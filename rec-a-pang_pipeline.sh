@@ -13,14 +13,23 @@
 alias dateprompt="date +'[%Y-%m-%d %H:%M:%S]'"
 datepad="                     "
 
-#### Set environment variables
+#### Set mandatory environment variables / parameters
 export myemail='me.myself@respectable-institu.ti.on'
 export raproot='/path/to/base/folder/for/all/this/business'
 export dbscripts='/path/to/pipeline/scripts'
 
 export rapdbname='aBoldDatabaseName' # mostly name of the top folder
 export famprefix='ABCDE'             # alphanumerical prefix (no number first) of the names for homologous protein/gene family clusters; will be appended with a 'P' for proteins and a 'C' for CDSs.
-# generic env var derived from the above
+
+## Set facultative parameters (can also be set interactively during the pipeline run)
+export pseudocoremingenomes=0		
+#~ echo "Enter the minimum number of genomes to possess an unicopy gene family for it to be part of pseudo-core genome:"
+#~ while [[ -z $pseudocoremingenomes || $pseudocoremingenomes -lt 1 ]] ; do
+ #~ read -p 'Please enter non-null integer value for minimum of genomes represented in pseudo-core unicopy gene families: ' pseudocoremingenomes
+#~ done
+#~ export pseudocoremingenomes=$pseudocoremingenomes
+
+## load generic environment variables derived from the above
 source ~/environ_rec-a-pang.sh
 
 ################################
@@ -92,6 +101,9 @@ diff ${allcomplete}_withlabstrains_list ${allcomplete}_labstrains_list | grep '<
 # regenerate metadata tables without the lab strains
 python $dbscripts/extract_metadata_from_gbff.py --assembly_folder_list=${allcomplete}_list --add_raw_metadata=${complete}/manual_metadata_dictionary.tab \
 --add_curated_metadata=${complete}/manual_curated_metadata_dictionary.tab --add_dbxref=${complete}/manual_dbxrefs.tab --add_assembly_info_dir=${indata}/assembly_stats
+
+export ngenomes=$((`wc -l ${complete}/complete_genomes_metadata.tab | cut -d' ' -f1` - 1))
+echo "work with a database of $ngenomes genomes (excluding lab strains)"
 
 #############################
 ## 01. Homologous Sequence db
@@ -200,6 +212,10 @@ cat ${protali}/full_families_genome_counts-noORFans.mat > ${protali}/all_familie
 tail -n +2 ${protali}/ENTCGC000000_genome_counts-ORFans.mat >> ${protali}/all_families_genome_counts.mat
 gzip ${protali}/all_families_genome_counts.mat
 
+# have glimpse of (almost-)universal unicopy gene family distribution and select those intended for core-genome tree given pseudocoremingenomes threshold
+$dbscripts/select_pseudocore_genefams.r
+
+
 
 ##############################################
 ## 03. Create and Initiate PostgreSQL database
@@ -212,3 +228,30 @@ cd ${database}
 # NB: expect INTERACTTIVE PROMPT here !!
 # lower-case name for SQL db: 'panterodb_v0.3'
 $dbscripts/create_pangenome_sql_db.sh ${entdbname,,}
+
+# generate reference for translation of genome assembly names into short identifier codes (uing UniProt "5-letter" code when available).
+psql -d ${sqldbname} -A -t -c "select assembly_id, code from genome.assemblies;" | sed -e 's/ |/\t/g' > $database/genome_codes.tab
+# and CDS names into code of type "SPECIES_CDSTAG" (ALE requires such a naming)
+psql -d ${sqldbname} -A -t -c "select genbank_cds_id, cds_code from genome.coding_sequences;" | cut -d'|' -f2,3 | sed -e 's/|/\t/g' > $database/cds_codes.tab
+
+# translates the header of the alignment files
+export alifastacodedir=${protali}/full_cdsfam_alignments_species_code
+mkdir -p ${alifastacodedir}
+# use parrallel bash command
+$dbscripts/lsfullpath.py ${protali}/full_cdsfam_alignments .aln > ${protali}/full_cdsfam_alignment_list
+$dbscripts/genbank2code_fastaseqnames.py ${protali}/full_cdsfam_alignment_list ${database}/cds_codes.tab ${alifastacodedir} > $entdb/logs/genbank2code_fastaseqnames.log
+
+
+###########################################
+## 04. Core Genome Phylogeny (Species tree)
+###########################################
+
+## generate core genome alignment path list
+export coregenome=$entdb/04.core_genome
+mkdir -p ${coregenome}
+pseudocorecdsalnlist=${coregenome}/pseudo-core-${pseudocoremingenomes}-unicopy_cds_aln_list
+rm -f ${pseudocorecdsalnlist}
+for fam in `cat ${protali}/pseudo-core-${pseudocoremingenomes}-unicopy_families.tab` ; do ls ${alifastacodedir}/$fam.codes.aln >> ${pseudocorecdsalnlist} ; done
+# by construction in extract_full_prot+cds_family_alignments.py script, CDSs are oredered by input genomes
+python $dbscripts/concat_ordered_core_aln.py ${coregenome}/core_cds_aln_list ${coregenome}/concat_core_cds.aln ${protali}/genomes_ordered.tab
+python $dbscripts/concat.py ${coregenome}/pseudo-core-881-unicopy_cds_aln_list ${coregenome}/pseudo-core-881-unicopy_concat_cds.aln
