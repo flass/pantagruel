@@ -9,9 +9,11 @@ export raplogs=$rapdb/logs
 export raptmp=$rapdb/tmp
 export indata=$rapdb/00.input_data
 export seqdb=$rapdb/01.seqdb
-export protali=$rapdb/02.clustalo_alignments
+export protali=$rapdb/02.gene_alignments
 export database=$rapdb/03.database
 export coregenome=$rapdb/04.core_genome
+export genetrees=$rapdb/05.gene_trees
+
 
 # sub folders
 export complete=${assmetadata}/complete_genomes
@@ -21,10 +23,14 @@ export nrfaacomplete=$seqdb/all_complete_proteomes.nr.faa
 export families=$seqdb/protein_families
 export nrprotali=$protali/nr_protfam_clustalo_alignments
 export alifastacodedir=${protali}/full_cdsfam_alignments_species_code
+export mlgenetrees=${genetrees}/raxml_trees
 
 # other variables
 export sqldbname=${entdbname,,}
 export protorfanclust="${famprefix}P000000"
+export pseudocore=pseudo-core-${pseudocoremingenomes}-unicopy
+export pseudocorealn=${coregenome}/${pseudocore}_concat_cds.aln
+export coretree=${coregenome}/raxml_tree
 
 # other variables conditonal on prior creation of files
 if [ -e $nrfaacomplete ] ; then
@@ -33,4 +39,8 @@ if [ -e $nrfaacomplete ] ; then
 fi
 if [ -e ${complete}/complete_genomes_metadata.tab ] ; then
  export ngenomes=$((`wc -l ${complete}/complete_genomes_metadata.tab | cut -d' ' -f1` - 1))
+ export treename=${pseudocore}_concat_cds_${ngenomes}entero
+ export nrspeciestree=$coretree/RAxML_bestTree.${treename}.MADrooted
+ export nrspeciestreeBS=$coretree/RAxML_bipartitions.${treename}
 fi
+

@@ -82,25 +82,28 @@ grep "$patasslev" */*${filetag} | sed -e "$sedfilter0" | sed -e 's/\r//g' > ${in
 
 mkdir ${indata}/complete_genomes/
 rm -f ${allcomplete}*
-ls ${assemblies}/GCF_* -d > ${allcomplete}_withlabstrains_list
+ls ${assemblies}/GCF_* -d > ${allcomplete}_withallstrains_list
 # complete genomes do not have their sequencing / assembly details reported in *_assembly_stats.txt files ; rather lok for the sequencing metadata in the GenBank flat file
-for assemb in `cat ${allcomplete}_withlabstrains_list` ; do 
+for assemb in `cat ${allcomplete}_withallstrains_list` ; do 
 ass=$(basename $assemb) ; tech=`zcat $assemb/${ass}_genomic.gbff.gz | grep -m 1 "Sequencing Technology" | awk -F' :: ' '{print $NF}' | sed -e 's/Il;lumina/Illumina/g'`
 if [ -z "$tech" ] ; then tech='NA' ; fi
 echo -e "${ass}\t${tech}" ; done > ${indata}/sequencing_technology.tab
 
 ## extract assembly/sample metadata from flat files
-python $dbscripts/extract_metadata_from_gbff.py --assembly_folder_list=${allcomplete}_withlabstrains_list --add_raw_metadata=${complete}/manual_metadata_dictionary.tab \
---add_curated_metadata=${complete}/manual_curated_metadata_dictionary.tab --add_dbxref=${complete}/manual_dbxrefs.tab --add_assembly_info_dir=${indata}/assembly_stats
+python $dbscripts/extract_metadata_from_gbff.py --assembly_folder_list=${allcomplete}_withallstrains_list --add_raw_metadata=${complete}/manual_metadata_dictionary.tab \
+--add_curated_metadata=${complete}/manual_curated_metadata_dictionary.tab --add_dbxref=${complete}/manual_dbxrefs.tab --add_assembly_info_dir=${indata}/assembly_stats \
+--default_species_name="unclassified organism"
 # remove lab strains
-grep "laboratory" ${allcomplete}_withlabstrains_metadata_curated.tab | cut -f1 > $complete/labstrains_list
-for strain in `cat $complete/labstrains_list` ; do
- grep $strain ${allcomplete}_withlabstrains_list >> ${allcomplete}_labstrains_list
+grep "laboratory" ${allcomplete}_withallstrains_metadata_curated.tab | cut -f1 > $complete/labstrains_list
+grep "endosymbiont" ${allcomplete}_withallstrains_metadata_curated.tab | cut -f1 > $complete/endosymbiontstrains_list
+for strain in `cat $complete/labstrains_list $complete/endosymbiontstrains_list` ; do
+ grep $strain ${allcomplete}_withallstrains_list >> ${allcomplete}_excludestrains_list
 done
-diff ${allcomplete}_withlabstrains_list ${allcomplete}_labstrains_list | grep '<' | cut -d' ' -f2 > ${allcomplete}_list
+diff ${allcomplete}_withallstrains_list ${allcomplete}_excludestrains_list | grep '<' | cut -d' ' -f2 > ${allcomplete}_list
 # regenerate metadata tables without the lab strains
 python $dbscripts/extract_metadata_from_gbff.py --assembly_folder_list=${allcomplete}_list --add_raw_metadata=${complete}/manual_metadata_dictionary.tab \
---add_curated_metadata=${complete}/manual_curated_metadata_dictionary.tab --add_dbxref=${complete}/manual_dbxrefs.tab --add_assembly_info_dir=${indata}/assembly_stats
+--add_curated_metadata=${complete}/manual_curated_metadata_dictionary.tab --add_dbxref=${complete}/manual_dbxrefs.tab --add_assembly_info_dir=${indata}/assembly_stats \
+--default_species_name="unclassified organism"
 
 export ngenomes=$((`wc -l ${complete}/complete_genomes_metadata.tab | cut -d' ' -f1` - 1))
 echo "work with a database of $ngenomes genomes (excluding lab strains)"
@@ -138,8 +141,9 @@ mmseqs cluster ${nrfaacomplete}.mmseqs-seqdb $mmseqsclout $mmseqstmp &> $mmseqsl
 # generate indexed fasta file listing all protein families
 mmseqs createseqfiledb ${nrfaacomplete}.mmseqs-seqdb $mmseqsclout ${mmseqsclout}_clusters
 # generate separate fasta files with family identifiers distinc from representative sequence name
-python $dbscripts/split_mmseqs-clustdb_fasta.py ${mmseqsclout}_clusters "${famprefix}P"
-echo "$(dateprompt)-- classified into $(ls ${mmseqsclout}_clusters_fasta/ | wc -l) non-redundant protein clusters"
+python $dbscripts/split_mmseqs-clustdb_fasta.py ${mmseqsclout}_clusters "${famprefix}P" 6
+echo "$(dateprompt)-- $(wc -l ${mmseqsclout}_clusters_fasta.tab | cut -d' ' -f1) non-redundant proteins"
+echo "$(dateprompt)-- classified into $(ls ${mmseqsclout}_clusters_fasta/ | wc -l) clusters"
 echo "${datepad}-- including artificial cluster ${famprefix}P000000 gathering $(grep -c '>' ${mmseqsclout}_clusters_fasta/${famprefix}P000000.fasta) ORFan nr proteins"
 echo "${datepad}-- (NB: some are not true ORFans as can be be present as identical sequences in several genomes)"
 
@@ -149,10 +153,15 @@ echo "${datepad}-- (NB: some are not true ORFans as can be be present as identic
 
 ## prepare protein families for alignment
 protfamseqs=${mmseqsclout}_clusters_fasta
-protali=$entdb/02.clustalo_alignments
+export protali=$entdb/02.gene_alignments
 nrprotali=$protali/nr_protfam_clustalo_alignments
 mkdir -p $nrprotali
-python $dbscripts/schedule_ali_task.py $protfamseqs.tab $protfamseqs $protali/$(basename ${protali})_tasklist `nproc`
+# generate lists of many jobs to be executed by a single process (clustalo jobs are too short to be dispatched via a cluster array job)
+# clustalomega is already parallelized (for part of the computation, i.e. distance matrix calculation) 
+# so less threads than avalilable cores (e.g. use 1 process / 2 cores) are specified
+# so each process can run at least at 100% and mobilize 2 cores when parrallel,
+# or more when cores unused by other concurent pocesses (during their sequential phase)
+python $dbscripts/schedule_ali_task.py $protfamseqs.tab $protfamseqs $protali/$(basename ${protali})_tasklist $((`nproc` / 2))
 
 ## align non-redundant protein families
 for tasklist in `ls $protali/${protali##*.}_tasklist.*` ; do
@@ -212,11 +221,6 @@ cat ${protali}/full_families_genome_counts-noORFans.mat > ${protali}/all_familie
 tail -n +2 ${protali}/ENTCGC000000_genome_counts-ORFans.mat >> ${protali}/all_families_genome_counts.mat
 gzip ${protali}/all_families_genome_counts.mat
 
-# have glimpse of (almost-)universal unicopy gene family distribution and select those intended for core-genome tree given pseudocoremingenomes threshold
-$dbscripts/select_pseudocore_genefams.r
-
-
-
 ##############################################
 ## 03. Create and Initiate PostgreSQL database
 ##############################################
@@ -228,6 +232,9 @@ cd ${database}
 # NB: expect INTERACTTIVE PROMPT here !!
 # lower-case name for SQL db: 'panterodb_v0.3'
 $dbscripts/create_pangenome_sql_db.sh ${entdbname,,}
+# create database dump
+sqldump=${database}/${sqldbname}_dump_$(date +'%d%m%Y')
+pg_dump -d ${sqldbname} -j 6 -F d -f $sqldump && chmod -w -R $sqldump/
 
 # generate reference for translation of genome assembly names into short identifier codes (uing UniProt "5-letter" code when available).
 psql -d ${sqldbname} -A -t -c "select assembly_id, code from genome.assemblies;" | sed -e 's/ |/\t/g' > $database/genome_codes.tab
@@ -246,12 +253,45 @@ $dbscripts/genbank2code_fastaseqnames.py ${protali}/full_cdsfam_alignment_list $
 ## 04. Core Genome Phylogeny (Species tree)
 ###########################################
 
+# have glimpse of (almost-)universal unicopy gene family distribution and select those intended for core-genome tree given pseudocoremingenomes threshold
+$dbscripts/select_pseudocore_genefams.r 
+# new value of pseudocoremingenomes stored in script exit status
+export pseudocoremingenomes=$?
+
 ## generate core genome alignment path list
 export coregenome=$entdb/04.core_genome
 mkdir -p ${coregenome}
-pseudocorecdsalnlist=${coregenome}/pseudo-core-${pseudocoremingenomes}-unicopy_cds_aln_list
-rm -f ${pseudocorecdsalnlist}
-for fam in `cat ${protali}/pseudo-core-${pseudocoremingenomes}-unicopy_families.tab` ; do ls ${alifastacodedir}/$fam.codes.aln >> ${pseudocorecdsalnlist} ; done
-# by construction in extract_full_prot+cds_family_alignments.py script, CDSs are oredered by input genomes
-python $dbscripts/concat_ordered_core_aln.py ${coregenome}/core_cds_aln_list ${coregenome}/concat_core_cds.aln ${protali}/genomes_ordered.tab
-python $dbscripts/concat.py ${coregenome}/pseudo-core-881-unicopy_cds_aln_list ${coregenome}/pseudo-core-881-unicopy_concat_cds.aln
+export pseudocore=${coregenome}/pseudo-core-${pseudocoremingenomes}-unicopy
+rm -f ${pseudocore}_cds_aln_list
+for fam in `cat ${protali}/pseudo-core-${pseudocoremingenomes}-unicopy_families.tab` ; do ls ${alifastacodedir}/$fam.codes.aln >> ${pseudocore}_cds_aln_list ; done
+# concatenate pseudo-core CDS alignments
+python $dbscripts/concat.py ${pseudocore}_cds_aln_list ${pseudocore}_concat_cds.aln
+rm ${alifastacodedir}/*_all_sp_new
+
+### compute species tree using RAxML
+export coretree=${coregenome}/raxml_tree
+export treename=${pseudocore}_concat_cds_${ngenomes}entero
+mkdir -p ${entlogs}/raxml ${coretree}
+# define RAxML options; uses options -T (threads) -j (checkpoints) 
+raxmloptions="-n ${treename} -m GTRCATI -j -p 1753 -T 8 -w ${coretree}"
+## first check the alignment for duplicate sequences and write a reduced alignment with  will be excluded
+raxmlHPC-PTHREADS-AVX -s ${pseudocorealn} ${raxmloptions} -f c &> ${entlogs}/raxml/${treename}.check.log
+# 117/880 exactly identical excluded
+grep 'exactly identical$' ${coretree}/RAxML_info.${treename} | sed -e 's/IMPORTANT WARNING: Sequences \(.\+\) and \(.\+\) are exactly identical/\1\t\2/g' > ${pseudocorealn}.identical_sequences
+rm ${coretree}/RAxML_info.${treename}
+## first just single ML tree on reduced alignment
+raxmlHPC-PTHREADS-AVX -s ${pseudocorealn}.reduced ${raxmloptions} &> ${entlogs}/raxml/${treename}.ML_run.log &
+#~ # resume analysis after crash
+#~ raxmlHPC-PTHREADS-AVX -s ${pseudocorealn}.reduced ${raxmloptions} -t ${coretree}/RAxML_checkpoint.${treename}.14 &> ${entlogs}/raxml/${treename}.ML_run.log2 &
+
+## root tree with MAD (Tria et al. Nat Ecol Evol (2017) Phylogenetic rooting using minimal ancestor deviation. s41559-017-0193 doi:10.1038/s41559-017-0193)
+R BATCH --vanilla --slave << EOF
+source('${dbscripts}/mad_R/MAD.R')
+mad.rooting = MAD(readLines('${coretree}/RAxML_bestTree.${treename}'), 'full')
+write(mad.rooting[[1]], file='${coretree}/RAxML_bestTree.${treename}.MADrooted')
+save(mad.rooting, file='${coretree}/RAxML_bestTree.${treename}.MADrooting.RData')
+EOF
+
+## RAxML, with parametric bootstrap
+raxmlHPC-PTHREADS-AVX -s ${pseudocorealn}.reduced ${raxmloptions} -b 198237 -N 500 &> ${entlogs}/raxml/${treename}_bs.log &
+
