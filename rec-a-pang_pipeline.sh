@@ -295,3 +295,89 @@ EOF
 ## RAxML, with parametric bootstrap
 raxmlHPC-PTHREADS-AVX -s ${pseudocorealn}.reduced ${raxmloptions} -b 198237 -N 500 &> ${entlogs}/raxml/${treename}_bs.log &
 
+
+#############################################################
+## 05. Gene trees (full [ML] and collapsed [bayesian sample])
+#############################################################
+
+export genetrees=$entdb/05.gene_trees
+export mlgenetrees=${genetrees}/raxml_trees
+mkdir -p ${mlgenetrees}
+mkdir -p $entlogs/raxml/gene_trees
+
+basequery="select gene_family_id, size from genome.gene_family_sizes where gene_family_id is not null and gene_family_id!='$cdsorfanclust'"
+python $dbscripts/query_gene_fam_sets.py --db.con.par="dbname=panterodb_v0.3" --outprefix='cdsfams_' --dirout=${protali} \
+ --base.query=${basequery} --famsets.min.sizes="4,500,2000,10000" --famsets.max.sizes="499,1999,9999,"
+
+## compute first pass of gene trees with RAxML, using rapid bootstrap to estimate branch supports
+allcdsfam2phylo=($(ls ${protali}/cdsfams_*))
+allmems=(4 8 32 64)
+allwalltimes=(24 24 72 72)
+for i in ${!allcdsfam2phylo[@]} ; do
+cdsfam2phylo=${allcdsfam2phylo[$i]} ; mem=${allmems[$i]} ; wt=${allwalltimes[$i]}
+echo "cdsfam2phylo=${cdsfam2phylo} ; mem_per_core=${mem}gb ; walltime=${wt}:00:00"
+tasklist=${cdsfam2phylo}_aln_list
+rm -f $tasklist ; for fam in `cut -f1 $cdsfam2phylo` ; do ls ${alifastacodedir}/${fam}.codes.aln >> $tasklist ; done
+if [ "$(wc -l $cdsfam2phylo | cut -f1 -d' ')" -lt "$(wc -l $tasklist | cut -f1 -d' ')" ] ; then 
+  >&2 echo "ERROR $(dateprompt): missing gene family alignments; please fix the list '$tasklist' or the content of folder '$alifastacodedir/' before continuing."
+  exit 1
+fi
+qsubvars="tasklist=$tasklist,outputdir=$mlgenetrees"
+Njob=`wc -l ${tasklist} | cut -f1 -d' '`
+chunksize=3000
+jobranges=($($dbscripts/get_jobranges.py $chunksize $Njob))
+for jobrange in ${jobranges[@]} ; do
+echo "jobrange=$jobrange"
+qsub -J $jobrange -l walltime=${wt}:00:00 -l select=1:ncpus=4:mem=${mem}gb -N raxml_gene_trees_$(basename $cdsfam2phylo) -o $entlogs/raxml/gene_trees -j oe -v "$qsubvars" $HOME/scripts/misc/raxml_array_PBS.qsub
+done
+done
+
+## detect clades to be collapsed in gene trees
+export colalinexuscodedir=${protali}/collapsed_cdsfam_alignments_species_code
+cladesupp=70
+subcladesupp=35
+criterion='bs'
+withinfun='median'
+export collapsecond=${criterion}_stem${cladesupp}_within${withinfun}${subcladesupp}
+mkdir -p ${colalinexuscodedir}/${collapsecond}
+mlgenetreelist=${mlgenetrees%*s}_list
+$dbscripts/lsfullpath.py ${mlgenetrees}/${mainresulttag} | sort > ${mlgenetreelist}
+
+Njob=`wc -l ${mlgenetreelist} | cut -f1 -d' '`
+chunksize=3000
+jobranges=($($dbscripts/get_jobranges.py $chunksize $Njob))
+
+for jobrange in ${jobranges[@]} ; do
+beg=`echo $jobrange | cut -d'-' -f1`
+tail -n +${beg} ${mlgenetreelist} | head -n ${chunksize} > ${mlgenetreelist}_${jobrange}
+qsub -N mark_unresolved_clades -l select=1:ncpus=12:mem=16gb,walltime=24:00:00 -o ${entlogs}/mark_unresolved_clades.${collapsecond}_${jobrange}.log -j oe -V -S /usr/bin/bash << EOF
+module load python
+python $dbscripts/mark_unresolved_clades.py --in_gene_tree_list=${mlgenetreelist}_${jobrange} --diraln=${alifastacodedir} --fmt_aln_in='fasta' \
+ --threads=12 --dirout=${colalinexuscodedir}/${collapsecond} --no_constrained_clade_subalns_output \
+ --clade_stem_conds="[('$criterion', '>=', $cladesupp)]" --within_clade_conds="[('$withinfun', '$criterion', '<=', $subcladesupp, -1), ('max', '$criterion', '<', $cladesupp, -1)]"
+EOF
+done
+
+## run mrbayes on collapsed alignments
+export collapsed_genetrees=${genetrees}/collapsed_mrbayes_trees
+mkdir -p ${collapsed_genetrees}/${collapsecond}
+alreadytrees=${collapsed_genetrees}_${collapsecond}_list
+$dbscripts/lsfullpath.py ${collapsed_genetrees}/${collapsecond} con.tre > $alreadytrees
+alreadytasklist=${colalinexuscodedir}/${collapsecond}_ali_list_done
+sed -e "s#${collapsed_genetrees}/${collapsecond}/\(.\+\)\.mb\.con\.tre#${colalinexuscodedir}/${collapsecond}/collapsed_alns/\1\.nex#g" $alreadytrees > $alreadytasklist
+
+tasklist=${colalinexuscodedir}/${collapsecond}_ali_list
+rm -f $tasklist
+$dbscripts/lsfullpath.py ${colalinexuscodedir}/${collapsecond}/collapsed_alns > $tasklist
+sort $tasklist > $tasklist.sort
+sort $alreadytasklist > $alreadytasklist.sort
+dtag=$(date +"%Y-%m-%d-%H-%M-%S")
+comm -2 -3  $tasklist.sort $alreadytasklist.sort > ${tasklist}_todo_${dtag}
+Njob=`wc -l ${tasklist}_todo | cut -f1 -d' '`
+chunksize=1000
+jobranges=($($dbscripts/get_jobranges.py $chunksize $Njob))
+qsubvar="mbversion=3.2.6, tasklist=${tasklist}_todo_${dtag}, outputdir=${collapsed_genetrees}/${collapsecond}, mbmcmcpopt='Nruns=2 Ngen=2000000 Nchains=6'"
+for jobrange in ${jobranges[@]}	; do
+echo $jobrange $qsubvar
+qsub -J $jobrange -N mb_panterodb -o ${entdlogs}/mrbayes/collapsed_mrbayes_trees_${jobrange}_${dtag} -v "$qsubvar" ${dbscripts}/mrbayes_array_PBS.qsub
+done

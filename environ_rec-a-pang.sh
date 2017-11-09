@@ -24,6 +24,8 @@ export families=$seqdb/protein_families
 export nrprotali=$protali/nr_protfam_clustalo_alignments
 export alifastacodedir=${protali}/full_cdsfam_alignments_species_code
 export mlgenetrees=${genetrees}/raxml_trees
+export colalinexuscodedir=${protali}/collapsed_cdsfam_alignments_species_code
+export collapsed_genetrees=${genetrees}/collapsed_mrbayes_trees
 
 # other variables
 export sqldbname=${entdbname,,}
@@ -31,6 +33,12 @@ export protorfanclust="${famprefix}P000000"
 export pseudocore=pseudo-core-${pseudocoremingenomes}-unicopy
 export pseudocorealn=${coregenome}/${pseudocore}_concat_cds.aln
 export coretree=${coregenome}/raxml_tree
+export mainresulttag=rootedTree
+cladesupp=70
+subcladesupp=35
+criterion='bs'
+withinfun='median'
+export collapsecond=${criterion}_stem${cladesupp}_within${withinfun}${subcladesupp}
 
 # other variables conditonal on prior creation of files
 if [ -e $nrfaacomplete ] ; then
