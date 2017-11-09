@@ -1,10 +1,10 @@
 #!/bin/bash
 
 #########################################################
-## REC-A-PANG: 
-##             a pipeline for 
-##             phylogenetic reconciliation
-##             of a bacterial pangenome
+## REC-A-PANG:                                         ##
+##             a pipeline for                          ##
+##             phylogenetic reconciliation             ##
+##             of a bacterial pangenome                ##
 #########################################################
 
 # Copyright: Florent Lassalle (f.lassalle@imperial.ac.uk), 22 August 2017
@@ -32,9 +32,9 @@ export pseudocoremingenomes=0
 ## load generic environment variables derived from the above
 source ~/environ_rec-a-pang.sh
 
-################################
+#################################
 ## 00. Data download and grooming
-################################
+#################################
 
 ### Download data
 ## using FTP
