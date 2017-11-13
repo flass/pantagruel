@@ -328,7 +328,7 @@ chunksize=3000
 jobranges=($($dbscripts/get_jobranges.py $chunksize $Njob))
 for jobrange in ${jobranges[@]} ; do
 echo "jobrange=$jobrange"
-qsub -J $jobrange -l walltime=${wt}:00:00 -l select=1:ncpus=4:mem=${mem}gb -N raxml_gene_trees_$(basename $cdsfam2phylo) -o $entlogs/raxml/gene_trees -j oe -v "$qsubvars" $HOME/scripts/misc/raxml_array_PBS.qsub
+qsub -J $jobrange -l walltime=${wt}:00:00 -l select=1:ncpus=4:mem=${mem}gb -N raxml_gene_trees_$(basename $cdsfam2phylo) -o $entlogs/raxml/gene_trees -j oe -v "$qsubvars" $dbscripts/raxml_array_PBS.qsub
 done
 done
 
@@ -373,11 +373,11 @@ sort $tasklist > $tasklist.sort
 sort $alreadytasklist > $alreadytasklist.sort
 dtag=$(date +"%Y-%m-%d-%H-%M-%S")
 comm -2 -3  $tasklist.sort $alreadytasklist.sort > ${tasklist}_todo_${dtag}
-Njob=`wc -l ${tasklist}_todo | cut -f1 -d' '`
+Njob=`wc -l ${tasklist}_todo_${dtag} | cut -f1 -d' '`
 chunksize=1000
 jobranges=($($dbscripts/get_jobranges.py $chunksize $Njob))
 qsubvar="mbversion=3.2.6, tasklist=${tasklist}_todo_${dtag}, outputdir=${collapsed_genetrees}/${collapsecond}, mbmcmcpopt='Nruns=2 Ngen=2000000 Nchains=6'"
 for jobrange in ${jobranges[@]}	; do
 echo $jobrange $qsubvar
-qsub -J $jobrange -N mb_panterodb -o ${entdlogs}/mrbayes/collapsed_mrbayes_trees_${jobrange}_${dtag} -v "$qsubvar" ${dbscripts}/mrbayes_array_PBS.qsub
+qsub -J $jobrange -N mb_panterodb -o ${entlogs}/mrbayes/collapsed_mrbayes_trees_${jobrange}_${dtag} -v "$qsubvar" ${dbscripts}/mrbayes_array_PBS.qsub
 done
