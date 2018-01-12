@@ -8,6 +8,25 @@ from random import shuffle
 
 sys.setrecursionlimit(10000)
 
+# a map of depth of current big recursive objects (trees) worked upon by each process
+currentmaxreccursdepths = {} 
+###### !!!! is this really sahred by mp processes ???? for the moment one when main(..., isparallel=False)
+
+# functions to edit and monitor it, and to set Python maximum recursion limit accordingly
+def checkmaxdepthandsetreclim(depths, mindefault=10000):
+	maxval = max(depths.values()+[mindefault])
+	if sys.getrecursionlimit() != maxval:
+		sys.setrecursionlimit(maxval)
+		print "# sys.setrecursionlimit(%d)"%maxval
+
+def adddepth(depths, key, val):
+	depths[key] = val
+	checkmaxdepthandsetreclim(depths)
+
+def rmdepth(depths, key):
+	del depths[key]
+	checkmaxdepthandsetreclim(depths)
+
 """
 
 
@@ -31,7 +50,18 @@ def median(seq, ignoreNull=True):
 	l.sort()
 	if not l: return None
 	nmed = len(l)/2
-	return l[nmed]
+	if l%2==1: return float(l[nmed+1])
+	else: return (float(l[nmed])+float(l[nmed+1]))/2
+
+def var(seq, correct=1):
+	m = mean(seq)
+	if m is None: return None
+	n = len([k for k in seq if (k is not None)])-correct
+	if n < 1:
+		return 'inf'		
+	else:
+		d = [(float(x) - m)**2 for x in seq]
+		return sum(d)/n
 
 def findSeqRecordIndexesFromSeqNames(aln, seqnames):
 	if isinstance(seqnames, list): return [k for k,seq in enumerate(aln) if seq.id in seqnames]
@@ -41,8 +71,8 @@ def findSeqRecordIndexesFromSeqNames(aln, seqnames):
 	
 ##core functions
 	
-def select_clades_on_conditions(tree, clade_stem_conds, within_clade_conds, depth=1, testLeaves=True, pruneSelected=True, nested=False, inclusive=True, order=2, verbose=2):
-	"""select tree nodes based on generic conditions and retur corresponding leaf sets.
+def select_clades_on_conditions(tree, clade_stem_conds, within_clade_conds, depth=1, testLeaves=True, testRoot=False, pruneSelected=True, nested=False, inclusive=True, order=2, verbose=2):
+	"""select tree nodes based on generic conditions and return corresponding leaf sets.
 	
 	The conditions for selecting a clade are separated in two types relating to the the stem and within the clade, respetively.
 	For each, a list of condition tuple(s) must be given, having the following structure: 
@@ -123,7 +153,7 @@ def select_clades_on_conditions(tree, clade_stem_conds, within_clade_conds, dept
 		selectedclades = []
 		selectedleaves = set([])
 		selectednodes = []
-		# iterate over all clades present in the rooted consensus gene tree (but the root)
+		# iterate over all clades present in the tree (but the root)
 		allnodes = t.get_sorted_children(order=order)
 		n = 0
 		#~ for node in allnodes:
@@ -132,7 +162,7 @@ def select_clades_on_conditions(tree, clade_stem_conds, within_clade_conds, dept
 			node = allnodes[n]
 			#~ print 'node', node
 			n += 1 # for next iteration
-			if (node.is_leaf() and not testLeaves) or node.is_root():
+			if (node.is_leaf() and not testLeaves) or (node.is_root() and not testRoot):
 				continue # the while node loop
 			if stem_testfun(node):
 				# clade meets stem condition, e.g. it is enough supported to be constrained,
@@ -146,22 +176,29 @@ def select_clades_on_conditions(tree, clade_stem_conds, within_clade_conds, dept
 								# this clade would be nesting previously defines ones, skip
 								continue # the for node loop
 					leaves = node.get_leaf_labels()
-					#~ print '', leaves
+					if verbose: print '', leaves
 					if not inclusive:
 						# restrict the leaf set to those not yet covered by selected leaf sets
 						leaves = list(set(leaves) - selectedleaves)
 						if not leaves:
-							#~ print 'here'
+							if verbose: print 'here'
 							# all leaves are assigned to nested clades
 							continue # the while node loop
 					selectedclades.append(leaves)
 					if pruneSelected: 
 						# father will disapear from the node list
-						#~ print 'pop', node.label(), node.newick(ignoreBS=1)
-						rmnodelab = t.pop(node, tellReplacingNode=True)[0]
-						rmnode = t[rmnodelab] 
+						if verbose: print 'pop', node.label(), node.newick(ignoreBS=1)
+						collapsenodelabs = t.pop(node, tellReplacingNode=True)
+						rmnode = t[collapsenodelabs[0]] 
+						if verbose:
+							print 'collapsenodelabs', collapsenodelabs, 
+							print '; rmnode', rmnode.newick(ignoreBS=True)
 						allnodes.remove(rmnode)
-						t.pop(node)
+						if testRoot and (node is t):
+							# cannot prune the root; rather return an empty node
+							t = t.newnode()
+						else:
+							t.pop(node)
 						# it takes time evaluating node nesting; no need to do it if pruning the node
 						# so do not store selcted nodes/leaf sets
 					else:
@@ -169,15 +206,26 @@ def select_clades_on_conditions(tree, clade_stem_conds, within_clade_conds, dept
 						selectednodes.append(node)
 		return (t, selectedclades)
 	
+	if verbose: print "'select_clades_on_conditions(clade_stem_conds='%s', within_clade_conds='%s')"%(clade_stem_conds, within_clade_conds)
 	tr = tree
 	selectedclades = []
-	nl = tr.nb_leaves()+1
-	while nl > tr.nb_leaves():
-		nl = tr.nb_leaves()
+	nl0 = nl = tr.nb_leaves()
+	nl1 = nl0+1
+	nround = 0
+	while nl1 > nl:
+		nround += 1
+		if verbose: print '# round %d ...'%nround
+		nl1 = tr.nb_leaves()
 		# may need two (or more?) passes to cover clades in the version with pruning
 		tr, sc = select_clades(tr)
+		nl = tr.nb_leaves()
 		selectedclades += sc
-		#~ print tr
+		nspeinsc = sum([len(c) for c in selectedclades])
+		if verbose:
+			print '# round %d ... complete'%nround
+			print 'leaves in selected clades:', nspeinsc
+			print 'remaining tree (%d leaves):\n'%nl, tr.newick(ignoreBS=True)
+	assert nspeinsc==nl0
 	return selectedclades
 	
 def mark_unresolved_clades(tree, cladesupport=None, subcladesupport=None, crit='bs', clade_stem_conds=None, within_clade_conds=None, nested=True, inclusive=False, pruneSelected=False, depth=1, verbose=2, **kw):
@@ -242,12 +290,29 @@ def restrict_alignment_representative_leaves(constraints, tree, nffullali, dirou
 		lcollapsedseqids.append(collapsedseqids)
 		alicollapsedseqs = Align.MultipleSeqAlignment([seq for k,seq in enumerate(aln) if k in collapsedseqids])
 		# select outgroup sequence: first leaf of sister clade
-		outgroup = tree.mrca(constraint).go_brother()
-		outgroupleaf = outgroup.get_leaf_labels()[0]
+		anccons = tree.mrca(constraint)
+		try:
+			outgroup = anccons.go_brother()
+			outgroupleaf = outgroup.get_leaf_labels()[0]
+		except ValueError, e:
+			print os.path.basename(nffullali)
+			sys.stderr.write( "Warning: in family %s, constraint %s leaf set makes a paraphyletic group.\nconstraint: %s\nanccons is root: %s\n"%(nffullali, cladename, constraint, str(anccons.is_root())) )
+			didseq = kw.get('didseq', {})
+			for refidseq, redidseqs in didseq.iteritems():
+				if (set(constraint) & set(redidseqs)):
+					sw = "Inclusion of identical leaf set: {%s:%s}\n to constraint results in paraphyletic group.\n"%(refidseq, repr(redidseqs))
+					sw+= "This indicate bad rooting of the gene tree, but can be ignored here.\nOutgroup for consraint %s will be set to 'None'.\n"%cladename
+					sys.stderr.write( sw )
+					outgroup = None
+					outgroupleaf = 'None'
+					break
+			else:
+				sys.stderr.write( "This indicate a definition of constraint clade that is inconsistent with the tree.\n" )
+				raise ValueError, e
 		loutgroups.append(outgroupleaf)
-		outgroupseqid = findSeqRecordIndexesFromSeqNames(aln, outgroupleaf)
-		alicollapsedseqs.append(aln[outgroupseqid])
 		if not 'ccs' in supressout:
+			outgroupseqid = findSeqRecordIndexesFromSeqNames(aln, outgroupleaf)
+			alicollapsedseqs.append(aln[outgroupseqid])
 			ccsoutd, ccsext = doutdext['ccs']
 			AlignIO.write(alicollapsedseqs, os.path.join(dirout, ccsoutd, radout+"-%s-%s-%s.%s"%(cladename, ccsext, outgroupleaf, dalnext[aliformatout])), aliformatout)
 		# select representative sequence out of the clade
@@ -256,7 +321,7 @@ def restrict_alignment_representative_leaves(constraints, tree, nffullali, dirou
 		reprseqid = findSeqRecordIndexesFromSeqNames(aln, reprseq.id)
 		representativeseqids.append(reprseqid)
 		if verbose: 
-			for thing in ['i', 'cladename', 'leaves', 'reprseq.id', 'reprseqid', 'outgroupleaf', 'outgroupseqid']:
+			for thing in ['i', 'cladename', 'leaves', 'reprseq.id', 'reprseqid']: #, 'outgroupleaf', 'outgroupseqid'
 				print thing+':', eval(thing),
 				print ''
 	allcollapsedbutreprseqids = reduce(lambda i,j: set(i) | set(j), lcollapsedseqids, set([])) - set(representativeseqids)
@@ -269,9 +334,12 @@ def restrict_alignment_representative_leaves(constraints, tree, nffullali, dirou
 				foutrepr.write('\t'.join([cladename, aln[reprseqid].id])+'\n')
 				aln[reprseqid].id = cladename	# rename the sequence in the main alignment
 	if not 'col' in supressout:
-		aliremainingseqs = Align.MultipleSeqAlignment([seq for k,seq in enumerate(aln) if k not in allcollapsedbutreprseqids])
 		coloutd, colext = doutdext['col']
-		AlignIO.write(aliremainingseqs, os.path.join(dirout, coloutd, radout+"-%s.%s"%(colext, dalnext[aliformatout])), aliformatout)
+		aliremainingseqs = Align.MultipleSeqAlignment([seq for k,seq in enumerate(aln) if k not in allcollapsedbutreprseqids])
+		if len(aliremainingseqs) >= 4:
+			AlignIO.write(aliremainingseqs, os.path.join(dirout, coloutd, radout+"-%s.%s"%(colext, dalnext[aliformatout])), aliformatout)
+		else:
+			sys.stderr.write( "Warning: collapsed alignment %s has too few remaining sequences (%d out of %d) for subsequent tree building, will not write it\n"%(os.path.basename(nffullali), len(aliremainingseqs), len(aln)) )
 	return loutgroups
 
 def write_out_MrBayes_clade_constraints(constraints, outgroup, nfout, allowin=False, verbose=False, ilist=None, **kw):
@@ -286,7 +354,7 @@ def write_out_MrBayes_clade_constraints(constraints, outgroup, nfout, allowin=Fa
 	else: raise ValueError, "all outgroup sequence are located wihin a constraint clade"
 	if verbose: print 'firstoutgroup:', firstoutgroup
 	with open(nfout, 'w') as fout:
-		fout.write("outgroup %s\n"%(firstoutgroup))
+		if (firstoutgroup != 'None'): fout.write("outgroup %s\n"%(firstoutgroup))
 		clades = []
 		if isinstance(ilist, list): il = ilist
 		else: il = range(len(constraints))
@@ -325,8 +393,10 @@ def colour_tree_with_constrained_clades(tree, constraints, palette=[], **kw):
 		for c in n.get_all_children():
 			c.edit_color(cols[k])
 
-def main(nfgenetree, diraln, dirout, outtag, **kw):
+def main(nfgenetree, diraln, dirout, outtag, mkdircons=True, **kw):
 	aliformatin = kw.get('aliformatin')
+	diridentseq = kw.get('diridentseq')
+	isparallel = kw.get('isparallel')
 	print nfgenetree
 	bnspl = os.path.basename(nfgenetree).split('.')
 	if bnspl[0].startswith('RAxML_'): bngt = bnspl[1]
@@ -347,18 +417,59 @@ def main(nfgenetree, diraln, dirout, outtag, **kw):
 		genetree = tree2.AnnotatedNode(file=nfgenetree)
 		# tree is interpreted here as trifurcated at the root ; root it.
 		genetree.resolveNode(outgroups='subroot')
-	# check accessibility of ouput dir
-	for outd, ext in doutdext.values():
-		if not os.path.isdir(os.path.join(dirout, outd)):
-			os.mkdir(os.path.join(dirout, outd))
+	# there will be deepcopy operation on the tree, either to save its state before pruning (pop) below or in select_clades.
+	# a deepcopy operation on a recursive tree2.Node object induces a cycle of ~7 function calls per nested node
+	# knowing that there are (2*n)-1 nodes in a tree (n being the nuber of tree leaves),
+	# one should set the recursion limit >> 7*2*n ; on sequential calls, set it to 10*2*n to be on the safe side with overheads of higher level function calls.
+	if not isparallel: adddepth(currentmaxreccursdepths, bngt, 10*2*genetree.nb_leaves())
+	# deal with potential information on sets of identical sequences 
+	didseq = {}
+	if diridentseq:
+		# parse pairs of (reference, redundant) sequences that are identical
+		globidseq = "%s/*%s*"%(diridentseq, bngt)
+		gnfidseq = glob.glob(globidseq)
+		if not gnfidseq: raise OSError, "cannot find file matching pattern: '%s'"%globidseq
+		nfidseq = gnfidseq[0]
+		with open(nfidseq, 'r') as fidseq:
+			for line in fidseq:
+				refidseq, redidseq = line.rstrip('\n').split('\t')
+				didseq.setdefault(refidseq, []).append(redidseq)
+		if didseq:
+			# remove any redundant sequence from the gene tree before preocessing
+			cleangenetree = copy.deepcopy(genetree)
+			gtleaves = set(cleangenetree.get_leaf_labels())
+			for refidseq, redidseqs in didseq.iteritems():
+				for redidseq in redidseqs:
+					if redidseq in gtleaves:
+						cleangenetree.pop(redidseq)
+						gtleaves.remove(redidseq)
+		else:
+			cleangenetree = genetree	
+	else:
+		cleangenetree = genetree	
 	# detect unresolved clades
-	constraintswithsingles = mark_unresolved_clades(genetree, **kw) #, pruneSelected=True, inclusive=True
+	constraintswithsingles = mark_unresolved_clades(cleangenetree, **kw) #, pruneSelected=True, inclusive=True
+	# add to identical sequence map to the constrained clades definitions
+	newconstraintsfromidseqs = []
+	for refidseq, redidseqs in didseq.iteritems():
+		# scan for existing clade that would contain the reference
+		for c in constraintswithsingles:
+			if refidseq in c:
+				c += redidseqs
+				break
+		else:
+			newconstraintsfromidseqs.append([refidseq]+redidseqs)
 	# for reporting, filter out contraint clades that are just made of one leaf (NB: these are useful for proper definitition of other constraint clades, when nested, non-inclusive clades are allowed)
-	constraints = [c for c in constraintswithsingles if len(c)>1]
+	constraints = [c for c in constraintswithsingles+newconstraintsfromidseqs if len(c)>1]
 	# write out subalignments and the main alignment with collapsed clades
-	loutgroups = restrict_alignment_representative_leaves(constraints, genetree, nfaln, dirout, radout=bnfaln, selectRepr=0, **kw)
+	loutgroups = restrict_alignment_representative_leaves(constraints, genetree, nfaln, dirout, radout=bnfaln, selectRepr=0, didseq=didseq, **kw)
 	if not 'mbc' in supressout:	
 		mbcoutd, mbcext = doutdext['mbc']
+		if mkdircons is True:
+			mbcoutd = os.path.join(mbcoutd, bnfaln)
+			dout = os.path.join(dirout, mbcoutd)
+			if not os.path.isdir(dout):
+				os.mkdir(dout)
 		for i, constraint in enumerate(constraints):
 			cladename = "clade%d"%i
 			# write out MrBayes clade constraint for the sub-alignment, in order to compute subalignment samples and/or ancestral sequence
@@ -374,6 +485,8 @@ def main(nfgenetree, diraln, dirout, outtag, **kw):
 			genetree.write_nexus(os.path.join(dirout, cgtoutd, bnfaln+'-%s.nex'%cgtext), ignoreBS=True)
 		else:
 			raise ValueError, "specified format '%s' for output coloured-branch tree is not valid; please select among '[phylo]xml' or 'nex[us]'"%fmtcoltree
+	# done risking going over reccursion limt
+	if not isparallel: rmdepth(currentmaxreccursdepths, bngt)
 		
 	
 def usage():
@@ -382,9 +495,13 @@ def usage():
 	s += '\n  Options:\t\t[Value:]\n'
 	s += '\n    1. general options:\n'
 	s += '\n      a. input:\n\n'
-	s += '  --in_gene_tree_list\tpath\tpath to file containing the list of paths for source gene trees\n'
+	s += '  --in_gene_tree_list\tpath\tpath to file containing the list of paths for source gene trees (MANDATORY).\n'
 	s += '\t\t\t\t (which must be point estimates [ML, consensus] in Newick format).\n'
 	s += '  --diraln\t\tpath\tpath to source alignment folder; defaults to the same older as each listed gene tree.\n'
+	s += '  --dir_identseq\npath to folder containing lists of identical sequences in the gene family;\n'
+	s += '\t\t\t\teach file must be formated as a tab delimited table with two columns, indicating reference and redundant sequences, respectively.\n'
+	s += '\t\t\t\tIf the redundant sequences are present in the input gene tree, they will be removed before processsing.\n'
+	s += '\t\t\t\tIn any case, the reference:(redundant1, redundant2, ...) sequence name map is later integrated with the map of clades to collapse.\n'
 	s += '  --fmt_aln_in\t\tfmt\tformat of input alignments; defaults to \'nexus\'.\n'
 	s += '\n      b. output:\n\n'
 	s += '  --dirout\t\tpath\tspecify output folder; defaults to the same older as each listed gene tree.\n'
@@ -416,7 +533,7 @@ if __name__=='__main__':
 
 	supressoutopt = ['_'.join(['no', outd, 'output']) for outd, ext in doutdext.values()]
 	
-	opts, args = getopt.getopt(sys.argv[1:], 'hv:', ['in_gene_tree_list=', \
+	opts, args = getopt.getopt(sys.argv[1:], 'hv:', ['in_gene_tree_list=', 'dir_identseq=', \
 													 'clade_support=', 'subclade_support=', 'criterion=', 'depth=', \
 													 'clade_stem_conds=', 'within_clade_conds=', \
 	                                                 'diraln=', 'fmt_aln_in=', 'fmt_aln_out=', 'fmt_col_genetrees=', \
@@ -443,6 +560,12 @@ if __name__=='__main__':
 	alnfmtin = dopt.get('--fmt_aln_in', 'nexus')
 	alnfmtout = dopt.get('--fmt_aln_out', 'nexus')
 	fmtcoltree = dopt.get('--fmt_col_genetrees', 'nex')
+	diridentseq = dopt.get('--dir_identseq')
+	
+	# check accessibility of ouput dir
+	for outd, ext in doutdext.values():
+		if not os.path.isdir(os.path.join(dirout, outd)):
+			os.mkdir(os.path.join(dirout, outd))
 	
 	supressout = []
 	for key, val in doutdext.items():
@@ -455,10 +578,11 @@ if __name__=='__main__':
 		dgt = os.path.dirname(nfgenetree)
 		dout = dirout if dirout else dgt
 		daln = diraln if diraln else dgt
-		main(nfgenetree, daln, dout, outtag, \
+		main(nfgenetree, daln, dout, outtag, diridentseq=diridentseq, \
 		     cladesupport=cladesupport, subcladesupport=subcladesupport, crit=crit, depth=depth, \
 		     clade_stem_conds=clade_stem_conds, within_clade_conds=within_clade_conds, \
-		     aliformatin=alnfmtin, aliformatout=alnfmtout, format_color_tree=fmtcoltree, verbose=verbose, supressout=supressout)
+		     aliformatin=alnfmtin, aliformatout=alnfmtout, format_color_tree=fmtcoltree, \
+		     supressout=supressout, verbose=verbose, isparallel=(nthreads > 1))
 	
 	with open(nflnfgenetree, 'r') as flnfgenetrees:
 		lnfgenetrees = [line.strip(' \n') for line in flnfgenetrees]

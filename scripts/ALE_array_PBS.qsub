@@ -1,0 +1,153 @@
+#!/bin/bash
+#PBS -S /bin/bash
+#PBS -N ale
+#PBS -o /work/flassall/logs/ALE
+#PBS -j oe 
+#PBS -l walltime=168:00:00 
+
+echo "This is job $PBS_JOBNAME, job_ID $PBS_JOBID (array_task_ID $PBS_ARRAY_INDEX) on host $HOSTNAME, running $PBS_NUM_PPN processes on these workers:"
+cat $PBS_NODEFILE
+
+# use parallel environment
+module -v load intel-suite
+#~ module -v load mpi
+#~ module -v load beagle-lib
+
+module list
+
+## verify key variable definition
+# tasklist
+echo "tasklist:"
+if [ -z $tasklist ] ; then
+  echo "ERROR: need to define variable tasklist ; exit now"
+  exit 2
+else
+  ls $tasklist
+  if [ $? != 0 ] ; then
+    echo "ERROR: file '$tasklist' is missing ; exit now"
+    exit 2
+  fi
+fi
+
+nfchain=`awk "NR==$PBS_ARRAY_INDEX" $tasklist`
+echo $nfchain
+python << EOF
+with open('$nfchain', 'r') as fchain:
+  chainone = fchain.readline()
+  print 'ntaxa:', chainone.count('(') + 2
+
+EOF
+echo ""
+echo "# # # #"
+dnchain=`dirname $nfchain`
+bnchain=`basename $nfchain`
+nfrad=${bnchain%%-*}
+
+# resultdir
+echo "resultdir:"
+if [ -z $resultdir ] ; then
+  echo "ERROR: need to define variable resultdir ; exit now"
+  exit 2
+else
+  ls $resultdir > /dev/null
+  if [ $? != 0 ] ; then
+    echo "directory '$resultdir' is missing ; create it now"
+    mkdir -p $resultdir
+    if [ $? != 0 ] ; then
+      echo "could not create directory '$resultdir' ; exit now"
+      exit 2
+    fi
+  fi
+fi
+# spetree
+echo "spetree:"
+if [ -z $spetree ] ; then
+  echo "ERROR: need to define variable spetree ; exit now"
+  exit 2
+else
+  ls $spetree
+  if [ $? != 0 ] ; then
+    echo "look for $spetree species tree file in $dnchain/ folder"
+    ls ${dnchain}/${nfrad}*${spetree}*
+    if [ $? != 0 ] ; then
+      echo "ERROR: file '$spetree' is missing ; exit now"
+      exit 2
+    else
+      echo "found it!" 
+      spetree=(`ls ${dnchain}/${nfrad}*${spetree}*`)
+      echo "will use spetree=${spetree[0]}"
+    fi
+  fi
+fi
+# nrecs
+echo "nrecs:"
+if [ -z $nrecs ] ; then
+  echo -n "Default: "
+  nrecs=1000
+fi
+echo "will sample $nrecs reconciliations"
+# alealgo
+echo "alealgo:"
+if [ -z $alealgo ] ; then
+  echo -n "Default: "
+  alealgo='ALEml_undated'
+fi
+echo "will use $alealgo algorithm for reconciliation estimation"
+# relburninfrac
+echo "relburninfrac:"
+if [ -z $relburninfrac ] ; then
+  echo -n "Default: "
+  relburninfrac=0.25
+fi
+echo "will discard $relburninfrac fraction of the tree chain as burn-in"
+  
+alebin=$HOME/software/ALE/build/bin
+
+
+if [ ! -e $nfchain.ale ] ; then
+  # prepare ALE index
+  lenchain=`wc -l $nfchain`
+  burnin=`echo "$lenchain * 0.25" | bc`
+  echo "input tree chain is ${lenchain} long; burnin is set to ${burnin%%.*}"
+  echo "# ${alebin}/ALEobserve $nfchain burnin=${burnin%%.*}"
+  ${alebin}/ALEobserve $nfchain burnin=${burnin%%.*}
+else
+  echo "use pre-existing ALE index file:"
+  ls $nfchain.ale
+fi
+date
+# start timing in seconds
+SECONDS=0
+# run ALE reconciliation 
+echo "# ${alebin}/${alealgo} ${spetree} ${nfchain}.ale ${nrecs} separators=_"
+${alebin}/${alealgo} ${spetree} ${nfchain}.ale ${nrecs} separators=_
+echo ""
+echo "# # # #"
+
+echo -e "$nfrad2\t$alealgo\t$SECONDS" > $nfrad2.ale.computetime
+
+echo "# ls"
+ls
+
+# save files
+ls ./*.ale.* > /dev/null
+if [ $? == 0 ] ; then
+  echo "# rsync -az ./*.ale.* $resultdir/"
+  rsync -az ./*.ale.* $resultdir/
+  if [ $? != 0 ] ; then
+    echo "ERROR: unable to save result files from $PWD/ to $resultdir/"
+  fi
+else
+ls $nfchain.ale.* > /dev/null
+if [ $? == 0 ] ; then
+  echo "# rsync -az $nfchain.ale.* $resultdir/"
+  rsync -az $nfchain.ale.* $resultdir/
+  if [ $? != 0 ] ; then
+    echo "ERROR: unable to save result files from $(dirname $nfchain) to $resultdir/"
+  fi
+else
+  echo "ERROR: unable to find the result files"
+fi
+fi
+echo "# rm ./*.ale.*"
+rm ./*.ale.*

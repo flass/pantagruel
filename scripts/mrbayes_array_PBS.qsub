@@ -137,12 +137,14 @@ echo "data matrix:"
 \grep 'dimensions' $nfrad1
 echo ""
 
-# set MrBayes parameters
+### set MrBayes parameters
 mbprameterize () {
 local mcmcopt=$@
-
+## general MrBayes parameters
 echo "set autoclose=yes nowarn=yes" > $nfrad2.mbparam.txt
+## load data matrix
 echo "execute $nfrad1" >> $nfrad2.mbparam.txt
+## set phylogenetic model type and metaprameters
 if [ ${mbversion%.*} == '3.2' ] ; then
   echo "lset nst=6 rates=invgamma ploidy=haploid" >> $nfrad2.mbparam.txt
 else
@@ -151,17 +153,23 @@ else
 fi
 echo "showmodel" >> $nfrad2.mbparam.txt
 
+## set to record or not ancestral states
 if [ ! -z $constraints ]  ; then
   cat $constraints >> $nfrad2.mbparam.txt
   echo "report ancstates=yes" >> $nfrad2.mbparam.txt
 fi
+## set parameters for MCMCMC run
 if [ ${mbversion%.*} == '3.2' ] ; then
 # following line WORKED with MrBayes v3.2.2, but DID NOT WORK with v3.1.2 as the checkpoint option is new to v3.2
   echo "mcmcp $mbmcmcpopt file=$nfrad2.mb checkpoint=yes checkfreq=100000" >> $nfrad2.mbparam.txt
 else
   echo "mcmcp $mbmcmcpopt file=$nfrad2.mb" >> $nfrad2.mbparam.txt
 fi
+## run MCMCMC
 echo "mcmc $mcmcopt" >> $nfrad2.mbparam.txt
+## analyse results of MCMCMC; sumarize model parameter estimates
+echo "sump" >> $nfrad2.mbparam.txt
+## analyse results of MCMCMC; sumarize topology estimates
 #~ sumtopt="minpartfreq=0.001 contype=allcompat calctreeprobs=no"
 sumtopt="minpartfreq=0.1 contype=allcompat calctreeprobs=no"
 if [ ${mbversion%.*} == '3.2' ] ; then
@@ -170,7 +178,7 @@ if [ ${mbversion%.*} == '3.2' ] ; then
 else
   echo "sumt $sumtopt" >> $nfrad2.mbparam.txt
 fi
-echo "sump" >> $nfrad2.mbparam.txt
+## exit MrBayes
 echo "quit" >> $nfrad2.mbparam.txt
 
 cat $nfrad2.mbparam.txt
@@ -179,40 +187,43 @@ echo ""
 mbprameterize ${mbmcmcopt}
 
 # define function to run MrBayes in background and incrementally sync results to output dir
-mbround=0
 runmbandsync () {
-let mbround+=1
-echo "running MrBayes (round #$mbround):"
-echo "mpiexec mb < $nfrad2.mbparam.txt > $nfrad2.mb.log &"
-mpiexec mb < $nfrad2.mbparam.txt > $nfrad2.mb.log &
-mbpid=$!
-#echo "mbpid=$mbpid"
-# prepare empty ckp files for the time stamp comparison
-ckp=$nfrad2.mb.ckp
-touch $TMPDIR/$ckp
-touch $outputdir/$ckp
-file1time=`stat -c %Y $TMPDIR/$ckp`
-file2time=`stat -c %Y $outputdir/$ckp`
-# monitor file updates and sync on the way
-nckp=0
-while [ ! -z $(ps -q $mbpid -o comm=) ] ; do
+  let mbround+=1
+  echo "running MrBayes (round #$mbround):"
+  echo "mpiexec mb < $nfrad2.mbparam.txt > $nfrad2.mb.log &"
+  mpiexec mb < $nfrad2.mbparam.txt > $nfrad2.mb.log &
+  mbpid=$!
+  #echo "mbpid=$mbpid"
+  # prepare empty ckp files for the time stamp comparison
+  ckp=$nfrad2.mb.ckp
+  touch $TMPDIR/$ckp
+  touch $outputdir/$ckp
   file1time=`stat -c %Y $TMPDIR/$ckp`
   file2time=`stat -c %Y $outputdir/$ckp`
-  if [ $file1time -gt $file2time ]; then
-    date
-    #echo "rsync -az ${excludesync[@]} ./*$nfrad2* $outputdir/"
-    rsync -az ${excludesync[@]} ./*$nfrad2* $outputdir/
-    let nckp+=1
+  # monitor file updates and sync on the way
+  nckp=0
+  while [ ! -z $(ps -q $mbpid -o comm=) ] ; do
+    file1time=`stat -c %Y $TMPDIR/$ckp`
+    file2time=`stat -c %Y $outputdir/$ckp`
+    if [ $file1time -gt $file2time ]; then
+      date
+      #echo "rsync -az ${excludesync[@]} ./*$nfrad2* $outputdir/"
+      rsync -az ${excludesync[@]} ./*$nfrad2* $outputdir/
+      let nckp+=1
+    fi
+    sleep 60s
+  done
+  echo "did $nckp incremental sync of the results"
+  echo ""
+  if [[ $nckp -eq 0 && ! -e $nfrad2.mb.con.tre ]] ; then
+    # no sync has happened, it is likely that MrBayes run has gone wrong and no computation has been made (hence no time for sync)
+    rsync -az $nfrad2.mb.log $outputdir/
   fi
-  sleep 60s
-done
-echo "did $nckp incremental sync of the results"
-echo ""
-if [ $nckp -eq 0 ] ; then
-  # no sync has happened, it is likely that MrBayes run has gone wrong and no computation has been made (hence no time for sync)
-  rsync -az $nfrad2.mb.log $outputdir/
 }
 
+# start timing in secondsand counter of MCMC rounds
+SECONDS=0
+mbround=0
 # execute 1st round of MrBayes+sync
 runmbandsync
 echo ""
@@ -233,6 +244,7 @@ while [[ -s $nfrad2.mb.noconv && mbround -lt ${maxrounds} ]] ; do
   grep -B 15 -A 2  "MrBayes suspects that your runs have not converged" $nfrad2.mb.log > $nfrad2.mb.noconv
 done
 echo ""
+echo -e "$nfrad2\t$mbround\t$SECONDS" > $nfrad2.mb.roundtime
 
 # end of inference
 echo "output of MrBayes phylogenetic reconstruction is :"
