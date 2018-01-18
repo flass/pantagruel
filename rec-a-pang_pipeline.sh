@@ -346,14 +346,15 @@ $dbscripts/lsfullpath.py ${mlgenetrees}/${mainresulttag} | sort > ${mlgenetreeli
 Njob=`wc -l ${mlgenetreelist} | cut -f1 -d' '`
 chunksize=3000
 jobranges=($($dbscripts/get_jobranges.py $chunksize $Njob))
+ncpus=4
 
 for jobrange in ${jobranges[@]} ; do
 beg=`echo $jobrange | cut -d'-' -f1`
 tail -n +${beg} ${mlgenetreelist} | head -n ${chunksize} > ${mlgenetreelist}_${jobrange}
-qsub -N mark_unresolved_clades -l select=1:ncpus=12:mem=16gb,walltime=24:00:00 -o ${entlogs}/mark_unresolved_clades.${collapsecond}_${jobrange}.log -j oe -V -S /usr/bin/bash << EOF
+qsub -N mark_unresolved_clades -l select=1:ncpus=${ncpus}:mem=16gb,walltime=4:00:00 -o ${entlogs}/mark_unresolved_clades.${collapsecond}_${jobrange}.log -j oe -V -S /usr/bin/bash << EOF
 module load python
 python $dbscripts/mark_unresolved_clades.py --in_gene_tree_list=${mlgenetreelist}_${jobrange} --diraln=${alifastacodedir} --fmt_aln_in='fasta' \
- --threads=12 --dirout=${colalinexuscodedir}/${collapsecond} --no_constrained_clade_subalns_output \
+ --threads=${ncpus} --dirout=${colalinexuscodedir}/${collapsecond} --no_constrained_clade_subalns_output --dir_identseq=${mlgenetrees}/identical_sequences \
  --clade_stem_conds="[('$criterion', '>=', $cladesupp)]" --within_clade_conds="[('$withinfun', '$criterion', '<=', $subcladesupp, -1), ('max', '$criterion', '<', $cladesupp, -1)]"
 EOF
 done
@@ -376,8 +377,71 @@ comm -2 -3  $tasklist.sort $alreadytasklist.sort > ${tasklist}_todo_${dtag}
 Njob=`wc -l ${tasklist}_todo_${dtag} | cut -f1 -d' '`
 chunksize=1000
 jobranges=($($dbscripts/get_jobranges.py $chunksize $Njob))
-qsubvar="mbversion=3.2.6, tasklist=${tasklist}_todo_${dtag}, outputdir=${collapsed_genetrees}/${collapsecond}, mbmcmcpopt='Nruns=2 Ngen=2000000 Nchains=6'"
+nchains=4
+nruns=2
+ncpus=$(( $nchains * $nruns ))
+qsubvar="mbversion=3.2.6, tasklist=${tasklist}_todo_${dtag}, outputdir=${collapsed_genetrees}/${collapsecond}, mbmcmcpopt='Nruns=${nruns} Ngen=2000000 Nchains=${nchains}'"
 for jobrange in ${jobranges[@]}	; do
 echo $jobrange $qsubvar
-qsub -J $jobrange -N mb_panterodb -o ${entlogs}/mrbayes/collapsed_mrbayes_trees_${jobrange}_${dtag} -v "$qsubvar" ${dbscripts}/mrbayes_array_PBS.qsub
+qsub -J $jobrange -N mb_panterodb -l select=1:ncpus=${ncpus}:mem=16gb -o ${entlogs}/mrbayes/collapsed_mrbayes_trees_${dtag}_${jobrange} -v "$qsubvar" ${dbscripts}/mrbayes_array_PBS.qsub
 done
+
+
+
+#############################################
+## 06. gene tree/ Spcies tree reconciliations
+#############################################
+
+### edit collapsed gene trees to attribute an (ancestral) species identity to the leafs representing collapsed clades
+## = pre-reconciliation of recent gene history
+
+export alerec=$entdb/06.ALE_reconciliation
+mkdir -p ${alerec}
+## first generate the population tree, i.e. the species tree with populations of near-identical strains collapsed, based on tree with branch lengths in subs/site
+python $dbscripts/replace_species_by_pop_in_gene_trees.py -S ${speciestreeBS}
+nspepop=$(tail -n+3 ${speciestreeBS%.*}_populations | wc -l)
+echo "Found $nspepop disctinct populations in the species tree"
+
+
+export coltreechains=${alerec}/collapsed_tree_chains
+export colmethod='replaceCCinGasinS-collapsePOPinSnotinG'
+mkdir -p ${coltreechains}/${collapsecond}
+
+## second edit the gene trees, producing the corresponding (potentially collapsed) species tree based on the 'time'-tree backbone
+mkdir -p $entdb/logs/replace_species_by_pop_in_gene_trees
+tasklist=${coltreechains}_${collapsecond}_nexus_list
+ls $collapsed_genetrees/${collapsecond}/*run1.t > $tasklist
+
+### INCORRECT WRITING OF TREES BY BioPython ; requires correction at line 338 of source file Bio.Phylo.NewickIO.py => reuires writing permission on lib files; usuall impossible on HPC systems
+
+# local parallel run
+python $dbscripts/replace_species_by_pop_in_gene_trees.py -G ${tasklist} -c ${colalinexuscodedir}/${collapsecond} -S ${speciestreeBS}.lsd.newick -o ${coltreechains}/${collapsecond} \
+ --populations=${speciestreeBS%.*}_populations --population_tree=${speciestreeBS%.*}_collapsedPopulations.nwk --population_node_distance=${speciestreeBS%.*}_interNodeDistPopulations \
+ --dir_full_gene_trees=${mlgenetrees}/rootedTree --method=${colmethod} --threads=8 --reuse=0 \
+ &> $entdb/logs/replace_species_by_pop_in_gene_trees/replace_species_by_pop_in_gene_trees_16012018.log
+
+### OR
+
+# PBS-submitted parallel job
+qsub -N replSpePopinGs -l select=1:ncpus=12:mem=64gb,walltime=24:00:00 -o $entdb/logs/replace_species_by_pop_in_gene_trees -j oe -V << EOF
+module load python
+python $dbscripts/replace_species_by_pop_in_gene_trees.py -G ${tasklist} -c ${colalinexuscodedir}/${collapsecond} -S ${speciestreeBS}.lsd.newick -o ${coltreechains}/${collapsecond} \
+ --populations=${speciestreeBS%.*}_populations --population_tree=${speciestreeBS%.*}_collapsedPopulations.nwk --population_node_distance=${speciestreeBS%.*}_interNodeDistPopulations \
+ --dir_full_gene_trees=${mlgenetrees}/rootedTree --method=${colmethod} --threads=12 --reuse=2
+EOF
+
+
+### perform reconciliations with ALE on that
+export colrecs=${alerec}/collapsed_recs
+tasklist=${coltreechains}/${collapsecond}/${colmethod}_Gtrees_list
+ls ${coltreechains}/${collapsecond}/${colmethod}/*-Gtrees.nwk > $tasklist
+alelogs=$entdb/logs/ALE
+mkdir -p $alelogs/ale_collapsed_undat $alelogs/ale_collapsed_dated
+outrecdir=${colrecs}/${collapsecond}/${colmethod}
+mkdir -p $outrecdir/ale_collapsed_undat $outrecdir/ale_collapsed_dated
+
+
+# [on IC HPC as flassall@login-3-internal]
+Njob=`wc -l $tasklist | cut -f1 -d' '`
+qsubvars="tasklist=$tasklist, resultdir=$outrecdir/ale_collapsed_undat, spetree=Stree.nwk, nrecs=1000, alealgo=ALEml_undated"
+qsub -J 1-$Njob -N ale_collapsed_undat -l select=1:ncpus=1:mem=40gb,walltime=72:00:00 -o $alelogs/ale_collapsed_undat -j oe -v "$qsubvars" $HOME/scripts/misc/ALE_array_PBS.qsub

@@ -30,6 +30,7 @@ else
 fi
 
 nfchain=`awk "NR==$PBS_ARRAY_INDEX" $tasklist`
+echo "current task"
 echo $nfchain
 python << EOF
 with open('$nfchain', 'r') as fchain:
@@ -49,7 +50,7 @@ if [ -z $resultdir ] ; then
   echo "ERROR: need to define variable resultdir ; exit now"
   exit 2
 else
-  ls $resultdir > /dev/null
+  ls $resultdir -d
   if [ $? != 0 ] ; then
     echo "directory '$resultdir' is missing ; create it now"
     mkdir -p $resultdir
@@ -106,8 +107,8 @@ alebin=$HOME/software/ALE/build/bin
 
 if [ ! -e $nfchain.ale ] ; then
   # prepare ALE index
-  lenchain=`wc -l $nfchain`
-  burnin=`echo "$lenchain * 0.25" | bc`
+  lenchain=`wc -l $nfchain | cut -d' ' -f1`
+  burnin=`echo "$lenchain * $relburninfrac" | bc`
   echo "input tree chain is ${lenchain} long; burnin is set to ${burnin%%.*}"
   echo "# ${alebin}/ALEobserve $nfchain burnin=${burnin%%.*}"
   ${alebin}/ALEobserve $nfchain burnin=${burnin%%.*}
@@ -119,12 +120,14 @@ date
 # start timing in seconds
 SECONDS=0
 # run ALE reconciliation 
-echo "# ${alebin}/${alealgo} ${spetree} ${nfchain}.ale ${nrecs} separators=_"
-${alebin}/${alealgo} ${spetree} ${nfchain}.ale ${nrecs} separators=_
+echo "# ${alebin}/${alealgo} ${spetree} ${nfchain}.ale sample=${nrecs} separators=_"
+${alebin}/${alealgo} ${spetree} ${nfchain}.ale sample=${nrecs} separators=_
 echo ""
 echo "# # # #"
 
-echo -e "$nfrad2\t$alealgo\t$SECONDS" > $nfrad2.ale.computetime
+ALETIME=$SECONDS
+echo -e "$nfrad\t$alealgo\t$ALETIME" > $nfrad.ale.computetime
+echo "reconciliation estimation took" $(date -u -d @${ALETIME} +"%Hh%Mm%Ss")
 
 echo "# ls"
 ls
@@ -132,8 +135,8 @@ ls
 # save files
 ls ./*.ale.* > /dev/null
 if [ $? == 0 ] ; then
-  echo "# rsync -az ./*.ale.* $resultdir/"
-  rsync -az ./*.ale.* $resultdir/
+  echo "# rsync -az ./*.ale* $resultdir/"
+  rsync -az ./*.ale* $resultdir/
   if [ $? != 0 ] ; then
     echo "ERROR: unable to save result files from $PWD/ to $resultdir/"
   fi
@@ -149,5 +152,5 @@ else
   echo "ERROR: unable to find the result files"
 fi
 fi
-echo "# rm ./*.ale.*"
-rm ./*.ale.*
+#~ echo "# rm ./*.ale.*"
+#~ rm ./*.ale.*

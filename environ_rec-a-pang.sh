@@ -26,6 +26,8 @@ export alifastacodedir=${protali}/full_cdsfam_alignments_species_code
 export mlgenetrees=${genetrees}/raxml_trees
 export colalinexuscodedir=${protali}/collapsed_cdsfam_alignments_species_code
 export collapsed_genetrees=${genetrees}/collapsed_mrbayes_trees
+export coltreechains=$alerec/collapsed_tree_chains
+export colrecs=${alerec}/collapsed_recs
 
 # other variables
 export sqldbname=${entdbname,,}
@@ -39,6 +41,7 @@ subcladesupp=35
 criterion='bs'
 withinfun='median'
 export collapsecond=${criterion}_stem${cladesupp}_within${withinfun}${subcladesupp}
+export colmethod='replaceCCinGasinS-collapsePOPinSnotinG'
 
 # other variables conditonal on prior creation of files
 if [ -e $nrfaacomplete ] ; then
@@ -51,4 +54,5 @@ if [ -e ${complete}/complete_genomes_metadata.tab ] ; then
  export nrspeciestree=$coretree/RAxML_bestTree.${treename}.MADrooted
  export nrspeciestreeBS=$coretree/RAxML_bipartitions.${treename}
 fi
+
 
