@@ -408,7 +408,7 @@ export colmethod='replaceCCinGasinS-collapsePOPinSnotinG'
 mkdir -p ${coltreechains}/${collapsecond}
 
 ## second edit the gene trees, producing the corresponding (potentially collapsed) species tree based on the 'time'-tree backbone
-mkdir -p $entdb/logs/replace_species_by_pop_in_gene_trees
+mkdir -p $entdb/logs/replspebypop
 tasklist=${coltreechains}_${collapsecond}_nexus_list
 ls $collapsed_genetrees/${collapsecond}/*run1.t > $tasklist
 
@@ -417,19 +417,21 @@ ls $collapsed_genetrees/${collapsecond}/*run1.t > $tasklist
 # local parallel run
 python $dbscripts/replace_species_by_pop_in_gene_trees.py -G ${tasklist} -c ${colalinexuscodedir}/${collapsecond} -S ${speciestreeBS}.lsd.newick -o ${coltreechains}/${collapsecond} \
  --populations=${speciestreeBS%.*}_populations --population_tree=${speciestreeBS%.*}_collapsedPopulations.nwk --population_node_distance=${speciestreeBS%.*}_interNodeDistPopulations \
- --dir_full_gene_trees=${mlgenetrees}/rootedTree --method=${colmethod} --threads=8 --reuse=0 \
- &> $entdb/logs/replace_species_by_pop_in_gene_trees/replace_species_by_pop_in_gene_trees_16012018.log
+ --dir_full_gene_trees=${mlgenetrees}/rootedTree --method=${colmethod} --threads=${ncpus} --reuse=0 \
+ &> $entdb/logs/replspebypop/replace_species_by_pop_in_gene_trees_$(date +'%d%m%Y').log
 
 ### OR
 
 # PBS-submitted parallel job
-qsub -N replSpePopinGs -l select=1:ncpus=12:mem=64gb,walltime=24:00:00 -o $entdb/logs/replace_species_by_pop_in_gene_trees -j oe -V << EOF
+qsub -N replSpePopinGs -l select=1:ncpus=${ncpus}:mem=64gb,walltime=24:00:00 -o $entdb/logs/replace_species_by_pop_in_gene_trees -j oe -V << EOF
 module load python
 python $dbscripts/replace_species_by_pop_in_gene_trees.py -G ${tasklist} -c ${colalinexuscodedir}/${collapsecond} -S ${speciestreeBS}.lsd.newick -o ${coltreechains}/${collapsecond} \
  --populations=${speciestreeBS%.*}_populations --population_tree=${speciestreeBS%.*}_collapsedPopulations.nwk --population_node_distance=${speciestreeBS%.*}_interNodeDistPopulations \
- --dir_full_gene_trees=${mlgenetrees}/rootedTree --method=${colmethod} --threads=12 --reuse=2
+ --dir_full_gene_trees=${mlgenetrees}/rootedTree --method=${colmethod} --threads=${ncpus} --reuse=0
 EOF
 
+## here some tasks may have failed dur to gene trees being too big for the set Python recursion limit (set to 4000 by default)
+## on recover from failed runs, con use --reuse=2 (if confident there are no partially written files)
 
 ### perform reconciliations with ALE on that
 export colrecs=${alerec}/collapsed_recs
