@@ -4,7 +4,8 @@ import os, sys, glob, getopt
 import tree2, copy
 import multiprocessing
 from Bio import AlignIO, Align, Alphabet
-from random import shuffle
+#~ from random import shuffle
+from random import randint
 
 sys.setrecursionlimit(10000)
 
@@ -48,10 +49,11 @@ def mean(seq, ignoreNull=True):
 def median(seq, ignoreNull=True):
 	l = [k for k in seq if ((k is not None) or (not ignoreNull))]
 	l.sort()
+	L = len(l)
 	if not l: return None
-	nmed = len(l)/2
-	if l%2==1: return float(l[nmed+1])
-	else: return (float(l[nmed])+float(l[nmed+1]))/2
+	nmed = L/2
+	if L%2==1: return float(l[nmed])
+	else: return (float(l[nmed-1])+float(l[nmed]))/2
 
 def var(seq, correct=1):
 	m = mean(seq)
@@ -372,18 +374,19 @@ def colour_tree_with_constrained_clades(tree, constraints, palette=[], **kw):
 	gradually removing clades, which means ealier picked constrained clades can be nested in later ones. The later clades are thus 
 	painted fist, and then nested ealier clades are painted over.
 	
-	Palette defaults to a shuffled ontinuous palette.
+	Palette defaults to a random RGB combination.
 	"""
-	def colorWheel(i, n):
-		assert i < n
-		j = float(i)
-		return tuple(int((256*((float(k)/3)+(j/n)))%256) for k in range(3))
+	#~ def colorWheel(i, n):
+		#~ assert i < n
+		#~ j = float(i)
+		#~ return tuple(int((256*((float(k)/3)+(j/n)))%256) for k in range(3))
+	def colorWheel():
+		return tuple(randint(0, 255) for k in range(3))
 
 	if not palette:
 		# make up one colour palette
 		nc = len(constraints)
-		cols = [colorWheel(i, nc) for i in range(nc)]
-		shuffle(cols)
+		cols = [colorWheel() for i in range(nc)]
 	else:
 		cols = palette
 	

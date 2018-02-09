@@ -2,7 +2,7 @@
 
 import tree2
 import sys, os, getopt, glob
-from mark_unresolved_clades import select_clades_on_conditions, mean, median, var
+from mark_unresolved_clades import select_clades_on_conditions, mean, median, var, colour_tree_with_constrained_clades
 from scipy import stats
 import copy
 
@@ -13,10 +13,13 @@ from Bio.Phylo import _io as PhyloIO
 from StringIO import StringIO
 import traceback
 
-sys.setrecursionlimit(4000)
-
 supported_formats = {'newick': NewickIO, 'nexus': NexusIO}
 phyloproftag='phyloprofiles'
+maxreclimupfactor = 1 # range for tentative increase of the recursion limit that was set by default or via command-line argument when it is not enogh to read a gene tree; e.g. 1.5 allows for 50% increase, 1 allows for none
+
+default_psc = [('lg', '>=', 0.0005), ('bs', '>=', 80)]
+default_wpc = [('max', 'lg', '<=', 0.0005, -1)]
+
 
 def repr_long_list(l, lenbeg=5, lenend=5):
 	assert type(l) is list
@@ -28,6 +31,27 @@ def repr_long_list(l, lenbeg=5, lenend=5):
 		if lenend>0: b =', %s'%( repr(l[(-1*lenend):]).strip('[]') )
 		else: b = ''
 		return '[%s...%s] (%d items)'%(a, b, len(l))
+		
+		
+def addStrtoTuple(a, b):
+	"""addition for tuples, suporting appending of single str element; always return a single tuple"""
+	if type(a) is str:
+		if type(b) is str:
+			return (a, b)
+		elif type(b) is tuple:
+			return (a,) + b
+		else:
+			raise TypeError, "unexpected type for 'b': %s"%repr(b)
+	elif type(a) is tuple:
+		if type(b) is str:
+			return a + (b,)
+		elif type(b) is tuple:
+			return a + b
+		else:
+			raise TypeError, "unexpected type for 'b': %s"%repr(b)
+	else:
+		raise TypeError, "unexpected type for 'a': %s"%repr(a)
+
 
 def parseMrBayesConstraints(lnfcons):
 	constraintclades = {}
@@ -179,27 +203,56 @@ def speciesTreePopulations(spetree, pop_stem_conds, within_pop_conds, nested=Fal
 			lnamepops.append((pop[0], pop))
 	return lnamepops
 
-def collapsePopulationInSpeciesTree(spetree, lnamepops, fast=True, speciestoprune=[], nested=True, keepUltrametric=True, collapseAllPops=False, verbose=0):
+def collapsePopulationInSpeciesTree(spetree, lnamepops, fast=True, speciestoprune=[], nested=True, keepUltrametric=True, collapseAllPops=True, verbose=0):
 	"""if population are nested, the order of the input population (name, (members,)) list matters!
 	verbose=0: silent, verbose=1: general progression, verbose=2: detail of tree edition.
 	"""
-	if verbose: print 'collapsePopulationInSpeciesTree()'
+	if verbose:
+		print 'collapsePopulationInSpeciesTree()'
+		print "initiate with a species tree with %d leaves"%( spetree.nb_leaves())
+	
 	# first mark the population ancestor node
-	spetree.complete_node_ids(order=2) # post-order traversal numeration
-	poptree = copy.deepcopy(spetree)
+	spetree.complete_node_ids(order=2, force=True) # post-order traversal numeration
+	poptree = copy.deepcopy(spetree) 
+	#~ poptree = spetree.deepcopybelow(keep_lg=True)
 	dnamepop = dict(lnamepops)
 	# list of nodes independent of tree structure (i.e. pruning or unlinking nodes in the tree won't affect list sequence]
 	lnamepopancs = [(popname, poptree.mrca(popspe)) for popname, popspe in lnamepops]
 	if verbose: print 'lnamepopancs:\n%s'%( repr_long_list(lnamepopancs) )
+		
+	if speciestoprune:
+		if verbose: print "start by pruning species from the tree:", speciestoprune #repr_long_list(list(speciestoprune))
+		#~ try:
+			#~ print speciestoprune
+			#~ speciestoprune.sort(key=lambda x: poptree[x].nodeid())
+		#~ except Exception, e:
+			#~ print 'Caught exception (in thread %d):'%os.getpid()
+			#~ traceback.print_exc()
+			#~ sys.stdout.flush()
+			#~ raise e
+			
+		for spetoprune in speciestoprune:
+			s2p = poptree[spetoprune]
+			if s2p:
+				if verbose: print "prune %s: poptree.pop(%s)"%(spetoprune, repr(s2p)),
+				popedspe = poptree.pop(s2p, verbose=max(verbose-1, 0))
+				if verbose: print "pruned", popedspe
+			else:
+				raise IndexError, "species to prune '%s' is missing in poptree"%spetoprune
+		else:
+			if verbose: print ""
+	
 	if fast:
 		# ensure sorting pop. ancestor nodes following post-order traversal numeration in the original tree
 		lnamepopancs.sort(key=lambda x: x[1].nodeid())
 		if verbose: print 'lnamepopancs (sorted according to popancs nodeids):\n%s'%( repr_long_list(lnamepopancs) )
 	lpopname, lpopancs = zip(*lnamepopancs)
 	lpopancids = [popanc.nodeid() for popanc in lpopancs] # increasing sequence of node ids
+	
 	for a, (popname, popanc) in enumerate(lnamepopancs):
 		lpopspe = dnamepop[popname]
-		if verbose: print '#%d. %s:'%(a, popname), lpopspe
+		p = popanc.nodeid()
+		if verbose: print '#%d. %s (id: %d):'%(a, popname, p), lpopspe
 		if len(lpopspe)==1: 
 			# leaf/single-species population; skip
 			continue
@@ -211,12 +264,12 @@ def collapsePopulationInSpeciesTree(spetree, lnamepops, fast=True, speciestoprun
 				# All nodes below a node (i.e. the node's subtree) being always before the node, and making an uninterupted series with only those nodes,
 				# it follws that the slice is [(p-n+1):p], with n the number of nodes in the subtree (including the node itself, as returned by Node.nb_all_children()).
 				# just have to translate that into the indexes of the pop. ancestor node id list,  which is a subset of the full node id set
-				# <=> [k:a] with a = lpopancids.index(p) and k = min([t for t, j in enumerate(lpopancids) if j>=(a-n+1)])
+				# <=> [k:a] with a = lpopancids.index(p) and k = min([t for t, j in enumerate(lpopancids) if j>=(p-n+1)])
 				n = spetree.idgetnode(popanc.nodeid()).nb_all_children() # rely on parent-child structure of the original, uncut tree
 				k = 0
 				for k, j in enumerate(lpopancids):
-					if j>=(a-n+1): break
-				if verbose: print 'check subancs within lpopancs[%d:%d]'%(k,a)
+					if j>=(p-n+1): break
+				if verbose: print 'check subancs within lpopancs[%d:%d] i.e. from nodeid %d'%(k, a, j)
 				subancs = popanc.is_parent_of_any(lpopancs[k:a], returnList=True)
 			else:
 				if verbose: print 'check all subancs'
@@ -254,7 +307,6 @@ def collapsePopulationInSpeciesTree(spetree, lnamepops, fast=True, speciestoprun
 	
 			else:
 				# no other population ancestor below
-				#~ assert set(popanc.get_leaf_labels())==set(lpopspe)
 				if set(popanc.get_leaf_labels())!=set(lpopspe):
 					print 'set(popanc.get_leaf_labels()):'
 					print set(popanc.get_leaf_labels())
@@ -262,8 +314,8 @@ def collapsePopulationInSpeciesTree(spetree, lnamepops, fast=True, speciestoprun
 					print set(lpopspe)
 					print 'set(popanc.get_leaf_labels()) - set(lpopspe)'
 					print set(popanc.get_leaf_labels()) - set(lpopspe)
-					raise ValueError, "there should be no other population ancestor below"
-				popanc.as_leaf(newlabel=popname, silent=1-(verbose-1))
+					raise ValueError, "There should be no other population ancestor below '%s' pop ancestor node (in thread %d)"%(popname, os.getpid())
+				popanc.as_leaf(newlabel=popname, silent=max(0, 1-(verbose-1)))
 				if keepUltrametric and sublen!='NA': popanc += sublen	# reports distances to longest leaf lineage below the ancestor so that an ultrametric tree keeps being ultrametric
 				if verbose: print 'as_leaf', popname, '+=', sublen
 						
@@ -276,29 +328,15 @@ def collapsePopulationInSpeciesTree(spetree, lnamepops, fast=True, speciestoprun
 		print "set(lpopname) - set(poptree.get_leaf_labels()):\n", set(lpopname) - set(poptree.get_leaf_labels())
 		print "set(poptree.get_leaf_labels()) - set(lpopname):\n", set(poptree.get_leaf_labels()) - set(lpopname)
 		raise IndexError, "population list and population tree are discordant"
-		
-	if speciestoprune:
-		for spetoprune in speciestoprune:
-			s2p = poptree[spetoprune]
-			if s2p: poptree.pop(s2p)
 			
 	return poptree
 
-#~ nfspetree = '/home/flassall/PanteroDB/core_genome/raxml_tree/RAxML_bipartitions.concat_core_cds_464entero.rooted.codes.nwk'
-#~ spetree = tree2.AnnotatedNode(file=nfspetree)
-#~ spetree.complete_internal_labels(order=0, ffel=True) # pre-order traversal labeling
-#~ lnamepops = speciesTreePopulations(spetree, pop_stem_conds=[('lg', '>=', 0.0002), ('bs', '>=', 80)], within_pop_conds=[('max', 'lg', '<=', 0.0002, -1)], testLeaves=True, nested=True, inclusive=False, taglen=3)
-#~ dspe2pop = getdspe2pop(lnamepops, spetree)
-#~ poptree = collapsePopulationInSpeciesTree(spetree, lnamepops, nested=True)
-#~ poptree.figtree()
-#~ annotatePopulationInSpeciesTree(spetree, lnamepops)
-
-def _popCountDict(lspe, dspe2pop, dnamepops, asList=True):
+def _popCountDict(lspe, dspe2pop, dnamepops, asList=True, addpopnames=[]):
 	dspecount = {spe:lspe.count(spe) for spe in set(lspe)}
 	dpopcount = {}
 	if asList:
 		# will return occurence profile (count per strain)
-		popnames = set([dspe2pop[spe] for spe in dspecount])
+		popnames = set([dspe2pop[spe] for spe in dspecount]+addpopnames)
 		for popname in popnames:
 			dpopcount[popname] = [dspecount.get(spe, 0) for spe in dnamepops[popname]]
 	else:
@@ -308,76 +346,85 @@ def _popCountDict(lspe, dspe2pop, dnamepops, asList=True):
 			dpopcount.setdefault(popname, 0) + dspecount[spe]
 	return dpopcount
 
+def combineMonophyleticPopulations(dpopcount, poptree, dnamepops, dpopnd={}, maxpopnodedist=3, **kw):
+	"""try and pool represented populations if they are monophyletic (or paraphyletic but closely related) 
+	and each have at least a moderately high occurence frequency of the gene (median >= 0.5).
+	
+	maxpopnodedist gives an extended criterion to consider the monophyly of populations, 
+	based on node (Robinson-Fould) distance of clade ancestors:
+	if maxpopnodedist < 2, NO populations will be lumped together;
+	if maxpopnodedist = 2, the criterion is that only sister (i.e. truly monophyletic) populations will be lumped together;
+	if maxpopnodedist > 2, it is possible that populations that are close in the tree but not sister can be joined;
+	In any case, if of two populations, one ancestor is a descendant of the other ancestor, populations will be aggreagated.
+	This is to account for imperfect gene conservation in clades, e.g. if in a clade of populations (((popA,popB),popC),popD),
+	a gene is present (conserved) in popB, popC, and popD but absent in popA, suggesting the gene was ancestrally present 
+	and lost in popA.
+	"""
+	verbose = kw.get('verbose', False)
+	if len(dpopcount) > 1:
+		pnames = dpopcount.keys()
+		for i, popnamei in enumerate(pnames):
+			indcountsi = dpopcount[popnamei]
+			if median(indcountsi) >= 0.5:
+				jointpopcount = indcountsi
+				ancpopi = poptree[popnamei]
+				jointpopnames = addStrtoTuple(popnamei, ())
+				for j, popnamej in enumerate(pnames[i+1:]):
+					indcountsj = dpopcount[popnamej]
+					if median(indcountsj) >= 0.5:
+						# at least hlaf of the joint sample has per-strain occurence greater than 0
+						ancpopj = poptree[popnamej]
+						jpn = addStrtoTuple(jointpopnames, popnamej)
+						# based on full species tree
+						#~ jointleaves = reduce(lambda x,y: x+y, (dnamepops[pn] for pn in jpn))
+						#~ if ancpopj.is_child(ancpopi) or ancpopi.is_child(ancpopj): mono = True
+						#~ elif maxpopnodedist>2: mono = (dpopnd.get(popnamei, {}).get(popnamej, ancpopi.node_distance(ancpopj)) <= maxpopnodedist)
+						#~ elif spetree.is_monophyletic(jointleaves): mono = True
+						# more efficiently based on collapsed species tree = population tree
+						if maxpopnodedist>2: mono = (dpopnd.get(popnamei, {}).get(popnamej, ancpopi.node_distance(ancpopj)) <= maxpopnodedist)
+						else: mono = False
+						if mono:
+							jointpopnames = jpn
+							del dpopcount[popnamei]
+							del dpopcount[popnamej]
+							jointpopcount += indcountsj
+							dpopcount[jointpopnames] = jointpopcount
+							if verbose: print "combine populations %s"%repr(jointpopnames)
+							# reccursive call allow to iteratively join monophyletic group
+							dpopcount = combineMonophyleticPopulations(dpopcount, poptree, dnamepops, dpopnd=dpopnd, maxpopnodedist=maxpopnodedist, **kw)
+							return dpopcount
+	return dpopcount
+
 def getSpeFromGenes(leaflabs, species_sep='_', **kw):
 	return [leaflab.split(species_sep)[0] for leaflab in leaflabs]
 
-def getCladeAncestor(lspe, spetree, dspe2pop, dnamepops, method='max_meanfreqpop', pvaltresh=0.05, dpopnd={}, **kw):
+def getCladeAncestor(dpopcount, dnamepops, spetree, dspe2pop, **kw):
 	verbose = kw.get('verbose', False)
-	## determine who was there first
-	crit, estim = method.split('_')
-	## based on a census of represented species
-	dpopcount = _popCountDict(lspe, dspe2pop, dnamepops, asList=True)
-	if estim=='totalcountpop': foo = sum
-	elif estim=='meanfreqpop': foo = mean
-	elif estim=='medianfreqpop': foo = median
-	else: raise ValueError, "chose wrong method for ranking puative ancestor populations"
-	allpopdistr = [(popname, float(foo(popcount)), popcount) for popname, popcount in dpopcount.iteritems()]
-	if len(allpopdistr) > 1:
-		## first rank populations according to estimator of targeted quantity and given optimal criterion
-		if crit=='max':
-			a = -1
-		elif crit=='min':
-			a = 1
-		else:
-			raise ValueError
-		# always from best values (index 0) to worst (index -1), breaking ties with sample size (more = better)
-		allpopdistr.sort(key=lambda x: (a*x[1], -1*len(x[2]))) 
-		# get min/max population
-		popname0, popestim0, indcounts0 = allpopdistr[0]
-		# explore populations ranked second, etc. to test difference of distributions
-		for k in range(1, len(allpopdistr)):
-			popnamek, popestimk, indcountsk = allpopdistr[k]
-			if verbose: print indcounts0, 'vs', indcountsk
-			tt = stats.ttest_ind(indcounts0, indcountsk, equal_var=False)
-			if verbose: print "difference of mean frequencies in %s (%f, n=%d) and %s (%f, n=%d): %s"%(popname0, popestim0, len(indcounts0), popnamek, popestimk, len(indcountsk), str(tt))
-			if tt[1] < pvaltresh:
-				# statistically different 
-				break
-		# all the first k populations have statistically equivalent frequencies
-		## will chose the most central population in the species tree
-		eqpopdistr = allpopdistr[:k]
-		if len(eqpopdistr) > 1:
-			if not dpopnd:
-				dnd = {}
-				# compute all pairwise node distance (on the species tree) between the populations
-				for i, epd1 in enumerate(eqpopdistr):
-					p1 = epd1[0]
-					for j, epd2 in enumerate(eqpopdistr[i+1:]):
-						p2 = epd2[0]
-						nd = spetree[p1].node_distance(spetree[p2]) # min node dist is 2
-						dnd.setdefault(p1, []).append(nd) 
-						dnd.setdefault(p2, []).append(nd) 
-				rankedpopdist = sorted([(ipop, sum(dnd[epd[0]])) for ipop, epd in enumerate(eqpopdistr)], key=lambda x: x[1])
-			else:
-				rankedpopdist = sorted([(ipop, sum([dpopnd[epd1[0]][epd2[0]] for epd2 in eqpopdistr])) for ipop, epd1 in enumerate(eqpopdistr)], key=lambda x: x[1])
-			# find the population the least distant from the others
-			
-			ancpopname, ancpopestim, indcounts = eqpopdistr[rankedpopdist[0][0]]
-			if verbose: print rankedpopdist, "most central population in tree is:", ancpopname
-			
-		else:
-			ancpopname, ancpopestim, indcounts = eqpopdistr[0]
-			
-	else:
-		ancpopname, ancpopestim, indcounts = allpopdistr[0]
-	if estim.endswith('freqpop'):
-		# keep track of roughly how many gene copies were there in the clade
-		# to avoid biasing to much the reconciliation if there was 
-		# a conserved ancestral duplication above the clade's node
-		ancnbcopies = ancpopestim
-	else:
-		ancnbcopies = 1
-	return (ancpopname, ancnbcopies, allpopdistr)
+	## determine who was there first based on:
+	# 1) their median frequency being >= 1 (True rank first) 
+	# 2) the higher depth of the (joint) population ancestor in the species tree (= minimum cumulated branch distance from the root) [better with ultrametric] 
+	# 3) the larger census of encompassed species (= sample size)
+	allpopdistr = [(popname, median(popcount)>=1, spetree[popname], popcount) for popname, popcount in dpopcount.iteritems()]
+	if len(allpopdistr) > 1:			
+		## rank populations according to 
+		# from best values (index 0) to worst (index -1), breaking ties with sample size (more = better)
+		allpopdistr.sort(key=lambda x: (x[1], -1*(x[2].distance_root()), len(x[3])), reverse=True) 
+		if verbose:
+			print "\tancestor_to_root_dist\toccurence/sample_size\tpopname"
+			for x in allpopdistr[:5]:
+				print "\t".join(str(y) for y in ['', x[2].distance_root(), "%d/%d"%(sum(x[3]),len(x[3])), repr(x[0])])
+			u = len(allpopdistr)-5
+			if u>0: print "\t... (%d other pops)"%u
+	ancpopname, medcounts, ancpopclade, indcounts = allpopdistr[0]
+	# from a proposed set of ancestral population, record the related populations that are missing the gene
+	# but are located below the the MRCA of ancestral populations (putative losses since the MRCA)
+	#~ lostpopnames = list((set(ancpopclade.get_children_labels()) & set(dnamepops.keys())) - set(addStrtoTuple(ancpopname, ())))
+	lostpopnames = list(set(dspe2pop[spe] for spe in ancpopclade.get_leaf_labels()) - set(addStrtoTuple(ancpopname, ())))
+	if verbose:
+		print "ancpopname", ancpopname
+		print "ancpopclade", repr(ancpopclade)
+		print "lostpopnames", lostpopnames
+	return (ancpopname, ancpopclade, lostpopnames)
 
 def get_clade_phyloprofiles(dcolclades, spetree, **kw):
 	ordspe = spetree.get_leaf_labels()
@@ -396,14 +443,28 @@ def write_out_clade_phyloprofiles(dfamcolclaprof, nfout):
 			fout.write('\t'.join([fam+'-'+cla]+[str(k) for k in dcolclaprof[cla]])+'\n')
 	fout.close()
 
-def getsavepoptree(nfpoptreeout, poptree=None, spetree=None, lnamepops2collapse=None, speciestoprune=[], collapseAllPops=False, verbose=False):
-	if not poptree: poptree = collapsePopulationInSpeciesTree(spetree, lnamepops2collapse, speciestoprune=speciestoprune, nested=True, collapseAllPops=collapseAllPops, verbose=verbose)
-	# save along the output gene tree sample file (species pruning being family-specific)
-	cpoptree = copy.deepcopy(poptree)
-	for node in cpoptree: # for compatibility with ALE
-		if not node.is_leaf(): node.edit_label('')
-	cpoptree.write_newick(nfpoptreeout)
-	return poptree
+def getsavepoptree(nfpoptreeout="", poptree=None, spetree=None, lnamepops2collapse=None, speciestoprune=[], collapseAllPops=False, verbose=False):
+	if not poptree: ptree = collapsePopulationInSpeciesTree(spetree, lnamepops2collapse, speciestoprune=speciestoprune, nested=True, collapseAllPops=collapseAllPops, verbose=verbose)
+	else: ptree = poptree
+	if nfpoptreeout:
+		# save along the output gene tree sample file (species pruning being family-specific)
+		cpoptree = copy.deepcopy(ptree)
+		for node in cpoptree: # for compatibility with ALE
+			if not node.is_leaf(): node.edit_label('')
+		cpoptree.write_newick(nfpoptreeout)
+	return ptree
+
+def _allinterpopdist(tupi):
+	i, lpopnames, poptree = tupi
+	dnd = {}
+	npop = len(lpopnames)
+	popname1 = lpopnames[i]
+	for j in range(i+1, npop):
+		popname2 = lpopnames[j]
+		nd = poptree[popname1].node_distance(poptree[popname2]) # min node dist is 2
+		dnd[popname2] = nd
+		if verbose: print popname1, popname2, nd
+	return dnd
 
 def allPWpopDist(poptree, lnamepops, nfmatpopdist, nbthreads=1, verbose=False):
 	"""compute population all pairwise inter-node distances between populations on the (possibly collapsed) species tree"""
@@ -411,24 +472,24 @@ def allPWpopDist(poptree, lnamepops, nfmatpopdist, nbthreads=1, verbose=False):
 	lpopnames = [n for n,p in lnamepops]
 	npop = len(lpopnames)
 	
-	def allinterpopdist(i):
-		dnd = {}
-		popname1 = lpopnames[i]
-		for j in range(i+1, npop):
-			popname2 = lpopnames[j]
-			nd = poptree[popname1].node_distance(poptree[popname2]) # min node dist is 2
-			dnd[popname2] = nd
-			if verbose: print popname1, popname2, nd
-		return dnd
+	#~ def allinterpopdist(i):
+		#~ dnd = {}
+		#~ popname1 = lpopnames[i]
+		#~ for j in range(i+1, npop):
+			#~ popname2 = lpopnames[j]
+			#~ nd = poptree[popname1].node_distance(poptree[popname2]) # min node dist is 2
+			#~ dnd[popname2] = nd
+			#~ if verbose: print popname1, popname2, nd
+		#~ return dnd
 
 	if nbthreads==1:
 		ddnd = {}
 		for i in range(npop):
 			popname1 = lpopnames[i]
-			ddnd[popname1] = allinterpopdist(i)
+			ddnd[popname1] = _allinterpopdist((i, lpopnames, poptree))
 	else:
 		pool = mp.Pool(processes=nbthreads)
-		res = pool.map(allinterpopdist, range(npop))
+		res = pool.map(_allinterpopdist, ((i, lpopnames, poptree) for i in range(npop)))
 		ddnd = {lpopnames[i]:dnd for i, dnd in enumerate(res)}
 		
 	with open(nfmatpopdist, 'w') as fmatpopdist:
@@ -469,9 +530,9 @@ def inferPopfromSpeTree(nfspetree, \
 	else:
 		# define conditions to select species population within the species tree
 		if pop_stem_conds: psc=pop_stem_conds
-		else: psc = [('lg', '>=', 0.0002), ('bs', '>=', 80)]
+		else: psc = default_psc
 		if within_pop_conds: wpc = within_pop_conds
-		else: wpc = [('max', 'lg', '<=', 0.0002, -1)]
+		else: wpc = default_wpc
 		# define species population that can be sued to summarize a collapsed clade
 		lnamepops = speciesTreePopulations(spetree, pop_stem_conds=psc, within_pop_conds=wpc, testLeaves=True, nested=True, inclusive=False, taglen=3)
 		# export in file ; name it after the species tree
@@ -480,8 +541,19 @@ def inferPopfromSpeTree(nfspetree, \
 			foutspepop.write("# wpc = %s\n"%repr(wpc))
 			for name, pop in lnamepops:
 				foutspepop.write("%s\t%s\n"%(name, ' '.join(pop)))
-				
-	poptree = getsavepoptree("%s_collapsedPopulations.nwk"%(bnst), poptree=poptree, spetree=spetree, lnamepops2collapse=lnamepops, collapseAllPops=True, verbose=verbose)
+	
+	nfpoptreeout = "" if nfpopulationtree else "%s_collapsedPopulations.nwk"%(bnst)
+	poptree = getsavepoptree(nfpoptreeout, poptree=poptree, spetree=spetree, lnamepops2collapse=lnamepops, collapseAllPops=True, verbose=verbose)
+	
+	## annotate ancestor nodes of populations on S
+	annotatePopulationInSpeciesTree(spetree, lnamepops)
+	if nfpoptreeout:
+		tnames, tpops = zip(*lnamepops)
+		colour_tree_with_constrained_clades(spetree, tpops)
+		spetree.write_nexus(nfpoptreeout.rsplit('.nwk', 1)[0]+'.nex', ignoreBS=True)
+		tree2.dump_pickle(spetree, nfpoptreeout.rsplit('.nwk', 1)[0]+'.pickle')
+		
+	dspe2pop = getdspe2pop(lnamepops, spetree)
 	
 	## compute or load matrix of all pairwise population inter-node distances on the species tree
 	if nfdpopnodedist:
@@ -496,17 +568,15 @@ def inferPopfromSpeTree(nfspetree, \
 	else:
 		dpopnd = allPWpopDist(poptree, lnamepops, "%s_interNodeDistPopulations"%(bnst), nbthreads=nbthreads, verbose=verbose)
 	
-	## annotate ancestor nodes of populations on S
-	annotatePopulationInSpeciesTree(spetree, lnamepops)
-	dspe2pop = getdspe2pop(lnamepops, spetree)
+	return (spetree, poptree, dspe2pop, lnamepops, dpopnd)
 	
-	return (spetree, dspe2pop, lnamepops, dpopnd)
-	
-def mapPop2GeneTree(nfingtchain1, dircons, dirout, method, spetree, dspe2pop, lnamepops, dpopnd={}, reuseOutput=0, \
+def mapPop2GeneTree(nfingtchain1, dircons, dirout, method, spetree, poptree, dspe2pop, lnamepops, \
+                    dpopnd={}, reuseOutput=0, combine_monophyletic=3, \
                     chain1ext='mb.run1.t', nbchains=2, aliext='nex', contreext='mb.con.tre', \
-                    constrainttag='mbconstraints', collapsalntag='collapsed_alns', phyloproftag='phyloprofile', ccmaxlentag='max_subtree_lengths', dirfullgt=None, \
+                    constrainttag='mbconstraints', collapsalntag='collapsed_alns', \
+                    phyloproftag='phyloprofile', ccmaxlentag='max_subtree_lengths', dirfullgt=None, \
                     species_sep='_', verbose=False, **kw):
-	"""method can be 'collapseCCinG', 'replaceCCinGasinS', 'replaceCCinGasinS-collapsePOPinSnotinG, 'collapseinSandG', 'collapseALLinSandG' or 'collapseALLinSbutinGbutinCC.
+	"""method can be 'collapseCCinG', 'replaceCCinGasinS', 'replaceCCinGasinS-collapsePOPinSnotinG'.
 	
 	With:
 	 - P is the set of populations {Pi}, each being a set composed of 
@@ -535,59 +605,28 @@ def mapPop2GeneTree(nfingtchain1, dircons, dirout, method, spetree, dspe2pop, ln
 	same as above, but in addition collapse all Pi in S that are not 
 	represented in the final form of G (once bush clades are replaced
 	by single leaves or monophyletic species clades)
-	
-	#                !!! the following methods are DEPRECATED !!!
-	# they lead to change of G-to-S mapping cardinality, 
-	# i.e. some leaves representing different species assigned to a same population 
-	# but paraphyletic in the gene tree, or even monophyletic but not grouped under a same bush calde
-	# will artefactually be seen as multiple gene copies for one single species population
-	     
-	- 'collapseCCinG-collapsematchingPOPinS': 
-	for all Cj, collapse both Cj in G and the ancestor population subtree si in S, 
-	replacing them by a single leaf labelled Pj, and replace labels of any leaf 
-	of G belonging to species pjk with a label Pj.
-	# This option minimizes the artefactual multiplication of leaves assigned to one population
-	# (i.e. gene copies) when not included in collpased bush clades.
-		      
-	- 'collapseALLinSandG': 
-	same as above, generalized to ALL populations in S : 
-	collapse all Pi in S regardless of the need to collapse bush clades in G.
-	Bush clades or single leaves in G that belong to 
-	those collpased species populations are replaced
-	by the corresponding population label.
-	# This option minimizes the effective size of S tree for later reconciliation inference
-	# but lead to maximal impact of artefactual multiplication of same-population leaves
-	          
-	- 'collapseCCinG-collapsePOPinSnotinGbutinCC': 
-	same as above, generalized to ALL populations in S 
-	but those present in G not as a bush ancestor : 
-	collapse all Pi in S that are not represented in G, 
-	and also collapse those that represent an ancestor 
-	to a collpased bush clade in G.
-	Bush clades or single leaves in G that belong to 
-	those collpased species populations are replaced
-	by the corresponding population label.
-	# This option is a compromize between minimizing the effective size of S tree for later
-	# reconciliation and the artefactual multiplication of gene copies
 	"""
 	
 	def replaceCCwithLabel(cla, speorpop, fam, dold2newname, tag='CC'):
 		"""collapsed clade is replaced by a single leaf with a species or species population label
 		
-		new G leaf label has the following structure: POPNAME_FAM_XX1234, 
-		with XX=CC referring to a collapsed 'bush' clade
-		or XX=SG referring to a single gene sequence (out of a collapsed 'bush' clade).
+		new G leaf label has the following structure: POPNAME_FAM_XX-xxxx, 
+		with XX=CC referring to a collapsed 'bush' clade; xxxx then contains the collapsed clade id 'clade1234'
+		or XX=SG referring to a single gene sequence (located out of a collapsed 'bush' clade); xxxx then contains the original CDS code 'SPENAME_6789'.
 		"""
-		newname = "%s_%s_%s%03d"%(speorpop, fam, tag, int(cla.split('clade')[1]))
+		newname = "%s_%s_%s-%s"%(speorpop, fam, tag, cla)
 		dold2newname[cla] = newname
 		if verbose: print 'rename leaf:', newname
-		
 	
-	def replaceCCwithSubtree(cla, ancpop, fam, dold2newname, spetree, tag='RC', restrictPopToLeaves=[]):
+	def replaceCCwithSubtree(cla, ancpopnodelabels, fam, dold2newname, lostpops=[], speciestoprune=[], tag='RC'): #, onlyancs=False
 		"""collapsed clade is replaced by a subtree"""
-		popsubtree = spetree[ancpop].deepcopybelow()
-		if restrictPopToLeaves:
-			popsubtree.restrictToLeaves(restrictPopToLeaves)
+		if verbose: print "replaceCCwithSubtree(%s)"%repr(ancpopnodelabels)
+		spesubtree = spetree[ancpopnodelabels] # ancpop can be a label (string) or a tuple of labels, in which case their MRCA will be fetched via Node.coalesce()
+		sublnamepops = [(apnl, dnamepops.get(apnl, (apnl,))) for apnl in ancpopnodelabels]
+		lostspecies = set(reduce(lambda x,y: x+y, (list(dnamepops[lp]) for lp in lostpops), []))
+		spetoprune = list((set(speciestoprune) | lostspecies) & set(spesubtree.get_leaf_labels()))
+		popsubtree = collapsePopulationInSpeciesTree(spesubtree, sublnamepops, speciestoprune=spetoprune, collapseAllPops=False, verbose=verbose)
+		if verbose: print "replace with subtree of populations %s (%d leaves)"%(repr(ancpopnodelabels), popsubtree.nb_leaves())
 		if dccmaxlen:
 			# scale the height of the new gene subtree to that of the original
 			maxlenspesub = popsubtree.max_leaf_distance()
@@ -603,11 +642,15 @@ def mapPop2GeneTree(nfingtchain1, dircons, dirout, method, spetree, dspe2pop, ln
 				for popleaf in popsubtree:
 					popleaf.set_lg(maxlenoricc)
 			popsubtree.set_lg(0.0) # set its root length to 0
-		for popleaf in popsubtree:
-			# new G leaf labels have the following structure: SPENAME_FAM_RC1234, with CC referring to a replaced clade
-			newspename = "%s_%s_%s%03d"%(popleaf.label(), fam, tag, int(cla.split('clade')[1]))
-			popleaf.edit_label(newspename)
-		if verbose: print 'replace with subtree:', popsubtree
+		for popnode in popsubtree: 
+			if popnode.is_leaf():
+				# new G leaf labels have the following structure: SPENAME_FAM_RC-clade1234, with RC referring to a replaced clade
+				newspename = "%s_%s_%s-%s"%(popnode.label(), fam, tag, cla)
+				popnode.edit_label(newspename)
+			else:
+				# naming internal nodes might lead to Gene trees incompatible with ALE
+				popnode.edit_label("")
+		if verbose: print popsubtree.newick(ignoreBS=1)
 		dold2newname[cla] = tree2toBioPhylo(popsubtree) # already formats the tree in Bio.Phylo format to later integration to the parsed gene tree chain	
 	
 	
@@ -619,7 +662,6 @@ def mapPop2GeneTree(nfingtchain1, dircons, dirout, method, spetree, dspe2pop, ln
 	# get file pre/sufix
 	dirgt = os.path.dirname(nfingtchain1)
 	bngt, extgt = os.path.basename(nfingtchain1).split('.', 1)
-	#~ outbn = bngt.replace("-collapsed", '-'+method)
 	outbn = bngt
 	fam = bngt.rsplit('-', 1)[0]
 	
@@ -654,6 +696,9 @@ def mapPop2GeneTree(nfingtchain1, dircons, dirout, method, spetree, dspe2pop, ln
 		if popname:
 			pop = dnamepops[popname]
 			if len(pop)>1: genetreepopset.add(popname) # only consider non-trivial populations, i.e. grouping >= 2 species
+	# record the set of populations absent in G;
+	# will appear collapsed in S in methods '*-collapsePOPinSnotinG'
+	notingttreepopset = (set(dnamepops.keys()) - genetreepopset)
 	# load list of gene subtree constrained clades = clades collapsed in the full gene tree G
 	consfilepat = '%s/%s/%s/%s*%s'%(dircons, constrainttag, fam, fam, constrainttag)
 	if verbose: print "get collapsed clades from files matching pattern '%s'"%consfilepat
@@ -689,84 +734,99 @@ def mapPop2GeneTree(nfingtchain1, dircons, dirout, method, spetree, dspe2pop, ln
 			sys.stderr.write("failed attempt to write max subtree lengths of the constrained clades to file '%s'\n"%nfccmaxlen)
 		
 	# record collapsed bush clades' leaf labels to edit in G
-	colapsedcladespopset = set([])
-	lancpopnames = []
+	pop2collapseinS = set([])
+	popnot2collapseinS = set([])
 	dold2newname = {}
 	speciestoprune = set([])
 	foutfreqpopdistr = open(nfoutfreqpopdistr, 'w') if ((not os.path.exists(nfoutfreqpopdistr)) or (not reuseOutput)) else None
 	for cla, leaves in constraintclades.iteritems():
 		if verbose: print '##', cla
 		lspeCC = getSpeFromGenes(leaves, species_sep=species_sep)
+		dpopcount = _popCountDict(lspeCC, dspe2pop, dnamepops, asList=True)
+		if foutfreqpopdistr: foutfreqpopdistr.write('\t'.join([cla]+['%s:%.3f'%(popname, mean(indcount)) for popname, indcount in dpopcount.iteritems()])+'\n')
+		# will try and pool represented populations if they are monophyletic and have similar distributions of occurence
+		if verbose: print "combineMonophyleticPopulations(%s)"%repr_long_list(dpopcount.keys())
+		dpopcount = combineMonophyleticPopulations(dpopcount, poptree, dnamepops, dpopnd=dpopnd, maxpopnodedist=combine_monophyletic, **kw)
 		# identify which species population is considered the ancestor of the collapsed clades
-		ancpop, ancnbcopies, popdistr = getCladeAncestor(lspeCC, spetree, dspe2pop, dnamepops, method='max_meanfreqpop', dpopnd=dpopnd, verbose=verbose)
-		if foutfreqpopdistr: foutfreqpopdistr.write('\t'.join([cla]+['%s:%.3f'%(popname, popfreq) for popname, popfreq, indcount in popdistr])+'\n')
-		# record the population considered ancestral to the collasped clade,
-		# i.e. the one used to replace the collasped clade in G (with a pop-labeled leaf or a S-tree-copied subtree) ;
-		colapsedcladespopset.add(ancpop)
-		lancpopnames.append((ancpop, leaves))
-		# for 'collapseCCinG*- methods, this population will appear collapsed in S;
-		# for the 'replaceCCinG*' method, that will depend on representation of member species in the gene tree
-		# if there are more than one, those will be chosen as representative of the population in a prune version of the Species tree
-		# species to prune off the family-specific species tree are stored
-			
-		if method.split('-')[0].startswith('replace'):
+		if verbose: print "getCladeAncestor(%s)"%repr(lspeCC)
+		ancpopname, ancpopclade, lostpopnames = getCladeAncestor(dpopcount, dnamepops, spetree, dspe2pop, verbose=verbose)
+		# record the population(s) considered ancestral to the collasped clade
+		# i.e. the one(s) used to replace the collasped clade in G (with a pop-labeled leaf or a S-tree-derived subtree) ;
+		if type(ancpopname) is str:
+			lancpopnames = [ancpopname]
+		elif type(ancpopname) is tuple:
+			lancpopnames = list(ancpopname)
+		A = len(lancpopnames)
+		pop2collapseinS |= set(lancpopnames) | set(lostpopnames)
+		
+		# collapsed clade is replaced by a S-tree-like subtree featuring the populations inferred as ancestrally present in the collapsed clade
+		stleaves = set([])
+		for t, pn in enumerate(lancpopnames+lostpopnames):
+			if verbose: print ".%d %s"%(t, pn), ("(ancpop)" if t < A else "(lostpop)"),
 			# evaluate presence of member species out of the clades to be colapsed
-			outccancpopmembers = sspeG & set(dnamepops[ancpop])
-			if len(outccancpopmembers)<=1:
+			ancpopmembers = set(dnamepops[pn])
+			outCCancpopmembers = ancpopmembers & sspeG
+			if verbose: print "; outCCancpopmembers:", outCCancpopmembers,
+			if len(outCCancpopmembers)<=1:
 				# if there are 0 or 1 members of the CC ancestral populations represented elsewhere in the Gene tree
 				# better represent the CC with a single population label (CC tag)
-				#if there is 1, outlier sequences of this member species will be equated with the population (SG tags, done below)
-				replaceCCwithLabel(cla, ancpop, fam, dold2newname)
+				# if there is 1, outlier sequences of this member species will be equated with the population (SG tags, done below)
+				if t < A:
+					# this population is infered present in the ancestral clade, add to the subtree
+					stleaves.add(pn)
 			else:
-				# collapsed clade is replaced by a subtree covering the member species present out of the CC
-				replaceCCwithSubtree(cla, ancpop, fam, dold2newname, spetree, tag='RC', restrictPopToLeaves=outccancpopmembers)
+				if t < A:
+					# this population is infered present in the ancestral clade, add to the subtree
+					# add a subtree covering the member species present out of the CC
+					stleaves |= outCCancpopmembers
 				# this population is not anymore to be collapsed in the Species tree
-				colapsedcladespopset.discard(ancpop)
-				speciestoprune |= (set(dnamepops[ancpop]) - outccancpopmembers)
-			
-		#~ elif method.split('-')[0].startswith('collapse'):
-		else:
-			# collapsed clade is replaced by a single leaf
-			replaceCCwithLabel(cla, ancpop, fam, dold2newname, tag='CC')
+				popnot2collapseinS.add(pn)
+				# record the remaining member species of the ancestral population for pruning in the species tree
+				# i.e. those members NOT represented in the gene tree (even after substitution of CCs)
+				speciestoprune = (speciestoprune | ancpopmembers) - sspeG
+				if verbose: print "; speciestoprune:", speciestoprune,
+			if verbose: print ""
+		if len(stleaves)==1:
+			replaceCCwithLabel(cla, stleaves.pop(), fam, dold2newname, tag='CC')
+		elif len(stleaves)>1:
+			replaceCCwithSubtree(cla, list(stleaves), fam, dold2newname, lostpops=lostpopnames, speciestoprune=list(speciestoprune), tag='RC')
+		elif t < A:
+			raise ValueError, "at least one species should be selected"
 			
 	if foutfreqpopdistr: foutfreqpopdistr.close()
-	if verbose: print '#', fam, 'colapsedcladespopset', colapsedcladespopset
-	# record the set of populations absent in G;
-	# will appear collapsed in S in methods '*-collapsePOPinSnotinG'
-	notingttreepopset = (set(dnamepops.keys()) - genetreepopset)
-	# record the set of populations absent in G unless they are considered ancestral to any collasped clades;
-	# will appear collapsed in S in methods '*-collapsePOPinSnotinGbutinCC'
-	notingtbutincctreepopset = notingttreepopset | colapsedcladespopset
+	
+	# define the set of populations of species absent in G, 
+	# unless they are considered ancestral to any collapsed clade in G (including subsequent loss)
+	# that will appear collapsed in S in methods '*-collapsePOPinSnotinG'
+	pop2collapseinS = (pop2collapseinS | notingttreepopset) - popnot2collapseinS
+	if verbose: print '#', fam, 'pop2collapseinS', pop2collapseinS
 	
 	if verbose: print '#', fam, 'dold2newname (CC)', dold2newname
 	## prepare name reference dict for editing labels in gene tree sample
 	dpop2SGnggen = {popname:0 for popname in dnamepops}
-	if 'inS' in method:
+	if 'collapsePOPinS' in method:
 		# collapse populations in S
-		if method=='collapseALLinSandG':
-			lnamepops2collapse = lnamepops
-		elif method.endswith('collapsePOPinSnotinG'):
-			lnamepops2collapse = [(name, pop) for name, pop in lnamepops if (name in notingttreepopset)]
-		elif method=='collapseCCinG-collapsematchingPOPinS':
-			lnamepops2collapse = [(name, pop) for name, pop in lnamepops if (name in colapsedcladespopset)]
-		elif method.endswith('collapsePOPinSnotinGbutinCC'):
-			lnamepops2collapse = [(name, pop) for name, pop in lnamepops if (name in notingtbutincctreepopset)]
-		# S tree with some populations collapsed as ancestors and some not, used later for reconciliation inference on this particular family
-		if verbose: print '#', fam, 'lnamepops2collapse:\n %s'%repr_long_list(lnamepops2collapse)
-		dspe2pop2collapse = getdspe2pop(lnamepops2collapse)
-		try:
-			getsavepoptree(nfoutcolStree, spetree=spetree, lnamepops2collapse=lnamepops2collapse, speciestoprune=speciestoprune, verbose=max(0, verbose-1))
-		except ValueError, e:
-			sys.stderr.write(str(e)+'\n')
-			sys.stderr.write("Error processing family %s\n"%fam)
-			return 1
-		# then record other single leaf labels belonging to collapsed pops in S to edit in G
-		for leaflab in gtleaflabels:
-			spelab = leaflab.split(species_sep, 1)[0]
-			poplab = dspe2pop2collapse.get(spelab)
-			if poplab and poplab!=spelab:
-				replaceCCwithLabel(leaflab, poplab, fam, dold2newname, tag='SG')
-				dpop2SGnggen[poplab] += 1
+		lnamepops2collapse = [(name, pop) for name, pop in lnamepops if (name in pop2collapseinS)]
+	# S tree with some populations collapsed as ancestors and some not, used later for reconciliation inference on this particular family
+	if verbose: print '#', fam, 'lnamepops2collapse:\n %s'%repr_long_list(lnamepops2collapse)
+	# add species from populations not to collapse to the list of populations as standalone species
+	dnamepops2collapse = dict(lnamepops2collapse)
+	for name, pop in lnamepops:
+		if name not in dnamepops2collapse:
+			for spe in pop:
+				if spe not in speciestoprune:
+					lnamepops2collapse.append((spe, (spe,)))
+						
+	getsavepoptree(nfoutcolStree, spetree=spetree, lnamepops2collapse=lnamepops2collapse, speciestoprune=list(speciestoprune), verbose=max(0, verbose-1))
+	# then record other single leaf labels belonging to collapsed pops in S to edit in G
+	# (species that are the single representatives of collapsed populations in G)
+	dspe2pop2collapse = getdspe2pop(lnamepops2collapse)
+	for leaflab in gtleaflabels:
+		spelab = leaflab.split(species_sep, 1)[0]
+		poplab = dspe2pop2collapse.get(spelab)
+		if poplab and poplab!=spelab:
+			replaceCCwithLabel(leaflab, poplab, fam, dold2newname, tag='SG')
+			dpop2SGnggen[poplab] += 1
 				
 	reptypes = ['CC', 'RC', 'SG']
 	if verbose: print '#', fam, 'dold2newname (%s)'%('+'.join(reptypes)), dold2newname
@@ -782,7 +842,7 @@ def mapPop2GeneTree(nfingtchain1, dircons, dirout, method, spetree, dspe2pop, ln
 				elif isinstance(newlaborst, BaseTree.TreeElement):
 					newlabs = [tip.name for tip in newlaborst.get_terminals()]
 				for newlab in newlabs:
-					newlabpop, fam, ngtag = newlab.split('_')
+					newlabpop, fam, ngtag = newlab.split('_',2)
 					dpoptyperepcount.setdefault(newlabpop, {rt:0 for rt in reptypes})[ngtag[:2]] += 1
 					foutreflab.write('\t'.join((oldlab, newlab))+'\n')
 	if dpoptyperepcount or ((not os.path.exists(nfoutlabpoplab)) or (not reuseOutput)):
@@ -819,7 +879,9 @@ def usage():
 	s += '	       \t\t\t\tif 1: skip computing and writing output files which name matches already existing file;\n'
 	s += '	       \t\t\t\t      BEWARE! This can save a lot of time but may produce inconsistent output file sets!\n'
 	s += '	       \t\t\t\tif 2: skip processing the entire gene tree chain if the expected output gene tree chain file (with labels replaced) exists;\n'
-	s += '  --verbose={0,1,2}\tverbose mode, from none to plenty.\n'
+	s += '  --max.recursion.limit\t(int)Set maximum recursion limit of Python, may be required for processing big trees  (default 4000).\n'
+	s += '  --logfile\t\t\tpath to file where combined stdout and stderr are redirected (if multiple threads, several files with this basename and a pid suffix will be created in addition to the master process\' one).\n'
+	s += '  --verbose {0,1,2}\tverbose mode, from none to plenty.\n'
 	s += '  -v\t\t\tequivalent to --verbose=1.\n'
 	return s
 
@@ -828,7 +890,7 @@ if __name__=='__main__':
 	opts, args = getopt.getopt(sys.argv[1:], 'G:c:S:o:hv', ['dir_out=', 'method=', \
 															'populations=', 'population_tree=', 'population_node_distance=', 'dir_full_gene_trees=', \
 															'pop_stem_conds=', 'within_pop_conds=', \
-															'threads=', 'reuse=', 'verbose=', 'help'])
+															'threads=', 'reuse=', 'verbose=', 'max.recursion.limit=', 'logfile=', 'help'])
 	dopt = dict(opts)
 	if ('-h' in dopt) or ('--help' in dopt):
 		print usage()
@@ -848,13 +910,20 @@ if __name__=='__main__':
 	nbthreads = int(dopt.get('--threads', 1))
 	reuseOutput = int(dopt.get('--reuse', 0))
 	verbose = int(dopt.get('--verbose', ('-v' in dopt)))
+	maxreclim = int(dopt.get('--max.recursion.limit', 4000))
+	nflog = dopt.get('--logfile')
+	
+	sys.setrecursionlimit(maxreclim)
+	
+	if nflog:
+		flog = open(nflog, 'w')
+		sys.stdout = sys.stderr = flog
 	
 	### define species populations
-	spetree, dspe2pop, lnamepops, dpopnd = inferPopfromSpeTree(nfspetree, populations=nfpops, \
+	spetree, poptree, dspe2pop, lnamepops, dpopnd = inferPopfromSpeTree(nfspetree, populations=nfpops, \
                                                                nfpopulationtree=nfpoptree, nfdpopnodedist=nfdpopnd, \
                                                                pop_stem_conds=psc, within_pop_conds=wpc, \
                                                                nbthreads=nbthreads, verbose=verbose)
-				
 	if nflnfingtchain:
 	
 		if not (dircons and dirout): raise ValueError, "must provide value for options -c and -o when passing gene tree samples to -G"
@@ -867,36 +936,51 @@ if __name__=='__main__':
 		with open(nflnfingtchain, 'r') as flnfingtchain:
 			lnfingtchain = [line.strip('\n') for line in flnfingtchain]
 		
+		# wrapper function for a single-family run
 		def mapPop2GeneTreeSetArgs(nfingtchain):
+			if nflog and nbthreads>1:
+				pflog = open(nflog+".%d"%(os.getpid()), 'a')
+				sys.stdout = sys.stderr = pflog
+				
 			print '#', nfingtchain
 			for method in methods:
 				print 'method:', method
 				try:
-					mapPop2GeneTree(nfingtchain, dircons, os.path.join(dirout, method), method, spetree, dspe2pop, lnamepops, dpopnd, \
+					mapPop2GeneTree(nfingtchain, dircons, os.path.join(dirout, method), method, spetree, poptree, dspe2pop, lnamepops, dpopnd, \
 									reuseOutput=reuseOutput, phyloproftag=phyloproftag, dirfullgt=dirfullgt, verbose=verbose)
 				except Exception, e:
-					if type(e) is RuntimeError:
+					if (type(e) is RuntimeError) and str(e).startswith('maximum recursion depth exceeded'):
 						print "met RuntimeError on file '%s':"%nfingtchain, e
-						if str(e).startswith('maximum recursion depth exceeded'):
-							if sys.getrecursionlimit()<10000:
-								sys.setrecursionlimit(sys.getrecursionlimit()+2000)
-								print "re-run with increased recursion depth +2000"
-								mapPop2GeneTreeSetArgs(nfingtchain)
-							else:
-								print "Error: failed to run on file '%s':"%nfingtchain
-								return 1
+						if sys.getrecursionlimit() < maxreclim*maxreclimupfactor:
+							# allow for increase of recursion limit
+							sys.setrecursionlimit(sys.getrecursionlimit()+2000)
+							print "re-run with increased recursion depth +2000"
+							mapPop2GeneTreeSetArgs(nfingtchain)
+						else:
+							print "Error: failed to run on file '%s':"%nfingtchain
+							return 1
 					else:	
 						print 'Caught exception:'
 						traceback.print_exc()
+						sys.stdout.flush()
 						raise e
+			
 			print '# # # #\n'
+			if nflog and nbthreads>1:
+				if not pflog.closed:
+					pflog.close()
+			return 0
 		
+		# run in sequential
 		if nbthreads==1:
 			for nfingtchain in lnfingtchain:
 				if verbose: print nfingtchain
 				mapPop2GeneTreeSetArgs(nfingtchain)
+		# or run in parallel
 		else:
 			pool = mp.Pool(processes=nbthreads)
 			res = pool.map(mapPop2GeneTreeSetArgs, lnfingtchain)
 			#~ res = [pool.apply_async(mapPop2GeneTreeSetArgs, nfingtchain) for nfingtchain in lnfingtchain] #, chunksize=5
 
+	if nflog:
+		flog.close()
