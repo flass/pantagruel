@@ -1,0 +1,7 @@
+(jbuild_version 1)
+
+(library
+ ((name pantagruel)
+  (public_name pantagruel)
+  (libraries (bistro.bioinfo bistro.utils))
+))
