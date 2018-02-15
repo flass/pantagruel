@@ -56,6 +56,11 @@ grep "scientific name"  $ncbitax/names.dmp | sed -e 's/\t|\t/\t/g' | cut -f1,2 >
 ## using NCBI web interface:
 # Search Assembly database using a query defined as convenient:	
 # e.g.: 'txid543[Organism:exp] AND ("latest refseq"[filter] AND all[filter] NOT anomalous[filter]) AND ("complete genome"[filter])'
+entrezassembquery='txid543[Organism:exp] AND ("latest refseq"[filter] AND all[filter] NOT anomalous[filter]) AND ("complete genome"[filter])'
+perl $dbscripts/entrez_queryfetch_assemblies.pl "$entrezassembquery"
+
+
+
 # save assemblies (Download Assemblies > Source Database: RefSeq; File type: All file type (including assembly-structure directory)) as
 genome_assemblies.tar
 # extract assembly data
