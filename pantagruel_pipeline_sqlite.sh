@@ -218,7 +218,7 @@ fi
 # join non-ORFan and ORFan family count matrices
 rm -f ${protali}/all_families_genome_counts.mat*
 cat ${protali}/full_families_genome_counts-noORFans.mat > ${protali}/all_families_genome_counts.mat
-tail -n +2 ${protali}/${famprefix}C000000_genome_counts-ORFans.mat >> ${protali}/all_families_genome_counts.mat
+tail -n +2 ${protali}/ENTCGC000000_genome_counts-ORFans.mat >> ${protali}/all_families_genome_counts.mat
 gzip ${protali}/all_families_genome_counts.mat
 
 ##############################################
@@ -228,61 +228,10 @@ gzip ${protali}/all_families_genome_counts.mat
 export database=$entdb/03.database
 mkdir -p ${database}
 cd ${database}
-tail -n +2 ${allcomplete}_metadata_curated.tab > genome_assemblies.tab
-cut -f1,3,4,5,6 ${allcomplete}_allreplicons_info.tab | tail -n +2 > genome_replicons.tab
-cut -f1,2,3,4,5,6,8 ${allcomplete}_allproteins_info.tab | tail -n +2 > genome_coding_sequences.tab
-cut -f2,3 $protali/full_families_info-noORFans.tab > genome_gene_families.tab
-cut -f1,7 ${allcomplete}_allproteins_info.tab | tail -n +2 | grep -vP "^\t" | sort -u > genome_protein_products.tab 
-
-
-# load UniProt taxon codes for CDS name shortening
-wget http://www.uniprot.org/docs/speclist
-# generate unique code for each genome assembly from the Uniprot code + enough digits
-python << EOF
-import re
-CODepat = re.compile("([A-Z0-9]{3,5}) +[ABEVO] +([0-9]{1,7}): ")
-fspeclist = open('speclist', 'r')
-dtaxid2uniptrotcode
-for line in fspeclist:
-  if line[0]==' ': continue
-  CODEmatch = CODepat.match(line)
-  if CODEmatch:
-    code, taxid = CODEmatch.groups()
-    dtaxid2uniptrotcode[taxid] = code
-
-fspeclist.close()
-fmetadata = open('${allcomplete}_metadata_curated.tab', 'r')
-metadataheader = fmetadata.readline().rstrip('\n').split('\t')
-taxonidfield = metadataheader.index('taxid')
-assemblfield = metadataheader.index('assembly_id')
-speciesfield = metadataheader.index('assembly_id')
-lmetadata = [line.rstrip('\n').split('\t') for line in fmetadata]
-fout = open("assembly_code_taxid.tab", 'w')
-dcodesn = {}
-for metadata in lmetadata:
-  tid = metadata[taxonidfield].strip(' ')
-  ass = metadata[assemblfield].strip(' ')
-  spe = metadata[speciesfield].strip(' ')
-  code = dtaxid2uniptrotcode.get(tid)
-  if not code:
-    s, p = spe.split()
-    if '.' in p:
-      # fairly common case of organism name being 'Genus sp.'
-      c = s[:6].upper()
-    else:
-      # regular case  of organism name being 'Genus species'
-      c = (s[:3]+p[:3]).upper()
-    else:
-      c = code
-	dcodesn[c] = dcodesn.setdefault(c, 0) + 1
-  if not code:
-    code = c+str(dcodesn[c])
-  fout.write('\t'.join(ass, code, tid)+'\n')
-  print ass, c+str(dcodesn[c]), tid
-fout.close()
-EOF
-
-
+### create PostgreSQL database "panterodb" (pan-genome enterobacteraceae database)
+# NB: expect INTERACTTIVE PROMPT here !!
+# lower-case name for SQL db: 'panterodb_v0.3'
+$dbscripts/create_pangenome_sql_db.sh ${entdbname,,}
 # create database dump
 sqldump=${database}/${sqldbname}_dump_$(date +'%d%m%Y')
 pg_dump -d ${sqldbname} -j 6 -F d -f $sqldump && chmod -w -R $sqldump/
