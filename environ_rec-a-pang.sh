@@ -32,6 +32,7 @@ export colrecs=${alerec}/collapsed_recs
 # other variables
 export sqldbname=${entdbname,,}
 export protorfanclust="${famprefix}P000000"
+export cdsorfanclust="${famprefix}C000000"
 export pseudocore=pseudo-core-${pseudocoremingenomes}-unicopy
 export pseudocorealn=${coregenome}/${pseudocore}_concat_cds.aln
 export coretree=${coregenome}/raxml_tree

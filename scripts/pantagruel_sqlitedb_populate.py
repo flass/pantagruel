@@ -3,12 +3,19 @@ import re
 import os, sys
 import sqlite3
 
-def replaceValuesAsNull(table, cursor, nullval='', ommitcols=[]):
+def getTableInfos(table, cursor):
 	cursor.execute("PRAGMA table_info(%s);"%table)
 	colinfos = cursor.fetchall()
+	return colinfos 
+
+def replaceValuesAsNull(table, cursor, nullval='', ommitcols=[], tableinfo=None):
+	if not tableinfo: colinfos = getTableInfos(table, cursor)
+	else: colinfos = tableinfo
 	for colinfo in colinfos:
 		colname = colinfo['name']
-		cursor.execute("UPDATE %s SET %s=NULL WHERE %s='%s';"%(table, colname, colname, nullval)
+		print colname
+		if colname not in ommitcols:
+			cursor.execute("UPDATE %s SET %s=NULL WHERE %s='%s';"%(table, colname, colname, nullval))
 
 def loadAndCurateTable(table, nfin, cursor, insertcolumns=(), sep='\t', **kw):
 	if insertcolumns:
@@ -16,28 +23,31 @@ def loadAndCurateTable(table, nfin, cursor, insertcolumns=(), sep='\t', **kw):
 		else: coldef = "(%s)"%(', '.join(insertcolumns))
 	else:
 		coldef = ''
+	colinfos = getTableInfos(table, cursor)
+	print colinfos
 	with open(nfin, 'r') as ftabin:
-		cursor.executemany("INSERT INTO %s %s VALUES (?, ?);"%(table, coldef), tuple(line.split(sep) for line in ftabin))
-	replaceValuesAsNull(table, cursor, **kw)
+		cursor.executemany("INSERT INTO %s %s VALUES (%s);"%(table, coldef, ','.join(['?']*len(colinfos))), (tuple(line.split(sep)) for line in ftabin))
+	replaceValuesAsNull(table, cursor, tableinfo=colinfos, **kw)
 	
 def createAndLoadTable(table, tabledef, nfin, cursor, temp=False, enddrop=False, **kw):
 	tmp = 'TEMP' if temp else ''
-	cursor.execute("CREATE %s TABLE %s %s ON COMMIT DROP %;"%(tmp, table, tabledef, tmpdrop))
+	cursor.execute("CREATE %s TABLE %s %s;"%(tmp, table, tabledef))
 	loadAndCurateTable(table, nfin, cursor, **kw)
 	if enddrop: cursor.execute("DROP TABLE %s;"%table)
 
 dbname = sys.argv[1]
-protfamseqs = os.environ['protfamseqs']
+protfamseqtab = os.environ['protfamseqs']+'.tab'
 protorfanclust = os.environ['protorfanclust']
 cdsorfanclust = os.environ['cdsorfanclust']
 
 conn = sqlite3.connect(database=dbname)
+conn.row_factory = sqlite3.Row
 cur = conn.cursor()
 curry = conn.cursor()
 
 
 # populate assemblies table
-loadAndCurateTable('assemblies', 'genome_assemblies.tab', cur, ommitcols=['assembly_id', 'assembly_name'])
+loadAndCurateTable('assemblies', 'genome_assemblies.tab', cur, ommitcols=['assembly_id', 'assembly_name', 'taxid'])
 # populate replicons table
 loadAndCurateTable('replicons', 'genome_replicons.tab', cur, insertcolumns="(assembly_id, genomic_accession, replicon_name, replicon_type, replicon_size)")
 conn.commit()
@@ -46,13 +56,14 @@ conn.commit()
 protprodtabledef = """(genbank_nr_protein_id VARCHAR(20), product TEXT)"""
 protfamtabledef = """(genbank_nr_protein_id VARCHAR(20), protein_family_id CHAR(13))"""
 createAndLoadTable('protein_products', protprodtabledef, 'genome_protein_products.tab', cur)
-createAndLoadTable('protein_fams', protfamtabledef, protfamseqs, cur)
+createAndLoadTable('protein_fams', protfamtabledef, protfamseqtab, cur)
 cur.executescript("""
-INSERT INTO proteins (genbank_nr_protein_id, product, protein_family_id) (select genbank_nr_protein_id, min(product), protein_family_id
- FROM protein_products
- INNER JOIN protein_fams USING (genbank_nr_protein_id)
- GROUP BY genbank_nr_protein_id,protein_family_id
-);
+INSERT INTO proteins (genbank_nr_protein_id, product, protein_family_id)
+ SELECT genbank_nr_protein_id, min(product), protein_family_id
+  FROM protein_products
+  INNER JOIN protein_fams USING (genbank_nr_protein_id)
+  GROUP BY genbank_nr_protein_id,protein_family_id
+;
 DROP TABLE protein_products;
 DROP TABLE protein_fams;
 """)
@@ -82,7 +93,7 @@ INSERT INTO coding_sequences (genbank_cds_id, genomic_accession, locus_tag, cds_
   FROM codingsequences
   LEFT JOIN cdsfam USING (genbank_cds_id)
 );
-"""
+""")
 conn.commit()
 
 # populate the protein families
@@ -101,9 +112,9 @@ cur.execute("INSERT INTO gene_families (SELECT distinct gene_family_id, false, ?
            +"FROM coding_sequences LEFT JOIN gene_families USING (gene_family_id) " \
            +"WHERE protein_family_id IS NULL AND gene_family_id IS NOT NULL);", protorfanclust)
 # add the bit mark for the ORFan gene family
-cur.execute("UPDATE gene_families SET is_orfan=true WHERE gene_family_id=?;", cdsorfanclust
+cur.execute("UPDATE gene_families SET is_orfan=true WHERE gene_family_id=?;", cdsorfanclust)
 # finally set the primary key
-cur.execute("ALTER TABLE gene_families ADD PRIMARY KEY (gene_family_id);"
+cur.execute("ALTER TABLE gene_families ADD PRIMARY KEY (gene_family_id);")
 
 # load UniProt taxon codes for CDS name shortening
 fout = open("uniprotcode_taxid.tab", 'w')
@@ -165,7 +176,7 @@ INNER JOIN assemblies USING (assembly_id);
 """)
 cdsrows = curry.fetchall()
 csdnumpat = re.compile('.+_([0-9]+)$')
-csdnumrows = (cdsrow[cdscoli:]+[cdsnumpat.search(cdsrow[cdscoli]).group(1)]+[:cdscoli+1] for cdsrow in cdsrows)
+csdnumrows = (cdsrow[cdscoli:]+[cdsnumpat.search(cdsrow[cdscoli]).group(1)]+cdsrow[:(cdscoli+1)] for cdsrow in cdsrows)
 
 cur.executescript("""
 create table coding_sequences2 (like coding_sequences);"

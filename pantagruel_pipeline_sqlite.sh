@@ -152,7 +152,7 @@ echo "${datepad}-- (NB: some are not true ORFans as can be be present as identic
 ####################################
 
 ## prepare protein families for alignment
-protfamseqs=${mmseqsclout}_clusters_fasta
+export protfamseqs=${mmseqsclout}_clusters_fasta
 export protali=$entdb/02.gene_alignments
 nrprotali=$protali/nr_protfam_clustalo_alignments
 mkdir -p $nrprotali
