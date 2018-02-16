@@ -1,3 +1,5 @@
+![repas]
+
 # required softwares
 - **MMseqs2** for homologous sequence clustering  
   (Install from [source code](https://github.com/soedinglab/MMseqs2)
@@ -33,3 +35,6 @@
   - [scipy/numpy](https://www.scipy.org/scipylib/download.html)
   - [tree2](https://github.com/flass/tree2)
   - [BioPython](http://biopython.org/wiki/Download)
+
+
+[repas]: https://github.com/flass/pantagruel/blob/master/Pantagruels_childhood.jpg
