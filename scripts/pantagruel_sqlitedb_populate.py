@@ -33,6 +33,7 @@ cdsorfanclust = os.environ['cdsorfanclust']
 
 conn = sqlite3.connect(database=dbname)
 cur = conn.cursor()
+curry = conn.cursor()
 
 
 # populate assemblies table
@@ -103,3 +104,90 @@ cur.execute("INSERT INTO gene_families (SELECT distinct gene_family_id, false, ?
 cur.execute("UPDATE gene_families SET is_orfan=true WHERE gene_family_id=?;", cdsorfanclust
 # finally set the primary key
 cur.execute("ALTER TABLE gene_families ADD PRIMARY KEY (gene_family_id);"
+
+# load UniProt taxon codes for CDS name shortening
+fout = open("uniprotcode_taxid.tab", 'w')
+codetaxids = []
+CODepat = re.compile("([A-Z0-9]{3,5}) +[ABEVO] +([0-9]{1,7}): ")
+fspeclist = open('speclist', 'r')
+for line in fspeclist:
+  if line[0]==' ': continue
+  CODEmatch = CODepat.match(line)
+  if CODEmatch:
+    code, taxid = CODEmatch.groups()
+    fout.write("%s\t%s\n"%(code, taxid))
+    codetaxids.append((code, taxid))
+
+fout.close()
+fspeclist.close()
+cur.execute("INSERT INTO uniptrotcode2taxid VALUES (?, ?);", codetaxids)
+
+# generate unique code for each genome assembly from the Uniprot code + enough digits
+cur.execute("SELECT assembly_id, uniptrotcode2taxid.code, species FROM assemblies LEFT JOIN uniptrotcode2taxid USING (taxid);")
+lasscode = cur.fetchall()
+try:
+  cur.execute("ALTER TABLE assemblies ADD COLUMN code varchar(10);")
+except sqlite3.Error, e:
+  conn.rollback()
+  sys.stderr.write( 'Warning:' + str(e) + "reset assemblies.code values to NULL before update\n" )
+  cur.execute("UPDATE assemblies SET code=NULL;")
+
+dcodesn = {}
+for ass, code, spe in lasscode:
+  if not code:
+    s, p = spe.split()
+    if '.' in p:
+      # fairly common case of organism name being 'Genus sp.'
+      c = s[:6].upper()
+    else:
+      # regular case  of organism name being 'Genus species'
+      c = (s[:3]+p[:3]).upper()
+  else:
+    c = code
+  dcodesn[c] = dcodesn.setdefault(c, 0) + 1
+  cur.execute("update assemblies set code=? where assembly_id=?;", (c+str(dcodesn[c]), ass.strip(' ')))
+  print c+str(dcodesn[c]), ass
+conn.commit()
+
+# add the cds_code column to coding_sequences table, generate unique cds codes based on the species code and genbank CDS id and create indexes
+cur.execute("PRAGMA table_info(coding_sequences);")
+cdscolinfos = cursor.fetchall()
+for cdscoli, cdscolinfo in cdscolinfos:
+	if cdscolinfo['name']=='genbank_cds_id': break
+else:
+	raise ValueError, "column 'genbank_cds_id' is missing in table coding_sequences"
+
+cur.execute("""
+SELECT coding_sequences.*, code
+FROM coding_sequences
+INNER JOIN replicons using (genomic_accession)
+INNER JOIN assemblies USING (assembly_id);
+""")
+cdsrows = curry.fetchall()
+csdnumpat = re.compile('.+_([0-9]+)$')
+csdnumrows = (cdsrow[cdscoli:]+[cdsnumpat.search(cdsrow[cdscoli]).group(1)]+[:cdscoli+1] for cdsrow in cdsrows)
+
+cur.executescript("""
+create table coding_sequences2 (like coding_sequences);"
+alter table coding_sequences2 add column cds_code varchar(20);
+""")
+cur.executemany("INSERT INTO coding_sequences2 VALUES (%s)"%(','.join(['?']*len(cdscolinfo))), csdnumrows)
+cur.executescript("""
+drop table coding_sequences;
+alter table coding_sequences2 rename to coding_sequences;
+-- recreate indexes and views
+CREATE INDEX genbank_cds_id_key ON coding_sequences (genbank_cds_id);
+CREATE INDEX cds_code_key ON coding_sequences (cds_code);
+CREATE INDEX gene_family_id ON coding_sequences (gene_family_id);
+CREATE INDEX genomic_accession_key ON coding_sequences (genomic_accession);
+CREATE INDEX genomic_accession_cds_begin_key ON coding_sequences (genomic_accession, cds_begin);
+CREATE INDEX genbank_nr_protein_id_key ON coding_sequences (genbank_nr_protein_id);
+CREATE VIEW gene_family_sizes AS SELECT gene_family_id, count(*) as size from coding_sequences group by gene_family_id;
+ALTER TABLE coding_sequences ADD UNIQUE (genbank_cds_id);
+ALTER TABLE coding_sequences ADD UNIQUE (cds_code);
+"""
+)
+conn.commit()
+
+conn.close()
+

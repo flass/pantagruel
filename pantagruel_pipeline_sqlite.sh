@@ -218,7 +218,7 @@ fi
 # join non-ORFan and ORFan family count matrices
 rm -f ${protali}/all_families_genome_counts.mat*
 cat ${protali}/full_families_genome_counts-noORFans.mat > ${protali}/all_families_genome_counts.mat
-tail -n +2 ${protali}/ENTCGC000000_genome_counts-ORFans.mat >> ${protali}/all_families_genome_counts.mat
+tail -n +2 ${protali}/${famprefix}C000000_genome_counts-ORFans.mat >> ${protali}/all_families_genome_counts.mat
 gzip ${protali}/all_families_genome_counts.mat
 
 ##############################################
