@@ -2,10 +2,10 @@
 import sys, os
 nfin = sys.argv[1]
 famprefix = sys.argv[2]
-if len(sys.argv)>3: padlen = sys.argv[3]
+dirout = sys.argv[3]
+if len(sys.argv)>4: padlen = int(sys.argv[4])
 else: padlen = 6
 
-dirout = "%s_fasta"%nfin
 if not os.path.exists(dirout):
 	os.mkdir(dirout)
 else:
