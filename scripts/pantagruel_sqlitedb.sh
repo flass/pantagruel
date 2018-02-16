@@ -24,7 +24,10 @@ cut -f1,7 ${allcomplete}_allproteins_info.tab | tail -n +2 | grep -vP "^\t" | so
 
 sqlite3 $dbname << EOF
 -- populate assemblies table
+.separator "\t"
 COPY assemblies FROM '$PWD/genome_assemblies.tab' NULL '';
+.import '$PWD/genome_assemblies.tab' assemblies;
+update assemblies set null where 
 
 -- populate replicons table
 COPY replicons (assembly_id, genomic_accession, replicon_name, replicon_type, replicon_size) FROM '$PWD/genome_replicons.tab' NULL '';
@@ -98,6 +101,7 @@ import sqlite3, sys
 conn = sqlite3.connect(database='$dbname')
 cur = conn.cursor()
 fout = open("uniprotcode_taxid.tab", 'w')
+codetaxids = []
 CODepat = re.compile("([A-Z0-9]{3,5}) +[ABEVO] +([0-9]{1,7}): ")
 fspeclist = open('speclist', 'r')
 for line in fspeclist:
@@ -106,10 +110,11 @@ for line in fspeclist:
   if CODEmatch:
     code, taxid = CODEmatch.groups()
     fout.write("%s\t%s\n"%(code, taxid))
+    codetaxids.append((code, taxid))
 
 fout.close()
 fspeclist.close()
-cur.execute("COPY uniptrotcode2taxid FROM '$PWD/uniprotcode_taxid.tab' NULL '';")
+cur.execute("INSERT INTO uniptrotcode2taxid VALUES (?, ?);", codetaxids)
 
 # generate unique code for each genome assembly from the Uniprot code + enough digits
 cur.execute("select assembly_id, uniptrotcode2taxid.code, species from assemblies left join uniptrotcode2taxid using (taxid);")
