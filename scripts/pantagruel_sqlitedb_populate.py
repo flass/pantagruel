@@ -26,7 +26,7 @@ def createAndLoadTable(table, tabledef, nfin, cursor, temp=False, enddrop=False,
 	loadAndCurateTable(table, nfin, cursor, **kw)
 	if enddrop: cursor.execute("DROP TABLE %s;"%table)
 
-dbname = os.environ['dbname']
+dbname = sys.argv[1]
 protfamseqs = os.environ['protfamseqs']
 protorfanclust = os.environ['protorfanclust']
 cdsorfanclust = os.environ['cdsorfanclust']

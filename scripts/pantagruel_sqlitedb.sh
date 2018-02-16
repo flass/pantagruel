@@ -12,7 +12,7 @@ while [ -z $dbname ] ; do
 done
 
 ## create database and load database schema
-sqlite3 $dbname < $dbscripts/panterodb_initiate.sql
+sqlite3 $dbname < $dbscripts/pantagruel_sqlitedb_initiate.sql
 
 ## populate database
 # use tail to truncate the header
@@ -22,76 +22,7 @@ cut -f1,2,3,4,5,6,8 ${allcomplete}_allproteins_info.tab | tail -n +2 > genome_co
 cut -f2,3 $protali/full_families_info-noORFans.tab > genome_gene_families.tab
 cut -f1,7 ${allcomplete}_allproteins_info.tab | tail -n +2 | grep -vP "^\t" | sort -u > genome_protein_products.tab 
 
-sqlite3 $dbname << EOF
--- populate assemblies table
-.separator "\t"
-COPY assemblies FROM '$PWD/genome_assemblies.tab' NULL '';
-.import '$PWD/genome_assemblies.tab' assemblies;
-update assemblies set null where 
-
--- populate replicons table
-COPY replicons (assembly_id, genomic_accession, replicon_name, replicon_type, replicon_size) FROM '$PWD/genome_replicons.tab' NULL '';
-
--- populate protein table
-begin;
-create temp table protein_products (genbank_nr_protein_id VARCHAR(20), product TEXT) on commit drop;
-create temp table protein_fams (genbank_nr_protein_id VARCHAR(20), protein_family_id CHAR(13)) on commit drop;
-copy protein_products (genbank_nr_protein_id, product) from '$PWD/genome_protein_products.tab' NULL '';
-copy protein_fams (protein_family_id, genbank_nr_protein_id) from '$protfamseqs.tab' NULL '';
-insert into proteins (genbank_nr_protein_id, product, protein_family_id) (select genbank_nr_protein_id, min(product), protein_family_id
- from protein_products
- inner join protein_fams using (genbank_nr_protein_id)
- group by genbank_nr_protein_id,protein_family_id
-);
-commit;
-
--- populate coding_sequences table
-begin;
-create temp table codingsequences (
-  nr_protein_id CHAR(15),
-  genomic_accession CHAR(14) NOT NULL,
-  locus_tag VARCHAR(200),
-  cds_begin INTEGER NOT NULL,
-  cds_end INTEGER NOT NULL,
-  strand CHAR(1) NOT NULL,
-  genbank_cds_id VARCHAR(50) NOT NULL
-) on commit drop;
-copy codingsequences from '$PWD/genome_coding_sequences.tab' null '';
-create temp table cdsfam (
-  genbank_cds_id VARCHAR(50) NOT NULL,
-  gene_family_id CHAR(13)
-) on commit drop;
-copy cdsfam from '$PWD/genome_gene_families.tab';
-create index gbcdsid_1 on codingsequences (genbank_cds_id);
-create index gbcdsid_2 on cdsfam (genbank_cds_id);
-insert into coding_sequences (genbank_cds_id, genomic_accession, locus_tag, cds_begin, cds_end, strand, genbank_nr_protein_id, gene_family_id) (
- select genbank_cds_id, genomic_accession, locus_tag, cds_begin, cds_end, strand, nr_protein_id, gene_family_id
-  from codingsequences
-  left join cdsfam using (genbank_cds_id)
-);
-commit;
-
--- populate the protein families
-insert into nr_protein_families (select distinct protein_family_id, false from proteins);
-
--- add the bit mark for the singleton nr protein family
-update nr_protein_families set is_singleton=true where protein_family_id='$protorfanclust';
-
--- allocated the '$cdsorfanclust' value to gene_family_id field for those CDSs with a parent protein but no gene family affiliation
-update coding_sequences set gene_family_id='$cdsorfanclust' where gene_family_id is null and genbank_nr_protein_id is not null;
-
--- populate the gene families deriving from the protein families
-insert into gene_families (select replace(protein_family_id, 'P', 'C') as gene_family_id, false, protein_family_id from nr_protein_families);
-
--- add the gene families which have no natural parent nr protein family, i.e. those derived from singleton nr proteins, but with multiple CDS members
-insert into gene_families (select distinct gene_family_id, false, '$protorfanclust' from coding_sequences left join gene_families using (gene_family_id) where protein_family_id is null and gene_family_id is not null);
-
--- add the bit mark for the ORFan gene family
-update gene_families set is_orfan=true where gene_family_id='$cdsorfanclust';
-
-alter table gene_families add primary key (gene_family_id);
-
-EOF
+python $dbscripts/pantagruel_sqlitedb_populate.py $dbname
 
 # load UniProt taxon codes for CDS name shortening
 wget http://www.uniprot.org/docs/speclist
