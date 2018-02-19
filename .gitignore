@@ -2,3 +2,5 @@
 **/.merlin
 _build
 pantagruel.install
+_bistro
+out
