@@ -6,19 +6,24 @@ import gzip
 import re
 
 nfldirassemb = sys.argv[1]
-nfoutrad = re.sub('_list$', '', nfldirassemb)
+dirout = sys.argv[2]
+nftaxnamesdump = sys.argv[3]
+
+if os.path.exists(dirout):
+	if os.path.isfile(dirout):
+		raise ValueError, "Cannot create folder '%s' as it already exist as a file"%(dirout)
+else:
+	os.mkdir(dirout)
 
 with open(nfldirassemb, 'r') as fldirassemb:
 	ldirassemb = [line.rstrip('\n') for line in fldirassemb.readlines()]
 
-# optional link to NCBI Taxonomy database
+# link to NCBI Taxonomy database
 dtaxid2sciname = {}
-if len(sys.argv) > 2:
-	nftaxnamesdump = sys.argv[2]
-	with open(nftaxnamesdump, 'r') as ftaxnamesdump:
-		for line in ftaxnamesdump:
-			lsp = line.rstrip('\n').split('\t')
-			dtaxid2sciname[int(lsp[0])] = lsp[1]
+with open(nftaxnamesdump, 'r') as ftaxnamesdump:
+	for line in ftaxnamesdump:
+		lsp = line.rstrip('\n').split('\t')
+		dtaxid2sciname[int(lsp[0])] = lsp[1]
 
 daliasrepli = {'ANONYMOUS':'chromosome'}
 
@@ -35,7 +40,7 @@ if dtaxid2sciname: dfoutheaders['replicons'].append('taxon_name')
 dfout = {}
 fouttags = ['proteins', 'ribosomes', 'replicons']
 for fouttag in fouttags:
-	dfout[fouttag] = open("%s_all%s_info.tab"%(nfoutrad, fouttag), 'w')
+	dfout[fouttag] = open(os.path.join(dirout, "all%s_info.tab"%(fouttag) ), 'w')
 	dfout[fouttag].write('\t'.join(dfoutheaders[fouttag])+'\n')
 
 for dirassemb in ldirassemb:

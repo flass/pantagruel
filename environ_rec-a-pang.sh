@@ -16,8 +16,7 @@ export genetrees=$rapdb/05.gene_trees
 
 
 # sub folders
-export complete=${assmetadata}/complete_genomes
-export allcomplete=${complete}/complete_genomes
+export genomeinfo=${assmetadata}/genome_infos
 export faacomplete=$seqdb/all_complete_proteomes.faa
 export nrfaacomplete=$seqdb/all_complete_proteomes.nr.faa
 export families=$seqdb/protein_families
