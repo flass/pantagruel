@@ -107,9 +107,9 @@ python $dbscripts/extract_metadata_from_gbff.py --assembly_folder_list=${genomin
 --add_curated_metadata=${genominfo}/manual_curated_metadata_dictionary.tab --add_dbxref=${genominfo}/manual_dbxrefs.tab --add_assembly_info_dir=${indata}/assembly_stats \
 --default_species_name="unclassified organism"
 # remove lab strains
-grep "laboratory" ${genominfo}/assemblies_withallstrains_metadata_curated.tab | cut -f1 > $complete/labstrains_list
-grep "endosymbiont" ${genominfo}/assemblies_withallstrains_metadata_curated.tab | cut -f1 > $complete/endosymbiontstrains_list
-for strain in `cat $complete/labstrains_list $complete/endosymbiontstrains_list` ; do
+grep "laboratory" ${genominfo}/assemblies_withallstrains_metadata_curated.tab | cut -f1 > ${genominfo}/assemblies_labstrains_list
+grep "endosymbiont" ${genominfo}/assemblies_withallstrains_metadata_curated.tab | cut -f1 > ${genominfo}/assemblies_endosymbiontstrains_list
+for strain in `cat ${genominfo}/assemblies_labstrains_list ${genominfo}/assemblies_endosymbiontstrains_list` ; do
  grep $strain ${genominfo}/assemblies_withallstrains_list >> ${genominfo}/assemblies_excludestrains_list
 done
 diff ${genominfo}/assemblies_withallstrains_list ${genominfo}/assemblies_excludestrains_list | grep '<' | cut -d' ' -f2 > ${genominfo}/assemblies_list
@@ -118,7 +118,7 @@ python $dbscripts/extract_metadata_from_gbff.py --assembly_folder_list=${genomin
 --add_curated_metadata=${genominfo}/manual_curated_metadata_dictionary.tab --add_dbxref=${genominfo}/manual_dbxrefs.tab --add_assembly_info_dir=${indata}/assembly_stats \
 --default_species_name="unclassified organism"
 
-export ngenomes=$((`wc -l ${genominfo}/complete_genomes_metadata.tab | cut -d' ' -f1` - 1))
+export ngenomes=$((`wc -l ${genominfo}/assembly_metadata/metadata.tab | cut -d' ' -f1` - 1))
 echo "work with a database of $ngenomes genomes (excluding lab strains)"
 
 #############################
