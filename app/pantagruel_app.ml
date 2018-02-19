@@ -2,9 +2,19 @@ open Core
 open Pantagruel
 open Bistro_utils
 
+let with_workflow w ~f =
+  let open Term in
+  run ~keep_all:true ~np:8 ~mem:(`GB 8) (
+    pure (fun (Term.Path p) -> f p) $ pureW w
+  )
+
 let run ~outdir ~assembly_folder () =
-  let pipeline = Pipeline.make assembly_folder in
-  let repo = Pipeline.repo pipeline in
+  let stage1 = Pipeline.stage1 assembly_folder in
+  (* let stage2 = with_workflow stage1#protein_families ~f:(fun path ->
+   *     Pipeline.stage2 path
+   *   ) in *)
+  let stage2 = object end in
+  let repo = Pipeline.repo stage1 stage2 in
   (* Lwt_main.run (Entrez.assembly_request ~taxid) ; *)
   Repo.build ~outdir repo
 
