@@ -231,10 +231,7 @@ cd ${database}
 ### create PostgreSQL database "panterodb" (pan-genome enterobacteraceae database)
 # NB: expect INTERACTTIVE PROMPT here !!
 # lower-case name for SQL db: 'panterodb_v0.3'
-$dbscripts/create_pangenome_sql_db.sh ${entdbname,,}
-# create database dump
-sqldump=${database}/${sqldbname}_dump_$(date +'%d%m%Y')
-pg_dump -d ${sqldbname} -j 6 -F d -f $sqldump && chmod -w -R $sqldump/
+${dbscripts}/pantagruel_sqlitedb.sh ${database} ${entdbname,,} ${allcomplete} ${protali} ${dbscripts}/pantagruel_sqlitedb_initiate.sql ${dbscripts}/pantagruel_sqlitedb_populate.py
 
 # generate reference for translation of genome assembly names into short identifier codes (uing UniProt "5-letter" code when available).
 psql -d ${sqldbname} -A -t -c "select assembly_id, code from genome.assemblies;" | sed -e 's/ |/\t/g' > $database/genome_codes.tab

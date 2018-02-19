@@ -56,12 +56,12 @@ CREATE TABLE proteins (
 
 CREATE TABLE nr_protein_families (
         protein_family_id CHAR(13) PRIMARY KEY,
-        is_singleton BOOL NOT NULL
+        is_singleton BOOL NOT NULL DEFAULT 0
 );
 
 CREATE TABLE gene_families (
-        gene_family_id CHAR(13),
-        is_orfan BOOL NOT NULL,
+        gene_family_id CHAR(13) PRIMARY KEY,
+        is_orfan BOOL NOT NULL DEFAULT 0,
         protein_family_id CHAR(13) NOT NULL
 );
 
