@@ -31,10 +31,22 @@
   - phytools
   
 - Python packages:
-  - [psycopg2](https://pypi.python.org/pypi/psycopg2)
+  - [sqlite3](https://docs.python.org/2/library/sqlite3.html) (standard package in Python 2.7.14)
   - [scipy/numpy](https://www.scipy.org/scipylib/download.html)
   - [tree2](https://github.com/flass/tree2)
   - [BioPython](http://biopython.org/wiki/Download)
+
+- Other software:
+  - [sqlite3](https://www.sqlite.org) (available as a Debian package)
+  - [LFTP](https://lftp.yar.ru/get.html) (available as a Debian package)
+
+-------------
+
+Two version of the pipeline are distributed:  
+
+- a script version, which source code is adatable and can be deployed on high-performance computing (HPC) "cluster" Linux systems;  
+
+- a pre-compiled Docker image that can be deployed on pretty much any platform, including swarms of virtual machines (VMs). The latter version was implemented using the [Bistro]() framework.
 
 
 [repas]: https://github.com/flass/pantagruel/blob/master/Pantagruels_childhood.jpg

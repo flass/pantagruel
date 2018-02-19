@@ -95,7 +95,7 @@ done
 
 mkdir ${genominfo}/
 rm -f ${genominfo}/assemblies*
-ls ${assemblies}/GCF_* -d > ${genominfo}/assemblies_withallstrains_list
+ls ${assemblies}/GC[AF]_* -d > ${genominfo}/assemblies_withallstrains_list
 # complete genomes do not have their sequencing / assembly details reported in *_assembly_stats.txt files ; rather lok for the sequencing metadata in the GenBank flat file
 for assemb in `cat ${genominfo}/assemblies_withallstrains_list` ; do 
 ass=$(basename $assemb) ; tech=`zcat $assemb/${ass}_genomic.gbff.gz | grep -m 1 "Sequencing Technology" | awk -F' :: ' '{print $NF}' | sed -e 's/Il;lumina/Illumina/g'`
