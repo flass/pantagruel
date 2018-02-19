@@ -7,6 +7,7 @@ import multiprocessing
 import gzip
 import re
 import time
+import traceback
 #~ from numpy import ndarray, zeros
 
 #~ dryrun = True
@@ -78,18 +79,24 @@ def castMultiPal2Nal(argtup):
 	
 	given a tuple containg the gene family name, folders of protein alignements and aligned gene sequence, respectively;
 	returns pal2nal.pl verbose log (text string)"""
-	# with multiprocessing
-	cdsfam, dirfullprotout, dirfullcdsseqout, fpal2nallog, queue = argtup
-	nfprotali = "%s/%s.aln"%(dirfullprotout, cdsfam)
-	nfcdsseq = "%s/%s.fasta"%(dirfullcdsseqout, cdsfam)
-	p2ncmd = ["pal2nal.pl", "-output", "fasta", "-codontable", "11", nfprotali, nfcdsseq]
-	#~ print ' '.join(p2ncmd)
-	nfoutalnc = "%s/%s.aln"%(dirfullcdsaliout, cdsfam)
-	foutalnc = open(nfoutalnc, 'w')
-	p2npipe = subprocess.Popen(p2ncmd, stdout=foutalnc, stderr=subprocess.PIPE)
-	foutalnc.close()
-	queue.put(cdsfam)
-	return p2npipe.stderr.read()
+        try:
+                # with multiprocessing
+	        cdsfam, dirfullprotout, dirfullcdsseqout, fpal2nallog, queue = argtup
+	        nfprotali = "%s/%s.aln"%(dirfullprotout, cdsfam)
+	        nfcdsseq = "%s/%s.fasta"%(dirfullcdsseqout, cdsfam)
+	        p2ncmd = ["pal2nal.pl", "-output", "fasta", "-codontable", "11", nfprotali, nfcdsseq]
+	        #~ print ' '.join(p2ncmd)
+	        nfoutalnc = "%s/%s.aln"%(dirfullcdsaliout, cdsfam)
+	        foutalnc = open(nfoutalnc, 'w')
+	        p2npipe = subprocess.Popen(p2ncmd, stdout=foutalnc, stderr=subprocess.PIPE)
+	        foutalnc.close()
+	        queue.put(cdsfam)
+	        return p2npipe.stderr.read()
+        except Exception, e:
+                print "caught exception:"
+                traceback.print_exc()
+                sys.stdout.flush()
+                raise e
 	#~ fpal2nallog.write(p2npipe.stderr.read())
 	
 def castMultiBMGE(argtup):
@@ -106,11 +113,12 @@ if __name__ == '__main__':
 	nfsingletonfasta = sys.argv[2]
 	nfprotinfotab = sys.argv[3]
 	nfreplinfotab = sys.argv[4]
-	nflnfcdsfasta = sys.argv[5]
-	dirlogs = sys.argv[6]
+	assembly_folder = sys.argv[5]
+	dirout = sys.argv[6]
+        fam_prefix = sys.argv[7]
+        dirlogs = "%s/logs"%(dirout)
 
 	# define output folders
-	dirout = os.path.dirname(dirnrprotaln)
 	suffdirout = os.path.basename(dirout)
 
 	dirfullprotout = "%s/full_protfam_alignments"%(dirout)
@@ -118,15 +126,13 @@ if __name__ == '__main__':
 	dirfullcdsaliout = "%s/full_cdsfam_alignments"%(dirout)
 
 	## non-redundant (nr) protein db
-	prefixprotfam = 'ENTCGP'
+	prefixprotfam = fam_prefix + 'P'
 	## (redundant) CDS db
 	# diverse families
-	prefixcdsfam = 'ENTCGC'
+	prefixcdsfam = fam_prefix + 'C'
 	#~ # homogeneous families (members of a family code a same unique protein) derived from ENTCGP000000; include singletons, i.e. ORFans pooled into ENTCGS000000
 	#~ prefixsinglefam = 'ENTCGS'
 	padlen = 6
-
-	assemblytag = 'GCF'
 
 	# extracted CDS sequences will be buffered in memory to avoid file open/close operations at every sequence
 	# not to put too high as multiplied by the number of concurrently parsed gene families, i.e. potential the number of gene families
@@ -153,17 +159,11 @@ if __name__ == '__main__':
 	lnfcdsfasta = []
 
 	print "# map genome assembly / CDS sequence dump files"
-	with open(nflnfcdsfasta, 'r') as flnfcdsfasta:
-		for line in flnfcdsfasta:
-			nfcdsfasta = line.rstrip('\n')
-			lnfcdsfasta.append(nfcdsfasta)
-			for p in nfcdsfasta.split('/'):
-				if p.startswith(assemblytag):
-					dnfcdsfasta[p] = nfcdsfasta
-					# {cds_fasta_path:assembly_id_name}
-					dassemb[nfcdsfasta] = p
-					break # for p loop
-
+	for d in os.listdir(assembly_folder):
+                nfcdsfasta = os.path.join(assembly_folder, d, d + "_cds_from_genomic.fna.gz")
+		dnfcdsfasta[d] = nfcdsfasta
+                dassemb[nfcdsfasta] = d
+                lnfcdsfasta.append(nfcdsfasta)
 	lnfcdsfasta.sort()
 
 	print "# parse protein / CDS data"
@@ -186,6 +186,10 @@ if __name__ == '__main__':
 			# {nr_prot_id:[(cds_fasta_path, unique_cds_id), ...]}
 			dprotinfo.setdefault(protid, []).append((nfcdsfasta, cdsid))
 			
+	if not os.path.exists(dirout):
+		os.mkdir(dirout)
+	if not os.path.exists(dirlogs):
+		os.mkdir(dirlogs)
 	if not os.path.exists(dirfullprotout):
 		os.mkdir(dirfullprotout)
 	if not os.path.exists(dirfullcdsseqout):
