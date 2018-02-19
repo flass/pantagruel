@@ -87,7 +87,7 @@ for dirassemb in ldirassemb:
 					replineout = [assacc, assname, seqreg, daliasrepli.get(repliname, repliname), replitype, end, taxid, strain]
 					if dtaxid2sciname: replineout.append(dtaxid2sciname[int(taxid)])
 					dfout['replicons'].write('\t'.join(replineout)+'\n')
-			elif lsp[2]=='gene':
+			elif lsp[2] in ['gene', 'pseudogene']:
 				descprevgene = desc
 				# need to buffer extraction of CDS entries as several lines can relate to the same gene in case of CDS in several segments (due  to introns, framshifts, ...)
 				ngenecds = 0
