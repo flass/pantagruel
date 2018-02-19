@@ -62,7 +62,7 @@ def parse_assembly_name(assembname, reass=reass, group=0):
 	
 ## script
 
-opts, args = getopt.getopt(sys.argv[1:], '', ['assembly_folder_list=', 'add_raw_metadata=', 'add_curated_metadata=', 'add_dbxref=', 'add_assembly_info_dir=', 'default_species_name='])
+opts, args = getopt.getopt(sys.argv[1:], '', ['assembly_folder_list=', 'add_raw_metadata=', 'add_curated_metadata=', 'add_dbxref=', 'add_assembly_info_dir=', 'default_species_name=', 'output='])
 dopt = dict(opts)
 nfldirassemb = dopt['--assembly_folder_list']
 nfdhandmetaraw = dopt.get('--add_raw_metadata')
@@ -70,6 +70,7 @@ nfdhandmetacur = dopt.get('--add_curated_metadata')
 nfdhanddbxref = dopt.get('--add_dbxref')
 dirassemblyinfo = dopt.get('--add_assembly_info_dir')
 defspename = dopt.get('--default_species_name')
+output = dopt.get('--output')
 
 ## metadata extraction from compressed GenBank flat files
 with open(nfldirassemb, 'r') as fldirassemb:
@@ -149,7 +150,7 @@ if nfdhandmetaraw:
 if dirassemblyinfo:
 	lnfassemblyfiles = os.listdir(dirassemblyinfo)
 	#~ for infotype in ['contig-N50', 'contig-count', 'assembly_level.tab', 'sequencing_technology.tab']:
-	for infotype in ['sequencing_technology.tab']:
+	for infotype in ['assembly_level.tab', 'sequencing_technology.tab']:
 		lnfinfo = [nf for nf in lnfassemblyfiles if nf.endswith(infotype)]
 		infotag = infotype.replace('-', '_').replace('.tab', '')
 		for nfinfo in lnfinfo:
@@ -159,14 +160,20 @@ if dirassemblyinfo:
 					assemb = parse_assembly_name(assembname, reass=reass)
 					dmetadata.setdefault(infotag, {})[assemb] = val.strip('" \r')
 
-nfout = nfldirassemb.replace('_list', '_metadata.tab')
+if os.path.exists(output):
+        if os.path.isfile(output):
+                raise ValueError, 'Output %s is an existing file'%output
+else:
+        os.mkdir(output)
+
+nfout = os.path.join(output, 'metadata.tab')
 with open(nfout, 'w') as fout:
 	fout.write('\t'.join(['assembly']+lqualif)+'\n')
 	for assemb in lassemb:
 		fout.write('\t'.join([assemb]+[dmetadata[qualif].get(assemb, '') for qualif in lqualif])+'\n')
 
 # separate many-to-many record of assemblies:dbxref, including pubmed_ids
-nfoutdbxref = nfldirassemb.replace('_list', '_dbxrefs.tab')
+nfoutdbxref = os.path.join(output, 'dbxrefs.tab')
 with open(nfoutdbxref, 'w') as foutdbxref:
 	for assemb in lassemb:
 		if assemb in dmetadata["dbxref"]:
@@ -193,17 +200,17 @@ na = ''
 #~ na = 'NA'
 
 for assemb in lassemb:
-	coun = dmetadata['country'].get(assemb, na).split(':')[0]
-	host = dmetadata['host'].get(assemb, na)
-	isol = dmetadata['isolation_source'].get(assemb, na).lower().strip(' "')
-	organism = dmetadata['organism'][assemb].strip(' "')
-	strain = dmetadata['strain'].get(assemb, na)
-	coldate = dmetadata['collection_date'].get(assemb, na)
-	ppmid = dmetadata['pubmed_id'].get(assemb, na).split(',')[0]
-	isolate = dmetadata['isolate'].get(assemb, na)
-	sero = dmetadata['serovar'].get(assemb, na)
-	note = dmetadata['note'].get(assemb, na)
-	taxid = dict(dbxref.split(':') for dbxref in dmetadata['db_xref'][assemb].strip(' "').split(';'))['taxon']
+	coun = dmetadata.get('country',{}).get(assemb, na).split(':')[0]
+	host = dmetadata.get('host',{}).get(assemb, na)
+	isol = dmetadata.get('isolation_source',{}).get(assemb, na).lower().strip(' "')
+	organism = dmetadata.get('organism',{}).get(assemb,na).strip(' "')
+	strain = dmetadata.get('strain',{}).get(assemb, na)
+	coldate = dmetadata.get('collection_date',{}).get(assemb, na)
+	ppmid = dmetadata.get('pubmed_id',{}).get(assemb, na).split(',')[0]
+	isolate = dmetadata.get('isolate',{}).get(assemb, na)
+	sero = dmetadata.get('serovar',{}).get(assemb, na)
+	note = dmetadata.get('note',{}).get(assemb, na)
+	taxid = dict(dbxref.split(':') for dbxref in dmetadata.get('db_xref',{}).get(assemb,na).strip(' "').split(';'))['taxon']
 	subspe = na
 	ecol = na
 	## strain
@@ -336,7 +343,7 @@ if nfdhandmetacur:
 				else:dcurated[qualif][assemb] = sval.replace("'", '').replace('"', '')
 			else: dcurated[qualif][assemb] = sval.replace("'", '').replace('"', '')
 
-nfoutcur = nfldirassemb.replace('_list', '_metadata_curated.tab')
+nfoutcur = os.path.join(output, 'metadata_curated.tab')
 with open(nfoutcur, 'w') as foutcur:
 	foutcur.write('\t'.join(['assembly_id', 'assembly_name']+lcurqualif)+'\n')
 	for assembname in lassembname:
