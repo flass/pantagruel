@@ -30,3 +30,5 @@ RUN wget "http://www.bork.embl.de/pal2nal/distribution/pal2nal.v14.tar.gz" && \
     tar xvfz pal2nal.v14.tar.gz && \
     cd pal2nal.v14 && \
     cp pal2nal.pl /usr/bin
+
+RUN apt-get install lftp
