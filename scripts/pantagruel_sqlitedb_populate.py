@@ -24,7 +24,7 @@ def loadAndCurateTable(table, nfin, cursor, insertcolumns=(), sep='\t', **kw):
 		coldef = ''
 	colinfos = getTableInfos(table, cursor)
 	with open(nfin, 'r') as ftabin:
-		cursor.executemany("INSERT INTO %s %s VALUES (%s);"%(table, coldef, ','.join(['?']*len(colinfos))), (tuple(line.split(sep)) for line in ftabin))
+		cursor.executemany("INSERT INTO %s %s VALUES (%s);"%(table, coldef, ','.join(['?']*len(colinfos))), (tuple(line.rstrip('n').split(sep)) for line in ftabin))
 	replaceValuesAsNull(table, cursor, tableinfo=colinfos, **kw)
 	
 def createAndLoadTable(table, tabledef, nfin, cursor, temp=False, enddrop=False, **kw):
@@ -33,17 +33,33 @@ def createAndLoadTable(table, tabledef, nfin, cursor, temp=False, enddrop=False,
 	loadAndCurateTable(table, nfin, cursor, **kw)
 	if enddrop: cursor.execute("DROP TABLE %s;"%table)
 
+
+cdsnumpat = re.compile('.+_([0-9]+)$')
+def make_cds_code(code, genbank_cds_id):
+	return "%s_%s"%(code, cdsnumpat.search(genbank_cds_id).group(1))
+
+
 dbname = sys.argv[1]
 protfamseqtab = os.environ['protfamseqs']+'.tab'
 protorfanclust = os.environ['protorfanclust']
 cdsorfanclust = os.environ['cdsorfanclust']
 
 conn = sqlite3.connect(database=dbname)
+conn.create_function("make_cds_code", 2, make_cds_code)
 conn.row_factory = sqlite3.Row
 cur = conn.cursor()
 
 # populate assemblies table
 loadAndCurateTable('assemblies', 'genome_assemblies.tab', cur, ommitcols=['assembly_id', 'assembly_name', 'taxid'])
+
+# create indexes on assemblies table
+cur.executescript("""
+CREATE INDEX assemblies_assembly_id_key ON assemblies (assembly_id);
+CREATE INDEX assemblies_species_key ON assemblies (species);
+CREATE INDEX assemblies_taxid_key ON assemblies (taxid);
+""")
+conn.commit()
+
 # populate replicons table
 loadAndCurateTable('replicons', 'genome_replicons.tab', cur, insertcolumns="(assembly_id, genomic_accession, replicon_name, replicon_type, replicon_size)")
 conn.commit()
@@ -62,6 +78,14 @@ INSERT INTO proteins (genbank_nr_protein_id, product, protein_family_id)
 ;
 DROP TABLE protein_products;
 DROP TABLE protein_fams;
+""")
+conn.commit()
+
+# create indexes on proteins table
+cur.executescript("""
+CREATE INDEX proteins_genbank_nr_protein_id_key ON proteins (genbank_nr_protein_id);
+CREATE INDEX proteins_protein_family_id_key ON proteins (protein_family_id);
+CREATE INDEX proteins_product_key ON proteins (product);
 """)
 conn.commit()
 
@@ -110,6 +134,15 @@ cur.execute("INSERT INTO gene_families SELECT distinct gene_family_id, 0, ? " \
            +"WHERE protein_family_id IS NULL AND gene_family_id IS NOT NULL;", (protorfanclust,))
 # add the bit mark for the ORFan gene family
 cur.execute("UPDATE gene_families SET is_orfan=1 WHERE gene_family_id=?;", (cdsorfanclust,))
+conn.commit()
+
+# create indexes on protein/gene family tables
+cur.executescript("""
+CREATE INDEX nrprotfams_protein_family_id_key ON nr_protein_families (protein_family_id);
+CREATE INDEX genefams_gene_family_id_key ON gene_families (gene_family_id);
+CREATE INDEX genefams_protein_family_id_key ON gene_families (protein_family_id);
+""")
+conn.commit()
 
 # load UniProt taxon codes for CDS name shortening
 fout = open("uniprotcode_taxid.tab", 'w')
@@ -127,6 +160,7 @@ for line in fspeclist:
 fout.close()
 fspeclist.close()
 cur.executemany("INSERT INTO uniptrotcode2taxid VALUES (?, ?);", codetaxids)
+conn.commit()
 
 # generate unique code for each genome assembly from the Uniprot code + enough digits
 cur.execute("SELECT assembly_id, uniptrotcode2taxid.code, species FROM assemblies LEFT JOIN uniptrotcode2taxid USING (taxid);")
@@ -140,6 +174,7 @@ cur.execute("ALTER TABLE assemblies ADD COLUMN code VARCHAR(10) DEFAULT NULL;")
 
 dcodesn = {}
 for ass, code, spe in lasscode:
+  print ass, code, spe
   if not code:
     s, p = spe.split()
     if '.' in p:
@@ -156,41 +191,29 @@ for ass, code, spe in lasscode:
 conn.commit()
 
 # add the cds_code column to coding_sequences table, generate unique cds codes based on the species code and genbank CDS id and create indexes
-cur.execute("PRAGMA table_info(coding_sequences);")
-cdscolinfos = cursor.fetchall()
-for cdscoli, cdscolinfo in cdscolinfos:
-	if cdscolinfo['name']=='genbank_cds_id': break
-else:
-	raise ValueError, "Column 'genbank_cds_id' is missing in table coding_sequences"
-
-cur.execute("""
-SELECT coding_sequences.*, code
-FROM coding_sequences
-INNER JOIN replicons using (genomic_accession)
-INNER JOIN assemblies USING (assembly_id);
-""")
-cdsrows = curry.fetchall()
-csdnumpat = re.compile('.+_([0-9]+)$')
-csdnumrows = (cdsrow[cdscoli:]+[cdsnumpat.search(cdsrow[cdscoli]).group(1)]+cdsrow[:(cdscoli+1)] for cdsrow in cdsrows)
-
 cur.executescript("""
-CREATE TABLE coding_sequences2 (like coding_sequences);"
-ALTER TABLE coding_sequences2 ADD COLUMN cds_code varchar(20) UNIQUE;
+CREATE TABLE coding_sequences2 AS SELECT * FROM coding_sequences WHERE 0;
+ALTER TABLE coding_sequences2 ADD COLUMN cds_code varchar(20);
+INSERT INTO coding_sequences2 
+  SELECT coding_sequences.*, make_cds_code(code, genbank_cds_id) AS cds_code
+    FROM coding_sequences
+    INNER JOIN replicons USING (genomic_accession)
+    INNER JOIN assemblies USING (assembly_id);
 """)
-cur.executemany("INSERT INTO coding_sequences2 VALUES (%s)"%(','.join(['?']*len(cdscolinfo))), csdnumrows)
+conn.commit()
+
+# drop original table and create indexes and views
 cur.executescript("""
 DROP TABLE coding_sequences;
-ALTER TABLE coding_sequences2 rename to coding_sequences;
--- recreate indexes and views
-CREATE INDEX genbank_cds_id_key ON coding_sequences (genbank_cds_id);
-CREATE INDEX cds_code_key ON coding_sequences (cds_code);
-CREATE INDEX gene_family_id ON coding_sequences (gene_family_id);
-CREATE INDEX genomic_accession_key ON coding_sequences (genomic_accession);
-CREATE INDEX genomic_accession_cds_begin_key ON coding_sequences (genomic_accession, cds_begin);
-CREATE INDEX genbank_nr_protein_id_key ON coding_sequences (genbank_nr_protein_id);
+ALTER TABLE coding_sequences2 RENAME TO coding_sequences;
+CREATE INDEX cds_genbank_cds_id_key ON coding_sequences (genbank_cds_id);
+CREATE INDEX cds_cds_code_key ON coding_sequences (cds_code);
+CREATE INDEX cds_gene_family_id_key ON coding_sequences (gene_family_id);
+CREATE INDEX cds_genomic_accession_key ON coding_sequences (genomic_accession);
+CREATE INDEX cds_genomic_accession_cds_begin_key ON coding_sequences (genomic_accession, cds_begin);
+CREATE INDEX cds_genbank_nr_protein_id_key ON coding_sequences (genbank_nr_protein_id);
 CREATE VIEW gene_family_sizes AS SELECT gene_family_id, count(*) as size from coding_sequences group by gene_family_id;
-"""
-)
+""")
 conn.commit()
 
 conn.close()

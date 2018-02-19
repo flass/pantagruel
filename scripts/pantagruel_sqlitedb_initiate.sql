@@ -41,11 +41,11 @@ CREATE TABLE coding_sequences (
         gene_family_id CHAR(13)
 );
 
-CREATE INDEX genbank_cds_id_key ON coding_sequences (genbank_cds_id);
-CREATE INDEX gene_family_id_key_key ON coding_sequences (gene_family_id);
-CREATE INDEX genomic_accession_key ON coding_sequences (genomic_accession);
-CREATE INDEX genomic_accession_cds_begin_key ON coding_sequences (genomic_accession, cds_begin);
-CREATE INDEX genbank_nr_protein_id_key ON coding_sequences (genbank_nr_protein_id);
+-- CREATE INDEX cds_genbank_cds_id_key ON coding_sequences (genbank_cds_id);
+-- CREATE INDEX cds_gene_family_id_key_key ON coding_sequences (gene_family_id);
+-- CREATE INDEX cds_genomic_accession_key ON coding_sequences (genomic_accession);
+-- CREATE INDEX cds_genomic_accession_cds_begin_key ON coding_sequences (genomic_accession, cds_begin);
+-- CREATE INDEX cds_genbank_nr_protein_id_key ON coding_sequences (genbank_nr_protein_id);
 
 CREATE TABLE proteins (
         protein_id SERIAL PRIMARY KEY,
@@ -81,16 +81,16 @@ CREATE TABLE collapsed_gene_tree_clades (
 		replacement_label VARCHAR(60) DEFAULT NULL
 );
 
-CREATE INDEX gene_family_id_key ON collapsed_gene_tree_clades (gene_family_id);
-CREATE INDEX cds_code_key ON collapsed_gene_tree_clades (cds_code);
+CREATE INDEX col_clades_gene_family_id_key ON collapsed_gene_tree_clades (gene_family_id);
+CREATE INDEX col_clades_cds_code_key ON collapsed_gene_tree_clades (cds_code);
 
 CREATE TABLE uniptrotcode2taxid (
 		code varchar(5) UNIQUE NOT NULL,
 		taxid integer UNIQUE NOT NULL
 );
 
-CREATE INDEX code ON uniptrotcode2taxid (code);
-CREATE INDEX taxid ON uniptrotcode2taxid (taxid);
+CREATE INDEX uniprot_code_key ON uniptrotcode2taxid (code);
+CREATE INDEX uniprot_taxid ON uniptrotcode2taxid (taxid);
 
 
 
