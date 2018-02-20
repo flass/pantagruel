@@ -203,8 +203,8 @@ fi
 for cg in `cat ${genominfo}/assemblies_list` ; do ls $cg/*_cds_from_genomic.fna.gz >> ${genominfo}/all_cds_fasta_list ; done
 
 # generate (full protein alignment, unaligned CDS fasta) file pairs and reverse-translate alignments to get CDS (gene family) alignments
-python $dbscripts/extract_full_prot+cds_family_alignments.py ${nrprotali} ${protfamseqs}/${protorfanclust}.fasta ${genominfo}/assembly_info/allproteins_info.tab \
-${genominfo}/assembly_info/allreplicons_info.tab ${genominfo}/all_cds_fasta_list $raplogs
+python $dbscripts/extract_full_prot_and_cds_family_alignments.py ${nrprotali} ${protfamseqs}/${protorfanclust}.fasta ${genominfo}/assembly_info/allproteins_info.tab \
+${genominfo}/assembly_info/allreplicons_info.tab ${genominfo}/all_cds_fasta_list ${protali} ${famprefix} $raplogs
 
 #~ ## check consistency of full reverse translated alignement set
 ok=1
