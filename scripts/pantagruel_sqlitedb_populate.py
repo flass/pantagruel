@@ -24,7 +24,7 @@ def loadAndCurateTable(table, nfin, cursor, insertcolumns=(), sep='\t', **kw):
 		coldef = ''
 	colinfos = getTableInfos(table, cursor)
 	with open(nfin, 'r') as ftabin:
-		cursor.executemany("INSERT INTO %s %s VALUES (%s);"%(table, coldef, ','.join(['?']*len(colinfos))), (tuple(line.rstrip('n').split(sep)) for line in ftabin))
+		cursor.executemany("INSERT INTO %s %s VALUES (%s);"%(table, coldef, ','.join(['?']*len(colinfos))), (tuple(line.rstrip('\n').split(sep)) for line in ftabin))
 	replaceValuesAsNull(table, cursor, tableinfo=colinfos, **kw)
 	
 def createAndLoadTable(table, tabledef, nfin, cursor, temp=False, enddrop=False, **kw):
@@ -39,10 +39,10 @@ def make_cds_code(code, genbank_cds_id):
 	return "%s_%s"%(code, cdsnumpat.search(genbank_cds_id).group(1))
 
 
-dbname = sys.argv[1]
-protfamseqtab = os.environ['protfamseqs']+'.tab'
-protorfanclust = os.environ['protorfanclust']
-cdsorfanclust = os.environ['cdsorfanclust']
+dbname = sys.argv[1] # os.environ['sqldbname']
+protfamseqtab = sys.argv[2] # os.environ['protfamseqs']+'.tab'
+protorfanclust = sys.argv[3] # os.environ['protorfanclust']
+cdsorfanclust = sys.argv[4] # os.environ['cdsorfanclust']
 
 conn = sqlite3.connect(database=dbname)
 conn.create_function("make_cds_code", 2, make_cds_code)

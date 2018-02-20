@@ -4,8 +4,11 @@ database=$1
 dbname=$2
 assemblyinfo=$3
 protali=$4
-initiatescript=$5
-populatescript=$6
+protfamseqtab=$5
+protorfanclust=$6
+cdsorfanclust=$7
+initiatescript=$8
+populatescript=$9
 
 cd ${database}
 
@@ -29,4 +32,4 @@ cut -f2,3 ${protali}/full_families_info-noORFans.tab > genome_gene_families.tab
 cut -f1,7 ${assemblyinfo}/allproteins_info.tab | tail -n +2 | grep -vP "^\t" | sort -u > genome_protein_products.tab 
 
 # populate database
-python $populatescript $dbname
+python $populatescript $dbname ${protfamseqtab} ${protorfanclust} ${cdsorfanclust}

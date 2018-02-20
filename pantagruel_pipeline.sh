@@ -244,12 +244,13 @@ cd ${database}
 ### create PostgreSQL database "panterodb" (pan-genome enterobacteraceae database)
 # NB: expect INTERACTTIVE PROMPT here !!
 # lower-case name for SQL db: 'panterodb_v0.3'
-${dbscripts}/pantagruel_sqlitedb.sh ${database} ${entdbname,,} ${allcomplete} ${protali} ${dbscripts}/pantagruel_sqlitedb_initiate.sql ${dbscripts}/pantagruel_sqlitedb_populate.py
+${dbscripts}/pantagruel_sqlitedb.sh ${database} ${entdbname,,} ${allcomplete} ${protali} ${protfamseqs}.tab ${protorfanclust} ${cdsorfanclust} ${dbscripts}/pantagruel_sqlitedb_initiate.sql ${dbscripts}/pantagruel_sqlitedb_populate.py
 
 # generate reference for translation of genome assembly names into short identifier codes (uing UniProt "5-letter" code when available).
-psql -d ${sqldbname} -A -t -c "select assembly_id, code from genome.assemblies;" | sed -e 's/ |/\t/g' > $database/genome_codes.tab
+sqlite3 -separator '\t' ${sqldbname} "select assembly_id, code from genome.assemblies;" > $database/genome_codes.tab
 # and CDS names into code of type "SPECIES_CDSTAG" (ALE requires such a naming)
-psql -d ${sqldbname} -A -t -c "select genbank_cds_id, cds_code from genome.coding_sequences;" | cut -d'|' -f2,3 | sed -e 's/|/\t/g' > $database/cds_codes.tab
+# here split the lines with '|' and remove 1st field that is always '|'
+sqlite3 -separator "\t" ${sqldbname} "select genbank_cds_id, cds_code from coding_sequences;" | awk -F'|' '{print $NF}' | sed -e 's/|/\t/g' > $database/cds_codes.tab
 
 # translates the header of the alignment files
 export alifastacodedir=${protali}/full_cdsfam_alignments_species_code

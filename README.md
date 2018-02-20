@@ -1,8 +1,8 @@
 ![repas]
 
 # required softwares
-- **MMseqs2** for homologous sequence clustering  
-  (Install from [source code](https://github.com/soedinglab/MMseqs2)
+- **MMseqs2/Linclust** for homologous sequence clustering  
+  (Install from [source code](https://github.com/soedinglab/MMseqs2); last tested version https://github.com/soedinglab/MMseqs2/commit/c92411b91175a2362554849b8889a5770a1ae537)
 
 - **Clustal Omega** for homologous sequence alignment  
   (Install from [source code](http://www.clustal.org/omega/) or *clustalo* debian package; version used and recommended: 1.2.1)  
