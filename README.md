@@ -26,12 +26,12 @@
   (Install from [source code](https://github.com/ssolo/ALE))
   
 
-- R packages:
+- R (version 3, >=3.2.3 recommended) + packages:
   - ape
   - phytools
   
-- Python packages:
-  - [sqlite3](https://docs.python.org/2/library/sqlite3.html) (standard package in Python 2.7.14)
+- Python (version 2.7, >=2.7.13 recommended) + packages:
+  - [sqlite3](https://docs.python.org/2/library/sqlite3.html) (standard package in Python 2.7)
   - [scipy/numpy](https://www.scipy.org/scipylib/download.html)
   - [tree2](https://github.com/flass/tree2)
   - [BioPython](http://biopython.org/wiki/Download)
@@ -44,9 +44,9 @@
 
 Two version of the pipeline are distributed:  
 
-- a script version, which source code is adatable and can be deployed on high-performance computing (HPC) "cluster" Linux systems;  
+- a script version, which source code is adaptable and can be deployed on high-performance computing (HPC) "cluster" Linux systems;  
 
-- a pre-compiled Docker image that can be deployed on pretty much any platform, including swarms of virtual machines (VMs). The latter version was implemented using the [Bistro]() framework.
+- a pre-compiled Docker image that can be deployed on pretty much any platform, including swarms of virtual machines (VMs). The latter version was implemented using P. Veber's [Bistro](https://github.com/pveber/bistro) framework.
 
 
 [repas]: https://github.com/flass/pantagruel/blob/master/Pantagruels_childhood.jpg
