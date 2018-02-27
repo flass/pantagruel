@@ -235,20 +235,18 @@ tail -n +2 ${protali}/${famprefix}C000000_genome_counts-ORFans.mat >> ${protali}
 gzip ${protali}/all_families_genome_counts.mat
 
 ##############################################
-## 03. Create and Initiate PostgreSQL database
+## 03. Create and Populate SQLite database
 ##############################################
 
 export database=$entdb/03.database
 mkdir -p ${database}
 cd ${database}
-### create PostgreSQL database "panterodb" (pan-genome enterobacteraceae database)
-# NB: expect INTERACTTIVE PROMPT here !!
-# lower-case name for SQL db: 'panterodb_v0.3'
+### create and populate SQLite database
 ${dbscripts}/pantagruel_sqlitedb.sh ${database} ${entdbname,,} ${allcomplete} ${protali} ${protfamseqs}.tab ${protorfanclust} ${cdsorfanclust} ${dbscripts}/pantagruel_sqlitedb_initiate.sql ${dbscripts}/pantagruel_sqlitedb_populate.py
 
-# generate reference for translation of genome assembly names into short identifier codes (uing UniProt "5-letter" code when available).
+# dump reference table for translation of genome assembly names into short identifier codes (uing UniProt "5-letter" code when available).
 sqlite3 ${sqldbname} "select assembly_id, code from genome.assemblies;" | sed -e 's/|/\t/g' > $database/genome_codes.tab
-# and CDS names into code of type "SPECIES_CDSTAG" (ALE requires such a naming)
+# and for CDS names into code of type "SPECIES_CDSTAG" (ALE requires such a naming)
 # here split the lines with '|' and remove GenBank CDS prefix that is always 'lcl|'
 sqlite3 ${sqldbname} "select genbank_cds_id, cds_code from coding_sequences;" | sed -e 's/lcl|//g'  | sed -e 's/|/\t/g' > $database/cds_codes.tab
 
@@ -303,8 +301,17 @@ write(mad.rooting[[1]], file='${coretree}/RAxML_bestTree.${treename}.MADrooted')
 save(mad.rooting, file='${coretree}/RAxML_bestTree.${treename}.MADrooting.RData')
 EOF
 
-## RAxML, with parametric bootstrap
-raxmlHPC-PTHREADS-AVX -s ${pseudocorealn}.reduced ${raxmloptions} -b 198237 -N 500 &> ${entlogs}/raxml/${treename}_bs.log &
+#~ ## RAxML, with parametric bootstrap
+#~ raxmlHPC-PTHREADS-AVX -s ${pseudocorealn}.reduced ${raxmloptions} -b 198237 -N 500 &> ${entlogs}/raxml/${treename}_bs.log &
+## RAxML, with rapid bootstrap
+raxmlHPC-PTHREADS-AVX -s ${pseudocorealn}.reduced ${raxmloptions} -x 198237 -N 1000 &> ${entlogs}/raxml/${treename}_bs.log &
+
+
+## delineate populations of near-identical strain (based on tree with branch lengths in subs/site) and generate the population tree, i.e. the species tree withs population collapsed
+python $dbscripts/replace_species_by_pop_in_gene_trees.py -S ${speciestreeBS} --threads=8 \
+--pop_stem_conds="[('lg', '>=', 0.0005), ('bs', '>=', 80)]" --within_pop_conds="[('max', 'lg', '<=', 0.0005, -1)]"
+nspepop=$(tail -n+3 ${speciestreeBS%.*}_populations | wc -l)
+echo "Found $nspepop disctinct populations in the species tree"
 
 
 #############################################################
@@ -408,17 +415,11 @@ done
 
 export alerec=$entdb/06.ALE_reconciliation
 mkdir -p ${alerec}
-## first generate the population tree, i.e. the species tree with populations of near-identical strains collapsed, based on tree with branch lengths in subs/site
-python $dbscripts/replace_species_by_pop_in_gene_trees.py -S ${speciestreeBS}
-nspepop=$(tail -n+3 ${speciestreeBS%.*}_populations | wc -l)
-echo "Found $nspepop disctinct populations in the species tree"
-
-
 export coltreechains=${alerec}/collapsed_tree_chains
 export colmethod='replaceCCinGasinS-collapsePOPinSnotinG'
 mkdir -p ${coltreechains}/${collapsecond}
 
-## second edit the gene trees, producing the corresponding (potentially collapsed) species tree based on the 'time'-tree backbone
+## edit the gene trees, producing the corresponding (potentially collapsed) species tree based on the 'time'-tree backbone
 mkdir -p $entdb/logs/replspebypop
 tasklist=${coltreechains}_${collapsecond}_nexus_list
 ls $collapsed_genetrees/${collapsecond}/*run1.t > $tasklist
