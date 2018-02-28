@@ -29,8 +29,11 @@ export pseudocoremingenomes=0
 #~ done
 #~ export pseudocoremingenomes=$pseudocoremingenomes
 
+
+sed -e "s/REPLACEraproot/$raproot/" $dbscripts/environ_pantagruel_template.sh | sed -e "s/REPLACErapdbname/$rapdbname/" > ~/environ_pantagruel_${rapdbname}.sh
 ## load generic environment variables derived from the above
-source ~/environ_rec-a-pang.sh
+source ~/environ_pantagruel_${rapdbname}.sh
+cat "source ~/environ_pantagruel_${rapdbname}.sh" >> ~/.bashrc
 
 #################################
 ## 00. Data download and grooming
@@ -60,7 +63,7 @@ grep "scientific name"  $ncbitax/names.dmp | sed -e 's/\t|\t/\t/g' | cut -f1,2 >
 genome_assemblies.tar
 # extract assembly data
 assfolder=`tar -tf genome_assemblies.tar | grep ncbi-genomes | head -n 1`
-tar -C $assemblies/ -xf genome_assemblies.tar ncbi-genomes-*/*
+tar -C $indata/assemblies/ -xf genome_assemblies.tar ncbi-genomes-*/*
 rm genome_assemblies.tar 
 # store in centralised folder for NCBI assemblies and just record links
 mv $indata/$assfolder/* $ncbiass/
@@ -445,7 +448,7 @@ python $dbscripts/replace_species_by_pop_in_gene_trees.py -G ${tasklist} -c ${co
 EOF
 
 ## here some tasks may have failed dur to gene trees being too big for the set Python recursion limit (set to 4000 by default)
-## on recover from failed runs, con use --reuse=2 (if confident there are no partially written files)
+## on recover from failed runs, can use --reuse=2 (if confident there are no partially written files)
 
 ### perform reconciliations with ALE on that
 export colrecs=${alerec}/collapsed_recs
@@ -453,11 +456,10 @@ tasklist=${coltreechains}/${collapsecond}/${colmethod}_Gtrees_list
 ls ${coltreechains}/${collapsecond}/${colmethod}/*-Gtrees.nwk > $tasklist
 alelogs=$entdb/logs/ALE
 mkdir -p $alelogs/ale_collapsed_undat $alelogs/ale_collapsed_dated
-outrecdir=${colrecs}/${collapsecond}/${colmethod}
-mkdir -p $outrecdir/ale_collapsed_undat $outrecdir/ale_collapsed_dated
-
+outrecdir=${colrecs}/${collapsecond}/${colmethod}/ale_collapsed_undat
+mkdir -p $outrecdir
 
 # [on IC HPC as flassall@login-3-internal]
 Njob=`wc -l $tasklist | cut -f1 -d' '`
-qsubvars="tasklist=$tasklist, resultdir=$outrecdir/ale_collapsed_undat, spetree=Stree.nwk, nrecs=1000, alealgo=ALEml_undated"
-qsub -J 1-$Njob -N ale_collapsed_undat -l select=1:ncpus=1:mem=40gb,walltime=72:00:00 -o $alelogs/ale_collapsed_undat -j oe -v "$qsubvars" $HOME/scripts/misc/ALE_array_PBS.qsub
+qsubvars="tasklist=$tasklist, resultdir=$outrecdir, spetree=Stree.nwk, nrecs=1000, alealgo=ALEml_undated"
+qsub -J 1-$Njob -N ale_collapsed_undat -l select=1:ncpus=1:mem=20gb,walltime=24:00:00 -o $alelogs/ale_collapsed_undat -j oe -v "$qsubvars" $HOME/scripts/misc/ALE_array_PBS.qsub

@@ -1,3 +1,9 @@
+find a story behind the name! or a derivation of the name.  
+
+- PANTEGRUALE for "PANgenome inTEGRation Using ALE" ?
+
+-------------
+
 options to create:
 
 - step 0 (raw data downdload and grooming):  
