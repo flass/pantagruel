@@ -29,7 +29,6 @@ export pseudocoremingenomes=0
 #~ done
 #~ export pseudocoremingenomes=$pseudocoremingenomes
 
-
 sed -e "s/REPLACEraproot/$raproot/" $dbscripts/environ_pantagruel_template.sh | sed -e "s/REPLACErapdbname/$rapdbname/" > ~/environ_pantagruel_${rapdbname}.sh
 ## load generic environment variables derived from the above
 source ~/environ_pantagruel_${rapdbname}.sh
@@ -48,7 +47,7 @@ host='ftp.ncbi.nlm.nih.gov'
 openparam=" -u $user,$pswd $host"
 source="/pub/taxonomy"
 files="taxcat.tar.gz* taxcat_readme.txt taxdump.tar.gz* taxdump_readme.txt"
-ncbitax="/enterobac/NCBI/Taxonomy"
+ncbitax="${raproot}/NCBI/Taxonomy"
 mkdir -p $ncbitax
 lftp -c "open $openparam; cd $source ; mget -O $ncbitax/ $files ; quit"
 mv $ncbitax/README $ncbitax/readme_accession2taxid
@@ -60,41 +59,20 @@ grep "scientific name"  $ncbitax/names.dmp | sed -e 's/\t|\t/\t/g' | cut -f1,2 >
 # Search Assembly database using a query defined as convenient:	
 # e.g.: 'txid543[Organism:exp] AND ("latest refseq"[filter] AND all[filter] NOT anomalous[filter]) AND ("complete genome"[filter])'
 # save assemblies (Download Assemblies > Source Database: RefSeq; File type: All file type (including assembly-structure directory)) as
-genome_assemblies.tar
+$indata/genome_assemblies.tar
 # extract assembly data
-assfolder=`tar -tf genome_assemblies.tar | grep ncbi-genomes | head -n 1`
-tar -C $indata/assemblies/ -xf genome_assemblies.tar ncbi-genomes-*/*
+tar -C $indata/assemblies/ -xf genome_assemblies.tar
+assfolder=`ls -d $indata/ncbi-genomes-* | head -n 1`
 rm genome_assemblies.tar 
 # store in centralised folder for NCBI assemblies and just record links
-mv $indata/$assfolder/* $ncbiass/
-mv $indata/$assfolder/ $indata/assemblies/
+mv $assfolder/* $ncbiass/
+mv $assfolder/ $indata/assemblies/
 for ass in `cut -f3 $indata/assembly_result.txt | tail -n +2` ; do ln -s $ncbiass/${ass}_* $indata/assemblies/  ; done
 
 
 ### Groom data
 ## generate assembly statistics to verify genome finishing status
-cd ${assemblies}/
-mkdir -p ${indata}/assembly_stats/
-filetag="_assembly_stats.txt"
-patasslev="Assembly level"
-patseqteq="Sequencing technology"
-patcontig="all\tall\tall\tall\tcontig-"	
-# assembly status
-sedfilter0="s@\(.\+\)/.\+${filetag}:# ${patasslev}: \(.\+\)@\1\t\2@g"
-grep "$patasslev" */*${filetag} | sed -e "$sedfilter0" | sed -e 's/\r//g' > ${indata}/assembly_stats/assembly_level.tab
-# assembly status
-sedfilter0="s@\(.\+\)/.\+${filetag}:# ${patasslev}: \(.\+\)@\1\t\2@g"
-grep "$patasslev" */*${filetag} | sed -e "$sedfilter0" | sed -e 's/\r//g' > ${indata}/assembly_stats/assembly_level.tab
-# sequencing technology
-sedfilter1="s@\(.\+\)/.\+${filetag}:# ${patseqteq}: \(.\+\)@\1\t\2@g"
-sedfilter2="s@\(.\+\)/.\+${filetag}@\1\tNA@g"
-grep "$patseqteq" */*${filetag} | sed -e "$sedfilter1" | sed -e 's/\r//g' > ${indata}/assembly_stats/sequencing_technology.tab
-grep -L "$patseqteq" */*${filetag} | sed -e "$sedfilter2" | sed -e 's/\r//g' >> ${indata}/assembly_stats/sequencing_technology.tab
-# contigs
-for info in count N50 ; do
-  sedfilter3="s@\(.\+\)/\1${filetag}:${patcontig}${info}\t\(.\+\)@\1\t\2@g"
-  grep -P $patcontig */*${filetag} | sed -e $sedfilter3 | grep -v $filetag > ${indata}/assembly_stats/contig-${info}
-done
+${dbscripts}/groom_refseq_data.sh ${indata}/assemblies ${indata}/assembly_stats
 
 mkdir ${genominfo}/
 rm -f ${genominfo}/assemblies*
