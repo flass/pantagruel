@@ -398,13 +398,13 @@ def combineMonophyleticPopulations(dpopcount, poptree, dnamepops, dpopnd={}, max
 def getSpeFromGenes(leaflabs, species_sep='_', **kw):
 	return [leaflab.split(species_sep)[0] for leaflab in leaflabs]
 
-def getCladeAncestor(dpopcount, dnamepops, spetree, dspe2pop, **kw):
+def getCladeAncestor(dpopcount, dnamepops, spetree, dspe2pop, medpopcountthresh=0.5, **kw):
 	verbose = kw.get('verbose', False)
-	## determine who was there first based on:
-	# 1) their median frequency being >= 1 (True rank first) 
+	## determine whatpopulation was the original donor of the sequence based on:
+	# 1) their median frequency being >= 0.5 AND their census size > 1 (lone strains don't ount) (True rank first) 
 	# 2) the higher depth of the (joint) population ancestor in the species tree (= minimum cumulated branch distance from the root) [better with ultrametric] 
 	# 3) the larger census of encompassed species (= sample size)
-	allpopdistr = [(popname, median(popcount)>=1, spetree[popname], popcount) for popname, popcount in dpopcount.iteritems()]
+	allpopdistr = [(popname, (median(popcount)>=medpopcountthresh and len(popcount)>1), spetree[popname], popcount) for popname, popcount in dpopcount.iteritems()]
 	if len(allpopdistr) > 1:			
 		## rank populations according to 
 		# from best values (index 0) to worst (index -1), breaking ties with sample size (more = better)
