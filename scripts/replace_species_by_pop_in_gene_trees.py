@@ -399,23 +399,38 @@ def getSpeFromGenes(leaflabs, species_sep='_', **kw):
 	return [leaflab.split(species_sep)[0] for leaflab in leaflabs]
 
 def getCladeAncestor(dpopcount, dnamepops, spetree, dspe2pop, medpopcountthresh=0.5, **kw):
+	"""rank populations or population groups based on a sequence of criteria tofind the most likely population of origin of the sequences in the collapsed clade.
+	
+	determine what population (or group of populations) was the original donor of the sequence based on:
+	# 1) the median gene occurence frequency being >= 0.5 AND the population census being > 1 (i.e. lone strains don't count) [True rank first] 
+	# 2) the higher depth of the (joint) population ancestor in the species tree (= minimum cumulated branch distance from the root) [best with ultrametric] 
+	# 3) the larger census (= count of species classified in the population(s), regarless of the gene presence/absence = sample size when estimating freq)
+	# 4) the mean gene occurence frequency
+	
+	High frequncy in lone strain is disregarded in first criterion 
+	because lone strain lineage tend to branch higher in the species tree, 
+	and thus to always rank first on the 2nd criterion.
+	riterion based on mean frequency is considered last only to break ties,
+	because mean is too sensitive to sample size
+	"""
+	def eval_criteria(x, medth=medpopcountthresh):
+		"""expect vector with (pop_name, popcount, pop_anc_node_in_spe_tree)"""
+		medc = median(x[1]) ; meanc = mean(x[1]) ; lenc = len(x[1])
+		return ((medc>=medth and lenc>1), -1*(x[2].distance_root()), lenc, meanc)
+	
 	verbose = kw.get('verbose', False)
-	## determine whatpopulation was the original donor of the sequence based on:
-	# 1) their median frequency being >= 0.5 AND their census size > 1 (lone strains don't ount) (True rank first) 
-	# 2) the higher depth of the (joint) population ancestor in the species tree (= minimum cumulated branch distance from the root) [better with ultrametric] 
-	# 3) the larger census of encompassed species (= sample size)
-	allpopdistr = [(popname, (median(popcount)>=medpopcountthresh and len(popcount)>1), spetree[popname], popcount) for popname, popcount in dpopcount.iteritems()]
+	allpopdistr = [(popname, popcount, spetree[popname]) for popname, popcount in dpopcount.iteritems()]
 	if len(allpopdistr) > 1:			
 		## rank populations according to 
-		# from best values (index 0) to worst (index -1), breaking ties with sample size (more = better)
-		allpopdistr.sort(key=lambda x: (x[1], -1*(x[2].distance_root()), len(x[3])), reverse=True) 
+		# from best values (index 0) to worst (index -1), breaking ties with sample size (more = better) and mean freq (higher = better)
+		allpopdistr.sort(key=lambda x: eval_criteria(x), reverse=True) 
 		if verbose:
 			print "\tancestor_to_root_dist\toccurence/sample_size\tpopname"
 			for x in allpopdistr[:5]:
-				print "\t".join(str(y) for y in ['', x[2].distance_root(), "%d/%d"%(sum(x[3]),len(x[3])), repr(x[0])])
+				print "\t".join(str(y) for y in ['', x[2].distance_root(), "%d/%d"%(sum(x[1]),len(x[1])), repr(x[0])])
 			u = len(allpopdistr)-5
 			if u>0: print "\t... (%d other pops)"%u
-	ancpopname, medcounts, ancpopclade, indcounts = allpopdistr[0]
+	ancpopname, indcounts, ancpopclade = allpopdistr[0]
 	# from a proposed set of ancestral population, record the related populations that are missing the gene
 	# but are located below the the MRCA of ancestral populations (putative losses since the MRCA)
 	#~ lostpopnames = list((set(ancpopclade.get_children_labels()) & set(dnamepops.keys())) - set(addStrtoTuple(ancpopname, ())))
