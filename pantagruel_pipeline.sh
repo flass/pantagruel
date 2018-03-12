@@ -16,7 +16,7 @@ datepad="                     "
 #### Set mandatory environment variables / parameters
 export myemail='me.myself@respectable-institu.ti.on'
 export raproot='/path/to/base/folder/for/all/this/business'
-export dbscripts='/path/to/pipeline/scripts'
+export ptgscripts='/path/to/pantagruel_pipeline/scripts'
 
 export rapdbname='aBoldDatabaseName' # mostly name of the top folder
 export famprefix='ABCDE'             # alphanumerical prefix (no number first) of the names for homologous protein/gene family clusters; will be appended with a 'P' for proteins and a 'C' for CDSs.
@@ -29,7 +29,7 @@ export pseudocoremingenomes=0
 #~ done
 #~ export pseudocoremingenomes=$pseudocoremingenomes
 
-sed -e "s/REPLACEraproot/$raproot/" $dbscripts/environ_pantagruel_template.sh | sed -e "s/REPLACErapdbname/$rapdbname/" > ~/environ_pantagruel_${rapdbname}.sh
+sed -e "s/REPLACEraproot/$raproot/" ${ptgscripts}/environ_pantagruel_template.sh | sed -e "s/REPLACErapdbname/$rapdbname/" | sed -e "s/REPLACEptgscripts/$ptgscripts/" > ~/environ_pantagruel_${rapdbname}.sh
 ## load generic environment variables derived from the above
 source ~/environ_pantagruel_${rapdbname}.sh
 cat "source ~/environ_pantagruel_${rapdbname}.sh" >> ~/.bashrc
@@ -72,7 +72,7 @@ for ass in `cut -f3 $indata/assembly_result.txt | tail -n +2` ; do ln -s $ncbias
 
 ### Groom data
 ## generate assembly statistics to verify genome finishing status
-${dbscripts}/groom_refseq_data.sh ${indata}/assemblies ${indata}/assembly_stats
+${ptgscripts}/groom_refseq_data.sh ${indata}/assemblies ${indata}/assembly_stats
 
 mkdir ${genominfo}/
 rm -f ${genominfo}/assemblies*
@@ -84,7 +84,7 @@ if [ -z "$tech" ] ; then tech='NA' ; fi
 echo -e "${ass}\t${tech}" ; done > ${indata}/sequencing_technology.tab
 
 ## extract assembly/sample metadata from flat files
-python $dbscripts/extract_metadata_from_gbff.py --assembly_folder_list=${genominfo}/assemblies_withallstrains_list --add_raw_metadata=${genominfo}/manual_metadata_dictionary.tab \
+python ${ptgscripts}/extract_metadata_from_gbff.py --assembly_folder_list=${genominfo}/assemblies_withallstrains_list --add_raw_metadata=${genominfo}/manual_metadata_dictionary.tab \
 --add_curated_metadata=${genominfo}/manual_curated_metadata_dictionary.tab --add_dbxref=${genominfo}/manual_dbxrefs.tab --add_assembly_info_dir=${indata}/assembly_stats \
 --default_species_name="unclassified organism"
 # remove lab strains
@@ -95,7 +95,7 @@ for strain in `cat ${genominfo}/assemblies_labstrains_list ${genominfo}/assembli
 done
 diff ${genominfo}/assemblies_withallstrains_list ${genominfo}/assemblies_excludestrains_list | grep '<' | cut -d' ' -f2 > ${genominfo}/assemblies_list
 # regenerate metadata tables without the lab strains
-python $dbscripts/extract_metadata_from_gbff.py --assembly_folder_list=${genominfo}/assemblies_list --add_raw_metadata=${genominfo}/manual_metadata_dictionary.tab \
+python ${ptgscripts}/extract_metadata_from_gbff.py --assembly_folder_list=${genominfo}/assemblies_list --add_raw_metadata=${genominfo}/manual_metadata_dictionary.tab \
 --add_curated_metadata=${genominfo}/manual_curated_metadata_dictionary.tab --add_dbxref=${genominfo}/manual_dbxrefs.tab --add_assembly_info_dir=${indata}/assembly_stats \
 --default_species_name="unclassified organism"
 
@@ -114,11 +114,11 @@ sed -e 's#\(.\+\)/\([^/]\+$\)#\1/\2/\2_protein\.faa\.gz#g' ${genominfo}/assembli
 for faa in `cat ${faacomplete}_list` ; do zcat $faa >> ${faacomplete} ; echo $faa ; done
 grep -c '>' ${faacomplete}
 # dereplicate proteins in db
-python $dbscripts/dereplicate_fasta.py $faacomplete
+python ${ptgscripts}/dereplicate_fasta.py $faacomplete
 echo "$(dateprompt)-- $(grep -c '>' $nrfaacomplete) non-redundant proteins in dataset"
 
 ## build database of species-to-sequence
-python $dbscripts/allgenome_gff2db.py ${genominfo}/assemblies_list ${genominfo}/assembly_info $ncbitax/scientific_names.dmp
+python ${ptgscripts}/allgenome_gff2db.py ${genominfo}/assemblies_list ${genominfo}/assembly_info $ncbitax/scientific_names.dmp
 
 ## clustering of proteome db with  MMSeqs2 
 # (https://github.com/soedinglab/MMseqs2,  Steinegger M and Soeding J. Sensitive protein sequence searching for the analysis of massive data sets. bioRxiv, doi: 10.1101/079681 (2016))
@@ -135,7 +135,7 @@ mmseqs cluster ${nrfaacomplete}.mmseqs-seqdb $mmseqsclout $mmseqstmp &> $mmseqsl
 # generate indexed fasta file listing all protein families
 mmseqs createseqfiledb ${nrfaacomplete}.mmseqs-seqdb $mmseqsclout ${mmseqsclout}_clusters
 # generate separate fasta files with family identifiers distinc from representative sequence name
-python $dbscripts/split_mmseqs-clustdb_fasta.py ${mmseqsclout}_clusters "${famprefix}P" 6
+python ${ptgscripts}/split_mmseqs-clustdb_fasta.py ${mmseqsclout}_clusters "${famprefix}P" 6
 echo "$(dateprompt)-- $(wc -l ${mmseqsclout}_clusters_fasta.tab | cut -d' ' -f1) non-redundant proteins"
 echo "$(dateprompt)-- classified into $(ls ${mmseqsclout}_clusters_fasta/ | wc -l) clusters"
 echo "${datepad}-- including artificial cluster ${famprefix}P000000 gathering $(grep -c '>' ${mmseqsclout}_clusters_fasta/${famprefix}P000000.fasta) ORFan nr proteins"
@@ -155,12 +155,12 @@ mkdir -p $nrprotali
 # so less threads than avalilable cores (e.g. use 1 process / 2 cores) are specified
 # so each process can run at least at 100% and mobilize 2 cores when parrallel,
 # or more when cores unused by other concurent pocesses (during their sequential phase)
-python $dbscripts/schedule_ali_task.py $protfamseqs.tab $protfamseqs $protali/$(basename ${protali})_tasklist $((`nproc` / 2))
+python ${ptgscripts}/schedule_ali_task.py $protfamseqs.tab $protfamseqs $protali/$(basename ${protali})_tasklist $((`nproc` / 2))
 
 ## align non-redundant protein families
 for tasklist in `ls $protali/${protali##*.}_tasklist.*` ; do
   bntl=`basename $tasklist`
-  $dbscripts/run_clustalo_sequential.sh $tasklist $nrprotali &> $entlogs/clustalo/$bntl.clustalo.log &
+  ${ptgscripts}/run_clustalo_sequential.sh $tasklist $nrprotali &> $entlogs/clustalo/$bntl.clustalo.log &
 done
 
 ## check consistency of non-redundant protein sets
@@ -184,7 +184,7 @@ fi
 for cg in `cat ${genominfo}/assemblies_list` ; do ls $cg/*_cds_from_genomic.fna.gz >> ${genominfo}/all_cds_fasta_list ; done
 
 # generate (full protein alignment, unaligned CDS fasta) file pairs and reverse-translate alignments to get CDS (gene family) alignments
-python $dbscripts/extract_full_prot_and_cds_family_alignments.py ${nrprotali} ${protfamseqs}/${protorfanclust}.fasta ${genominfo}/assembly_info/allproteins_info.tab \
+python ${ptgscripts}/extract_full_prot_and_cds_family_alignments.py ${nrprotali} ${protfamseqs}/${protorfanclust}.fasta ${genominfo}/assembly_info/allproteins_info.tab \
 ${genominfo}/assembly_info/allreplicons_info.tab ${genominfo}/all_cds_fasta_list ${protali} ${famprefix} $raplogs
 
 #~ ## check consistency of full reverse translated alignement set
@@ -203,7 +203,7 @@ if [ ok -lt 1 ] ; then
   >&2 echo "WARNING $(dateprompt): failure of pal2nal.pl reverse translation step for families: $(cat $enttmp/pal2nal_missed_fams | xargs)"
   >&2 echo "will use tranposeAlignmentProt2CDS.py instead, a less safe, but more permissive method for generating CDS alignment"
   for fam in `cat $enttmp/pal2nal_missed_fams` ; do
-    $dbscripts/tranposeAlignmentProt2CDS.py $protali/full_cdsfam_fasta/$fam.fasta $protali/full_protfam_alignments/$fam.aln $protali/full_cdsfam_alignments/$fam.aln
+    ${ptgscripts}/tranposeAlignmentProt2CDS.py $protali/full_cdsfam_fasta/$fam.fasta $protali/full_protfam_alignments/$fam.aln $protali/full_cdsfam_alignments/$fam.aln
   done
 fi
 # protein alignments do not match the CDS sequences
@@ -223,7 +223,7 @@ export database=$entdb/03.database
 mkdir -p ${database}
 cd ${database}
 ### create and populate SQLite database
-${dbscripts}/pantagruel_sqlitedb.sh ${database} ${entdbname,,} ${allcomplete} ${protali} ${protfamseqs}.tab ${protorfanclust} ${cdsorfanclust} ${dbscripts}/pantagruel_sqlitedb_initiate.sql ${dbscripts}/pantagruel_sqlitedb_populate.py
+${ptgscripts}/pantagruel_sqlitedb.sh ${database} ${entdbname,,} ${allcomplete} ${protali} ${protfamseqs}.tab ${protorfanclust} ${cdsorfanclust} ${ptgscripts}/pantagruel_sqlitedb_initiate.sql ${ptgscripts}/pantagruel_sqlitedb_populate.py
 
 # dump reference table for translation of genome assembly names into short identifier codes (uing UniProt "5-letter" code when available).
 sqlite3 ${sqldbname} "select assembly_id, code from genome.assemblies;" | sed -e 's/|/\t/g' > $database/genome_codes.tab
@@ -235,8 +235,8 @@ sqlite3 ${sqldbname} "select genbank_cds_id, cds_code from coding_sequences;" | 
 export alifastacodedir=${protali}/full_cdsfam_alignments_species_code
 mkdir -p ${alifastacodedir}
 # use parrallel bash command
-$dbscripts/lsfullpath.py ${protali}/full_cdsfam_alignments .aln > ${protali}/full_cdsfam_alignment_list
-$dbscripts/genbank2code_fastaseqnames.py ${protali}/full_cdsfam_alignment_list ${database}/cds_codes.tab ${alifastacodedir} > $entdb/logs/genbank2code_fastaseqnames.log
+${ptgscripts}/lsfullpath.py ${protali}/full_cdsfam_alignments .aln > ${protali}/full_cdsfam_alignment_list
+${ptgscripts}/genbank2code_fastaseqnames.py ${protali}/full_cdsfam_alignment_list ${database}/cds_codes.tab ${alifastacodedir} > $entdb/logs/genbank2code_fastaseqnames.log
 
 
 ###########################################
@@ -244,7 +244,7 @@ $dbscripts/genbank2code_fastaseqnames.py ${protali}/full_cdsfam_alignment_list $
 ###########################################
 
 # have glimpse of (almost-)universal unicopy gene family distribution and select those intended for core-genome tree given pseudocoremingenomes threshold
-$dbscripts/select_pseudocore_genefams.r 
+${ptgscripts}/select_pseudocore_genefams.r 
 # new value of pseudocoremingenomes stored in script exit status
 export pseudocoremingenomes=$?
 
@@ -255,7 +255,7 @@ export pseudocore=${coregenome}/pseudo-core-${pseudocoremingenomes}-unicopy
 rm -f ${pseudocore}_cds_aln_list
 for fam in `cat ${protali}/pseudo-core-${pseudocoremingenomes}-unicopy_families.tab` ; do ls ${alifastacodedir}/$fam.codes.aln >> ${pseudocore}_cds_aln_list ; done
 # concatenate pseudo-core CDS alignments
-python $dbscripts/concat.py ${pseudocore}_cds_aln_list ${pseudocore}_concat_cds.aln
+python ${ptgscripts}/concat.py ${pseudocore}_cds_aln_list ${pseudocore}_concat_cds.aln
 rm ${alifastacodedir}/*_all_sp_new
 
 ### compute species tree using RAxML
@@ -276,7 +276,7 @@ raxmlHPC-PTHREADS-AVX -s ${pseudocorealn}.reduced ${raxmloptions} &> ${entlogs}/
 
 ## root tree with MAD (Tria et al. Nat Ecol Evol (2017) Phylogenetic rooting using minimal ancestor deviation. s41559-017-0193 doi:10.1038/s41559-017-0193)
 R BATCH --vanilla --slave << EOF
-source('${dbscripts}/mad_R/MAD.R')
+source('${ptgscripts}/mad_R/MAD.R')
 mad.rooting = MAD(readLines('${coretree}/RAxML_bestTree.${treename}'), 'full')
 write(mad.rooting[[1]], file='${coretree}/RAxML_bestTree.${treename}.MADrooted')
 save(mad.rooting, file='${coretree}/RAxML_bestTree.${treename}.MADrooting.RData')
@@ -289,7 +289,7 @@ raxmlHPC-PTHREADS-AVX -s ${pseudocorealn}.reduced ${raxmloptions} -x 198237 -N 1
 
 
 ## delineate populations of near-identical strain (based on tree with branch lengths in subs/site) and generate the population tree, i.e. the species tree withs population collapsed
-python $dbscripts/replace_species_by_pop_in_gene_trees.py -S ${speciestreeBS} --threads=8 \
+python ${ptgscripts}/replace_species_by_pop_in_gene_trees.py -S ${speciestreeBS} --threads=8 \
 --pop_stem_conds="[('lg', '>=', 0.0005), ('bs', '>=', 80)]" --within_pop_conds="[('max', 'lg', '<=', 0.0005, -1)]"
 nspepop=$(tail -n+3 ${speciestreeBS%.*}_populations | wc -l)
 echo "Found $nspepop disctinct populations in the species tree"
@@ -305,7 +305,7 @@ mkdir -p ${mlgenetrees}
 mkdir -p $entlogs/raxml/gene_trees
 
 basequery="select gene_family_id, size from genome.gene_family_sizes where gene_family_id is not null and gene_family_id!='$cdsorfanclust'"
-python $dbscripts/query_gene_fam_sets.py --db.con.par="dbname=panterodb_v0.3" --outprefix='cdsfams_' --dirout=${protali} \
+python ${ptgscripts}/query_gene_fam_sets.py --db.con.par="dbname=panterodb_v0.3" --outprefix='cdsfams_' --dirout=${protali} \
  --base.query=${basequery} --famsets.min.sizes="4,500,2000,10000" --famsets.max.sizes="499,1999,9999,"
 
 ## compute first pass of gene trees with RAxML, using rapid bootstrap to estimate branch supports
@@ -324,10 +324,10 @@ fi
 qsubvars="tasklist=$tasklist,outputdir=$mlgenetrees"
 Njob=`wc -l ${tasklist} | cut -f1 -d' '`
 chunksize=3000
-jobranges=($($dbscripts/get_jobranges.py $chunksize $Njob))
+jobranges=($(${ptgscripts}/get_jobranges.py $chunksize $Njob))
 for jobrange in ${jobranges[@]} ; do
 echo "jobrange=$jobrange"
-qsub -J $jobrange -l walltime=${wt}:00:00 -l select=1:ncpus=4:mem=${mem}gb -N raxml_gene_trees_$(basename $cdsfam2phylo) -o $entlogs/raxml/gene_trees -j oe -v "$qsubvars" $dbscripts/raxml_array_PBS.qsub
+qsub -J $jobrange -l walltime=${wt}:00:00 -l select=1:ncpus=4:mem=${mem}gb -N raxml_gene_trees_$(basename $cdsfam2phylo) -o $entlogs/raxml/gene_trees -j oe -v "$qsubvars" ${ptgscripts}/raxml_array_PBS.qsub
 done
 done
 
@@ -340,11 +340,11 @@ withinfun='median'
 export collapsecond=${criterion}_stem${cladesupp}_within${withinfun}${subcladesupp}
 mkdir -p ${colalinexuscodedir}/${collapsecond}
 mlgenetreelist=${mlgenetrees%*s}_list
-$dbscripts/lsfullpath.py ${mlgenetrees}/${mainresulttag} | sort > ${mlgenetreelist}
+${ptgscripts}/lsfullpath.py ${mlgenetrees}/${mainresulttag} | sort > ${mlgenetreelist}
 
 Njob=`wc -l ${mlgenetreelist} | cut -f1 -d' '`
 chunksize=3000
-jobranges=($($dbscripts/get_jobranges.py $chunksize $Njob))
+jobranges=($(${ptgscripts}/get_jobranges.py $chunksize $Njob))
 ncpus=4
 
 for jobrange in ${jobranges[@]} ; do
@@ -352,7 +352,7 @@ beg=`echo $jobrange | cut -d'-' -f1`
 tail -n +${beg} ${mlgenetreelist} | head -n ${chunksize} > ${mlgenetreelist}_${jobrange}
 qsub -N mark_unresolved_clades -l select=1:ncpus=${ncpus}:mem=16gb,walltime=4:00:00 -o ${entlogs}/mark_unresolved_clades.${collapsecond}_${jobrange}.log -j oe -V -S /usr/bin/bash << EOF
 module load python
-python $dbscripts/mark_unresolved_clades.py --in_gene_tree_list=${mlgenetreelist}_${jobrange} --diraln=${alifastacodedir} --fmt_aln_in='fasta' \
+python ${ptgscripts}/mark_unresolved_clades.py --in_gene_tree_list=${mlgenetreelist}_${jobrange} --diraln=${alifastacodedir} --fmt_aln_in='fasta' \
  --threads=${ncpus} --dirout=${colalinexuscodedir}/${collapsecond} --no_constrained_clade_subalns_output --dir_identseq=${mlgenetrees}/identical_sequences \
  --clade_stem_conds="[('$criterion', '>=', $cladesupp)]" --within_clade_conds="[('$withinfun', '$criterion', '<=', $subcladesupp, -1), ('max', '$criterion', '<', $cladesupp, -1)]"
 EOF
@@ -362,27 +362,27 @@ done
 export collapsed_genetrees=${genetrees}/collapsed_mrbayes_trees
 mkdir -p ${collapsed_genetrees}/${collapsecond}
 alreadytrees=${collapsed_genetrees}_${collapsecond}_list
-$dbscripts/lsfullpath.py ${collapsed_genetrees}/${collapsecond} con.tre > $alreadytrees
+${ptgscripts}/lsfullpath.py ${collapsed_genetrees}/${collapsecond} con.tre > $alreadytrees
 alreadytasklist=${colalinexuscodedir}/${collapsecond}_ali_list_done
 sed -e "s#${collapsed_genetrees}/${collapsecond}/\(.\+\)\.mb\.con\.tre#${colalinexuscodedir}/${collapsecond}/collapsed_alns/\1\.nex#g" $alreadytrees > $alreadytasklist
 
 tasklist=${colalinexuscodedir}/${collapsecond}_ali_list
 rm -f $tasklist
-$dbscripts/lsfullpath.py ${colalinexuscodedir}/${collapsecond}/collapsed_alns > $tasklist
+${ptgscripts}/lsfullpath.py ${colalinexuscodedir}/${collapsecond}/collapsed_alns > $tasklist
 sort $tasklist > $tasklist.sort
 sort $alreadytasklist > $alreadytasklist.sort
 dtag=$(date +"%Y-%m-%d-%H-%M-%S")
 comm -2 -3  $tasklist.sort $alreadytasklist.sort > ${tasklist}_todo_${dtag}
 Njob=`wc -l ${tasklist}_todo_${dtag} | cut -f1 -d' '`
 chunksize=1000
-jobranges=($($dbscripts/get_jobranges.py $chunksize $Njob))
+jobranges=($(${ptgscripts}/get_jobranges.py $chunksize $Njob))
 nchains=4
 nruns=2
 ncpus=$(( $nchains * $nruns ))
 qsubvar="mbversion=3.2.6, tasklist=${tasklist}_todo_${dtag}, outputdir=${collapsed_genetrees}/${collapsecond}, mbmcmcpopt='Nruns=${nruns} Ngen=2000000 Nchains=${nchains}'"
 for jobrange in ${jobranges[@]}	; do
 echo $jobrange $qsubvar
-qsub -J $jobrange -N mb_panterodb -l select=1:ncpus=${ncpus}:mem=16gb -o ${entlogs}/mrbayes/collapsed_mrbayes_trees_${dtag}_${jobrange} -v "$qsubvar" ${dbscripts}/mrbayes_array_PBS.qsub
+qsub -J $jobrange -N mb_panterodb -l select=1:ncpus=${ncpus}:mem=16gb -o ${entlogs}/mrbayes/collapsed_mrbayes_trees_${dtag}_${jobrange} -v "$qsubvar" ${ptgscripts}/mrbayes_array_PBS.qsub
 done
 
 
@@ -411,7 +411,7 @@ replrun=$(date +'%d%m%Y')
 ### INCORRECT WRITING OF TREES BY BioPython ; requires correction at line 338 of source file Bio.Phylo.NewickIO.py => reuires writing permission on lib files; usuall impossible on HPC systems
 
 # local parallel run
-python $dbscripts/replace_species_by_pop_in_gene_trees.py -G ${tasklist} -c ${colalinexuscodedir}/${collapsecond} -S ${speciestreeBS}.lsd.newick -o ${coltreechains}/${collapsecond} \
+python ${ptgscripts}/replace_species_by_pop_in_gene_trees.py -G ${tasklist} -c ${colalinexuscodedir}/${collapsecond} -S ${speciestreeBS}.lsd.newick -o ${coltreechains}/${collapsecond} \
  --populations=${speciestreeBS%.*}_populations --population_tree=${speciestreeBS%.*}_collapsedPopulations.nwk --population_node_distance=${speciestreeBS%.*}_interNodeDistPopulations \
  --dir_full_gene_trees=${mlgenetrees}/rootedTree --method=${colmethod} --threads=${ncpus} --reuse=0 --verbose=0 --max.recursion.limit=12000 --logfile=${repllogs}_${replrun}.log &
 
@@ -420,7 +420,7 @@ python $dbscripts/replace_species_by_pop_in_gene_trees.py -G ${tasklist} -c ${co
 # PBS-submitted parallel job
 qsub -N replSpePopinGs -l select=1:ncpus=${ncpus}:mem=64gb,walltime=24:00:00 -o $repllogd -j oe -V << EOF
 module load python
-python $dbscripts/replace_species_by_pop_in_gene_trees.py -G ${tasklist} -c ${colalinexuscodedir}/${collapsecond} -S ${speciestreeBS}.lsd.newick -o ${coltreechains}/${collapsecond} \
+python ${ptgscripts}/replace_species_by_pop_in_gene_trees.py -G ${tasklist} -c ${colalinexuscodedir}/${collapsecond} -S ${speciestreeBS}.lsd.newick -o ${coltreechains}/${collapsecond} \
  --populations=${speciestreeBS%.*}_populations --population_tree=${speciestreeBS%.*}_collapsedPopulations.nwk --population_node_distance=${speciestreeBS%.*}_interNodeDistPopulations \
  --dir_full_gene_trees=${mlgenetrees}/rootedTree --method=${colmethod} --threads=${ncpus} --reuse=0 --max.recursion.limit=12000 --logfile=${repllogs}_${replrun}.log
 EOF
