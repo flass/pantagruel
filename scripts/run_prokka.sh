@@ -8,7 +8,7 @@ if [ -z $seqcentre ] ; then
   $seqcentre='XXX' 
 fi
 
-prokkadir=$(dirname `which prokka`)/../
+prokkablastdb=$(dirname $(dirname $(ls -l `which prokka` | awk '{ print $NF }')))/db
 
 echo "### assembly: $gproject; contig files from: ${allcontigs}/"
 head -n1 $refstrains
@@ -20,8 +20,8 @@ if [[ -z $genus || -z $species || -z $strain || -z $taxid || -z $loctagprefix ]]
   echo "cannot run Prokka, exit now."
   exit 1
 fi
-mkdir -p $outdir
-if [ -e $prokkadir/db/genus/$genus ] ; then
+mkdir -p ${outdir}
+if [ -e ${prokkablastdb}/genus/${genus} ] ; then
  usegenus="--usegenus"
 fi
 prokkaopts="
