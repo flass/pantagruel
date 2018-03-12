@@ -29,7 +29,7 @@ export pseudocoremingenomes=0
 #~ done
 #~ export pseudocoremingenomes=$pseudocoremingenomes
 
-sed -e "s/REPLACEraproot/$raproot/" ${ptgscripts}/environ_pantagruel_template.sh | sed -e "s/REPLACErapdbname/$rapdbname/" | sed -e "s/REPLACEptgscripts/$ptgscripts/" > ~/environ_pantagruel_${rapdbname}.sh
+sed -e "s#REPLACEraproot#$raproot#" ${ptgscripts}/environ_pantagruel_template.sh | sed -e "s#REPLACErapdbname#$rapdbname#" | sed -e "s#REPLACEptgscripts#$ptgscripts#" > ~/environ_pantagruel_${rapdbname}.sh
 ## load generic environment variables derived from the above
 source ~/environ_pantagruel_${rapdbname}.sh
 cat "source ~/environ_pantagruel_${rapdbname}.sh" >> ~/.bashrc

@@ -15,6 +15,11 @@ head -n1 $refstrains
 taxo=(`grep $gproject $refstrains`)
 echo ${taxo[@]}
 genus=${taxo[1]} ; species=${taxo[2]%*.} ; strain=${taxo[3]} ; taxid=${taxo[4]} ; loctagprefix=${taxo[5]}
+if [[ -z $genus || -z $species || -z $strain || -z $taxid || -z $loctagprefix ]] ; then
+  echo "missing value in genus='$genus', species='$species', strain='$strain', taxid='$taxid', loctagprefix='$loctagprefix'"
+  echo "cannot run Prokka, exit now."
+  exit 1
+fi
 mkdir -p $outdir
 if [ -e $prokkadir/db/genus/$genus ] ; then
  usegenus="--usegenus"
@@ -23,7 +28,7 @@ prokkaopts="
 --outdir $outdir --prefix ${genus}_${species}_${strain} --force 
 --addgenes --locustag ${loctagprefix} --compliant --centre ${seqcentre} ${usegenus}
 --genus ${genus} --species ${species} --strain '${strain}'
- --kingdom Bacteria --gcode 11 --cpu 4"
+ --kingdom Bacteria --gcode 11"
 echo "#call: prokka $prokkaopts ${allcontigs}"
 prokka $prokkaopts ${allcontigs}
 date
