@@ -9,6 +9,7 @@ nfstraininfo = sys.argv[3]
 fgbkin = open(nfgbkin, 'r')
 fgbkout = open(nfgbkout, 'w')
 
+dstraininfo = {}
 with open(nfstraininfo, 'r') as fstraininfo:
 	header = fstraininfo.readline().rstrip('\n').split('\t')
 	for line in fstraininfo:
