@@ -78,7 +78,7 @@ for dirassemb in ldirassemb:
 			if lsp[2]=='region':
 				if seqreg!=currseqreg and beg=='1':
 					# new replicon
-					currseqreg = seqreg.split('|')[-1]	# to account for Progkka-style annotation that prepends 'gnl|Sequencing_Centre' to the region_id
+					currseqreg = seqreg.split('|')[-1]	# to account for Prokka-style annotation that prepends 'gnl|Sequencing_Centre' to the region_id
 					dbxref = dict(d.split(':') for d in desc['Dbxref'].split(','))
 					taxid = dbxref['taxon']
 					strain = desc.get('strain', '')

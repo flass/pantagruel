@@ -15,7 +15,7 @@ with open(nfstraininfo, 'r') as fstraininfo:
 	header = fstraininfo.readline().rstrip('\n').split('\t')
 	for line in fstraininfo:
 		lsp = line.rstrip('\n').split('\t')
-		loctagprefix = lsp[-1]
+		loctagprefix = lsp[5]
 		dstraininfo[loctagprefix] = dict(zip(header, lsp))
 
 lcontignames = []
@@ -37,8 +37,6 @@ with open(nfrawassembseq, 'r') as frawassembseq:
 					cname = lsp[0]
 				dcontigs[cname] = dict(lsp[i].split('=') for i  in range(1, len(lsp)))
 			lcontignames.append(cname)
-print lcontignames
-print dcontigs
 
 fgffin = open(nfgffin, 'r')
 fgffout = open(nfgffout, 'w')
