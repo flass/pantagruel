@@ -4,6 +4,7 @@ import sys, os
 
 nfgbkin = sys.argv[1]
 nfgbkout = sys.argv[2]
+nfstraininfo = sys.argv[3]
 
 fgffin = open(nfgffin, 'r')
 fgffout = open(nfgffout, 'w')
