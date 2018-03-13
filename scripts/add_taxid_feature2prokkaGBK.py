@@ -6,8 +6,8 @@ nfgbkin = sys.argv[1]
 nfgbkout = sys.argv[2]
 nfstraininfo = sys.argv[3]
 
-fgffin = open(nfgffin, 'r')
-fgffout = open(nfgffout, 'w')
+fgbkin = open(nfgbkin, 'r')
+fgbkout = open(nfgbkout, 'w')
 
 with open(nfstraininfo, 'r') as fstraininfo:
 	header = fstraininfo.readline().rstrip('\n').split('\t')
