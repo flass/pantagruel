@@ -3,8 +3,15 @@ import sys, os
 nfin = sys.argv[1]
 famprefix = sys.argv[2]
 dirout = sys.argv[3]
-if len(sys.argv)>4: padlen = int(sys.argv[4])
-else: padlen = 6
+padlen = int(sys.argv[4])
+if len(sys.argv)>5: 
+	writeseq = True
+else:
+	writeseq = bool(int(sys.argv[5))
+if len(sys.argv)>6: 
+	discardsingle = False
+else:
+	discardsingle = bool(int(sys.argv[6))
 
 if not os.path.exists(dirout):
 	os.mkdir(dirout)
@@ -12,7 +19,7 @@ else:
 	raise IOError, "ouput directory '%s' already exists"%dirout
 	
 
-def idfam(nfam):
+def idfam(nfam, famprefix=famprefix, padlen=padlen):
 	return famprefix+str(nfam).zfill(padlen)
 	
 idfam0 = idfam(0)
@@ -24,13 +31,15 @@ def incrementfam(nfam, lseqinfam, seqbuffer):
 		# generate new id
 		idfamn = idfam(nfam)
 		nfam += 1
-		# open, fill and close family file
-		with open("%s/%s.fasta"%(dirout, idfamn), 'w') as fout: fout.write(seqbuffer)
-		ftabout
+		if writeseq:
+			# open, fill and close family file
+			with open("%s/%s.fasta"%(dirout, idfamn), 'w') as fout: fout.write(seqbuffer)
 	else:
 		idfamn = idfam0
-		fout0.write(seqbuffer)
-	ftabout.writelines(["%s\t%s\n"%(idfamn, seqname) for seqname in lseqinfam])
+		if writeseq:
+			fout0.write(seqbuffer)
+	if not (idfam==idfam0 and discardsingle):
+		ftabout.writelines(["%s\t%s\n"%(idfamn, seqname) for seqname in lseqinfam])
 	# update/reset
 	lseqinfam = []
 	seqbuffer = ''
