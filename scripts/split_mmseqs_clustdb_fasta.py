@@ -12,6 +12,10 @@ if len(sys.argv)>6:
 	discardsingle = False
 else:
 	discardsingle = bool(int(sys.argv[6]))
+	
+for var in ['nfin', 'famprefix', 'dirout', 'padlen', 'writeseq', 'discardsingle']:
+	print "%s = %s"%(var, repr(eval(var))),
+print ''
 
 if writeseq and (not os.path.exists(dirout)):
 	os.mkdir(dirout)

@@ -78,7 +78,7 @@ for dirassemb in ldirassemb:
 			if lsp[2]=='region':
 				if seqreg!=currseqreg and beg=='1':
 					# new replicon
-					currseqreg = seqreg
+					currseqreg = seqreg.split('|')[-1]	# to account for Progkka-style annotation that prepends 'gnl|Sequencing_Centre' to the region_id
 					dbxref = dict(d.split(':') for d in desc['Dbxref'].split(','))
 					taxid = dbxref['taxon']
 					strain = desc.get('strain', '')
@@ -103,7 +103,7 @@ for dirassemb in ldirassemb:
 					ngenecds += 1
 					buffbeg.append(beg)
 					buffend.append(end)
-					productid = desc.get('protein_id', '')
+					productid = desc.get('protein_id', '').split('|')[-1]	# to account for Progkka-style annotation that prepends 'gnl|Sequencing_Centre' to the protein_id
 					locustag = descprevgene['locus_tag']
 					if ngenecds > 1:
 						if nprintmullicds==0: print "multiline CDS feature:",
