@@ -7,11 +7,11 @@ padlen = int(sys.argv[4])
 if len(sys.argv)>5: 
 	writeseq = True
 else:
-	writeseq = bool(int(sys.argv[5])
+	writeseq = bool(int(sys.argv[5]))
 if len(sys.argv)>6: 
 	discardsingle = False
 else:
-	discardsingle = bool(int(sys.argv[6])
+	discardsingle = bool(int(sys.argv[6]))
 
 if writeseq and (not os.path.exists(dirout)):
 	os.mkdir(dirout)
