@@ -23,6 +23,7 @@ export genetrees=${rapdb}/05.gene_trees
 # sub folders
 export annot=${customassemb}/prokka_annotation
 export genomeinfo=${indata}/genome_infos
+export assemblies=${indata}/assemblies
 export faaproteome=${seqdb}/all_proteomes.faa
 export nrfaaproteome=${seqdb}/all_proteomes.nr.faa
 export families=${seqdb}/protein_families

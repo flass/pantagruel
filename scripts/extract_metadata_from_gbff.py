@@ -37,7 +37,8 @@ ddatefields = [['day', 'month', 'year'], \
 ddatepatfields = dict(zip(ldatepats, ddatefields))
 
 # pattern to separate assembly_id and assembly_name
-reass = re.compile('(GC[AF]_[0-9]{9}\.[0-9])_(.+)')
+reassgenbank = re.compile('(GC[AF]_[0-9]{9}\.[0-9])_(.+)')
+reass = re.compile('(.+?\.[0-9])_(.+)')
 
 ## functions
 

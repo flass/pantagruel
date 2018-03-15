@@ -70,6 +70,28 @@ mv $assfolder/ $indata/assemblies/
 for ass in `cut -f3 $indata/assembly_result.txt | tail -n +2` ; do ln -s $ncbiass/${ass}_* $indata/assemblies/  ; done
 
 
+### can be automated using NCBI Entrez tools
+#~ example from https://www.ncbi.nlm.nih.gov/books/NBK179288/ :
+ #~ for org in \
+    #~ "Agrobacterium tumefaciens" \
+    #~ "Bacillus anthracis" \
+    #~ "Escherichia coli" \
+    #~ "Neisseria gonorrhoeae" \
+    #~ "Pseudomonas aeruginosa" \
+    #~ "Shigella flexneri" \
+    #~ "Streptococcus pneumoniae"
+  #~ do
+    #~ esearch -db assembly -query "$org [ORGN]" |
+    #~ efilter -query "representative [PROP]" |
+    #~ elink -target nuccore -name assembly_nuccore_refseq |
+    #~ efetch -format docsum |
+    #~ xtract -pattern DocumentSummary -element AccessionVersion Slen Title |
+    #~ sed 's/,.*//' |
+    #~ grep -v -i -e scaffold -e contig -e plasmid -e sequence -e patch |
+    #~ sort -t $'\t' -k 2,2nr
+  #~ done
+
+
 ### Groom data
 ## generate assembly statistics to verify genome finishing status
 ${ptgscripts}/groom_refseq_data.sh ${indata}/assemblies ${indata}/assembly_stats
