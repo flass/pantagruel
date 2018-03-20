@@ -27,7 +27,9 @@ with open(nftaxnamesdump, 'r') as ftaxnamesdump:
 
 daliasrepli = {'ANONYMOUS':'chromosome'}
 
-assembpat = re.compile('(GCF_[^\._]+\.[0-9])_(.+)')
+assembpatgenbank = re.compile('(GC[AF]_[^\._]+\.[0-9])_(.+)')
+assembpat = re.compile('(.+?\.[0-9])_(.+)')
+
 
 # prepare annoatation db output files
 dfoutheaders = { \
