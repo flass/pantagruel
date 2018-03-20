@@ -103,7 +103,7 @@ for dirassemb in ldirassemb:
 					ngenecds += 1
 					buffbeg.append(beg)
 					buffend.append(end)
-					productid = desc.get('protein_id', '').split('|')[-1]	# to account for Progkka-style annotation that prepends 'gnl|Sequencing_Centre' to the protein_id
+					productid = desc.get('protein_id', '').split('|')[-1]	# to account for Prokka-style annotation that prepends 'gnl|Sequencing_Centre' to the protein_id
 					locustag = descprevgene['locus_tag']
 					if ngenecds > 1:
 						if nprintmullicds==0: print "multiline CDS feature:",

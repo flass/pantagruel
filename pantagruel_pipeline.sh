@@ -96,32 +96,18 @@ for ass in `cut -f3 $indata/assembly_result.txt | tail -n +2` ; do ln -s $ncbias
 ## generate assembly statistics to verify genome finishing status
 ${ptgscripts}/groom_refseq_data.sh ${indata}/assemblies ${indata}/assembly_stats
 
-mkdir ${genominfo}/
-rm -f ${genominfo}/assemblies*
-ls ${assemblies}/GC[AF]_* -d > ${genominfo}/assemblies_withallstrains_list
-# complete genomes do not have their sequencing / assembly details reported in *_assembly_stats.txt files ; rather lok for the sequencing metadata in the GenBank flat file
-for assemb in `cat ${genominfo}/assemblies_withallstrains_list` ; do 
-ass=$(basename $assemb) ; tech=`zcat $assemb/${ass}_genomic.gbff.gz | grep -m 1 "Sequencing Technology" | awk -F' :: ' '{print $NF}' | sed -e 's/Il;lumina/Illumina/g'`
-if [ -z "$tech" ] ; then tech='NA' ; fi
-echo -e "${ass}\t${tech}" ; done > ${indata}/sequencing_technology.tab
-
+mkdir ${genomeinfo}/
+manuin=${genomeinfo}/manual_input_metadata
+touch ${manuin}/manual_metadata_dictionary.tab ${manuin}/manual_curated_metadata_dictionary.tab ${manuin}/manual_dbxrefs.tab
+rm -rf ${genomeinfo}/assemblies*
+ls ${assemblies}/* -d > ${genomeinfo}/assemblies_list
+mkdir -p ${genomeinfo}/assembly_metadata
 ## extract assembly/sample metadata from flat files
-python ${ptgscripts}/extract_metadata_from_gbff.py --assembly_folder_list=${genominfo}/assemblies_withallstrains_list --add_raw_metadata=${genominfo}/manual_metadata_dictionary.tab \
---add_curated_metadata=${genominfo}/manual_curated_metadata_dictionary.tab --add_dbxref=${genominfo}/manual_dbxrefs.tab --add_assembly_info_dir=${indata}/assembly_stats \
---default_species_name="unclassified organism"
-# remove lab strains
-grep "laboratory" ${genominfo}/assemblies_withallstrains_metadata_curated.tab | cut -f1 > ${genominfo}/assemblies_labstrains_list
-grep "endosymbiont" ${genominfo}/assemblies_withallstrains_metadata_curated.tab | cut -f1 > ${genominfo}/assemblies_endosymbiontstrains_list
-for strain in `cat ${genominfo}/assemblies_labstrains_list ${genominfo}/assemblies_endosymbiontstrains_list` ; do
- grep $strain ${genominfo}/assemblies_withallstrains_list >> ${genominfo}/assemblies_excludestrains_list
-done
-diff ${genominfo}/assemblies_withallstrains_list ${genominfo}/assemblies_excludestrains_list | grep '<' | cut -d' ' -f2 > ${genominfo}/assemblies_list
-# regenerate metadata tables without the lab strains
-python ${ptgscripts}/extract_metadata_from_gbff.py --assembly_folder_list=${genominfo}/assemblies_list --add_raw_metadata=${genominfo}/manual_metadata_dictionary.tab \
---add_curated_metadata=${genominfo}/manual_curated_metadata_dictionary.tab --add_dbxref=${genominfo}/manual_dbxrefs.tab --add_assembly_info_dir=${indata}/assembly_stats \
---default_species_name="unclassified organism"
+python ${ptgscripts}/extract_metadata_from_gbff.py --assembly_folder_list=${genomeinfo}/assemblies_list --add_raw_metadata=${manuin}/manual_metadata_dictionary.tab \
+--add_curated_metadata=${manuin}/manual_curated_metadata_dictionary.tab --add_dbxref=${manuin}/manual_dbxrefs.tab --add_assembly_info_dir=${indata}/assembly_stats \
+--default_species_name="unclassified organism" --output=${genomeinfo}/assembly_metadata
 
-export ngenomes=$((`wc -l ${genominfo}/assembly_metadata/metadata.tab | cut -d' ' -f1` - 1))
+export ngenomes=$((`wc -l ${genomeinfo}/assembly_metadata/metadata.tab | cut -d' ' -f1` - 1))
 echo "work with a database of $ngenomes genomes (excluding lab strains)"
 
 #############################
@@ -132,7 +118,7 @@ echo "work with a database of $ngenomes genomes (excluding lab strains)"
 mkdir -p $seqdb
 faacomplete=$seqdb/all_complete_proteomes.faa
 rm -f $faacomplete*
-sed -e 's#\(.\+\)/\([^/]\+$\)#\1/\2/\2_protein\.faa\.gz#g' ${genominfo}/assemblies_list > ${faacomplete}_list
+sed -e 's#\(.\+\)/\([^/]\+$\)#\1/\2/\2_protein\.faa\.gz#g' ${genomeinfo}/assemblies_list > ${faacomplete}_list
 for faa in `cat ${faacomplete}_list` ; do zcat $faa >> ${faacomplete} ; echo $faa ; done
 grep -c '>' ${faacomplete}
 # dereplicate proteins in db
@@ -140,7 +126,7 @@ python ${ptgscripts}/dereplicate_fasta.py $faacomplete
 echo "$(dateprompt)-- $(grep -c '>' $nrfaacomplete) non-redundant proteins in dataset"
 
 ## build database of species-to-sequence
-python ${ptgscripts}/allgenome_gff2db.py ${genominfo}/assemblies_list ${genominfo}/assembly_info $ncbitax/scientific_names.dmp
+python ${ptgscripts}/allgenome_gff2db.py ${genomeinfo}/assemblies_list ${genomeinfo}/assembly_info $ncbitax/scientific_names.dmp
 
 ## clustering of proteome db with  MMSeqs2 
 # (https://github.com/soedinglab/MMseqs2,  Steinegger M and Soeding J. Sensitive protein sequence searching for the analysis of massive data sets. bioRxiv, doi: 10.1101/079681 (2016))
@@ -188,10 +174,10 @@ done
 ## check consistency of non-redundant protein sets
 mkdir $raptmp
 cd $raptmp
-cut -f1 ${genominfo}/assembly_info/allproteins_info.tab | grep -v "^$\|protein_id" | sort -u > ${genominfo}/assembly_info/allproteins_in_gff
+cut -f1 ${genomeinfo}/assembly_info/allproteins_info.tab | grep -v "^$\|protein_id" | sort -u > ${genomeinfo}/assembly_info/allproteins_in_gff
 grep '>' $nrfaacomplete | cut -d' ' -f1 | cut -d'>' -f2 | sort -u > ${nrfaacomplete}_protlist
 # compare original dataset of nr protein (as described in the input GFF files) to the aligned nr proteome
-diff ${genominfo}/assembly_info/allproteins_in_gff ${nrfaacomplete}_protlist > $raptmp/diff_prot_info_fasta
+diff ${genomeinfo}/assembly_info/allproteins_in_gff ${nrfaacomplete}_protlist > $raptmp/diff_prot_info_fasta
 if [ -s $raptmp/diff_prot_info_fasta ] ; then 
   >&2 echo "ERROR $(dateprompt): inconsistent propagation of the protein dataset:"
   >&2 echo "present in aligned fasta proteome / absent in info table generated from input GFF:"
@@ -203,11 +189,11 @@ fi
 
 ## reconstruct full (redundant) protein alignments
 # make list of CDS sets
-for cg in `cat ${genominfo}/assemblies_list` ; do ls $cg/*_cds_from_genomic.fna.gz >> ${genominfo}/all_cds_fasta_list ; done
+for cg in `cat ${genomeinfo}/assemblies_list` ; do ls $cg/*_cds_from_genomic.fna.gz >> ${genomeinfo}/all_cds_fasta_list ; done
 
 # generate (full protein alignment, unaligned CDS fasta) file pairs and reverse-translate alignments to get CDS (gene family) alignments
-python ${ptgscripts}/extract_full_prot_and_cds_family_alignments.py ${nrprotali} ${protfamseqs}/${protorfanclust}.fasta ${genominfo}/assembly_info/allproteins_info.tab \
-${genominfo}/assembly_info/allreplicons_info.tab ${genominfo}/all_cds_fasta_list ${protali} ${famprefix} $raplogs
+python ${ptgscripts}/extract_full_prot_and_cds_family_alignments.py ${nrprotali} ${protfamseqs}/${protorfanclust}.fasta ${genomeinfo}/assembly_info/allproteins_info.tab \
+${genomeinfo}/assembly_info/allreplicons_info.tab ${genomeinfo}/all_cds_fasta_list ${protali} ${famprefix} $raplogs
 
 #~ ## check consistency of full reverse translated alignement set
 ok=1
