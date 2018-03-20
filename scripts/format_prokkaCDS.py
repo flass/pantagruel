@@ -12,7 +12,7 @@ fout = gzip.open(sys.argv[2], 'wb')
 for line in fin:
 	if line.startswith('>'):
 		cdsname, product = line.strip('>\n').split(' ', 1)
-		fout.write(">%s [locus_tag=%s] [protein=%s] [protein_id=%s] [gbkey=CDS]\n"%(cdsname, product, cdsname))
+		fout.write(">%s [locus_tag=%s] [protein=%s] [protein_id=%s] [gbkey=CDS]\n"%(cdsname, cdsname, product, cdsname))
 	else:
 		fout.write(line)
 		
