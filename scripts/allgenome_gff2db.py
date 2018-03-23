@@ -33,7 +33,7 @@ with open(nfldirassemb, 'r') as fldirassemb:
 # link to NCBI Taxonomy database
 dmergedtaxid = {}
 with open("%s/merged.dmp"%dirncbitax, 'r') as ftaxmergedump:
-	for line in ftaxnamesdump:
+	for line in ftaxmergedump:
 		dmergedtaxid[int(lsp[0])] = int(lsp[1])
 
 dtaxid2sciname = {}
