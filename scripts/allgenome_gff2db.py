@@ -19,7 +19,7 @@ def parseGFFline(line):
 
 nfldirassemb = sys.argv[1]
 dirout = sys.argv[2]
-nftaxnamesdump = sys.argv[3]
+dirncbitax = sys.argv[3]
 
 if os.path.exists(dirout):
 	if os.path.isfile(dirout):
@@ -31,12 +31,19 @@ with open(nfldirassemb, 'r') as fldirassemb:
 	ldirassemb = [line.rstrip('\n') for line in fldirassemb.readlines()]
 
 # link to NCBI Taxonomy database
-dtaxid2sciname = {}
-with open(nftaxnamesdump, 'r') as ftaxnamesdump:
+dmergedtaxid = {}
+with open("%s/merged.dmp"%dirncbitax, 'r') as ftaxmergedump:
 	for line in ftaxnamesdump:
-		lsp = line.rstrip('\n').split('\t')
-		dtaxid2sciname[int(lsp[0])] = lsp[1]
+		dmergedtaxid[int(lsp[0])] = int(lsp[1])
 
+dtaxid2sciname = {}
+with open("%s/names.dmp"%dirncbitax, 'r') as ftaxnamesdump:
+	for line in ftaxnamesdump:
+		lsp = [f.strip('\t') for f in line.rstrip('\n').split('|')]
+		if lsp[-1]=='scientific name':
+			dtaxid2sciname[int(lsp[0])] = lsp[1]
+
+	
 daliasrepli = {'ANONYMOUS':'chromosome'}
 
 assembpatgenbank = re.compile('(GC[AF]_[^\._]+\.[0-9])_(.+)')
@@ -99,7 +106,8 @@ for dirassemb in ldirassemb:
 				repliname = desc.get('Name', '')
 				replitype = desc.get('genome', '')
 				replineout = [assacc, assname, seqreg, daliasrepli.get(repliname, repliname), replitype, end, taxid, strain]
-				if dtaxid2sciname: replineout.append(dtaxid2sciname[int(taxid)])
+				tid = int(taxid)
+				if dtaxid2sciname: replineout.append(dtaxid2sciname[dmergedtaxid.get(tid, tid)])
 				dfout['replicons'].write('\t'.join(replineout)+'\n')
 		elif annottype in ['gene', 'pseudogene']:
 			#~ descprevgene = desc
