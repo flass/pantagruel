@@ -34,12 +34,13 @@ with open(nfldirassemb, 'r') as fldirassemb:
 dmergedtaxid = {}
 with open("%s/merged.dmp"%dirncbitax, 'r') as ftaxmergedump:
 	for line in ftaxmergedump:
+		lsp = [f.strip('\t') for f in line.rstrip('|\n').split('|')]
 		dmergedtaxid[int(lsp[0])] = int(lsp[1])
 
 dtaxid2sciname = {}
 with open("%s/names.dmp"%dirncbitax, 'r') as ftaxnamesdump:
 	for line in ftaxnamesdump:
-		lsp = [f.strip('\t') for f in line.rstrip('\n').split('|')]
+		lsp = [f.strip('\t') for f in line.rstrip('|\n').split('|')]
 		if lsp[-1]=='scientific name':
 			dtaxid2sciname[int(lsp[0])] = lsp[1]
 
