@@ -5,6 +5,18 @@ import os
 import gzip
 import re
 
+def parseGFFline(line):
+	#~ print line
+	lsp = line.rstrip('\n').split('\t')
+	seqreg = lsp[0]
+	annottype = lsp[2]
+	beg = lsp[3]
+	end = lsp[4]
+	strand = lsp[6]
+	desc = dict(d.split('=', 1) for d in lsp[8].split(';'))
+	return (seqreg, annottype, beg, end, strand, desc)
+
+
 nfldirassemb = sys.argv[1]
 dirout = sys.argv[2]
 nftaxnamesdump = sys.argv[3]
@@ -49,7 +61,6 @@ for dirassemb in ldirassemb:
 	# extract assembly acc and name
 	assembsearch = assembpat.search(os.path.basename(dirassemb))
 	assacc, assname = assembsearch.groups()
-	descprevgene = {}
 	# parse CDS fasta file
 	fcds = gzip.open("%s/%s_cds_from_genomic.fna.gz"%(dirassemb, os.path.basename(dirassemb)), 'rb')
 	# register unambiguously the exact naming of the CDS sequence in the corresponding extracted CDS sequence file
@@ -68,66 +79,75 @@ for dirassemb in ldirassemb:
 	cdslineout = None
 	#~ numcds = 0
 	nprintmullicds = 0
+	# first scans the file for region and (pseudo)gene features
+	dgeneranges = {}
+	dgenedesc = {}
+	#~ dregions = {}
 	for line in fgff:
-		if not line.startswith('#'):
-			lsp = line.rstrip('\n').split('\t')
-			seqreg = lsp[0]
-			annottype = lsp[2]
-			beg = lsp[3]
-			end = lsp[4]
-			strand = lsp[6]
-			desc = dict(d.split('=', 1) for d in lsp[8].split(';'))
-			if lsp[2]=='region':
-				if seqreg!=currseqreg and beg=='1':
-					# new replicon
-					currseqreg = seqreg.split('|')[-1]	# to account for Prokka-style annotation that prepends 'gnl|Sequencing_Centre' to the region_id
-					dbxref = dict(d.split(':') for d in desc['Dbxref'].split(','))
-					taxid = dbxref['taxon']
-					strain = desc.get('strain', '')
-					repliname = desc.get('Name', '')
-					replitype = desc.get('genome', '')
-					replineout = [assacc, assname, seqreg, daliasrepli.get(repliname, repliname), replitype, end, taxid, strain]
-					if dtaxid2sciname: replineout.append(dtaxid2sciname[int(taxid)])
-					dfout['replicons'].write('\t'.join(replineout)+'\n')
-			elif lsp[2] in ['gene', 'pseudogene']:
-				descprevgene = desc
-				# need to buffer extraction of CDS entries as several lines can relate to the same gene in case of CDS in several segments (due  to introns, framshifts, ...)
-				ngenecds = 0
-				buffbeg = []
-				buffend = []
-				lastprodid = ''
-			elif lsp[2] in ['CDS', 'rRNA']:
-				if lsp[2]=="CDS":
-					if ngenecds==0 and cdslineout:
-						# write out last CDS info (potential synthesis of  several lines)
-						dfout['proteins'].write('\t'.join(cdslineout)+'\n')
-						cdslineout = None
-					ngenecds += 1
-					buffbeg.append(beg)
-					buffend.append(end)
-					productid = desc.get('protein_id', '').split('|')[-1]	# to account for Prokka-style annotation that prepends 'gnl|Sequencing_Centre' to the protein_id
-					locustag = descprevgene['locus_tag']
-					if ngenecds > 1:
-						if nprintmullicds==0: print "multiline CDS feature:",
-						print productid,
-						nprintmullicds +=1
-						if lastprodid!=productid: raise IndexError, "multiline CDS feature not pointing at the same protein: %s and %s"%(lastprodid, productid)
-					cdslineout = [productid, seqreg, locustag, min(buffbeg), max(buffend), strand, desc.get('product', '')]
-					# generate unique CDS id
-					#~ numcds = int(desc['ID'].lstrip('cds'))+1 #feature numbering is 0-based; we want a 1-based numbering in output.
-					#~ if productid: genbankcdsid = "lcl|%s_cds_%s_%d"%(seqreg, productid, numcds)
-					#~ else: genbankcdsid = "lcl|%s_cds_%d"%(seqreg, numcds)
-					genbankcdsid = dgenbankcdsids[(locustag, productid)]
-					cdslineout.append(genbankcdsid)
-				if lsp[2]=="rRNA":
-					productid = desc.get('ID', '')
-					riblineout = [productid, seqreg, locustag, beg, end, strand, desc.get('product', '')]
-					dfout['ribosomes'].write('\t'.join(riblineout)+'\n')
-				lastprodid = productid
-	else:
-		if cdslineout:
-			# write out last CDS info (potential synthesis of  several lines); flush buffer
-			dfout['proteins'].write('\t'.join(cdslineout)+'\n')
+		if line.startswith('#'): continue
+		elif line.startswith('>'): break
+		#~ print line
+		seqreg, annottype, beg, end, strand, desc = parseGFFline(line)
+		if annottype=='region':
+			if seqreg!=currseqreg and beg=='1':
+				# new replicon
+				#~ dregions[desc['ID']] = desc
+				currseqreg = seqreg.split('|')[-1]	# to account for Prokka-style annotation that prepends 'gnl|Sequencing_Centre' to the region_id
+				dbxref = dict(d.split(':') for d in desc['Dbxref'].split(','))
+				taxid = dbxref['taxon']
+				strain = desc.get('strain', '')
+				repliname = desc.get('Name', '')
+				replitype = desc.get('genome', '')
+				replineout = [assacc, assname, seqreg, daliasrepli.get(repliname, repliname), replitype, end, taxid, strain]
+				if dtaxid2sciname: replineout.append(dtaxid2sciname[int(taxid)])
+				dfout['replicons'].write('\t'.join(replineout)+'\n')
+		elif annottype in ['gene', 'pseudogene']:
+			#~ descprevgene = desc
+			dgeneranges[desc['ID']] = []
+			dgenedesc[desc['ID']] = desc
+	
+	# need to buffer extraction of CDS entries as several lines can relate to the same gene in case of CDS in several segments (due  to introns, framshifts, ...)
+	buffbeg = []
+	buffend = []
+	lastprodid = ''
+	# resume reading the file from start
+	fgff.seek(0)
+	for line in fgff:
+		if line.startswith('#'): continue
+		elif line.startswith('>'): break
+		#~ print line
+		seqreg, annottype, beg, end, strand, desc = parseGFFline(line)
+		if annottype in ['CDS', 'rRNA']:
+			if annottype=="CDS":
+				parentgene = desc['Parent']
+				if len(dgeneranges[parentgene])==0 and cdslineout:
+					# write out last CDS info (potential synthesis of  several lines)
+					dfout['proteins'].write('\t'.join(cdslineout)+'\n')
+					cdslineout = None
+					lastprodid = ''
+				productid = desc.get('protein_id', '').split('|')[-1]	# to account for Prokka-style annotation that prepends 'gnl|Sequencing_Centre' to the protein_id
+				dgeneranges[parentgene].append((beg, end, productid))
+				begs, ends, products = zip(*dgeneranges[parentgene])
+				locustag = dgenedesc[parentgene]['locus_tag']
+				if len(dgeneranges[parentgene]) > 1:
+					if nprintmullicds==0: print "multiline CDS feature:",
+					print productid,
+					nprintmullicds +=1
+					if products[0]!=productid: raise IndexError, "multiline CDS feature not pointing at the same protein: %s and %s"%(products[0], productid)
+				cdslineout = [productid, seqreg, locustag, min(begs), max(ends), strand, desc.get('product', '')]
+				# generate unique CDS id
+				#~ numcds = int(desc['ID'].lstrip('cds'))+1 #feature numbering is 0-based; we want a 1-based numbering in output.
+				#~ if productid: genbankcdsid = "lcl|%s_cds_%s_%d"%(seqreg, productid, numcds)
+				#~ else: genbankcdsid = "lcl|%s_cds_%d"%(seqreg, numcds)
+				genbankcdsid = dgenbankcdsids[(locustag, productid)]
+				cdslineout.append(genbankcdsid)
+			if annottype=="rRNA":
+				productid = desc.get('ID', '')
+				riblineout = [productid, seqreg, locustag, beg, end, strand, desc.get('product', '')]
+				dfout['ribosomes'].write('\t'.join(riblineout)+'\n')
+	if cdslineout:
+		# write out last CDS info (potential synthesis of  several lines); flush buffer
+		dfout['proteins'].write('\t'.join(cdslineout)+'\n')
 	if nprintmullicds>0: print	'\n'
 
 for fouttag in fouttags:
