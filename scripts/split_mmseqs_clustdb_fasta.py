@@ -5,17 +5,18 @@ famprefix = sys.argv[2]
 dirout = sys.argv[3]
 padlen = int(sys.argv[4])
 if len(sys.argv)>5: 
-	writeseq = True
-else:
 	writeseq = bool(int(sys.argv[5]))
-if len(sys.argv)>6: 
-	discardsingle = False
 else:
+	writeseq = True
+if len(sys.argv)>6: 
 	discardsingle = bool(int(sys.argv[6]))
+else:
+	discardsingle = False
 	
 for var in ['nfin', 'famprefix', 'dirout', 'padlen', 'writeseq', 'discardsingle']:
 	print "%s = %s"%(var, repr(eval(var))),
 print ''
+exit(0)
 
 if writeseq and (not os.path.exists(dirout)):
 	os.mkdir(dirout)

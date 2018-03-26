@@ -36,3 +36,7 @@ for line in fastain:
 		fastaout.write(line)
 
 print "filtered %d non-redundant sequences"%nnrseq
+
+
+fastain.close()
+fastaout.close()
