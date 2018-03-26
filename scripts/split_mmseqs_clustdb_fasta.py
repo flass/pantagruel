@@ -17,10 +17,11 @@ for var in ['nfin', 'famprefix', 'dirout', 'padlen', 'writeseq', 'discardsingle'
 	print "%s = %s"%(var, repr(eval(var))),
 print ''
 
-if writeseq and (not os.path.exists(dirout)):
-	os.mkdir(dirout)
-else:
-	raise IOError, "ouput directory '%s' already exists"%dirout
+if writeseq:
+	if not os.path.exists(dirout)):
+		os.mkdir(dirout)
+	else:
+		raise IOError, "ouput directory '%s' already exists"%dirout
 	
 
 def idfam(nfam, famprefix=famprefix, padlen=padlen):
