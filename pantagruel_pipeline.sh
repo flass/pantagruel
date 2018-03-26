@@ -53,7 +53,6 @@ lftp -c "open $openparam; cd $source ; mget -O $ncbitax/ $files ; quit"
 mv $ncbitax/README $ncbitax/readme_accession2taxid
 # reduce taxonomic id2name reference file complexity
 for tgz in `ls $ncbitax/*.tar.gz` ; do md5sum -c $tgz.md5 && tar -xzf $tgz ; done
-grep "scientific name"  $ncbitax/names.dmp | sed -e 's/\t|\t/\t/g' | cut -f1,2 > $ncbitax/scientific_names.dmp
 
 ## using NCBI web interface:
 # Search Assembly database using a query defined as convenient:	
@@ -110,6 +109,9 @@ python ${ptgscripts}/extract_metadata_from_gbff.py --assembly_folder_list=${geno
 export ngenomes=$((`wc -l ${genomeinfo}/assembly_metadata/metadata.tab | cut -d' ' -f1` - 1))
 echo "work with a database of $ngenomes genomes (excluding lab strains)"
 
+## build database of species-to-sequence
+python ${ptgscripts}/allgenome_gff2db.py ${genomeinfo}/assemblies_list ${genomeinfo}/assembly_info $ncbitax
+
 #############################
 ## 01. Homologous Sequence db
 #############################
@@ -125,8 +127,25 @@ grep -c '>' ${faacomplete}
 python ${ptgscripts}/dereplicate_fasta.py $faacomplete
 echo "$(dateprompt)-- $(grep -c '>' $nrfaacomplete) non-redundant proteins in dataset"
 
-## build database of species-to-sequence
-python ${ptgscripts}/allgenome_gff2db.py ${genomeinfo}/assemblies_list ${genomeinfo}/assembly_info $ncbitax/scientific_names.dmp
+## clustering of identical protein sequences
+# notably those from the custom assemblies to those from the public database (and those redudant between RefSeq and Genbank sets)
+# run mmseqs clusthash with 100% seq id threshold
+# used MMseqs2 Version: 6306925fa9ae6198116c26e605277132deff70d0
+mmseqs createdb ${nrfaarad}.faa  ${nrfaarad}.mmseqsdb
+mmseqs clusthash --min-seq-id 1.0 ${nrfaarad}.mmseqsdb ${nrfaarad}.clusthashdb
+mmseqs createseqfiledb ${nrfaarad}.mmseqsdb ${nrfaarad}.clusthashdb ${nrfaarad}.clusthashdb_clusters
+
+# get table of redundant protein names
+python ${ptgscripts}/split_mmseqs_clustdb_fasta.py ${nrfaarad}.clusthashdb_clusters "NRPROT" ${nrfaarad}.clusthashdb_families 6 0
+grep -v NRPROT000000 ${nrfaarad}.clusthashdb_families.tab > ${nrfaarad}.clusthashdb_identicals.tab
+cut -f1 ${nrfaarad}.clusthashdb_identicals.tab | uniq | wc -l
+# 27,529 groups o identical proteins (does not mean unique proteins as there are also many singltons)
+grep NRPROT000000 ${nrfaarad}.clusthashdb_families.tab | wc -l
+# 2,290,755 singletons
+# = 2,318,284 unique proteins in full (Genbank/Refseq + custom) dataset
+python ${ptgscripts}/remove_identical_seqs.py ${nrfaarad}.faa ${nrfaarad}.clusthashdb_identicals.tab ${nrfaarad}.nr.faa
+
+
 
 ## clustering of proteome db with  MMSeqs2 
 # (https://github.com/soedinglab/MMseqs2,  Steinegger M and Soeding J. Sensitive protein sequence searching for the analysis of massive data sets. bioRxiv, doi: 10.1101/079681 (2016))
