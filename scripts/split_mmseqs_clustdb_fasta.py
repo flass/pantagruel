@@ -18,7 +18,7 @@ for var in ['nfin', 'famprefix', 'dirout', 'padlen', 'writeseq', 'discardsingle'
 print ''
 
 if writeseq:
-	if not os.path.exists(dirout)):
+	if not os.path.exists(dirout):
 		os.mkdir(dirout)
 	else:
 		raise IOError, "ouput directory '%s' already exists"%dirout
