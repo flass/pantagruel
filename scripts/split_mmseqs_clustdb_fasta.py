@@ -13,9 +13,10 @@ if len(sys.argv)>6:
 else:
 	discardsingle = False
 	
+lvar = []
 for var in ['nfin', 'famprefix', 'dirout', 'padlen', 'writeseq', 'discardsingle']:
-	print "%s = %s"%(var, repr(eval(var))),
-print ''
+	lvar.append("%s = %s"%(var, repr(eval(var))))
+print ' ; '.join(lvar)
 
 if writeseq:
 	if not os.path.exists(dirout):
@@ -43,7 +44,7 @@ def incrementfam(nfam, lseqinfam, seqbuffer):
 		idfamn = idfam0
 		if writeseq:
 			fout0.write(seqbuffer)
-	if not (idfam==idfam0 and discardsingle):
+	if not (idfamn==idfam0 and discardsingle):
 		ftabout.writelines(["%s\t%s\n"%(idfamn, seqname) for seqname in lseqinfam])
 	# update/reset
 	lseqinfam = []
