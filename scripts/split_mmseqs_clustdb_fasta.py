@@ -16,7 +16,6 @@ else:
 for var in ['nfin', 'famprefix', 'dirout', 'padlen', 'writeseq', 'discardsingle']:
 	print "%s = %s"%(var, repr(eval(var))),
 print ''
-exit(0)
 
 if writeseq and (not os.path.exists(dirout)):
 	os.mkdir(dirout)
