@@ -128,10 +128,10 @@ def parseAssemb(dirassemb, dfout, dtaxid2sciname={}, dmergedtaxid={}, didentseq=
 	# parse GFF file
 	fgff = gzip.open("%s/%s_genomic.gff.gz"%(dirassemb, os.path.basename(dirassemb)), 'rb')
 	# first scans the file for region and (pseudo)gene features
-	dgeneloctag, dgenenchild = indexRegionsAndGenes(fgff, dfout, assacc, assname, dtaxid2sciname, dmergedtaxid)
+	dgeneloctag, dgenenchild = indexRegionsAndGenes(fgff, dfout, assacc, assname, dtaxid2sciname=dtaxid2sciname, dmergedtaxid=dmergedtaxid)
 	# resume reading the file from start
 	fgff.seek(0)
-	compileFeatures(fgff, dfout, dgenbankcdsids, dgeneloctag, dgenenchild, didentseq)
+	compileFeatures(fgff, dfout, dgenbankcdsids, dgeneloctag, dgenenchild, didentseq=didentseq)
 	fgff.close()
 
 def usage():
@@ -210,7 +210,7 @@ def main():
 	# parse all assemblies
 	for dirassemb in ldirassemb:
 		print "parse assembly '%s'"%dirassemb
-		parseAssemb(dirassemb, dfout, dtaxid2sciname, didentseq, dmergedtaxid)
+		parseAssemb(dirassemb, dfout, dtaxid2sciname=dtaxid2sciname, dmergedtaxid=dmergedtaxid, didentseq=didentseq)
 
 	for fouttag in fouttags:
 		dfout[fouttag].close()

@@ -148,7 +148,7 @@ python ${ptgscripts}/allgenome_gff2db.py --assemb_list ${genomeinfo}/assemblies_
 # run mmseqs cluster with default parameters
 # used MMseqs2 Version: e5d64b2701789e7eef8fcec0812ccb910c8dfef3
 # compute the memory use of MMSeq2: M = (7 × N × L + 8 × a^k) bytes, N the number of sequences, L their average size, a the size of the alphabet
-mmseqslogs=${entlogs}/mmseqs && mkdir -p $mmseqslogs
+mmseqslogs=${raplogs}/mmseqs && mkdir -p $mmseqslogs
 # create MMseqs2 db
 mmseqs createdb ${allfaarad}.nr.faa ${allfaarad}.nr.mmseqsdb &> $mmseqslogs/mmseqs-createdb.log
 # perform clustering
