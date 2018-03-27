@@ -26,7 +26,8 @@ if writeseq:
 	
 
 def idfam(nfam, famprefix=famprefix, padlen=padlen):
-	return famprefix+str(nfam).zfill(padlen)
+	nfam += 1
+	return (famprefix+str(nfam).zfill(padlen), nfam)
 	
 idfam0 = idfam(0)
 if writeseq: fout0 = open("%s/%s.fasta"%(dirout, idfam0), 'w')	# family with id # PREFIX000000 is reserved for ORFan sequences
@@ -35,8 +36,7 @@ ftabout = open("%s.tab"%dirout, 'w')
 def incrementfam(nfam, lseqinfam, seqbuffer):
 	if len(lseqinfam)>1:
 		# generate new id
-		idfamn = idfam(nfam)
-		nfam += 1
+		idfamn, nfam = idfam(nfam)
 		if writeseq:
 			# open, fill and close family file
 			with open("%s/%s.fasta"%(dirout, idfamn), 'w') as fout: fout.write(seqbuffer)
@@ -51,7 +51,7 @@ def incrementfam(nfam, lseqinfam, seqbuffer):
 	seqbuffer = ''
 	return (nfam, lseqinfam, seqbuffer)
 
-nfam = 1
+nfam = 0
 lseqinfam = []
 seqbuffer = ''
 
@@ -64,7 +64,7 @@ with open(nfin, 'r') as fin:
 		else:
 			l = line
 		if l.startswith('>'):
-			seqname = l.split()[0].lstrip('>')
+			seqname = l.split(' ', 1)[0].lstrip('>')
 			lseqinfam.append(seqname)
 		seqbuffer += l
 		

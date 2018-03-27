@@ -109,60 +109,58 @@ python ${ptgscripts}/extract_metadata_from_gbff.py --assembly_folder_list=${geno
 export ngenomes=$((`wc -l ${genomeinfo}/assembly_metadata/metadata.tab | cut -d' ' -f1` - 1))
 echo "work with a database of $ngenomes genomes (excluding lab strains)"
 
-## build database of species-to-sequence
-python ${ptgscripts}/allgenome_gff2db.py ${genomeinfo}/assemblies_list ${genomeinfo}/assembly_info $ncbitax
-
 #############################
 ## 01. Homologous Sequence db
 #############################
 
 ## extract all the protein sequences into single proteome fasta files
-mkdir -p $seqdb
-faacomplete=$seqdb/all_complete_proteomes.faa
-rm -f $faacomplete*
-sed -e 's#\(.\+\)/\([^/]\+$\)#\1/\2/\2_protein\.faa\.gz#g' ${genomeinfo}/assemblies_list > ${faacomplete}_list
-for faa in `cat ${faacomplete}_list` ; do zcat $faa >> ${faacomplete} ; echo $faa ; done
-grep -c '>' ${faacomplete}
-# dereplicate proteins in db
-python ${ptgscripts}/dereplicate_fasta.py $faacomplete
-echo "$(dateprompt)-- $(grep -c '>' $nrfaacomplete) non-redundant proteins in dataset"
+mkdir -p ${seqdb}
+export allfaarad=${seqdb}/all_proteomes
+rm -f ${allfaarad}*
+for ass in `ls ${assemblies}` ; do
+ faa=$(ls ${assemblies}/${ass}/ | grep '.faa')
+ zcat $faa >> ${allfaarad}.faa && echo $faa >> ${allfaarad}_list
+done
+wc -l ${allfaarad}_list
+grep -c '>' ${allfaarad}.faa
 
 ## clustering of identical protein sequences
 # notably those from the custom assemblies to those from the public database (and those redudant between RefSeq and Genbank sets)
 # run mmseqs clusthash with 100% seq id threshold
 # used MMseqs2 Version: 6306925fa9ae6198116c26e605277132deff70d0
-mmseqs createdb ${nrfaarad}.faa  ${nrfaarad}.mmseqsdb
-mmseqs clusthash --min-seq-id 1.0 ${nrfaarad}.mmseqsdb ${nrfaarad}.clusthashdb
-mmseqs createseqfiledb ${nrfaarad}.mmseqsdb ${nrfaarad}.clusthashdb ${nrfaarad}.clusthashdb_clusters
+mmseqs createdb ${allfaarad}.faa  ${allfaarad}.mmseqsdb
+mmseqs clusthash --min-seq-id 1.0 ${allfaarad}.mmseqsdb ${allfaarad}.clusthashdb
+mmseqs clust ${allfaarad}.mmseqsdb ${allfaarad}.clusthashdb ${allfaarad}.clust
+mmseqs createseqfiledb ${allfaarad}.mmseqsdb ${allfaarad}.clust ${allfaarad}.clust_clusters
 
 # get table of redundant protein names
-python ${ptgscripts}/split_mmseqs_clustdb_fasta.py ${nrfaarad}.clusthashdb_clusters "NRPROT" ${nrfaarad}.clusthashdb_families 6 0
-grep -v NRPROT000000 ${nrfaarad}.clusthashdb_families.tab > ${nrfaarad}.clusthashdb_identicals.tab
-cut -f1 ${nrfaarad}.clusthashdb_identicals.tab | uniq | wc -l
-# 27,529 groups o identical proteins (does not mean unique proteins as there are also many singltons)
-grep NRPROT000000 ${nrfaarad}.clusthashdb_families.tab | wc -l
-# 2,290,755 singletons
-# = 2,318,284 unique proteins in full (Genbank/Refseq + custom) dataset
-python ${ptgscripts}/remove_identical_seqs.py ${nrfaarad}.faa ${nrfaarad}.clusthashdb_identicals.tab ${nrfaarad}.nr.faa
+python ${ptgscripts}/split_mmseqs_clustdb_fasta.py ${allfaarad}.clusthash_clusters "NRPROT" ${allfaarad}.clusthash_families 6 0 0
+grep -v NRPROT000000 ${allfaarad}.clusthash_families.tab > ${allfaarad}.clusthash_identicals.tab
+python ${ptgscripts}/remove_identical_seqs.py ${allfaarad}.faa ${allfaarad}.clusthash_identicals.tab ${allfaarad}.nr.faa
 
-
+## collect data from assemblies, including matching of (nr) protein to CDS sequence ids
+python ${ptgscripts}/allgenome_gff2db.py --assemb_list ${genomeinfo}/assemblies_list --dirout ${genomeinfo}/assembly_info --ncbi_taxonomy ${ncbitax} --identical_prots ${allfaarad}.identicals.tab
 
 ## clustering of proteome db with  MMSeqs2 
 # (https://github.com/soedinglab/MMseqs2,  Steinegger M and Soeding J. Sensitive protein sequence searching for the analysis of massive data sets. bioRxiv, doi: 10.1101/079681 (2016))
 # compute the memory use of MMSeq2: M = (7 × N × L + 8 × a^k) bytes, N the number of sequences, L their average size, a the size of the alphabet
+## clustering of nr proteome 
+# run mmseqs cluster with default parameters
+# used MMseqs2 Version: e5d64b2701789e7eef8fcec0812ccb910c8dfef3
+# compute the memory use of MMSeq2: M = (7 × N × L + 8 × a^k) bytes, N the number of sequences, L their average size, a the size of the alphabet
 mmseqslogs=${entlogs}/mmseqs && mkdir -p $mmseqslogs
 # create MMseqs2 db
-mmseqs createdb $nrfaacomplete $nrfaacomplete.mmseqs-seqdb &> $mmseqslogs/mmseqs-createdb.log
+mmseqs createdb ${allfaarad}.nr.faa ${allfaarad}.nr.mmseqsdb &> $mmseqslogs/mmseqs-createdb.log
 # perform clustering
-mmseqstmp=${enttmp}/mmseqs && mkdir -p $mmseqstmp
-families=${seqdb}/protein_families && mkdir -p $families
-mmseqsclout=${families}/$(basename $nrfaacomplete).mmseqs-clusterdb_default
+mmseqstmp=${raptmp}/mmseqs && rm -rf $mmseqstmp && mkdir -p $mmseqstmp
+export families=${seqdb}/protein_families && mkdir -p $families
+mmseqsclout=${families}/$(basename ${allfaarad}.nr).mmseqs_clusterdb_default
 # perform similarity search and clustering ; uses all CPU cores by default
-mmseqs cluster ${nrfaacomplete}.mmseqs-seqdb $mmseqsclout $mmseqstmp &> $mmseqslogs/$(basename $mmseqsclout).log &
+mmseqs cluster ${allfaarad}.nr.mmseqsdb $mmseqsclout $mmseqstmp &> $mmseqslogs/$(basename $mmseqsclout).log
 # generate indexed fasta file listing all protein families
-mmseqs createseqfiledb ${nrfaacomplete}.mmseqs-seqdb $mmseqsclout ${mmseqsclout}_clusters
+mmseqs createseqfiledb ${allfaarad}.nr.mmseqsdb $mmseqsclout ${mmseqsclout}_clusters
 # generate separate fasta files with family identifiers distinc from representative sequence name
-python ${ptgscripts}/split_mmseqs-clustdb_fasta.py ${mmseqsclout}_clusters "${famprefix}P" 6
+python ${ptgscripts}/split_mmseqs_clustdb_fasta.py ${mmseqsclout}_clusters "${famprefix}P" ${mmseqsclout}_clusters_fasta 6 1 0
 echo "$(dateprompt)-- $(wc -l ${mmseqsclout}_clusters_fasta.tab | cut -d' ' -f1) non-redundant proteins"
 echo "$(dateprompt)-- classified into $(ls ${mmseqsclout}_clusters_fasta/ | wc -l) clusters"
 echo "${datepad}-- including artificial cluster ${famprefix}P000000 gathering $(grep -c '>' ${mmseqsclout}_clusters_fasta/${famprefix}P000000.fasta) ORFan nr proteins"

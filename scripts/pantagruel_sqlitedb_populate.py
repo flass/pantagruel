@@ -16,7 +16,7 @@ def replaceValuesAsNull(table, cursor, nullval='', ommitcols=[], tableinfo=None)
 		if colname not in ommitcols:
 			cursor.execute("UPDATE %s SET %s=NULL WHERE %s='%s';"%(table, colname, colname, nullval))
 
-def loadAndCurateTable(table, nfin, cursor, insertcolumns=(), sep='\t', **kw):
+def loadAndCurateTable(table, nfin, cursor, insertcolumns=(), sep='\t', doNotReplaceWithNull=[], **kw):
 	if insertcolumns:
 		if type(insertcolumns)==str: coldef = insertcolumns
 		else: coldef = "(%s)"%(', '.join(insertcolumns))
@@ -25,7 +25,7 @@ def loadAndCurateTable(table, nfin, cursor, insertcolumns=(), sep='\t', **kw):
 	colinfos = getTableInfos(table, cursor)
 	with open(nfin, 'r') as ftabin:
 		cursor.executemany("INSERT INTO %s %s VALUES (%s);"%(table, coldef, ','.join(['?']*len(colinfos))), (tuple(line.rstrip('\n').split(sep)) for line in ftabin))
-	replaceValuesAsNull(table, cursor, tableinfo=colinfos, **kw)
+	replaceValuesAsNull(table, cursor, tableinfo=colinfos, ommitcols=doNotReplaceWithNull, **kw)
 	
 def createAndLoadTable(table, tabledef, nfin, cursor, temp=False, enddrop=False, **kw):
 	tmp = 'TEMP' if temp else ''
@@ -50,7 +50,7 @@ conn.row_factory = sqlite3.Row
 cur = conn.cursor()
 
 # populate assemblies table
-loadAndCurateTable('assemblies', 'genome_assemblies.tab', cur, ommitcols=['assembly_id', 'assembly_name', 'taxid'])
+loadAndCurateTable('assemblies', 'genome_assemblies.tab', cur, doNotReplaceWithNull=['assembly_id', 'assembly_name', 'taxid'])
 
 # create indexes on assemblies table
 cur.executescript("""

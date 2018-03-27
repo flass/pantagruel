@@ -24,8 +24,7 @@ export genetrees=${rapdb}/05.gene_trees
 export annot=${customassemb}/prokka_annotation
 export genomeinfo=${indata}/genome_infos
 export assemblies=${indata}/assemblies
-export faaproteome=${seqdb}/all_proteomes.faa
-export nrfaaproteome=${seqdb}/all_proteomes.nr.faa
+export protfamseqs=${mmseqsclout}_clusters_fasta
 export families=${seqdb}/protein_families
 export nrprotali=$protali/nr_protfam_clustalo_alignments
 export alifastacodedir=${protali}/full_cdsfam_alignments_species_code
@@ -38,6 +37,8 @@ export colrecs=${alerec}/collapsed_recs
 # other variables
 export straininfo=${customassemb}/strain_infos.txt
 export sqldbname=${entdbname,,}
+export allfaarad=${seqdb}/all_proteomes
+export mmseqsclout=${families}/$(basename ${allfaarad}.nr).mmseqs_clusterdb_default
 export protorfanclust="${famprefix}P000000"
 export cdsorfanclust="${famprefix}C000000"
 export pseudocore=pseudo-core-${pseudocoremingenomes}-unicopy
@@ -52,12 +53,8 @@ export collapsecond=${criterion}_stem${cladesupp}_within${withinfun}${subcladesu
 export colmethod='replaceCCinGasinS-collapsePOPinSnotinG'
 
 # other variables conditonal on prior creation of files
-if [ -e $nrfaacomplete ] ; then
- export mmseqsclout=${families}/$(basename $nrfaacomplete).mmseqs-clusterdb_default
- export protfamseqs=${mmseqsclout}_clusters_fasta
-fi
 if [ -e ${complete}/complete_genomes_metadata.tab ] ; then
- export ngenomes=$((`wc -l ${complete}/complete_genomes_metadata.tab | cut -d' ' -f1` - 1))
+ export ngenomes=$((`wc -l ${genomeinfo}/metadata_${rapdbname}/metadata.tab | cut -d' ' -f1` - 1))
  export treename=${pseudocore}_concat_cds_${ngenomes}entero
  export nrspeciestree=${coretree}/RAxML_bestTree.${treename}.MADrooted
  export nrspeciestreeBS=${coretree}/RAxML_bipartitions.${treename}
