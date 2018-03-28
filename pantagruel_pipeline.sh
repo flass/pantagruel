@@ -185,22 +185,25 @@ python ${ptgscripts}/schedule_ali_task.py $protfamseqs.tab $protfamseqs $protali
 ## align non-redundant protein families
 for tasklist in `ls $protali/${protali##*.}_tasklist.*` ; do
   bntl=`basename $tasklist`
-  ${ptgscripts}/run_clustalo_sequential.sh $tasklist $nrprotali &> $entlogs/clustalo/$bntl.clustalo.log &
+  ${ptgscripts}/run_clustalo_sequential.sh $tasklist $nrprotali &> $raplogs/clustalo/$bntl.clustalo.log &
 done
 
 ## check consistency of non-redundant protein sets
-mkdir $raptmp
-cd $raptmp
-cut -f1 ${genomeinfo}/assembly_info/allproteins_info.tab | grep -v "^$\|protein_id" | sort -u > ${genomeinfo}/assembly_info/allproteins_in_gff
-grep '>' $nrfaacomplete | cut -d' ' -f1 | cut -d'>' -f2 | sort -u > ${nrfaacomplete}_protlist
+mkdir -p $raptmp
+protidfield=$(head -n 1 ${genomeinfo}/assembly_info/allproteins_info.tab |  tr '\t' '\n' | grep -n 'nr_protein_id' | cut -d':' -f1)
+if [ -z $protidfield ] ; then 
+ protidfield=$(head -n 1 ${genomeinfo}/assembly_info/allproteins_info.tab |  tr '\t' '\n' | grep -n 'protein_id' | cut -d':' -f1)
+fi
+cut -f $protidfield ${genomeinfo}/assembly_info/allproteins_info.tab | grep -v "^$\|protein_id" | sort -u > ${genomeinfo}/assembly_info/allproteins_in_gff
+grep '>' ${allfaarad}.nr.faa | cut -d' ' -f1 | cut -d'>' -f2 | sort -u > ${allfaarad}.nr_protlist
 # compare original dataset of nr protein (as described in the input GFF files) to the aligned nr proteome
-diff ${genomeinfo}/assembly_info/allproteins_in_gff ${nrfaacomplete}_protlist > $raptmp/diff_prot_info_fasta
+diff ${genomeinfo}/assembly_info/allproteins_in_gff ${allfaarad}.nr_protlist > $raptmp/diff_prot_info_fasta
 if [ -s $raptmp/diff_prot_info_fasta ] ; then 
   >&2 echo "ERROR $(dateprompt): inconsistent propagation of the protein dataset:"
   >&2 echo "present in aligned fasta proteome / absent in info table generated from input GFF:"
-  >&2 grep '>' diff_prot_info_fasta | cut -d' ' -f2
+  >&2 grep '>' $raptmp/diff_prot_info_fasta | cut -d' ' -f2
   >&2 echo "present in info table generated from input GFF / absent in aligned fasta proteome:"
-  >&2 grep '<' diff_prot_info_fasta | cut -d' ' -f2
+  >&2 grep '<' $raptmp/diff_prot_info_fasta | cut -d' ' -f2
   exit 1
 fi
 
@@ -286,18 +289,18 @@ rm ${alifastacodedir}/*_all_sp_new
 ### compute species tree using RAxML
 export coretree=${coregenome}/raxml_tree
 export treename=${pseudocore}_concat_cds_${ngenomes}entero
-mkdir -p ${entlogs}/raxml ${coretree}
+mkdir -p ${raplogs}/raxml ${coretree}
 # define RAxML options; uses options -T (threads) -j (checkpoints) 
 raxmloptions="-n ${treename} -m GTRCATI -j -p 1753 -T 8 -w ${coretree}"
 ## first check the alignment for duplicate sequences and write a reduced alignment with  will be excluded
-raxmlHPC-PTHREADS-AVX -s ${pseudocorealn} ${raxmloptions} -f c &> ${entlogs}/raxml/${treename}.check.log
+raxmlHPC-PTHREADS-AVX -s ${pseudocorealn} ${raxmloptions} -f c &> ${raplogs}/raxml/${treename}.check.log
 # 117/880 exactly identical excluded
 grep 'exactly identical$' ${coretree}/RAxML_info.${treename} | sed -e 's/IMPORTANT WARNING: Sequences \(.\+\) and \(.\+\) are exactly identical/\1\t\2/g' > ${pseudocorealn}.identical_sequences
 rm ${coretree}/RAxML_info.${treename}
 ## first just single ML tree on reduced alignment
-raxmlHPC-PTHREADS-AVX -s ${pseudocorealn}.reduced ${raxmloptions} &> ${entlogs}/raxml/${treename}.ML_run.log &
+raxmlHPC-PTHREADS-AVX -s ${pseudocorealn}.reduced ${raxmloptions} &> ${raplogs}/raxml/${treename}.ML_run.log &
 #~ # resume analysis after crash
-#~ raxmlHPC-PTHREADS-AVX -s ${pseudocorealn}.reduced ${raxmloptions} -t ${coretree}/RAxML_checkpoint.${treename}.14 &> ${entlogs}/raxml/${treename}.ML_run.log2 &
+#~ raxmlHPC-PTHREADS-AVX -s ${pseudocorealn}.reduced ${raxmloptions} -t ${coretree}/RAxML_checkpoint.${treename}.14 &> ${raplogs}/raxml/${treename}.ML_run.log2 &
 
 ## root tree with MAD (Tria et al. Nat Ecol Evol (2017) Phylogenetic rooting using minimal ancestor deviation. s41559-017-0193 doi:10.1038/s41559-017-0193)
 R BATCH --vanilla --slave << EOF
@@ -308,9 +311,9 @@ save(mad.rooting, file='${coretree}/RAxML_bestTree.${treename}.MADrooting.RData'
 EOF
 
 #~ ## RAxML, with parametric bootstrap
-#~ raxmlHPC-PTHREADS-AVX -s ${pseudocorealn}.reduced ${raxmloptions} -b 198237 -N 500 &> ${entlogs}/raxml/${treename}_bs.log &
+#~ raxmlHPC-PTHREADS-AVX -s ${pseudocorealn}.reduced ${raxmloptions} -b 198237 -N 500 &> ${raplogs}/raxml/${treename}_bs.log &
 ## RAxML, with rapid bootstrap
-raxmlHPC-PTHREADS-AVX -s ${pseudocorealn}.reduced ${raxmloptions} -x 198237 -N 1000 &> ${entlogs}/raxml/${treename}_bs.log &
+raxmlHPC-PTHREADS-AVX -s ${pseudocorealn}.reduced ${raxmloptions} -x 198237 -N 1000 &> ${raplogs}/raxml/${treename}_bs.log &
 
 
 ## delineate populations of near-identical strain (based on tree with branch lengths in subs/site) and generate the population tree, i.e. the species tree withs population collapsed
@@ -327,7 +330,7 @@ echo "Found $nspepop disctinct populations in the species tree"
 export genetrees=$entdb/05.gene_trees
 export mlgenetrees=${genetrees}/raxml_trees
 mkdir -p ${mlgenetrees}
-mkdir -p $entlogs/raxml/gene_trees
+mkdir -p $raplogs/raxml/gene_trees
 
 basequery="select gene_family_id, size from genome.gene_family_sizes where gene_family_id is not null and gene_family_id!='$cdsorfanclust'"
 python ${ptgscripts}/query_gene_fam_sets.py --db.con.par="dbname=panterodb_v0.3" --outprefix='cdsfams_' --dirout=${protali} \
@@ -352,7 +355,7 @@ chunksize=3000
 jobranges=($(${ptgscripts}/get_jobranges.py $chunksize $Njob))
 for jobrange in ${jobranges[@]} ; do
 echo "jobrange=$jobrange"
-qsub -J $jobrange -l walltime=${wt}:00:00 -l select=1:ncpus=4:mem=${mem}gb -N raxml_gene_trees_$(basename $cdsfam2phylo) -o $entlogs/raxml/gene_trees -j oe -v "$qsubvars" ${ptgscripts}/raxml_array_PBS.qsub
+qsub -J $jobrange -l walltime=${wt}:00:00 -l select=1:ncpus=4:mem=${mem}gb -N raxml_gene_trees_$(basename $cdsfam2phylo) -o $raplogs/raxml/gene_trees -j oe -v "$qsubvars" ${ptgscripts}/raxml_array_PBS.qsub
 done
 done
 
@@ -375,7 +378,7 @@ ncpus=4
 for jobrange in ${jobranges[@]} ; do
 beg=`echo $jobrange | cut -d'-' -f1`
 tail -n +${beg} ${mlgenetreelist} | head -n ${chunksize} > ${mlgenetreelist}_${jobrange}
-qsub -N mark_unresolved_clades -l select=1:ncpus=${ncpus}:mem=16gb,walltime=4:00:00 -o ${entlogs}/mark_unresolved_clades.${collapsecond}_${jobrange}.log -j oe -V -S /usr/bin/bash << EOF
+qsub -N mark_unresolved_clades -l select=1:ncpus=${ncpus}:mem=16gb,walltime=4:00:00 -o ${raplogs}/mark_unresolved_clades.${collapsecond}_${jobrange}.log -j oe -V -S /usr/bin/bash << EOF
 module load python
 python ${ptgscripts}/mark_unresolved_clades.py --in_gene_tree_list=${mlgenetreelist}_${jobrange} --diraln=${alifastacodedir} --fmt_aln_in='fasta' \
  --threads=${ncpus} --dirout=${colalinexuscodedir}/${collapsecond} --no_constrained_clade_subalns_output --dir_identseq=${mlgenetrees}/identical_sequences \
@@ -407,7 +410,7 @@ ncpus=$(( $nchains * $nruns ))
 qsubvar="mbversion=3.2.6, tasklist=${tasklist}_todo_${dtag}, outputdir=${collapsed_genetrees}/${collapsecond}, mbmcmcpopt='Nruns=${nruns} Ngen=2000000 Nchains=${nchains}'"
 for jobrange in ${jobranges[@]}	; do
 echo $jobrange $qsubvar
-qsub -J $jobrange -N mb_panterodb -l select=1:ncpus=${ncpus}:mem=16gb -o ${entlogs}/mrbayes/collapsed_mrbayes_trees_${dtag}_${jobrange} -v "$qsubvar" ${ptgscripts}/mrbayes_array_PBS.qsub
+qsub -J $jobrange -N mb_panterodb -l select=1:ncpus=${ncpus}:mem=16gb -o ${raplogs}/mrbayes/collapsed_mrbayes_trees_${dtag}_${jobrange} -v "$qsubvar" ${ptgscripts}/mrbayes_array_PBS.qsub
 done
 
 

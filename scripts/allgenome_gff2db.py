@@ -8,7 +8,7 @@ import re
 daliasrepli = {'ANONYMOUS':'chromosome'}
 
 dfoutheaders = { \
-'proteins':['protein_id', 'genomic_accession', 'gene_begin', 'gene_end', 'gene_strand', 'gene_product', 'genbank_cds_id'], \
+'proteins':['protein_id', 'locus_tag', 'genomic_accession', 'gene_begin', 'gene_end', 'gene_strand', 'gene_product', 'genbank_cds_id'], \
 'ribosomes':['rrna_id', 'genomic_accession', 'gene_begin', 'gene_end', 'gene_strand', 'gene_product'], \
 'replicons':['assembly_accession', 'assembly_name', 'genomic_accession', 'replicon_name', 'replicon_type', 'size', 'tax_id', 'strain'] \
 }
@@ -43,7 +43,6 @@ def parseGFFline(line):
 
 def indexRegionsAndGenes(fgff, dfout, assacc, assname, dtaxid2sciname={}, dmergedtaxid={}):
 	currseqreg = ''
-	#~ dgenedesc = {}
 	dgeneloctag = {}
 	dgenenchild = {}
 	for line in fgff:
@@ -65,7 +64,6 @@ def indexRegionsAndGenes(fgff, dfout, assacc, assname, dtaxid2sciname={}, dmerge
 				if dtaxid2sciname: replineout.append(dtaxid2sciname[dmergedtaxid.get(tid, tid)])
 				dfout['replicons'].write('\t'.join(replineout)+'\n')
 		elif annottype in ['gene', 'pseudogene']:
-			#~ dgenedesc[desc['ID']] = desc
 			dgeneloctag[desc['ID']] = desc['locus_tag']
 		elif annottype in annottype2fouttag:
 			parentgene = desc.get('Parent')
@@ -75,8 +73,7 @@ def indexRegionsAndGenes(fgff, dfout, assacc, assname, dtaxid2sciname={}, dmerge
 
 def compileFeatures(fgff, dfout, dgenbankcdsids, dgeneloctag, dgenenchild, didentseq={}):
 	dgenerangeprods = {}
-	annottype = None
-	lineout = []
+	#~ annottype = None
 	nprintmullicds = 0
 	for line in fgff:
 		if line.startswith('#'): continue
@@ -84,21 +81,19 @@ def compileFeatures(fgff, dfout, dgenbankcdsids, dgeneloctag, dgenenchild, diden
 		#~ print line
 		seqreg, annottype, beg, end, strand, desc = parseGFFline(line)
 		if annottype in annottype2fouttag:
+			lineoutend = []
 			parentgene = desc['Parent']
-			#~ locustag = dgenedesc[parentgene]['locus_tag']
 			locustag = dgeneloctag[parentgene]
 			# need to buffer extraction of entries as several lines can relate to the same gene in case of CDS/RNA in several segments (due  to introns, framshifts, ...)
 			if annottype=="CDS":
 				productid = desc.get('protein_id', '').split('|')[-1]	# to account for Prokka-style annotation that prepends 'gnl|Sequencing_Centre' to the protein_id
 				genbankcdsid = dgenbankcdsids[(locustag, productid)]	# get unique CDS id
-				lineout.append(genbankcdsid)
-				if didentseq: lineout.append(didentseq.get(productid, productid))
+				lineoutend.append(genbankcdsid)
+				if didentseq: lineoutend.append(didentseq.get(productid, productid))
 			else:
 				productid = desc.get('ID', '')
 			dgenerangeprods.setdefault(parentgene, []).append((beg, end, productid))
 			begs, ends, products = zip(*dgenerangeprods[parentgene])
-			lineout = [productid, seqreg, locustag, min(begs), max(ends), strand, desc.get('product', '')] + lineout
-			
 			if len(dgenerangeprods[parentgene]) > 1:
 				if nprintmullicds==0: print "multiline feature:",
 				print productid,
@@ -106,16 +101,14 @@ def compileFeatures(fgff, dfout, dgenbankcdsids, dgeneloctag, dgenenchild, diden
 				if products[0]!=productid: raise IndexError, "multiline feature not pointing at the same product: %s and %s"%(products[0], productid)
 			if len(dgenerangeprods[parentgene])==dgenenchild[parentgene]:
 				# write out previous CDS/RNA gene info (potential synthesis of several lines)
+				lineout = [productid, seqreg, locustag, min(begs), max(ends), strand, desc.get('product', '')] + lineoutend
 				dfout[annottype2fouttag.get(annottype, 'misc_features')].write('\t'.join(lineout)+'\n')
-				lineout = []
 				del dgenenchild[parentgene]
 	
 	if dgenenchild:
 		raise IndexError, "some genes not written:\n%s"%(repr(dgenenchild))
-	if lineout:
-		raise IndexError, "extra unwritten line:\n%"%lineout
-		#~ # write out last CDS info (potential synthesis of  several lines); flush buffer
-		#~ dfout[annottype2fouttag[annottype]].write('\t'.join(lineout)+'\n')
+	#~ if lineout:
+		#~ raise IndexError, "extra unwritten line:\n%s"%lineout
 	if nprintmullicds>0: print	'\n'
 
 

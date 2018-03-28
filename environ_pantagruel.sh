@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# logging variables and functions
+alias dateprompt="date +'[%Y-%m-%d %H:%M:%S]'"
+datepad="                     "
+
 ## variables to be automaticly replaced by user-defined environment variables ${raproot} and ${rapdb}
 export raproot='REPLACEraproot'
 export rapdbname='REPLACErapdbname'

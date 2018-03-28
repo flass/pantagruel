@@ -27,10 +27,16 @@ def loadAndCurateTable(table, nfin, cursor, insertcolumns=(), sep='\t', doNotRep
 		cursor.executemany("INSERT INTO %s %s VALUES (%s);"%(table, coldef, ','.join(['?']*len(colinfos))), (tuple(line.rstrip('\n').split(sep)) for line in ftabin))
 	replaceValuesAsNull(table, cursor, tableinfo=colinfos, ommitcols=doNotReplaceWithNull, **kw)
 	
-def createAndLoadTable(table, tabledef, nfin, cursor, temp=False, enddrop=False, **kw):
+def createAndLoadTable(table, tabledef, nfin, cursor, header=False, temp=False, enddrop=False, **kw):
 	tmp = 'TEMP' if temp else ''
+	if header:
+		sep = kw.get('sep', '\t')
+		with open(nfin, 'r') as fin:
+			insertcols = tuple(fin.readline().rstrip('\n').split(sep))
+	else:
+		insertcols = ()
 	cursor.execute("CREATE %s TABLE %s %s;"%(tmp, table, tabledef))
-	loadAndCurateTable(table, nfin, cursor, **kw)
+	loadAndCurateTable(table, nfin, cursor, insertcolumns=insertcols, **kw)
 	if enddrop: cursor.execute("DROP TABLE %s;"%table)
 
 
