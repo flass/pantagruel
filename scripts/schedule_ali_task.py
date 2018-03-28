@@ -6,8 +6,7 @@ nffamtab = sys.argv[1]
 dirfamfasta = sys.argv[2]
 nfoutalitasklit = sys.argv[3]
 nparalleltasks = int(sys.argv[4])
-
-excludefams = ['ENTCGP000000']	# ORFan families
+excludefams = sys.argv[5:]	# ORFan families
 fastaext = '.fasta'
 
 # 2 nr sequences can translte into many sequqnces in whole genome db, so must have sequqnces aligned
