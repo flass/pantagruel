@@ -60,7 +60,7 @@ def sorttasksbysource(dprotfiletasks):
 def joinlistasline(l):
 	return '\t'.join([str(e) for e in l])+'\n'
 	
-def castPal2Nal(cdsfam, dirfullprotout, dirfullcdsseqout, fpal2nallog):
+def castPal2Nal(cdsfam, dirfullprotout, dirfullcdsseqout, dirfullcdsaliout, fpal2nallog):
 	"""sequential call to pal2nal.pl alignment reverse-translation script
 	
 	given gene family name, folders of protein alignements and aligned gene sequence, respectively,
@@ -80,8 +80,8 @@ def castMultiPal2Nal(argtup):
 	given a tuple containg the gene family name, folders of protein alignements and aligned gene sequence, respectively;
 	returns pal2nal.pl verbose log (text string)"""
         try:
-                # with multiprocessing
-	        cdsfam, dirfullprotout, dirfullcdsseqout, fpal2nallog, queue = argtup
+            # with multiprocessing
+	        cdsfam, dirfullprotout, dirfullcdsseqout, dirfullcdsaliout, fpal2nallog, queue = argtup
 	        nfprotali = "%s/%s.aln"%(dirfullprotout, cdsfam)
 	        nfcdsseq = "%s/%s.fasta"%(dirfullcdsseqout, cdsfam)
 	        p2ncmd = ["pal2nal.pl", "-output", "fasta", "-codontable", "11", nfprotali, nfcdsseq]
@@ -388,7 +388,7 @@ def main(dirnrprotaln, nfsingletonfasta, nfprotinfotab, nfreplinfotab, dirassemb
 		# sequentially
 		#~ np2p = 0
 		#~ for cdsfam in allcdsfam:
-			#~ castPal2Nal(cdsfam, dirfullprotout, dirfullcdsseqout, fpal2nallog)
+			#~ castPal2Nal(cdsfam, dirfullprotout, dirfullcdsseqout, dirfullcdsaliout, fpal2nallog)
 			#~ np2p += 1
 			#~ sys.stdout.write("\r%d\t/%d"%(np2p, len(allcdsfam)))
 		
@@ -397,8 +397,8 @@ def main(dirnrprotaln, nfsingletonfasta, nfprotinfotab, nfreplinfotab, dirassemb
 		pool = multiprocessing.Pool(processes=nbcores)
 		manag = multiprocessing.Manager()
 		queue = manag.Queue()
-		p2nlog = pool.map(castMultiPal2Nal, ((cdsfam, dirfullprotout, dirfullcdsseqout, fpal2nallog, queue) for cdsfam in allcdsfam))
-		#~ result = pool.map_async(castMultiPal2Nal, ((cdsfam, dirfullprotout, dirfullcdsseqout, fpal2nallog, queue) for cdsfam in allcdsfam))
+		p2nlog = pool.map(castMultiPal2Nal, ((cdsfam, dirfullprotout, dirfullcdsseqout, dirfullcdsaliout, fpal2nallog, queue) for cdsfam in allcdsfam))
+		#~ result = pool.map_async(castMultiPal2Nal, ((cdsfam, dirfullprotout, dirfullcdsseqout, dirfullcdsaliout, fpal2nallog, queue) for cdsfam in allcdsfam))
 		#~ # monitor loop
 		#~ while True:
 			#~ if result.ready():

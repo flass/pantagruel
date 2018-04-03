@@ -253,7 +253,9 @@ export database=${rapdb}/03.database
 mkdir -p ${database}
 cd ${database}
 ### create and populate SQLite database
-${ptgscripts}/pantagruel_sqlitedb.sh ${database} ${rapdbname,,} ${genomeinfo}/metadata ${genomeinfo}/assembly_info ${protali} ${protfamseqs}.tab ${protorfanclust} ${cdsorfanclust}
+${ptgscripts}/pantagruel_sqlitedb.sh ${database} ${rapdbname,,} ${genomeinfo}/metadata ${genomeinfo}/assembly_info ${protali} ${protfamseqs}.tab ${protorfanclust} ${cdsorfanclust} >& ${raplogs}/pantagruel_sqlitedb.log &
+[1] 13434
+
 
 # dump reference table for translation of genome assembly names into short identifier codes (uing UniProt "5-letter" code when available).
 sqlite3 ${sqldbname} "select assembly_id, code from genome.assemblies;" | sed -e 's/|/\t/g' > ${database}/genome_codes.tab

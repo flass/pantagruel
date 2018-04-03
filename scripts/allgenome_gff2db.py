@@ -10,7 +10,7 @@ daliasrepli = {'ANONYMOUS':'chromosome'}
 dfoutheaders = { \
 'proteins':['protein_id', 'genomic_accession', 'locus_tag', 'gene_begin', 'gene_end', 'gene_strand', 'gene_product', 'genbank_cds_id'], \
 'ribosomes':['rrna_id', 'genomic_accession', 'gene_begin', 'gene_end', 'gene_strand', 'gene_product'], \
-'replicons':['assembly_accession', 'assembly_name', 'genomic_accession', 'replicon_name', 'replicon_type', 'size', 'tax_id', 'strain'] \
+'replicons':['assembly_id', 'assembly_name', 'genomic_accession', 'replicon_name', 'replicon_type', 'replicon_size', 'taxid', 'strain'] \
 }
 
 fouttags = ['proteins', 'ribosomes', 'replicons']

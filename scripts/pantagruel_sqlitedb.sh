@@ -9,6 +9,15 @@ protfamseqtab=$6
 protorfanclust=$7
 cdsorfanclust=$8
 
+if [ -z $cdsorfanclust ] ; do
+ echo "Error: incomplete argument list. Usage:"
+ echo "${thisscript} database dbname metadata assemblyinfo protali protfamseqtab protorfanclust cdsorfanclust"
+ echo "currently set variable:"
+ echo "database=$1 dbname=$2 metadata=$3 assemblyinfo=$4 protali=$5 protfamseqtab=$6 protorfanclust=$7 cdsorfanclust=$8"
+ exit 1
+fi
+
+
 initiatescript=${thisscript%.*}_initiate.sql
 populatescript=${thisscript%.*}_populate.py
 
