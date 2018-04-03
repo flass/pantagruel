@@ -8,7 +8,7 @@ import re
 daliasrepli = {'ANONYMOUS':'chromosome'}
 
 dfoutheaders = { \
-'proteins':['protein_id', 'locus_tag', 'genomic_accession', 'gene_begin', 'gene_end', 'gene_strand', 'gene_product', 'genbank_cds_id'], \
+'proteins':['protein_id', 'genomic_accession', 'locus_tag', 'gene_begin', 'gene_end', 'gene_strand', 'gene_product', 'genbank_cds_id'], \
 'ribosomes':['rrna_id', 'genomic_accession', 'gene_begin', 'gene_end', 'gene_strand', 'gene_product'], \
 'replicons':['assembly_accession', 'assembly_name', 'genomic_accession', 'replicon_name', 'replicon_type', 'size', 'tax_id', 'strain'] \
 }

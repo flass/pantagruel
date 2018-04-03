@@ -16,27 +16,24 @@ def replaceValuesAsNull(table, cursor, nullval='', ommitcols=[], tableinfo=None)
 		if colname not in ommitcols:
 			cursor.execute("UPDATE %s SET %s=NULL WHERE %s='%s';"%(table, colname, colname, nullval))
 
-def loadAndCurateTable(table, nfin, cursor, insertcolumns=(), sep='\t', doNotReplaceWithNull=[], **kw):
-	if insertcolumns:
+def loadAndCurateTable(table, nfin, cursor, header=True, insertcolumns=(), sep='\t', doNotReplaceWithNull=[], **kw):
+	ftabin = open(nfin, 'r')
+	if header:
+		coldef = ftabin.readline().rstrip('\n').replace(sep, ', ')
+	elif insertcolumns:
 		if type(insertcolumns)==str: coldef = insertcolumns
 		else: coldef = "(%s)"%(', '.join(insertcolumns))
 	else:
 		coldef = ''
 	colinfos = getTableInfos(table, cursor)
-	with open(nfin, 'r') as ftabin:
-		cursor.executemany("INSERT INTO %s %s VALUES (%s);"%(table, coldef, ','.join(['?']*len(colinfos))), (tuple(line.rstrip('\n').split(sep)) for line in ftabin))
+	cursor.executemany("INSERT INTO %s %s VALUES (%s);"%(table, coldef, ','.join(['?']*len(colinfos))), (tuple(line.rstrip('\n').split(sep)) for line in ftabin))
 	replaceValuesAsNull(table, cursor, tableinfo=colinfos, ommitcols=doNotReplaceWithNull, **kw)
+	ftabin.close()
 	
-def createAndLoadTable(table, tabledef, nfin, cursor, header=False, temp=False, enddrop=False, **kw):
+def createAndLoadTable(table, tabledef, nfin, cursor, temp=False, enddrop=False, **kw):
 	tmp = 'TEMP' if temp else ''
-	if header:
-		sep = kw.get('sep', '\t')
-		with open(nfin, 'r') as fin:
-			insertcols = tuple(fin.readline().rstrip('\n').split(sep))
-	else:
-		insertcols = ()
 	cursor.execute("CREATE %s TABLE %s %s;"%(tmp, table, tabledef))
-	loadAndCurateTable(table, nfin, cursor, insertcolumns=insertcols, **kw)
+	loadAndCurateTable(table, nfin, cursor, **kw)
 	if enddrop: cursor.execute("DROP TABLE %s;"%table)
 
 
@@ -67,7 +64,8 @@ CREATE INDEX assemblies_taxid_key ON assemblies (taxid);
 conn.commit()
 
 # populate replicons table
-loadAndCurateTable('replicons', 'genome_replicons.tab', cur, insertcolumns="(assembly_id, genomic_accession, replicon_name, replicon_type, replicon_size)")
+#~ loadAndCurateTable('replicons', 'genome_replicons.tab', cur, insertcolumns="(assembly_id, genomic_accession, replicon_name, replicon_type, replicon_size)")
+loadAndCurateTable('replicons', 'genome_replicons.tab', cur, header=True)
 conn.commit()
 
 # populate protein table
@@ -110,7 +108,7 @@ cdsfamtabledef = """(
   gene_family_id CHAR(13)
 )"""
 createAndLoadTable('codingsequences', cdstabledef, 'genome_coding_sequences.tab', cur)
-createAndLoadTable('cdsfam', cdsfamtabledef, 'genome_gene_families.tab', cur)
+createAndLoadTable('cdsfam', cdsfamtabledef, 'genome_gene_families.tab', cur, header=False)
 cur.executescript("""
 CREATE INDEX gbcdsid_1 ON codingsequences (genbank_cds_id);
 CREATE INDEX gbcdsid_2 ON cdsfam (genbank_cds_id);

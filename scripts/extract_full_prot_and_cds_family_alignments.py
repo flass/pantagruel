@@ -180,7 +180,8 @@ def main(dirnrprotaln, nfsingletonfasta, nfprotinfotab, nfreplinfotab, dirassemb
 			lsp = line.rstrip('\n').split('\t')
 			protid = lsp[0]
 			repliacc = lsp[1]
-			cdsid = lsp[-1]
+			#~ cdsid = lsp[-1]
+			cdsid = lsp[7]
 			# {unique_cds_id:taxon_name <- refseq_acc}
 			dcdstaxa[cdsid] = dreplitaxa[repliacc]
 			# cds_fasta_path <- assembly_id_name <- refseq_acc
