@@ -1,20 +1,23 @@
 #!/bin/bash
-
+thisscript=$0
 database=$1
 dbname=$2
-assemblyinfo=$3
-protali=$4
-protfamseqtab=$5
-protorfanclust=$6
-cdsorfanclust=$7
-initiatescript=$8
-populatescript=$9
+metadata=$3
+assemblyinfo=$4
+protali=$5
+protfamseqtab=$6
+protorfanclust=$7
+cdsorfanclust=$8
+
+initiatescript=${thisscript%.*}_initiate.sql
+populatescript=${thisscript%.*}_populate.py
 
 cd ${database}
 
 # fetch UniProt taxon codes
-wget http://www.uniprot.org/docs/speclist
-
+if [ ! -e speclist ] ; then
+ wget http://www.uniprot.org/docs/speclist
+fi
 ### if no set db name env variable, INTERACTIVE prompt asks for database name and password
 while [ -z $dbname ] ; do
   read -p 'Set PostgreSQL database name: ' dbname ; echo ''
@@ -39,3 +42,5 @@ cut -f${protidfield},7 ${assemblyinfo}/allproteins_info.tab | tail -n +2 | grep 
 
 # populate database
 python $populatescript $dbname ${protfamseqtab} ${protorfanclust} ${cdsorfanclust}
+
+cd -

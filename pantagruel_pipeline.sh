@@ -172,7 +172,7 @@ echo "${datepad}-- (NB: some are not true ORFans as can be be present as identic
 
 ## prepare protein families for alignment
 export protfamseqs=${mmseqsclout}_clusters_fasta
-export protali=$entdb/02.gene_alignments
+export protali=${rapdb}/02.gene_alignments
 nrprotali=$protali/nr_protfam_clustalo_alignments
 mkdir -p $nrprotali
 # generate lists of many jobs to be executed by a single process (clustalo jobs are too short to be dispatched via a cluster array job)
@@ -249,25 +249,27 @@ gzip ${protali}/all_families_genome_counts.mat
 ## 03. Create and Populate SQLite database
 ##############################################
 
-export database=$entdb/03.database
+export database=${rapdb}/03.database
 mkdir -p ${database}
 cd ${database}
 ### create and populate SQLite database
-${ptgscripts}/pantagruel_sqlitedb.sh ${database} ${entdbname,,} ${allcomplete} ${protali} ${protfamseqs}.tab ${protorfanclust} ${cdsorfanclust} ${ptgscripts}/pantagruel_sqlitedb_initiate.sql ${ptgscripts}/pantagruel_sqlitedb_populate.py
+${ptgscripts}/pantagruel_sqlitedb.sh ${database} ${rapdbname,,} ${genomeinfo}/metadata ${genomeinfo}/assembly_info ${protali} ${protfamseqs}.tab ${protorfanclust} ${cdsorfanclust}
 
 # dump reference table for translation of genome assembly names into short identifier codes (uing UniProt "5-letter" code when available).
-sqlite3 ${sqldbname} "select assembly_id, code from genome.assemblies;" | sed -e 's/|/\t/g' > $database/genome_codes.tab
+sqlite3 ${sqldbname} "select assembly_id, code from genome.assemblies;" | sed -e 's/|/\t/g' > ${database}/genome_codes.tab
 # and for CDS names into code of type "SPECIES_CDSTAG" (ALE requires such a naming)
 # here split the lines with '|' and remove GenBank CDS prefix that is always 'lcl|'
-sqlite3 ${sqldbname} "select genbank_cds_id, cds_code from coding_sequences;" | sed -e 's/lcl|//g'  | sed -e 's/|/\t/g' > $database/cds_codes.tab
+sqlite3 ${sqldbname} "select genbank_cds_id, cds_code from coding_sequences;" | sed -e 's/lcl|//g'  | sed -e 's/|/\t/g' > ${database}/cds_codes.tab
 
 # translates the header of the alignment files
-export alifastacodedir=${protali}/full_cdsfam_alignments_species_code
+export cdsalifastacodedir=${protali}/full_cdsfam_alignments_species_code
+export protalifastacodedir=${protali}/full_protfam_alignments_species_code
 mkdir -p ${alifastacodedir}
 # use parrallel bash command
 ${ptgscripts}/lsfullpath.py ${protali}/full_cdsfam_alignments .aln > ${protali}/full_cdsfam_alignment_list
-${ptgscripts}/genbank2code_fastaseqnames.py ${protali}/full_cdsfam_alignment_list ${database}/cds_codes.tab ${alifastacodedir} > $entdb/logs/genbank2code_fastaseqnames.log
-
+${ptgscripts}/lsfullpath.py ${protali}/full_protfam_alignments .aln > ${protali}/full_protfam_alignment_list
+${ptgscripts}/genbank2code_fastaseqnames.py ${protali}/full_cdsfam_alignment_list ${database}/cds_codes.tab ${cdsalifastacodedir} > ${rapdb}/logs/genbank2code_fastaseqnames.cds.log
+${ptgscripts}/genbank2code_fastaseqnames.py ${protali}/full_protfam_alignment_list ${database}/cds_codes.tab ${protalifastacodedir} > ${rapdb}/logs/genbank2code_fastaseqnames.prot.log
 
 ###########################################
 ## 04. Core Genome Phylogeny (Species tree)
@@ -279,7 +281,7 @@ ${ptgscripts}/select_pseudocore_genefams.r
 export pseudocoremingenomes=$?
 
 ## generate core genome alignment path list
-export coregenome=$entdb/04.core_genome
+export coregenome=${rapdb}/04.core_genome
 mkdir -p ${coregenome}
 export pseudocore=${coregenome}/pseudo-core-${pseudocoremingenomes}-unicopy
 rm -f ${pseudocore}_cds_aln_list
@@ -329,7 +331,7 @@ echo "Found $nspepop disctinct populations in the species tree"
 ## 05. Gene trees (full [ML] and collapsed [bayesian sample])
 #############################################################
 
-export genetrees=$entdb/05.gene_trees
+export genetrees=${rapdb}/05.gene_trees
 export mlgenetrees=${genetrees}/raxml_trees
 mkdir -p ${mlgenetrees}
 mkdir -p $raplogs/raxml/gene_trees
@@ -424,17 +426,17 @@ done
 ### edit collapsed gene trees to attribute an (ancestral) species identity to the leafs representing collapsed clades
 ## = pre-reconciliation of recent gene history
 
-export alerec=$entdb/06.ALE_reconciliation
+export alerec=${rapdb}/06.ALE_reconciliation
 mkdir -p ${alerec}
 export coltreechains=${alerec}/collapsed_tree_chains
 export colmethod='replaceCCinGasinS-collapsePOPinSnotinG'
 mkdir -p ${coltreechains}/${collapsecond}
 
 ## edit the gene trees, producing the corresponding (potentially collapsed) species tree based on the 'time'-tree backbone
-mkdir -p $entdb/logs/replspebypop
+mkdir -p ${rapdb}/logs/replspebypop
 tasklist=${coltreechains}_${collapsecond}_nexus_list
 ls $collapsed_genetrees/${collapsecond}/*run1.t > $tasklist
-repllogd=$entdb/logs/replspebypop
+repllogd=${rapdb}/logs/replspebypop
 repllogs=$repllogd/replace_species_by_pop_in_gene_trees
 replrun=$(date +'%d%m%Y')
 
@@ -462,7 +464,7 @@ EOF
 export colrecs=${alerec}/collapsed_recs
 tasklist=${coltreechains}/${collapsecond}/${colmethod}_Gtrees_list
 ls ${coltreechains}/${collapsecond}/${colmethod}/*-Gtrees.nwk > $tasklist
-alelogs=$entdb/logs/ALE
+alelogs=${rapdb}/logs/ALE
 mkdir -p $alelogs/ale_collapsed_undat $alelogs/ale_collapsed_dated
 outrecdir=${colrecs}/${collapsecond}/${colmethod}/ale_collapsed_undat
 mkdir -p $outrecdir
