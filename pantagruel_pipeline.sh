@@ -212,10 +212,12 @@ fi
 for cg in `cat ${genomeinfo}/assemblies_list` ; do ls $cg/*_cds_from_genomic.fna.gz >> ${genomeinfo}/all_cds_fasta_list ; done
 
 # generate (full protein alignment, unaligned CDS fasta) file pairs and reverse-translate alignments to get CDS (gene family) alignments
-python ${ptgscripts}/extract_full_prot_and_cds_family_alignments.py ${nrprotali} ${protfamseqs}/${protorfanclust}.fasta ${genomeinfo}/assembly_info/allproteins_info.tab \
-${genomeinfo}/assembly_info/allreplicons_info.tab ${genomeinfo}/all_cds_fasta_list ${protali} ${famprefix} $raplogs
+mkdir -p ${raplogs}/extract_full_prot_and_cds_family_alignments/
+python ${ptgscripts}/extract_full_prot_and_cds_family_alignments.py --nrprot_fam_alns ${nrprotali} --singletons ${protfamseqs}/${protorfanclust}.fasta \
+ --prot_info ${genomeinfo}/assembly_info/allproteins_info.tab --repli_info ${genomeinfo}/assembly_info/allreplicons_info.tab --assemblies ${assemblies} \
+ --dirout ${protali} --famprefix ${famprefix} --logs ${raplogs}/extract_full_prot_and_cds_family_alignments
 
-#~ ## check consistency of full reverse translated alignement set
+## check consistency of full reverse translated alignement set
 ok=1
 for fam in `ls /enterobac/PanteroDB_v0.3/02.clustalo_alignments/full_cdsfam_alignments/ | cut -d'.' -f1` ; do 
 nseqin1=`grep -c '>' $protali/full_cdsfam_fasta/$fam.fasta`
