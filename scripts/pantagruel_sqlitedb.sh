@@ -51,8 +51,9 @@ protidfield=$(head -n 1 ${assemblyinfo}/allproteins_info.tab | grep -o 'nr_prote
 if [ -z $protidfield ] ; then 
  protidfield=$(head -n 1 ${assemblyinfo}/allproteins_info.tab | grep -o 'protein_id')
  if [ -z $protidfield ] ; then 
-  echo "Error, header of file '${assemblyinfo}/allproteins_info.tab' if missing 'nr_protein_id' or 'protein_id' fields"
+  echo "Error, file '${assemblyinfo}/allproteins_info.tab' if missing a field headed 'nr_protein_id' or 'protein_id'"
   exit 1
+ fi
 fi
 protidsedfilter='s/[^\t]*protein_id[^\t]*/nr_protein_id/'
 # assembly table
