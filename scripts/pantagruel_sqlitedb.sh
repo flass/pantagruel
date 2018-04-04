@@ -9,7 +9,7 @@ protfamseqtab=$6
 protorfanclust=$7
 cdsorfanclust=$8
 
-if [ -z $cdsorfanclust ] ; do
+if [ -z $cdsorfanclust ] ; then
  echo "Error: incomplete argument list. Usage:"
  echo "${thisscript} database dbname metadata assemblyinfo protali protfamseqtab protorfanclust cdsorfanclust"
  echo "currently set variable:"
