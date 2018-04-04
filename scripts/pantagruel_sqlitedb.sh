@@ -65,15 +65,15 @@ cut -f $replifieldnums ${assemblyinfo}/allreplicons_info.tab > genome_replicons.
 # gene_family table
 cut -f 2,3 ${protali}/full_families_info-noORFans.tab > genome_gene_families.tab
 # coding_sequences table
-cdsfields="$protidfield genomic_accession locus_tag cds_begin cds_end cds_strand product genbank_cds_id"
+cdsfields="$protidfield genomic_accession locus_tag cds_begin cds_end cds_strand genbank_cds_id"
 cdsfieldnums=$(getnumfield ${assemblyinfo}/allproteins_info.tab $cdsfields)
 head -n 1  ${assemblyinfo}/allproteins_info.tab | cut -f ${cdsfieldnums} | sed -e $protidsedfilter > genome_coding_sequences.tab && \
 tail -n +2 ${assemblyinfo}/allproteins_info.tab | cut -f ${cdsfieldnums} >> genome_coding_sequences.tab
-# prpteins table
+# proteins table
 protfields="$protidfield product"
 protfieldnums=$(getnumfield ${assemblyinfo}/allproteins_info.tab $protfields)
 head -n 1  ${assemblyinfo}/allproteins_info.tab | cut -f ${protfieldnums} | sed -e $protidsedfilter > genome_protein_products.tab && \
-tail -n +2 ${assemblyinfo}/allproteins_info.tab | cut -f ${protfieldnums} | grep -vP "^\t" | sort -u | sed -e "s/%2C/,/g" | sed -e "s/%3B/;/g" >> genome_protein_products.tab
+tail -n +2 ${assemblyinfo}/allproteins_info.tab | cut -f ${protfieldnums} | grep -vP "^\t" | sort -u --parallel | sed -e "s/%2C/,/g" | sed -e "s/%3B/;/g" >> genome_protein_products.tab
 
 ## populate database
 python $populatescript $dbname ${protfamseqtab} ${protorfanclust} ${cdsorfanclust}
