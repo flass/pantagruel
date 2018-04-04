@@ -105,7 +105,7 @@ cdstabledef = """(
   locus_tag VARCHAR(200),
   cds_begin INTEGER NOT NULL,
   cds_end INTEGER NOT NULL,
-  strand CHAR(1) NOT NULL,
+  cds_strand CHAR(1) NOT NULL,
   genbank_cds_id VARCHAR(50) NOT NULL
 )"""
 cdsfamtabledef = """(
