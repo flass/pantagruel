@@ -29,7 +29,7 @@ CREATE TABLE replicons (
 );
 
 CREATE TABLE coding_sequences (
-        cds_id SERIAL PRIMARY KEY,
+        cds_serial_id SERIAL PRIMARY KEY,
         genbank_cds_id VARCHAR(50) UNIQUE NOT NULL,
         genomic_accession CHAR(14) NOT NULL,
         locus_tag VARCHAR(200),
@@ -37,7 +37,7 @@ CREATE TABLE coding_sequences (
         cds_end INTEGER NOT NULL,
         cds_strand CHAR(1) NOT NULL,
         location_long VARCHAR(200),
-        genbank_nr_protein_id CHAR(15),
+        nr_protein_id CHAR(15),
         gene_family_id CHAR(13)
 );
 
@@ -45,11 +45,11 @@ CREATE TABLE coding_sequences (
 -- CREATE INDEX cds_gene_family_id_key_key ON coding_sequences (gene_family_id);
 -- CREATE INDEX cds_genomic_accession_key ON coding_sequences (genomic_accession);
 -- CREATE INDEX cds_genomic_accession_cds_begin_key ON coding_sequences (genomic_accession, cds_begin);
--- CREATE INDEX cds_genbank_nr_protein_id_key ON coding_sequences (genbank_nr_protein_id);
+-- CREATE INDEX cds_nr_protein_id_key ON coding_sequences (nr_protein_id);
 
 CREATE TABLE proteins (
-        protein_id SERIAL PRIMARY KEY,
-        genbank_nr_protein_id VARCHAR(20),
+        protein_serial_id SERIAL PRIMARY KEY,
+        nr_protein_id VARCHAR(20),
         product TEXT,
         protein_family_id CHAR(13)
 );

@@ -70,16 +70,16 @@ loadAndCurateTable('replicons', 'genome_replicons.tab', cur, header=True)
 conn.commit()
 
 # populate protein table
-protprodtabledef = """(genbank_nr_protein_id VARCHAR(20), product TEXT)"""
-protfamtabledef = """(genbank_nr_protein_id VARCHAR(20), protein_family_id CHAR(13))"""
+protprodtabledef = """(nr_protein_id VARCHAR(20), product TEXT)"""
+protfamtabledef = """(nr_protein_id VARCHAR(20), protein_family_id CHAR(13))"""
 createAndLoadTable('protein_products', protprodtabledef, 'genome_protein_products.tab', cur)
 createAndLoadTable('protein_fams', protfamtabledef, protfamseqtab, cur, header=False)
 cur.executescript("""
-INSERT INTO proteins (genbank_nr_protein_id, product, protein_family_id)
- SELECT genbank_nr_protein_id, min(product), protein_family_id
+INSERT INTO proteins (nr_protein_id, product, protein_family_id)
+ SELECT nr_protein_id, min(product), protein_family_id
   FROM protein_products
-  INNER JOIN protein_fams USING (genbank_nr_protein_id)
-  GROUP BY genbank_nr_protein_id,protein_family_id
+  INNER JOIN protein_fams USING (nr_protein_id)
+  GROUP BY nr_protein_id,protein_family_id
 ;
 DROP TABLE protein_products;
 DROP TABLE protein_fams;
@@ -88,7 +88,7 @@ conn.commit()
 
 # create indexes on proteins table
 cur.executescript("""
-CREATE INDEX proteins_genbank_nr_protein_id_key ON proteins (genbank_nr_protein_id);
+CREATE INDEX proteins_nr_protein_id_key ON proteins (nr_protein_id);
 CREATE INDEX proteins_protein_family_id_key ON proteins (protein_family_id);
 CREATE INDEX proteins_product_key ON proteins (product);
 """)
@@ -113,7 +113,7 @@ createAndLoadTable('cdsfam', cdsfamtabledef, 'genome_gene_families.tab', cur, he
 cur.executescript("""
 CREATE INDEX gbcdsid_1 ON codingsequences (genbank_cds_id);
 CREATE INDEX gbcdsid_2 ON cdsfam (genbank_cds_id);
-INSERT INTO coding_sequences (genbank_cds_id, genomic_accession, locus_tag, cds_begin, cds_end, strand, genbank_nr_protein_id, gene_family_id) 
+INSERT INTO coding_sequences (genbank_cds_id, genomic_accession, locus_tag, cds_begin, cds_end, strand, nr_protein_id, gene_family_id) 
  SELECT genbank_cds_id, genomic_accession, locus_tag, cds_begin, cds_end, strand, nr_protein_id, gene_family_id
   FROM codingsequences
   LEFT JOIN cdsfam USING (genbank_cds_id);
@@ -128,7 +128,7 @@ cur.execute("INSERT INTO nr_protein_families (protein_family_id) SELECT DISTINCT
 cur.execute("UPDATE nr_protein_families SET is_singleton=1 WHERE protein_family_id=?;", (protorfanclust,))
 # allocated the '$cdsorfanclust' value to gene_family_id field for those CDSs with a parent protein but no gene family affiliation
 cur.execute("UPDATE coding_sequences SET gene_family_id=? " \
-           +"WHERE gene_family_id IS NULL AND genbank_nr_protein_id IS NOT NULL;", (cdsorfanclust,))
+           +"WHERE gene_family_id IS NULL AND nr_protein_id IS NOT NULL;", (cdsorfanclust,))
 # populate the gene families deriving from the protein families
 cur.execute("INSERT INTO gene_families " \
            +"SELECT replace(protein_family_id, 'P', 'C') AS gene_family_id, 0, protein_family_id " \
@@ -216,7 +216,7 @@ CREATE INDEX cds_cds_code_key ON coding_sequences (cds_code);
 CREATE INDEX cds_gene_family_id_key ON coding_sequences (gene_family_id);
 CREATE INDEX cds_genomic_accession_key ON coding_sequences (genomic_accession);
 CREATE INDEX cds_genomic_accession_cds_begin_key ON coding_sequences (genomic_accession, cds_begin);
-CREATE INDEX cds_genbank_nr_protein_id_key ON coding_sequences (genbank_nr_protein_id);
+CREATE INDEX cds_nr_protein_id_key ON coding_sequences (nr_protein_id);
 CREATE VIEW gene_family_sizes AS SELECT gene_family_id, count(*) as size from coding_sequences group by gene_family_id;
 """)
 conn.commit()
