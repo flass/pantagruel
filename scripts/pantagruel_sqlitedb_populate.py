@@ -20,6 +20,7 @@ def replaceValuesAsNull(table, cursor, nullval='', ommitcols=[], tableinfo=None)
 
 def loadAndCurateTable(table, nfin, cursor, header=True, insertcolumns=(), sep='\t', doNotReplaceWithNull=[], **kw):
 	ftabin = open(nfin, 'r')
+	colinfos = getTableInfos(table, cursor, ommitserial=True)
 	insertcols=[]
 	if header:
 		insertcols = ftabin.readline().rstrip('\n').split(sep)
@@ -27,7 +28,7 @@ def loadAndCurateTable(table, nfin, cursor, header=True, insertcolumns=(), sep='
 		if type(insertcolumns)==str: insertcols = [incol.strip(' ') for incol in insertcolumns.split(',')]
 		else: insertcols = insertcolumns
 	else:
-		insertcols = [colinfo['name']  for colinfo in getTableInfos(table, cursor, ommitserial=True)]
+		insertcols = [colinfo['name']  for colinfo in colinfos]
 	coldef = '('+', '.join(insertcols)+')'
 	print table, coldef
 	cursor.executemany("INSERT INTO %s %s VALUES (%s);"%(table, coldef, ','.join(['?']*len(insertcols))), (tuple(line.rstrip('\n').split(sep)) for line in ftabin))
