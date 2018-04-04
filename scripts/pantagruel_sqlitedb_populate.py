@@ -239,8 +239,9 @@ for ass, code, spe in lasscode:
 		dcodeass[c] = ass
 		print c, ass
 	else:
-		dcodeass[c+'1'] = dcodeass[c]
-		del dcodeass[c]
+		if dcodesn[c] == 2:
+			dcodeass[c+'1'] = dcodeass[c]
+			del dcodeass[c]
 		dcodeass[c+str(dcodesn[c])] = ass
 		print c+str(dcodesn[c]), ass
 
