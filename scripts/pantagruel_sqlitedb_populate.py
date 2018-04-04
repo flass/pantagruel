@@ -54,7 +54,7 @@ conn.row_factory = sqlite3.Row
 cur = conn.cursor()
 
 # populate assemblies table
-loadAndCurateTable('assemblies', 'genome_assemblies.tab', cur, doNotReplaceWithNull=['assembly_id', 'assembly_name', 'taxid'])
+loadAndCurateTable('assemblies', 'genome_assemblies.tab', cur, header=True, doNotReplaceWithNull=['assembly_id', 'assembly_name', 'taxid'])
 
 # create indexes on assemblies table
 cur.executescript("""
@@ -73,7 +73,7 @@ conn.commit()
 protprodtabledef = """(genbank_nr_protein_id VARCHAR(20), product TEXT)"""
 protfamtabledef = """(genbank_nr_protein_id VARCHAR(20), protein_family_id CHAR(13))"""
 createAndLoadTable('protein_products', protprodtabledef, 'genome_protein_products.tab', cur)
-createAndLoadTable('protein_fams', protfamtabledef, protfamseqtab, cur)
+createAndLoadTable('protein_fams', protfamtabledef, protfamseqtab, cur, header=False)
 cur.executescript("""
 INSERT INTO proteins (genbank_nr_protein_id, product, protein_family_id)
  SELECT genbank_nr_protein_id, min(product), protein_family_id

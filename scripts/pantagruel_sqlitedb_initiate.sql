@@ -35,7 +35,7 @@ CREATE TABLE coding_sequences (
         locus_tag VARCHAR(200),
         cds_begin INTEGER NOT NULL,
         cds_end INTEGER NOT NULL,
-        strand CHAR(1) NOT NULL,
+        cds_strand CHAR(1) NOT NULL,
         location_long VARCHAR(200),
         genbank_nr_protein_id CHAR(15),
         gene_family_id CHAR(13)

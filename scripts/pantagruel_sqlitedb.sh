@@ -47,7 +47,8 @@ cat ${metadata}/metadata_curated.tab > genome_assemblies.tab
 cut -f1,3,4,5,6 ${assemblyinfo}/allreplicons_info.tab > genome_replicons.tab
 cut -f${protidfield},2,3,4,5,6,8 ${assemblyinfo}/allproteins_info.tab > genome_coding_sequences.tab
 cut -f2,3 ${protali}/full_families_info-noORFans.tab > genome_gene_families.tab
-cut -f${protidfield},7 ${assemblyinfo}/allproteins_info.tab | grep -vP "^\t" | sort -u > genome_protein_products.tab 
+cut -f${protidfield},7 ${assemblyinfo}/allproteins_info.tab | grep -vP "^\t" | sort -u | sed -e "s/%2C/,/g" | sed -e "s/%3B/;/g" > genome_protein_products.tab~
+grep 'protein_id' genome_protein_products.tab~ > genome_protein_products.tab && grep -v 'protein_id' genome_protein_products.tab~ >> genome_protein_products.tab && rm genome_protein_products.tab~
 
 # populate database
 python $populatescript $dbname ${protfamseqtab} ${protorfanclust} ${cdsorfanclust}
