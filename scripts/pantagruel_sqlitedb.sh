@@ -73,7 +73,7 @@ tail -n +2 ${assemblyinfo}/allproteins_info.tab | cut -f ${cdsfieldnums} >> geno
 protfields="$protidfield product"
 protfieldnums=$(getnumfield ${assemblyinfo}/allproteins_info.tab $protfields)
 head -n 1  ${assemblyinfo}/allproteins_info.tab | cut -f ${protfieldnums} | sed -e $protidsedfilter > genome_protein_products.tab && \
-tail -n +2 ${assemblyinfo}/allproteins_info.tab | cut -f ${protfieldnums} | grep -vP "^\t" | sort -u --parallel | sed -e "s/%2C/,/g" | sed -e "s/%3B/;/g" >> genome_protein_products.tab
+tail -n +2 ${assemblyinfo}/allproteins_info.tab | cut -f ${protfieldnums} | grep -vP "^\t" | sort -u | sed -e "s/%2C/,/g" | sed -e "s/%3B/;/g" >> genome_protein_products.tab
 
 ## populate database
 python $populatescript $dbname ${protfamseqtab} ${protorfanclust} ${cdsorfanclust}

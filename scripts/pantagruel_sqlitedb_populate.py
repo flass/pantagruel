@@ -37,7 +37,28 @@ def loadAndCurateTable(table, nfin, cursor, header=True, insertcolumns=(), sep='
 	
 def createAndLoadTable(table, tabledef, nfin, cursor, temp=False, enddrop=False, **kw):
 	tmp = 'TEMP' if temp else ''
-	cursor.execute("CREATE %s TABLE %s %s;"%(tmp, table, tabledef))
+	if tabledef.upper().startswith('LIKE ') and 'header' in kw:
+		with open(nfin, 'r') as ftabin:
+			insertcols = ftabin.readline().rstrip('\n').split(sep)
+		reftable = tabledef.split('LIKE ', 1)[1]
+		refcolinfos = getTableInfos(reftable, cursor, ommitserial=True)
+		tdeflines = []
+		for incol in insertcols:
+			for refcolinfo in refcolinfos:
+				if refcolinfo['name']==incol:
+					tdefline = [refcolinfo['name'], 
+					            refcolinfo['type'], 
+					            'NOT NULL' if bool(int(refcolinfo['nn'])) else 'NULL', 
+					            'DEFAULT'+refcolinfo['dflt_value'] if refcolinfo['dflt_value'] else '', 
+					            'PRIMARY KEY'  if bool(int(refcolinfo['pk'])) else '']
+					tdeflines.append(' '.join(tdefline))
+					break
+			else:
+				raise ValueError, "no collumn named '%s' in reference table '%s'"%(incol, reftable)
+		tdef = '('+', '.join(tdeflines)+')'
+	else:
+		tdef = tabledef
+	cursor.execute("CREATE %s TABLE %s %s;"%(tmp, table, tdef))
 	loadAndCurateTable(table, nfin, cursor, **kw)
 	if enddrop: cursor.execute("DROP TABLE %s;"%table)
 
@@ -112,13 +133,15 @@ cdsfamtabledef = """(
   genbank_cds_id VARCHAR(50) NOT NULL,
   gene_family_id CHAR(13)
 )"""
-createAndLoadTable('codingsequences', cdstabledef, 'genome_coding_sequences.tab', cur)
+#~ createAndLoadTable('codingsequences', 'LIKE coding_sequences', 'genome_coding_sequences.tab', cur, header=True)
+#~ createAndLoadTable('cdsfam', 'LIKE coding_sequences', 'genome_gene_families.tab', cur, header=True)
+createAndLoadTable('codingsequences', cdstabledef, 'genome_coding_sequences.tab', cur, header=True)
 createAndLoadTable('cdsfam', cdsfamtabledef, 'genome_gene_families.tab', cur, header=False)
 cur.executescript("""
 CREATE INDEX gbcdsid_1 ON codingsequences (genbank_cds_id);
 CREATE INDEX gbcdsid_2 ON cdsfam (genbank_cds_id);
-INSERT INTO coding_sequences (genbank_cds_id, genomic_accession, locus_tag, cds_begin, cds_end, strand, nr_protein_id, gene_family_id) 
- SELECT genbank_cds_id, genomic_accession, locus_tag, cds_begin, cds_end, strand, nr_protein_id, gene_family_id
+INSERT INTO coding_sequences (genbank_cds_id, genomic_accession, locus_tag, cds_begin, cds_end, cds_strand, nr_protein_id, gene_family_id) 
+ SELECT genbank_cds_id, genomic_accession, locus_tag, cds_begin, cds_end, cds_strand, nr_protein_id, gene_family_id
   FROM codingsequences
   LEFT JOIN cdsfam USING (genbank_cds_id);
 DROP TABLE codingsequences;
