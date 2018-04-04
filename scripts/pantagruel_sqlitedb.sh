@@ -36,8 +36,8 @@ done
 sqlite3 $dbname < $initiatescript
 
 
-## create input tables
-# function for searching field positions
+## generate input data tables
+# create function for searching field positions
 getnumfield (){
  local table=$1
  shift
@@ -46,7 +46,7 @@ getnumfield (){
   echo $k
  done | cut -d':' -f 1 | xargs | tr ' ' ','
 }
-# verify occurence of 'nr_protein_id' or 'protein_id'
+# verify occurence of 'nr_protein_id' or 'protein_id' field in 'allproteins_info.tab'
 protidfield=$(head -n 1 ${assemblyinfo}/allproteins_info.tab | grep -o 'nr_protein_id')
 if [ -z $protidfield ] ; then 
  protidfield=$(head -n 1 ${assemblyinfo}/allproteins_info.tab | grep -o 'protein_id')
@@ -60,7 +60,7 @@ protidsedfilter='s/[^\t]*protein_id[^\t]*/nr_protein_id/'
 cat ${metadata}/metadata_curated.tab > genome_assemblies.tab
 # replicon table
 replifields="assembly_id genomic_accession replicon_name replicon_type replicon_size"
-replifieldnums=$(getnumfield ${assemblyinfo}/allreplicons_info.tab $replifileds)
+replifieldnums=$(getnumfield ${assemblyinfo}/allreplicons_info.tab $replifields)
 cut -f $replifieldnums ${assemblyinfo}/allreplicons_info.tab > genome_replicons.tab
 # gene_family table
 cut -f 2,3 ${protali}/full_families_info-noORFans.tab > genome_gene_families.tab

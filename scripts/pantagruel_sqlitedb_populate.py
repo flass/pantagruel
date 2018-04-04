@@ -28,7 +28,7 @@ def loadAndCurateTable(table, nfin, cursor, header=True, insertcolumns=(), sep='
 		if type(insertcolumns)==str: insertcols = [incol.strip(' ') for incol in insertcolumns.split(',')]
 		else: insertcols = insertcolumns
 	else:
-		insertcols = [colinfo['name']  for colinfo in colinfos]
+		insertcols = [colinfo['name'] for colinfo in colinfos]
 	coldef = '('+', '.join(insertcols)+')'
 	print table, coldef
 	cursor.executemany("INSERT INTO %s %s VALUES (%s);"%(table, coldef, ','.join(['?']*len(insertcols))), (tuple(line.rstrip('\n').split(sep)) for line in ftabin))
