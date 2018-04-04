@@ -3,9 +3,11 @@ import re
 import os, sys
 import sqlite3
 
-def getTableInfos(table, cursor):
+def getTableInfos(table, cursor, ommitserial=False):
 	cursor.execute("PRAGMA table_info(%s);"%table)
 	colinfos = cursor.fetchall()
+	if ommitserial:
+		 colinfos = [colinfo for colinfo in colinfos if colinfo['type'].upper()!='SERIAL']
 	return colinfos 
 
 def replaceValuesAsNull(table, cursor, nullval='', ommitcols=[], tableinfo=None):
@@ -13,21 +15,22 @@ def replaceValuesAsNull(table, cursor, nullval='', ommitcols=[], tableinfo=None)
 	else: colinfos = tableinfo
 	for colinfo in colinfos:
 		colname = colinfo['name']
-		if colname not in ommitcols:
+		if (colname not in ommitcols):
 			cursor.execute("UPDATE %s SET %s=NULL WHERE %s='%s';"%(table, colname, colname, nullval))
 
 def loadAndCurateTable(table, nfin, cursor, header=True, insertcolumns=(), sep='\t', doNotReplaceWithNull=[], **kw):
 	ftabin = open(nfin, 'r')
+	insertcols=[]
 	if header:
-		headline = ftabin.readline()
-		coldef = '('+headline.rstrip('\n').replace(sep, ', ')+')'
+		insertcols = ftabin.readline().rstrip('\n').split(sep)
 	elif insertcolumns:
-		if type(insertcolumns)==str: coldef = insertcolumns
-		else: coldef = '('+', '.join(insertcolumns)+')'
+		if type(insertcolumns)==str: insertcols = [incol.strip(' ') for incol in insertcolumns.split(',')]
+		else: insertcols = insertcolumns
 	else:
-		coldef = ''
-	colinfos = getTableInfos(table, cursor)
-	cursor.executemany("INSERT INTO %s %s VALUES (%s);"%(table, coldef, ','.join(['?']*len(colinfos))), (tuple(line.rstrip('\n').split(sep)) for line in ftabin))
+		insertcols = [colinfo['name']  for colinfo in getTableInfos(table, cursor, ommitserial=True)]
+	coldef = '('+', '.join(insertcolumns)+')'
+	print table, coldef
+	cursor.executemany("INSERT INTO %s %s VALUES (%s);"%(table, coldef, ','.join(['?']*len(insertcols))), (tuple(line.rstrip('\n').split(sep)) for line in ftabin))
 	replaceValuesAsNull(table, cursor, tableinfo=colinfos, ommitcols=doNotReplaceWithNull, **kw)
 	ftabin.close()
 	
