@@ -28,7 +28,7 @@ def loadAndCurateTable(table, nfin, cursor, header=True, insertcolumns=(), sep='
 		else: insertcols = insertcolumns
 	else:
 		insertcols = [colinfo['name']  for colinfo in getTableInfos(table, cursor, ommitserial=True)]
-	coldef = '('+', '.join(insertcolumns)+')'
+	coldef = '('+', '.join(insertcols)+')'
 	print table, coldef
 	cursor.executemany("INSERT INTO %s %s VALUES (%s);"%(table, coldef, ','.join(['?']*len(insertcols))), (tuple(line.rstrip('\n').split(sep)) for line in ftabin))
 	replaceValuesAsNull(table, cursor, tableinfo=colinfos, ommitcols=doNotReplaceWithNull, **kw)
