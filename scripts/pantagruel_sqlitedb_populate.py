@@ -223,9 +223,9 @@ dcodeass = {}
 for ass, code, spe in lasscode:
 	print ass, code, spe
 	if code:
-		c = code
+		c = str(code)
 	else:
-		spsp = spe.split()
+		spsp = str(spe).split()
 		s = spsp[-2]
 		p = spsp[-1]
 		if '.' in p:

@@ -31,12 +31,13 @@ selectMinGenomes = function(countmatrix, pseudocoremingenomes=NA, ngenomes=NULL)
 	countsbyfam = apply(countmatrix, 1, sum)
 	if (is.null(ngenomes)){ N = max(countsbyfam) }else{ N = ngenomes }
 	cat(sprintf("number of unicopy gene families present in at least n genomes (out of %d):\n", N))
-	print(cumsum(rev(table(countsbyfam)))[as.character(floor(N*0.97):N)])
+	print(cumsum(rev(table(countsbyfam)))[as.character(floor(N*0.80):N)])
 
 	pseudocoremingenomes = selectmingenomes(pseudocoremingenomes)	
 	
 	pcmg = 0
-	X11(width=16, height=10)
+#~ 	X11(width=16, height=10)
+	pdf(file.path(protali, 'full_families_genome_counts-noORFans.mat.pdf'), width=30, height=20)
 	while (pseudocoremingenomes != pcmg){
 		pcmg = pseudocoremingenomes
 		pseudocorefams = getpseudocorefams(pseudocoremingenomes, countsbyfam)
