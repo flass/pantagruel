@@ -209,7 +209,7 @@ cur.executemany("INSERT INTO uniptrotcode2taxid VALUES (?, ?);", codetaxids)
 conn.commit()
 
 # generate unique code for each genome assembly from the Uniprot code + enough digits
-cur.execute("SELECT assembly_id, uniptrotcode2taxid.code, species FROM assemblies LEFT JOIN uniptrotcode2taxid USING (taxid);")
+cur.execute("SELECT assembly_id, uniptrotcode2taxid.code, species FROM assemblies LEFT JOIN uniptrotcode2taxid USING (taxid) ORDER BY uniptrotcode2taxid.code DESC;")
 lasscode = cur.fetchall()
 #~ try:
 cur.execute("ALTER TABLE assemblies ADD COLUMN code VARCHAR(10) DEFAULT NULL;")
@@ -219,21 +219,32 @@ cur.execute("ALTER TABLE assemblies ADD COLUMN code VARCHAR(10) DEFAULT NULL;")
   #~ cur.execute("UPDATE assemblies SET code=NULL;")
 
 dcodesn = {}
+dcodeass = {}
 for ass, code, spe in lasscode:
-  print ass, code, spe
-  if not code:
-    s, p = spe.rsplit(None, 1)
-    if '.' in p:
-      # fairly common case of organism name being '[Candidatus] Genus sp.'
-      c = s[:6].upper()
-    else:
-      # regular case  of organism name being '[Candidatus] Genus species'
-      c = (s[:3]+p[:3]).upper()
-  else:
-    c = code
-  dcodesn[c] = dcodesn.setdefault(c, 0) + 1
-  cur.execute("UPDATE assemblies set code=? WHERE assembly_id=?;", (c+str(dcodesn[c]), ass.strip(' ')))
-  print c+str(dcodesn[c]), ass
+	print ass, code, spe
+	if code:
+		c = code
+	else:
+		spsp = spe.split()
+		s = spsp[-2]
+		p = spsp[-1]
+		if '.' in p:
+			# fairly common case of organism name being '[Candidatus] Genus sp.'
+			c = s[:6].upper()
+		else:
+			# regular case  of organism name being '[Candidatus] Genus species'
+			c = (s[:3]+p[:3]).upper()
+	dcodesn[c] = dcodesn.setdefault(c, 0) + 1
+	if dcodesn[c] == 1:
+		dcodeass[c] = ass
+		print c, ass
+	else:
+		dcodeass[c+'1'] = dcodeass[c]
+		del dcodeass[c]
+		dcodeass[c+str(dcodesn[c])] = ass
+		print c+str(dcodesn[c]), ass
+
+cur.executemany("UPDATE assemblies set code=? WHERE assembly_id=?;", dcodeass.iteritems())
 conn.commit()
 
 # add the cds_code column to coding_sequences table, generate unique cds codes based on the species code and genbank CDS id and create indexes
