@@ -8,12 +8,13 @@ protali=$5
 protfamseqtab=$6
 protorfanclust=$7
 cdsorfanclust=$8
+usergenomeinfo=$9
 
 if [ -z $cdsorfanclust ] ; then
  echo "Error: incomplete argument list. Usage:"
- echo "${thisscript} database dbname metadata assemblyinfo protali protfamseqtab protorfanclust cdsorfanclust"
+ echo "${thisscript} database dbname metadata assemblyinfo protali protfamseqtab protorfanclust cdsorfanclust [usergenomeinfo]"
  echo "currently set variable:"
- echo "database=$1 dbname=$2 metadata=$3 assemblyinfo=$4 protali=$5 protfamseqtab=$6 protorfanclust=$7 cdsorfanclust=$8"
+ echo "database=$1 dbname=$2 metadata=$3 assemblyinfo=$4 protali=$5 protfamseqtab=$6 protorfanclust=$7 cdsorfanclust=$8 usergenomeinfo=$9"
  exit 1
 fi
 
@@ -27,6 +28,7 @@ cd ${database}
 if [ ! -e speclist ] ; then
  wget http://www.uniprot.org/docs/speclist
 fi
+ 
 ### if no set db name env variable, INTERACTIVE prompt asks for database name and password
 while [ -z $dbname ] ; do
   read -p 'Set PostgreSQL database name: ' dbname ; echo ''
@@ -76,6 +78,6 @@ head -n 1  ${assemblyinfo}/allproteins_info.tab | cut -f ${protfieldnums} | sed 
 tail -n +2 ${assemblyinfo}/allproteins_info.tab | cut -f ${protfieldnums} | grep -vP "^\t" | sort -u | sed -e "s/%2C/,/g" | sed -e "s/%3B/;/g" >> genome_protein_products.tab
 
 ## populate database
-python $populatescript $dbname ${protfamseqtab} ${protorfanclust} ${cdsorfanclust}
+python $populatescript $dbname ${protfamseqtab} ${protorfanclust} ${cdsorfanclust} ${database}/speclist ${usergenomeinfo}
 
 cd -

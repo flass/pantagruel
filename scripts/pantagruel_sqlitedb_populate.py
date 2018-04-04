@@ -72,6 +72,11 @@ dbname = sys.argv[1] # os.environ['sqldbname']
 protfamseqtab = sys.argv[2] # os.environ['protfamseqs']+'.tab'
 protorfanclust = sys.argv[3] # os.environ['protorfanclust']
 cdsorfanclust = sys.argv[4] # os.environ['cdsorfanclust']
+nfspeclist = sys.argv[5] # 'speclist'
+if len(sys.argv) > 6:
+	nfusergenomeinfo = sys.argv[6]
+else:
+	nfusergenomeinfo = None
 
 conn = sqlite3.connect(database=dbname)
 conn.create_function("make_cds_code", 2, make_cds_code)
@@ -180,17 +185,26 @@ conn.commit()
 fout = open("uniprotcode_taxid.tab", 'w')
 codetaxids = []
 CODepat = re.compile("([A-Z0-9]{3,5}) +[ABEVO] +([0-9]{1,7}): ")
-fspeclist = open('speclist', 'r')
-for line in fspeclist:
-  if line[0]==' ': continue
-  CODEmatch = CODepat.match(line)
-  if CODEmatch:
-    code, taxid = CODEmatch.groups()
-    fout.write("%s\t%s\n"%(code, taxid))
-    codetaxids.append((code, taxid))
+with open(nfspeclist, 'r') as fspeclist:
+	for line in fspeclist:
+		if line[0] in [' ', '<']: continue # skip comments and HTML content
+		CODEmatch = CODepat.match(line)
+		if CODEmatch:
+			code, taxid = CODEmatch.groups()
+			fout.write("%s\t%s\n"%(code, taxid))
+			codetaxids.append((code, taxid))
+
+if nfusergenomeinfo:
+	with open(nfusergenomeinfo, 'r') as fusergenomeinfo:
+		uginfheader = fusergenomeinfo.readline().rstrip('\n').split('\t')
+		for line in fusergenomeinfo:
+			lsp = line.rstrip('\n').split('\t')
+			duginfo = {field:lsp[f] for f, field in enumerate(uginfheader)}
+			code, taxid = (duginfo['locus_tag_prefix'], duginfo['taxid'])
+			fout.write("%s\t%s\n"%(code, taxid))
+			codetaxids.append((code, taxid))
 
 fout.close()
-fspeclist.close()
 cur.executemany("INSERT INTO uniptrotcode2taxid VALUES (?, ?);", codetaxids)
 conn.commit()
 
@@ -208,7 +222,7 @@ dcodesn = {}
 for ass, code, spe in lasscode:
   print ass, code, spe
   if not code:
-    s, p = spe.split()
+    s, p = spe.rsplit(maxsplit=1)
     if '.' in p:
       # fairly common case of organism name being 'Genus sp.'
       c = s[:6].upper()
