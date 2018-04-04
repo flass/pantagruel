@@ -222,12 +222,12 @@ dcodesn = {}
 for ass, code, spe in lasscode:
   print ass, code, spe
   if not code:
-    s, p = spe.rsplit(maxsplit=1)
+    s, p = spe.rsplit(None, 1)
     if '.' in p:
-      # fairly common case of organism name being 'Genus sp.'
+      # fairly common case of organism name being '[Candidatus] Genus sp.'
       c = s[:6].upper()
     else:
-      # regular case  of organism name being 'Genus species'
+      # regular case  of organism name being '[Candidatus] Genus species'
       c = (s[:3]+p[:3]).upper()
   else:
     c = code
