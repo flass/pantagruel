@@ -1,4 +1,4 @@
-#!/usr/bin/Rscript --vanilla --silent
+#!/usr/bin/Rscript --vanilla --silent --args
 #~ library('ade4')
 
 #~ options(width = 160)
@@ -71,11 +71,11 @@ selectMinGenomes = function(countmatrix, dirout, pseudocoremingenomes=NA, ngenom
 #~ ngenomes = as.numeric(Sys.getenv('ngenomes'))
 #~ pseudocoremingenomes = as.numeric(Sys.getenv('pseudocoremingenomes'))
 #~ protali = Sys.getenv('protali')
-#~ nflasscode =  file.path(Sys.getenv('database'), 'cds_codes.tab')
+#~ nflasscode =  file.path(Sys.getenv('database'), 'genome_codes.tab')
 #~ dirout = protali
 #~ nffamgenomemat = file.path(protali, 'full_families_genome_counts-noORFans.mat')
 
-cargs = commandArgs()
+cargs = commandArgs(trailingOnly=TRUE)
 
 ngenomes = cargs[1]
 nffamgenomemat = cargs[2]
@@ -88,6 +88,8 @@ if (length(cargs) > 4){
 }
 cat("Loading matrix of gene families counts in genomes...\n")
 genocount = data.matrix(read.table(file=nffamgenomemat))
+lasscode = read.table(nflasscode, row.names=1, stringsAsFactors=F)
+colnames(genocount) = lasscode[colnames(genocount),1]
 onlyunicopy = apply(genocount, 1, function(x){ max(x)==1 })
 
 pseudocore = selectMinGenomes(genocount[onlyunicopy,], dirout, pseudocoremingenomes=pseudocoremingenomes, ngenomes=ngenomes)
