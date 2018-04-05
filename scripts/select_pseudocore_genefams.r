@@ -29,7 +29,7 @@ getpseudocorefams = function(pseudocoremingenomes, countsbyfam){
 selectMinGenomes = function(countmatrix, dirout, pseudocoremingenomes=NA, ngenomes=NA, interactive.X=FALSE, plot.PCoA=FALSE){
 	countsbyfam = apply(countmatrix, 1, sum)
 	if (is.numeric(ngenomes)){   N = ngenomes 
-	}else{                       N = ncols(countmatrix) }
+	}else{                       N = ncol(countmatrix) }
 	cat(sprintf("number of unicopy gene families present in at least n genomes (out of %d):\n", N))
 	print(cumsum(rev(table(countsbyfam)))[as.character(floor(N*minfracNgenomeshow):N)])
 
