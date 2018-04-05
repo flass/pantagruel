@@ -12,8 +12,8 @@ readInput = function(prompt){
 	return(val)
 }
 
-selectmingenomes = function(pseudocoremingenomes=NA, silent=F){
-	while (is.na(pseudocoremingenomes) || pseudocoremingenomes < 0){
+selectmingenomes = function(pseudocoremingenomes=-1, silent=F){
+	while (pseudocoremingenomes < 0){
 		pseudocoremingenomes = as.numeric(readInput(prompt="Please enter non-zero integer value for minimum of genomes represented in pseudo-core unicopy gene families: "))
 	}
 	if (!silent){ cat(sprintf("Selected %d as the minimum number of genomes to be represented in pseudo-core unicopy gene families\n", pseudocoremingenomes)) }
@@ -26,7 +26,7 @@ getpseudocorefams = function(pseudocoremingenomes, countsbyfam){
 	return(pseudocorefams)
 }
 
-selectMinGenomes = function(countmatrix, dirout, pseudocoremingenomes=NA, ngenomes=NA, interactive.X=FALSE, plot.PCoA=FALSE){
+selectMinGenomes = function(countmatrix, dirout, pseudocoremingenomes=-1, ngenomes=NA, interactive.X=FALSE, plot.PCoA=FALSE){
 	countsbyfam = apply(countmatrix, 1, sum)
 	if (is.numeric(ngenomes)){   N = ngenomes 
 	}else{                       N = ncol(countmatrix) }
@@ -89,7 +89,7 @@ dirout = cargs[3]
 if (length(cargs) > 3){
 	pseudocoremingenomes = as.numeric(cargs[4])
 }else{
-	pseudocoremingenomes = NA
+	pseudocoremingenomes = -1
 }
 if (length(cargs) > 4){
 	interactive.X = as.logical(cargs[5])
