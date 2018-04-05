@@ -61,6 +61,8 @@ selectMinGenomes = function(countmatrix, dirout, pseudocoremingenomes=NA, ngenom
 		pseudocoremingenomes = selectmingenomes(silent=T)
 		dev.off()
 		write(pseudocorefams, file=nftabout)
+		cat(sprintf("Written list of pseudo-core unicopy gene families (with min. genome nb. = %d) and graphical representation of their distribution at:\n%s\n%s\n",
+		 pseudocoremingenomes, nfpdfout, nftabout))
 	}
 	#~ 	exportcmd = sprintf("export pseudocoremingenomes=%d", pseudocoremingenomes)
 	#~ system(exportcmd) ; cat(sprintf("system call: %s\n", exportcmd))
@@ -97,8 +99,5 @@ colnames(genocount) = lasscode[colnames(genocount),1]
 onlyunicopy = apply(genocount, 1, function(x){ max(x)==1 })
 
 pseudocore = selectMinGenomes(genocount[onlyunicopy,], dirout, pseudocoremingenomes=pseudocoremingenomes, ngenomes=ngenomes)
-
-
-cat(sprintf("Written list of pseudo-core unicopy gene families (with min. genome nb. = %d) at '%s'.\n", pseudocore$mingenomes, nfout))
-
+cat(sprintf("Final choice of %d pseudo-core unicopy gene families (present in at least %d genomes).\n", pseudocore$mingenomes, pseudocore$fams)
 quit(status=pseudocoremingenomes, save='no')
