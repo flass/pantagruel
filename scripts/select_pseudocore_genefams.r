@@ -26,7 +26,7 @@ getpseudocorefams = function(pseudocoremingenomes, countsbyfam){
 	return(pseudocorefams)
 }
 
-selectMinGenomes = function(countmatrix, dirout, pseudocoremingenomes=NA, ngenomes=NULL, interactive.X=FALSE, plot.PCoA=FALSE){
+selectMinGenomes = function(countmatrix, dirout, pseudocoremingenomes=NA, ngenomes=NA, interactive.X=FALSE, plot.PCoA=FALSE){
 	countsbyfam = apply(countmatrix, 1, sum)
 	if (ngenomes=='max.gene.count'){    N = max(countsbyfam) 
 	}else{ if (is.numeric(ngenomes)){   N = ngenomes 
@@ -108,6 +108,8 @@ pseudocore = selectMinGenomes(genocountunicopy, dirout, pseudocoremingenomes=pse
 
 pseudocoremingenomes = names(pseudocore)[length(pseudocore)]
 cat(sprintf("Final choice of %d pseudo-core unicopy gene families (present in at least %d genomes).\n", length(pseudocore[[pseudocoremingenomes]]), as.numeric(pseudocoremingenomes))
-save(genocountunicopy, pseudocore, file=file.path(dirout, "pseudo-core-all.RData"))
+nfdataout = file.path(dirout, "pseudo-core-all.RData")
+save(genocountunicopy, pseudocore, file=nfdataout)
+cat(sprintf("Saved data in file: '%s'.\n", nfdataout))
 
 quit(status=pseudocoremingenomes, save='no')
