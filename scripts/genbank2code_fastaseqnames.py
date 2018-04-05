@@ -23,7 +23,7 @@ def genbank2code(argtup):
 	for line in infile:
 		if line.startswith('>'):
 			lsp = line.strip('>\n').split()
-			gbseqname = lsp[0].split('lcl|', 1)[1]
+			gbseqname = lsp[0].split('lcl|', 1)[-1]
 			li = '>'+transnames[gbseqname]+'\n'
 		else:
 			li = line
