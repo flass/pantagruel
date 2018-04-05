@@ -4,10 +4,12 @@
 alias dateprompt="date +'[%Y-%m-%d %H:%M:%S]'"
 datepad="                     "
 
-## variables to be automaticly replaced by user-defined environment variables ${raproot} and ${rapdb}
+## variables to be automaticly replaced by user-defined environment variables
 export raproot='REPLACEraproot'
 export rapdbname='REPLACErapdbname'
 export ptgscripts='REPLACEptgscripts'
+export pseudocoremingenomes='REPLACEpseudocoremingenomes'
+export famprefix='REPLACEfamprefix'
 
 # head folders
 export ncbiass=${raproot}/NCBI/Assembly
@@ -31,7 +33,8 @@ export assemblies=${indata}/assemblies
 export protfamseqs=${mmseqsclout}_clusters_fasta
 export families=${seqdb}/protein_families
 export nrprotali=$protali/nr_protfam_clustalo_alignments
-export alifastacodedir=${protali}/full_cdsfam_alignments_species_code
+export cdsalifastacodedir=${protali}/full_cdsfam_alignments_species_code
+export protalifastacodedir=${protali}/full_protfam_alignments_species_code
 export mlgenetrees=${genetrees}/raxml_trees
 export colalinexuscodedir=${protali}/collapsed_cdsfam_alignments_species_code
 export collapsed_genetrees=${genetrees}/collapsed_mrbayes_trees
@@ -40,7 +43,7 @@ export colrecs=${alerec}/collapsed_recs
 
 # other variables
 export straininfo=${customassemb}/strain_infos.txt
-export sqldbname=${entdbname,,}
+export sqldbname=${rapdbname,,}
 export allfaarad=${seqdb}/all_proteomes
 export mmseqsclout=${families}/$(basename ${allfaarad}.nr).mmseqs_clusterdb_default
 export protorfanclust="${famprefix}P000000"

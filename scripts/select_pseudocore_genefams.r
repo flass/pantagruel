@@ -1,7 +1,9 @@
 #!/usr/bin/Rscript --vanilla --silent
 #~ library('ade4')
 
-options(width = 160)
+#~ options(width = 160)
+
+minfracNgenomeshow=0.7
 
 readInput = function(prompt){
 	if (interactive() ){
@@ -27,18 +29,20 @@ getpseudocorefams = function(pseudocoremingenomes, countsbyfam){
 	return(pseudocorefams)
 }
 
-selectMinGenomes = function(countmatrix, pseudocoremingenomes=NA, ngenomes=NULL){
+selectMinGenomes = function(countmatrix, dirout, pseudocoremingenomes=NA, ngenomes=NULL){
 	countsbyfam = apply(countmatrix, 1, sum)
 	if (is.null(ngenomes)){ N = max(countsbyfam) }else{ N = ngenomes }
 	cat(sprintf("number of unicopy gene families present in at least n genomes (out of %d):\n", N))
-	print(cumsum(rev(table(countsbyfam)))[as.character(floor(N*0.80):N)])
+	print(cumsum(rev(table(countsbyfam)))[as.character(floor(N*minfracNgenomeshow):N)])
 
 	pseudocoremingenomes = selectmingenomes(pseudocoremingenomes)	
 	
-	pcmg = 0
+	pcmg = -1
 #~ 	X11(width=16, height=10)
-	pdf(file.path(protali, 'full_families_genome_counts-noORFans.mat.pdf'), width=30, height=20)
 	while (pseudocoremingenomes != pcmg){
+		nftabout = file.path(dirout, sprintf("pseudo-core-%d-unicopy_families.tab", pseudocoremingenomes))
+		nfpdfout = file.path(dirout, sprintf("pseudo-core-%d-unicopy_families.pdf", pseudocoremingenomes))
+		pdf(nfpdfout, width=30, height=20)
 		pcmg = pseudocoremingenomes
 		pseudocorefams = getpseudocorefams(pseudocoremingenomes, countsbyfam)
 		cat("please verify that the distribution of markers per species is not too skewed (counts per species, white: 0, black: 1, red: >1)\n")
@@ -55,25 +59,40 @@ selectMinGenomes = function(countmatrix, pseudocoremingenomes=NA, ngenomes=NULL)
 		barplot(nmissing[order(nmissing, decreasing=T)[1:min(20, N)]], las=2, xlab='Species label', ylab='Nb. missing gene markers')
 		cat("please confirm value for minimum of genomes represented in pseudo-core unicopy gene families: \n")
 		pseudocoremingenomes = selectmingenomes(silent=T)
+		dev.off()
+		write(pseudocorefams, file=nftabout)
 	}
 	#~ 	exportcmd = sprintf("export pseudocoremingenomes=%d", pseudocoremingenomes)
 	#~ system(exportcmd) ; cat(sprintf("system call: %s\n", exportcmd))
-	dev.off()
+#~ 	dev.off()
 	return(list(mingenomes=pseudocoremingenomes, fams=pseudocorefams))
 }
 
-ngenomes = as.numeric(Sys.getenv('ngenomes'))
-pseudocoremingenomes = as.numeric(Sys.getenv('pseudocoremingenomes'))
-protali = Sys.getenv('protali')
+#~ ngenomes = as.numeric(Sys.getenv('ngenomes'))
+#~ pseudocoremingenomes = as.numeric(Sys.getenv('pseudocoremingenomes'))
+#~ protali = Sys.getenv('protali')
+#~ nflasscode =  file.path(Sys.getenv('database'), 'cds_codes.tab')
+#~ dirout = protali
+#~ nffamgenomemat = file.path(protali, 'full_families_genome_counts-noORFans.mat')
 
+cargs = commandArgs()
+
+ngenomes = cargs[1]
+nffamgenomemat = cargs[2]
+nflasscode = cargs[3]
+dirout = cargs[4]
+if (length(cargs) > 4){
+	pseudocoremingenomes = cargs[5]
+}else{
+	pseudocoremingenomes = NA
+}
 cat("Loading matrix of gene families counts in genomes...\n")
-genocount = data.matrix(read.table(file=file.path(protali, 'full_families_genome_counts-noORFans.mat')))
+genocount = data.matrix(read.table(file=nffamgenomemat))
 onlyunicopy = apply(genocount, 1, function(x){ max(x)==1 })
 
-pseudocore = selectMinGenomes(genocount[onlyunicopy,], pseudocoremingenomes=pseudocoremingenomes, ngenomes=ngenomes)
+pseudocore = selectMinGenomes(genocount[onlyunicopy,], dirout, pseudocoremingenomes=pseudocoremingenomes, ngenomes=ngenomes)
 
-nfout = file.path(protali, sprintf("pseudo-core-%d-unicopy_families.tab", pseudocore$mingenomes))
-write(pseudocore$fams, file=nfout)
+
 cat(sprintf("Written list of pseudo-core unicopy gene families (with min. genome nb. = %d) at '%s'.\n", pseudocore$mingenomes, nfout))
 
-quit(pseudocoremingenomes)
+quit(status=pseudocoremingenomes, save='no')
