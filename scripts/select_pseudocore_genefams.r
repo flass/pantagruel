@@ -1,6 +1,6 @@
 #!/usr/bin/Rscript
 
-minfracNgenomeshow=0.7
+minfracNgenomeshow=0.75
 
 readInput = function(prompt){
 	if (interactive() ){
@@ -28,7 +28,9 @@ getpseudocorefams = function(pseudocoremingenomes, countsbyfam){
 
 selectMinGenomes = function(countmatrix, dirout, pseudocoremingenomes=NA, ngenomes=NULL, interactive.X=FALSE, plot.PCoA=FALSE){
 	countsbyfam = apply(countmatrix, 1, sum)
-	if (is.null(ngenomes)){ N = max(countsbyfam) }else{ N = ngenomes }
+	if (N=='max.gene.count'){           N = max(countsbyfam) 
+	}else{ if (is.numeric(ngenomes)){   N = ngenomes 
+	}else{                              N = ncols(countmatrix) }}
 	cat(sprintf("number of unicopy gene families present in at least n genomes (out of %d):\n", N))
 	print(cumsum(rev(table(countsbyfam)))[as.character(floor(N*minfracNgenomeshow):N)])
 
@@ -39,25 +41,26 @@ selectMinGenomes = function(countmatrix, dirout, pseudocoremingenomes=NA, ngenom
 	while (pseudocoremingenomes!=pcmg){
 		nftabout = file.path(dirout, sprintf("pseudo-core-%d-unicopy_families.tab", pseudocoremingenomes))
 		nfpdfout = file.path(dirout, sprintf("pseudo-core-%d-unicopy_families.pdf", pseudocoremingenomes))
-		if (!interactive.X){ pdf(nfpdfout, width=30, height=20) }
+		if (!interactive.X){ pdf(nfpdfout, width=30, height=30) }
 		pcmg = pseudocoremingenomes
 		pseudocorefams = getpseudocorefams(pseudocoremingenomes, countsbyfam)
 		cat("plotting heatmap... ")
-		heatmap(countmatrix[pseudocorefams,], breaks=c(-0.5, 0.5, 1.5, N), col=c('white', 'black', 'red'), scale='none')
+		pseudocoremat = countmatrix[pseudocorefams,]
+		heatmap(t(pseudocoremat), breaks=c(-0.5, 0.5, 1.5, N), col=c('white', 'black', 'red'), scale='none')
 		if (interactive.X){
 			cat("please verify that the distribution of markers per species is not too skewed (counts per species, white: 0, black: 1, red: >1)\n")
 			message("Press Return To Continue") ; invisible(readLines("stdin", n=1))
 		}
 		if (plot.PCoA){
 			cat("computing and plotting PCoA of gene species based on presence/absence... ")
-			count.coa = dudi.coa(countmatrix[pseudocorefams,], scannf=F, nf=2)
+			count.coa = dudi.coa(pseudocoremat, scannf=F, nf=2)
 			if (interactive.X){ message("Press Return To Continue") ; invisible(readLines("stdin", n=1)) }
 			s.label(count.coa$c1)
 		}
-		nmissing = apply(countmatrix[pseudocorefams,], 2, function(x){ length(which(!x)) })
-		barplot(nmissing, las=2, xlab='Species label', ylab='Nb. missing gene markers')
+		nmissing = apply(pseudocoremat, 2, function(x){ length(which(!x)) })
+		barplot(nmissing, horiz=T, las=2, ylab='Species label', xlab='Nb. missing gene markers')
 		if (interactive.X){ message("Press Return To Continue") ; invisible(readLines("stdin", n=1)) }
-		barplot(nmissing[order(nmissing, decreasing=T)[1:min(20, N)]], las=2, xlab='Species label', ylab='Nb. missing gene markers')
+		barplot(nmissing[order(nmissing, decreasing=T)[1:min(20, N)]], horiz=T, las=2, ylab='Species label', xlab='Nb. missing gene markers')
 		if (!interactive.X){ dev.off() }
 		write(pseudocorefams, file=nftabout)
 		cat(sprintf("Written list of pseudo-core unicopy gene families (with min. genome nb. = %d) and graphical representation of their distribution at:\n%s\n%s\n",
