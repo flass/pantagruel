@@ -1,4 +1,4 @@
-#!/usr/bin/Rscript --vanilla --silent --args
+#!/usr/bin/Rscript
 #~ library('ade4')
 
 #~ options(width = 160)
@@ -77,14 +77,18 @@ selectMinGenomes = function(countmatrix, dirout, pseudocoremingenomes=NA, ngenom
 
 cargs = commandArgs(trailingOnly=TRUE)
 
-ngenomes = cargs[1]
-nffamgenomemat = cargs[2]
-nflasscode = cargs[3]
-dirout = cargs[4]
-if (length(cargs) > 4){
-	pseudocoremingenomes = cargs[5]
+nffamgenomemat = cargs[1]
+nflasscode = cargs[2]
+dirout = cargs[3]
+if (length(cargs) > 3){
+	pseudocoremingenomes = as.numeric(cargs[4])
 }else{
 	pseudocoremingenomes = NA
+}
+if (length(cargs) > 4){
+	ngenomes = as.numeric(cargs[5])
+}else{
+	ngenomes = NULL
 }
 cat("Loading matrix of gene families counts in genomes...\n")
 genocount = data.matrix(read.table(file=nffamgenomemat))

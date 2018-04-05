@@ -8,8 +8,8 @@ datepad="                     "
 export raproot='REPLACEraproot'
 export rapdbname='REPLACErapdbname'
 export ptgscripts='REPLACEptgscripts'
-export pseudocoremingenomes='REPLACEpseudocoremingenomes'
 export famprefix='REPLACEfamprefix'
+export pseudocoremingenomes='REPLACEpseudocoremingenomes'
 
 # head folders
 export ncbiass=${raproot}/NCBI/Assembly

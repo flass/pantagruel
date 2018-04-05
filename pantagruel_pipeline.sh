@@ -17,22 +17,24 @@ datepad="                     "
 export myemail='me.myself@respectable-institu.ti.on'
 export raproot='/path/to/base/folder/for/all/this/business'
 export ptgscripts='/path/to/pantagruel_pipeline/scripts'
-
+export famprefix='REPLACEfamprefix'
 export rapdbname='aBoldDatabaseName' # mostly name of the top folder
 export famprefix='ABCDE'             # alphanumerical prefix (no number first) of the names for homologous protein/gene family clusters; will be appended with a 'P' for proteins and a 'C' for CDSs.
 
-## Set facultative parameters (can also be set interactively during the pipeline run)
-export pseudocoremingenomes=0		
-#~ echo "Enter the minimum number of genomes to possess an unicopy gene family for it to be part of pseudo-core genome:"
-#~ while [[ -z $pseudocoremingenomes || $pseudocoremingenomes -lt 1 ]] ; do
- #~ read -p 'Please enter non-null integer value for minimum of genomes represented in pseudo-core unicopy gene families: ' pseudocoremingenomes
-#~ done
-#~ export pseudocoremingenomes=$pseudocoremingenomes
+#### Set facultative environment variables / parameters
+export pseudocoremingenomes=''       # defaults to empty variable in which case will be set INTERACTIVELY at stage 04.core_genome of the pipeline
+envsourcescript=${HOME}/environ_pantagruel_${rapdbname}.sh
 
-sed -e "s#REPLACEraproot#$raproot#" ${ptgscripts}/environ_pantagruel_template.sh | sed -e "s#REPLACErapdbname#$rapdbname#" | sed -e "s#REPLACEptgscripts#$ptgscripts#" > ~/environ_pantagruel_${rapdbname}.sh
+rm -f ${raptmp}/sedenvvar.sh
+echo -n "cat ${ptgscripts}/environ_pantagruel_template.sh" > ${raptmp}/sedenvvar.sh
+for var in myemail raproot ptgscripts famprefix rapdbname famprefix pseudocoremingenomes ; do
+echo -n " | sed -e \"s#REPLACE${var}#${var}#\"" >> ${raptmp}/sedenvvar.sh
+done
+echo -n " > ${envsourcescript}" >> ${raptmp}/sedenvvar.sh
+bash < ${raptmp}/sedenvvar.sh
 ## load generic environment variables derived from the above
-source ~/environ_pantagruel_${rapdbname}.sh
-cat "source ~/environ_pantagruel_${rapdbname}.sh" >> ~/.bashrc
+source ${envsourcescript}
+cat "source ${envsourcescript}" >> ~/.bashrc
 
 #################################
 ## 00. Data download and grooming
@@ -278,7 +280,7 @@ done
 ###########################################
 
 # have glimpse of (almost-)universal unicopy gene family distribution and select those intended for core-genome tree given pseudocoremingenomes threshold
-${ptgscripts}/select_pseudocore_genefams.r 
+${ptgscripts}/select_pseudocore_genefams.r ${protali}/full_families_genome_counts-noORFans.mat ${database}/genome_codes.tab ${protali}
 # new value of pseudocoremingenomes stored in script exit status
 export pseudocoremingenomes=$?
 
