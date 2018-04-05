@@ -279,14 +279,17 @@ done
 ## 04. Core Genome Phylogeny (Species tree)
 ###########################################
 
-# have glimpse of (almost-)universal unicopy gene family distribution and select those intended for core-genome tree given pseudocoremingenomes threshold
-${ptgscripts}/select_pseudocore_genefams.r ${protali}/full_families_genome_counts-noORFans.mat ${database}/genome_codes.tab ${protali}
-# new value of pseudocoremingenomes stored in script exit status
-export pseudocoremingenomes=$?
-
-## generate core genome alignment path list
+## select psedo-core genome marker gene set
 export coregenome=${rapdb}/04.core_genome
-mkdir -p ${coregenome}
+mkdir -p ${coregenome}/
+if [ -z ${pseudocoremingenomes} ] ; then
+  mkdir -p ${coregenome}/pseudo-coregenome_sets/
+  # have glimpse of (almost-)universal unicopy gene family distribution and select those intended for core-genome tree given pseudocoremingenomes threshold
+  ${ptgscripts}/select_pseudocore_genefams.r ${protali}/full_families_genome_counts-noORFans.mat ${database}/genome_codes.tab ${coregenome}/pseudo-coregenome_sets
+  # new value of pseudocoremingenomes stored in script exit status
+  export pseudocoremingenomes=$?
+fi
+## generate core genome alignment path list
 export pseudocore=${coregenome}/pseudo-core-${pseudocoremingenomes}-unicopy
 rm -f ${pseudocore}_cds_aln_list
 for fam in `cat ${protali}/pseudo-core-${pseudocoremingenomes}-unicopy_families.tab` ; do ls ${alifastacodedir}/$fam.codes.aln >> ${pseudocore}_cds_aln_list ; done
