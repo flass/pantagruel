@@ -28,7 +28,7 @@ getpseudocorefams = function(pseudocoremingenomes, countsbyfam){
 
 selectMinGenomes = function(countmatrix, dirout, pseudocoremingenomes=NA, ngenomes=NULL, interactive.X=FALSE, plot.PCoA=FALSE){
 	countsbyfam = apply(countmatrix, 1, sum)
-	if (N=='max.gene.count'){           N = max(countsbyfam) 
+	if (ngenomes=='max.gene.count'){    N = max(countsbyfam) 
 	}else{ if (is.numeric(ngenomes)){   N = ngenomes 
 	}else{                              N = ncols(countmatrix) }}
 	cat(sprintf("number of unicopy gene families present in at least n genomes (out of %d):\n", N))
@@ -36,12 +36,13 @@ selectMinGenomes = function(countmatrix, dirout, pseudocoremingenomes=NA, ngenom
 
 	pseudocoremingenomes = selectmingenomes(pseudocoremingenomes)	
 	pseudocorefams = NULL
+	pseudocore = list()
 	pcmg = -1
 	if (interactive.X){ X11(width=16, height=10) }
 	while (pseudocoremingenomes!=pcmg){
 		nftabout = file.path(dirout, sprintf("pseudo-core-%d-unicopy_families.tab", pseudocoremingenomes))
 		nfpdfout = file.path(dirout, sprintf("pseudo-core-%d-unicopy_families.pdf", pseudocoremingenomes))
-		if (!interactive.X){ pdf(nfpdfout, width=30, height=30) }
+		if (!interactive.X){ pdf(nfpdfout, width=40, height=40) }
 		pcmg = pseudocoremingenomes
 		pseudocorefams = getpseudocorefams(pseudocoremingenomes, countsbyfam)
 		cat("plotting heatmap... ")
@@ -66,11 +67,12 @@ selectMinGenomes = function(countmatrix, dirout, pseudocoremingenomes=NA, ngenom
 		cat(sprintf("Written list of pseudo-core unicopy gene families (with min. genome nb. = %d) and graphical representation of their distribution at:\n%s\n%s\n",
 		 pseudocoremingenomes, nfpdfout, nftabout))
 		cat("please confirm value for minimum of genomes represented in pseudo-core unicopy gene families [or stop by choosing 0]: \n")
+		pseudocore[[pseudocoremingenomes]] = pseudocorefams
 		pseudocoremingenomes = selectmingenomes(silent=T)
-		if (pseudocoremingenomes==0){ pseudocorefams = NULL ; break }
+		if (pseudocoremingenomes==0){ break }
 	}
 	if (interactive.X){ dev.off() }
-	return(list(mingenomes=pseudocoremingenomes, fams=pseudocorefams))
+	return(pseudocore)
 }
 
 #~ ngenomes = as.numeric(Sys.getenv('ngenomes'))
@@ -100,7 +102,12 @@ genocount = data.matrix(read.table(file=nffamgenomemat))
 lasscode = read.table(nflasscode, row.names=1, stringsAsFactors=F)
 colnames(genocount) = lasscode[colnames(genocount),1]
 onlyunicopy = apply(genocount, 1, function(x){ max(x)==1 })
+genocountunicopy = genocount[onlyunicopy,]
 
-pseudocore = selectMinGenomes(genocount[onlyunicopy,], dirout, pseudocoremingenomes=pseudocoremingenomes, interactive.X=interactive.X)
-cat(sprintf("Final choice of %d pseudo-core unicopy gene families (present in at least %d genomes).\n", pseudocore$mingenomes, pseudocore$fams)
+pseudocore = selectMinGenomes(genocountunicopy, dirout, pseudocoremingenomes=pseudocoremingenomes, interactive.X=interactive.X)
+
+pseudocoremingenomes = names(pseudocore)[length(pseudocore)]
+cat(sprintf("Final choice of %d pseudo-core unicopy gene families (present in at least %d genomes).\n", length(pseudocore[[pseudocoremingenomes]]), as.numeric(pseudocoremingenomes))
+save(genocountunicopy, pseudocore, file=file.path(dirout, "pseudo-core-all.RData"))
+
 quit(status=pseudocoremingenomes, save='no')
