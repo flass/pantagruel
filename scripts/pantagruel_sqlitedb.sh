@@ -67,7 +67,7 @@ cut -f $replifieldnums ${assemblyinfo}/allreplicons_info.tab > genome_replicons.
 # gene_family table
 cut -f 2,3 ${protali}/full_families_info-noORFans.tab > genome_gene_families.tab
 # protein_family table
-cat ${protfamseqtab} > genome_protein_families.tab
+awk -v"OFS=\t" '{print $2 ,$1}' $protfamseqs.tab ${protfamseqtab} > genome_protein_families.tab
 # coding_sequences table
 cdsfields="$protidfield genomic_accession locus_tag cds_begin cds_end cds_strand genbank_cds_id"
 cdsfieldnums=$(getnumfield ${assemblyinfo}/allproteins_info.tab $cdsfields)
