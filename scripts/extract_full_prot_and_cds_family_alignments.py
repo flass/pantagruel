@@ -183,6 +183,7 @@ def main(dirnrprotaln, nfsingletonfasta, nfprotinfotab, nfreplinfotab, dirassemb
 		for line in fprotinfotab:
 			lsp = line.rstrip('\n').split('\t')
 			protid = lsp[0]
+			nrprotid = didentseq.get(protid, protid)
 			repliacc = lsp[1]
 			#~ cdsid = lsp[-1]
 			cdsid = lsp[7]
@@ -193,7 +194,7 @@ def main(dirnrprotaln, nfsingletonfasta, nfprotinfotab, nfreplinfotab, dirassemb
 			#~ # {unique_cds_id:(cds_fasta_path, nr_prot_id)}
 			#~ dcdsinfo[cdsid] = (nfcdsfasta, protid)
 			# {nr_prot_id:[(cds_fasta_path, unique_cds_id), ...]}
-			dprotinfo.setdefault(protid, []).append((nfcdsfasta, cdsid))
+			dprotinfo.setdefault(nrprotid, []).append((nfcdsfasta, cdsid))
 			
 	if not os.path.exists(dirout):
 		os.mkdir(dirout)
