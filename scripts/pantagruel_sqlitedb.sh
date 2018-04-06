@@ -80,6 +80,6 @@ head -n 1  ${assemblyinfo}/allproteins_info.tab | cut -f ${protfieldnums} | sed 
 tail -n +2 ${assemblyinfo}/allproteins_info.tab | cut -f ${protfieldnums} | grep -vP "^\t" | sort -u | sed -e "s/%2C/,/g" | sed -e "s/%3B/;/g" >> genome_protein_products.tab
 
 ## populate database
-python $populatescript $dbname ${protfamseqtab} ${protorfanclust} ${cdsorfanclust} ${database}/speclist ${usergenomeinfo}
+python $populatescript $dbname ${protorfanclust} ${cdsorfanclust} ${database}/speclist ${usergenomeinfo}
 
 cd -
