@@ -69,12 +69,11 @@ def make_cds_code(code, genbank_cds_id):
 
 
 dbname = sys.argv[1] # os.environ['sqldbname']
-protfamseqtab = sys.argv[2] # os.environ['protfamseqs']+'.tab'
-protorfanclust = sys.argv[3] # os.environ['protorfanclust']
-cdsorfanclust = sys.argv[4] # os.environ['cdsorfanclust']
-nfspeclist = sys.argv[5] # 'speclist'
-if len(sys.argv) > 6:
-	nfusergenomeinfo = sys.argv[6]
+protorfanclust = sys.argv[2] # os.environ['protorfanclust']
+cdsorfanclust = sys.argv[3] # os.environ['cdsorfanclust']
+nfspeclist = sys.argv[4] # 'speclist'
+if len(sys.argv) > 5:
+	nfusergenomeinfo = sys.argv[5]
 else:
 	nfusergenomeinfo = None
 
@@ -100,16 +99,18 @@ loadAndCurateTable('replicons', 'genome_replicons.tab', cur, header=True)
 conn.commit()
 
 # populate protein table
+#~ createAndLoadTable('codingsequences', 'LIKE proteins', 'genome_protein_products.tab', cur, header=True)
+#~ createAndLoadTable('cdsfam', 'LIKE proteins', 'genome_protein_families.tab', cur, header=True)
 protprodtabledef = """(nr_protein_id VARCHAR(20), product TEXT)"""
 protfamtabledef = """(nr_protein_id VARCHAR(20), protein_family_id CHAR(13))"""
 createAndLoadTable('protein_products', protprodtabledef, 'genome_protein_products.tab', cur)
-createAndLoadTable('protein_fams', protfamtabledef, protfamseqtab, cur, header=False)
+createAndLoadTable('protein_fams', protfamtabledef, 'genome_protein_families.tab', cur, header=False)
 cur.executescript("""
 INSERT INTO proteins (nr_protein_id, product, protein_family_id)
  SELECT nr_protein_id, min(product), protein_family_id
   FROM protein_products
   INNER JOIN protein_fams USING (nr_protein_id)
-  GROUP BY nr_protein_id,protein_family_id
+  GROUP BY nr_protein_id, protein_family_id
 ;
 DROP TABLE protein_products;
 DROP TABLE protein_fams;
@@ -162,8 +163,10 @@ cur.execute("UPDATE nr_protein_families SET is_singleton=1 WHERE protein_family_
 cur.execute("UPDATE coding_sequences SET gene_family_id=? " \
            +"WHERE gene_family_id IS NULL AND nr_protein_id IS NOT NULL;", (cdsorfanclust,))
 # populate the gene families deriving from the protein families
+cdsfamrad=cdsorfanclust.rstrip('0')
+protfamrad=protorfanclust.rstrip('0')
 cur.execute("INSERT INTO gene_families " \
-           +"SELECT replace(protein_family_id, 'P', 'C') AS gene_family_id, 0, protein_family_id " \
+           +"SELECT replace(protein_family_id, '%s', '%s') AS gene_family_id, 0, protein_family_id "%( protfamrad, cdsfamrad ) \
            +"FROM nr_protein_families;")
 # add the gene families which have no natural parent nr protein family, i.e. those derived from singleton nr proteins, but with multiple CDS members
 cur.execute("INSERT INTO gene_families SELECT distinct gene_family_id, 0, ? " \

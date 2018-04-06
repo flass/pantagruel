@@ -32,18 +32,24 @@ selectMinGenomes = function(countmatrix, dirout, pseudocoremingenomes=-1, ngenom
 	}else{                       N = ncol(countmatrix) }
 	cat(sprintf("number of unicopy gene families present in at least n genomes (out of %d):\n", N))
 	print(cumsum(rev(table(countsbyfam)))[as.character(floor(N*minfracNgenomeshow):N)])
-
-	pseudocoremingenomes = selectmingenomes(pseudocoremingenomes)	
+	
+	nloop = 0
+	if (length(pseudocoremingenomes) > 1){
+		nloop = 1
+		p = pseudocoremingenomes[nloop]
+	}else{
+		p = selectmingenomes(pseudocoremingenomes)
+	}
 	pseudocorefams = NULL
 	pseudocore = list()
 	pcmg = -1
 	if (interactive.X){ X11(width=16, height=10) }
-	while (pseudocoremingenomes!=pcmg){
-		nftabout = file.path(dirout, sprintf("pseudo-core-%d-unicopy_families.tab", pseudocoremingenomes))
-		nfpdfout = file.path(dirout, sprintf("pseudo-core-%d-unicopy_families.pdf", pseudocoremingenomes))
+	while (p!=pcmg | nloop==length(pseudocoremingenomes)){
+		nftabout = file.path(dirout, sprintf("pseudo-core-%d-unicopy_families.tab", p))
+		nfpdfout = file.path(dirout, sprintf("pseudo-core-%d-unicopy_families.pdf", p))
 		if (!interactive.X){ pdf(nfpdfout, width=40, height=40) }
-		pcmg = pseudocoremingenomes
-		pseudocorefams = getpseudocorefams(pseudocoremingenomes, countsbyfam)
+		pcmg = p
+		pseudocorefams = getpseudocorefams(p, countsbyfam)
 		cat("plotting heatmap... ")
 		pseudocoremat = countmatrix[pseudocorefams,]
 		heatmap(t(pseudocoremat), breaks=c(-0.5, 0.5, 1.5, N), col=c('white', 'black', 'red'), scale='none')
@@ -53,7 +59,7 @@ selectMinGenomes = function(countmatrix, dirout, pseudocoremingenomes=-1, ngenom
 		}
 		if (plot.PCoA){
 			cat("computing and plotting PCoA of gene species based on presence/absence... ")
-			count.coa = dudi.coa(pseudocoremat, scannf=F, nf=2)
+			count.coa = ade4::dudi.coa(pseudocoremat, scannf=F, nf=2)
 			if (interactive.X){ message("Press Return To Continue") ; invisible(readLines("stdin", n=1)) }
 			s.label(count.coa$c1)
 		}
@@ -64,11 +70,16 @@ selectMinGenomes = function(countmatrix, dirout, pseudocoremingenomes=-1, ngenom
 		if (!interactive.X){ dev.off() }
 		write(pseudocorefams, file=nftabout)
 		cat(sprintf("Written list of pseudo-core unicopy gene families (with min. genome nb. = %d) and graphical representation of their distribution at:\n%s\n%s\n",
-		 pseudocoremingenomes, nfpdfout, nftabout))
+		 p, nfpdfout, nftabout))
 		cat("please confirm value for minimum of genomes represented in pseudo-core unicopy gene families [or stop by choosing 0]: \n")
-		pseudocore[[pseudocoremingenomes]] = pseudocorefams
-		pseudocoremingenomes = selectmingenomes(silent=T)
-		if (pseudocoremingenomes==0){ break }
+		pseudocore[[as.character(p)]] = pseudocorefams
+		if (nloop>0){
+			nloop = nloop + 1
+			p = pseudocoremingenomes[nloop]
+		}else{
+			p = selectmingenomes(silent=T)
+		}
+		if (p==0){ break }
 	}
 	if (interactive.X){ dev.off() }
 	return(pseudocore)
