@@ -132,16 +132,20 @@ def main(dirnrprotaln, nfsingletonfasta, nfprotinfotab, nfreplinfotab, dirassemb
 	didentseq = {}
 	if nfidentseq:
 		print "parse redundant protein names from '%s'"%nfidentseq
-		curfam = None
-		refprot = None
+		#~ curfam = None
+		#~ refprot = None
 		with open(nfidentseq, 'r') as fidentseq:
 			for line in fidentseq:
-				fam, prot = line.rstrip('\n').split('\t')
-				if fam == curfam:
+				#~ fam, prot = line.rstrip('\n').split('\t')
+				#~ if fam == curfam:
+					#~ didentseq[prot] = refprot
+				#~ else:
+					#~ curfam = fam
+					#~ refprot = prot
+				prots = line.rstrip('\n').split('\t')
+				refprot = prots[0]
+				for prot in prots[1:]:
 					didentseq[prot] = refprot
-				else:
-					curfam = fam
-					refprot = prot
 	
 	print "# parse replicon/genome assembly data"
 	drepliasse = {}

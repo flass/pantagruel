@@ -10,11 +10,13 @@ lredundant = []
 curfam = None
 with open(nfidentseq, 'r') as fidentseq:
 	for line in fidentseq:
-		fam, prot = line.rstrip('\n').split('\t')
-		if fam == curfam:
-			lredundant.append(prot)
-		else:
-			curfam = fam
+		#~ fam, prot = line.rstrip('\n').split('\t')
+		#~ if fam == curfam:
+			#~ lredundant.append(prot)
+		#~ else:
+			#~ curfam = fam
+		prots = line.rstrip('\n').split('\t')
+		lredundant += prots[1:]
 
 print "listed %d redundant sequences in dataset"%len(lredundant)
 sredundant = set(lredundant)

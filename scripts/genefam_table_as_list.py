@@ -4,7 +4,12 @@ import sys
 
 nffam = sys.argv[1]
 nfout = sys.argv[2]
-writefamname = bool(sys.argv[3])
+if len(sys.argv)>3:
+	a = sys.argv[3]
+	if a.isdigit(): writefamname = bool(int(a))
+	else: writefamname = bool(eval(a))
+else:
+	writefamname = False
 
 # could just read input file and write as it reads family blocks
 # however non-efficient use of a dict to store family is prefered
