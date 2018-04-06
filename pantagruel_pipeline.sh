@@ -131,17 +131,19 @@ grep -c '>' ${allfaarad}.faa
 # run mmseqs clusthash with 100% seq id threshold
 # used MMseqs2 Version: 6306925fa9ae6198116c26e605277132deff70d0
 mmseqs createdb ${allfaarad}.faa  ${allfaarad}.mmseqsdb
-mmseqs clusthash --min-seq-id 1.0 ${allfaarad}.mmseqsdb ${allfaarad}.clusthashdb
-mmseqs clust ${allfaarad}.mmseqsdb ${allfaarad}.clusthashdb ${allfaarad}.clust
-mmseqs createseqfiledb ${allfaarad}.mmseqsdb ${allfaarad}.clust ${allfaarad}.clust_clusters
+mmseqs clusthash --min-seq-id 1.0 ${allfaarad}.mmseqsdb ${allfaarad}.clusthashdb_minseqid100
+mmseqs clust ${allfaarad}.mmseqsdb ${allfaarad}.clusthashdb_minseqid100 ${allfaarad}.clusthashdb_minseqid100_clust
+mmseqs createseqfiledb ${allfaarad}.mmseqsdb ${allfaarad}.clusthashdb_minseqid100_clust ${allfaarad}.clusthashdb_minseqid100_clusters
 
 # get table of redundant protein names
-python ${ptgscripts}/split_mmseqs_clustdb_fasta.py ${allfaarad}.clusthash_clusters "NRPROT" ${allfaarad}.clusthash_families 6 0 0
-grep -v NRPROT000000 ${allfaarad}.clusthash_families.tab > ${allfaarad}.clusthash_identicals.tab
-python ${ptgscripts}/remove_identical_seqs.py ${allfaarad}.faa ${allfaarad}.clusthash_identicals.tab ${allfaarad}.nr.faa
+python ${ptgscripts}/split_mmseqs_clustdb_fasta.py ${allfaarad}.clusthashdb_minseqid100_clusters "NRPROT" ${allfaarad}.clusthashdb_minseqid100_families 6 0 0
+grep -v NRPROT000000 ${allfaarad}.clusthashdb_minseqid100_families.tab > ${allfaarad}.identicals.tab
+python ${ptgscripts}/genefam_table_as_list.py ${allfaarad}.identicals.tab ${allfaarad}.identicals.list 0
+python ${ptgscripts}/remove_identical_seqs.py ${allfaarad}.faa ${allfaarad}.identicals.list ${allfaarad}.nr.faa
 
 ## collect data from assemblies, including matching of (nr) protein to CDS sequence ids
-python ${ptgscripts}/allgenome_gff2db.py --assemb_list ${genomeinfo}/assemblies_list --dirout ${genomeinfo}/assembly_info --ncbi_taxonomy ${ncbitax} --identical_prots ${allfaarad}.identicals.tab
+python ${ptgscripts}/allgenome_gff2db.py --assemb_list ${genomeinfo}/assemblies_list --dirout ${genomeinfo}/assembly_info \
+ --ncbi_taxonomy ${ncbitax} --identical_prots ${allfaarad}.identicals.list
 
 ## clustering of proteome db with  MMSeqs2 
 # (https://github.com/soedinglab/MMseqs2,  Steinegger M and Soeding J. Sensitive protein sequence searching for the analysis of massive data sets. bioRxiv, doi: 10.1101/079681 (2016))
@@ -217,7 +219,7 @@ for cg in `cat ${genomeinfo}/assemblies_list` ; do ls $cg/*_cds_from_genomic.fna
 mkdir -p ${raplogs}/extract_full_prot_and_cds_family_alignments/
 python ${ptgscripts}/extract_full_prot_and_cds_family_alignments.py --nrprot_fam_alns ${nrprotali} --singletons ${protfamseqs}/${protorfanclust}.fasta \
  --prot_info ${genomeinfo}/assembly_info/allproteins_info.tab --repli_info ${genomeinfo}/assembly_info/allreplicons_info.tab --assemblies ${assemblies} \
- --dirout ${protali} --famprefix ${famprefix} --logs ${raplogs}/extract_full_prot_and_cds_family_alignments
+ --dirout ${protali} --famprefix ${famprefix} --logs ${raplogs}/extract_full_prot_and_cds_family_alignments --identical_prots ${allfaarad}.identicals.list
 
 ## check consistency of full reverse translated alignement set
 ok=1
