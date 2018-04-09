@@ -27,7 +27,7 @@ def main(dbconpar, baseq, minsizes=[], maxsizes=[], dirout='', outprefix=''):
 		q = "%s%s%s order by size desc;"%(baseq, gtmin, ltmax)
 		dbcur.execute( q )
 		lfamsizes = dbcur.fetchall()
-		with open(os.path.join(dirout, "%s%s%s"%(outprefix, smins, smaxs))) as fout:
+		with open(os.path.join(dirout, "%s%s%s"%(outprefix, smins, smaxs)), 'w') as fout:
 			for row in lfamsizes:
 				fout.write('\t'.join([str(x).rstrip(' ') for x in row])+'\n')
 
@@ -53,7 +53,7 @@ if __name__=='__main__':
 	cdsorfanclust = dopt.get('--cds.orfan.fam.name', '')
 	basequery = dopt.get('--base.query', "select gene_family_id, size from gene_family_sizes where gene_family_id is not null and gene_family_id!='%s'"%(cdsorfanclust))
 	dirout = dopt.get('--dirout', os.getcwd())
-	outprefix = dopt.get('--outprefix', 'cdsfam_')
+	outprefix = dopt.get('--outprefix', 'cdsfam')
 	
 	main(db, baseq=basequery, minsizes=minsizes, maxsizes=maxsizes, dirout=dirout, outprefix=outprefix)
 	
