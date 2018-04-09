@@ -14,9 +14,9 @@ readInput = function(prompt){
 
 selectmingenomes = function(pseudocoremingenomes=-1, silent=F){
 	while (pseudocoremingenomes < 0){
-		pseudocoremingenomes = as.numeric(readInput(prompt="Please enter non-zero integer value for minimum of genomes represented in pseudo-core unicopy gene families: "))
+		pseudocoremingenomes = as.numeric(readInput(prompt="Please enter non-zero integer value for P: "))
 	}
-	if (!silent){ cat(sprintf("Selected %d as the minimum number of genomes to be represented in pseudo-core unicopy gene families\n", pseudocoremingenomes)) }
+	if (!silent){ cat(sprintf("Selected %d as value of P\n", pseudocoremingenomes)) }
 	return(pseudocoremingenomes)
 }
 
@@ -31,7 +31,9 @@ selectMinGenomes = function(countmatrix, dirout, pseudocoremingenomes=-1, ngenom
 	if (is.numeric(ngenomes)){   N = ngenomes 
 	}else{                       N = ncol(countmatrix) }
 	cat(sprintf("number of unicopy gene families present in at least n genomes (out of %d):\n", N))
-	print(cumsum(rev(table(countsbyfam)))[as.character(floor(N*minfracNgenomeshow):N)])
+	cscbf = cumsum(rev(table(countsbyfam)))
+	print(cscbf[intersect(names(cscbf), as.character(floor(N*minfracNgenomeshow):N))])
+	print("Select a value for P, the minimum number of genomes to be represented in pseudo-core unicopy gene families")
 	
 	nloop = 0
 	if (length(pseudocoremingenomes) > 1){
@@ -71,7 +73,7 @@ selectMinGenomes = function(countmatrix, dirout, pseudocoremingenomes=-1, ngenom
 		write(pseudocorefams, file=nftabout)
 		cat(sprintf("Written list of pseudo-core unicopy gene families (with min. genome nb. = %d) and graphical representation of their distribution at:\n%s\n%s\n",
 		 p, nfpdfout, nftabout))
-		cat("please confirm value for minimum of genomes represented in pseudo-core unicopy gene families [or stop by choosing 0]: \n")
+		cat("Please confirm or enter a new value for P [or stop by choosing 0]: \n")
 		pseudocore[[as.character(p)]] = pseudocorefams
 		if (nloop>0){
 			nloop = nloop + 1

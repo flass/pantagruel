@@ -272,6 +272,7 @@ export protalifastacodedir=${protali}/full_protfam_alignments_species_code
 for mol in cds prot ; do
   alifastacodedir=${protali}/full_${mol}fam_alignments_species_code
   mkdir -p ${alifastacodedir}
+  eval "export ${mol}alifastacodedir=${alifastacodedir}"
   # use multiprocessing python script
   ${ptgscripts}/lsfullpath.py ${protali}/full_${mol}fam_alignments .aln > ${protali}/full_${mol}fam_alignment_list
   ${ptgscripts}/genbank2code_fastaseqnames.py ${protali}/full_${mol}fam_alignment_list ${database}/cds_codes.tab ${alifastacodedir} > ${rapdb}/logs/genbank2code_fastaseqnames.${mol}.log
@@ -301,7 +302,7 @@ rm ${alifastacodedir}/*_all_sp_new
 
 ### compute species tree using RAxML
 export coretree=${coregenome}/raxml_tree
-export treename=${pseudocore}_concat_cds_${ngenomes}entero
+export treename=${pseudocore}_concat_cds_${ngenomes}_${rapdbname}
 mkdir -p ${raplogs}/raxml ${coretree}
 # define RAxML options; uses options -T (threads) -j (checkpoints) 
 raxmloptions="-n ${treename} -m GTRCATI -j -p 1753 -T 8 -w ${coretree}"
@@ -322,6 +323,7 @@ mad.rooting = MAD(readLines('${coretree}/RAxML_bestTree.${treename}'), 'full')
 write(mad.rooting[[1]], file='${coretree}/RAxML_bestTree.${treename}.MADrooted')
 save(mad.rooting, file='${coretree}/RAxML_bestTree.${treename}.MADrooting.RData')
 EOF
+
 
 #~ ## RAxML, with parametric bootstrap
 #~ raxmlHPC-PTHREADS-AVX -s ${pseudocorealn}.reduced ${raxmloptions} -b 198237 -N 500 &> ${raplogs}/raxml/${treename}_bs.log &

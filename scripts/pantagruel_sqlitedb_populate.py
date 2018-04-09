@@ -108,7 +108,12 @@ def main(dbname, protorfanclust, cdsorfanclust, nfspeclist, nfusergenomeinfo):
 	DROP TABLE protein_fams;
 	""")
 	conn.commit()
-
+	
+	# verify table has been properly loaded
+	cur.execute("select count(*) from proteins;")
+	nprotrecords = cur.fetchone()[0]
+	assert nprotrecords>0
+	
 	# create indexes on proteins table
 	cur.executescript("""
 	CREATE INDEX proteins_nr_protein_id_key ON proteins (nr_protein_id);
@@ -146,6 +151,11 @@ def main(dbname, protorfanclust, cdsorfanclust, nfspeclist, nfusergenomeinfo):
 	DROP TABLE cdsfam;
 	""")
 	conn.commit()
+	
+	# verify table has been properly loaded
+	cur.execute("select count(*) from coding_sequences;")
+	ncdsrecords = cur.fetchone()[0]
+	assert ncdsrecords>0
 
 	# populate the protein families
 	cur.execute("INSERT INTO nr_protein_families (protein_family_id) SELECT DISTINCT protein_family_id FROM proteins;")

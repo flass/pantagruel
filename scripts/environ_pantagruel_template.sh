@@ -49,7 +49,6 @@ export mmseqsclout=${families}/$(basename ${allfaarad}.nr).mmseqs_clusterdb_defa
 export protorfanclust="${famprefix}P000000"
 export cdsorfanclust="${famprefix}C000000"
 export pseudocore=pseudo-core-${pseudocoremingenomes}-unicopy
-export pseudocorealn=${coregenome}/${pseudocore}_concat_cds.aln
 export coretree=${coregenome}/raxml_tree
 export mainresulttag=rootedTree
 cladesupp=70
@@ -62,7 +61,8 @@ export colmethod='replaceCCinGasinS-collapsePOPinSnotinG'
 # other variables conditonal on prior creation of files
 if [ -e ${complete}/complete_genomes_metadata.tab ] ; then
  export ngenomes=$((`wc -l ${genomeinfo}/metadata_${rapdbname}/metadata.tab | cut -d' ' -f1` - 1))
- export treename=${pseudocore}_concat_cds_${ngenomes}entero
+ export treename=${rapdbname}_${pseudocore}-concat-prot_${ngenomes}-genomes
+ export pseudocorealn=${coregenome}/${treename}.aln
  export nrspeciestree=${coretree}/RAxML_bestTree.${treename}.MADrooted
  export nrspeciestreeBS=${coretree}/RAxML_bipartitions.${treename}
 fi
