@@ -348,7 +348,7 @@ mkdir -p ${mlgenetrees}
 mkdir -p $raplogs/raxml/gene_trees
 
 basequery="select gene_family_id, size from gene_family_sizes where gene_family_id is not null and gene_family_id!='$cdsorfanclust'"
-python ${ptgscripts}/pantagruel_sqlitedb_query_gene_fam_sets.py --db=${sqldb} --outprefix='cdsfams_' --dirout=${protali} \
+python ${ptgscripts}/pantagruel_sqlitedb_query_gene_fam_sets.py --db=${sqldb} --outprefix='cdsfams' --dirout=${protali} \
  --base.query="${basequery}" --famsets.min.sizes="4,500,2000,10000" --famsets.max.sizes="499,1999,9999,"
 
 ## compute first pass of gene trees with RAxML, using rapid bootstrap to estimate branch supports
