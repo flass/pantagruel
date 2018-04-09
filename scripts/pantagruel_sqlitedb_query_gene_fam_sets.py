@@ -52,7 +52,7 @@ if __name__=='__main__':
 	maxsizes = dopt.get('--famsets.max.sizes', '').split(',')
 	cdsorfanclust = dopt.get('--cds.orfan.fam.name', '')
 	basequery = dopt.get('--base.query=', "select gene_family_id, size from genome.gene_family_sizes where gene_family_id is not null and gene_family_id!='%s'"%(cdsorfanclust))
-	dirout = dopt.get('--dirout', os.get_wd())
+	dirout = dopt.get('--dirout', os.getcwd())
 	outprefix = dopt.get('--outprefix', 'cdsfam_')
 	
 	main(db, baseq=basequery, minsizes=minsizes, maxsizes=maxsizes, dirout=dirout, outprefix=outprefix)
