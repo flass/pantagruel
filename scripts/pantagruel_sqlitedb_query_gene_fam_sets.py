@@ -47,7 +47,7 @@ if __name__=='__main__':
 		print usage()
 		sys.exit(0)
 	
-	dbconpar = dopt['--db.con.par']
+	db = dopt['--db']
 	minsizes = dopt.get('--famsets.min.sizes', '').split(',')
 	maxsizes = dopt.get('--famsets.max.sizes', '').split(',')
 	cdsorfanclust = dopt.get('--cds.orfan.fam.name', '')
