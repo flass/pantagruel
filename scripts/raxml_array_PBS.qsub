@@ -145,6 +145,7 @@ for i in {1..5} ; do
         localn=${localn}.reduced
         echo "# Found $(wc -l RAxML_identical_sequences.${nfrad2} | cut -d':' -f2) redundant sequences; changed input alignment from '${localn}' to '${localn}.reduced'."
       fi
+    fi
   fi
 done
 echo "output of RAxML phylogenetic reconstruction is :"
