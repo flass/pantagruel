@@ -76,6 +76,8 @@ def main():
 		print "restrict to species present in specified set of %d species"%len(lrestrictsp)
 		sp_list_nr = list(set(sp_list_nr) & set(lrestrictsp))
 		print "left %d species in the dataset"%len(sp_list_nr)
+		
+		##### does not work to restrict the alignement to species list specified in $3
 	
 	concat_list=[]	
 	for aln in aln_list:
