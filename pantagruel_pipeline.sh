@@ -364,7 +364,7 @@ if [ "$(wc -l $cdsfam2phylo | cut -f1 -d' ')" -lt "$(wc -l $tasklist | cut -f1 -
   >&2 echo "ERROR $(dateprompt): missing gene family alignments; please fix the list '$tasklist' or the content of folder '$alifastacodedir/' before continuing."
   exit 1
 fi
-qsubvars="tasklist=$tasklist,outputdir=$mlgenetrees"
+qsubvars="tasklist=$tasklist,outputdir=$mlgenetrees,reducedaln=true"
 Njob=`wc -l ${tasklist} | cut -f1 -d' '`
 chunksize=3000
 jobranges=($(${ptgscripts}/get_jobranges.py $chunksize $Njob))

@@ -105,8 +105,6 @@ idseqsedpat='s/IMPORTANT WARNING: Sequences \(.\+\) and \(.\+\) are exactly iden
 if [[ "$reducedaln" == "true" ]] ; then
   ## reduce the alignement and record which sequences were seen as duplicates
   raxmlcall0="$raxmlbin -s $localn ${raxmloptions} -f c && grep '$idseqgreppat' RAxML_info.${nfrad2} | sed -e '$idseqsedpat' > RAxML_identical_sequences.${nfrad2}"
-  ## change alignment to be further considered by RAxML as the reduced one: !!! the resulting tree will NOT contain any duplicates !!!
-  localn=${localn}.reduced
 else
   raxmlcall0="# NOT reducing alignment to unique sequences before start"
   raxmlbin="$raxmlbin --silent"
@@ -125,11 +123,10 @@ raxmlcallz=""
 ### pipeline
 raxmlcalls=(raxmlcall0 raxmlcall1 raxmlcall2 raxmlcall3 raxmlcall4 raxmlcallz)
 
+status=$?
 for i in {1..5} ; do
-  status=$?
   let j=$i-1
   if [ $status != 0 ] ; then
-    #~ echo "!!! ERROR : during former RAxML call :" ; echo ${raxmlcall[$j]} ; echo "exit now"
     echo "!!! ERROR : during former RAxML call ; exit now"
     exit 1
   else  
@@ -141,14 +138,19 @@ for i in {1..5} ; do
     echo "#####"
     echo $raxmlcall
     eval $raxmlcall
+    status=$?
+    if [ $i -eq 0 ] ; then
+      ## change alignment to be further considered by RAxML as the reduced one: !!! the resulting tree will NOT contain any duplicates !!!
+      if [[ -e ${localn}.reduced ]] ; then
+        localn=${localn}.reduced
+        echo "# Found $(wc -l RAxML_identical_sequences.${nfrad2} | cut -d':' -f2) redundant sequences; changed input alignment from '${localn}' to '${localn}.reduced'."
+      fi
   fi
 done
 echo "output of RAxML phylogenetic reconstruction is :"
 echo "ls ./*.$nfrad2*"
 ls ./*.$nfrad2*
 
-#~ cp ./RAxML_*.$nfrad2 $outputdir/bulk/
-#~ rsync -avz --exclude=$nfrad1 ./*$nfrad2 $outputdir/bulk/
 rsync -avz --exclude=$nfrad1 --exclude=RAxML_info* ./*$nfrad2 $outputdir/bulk/
 if [ $? != 0 ] ; then
   echo "!!! ERROR : unable to copy RAxML_* output files from $HOSTNAME:$PWD ; exit now"
