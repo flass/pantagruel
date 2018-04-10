@@ -142,8 +142,10 @@ for i in {0..5} ; do
     if [ $i -eq 0 ] ; then
       ## change alignment to be further considered by RAxML as the reduced one: !!! the resulting tree will NOT contain any duplicates !!!
       if [[ -e ${localn}.reduced ]] ; then
-        localn=${localn}.reduced
-        echo "# Found $(wc -l RAxML_identical_sequences.${nfrad2} | cut -d':' -f2) redundant sequences; changed input alignment from '${localn}' to '${localn}.reduced'."
+        echo "# Found $(wc -l RAxML_identical_sequences.${nfrad2} | cut -d':' -f2) redundant sequences; replace input alignment '${localn}' by '${localn}.reduced'."
+        repllocaln="mv ${localn} ${localn}.full ; mv ${localn}.reduced ${localn}"
+        echo $repllocaln
+        eval $repllocaln
       fi
     fi
   fi
