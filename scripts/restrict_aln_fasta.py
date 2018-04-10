@@ -8,8 +8,8 @@ with open(nfrestrictspelist, 'r') as frestrictspelist:
 	lrestrictspe = [line.rstrip('\n') for line in frestrictspelist]
 
 w = False
-with open(nfin, 'r') as fin:
- with open(nfout, 'w') as fout:
+with open(nfinaln, 'r') as fin:
+ with open(nfoutaln, 'w') as fout:
   for line in fin:
    if line.startswith('>'):
     lsp = line.strip('>\n').split()
