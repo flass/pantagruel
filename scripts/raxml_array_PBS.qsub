@@ -124,7 +124,7 @@ raxmlcallz=""
 raxmlcalls=(raxmlcall0 raxmlcall1 raxmlcall2 raxmlcall3 raxmlcall4 raxmlcallz)
 
 status=$?
-for i in {1..5} ; do
+for i in {0..5} ; do
   let j=$i-1
   if [ $status != 0 ] ; then
     echo "!!! ERROR : during former RAxML call ; exit now"
