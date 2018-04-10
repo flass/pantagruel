@@ -40,42 +40,52 @@ def rebuildAln(sp_list_tot, aln_file):
 		return None
 		
 def main():
-	if len(sys.argv)!=3:
+	if len(sys.argv)<3:
 		print "Usage : python concat.py liste_fichiers concatfilename."
-		return 1
+		sys.exit( 1 )
+	
+	aln_files=sys.argv[1]	
+	concatfile=sys.argv[2]
+	if len(sys.argv)>3:
+		nfrestrictsplist = sys.argv[3]
+		with open(nfrestrictsplist, 'r') as frestrictsplist:
+			lrestrictsp = [line.rstrip('\n') for line in frestrictsplist]
 	else:
-		aln_files=sys.argv[1]	
-		concatfile=sys.argv[2]
+		lrestrictsp = []
+		
+	files=utilitaires.fileToLines(aln_files)
+	#print files
+	sp_list=[]
+	aln_list=[]
+	
+	dico_aln={}
+	for f in files:
+		f=f[:-1]
+		print f
+		if os.path.exists(f):
+			aln=lib_util.AlnGenerator(f)
 			
-		files=utilitaires.fileToLines(aln_files)
-		#print files
-		sp_list=[]
-		aln_list=[]
-		
-		dico_aln={}
-		for f in files:
-			f=f[:-1]
-			print f
-			if os.path.exists(f):
-				aln=lib_util.AlnGenerator(f)
-				
-				sp_list+=aln.get_species()
-				aln_list.append(f)
-				print "File %s included."%f	
-			else:
-				print "File %s NOT INCLUDED : does not exist."%f
-		sp_list_nr=utilitaires.deleteCopies(sp_list)
-		print "%d species."%len(sp_list_nr)
-		
-		concat_list=[]	
-		for aln in aln_list:
-			res=rebuildAln(sp_list_nr, aln)
-			#if res!=None:
-			if res:
-				concat_list.append(res)
-		
-		lib_util.concatAln(concat_list, concatfile, format="fasta")	
-		
-		return 0
+			sp_list+=aln.get_species()
+			aln_list.append(f)
+			print "File %s included."%f	
+		else:
+			print "File %s NOT INCLUDED : does not exist."%f
+	sp_list_nr=utilitaires.deleteCopies(sp_list)
+	print "found %d species."%len(sp_list_nr)
+	if lrestrictsp:
+		print "restrict to species present in specified set of %d species"%len(lrestrictsp)
+		sp_list_nr = list(set(sp_list_nr) & set(lrestrictsp))
+		print "left %d species in the dataset"%len(sp_list_nr)
+	
+	concat_list=[]	
+	for aln in aln_list:
+		res=rebuildAln(sp_list_nr, aln)
+		#if res!=None:
+		if res:
+			concat_list.append(res)
+	
+	lib_util.concatAln(concat_list, concatfile, format="fasta")	
+	
+	return 0
 
 main()
