@@ -40,7 +40,7 @@ if [ -z $reducedaln ] ; then
   reducedaln=false
 fi
 
-for $mainresulttag in bulk ${mainresulttags[@]} ; do
+for mainresulttag in bulk ${mainresulttags[@]} ; do
   mkdir -p $outputdir/$mainresulttag/
   if [ ! -d $outputdir/$mainresulttag ] ; then 
     echo "!!! ERROR : unable to access output directory 'outputdir/$mainresulttag/' ; exit now"
@@ -157,7 +157,7 @@ else
   echo "copied RAxML_* output files with exit status $?"
 fi
 echo ""
-for $mainresulttag in ${mainresulttags[@]} ; do
+for mainresulttag in ${mainresulttags[@]} ; do
   echo "mv -f $outputdir/bulk/RAxML_${mainresulttag}.$nfrad2 $outputdir/$mainresulttag/"
   mv -f $outputdir/bulk/RAxML_${mainresulttag}.$nfrad2 $outputdir/$mainresulttag/
 done

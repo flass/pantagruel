@@ -223,7 +223,7 @@ python ${ptgscripts}/extract_full_prot_and_cds_family_alignments.py --nrprot_fam
 
 ## check consistency of full reverse translated alignement set
 ok=1
-for fam in `ls /enterobac/PanteroDB_v0.3/02.clustalo_alignments/full_cdsfam_alignments/ | cut -d'.' -f1` ; do 
+for fam in `ls $protali/full_cdsfam_alignments/ | cut -d'.' -f1` ; do 
 nseqin1=`grep -c '>' $protali/full_cdsfam_fasta/$fam.fasta`
 nseqin2=`grep -c '>' $protali/full_protfam_alignments/$fam.aln`
 nseqout=`grep -c '>' $protali/full_cdsfam_alignments/$fam.aln`
@@ -234,9 +234,9 @@ if [[ "$nseqin1" != "$nseqout" || "$nseqin2" != "$nseqout" ]] ; then
 fi
 done > $raptmp/pal2nal_missed_fams
 if [ ok -lt 1 ] ; then
-  >&2 echo "WARNING $(dateprompt): failure of pal2nal.pl reverse translation step for families: $(cat $enttmp/pal2nal_missed_fams | xargs)"
+  >&2 echo "WARNING $(dateprompt): failure of pal2nal.pl reverse translation step for families: $(cat $raptmp/pal2nal_missed_fams | xargs)"
   >&2 echo "will use tranposeAlignmentProt2CDS.py instead, a less safe, but more permissive method for generating CDS alignment"
-  for fam in `cat $enttmp/pal2nal_missed_fams` ; do
+  for fam in `cat $raptmp/pal2nal_missed_fams` ; do
     ${ptgscripts}/tranposeAlignmentProt2CDS.py $protali/full_cdsfam_fasta/$fam.fasta $protali/full_protfam_alignments/$fam.aln $protali/full_cdsfam_alignments/$fam.aln
   done
 fi
