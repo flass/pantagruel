@@ -302,39 +302,74 @@ rm ${alifastacodedir}/*_all_sp_new
 
 ### compute species tree using RAxML
 export coretree=${coregenome}/raxml_tree
-export treename=${pseudocore}_concat_cds_${ngenomes}_${rapdbname}
+export treename=${pseudocore}_concat_cds_${ngenomes}-genomes_${rapdbname}
 mkdir -p ${raplogs}/raxml ${coretree}
-# define RAxML options; uses options -T (threads) -j (checkpoints) 
-raxmloptions="-n ${treename} -m GTRCATI -j -p 1753 -T 8 -w ${coretree}"
+# define RAxML binary and options; uses options -T (threads) -j (checkpoints) 
+if [ ! -z $(grep -o avx2 /proc/cpuinfo | head -n 1) ] ; then
+  raxmlflav='-AVX2 -U'
+elif [ ! -z $(grep -o avx /proc/cpuinfo | head -n 1) ] ; then
+  raxmlflav='-AVX -U'
+elif [ ! -z $(grep -o sse3 /proc/cpuinfo | head -n 1) ] ; then
+  raxmlflav='-SSE3 -U'
+else
+  raxmlflav=''
+fi
+raxmlbin="raxmlHPC-PTHREADS${raxmlflav} -T $(nproc)"
+raxmloptions="-n ${treename} -m GTRCATI -j -p 1753 -w ${coretree}"
+
 ## first check the alignment for duplicate sequences and write a reduced alignment with  will be excluded
-raxmlHPC-PTHREADS-AVX -s ${pseudocorealn} ${raxmloptions} -f c &> ${raplogs}/raxml/${treename}.check.log
+$raxmlbin -s ${pseudocorealn} ${raxmloptions} -f c &> ${raplogs}/raxml/${treename}.check.log
 # 117/880 exactly identical excluded
 grep 'exactly identical$' ${coretree}/RAxML_info.${treename} | sed -e 's/IMPORTANT WARNING: Sequences \(.\+\) and \(.\+\) are exactly identical/\1\t\2/g' > ${pseudocorealn}.identical_sequences
 rm ${coretree}/RAxML_info.${treename}
 ## first just single ML tree on reduced alignment
-raxmlHPC-PTHREADS-AVX -s ${pseudocorealn}.reduced ${raxmloptions} &> ${raplogs}/raxml/${treename}.ML_run.log &
-#~ # resume analysis after crash
-#~ raxmlHPC-PTHREADS-AVX -s ${pseudocorealn}.reduced ${raxmloptions} -t ${coretree}/RAxML_checkpoint.${treename}.14 &> ${raplogs}/raxml/${treename}.ML_run.log2 &
+$raxmlbin -s ${pseudocorealn}.reduced ${raxmloptions} &> ${raplogs}/raxml/${treename}.ML_run.log
+mv RAxML_info.${treename} RAxML_info_bestTree.${treename}
+
+
+## RAxML, with rapid bootstrap
+$raxmlbin -s ${pseudocorealn}.reduced ${raxmloptions} -x 198237 -N 1000 &> ${raplogs}/raxml/${treename}_bs.log
+mv RAxML_info.${treename} RAxML_info_bootstrap.${treename}
+$raxmlbin -s ${pseudocorealn}.reduced ${raxmloptions} -f b -z RAxML_bootstrap.${treename} -t RAxML_bestTree.${treename} 
+mv RAxML_info.${treename} RAxML_info_bipartitions.${treename}
+#~ ## root ML tree
+#~ $raxmlbin -s ${pseudocorealn}.reduced ${raxmloptions} -f I -t RAxML_bipartitionsBranchLabels.${treename}  
+#~ mv RAxML_info.${treename} RAxML_info_rootedTree.${treename}
 
 ## root tree with MAD (Tria et al. Nat Ecol Evol (2017) Phylogenetic rooting using minimal ancestor deviation. s41559-017-0193 doi:10.1038/s41559-017-0193)
+nrbesttree=${coretree}/RAxML_bestTree.${treename}
 R BATCH --vanilla --slave << EOF
 source('${ptgscripts}/mad_R/MAD.R')
-mad.rooting = MAD(readLines('${coretree}/RAxML_bestTree.${treename}'), 'full')
-write(mad.rooting[[1]], file='${coretree}/RAxML_bestTree.${treename}.MADrooted')
-save(mad.rooting, file='${coretree}/RAxML_bestTree.${treename}.MADrooting.RData')
+mad.rooting = MAD(readLines('${besttree}'), 'full')
+write(mad.rooting[[1]], file='${besttree}.MADrooted')
+save(mad.rooting, file='${besttree}.MADrooting.RData}')
 EOF
 
+# reintroduce excluded species name into the tree + root as MAD-rooted species tree
+nrbiparts=${besttree/bestTree/bipartitions}
+export speciestree=${nrbiparts}.MADrooted.full
+python ${ptgscripts}/putidentseqbackintree.py --input.nr.tree=${nrbiparts} --ref.rooted.nr.tree=${besttree}.MADrooted \
+ --list.identical.seq=${pseudocorealn}.identical_sequences --output.tree=${speciestree}
 
-#~ ## RAxML, with parametric bootstrap
-#~ raxmlHPC-PTHREADS-AVX -s ${pseudocorealn}.reduced ${raxmloptions} -b 198237 -N 500 &> ${raplogs}/raxml/${treename}_bs.log &
-## RAxML, with rapid bootstrap
-raxmlHPC-PTHREADS-AVX -s ${pseudocorealn}.reduced ${raxmloptions} -x 198237 -N 1000 &> ${raplogs}/raxml/${treename}_bs.log &
+### generate ultrametric 'dated' species tree for more meaningfulgraphical representation of reconciliation AND to use the dated (original) version of ALE
+## use LSD (v 0.3 beta; To et al. Syst. Biol. 2015) to generate an ultrametric tree from the rooted ML tree (only assumin different, uncorrelated clocks for each branch)
+alnlen=$((`grep -v '>' ${pseudocorealn} | wc -c` / ${pseudocoremingenomes} ))
+lsd -i ${speciestree} -c -v 1 -s $alnlen -o ${speciestree}.lsd
+#~ Reading the tree 1...
+#~ The results correspond to the estimation of relative dates when T[mrca]=0.000 and T[tips]=1.000
+#~ rate 3.553e-01 , tMRCA 0.000 , objective function 1.176019e+05
+
+# tentative rooting with LSD
+lsd -i ${speciestree} -c -v 1 -r a -s $alnlen -o $coretree/RAxML_bipartitions.${treename}.${bssample}_LSDrooted.full
+# LSD rooting very similar to MAD rooting;
+# only with LSD the root is a polytomy, with five branches: the pre-symbiotic species UNCENT1 and SHIBC1 (separately), the Cedecea and Cronobacter clades, and the main clade
+# whereas with MAD the root is bifurcated and the outgroup clade is (main, (Cronobacter, (Cedecea, (UNCENT1, SHIBC1)))). MAD rooting is preferred.
 
 
-## delineate populations of near-identical strain (based on tree with branch lengths in subs/site) and generate the population tree, i.e. the species tree withs population collapsed
-python ${ptgscripts}/replace_species_by_pop_in_gene_trees.py -S ${speciestreeBS} --threads=8 \
+## delineate populations of near-identical strains (based on tree with branch lengths in subs/site) and generate the population tree, i.e. the species tree withs population collapsed
+python ${ptgscripts}/replace_species_by_pop_in_gene_trees.py -S ${speciestree} --threads=8 \
 --pop_stem_conds="[('lg', '>=', 0.0005), ('bs', '>=', 80)]" --within_pop_conds="[('max', 'lg', '<=', 0.0005, -1)]"
-nspepop=$(tail -n+3 ${speciestreeBS%.*}_populations | wc -l)
+nspepop=$(tail -n+3 ${speciestree%.*}_populations | wc -l)
 echo "Found $nspepop disctinct populations in the species tree"
 
 
@@ -454,8 +489,8 @@ replrun=$(date +'%d%m%Y')
 ### INCORRECT WRITING OF TREES BY BioPython ; requires correction at line 338 of source file Bio.Phylo.NewickIO.py => reuires writing permission on lib files; usuall impossible on HPC systems
 
 # local parallel run
-python ${ptgscripts}/replace_species_by_pop_in_gene_trees.py -G ${tasklist} -c ${colalinexuscodedir}/${collapsecond} -S ${speciestreeBS}.lsd.newick -o ${coltreechains}/${collapsecond} \
- --populations=${speciestreeBS%.*}_populations --population_tree=${speciestreeBS%.*}_collapsedPopulations.nwk --population_node_distance=${speciestreeBS%.*}_interNodeDistPopulations \
+python ${ptgscripts}/replace_species_by_pop_in_gene_trees.py -G ${tasklist} -c ${colalinexuscodedir}/${collapsecond} -S ${speciestree}.lsd.newick -o ${coltreechains}/${collapsecond} \
+ --populations=${speciestree%.*}_populations --population_tree=${speciestree%.*}_collapsedPopulations.nwk --population_node_distance=${speciestree%.*}_interNodeDistPopulations \
  --dir_full_gene_trees=${mlgenetrees}/rootedTree --method=${colmethod} --threads=${ncpus} --reuse=0 --verbose=0 --max.recursion.limit=12000 --logfile=${repllogs}_${replrun}.log &
 
 ### OR
@@ -463,8 +498,8 @@ python ${ptgscripts}/replace_species_by_pop_in_gene_trees.py -G ${tasklist} -c $
 # PBS-submitted parallel job
 qsub -N replSpePopinGs -l select=1:ncpus=${ncpus}:mem=64gb,walltime=24:00:00 -o $repllogd -j oe -V << EOF
 module load python
-python ${ptgscripts}/replace_species_by_pop_in_gene_trees.py -G ${tasklist} -c ${colalinexuscodedir}/${collapsecond} -S ${speciestreeBS}.lsd.newick -o ${coltreechains}/${collapsecond} \
- --populations=${speciestreeBS%.*}_populations --population_tree=${speciestreeBS%.*}_collapsedPopulations.nwk --population_node_distance=${speciestreeBS%.*}_interNodeDistPopulations \
+python ${ptgscripts}/replace_species_by_pop_in_gene_trees.py -G ${tasklist} -c ${colalinexuscodedir}/${collapsecond} -S ${speciestree}.lsd.newick -o ${coltreechains}/${collapsecond} \
+ --populations=${speciestree%.*}_populations --population_tree=${speciestree%.*}_collapsedPopulations.nwk --population_node_distance=${speciestree%.*}_interNodeDistPopulations \
  --dir_full_gene_trees=${mlgenetrees}/rootedTree --method=${colmethod} --threads=${ncpus} --reuse=0 --max.recursion.limit=12000 --logfile=${repllogs}_${replrun}.log
 EOF
 
