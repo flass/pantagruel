@@ -324,14 +324,13 @@ grep 'exactly identical$' ${coretree}/RAxML_info.${treename} | sed -e 's/IMPORTA
 rm ${coretree}/RAxML_info.${treename}
 ## first just single ML tree on reduced alignment
 $raxmlbin -s ${pseudocorealn}.reduced ${raxmloptions} &> ${raplogs}/raxml/${treename}.ML_run.log
-mv RAxML_info.${treename} RAxML_info_bestTree.${treename}
-
+mv ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_bestTree.${treename}
 
 ## RAxML, with rapid bootstrap
 $raxmlbin -s ${pseudocorealn}.reduced ${raxmloptions} -x 198237 -N 1000 &> ${raplogs}/raxml/${treename}_bs.log
-mv RAxML_info.${treename} RAxML_info_bootstrap.${treename}
-$raxmlbin -s ${pseudocorealn}.reduced ${raxmloptions} -f b -z RAxML_bootstrap.${treename} -t RAxML_bestTree.${treename} 
-mv RAxML_info.${treename} RAxML_info_bipartitions.${treename}
+mv ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_bootstrap.${treename}
+$raxmlbin -s ${pseudocorealn}.reduced ${raxmloptions} -f b -z ${coretree}/RAxML_bootstrap.${treename} -t ${coretree}/RAxML_bestTree.${treename} 
+mv ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_bipartitions.${treename}
 #~ ## root ML tree
 #~ $raxmlbin -s ${pseudocorealn}.reduced ${raxmloptions} -f I -t RAxML_bipartitionsBranchLabels.${treename}  
 #~ mv RAxML_info.${treename} RAxML_info_rootedTree.${treename}
@@ -340,27 +339,29 @@ mv RAxML_info.${treename} RAxML_info_bipartitions.${treename}
 nrbesttree=${coretree}/RAxML_bestTree.${treename}
 R BATCH --vanilla --slave << EOF
 source('${ptgscripts}/mad_R/MAD.R')
-mad.rooting = MAD(readLines('${besttree}'), 'full')
-write(mad.rooting[[1]], file='${besttree}.MADrooted')
-save(mad.rooting, file='${besttree}.MADrooting.RData}')
+mad.rooting = MAD(readLines('${nrbesttree}'), 'full')
+write(mad.rooting[[1]], file='${nrbesttree}.MADrooted')
+save(mad.rooting, file='${nrbesttree}.MADrooting.RData}')
 EOF
 
 # reintroduce excluded species name into the tree + root as MAD-rooted species tree
-nrbiparts=${besttree/bestTree/bipartitions}
+nrbiparts=${nrbesttree/bestTree/bipartitions}
 export speciestree=${nrbiparts}.MADrooted.full
-python ${ptgscripts}/putidentseqbackintree.py --input.nr.tree=${nrbiparts} --ref.rooted.nr.tree=${besttree}.MADrooted \
+python ${ptgscripts}/putidentseqbackintree.py --input.nr.tree=${nrbiparts} --ref.rooted.nr.tree=${nrbesttree}.MADrooted \
  --list.identical.seq=${pseudocorealn}.identical_sequences --output.tree=${speciestree}
+
+python ${ptgscripts}/code2orgnames_in_tree.py ${speciestree} $database/organism_codes.tab ${speciestree}.names
 
 ### generate ultrametric 'dated' species tree for more meaningfulgraphical representation of reconciliation AND to use the dated (original) version of ALE
 ## use LSD (v 0.3 beta; To et al. Syst. Biol. 2015) to generate an ultrametric tree from the rooted ML tree (only assumin different, uncorrelated clocks for each branch)
-alnlen=$((`grep -v '>' ${pseudocorealn} | wc -c` / ${pseudocoremingenomes} ))
+alnlen=$( head -n1 ${pseudocorealn}.reduced | cut -d' ' -f2 )
 lsd -i ${speciestree} -c -v 1 -s $alnlen -o ${speciestree}.lsd
 #~ Reading the tree 1...
 #~ The results correspond to the estimation of relative dates when T[mrca]=0.000 and T[tips]=1.000
 #~ rate 3.553e-01 , tMRCA 0.000 , objective function 1.176019e+05
 
 # tentative rooting with LSD
-lsd -i ${speciestree} -c -v 1 -r a -s $alnlen -o $coretree/RAxML_bipartitions.${treename}.${bssample}_LSDrooted.full
+lsd -i ${speciestree} -c -v 1 -r a -s $alnlen -o ${nrbiparts}.LSDrooted.full
 # LSD rooting very similar to MAD rooting;
 # only with LSD the root is a polytomy, with five branches: the pre-symbiotic species UNCENT1 and SHIBC1 (separately), the Cedecea and Cronobacter clades, and the main clade
 # whereas with MAD the root is bifurcated and the outgroup clade is (main, (Cronobacter, (Cedecea, (UNCENT1, SHIBC1)))). MAD rooting is preferred.

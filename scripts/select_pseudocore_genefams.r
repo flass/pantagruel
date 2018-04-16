@@ -105,16 +105,30 @@ if (length(cargs) > 3){
 	pseudocoremingenomes = -1
 }
 if (length(cargs) > 4){
-	interactive.X = as.logical(cargs[5])
+	interactive.X = as.logical(toupper(cargs[5]))
+	if (is.na(interactive.X)){ interactive.X = as.logical(as.numeric(cargs[5])) }
 }else{
 	interactive.X = FALSE
+}
+if (length(cargs) > 5){
+	nfrestrictlist = cargs[6]
+}else{
+	nfrestrictlist = NULL
 }
 cat("Loading matrix of gene families counts in genomes...\n")
 genocount = data.matrix(read.table(file=nffamgenomemat))
 lasscode = read.table(nflasscode, row.names=1, stringsAsFactors=F)
 colnames(genocount) = lasscode[colnames(genocount),1]
+
+if (!is.null(nfrestrictlist)){
+	restrictgenomelist = readLines(nfrestrictlist)
+	genocount = genocount[,restrictgenomelist]
+}
+
 onlyunicopy = apply(genocount, 1, function(x){ max(x)==1 })
 genocountunicopy = genocount[onlyunicopy,]
+
+
 
 pseudocore = selectMinGenomes(genocountunicopy, dirout, pseudocoremingenomes=pseudocoremingenomes, interactive.X=interactive.X)
 
