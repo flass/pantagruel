@@ -1,0 +1,163 @@
+#PBS -l walltime=72:00:00
+#PBS -l select=2:ncpus=32:mem=64gb
+#PBS -N phylobayesMPI
+#PBS -o /home/flassall/logs/raxml/gene_trees
+#PBS -j oe
+
+# start timing
+SECONDS=0
+
+## load modules
+module load intel-suite
+module load gcc/4.9.1
+module list
+
+## user-installed openmpi
+# code to install the software = just indications to reproduce -- VERY LONG!
+#~ wget --no-check-certificate https://www.open-mpi.org/software/ompi/v1.8/downloads/openmpi-1.8.8.tar.gz
+#~ tar -xvzf openmpi-1.8.8.tar.gz
+#~ mkdir -p ${HOME}/software/openmpi-1.8.8-build ${HOME}/libraries/openmpi-1.8.8
+#~ cd ${HOME}/software/openmpi-1.8.8-build
+#~ ../openmpi-1.8.8/configure --prefix=${HOME}/libraries/openmpi-1.8.8/
+#~ make all install
+# load libs
+export LD_LIBRARY_PATH=${HOME}/libraries/openmpi-1.8.8/lib:${LD_LIBRARY_PATH}
+export PATH=${HOME}/libraries/openmpi-1.8.8/bin:${PATH}
+export CPATH=${HOME}/libraries/openmpi-1.8.8/include:${CPATH}
+export CPPPATH=${HOME}/libraries/openmpi-1.8.8/include:${CPPPATH}
+export C_INCLUDE_PATH=${HOME}/libraries/openmpi-1.8.8/include:${C_INCLUDE_PATH}
+export INCLUDE_PATH=${HOME}/libraries/openmpi-1.8.8/include:${C_INCLUDE_PATH}
+export MANPATH=${HOME}/libraries/openmpi-1.8.8/share/man:${MANPATH}
+
+echo "using mpirun:"
+which mpirun
+if [ $? != 0 ] ; then
+  echo "!!! ERROR : unable to find mpirun ; exit now"
+  exit 1
+fi
+
+if [ -z $nfaln ] ; then
+  echo "!!! ERROR : mandatory variable \$nfaln not declared ; exit now"
+  exit 1
+fi
+
+# test user-provided variables are correctly set
+
+## mandatory variables
+if [ -z $nfaln ] ; then
+  echo "!!! ERROR : mandatory variable \$nfaln not declared ; exit now"
+  exit 1
+fi
+nfrad1=$(basename $nfaln)
+nfrad2=${nfrad1%.*}
+echo $nfrad2
+if [ -z $outputdir ] ; then
+  echo "!!! ERROR : mandatory variable \$outputdir not declared ; exit now"
+  exit 1
+fi
+mkdir -p $outputdir/
+  if [ ! -d $outputdir/ ] ; then 
+    echo "!!! ERROR : unable to access output directory '$outputdir/' ; exit now"
+    exit 1
+fi
+
+# variables with default values
+# define software
+if [ -z $pbmpibin ] ; then
+  pbmpibin='/home/flassall/software/pbmpi/data/pb_mpi'
+fi
+echo "will use Phylobayes MPI binary:"
+ls $pbmpibin
+if [ $? != 0 ] ; then
+  echo "!!! ERROR : unable to access Phylobayes MPI binary ; exit now"
+  exit 1
+fi
+if [ ! -x $pbmpibin ] ; then
+  echo "!!! ERROR : Phylobayes MPI binary '$pbmpibin' is not executable ; exit now"
+  exit 1
+fi
+# define parallelism
+if [ -z $coreperchain ] ; then
+  coreperchain=8
+fi
+if [ -z $nbchain ] ; then
+  nbchain=2
+fi
+# define software options
+if [ -z $pboptions ] ; then
+   pboptions="-cat -gtr -dgam 4"
+fi
+# define running time limit
+if [ -z $timelimit ] ; then
+   timelimit=$(( 72 * 60 * 60 ))
+fi
+# sync frequency
+if [ -z $syncfreq ] ; then
+  syncfreq=30m
+fi
+
+
+## copy data locally
+cd $TMPDIR/
+echo "current directory is $PWD"
+rsync -avz $nfaln $TMPDIR/
+if [ $? != 0 ] ; then
+  echo "!!! ERROR : unable to copied input file $nfaln into $TMPDIR/ ; exit now"
+  exit 1
+else
+  echo "copied input files $nfaln succesfully"
+fi
+echo "ls ./"
+ls ./
+
+if [ -z $chainname ] ; then
+  pchain=${nfrad2}.pb.chain
+else
+  pchain=${chainname}
+fi
+
+if [ "$pbresume" == 'yes' ] ; then
+  # import files from previous interupted analysis
+  echo "rsync -avz $outputdir/${pchain}* $TMPDIR/"
+  rsync -avz $outputdir/${pchain}* $TMPDIR/
+fi
+echo "copied previously computed chain files with exit status $?"
+echo "ls ./"
+ls ./
+echo ""
+
+pbmpicmd="mpirun -n ${coreperchain} ${pbmpibin}"
+if [ "$pbresume" != 'yes' ] ; then
+  # start chain i
+  pbmpicmd="${pbmpicmd} -d ${nfrad1} ${pboptions}"
+  # else just resume chain i
+fi
+pbpid=()
+for i in $(seq 1 ${nbchain}) ; do
+  echo "${pbmpicmd} ${pchain}.${i} &"
+  ${pbmpicmd} ${pchain}.${i} &
+  pbpid+=($!)
+done
+pbpidorstr=$(echo ${pbpid[@]} | sed -e 's/ /\\|/g')
+
+rsynccmd="rsync -avz $TMPDIR/${pchain}* $outputdir/"
+echo "run '$rsynccmd' every $syncfreq"
+# run until the near end of time
+while [[ ${SECONDS} -lt $(( ${timelimit} - 3600 )) ]] ; do
+  sleep $syncfreq
+  $rsynccmd
+  # should add convergence diagnostic here for possible early end of execution
+done
+# request chains to stop
+for i in $(seq 1 ${nbchain}) ; do
+  echo 0 > $TMPDIR/${pchain}.${i}.run
+done
+# wait for completion of chains' last cycles
+while [ ! -z "$(ps | grep $pbpidorstr)" ] ; do
+  sleep 60s
+done
+
+## end of script
+
+
+

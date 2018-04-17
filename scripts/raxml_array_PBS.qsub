@@ -62,7 +62,7 @@ echo $nfrad2
 cd $TMPDIR/
 echo "current directory is $PWD"
 
-cp $nfaln $TMPDIR/
+rsync -az $nfaln $TMPDIR/
 if [ $? != 0 ] ; then
   echo "!!! ERROR : unable to copied input file $nfaln into $TMPDIR/ ; exit now"
   exit 1
@@ -79,7 +79,7 @@ if [ "$nfext" == 'nex' ] ; then
   if [ $? == 0 ] ; then
     echo "succesfully converted Nexus input file $nfrad1 into FASTA format: ${nfrad2}.fasta"
     localn=${nfrad2}.fasta
-    cp $localn $outputdir/bulk/
+    rsync -az $localn $outputdir/bulk/
   else
     echo "failed conversion of input file $nfrad1 into FASTA format; we'll see if it goes through..."
   fi
