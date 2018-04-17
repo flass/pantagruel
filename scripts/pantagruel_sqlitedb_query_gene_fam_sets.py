@@ -9,11 +9,11 @@ def main(dbconpar, baseq, minsizes=[], maxsizes=[], dirout='', outprefix='', nfe
 	dbcur = dbcon.cursor()
 	
 	if nfexcludefams:
-		dbcur.execute( 'create temporary table excludefams (gene_family_id varchar(25));' )
+		dbcur.execute( 'create temporary table excludefams (gene_family_id varchar(25), flag char(4));' )
 		with open(nfexcludefams, 'r') as fexcludefams:
-			dbcur.executemany("INSERT INTO excludefams VALUES (?);", ((line.rstrip('\n'),) for line in fexcludefams))
+			dbcur.executemany("INSERT INTO excludefams VALUES (?,?);", ((line.rstrip('\n'), 'excl') for line in fexcludefams))
 		joinexcl = " LEFT JOIN excludefams USING (gene_family_id)"
-		whereexcl = " AND excludefams.gene_family_id IS NULL"
+		whereexcl = " AND excludefams.flag IS NULL"
 		basqparts = re.split(' where ', baseq.rstrip(';'), maxsplit=1, flags=re.IGNORECASE)
 		headq = basqparts[0]+joinexcl+' WHERE '+basqparts[1]+whereexcl
 	else:
