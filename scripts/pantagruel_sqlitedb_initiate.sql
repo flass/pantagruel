@@ -38,7 +38,7 @@ CREATE TABLE coding_sequences (
         cds_strand CHAR(1) NOT NULL,
         location_long VARCHAR(200),
         nr_protein_id CHAR(15),
-        gene_family_id CHAR(13)
+        gene_family_id VARCHAR(20)
 );
 
 -- CREATE INDEX cds_genbank_cds_id_key ON coding_sequences (genbank_cds_id);
@@ -51,18 +51,18 @@ CREATE TABLE proteins (
         protein_serial_id SERIAL PRIMARY KEY,
         nr_protein_id VARCHAR(20),
         product TEXT,
-        protein_family_id CHAR(13)
+        protein_family_id VARCHAR(20)
 );
 
 CREATE TABLE nr_protein_families (
-        protein_family_id CHAR(13) PRIMARY KEY,
+        protein_family_id VARCHAR(20) PRIMARY KEY,
         is_singleton BOOL NOT NULL DEFAULT 0
 );
 
 CREATE TABLE gene_families (
-        gene_family_id CHAR(13) PRIMARY KEY,
+        gene_family_id VARCHAR(20) PRIMARY KEY,
         is_orfan BOOL NOT NULL DEFAULT 0,
-        protein_family_id CHAR(13) NOT NULL
+        protein_family_id VARCHAR(20) NOT NULL
 );
 
 CREATE TABLE criteria_collapse_gene_tree_clades (
@@ -74,7 +74,7 @@ CREATE TABLE criteria_collapse_gene_tree_clades (
 
 
 CREATE TABLE collapsed_gene_tree_clades (
-		gene_family_id CHAR(13) NOT NULL,
+		gene_family_id VARCHAR(20) NOT NULL,
 		col_clade VARCHAR(8) NOT NULL,
 		cds_code VARCHAR(20) NOT NULL,
 		criterion_id INT NOT NULL,
