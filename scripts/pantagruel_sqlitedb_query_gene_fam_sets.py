@@ -35,7 +35,7 @@ def main(dbconpar, baseq, minsizes=[], maxsizes=[], dirout='', outprefix='', nfe
 			ltmax = ""
 			smaxs = ""
 		
-		q = "%s%s%s order by size desc;"%(baseq, gtmin, ltmax)
+		q = "%s%s%s order by size desc;"%(headq, gtmin, ltmax)
 		dbcur.execute( q )
 		lfamsizes = dbcur.fetchall()
 		with open(os.path.join(dirout, "%s%s%s"%(outprefix, smins, smaxs)), 'w') as fout:
