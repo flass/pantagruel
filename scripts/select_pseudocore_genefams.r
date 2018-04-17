@@ -131,11 +131,11 @@ genocountunicopy = genocount[onlyunicopy,]
 
 
 pseudocore = selectMinGenomes(genocountunicopy, dirout, pseudocoremingenomes=pseudocoremingenomes, interactive.X=interactive.X)
-
-pseudocoremingenomes = names(pseudocore)[length(pseudocore)]
-cat(sprintf("Final choice of %d pseudo-core unicopy gene families (present in at least %d genomes).\n", length(pseudocore[[pseudocoremingenomes]]), as.numeric(pseudocoremingenomes))
 nfdataout = file.path(dirout, "pseudo-core-all.RData")
 save(genocountunicopy, pseudocore, file=nfdataout)
 cat(sprintf("Saved data in file: '%s'.\n", nfdataout))
+
+pseudocoremingenomes = names(pseudocore)[length(pseudocore)]
+cat(sprintf("Final choice of %d pseudo-core unicopy gene families (present in at least %d genomes).\n", length(pseudocore[[pseudocoremingenomes]]), as.numeric(pseudocoremingenomes)))
 
 quit(status=pseudocoremingenomes, save='no')

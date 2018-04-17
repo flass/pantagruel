@@ -142,10 +142,17 @@ for i in {0..5} ; do
     if [ $i -eq 0 ] ; then
       ## change alignment to be further considered by RAxML as the reduced one: !!! the resulting tree will NOT contain any duplicates !!!
       if [[ -e ${localn}.reduced ]] ; then
-        echo "# Found $(wc -l RAxML_identical_sequences.${nfrad2} | cut -d':' -f2) redundant sequences; replace input alignment '${localn}' by '${localn}.reduced'."
-        repllocaln="mv ${localn} ${localn}.full ; mv ${localn}.reduced ${localn}"
-        echo $repllocaln
-        eval $repllocaln
+        nbnrseq=$(head -n1 ${localn}.reduced | cut -d' ' -f1)
+        if [[ $nbnrseq -lt 4 ]] ; then
+          echo "WARNING: Reduced alignment is too small to pass further steps ; copy the identical_sequences file to '$outputdir/identical_sequences/' and quit"
+          rsync -avz RAxML_identical_sequences.${nfrad2} $outputdir/identical_sequences/
+          exit 0
+        else
+          echo "# Found $(wc -l RAxML_identical_sequences.${nfrad2} | cut -d':' -f2) redundant sequences; replace input alignment '${localn}' by '${localn}.reduced'."
+          repllocaln="mv ${localn} ${localn}.full ; mv ${localn}.reduced ${localn}"
+          echo $repllocaln
+          eval $repllocaln
+        fi
       fi
     fi
   fi
