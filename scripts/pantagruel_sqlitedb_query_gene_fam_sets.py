@@ -11,7 +11,7 @@ def main(dbconpar, baseq, minsizes=[], maxsizes=[], dirout='', outprefix='', nfe
 	if nfexcludefams:
 		dbcur.execute( 'create temporary table excludefams (gene_family_id varchar(25));' )
 		with open(nfexcludefams, 'r') as fexcludefams:
-			cursor.executemany("INSERT INTO excludefams VALUES (?);", ((line.rstrip('\n'),) for line in fexcludefams))
+			dbcur.executemany("INSERT INTO excludefams VALUES (?);", ((line.rstrip('\n'),) for line in fexcludefams))
 		joinexcl = " LEFT JOIN excludefams USING (gene_family_id)"
 		whereexcl = " AND excludefams.gene_family_id IS NULL"
 		basqparts = re.split(' where ', baseq.rstrip(';'), maxsplit=1, flags=re.IGNORECASE)
