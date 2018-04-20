@@ -12,6 +12,18 @@ module load intel-suite
 module load mpi
 module list
 
+echo "passed variables:"
+echo "  nfaln=${nfaln}"
+echo "  outputdir=${outputdir}"
+echo "  chainname=${chainname}"
+echo "  pbmpibin=${pbmpibin}"
+echo "  coreperchain=${coreperchain}"
+echo "  nbchain=${nbchain}"
+echo "  pboptions=${pboptions}"
+echo "  pbresume=${pbresume}"
+echo "  timelimit=${timelimit}"
+echo "  syncfreq=${syncfreq}"
+
 #~ ## user-installed openmpi
 #~ module load gcc/4.9.1
 #~ # code to install the software = just indications to reproduce -- VERY LONG!
