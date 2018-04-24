@@ -2,8 +2,12 @@
 
 tasklist=$1
 outdir=$2
+nbthreads=2
+if [ ! -z $3 ] ; then
+  nbthreads=$3
+fi
 overwrite=0
-if [ $3 == 'overwrite' ] ; then
+if [ $4 == 'overwrite' ] ; then
   overwrite=1
 fi
 

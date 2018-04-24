@@ -36,6 +36,12 @@ bash < ${raptmp}/sedenvvar.sh
 source ${envsourcescript}
 cat "source ${envsourcescript}" >> ~/.bashrc
 
+mkdir -p ${raplogs}/
+mkdir -p ${raptmp}/
+mkdir -p ${customassemb}/contigs/
+
+echo "please copy/link raw sequence (in multi-fasta format) files of custom (user-generated) assemblies into ${customassemb}/contigs/"
+
 #################################
 ## 00. Data download and grooming
 #################################
@@ -92,13 +98,79 @@ for ass in `cut -f3 $indata/assembly_result.txt | tail -n +2` ; do ln -s $ncbias
     #~ sort -t $'\t' -k 2,2nr
   #~ done
 
+## if the folder of custom/user-provided set of genomes is not empty
+if [[ "$(ls -A "${customassemb}/contigs/" 2>/dev/null)" ]] ; then
+
+### uniformly annotate the raw sequence data with Prokka
+# first add all the (representative) proteins in the dataset to the custom reference prot database for Prokka to search for similarities
+ls ${indata}/assemblies/*/*gbff.gz > ${indata}/assemblies_gbffgz_list
+parallel -a ${indata}/assemblies_gbffgz_list 'gunzip -k'
+# extract protein sequences
+prokka-genbank_to_fasta_db ${indata}/assemblies/*/*gbff > ${raptmp}/${refgenus}.faa >& ${raptmp}/prokka-genbank_to_fasta_db.log
+# cluster similar sequences
+cdhit -i ${raptmp}/${refgenus}.faa -o ${raptmp}/${refgenus}_representative.faa -T 0 -M 0 -G 1 -s 0.8 -c 0.9 &> cdhit.log
+# 805428 representative proteins
+rm -fv ${raptmp}/${refgenus}.faa ${raptmp}/${refgenus}_representative.faa.clstr
+# replace database name for genus detection by Prokka 
+prokkablastdb=$(dirname $(dirname $(ls -l `which prokka` | awk '{ print $NF }')))/db/genus/
+cp -p ${raptmp}/${refgenus}_representative.faa ${prokkablastdb}/${refgenus}
+cd ${prokkablastdb}/
+makeblastdb -dbtype prot -in ${refgenus}
+cd -
+
+# run Prokka 
+export annot=${customassemb}/prokka_annotation
+export straininfo=${customassemb}/strain_infos.txt
+mkdir -p $annot
+for allcontigs in `ls ${customassemb}/contigs/` ; do
+gproject=${allcontigs%_assembly*}
+date
+echo "### assembly: $gproject; contig files from: ${customassemb}/contigs/${allcontigs}"
+echo "running Prokka..."
+$ptgscripts/run_prokka.sh ${gproject} ${customassemb}/contigs/${allcontigs} ${straininfo} ${annot}/${gproject} ${seqcentre}
+echo "fix prokka output to integrate region information into GFF files"
+annotoutgff=$(ls ${annot}/${gproject}/*.gff)
+python $ptgscripts/add_region_feature2prokkaGFF.py ${annotoutgff[0]} ${annotoutgff[0]%*.gff}.ptg.gff ${straininfo} ${customassemb}/contigs/${allcontigs} 'Unicycler:0.4.3'
+echo "fix prokka output to integrate taxid information into GBK files"
+annotoutgbk=$(ls ${annot}/${gproject}/*.gbk)
+python $ptgscripts/add_taxid_feature2prokkaGBK.py ${annotoutgbk[0]} ${annotoutgbk[0]%*.gbk}.ptg.gbk ${straininfo}
+echo "done."
+date
+done &> $raptmp/prokka.log &
+
+# create assembly directory and link/create relevant files
+export gblikeass=${customassemb}/genbank-format_assemblies
+mkdir -p $gblikeass/
+for gproject in `ls $annot` ; do
+gff=$(ls ${annot}/${gproject}/ | grep 'ptg.gff')
+assemb=${gproject}.1_${gff[0]%*.ptg.gff}
+assembpathdir=${gblikeass}/${assemb}
+assembpathrad=${assembpathdir}/${assemb}
+mkdir -p ${assembpathdir}/
+ls ${assembpathdir}/ -d
+gffgz=${assembpathrad}_genomic.gff.gz
+gzip -c ${annot}/${gproject}/$gff > $gffgz
+ls $gffgz
+gbk=$(ls ${annot}/${gproject}/ | grep 'ptg.gbk') ; gbkgz=${assembpathrad}_genomic.gbff.gz
+gzip -c ${annot}/${gproject}/$gbk > $gbkgz
+ls $gbkgz
+faa=$(ls ${annot}/${gproject}/ | grep '.faa') ; faagz=${assembpathrad}_protein.faa.gz
+gzip -c ${annot}/${gproject}/$faa > $faagz
+ffn=$(ls ${annot}/${gproject}/ | grep '.ffn') ; fnagz=${assembpathrad}_cds_from_genomic.fna.gz
+python ${ptgscripts}/format_prokkaCDS.py ${annot}/${gproject}/$ffn $fnagz
+ls $fnagz
+done
+
+ln -s ${gblikeass}/* ${indata}/assemblies/
+fi
+#### end of the block treating custom genome set
 
 ### Groom data
 ## generate assembly statistics to verify genome finishing status
 ${ptgscripts}/groom_refseq_data.sh ${indata}/assemblies ${indata}/assembly_stats
 
-mkdir ${genomeinfo}/
 manuin=${genomeinfo}/manual_input_metadata
+mkdir ${genomeinfo}/metadata_${rapdbname}/ ${manuin}/
 touch ${manuin}/manual_metadata_dictionary.tab ${manuin}/manual_curated_metadata_dictionary.tab ${manuin}/manual_dbxrefs.tab
 rm -rf ${genomeinfo}/assemblies*
 ls ${assemblies}/* -d > ${genomeinfo}/assemblies_list
@@ -178,7 +250,7 @@ echo "${datepad}-- (NB: some are not true ORFans as can be be present as identic
 export protfamseqs=${mmseqsclout}_clusters_fasta
 export protali=${rapdb}/02.gene_alignments
 nrprotali=$protali/nr_protfam_clustalo_alignments
-mkdir -p $nrprotali
+mkdir -p ${nrprotali}/ ${raplogs}/clustalo/
 # generate lists of many jobs to be executed by a single process (clustalo jobs are too short to be dispatched via a cluster array job)
 # clustalomega is already parallelized (for part of the computation, i.e. distance matrix calculation) 
 # so less threads than avalilable cores (e.g. use 1 process / 2 cores) are specified
@@ -189,7 +261,7 @@ python ${ptgscripts}/schedule_ali_task.py $protfamseqs.tab $protfamseqs $protali
 ## align non-redundant protein families
 for tasklist in `ls $protali/${protali##*.}_tasklist.*` ; do
   bntl=`basename $tasklist`
-  ${ptgscripts}/run_clustalo_sequential.sh $tasklist $nrprotali &> $raplogs/clustalo/$bntl.clustalo.log &
+  ${ptgscripts}/run_clustalo_sequential.sh $tasklist $nrprotali 2 &> $raplogs/clustalo/$bntl.clustalo.log &
 done
 
 ## check consistency of non-redundant protein sets
