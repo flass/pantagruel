@@ -19,7 +19,7 @@ for task in `cat $tasklist` ; do
   if [[ ! -e $outdir/$rad.aln || $overwrite -eq 1 ]] ; then
     echo "task: $task"
     date +"%d/%m/%Y %H:%M:%S"
-    clustalo -i $task -o $outdir/$rad.aln
+    clustalo --threads=$nbthreads -i $task -o $outdir/$rad.aln
     date +"%d/%m/%Y %H:%M:%S"
     echo ""
     echo "- - - - -"
