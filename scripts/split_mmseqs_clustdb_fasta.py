@@ -29,7 +29,7 @@ def idfam(nfam, famprefix=famprefix, padlen=padlen):
 	nfam += 1
 	return (famprefix+str(nfam).zfill(padlen), nfam)
 	
-idfam0 = idfam(0)
+idfam0, nfam0 = idfam(0)
 if writeseq: fout0 = open("%s/%s.fasta"%(dirout, idfam0), 'w')	# family with id # PREFIX000000 is reserved for ORFan sequences
 ftabout = open("%s.tab"%dirout, 'w')
 
