@@ -59,7 +59,7 @@ export collapsecond=${criterion}_stem${cladesupp}_within${withinfun}${subcladesu
 export colmethod='replaceCCinGasinS-collapsePOPinSnotinG'
 
 # other variables conditonal on prior creation of files
-if [ -e ${complete}/complete_genomes_metadata.tab ] ; then
+if [ -e ${genomeinfo}/metadata_${rapdbname}/metadata.tab ] ; then
  export ngenomes=$((`wc -l ${genomeinfo}/metadata_${rapdbname}/metadata.tab | cut -d' ' -f1` - 1))
  export treename=${rapdbname}_${pseudocore}-concat-prot_${ngenomes}-genomes
  export pseudocorealn=${coregenome}/${treename}.aln

@@ -171,11 +171,12 @@ rsynccmd="rsync -avz $TMPDIR/${pchain}* $outputdir/"
 echo "run '$rsynccmd' every $syncfreq"
 lastsync=0
 # run until the near end of time
-while [[ ${SECONDS} -lt $(( ${timelimit}*0.98 )) ]] ; do
+while [[ ${SECONDS} -lt $(( ${timelimit} - (2 * ${timelimit} / 100) )) ]] ; do
   sleep 60s
   lastsync=$(( ${lastsync} + 60 ))
   if [[ ${lastsync} -gt ${syncf} ]] ; then
-    $rsynccmd
+    top -b -n1 -u $USER -b >> $TMPDIR/${pchain}.toplog
+    $rsynccmd >> $TMPDIR/${pchain}.rsynclog
     lastsync=0
   fi
   ################
@@ -196,6 +197,7 @@ done
 while [ ! -z "$(ps | grep $pbpidorstr)" ] ; do
   sleep 60s
 done
+$rsynccmd
 
 ## end of script
 
