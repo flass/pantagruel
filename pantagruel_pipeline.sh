@@ -189,13 +189,41 @@ echo "work with a database of $ngenomes genomes (excluding lab strains)"
 
 ## extract all the protein sequences into single proteome fasta files
 mkdir -p ${seqdb}
+faafiletag='protein'
+#~ faafiletag='translated_from_cds'
+
+### TO DO ###
+# using translated_from_cds could probably save some steps, 
+# even though would mean handling slightly bigger files at the first clustering step (clusthash_minseqid100)
+# after that, protein sequence files are already non-redundant step anyway
+# also would ensure consistency of protein and CDS sequence at the pal2nal step
+
+#~ export allfaarad=${seqdb}/all_proteomes
+#~ rm -f ${allfaarad}*
+#~ for ass in `ls ${assemblies}` ; do
+ #~ faa=$(ls ${assemblies}/${ass}/ | grep '${faafiletag}.faa')
+ #~ zcat $faa >> ${allfaarad}.faa && echo $faa >> ${allfaarad}_list
+#~ done
+#~ wc -l ${allfaarad}_list
+
+ls ${indata}/assemblies/GC[AF]_* -d > ${genomeinfo}/refseq_assemblies_list
+sed -e 's#\(.\+\)/\([^/]\+$\)#\1/\2/\2_protein\.faa\.gz#g' ${genomeinfo}/refseq_assemblies_list > ${faarefseq}_list
+for faa in `cat ${faarefseq}_list` ; do zcat $faa >> ${faarefseq} ; echo $faa ; done 
+grep -c '>' ${faarefseq}
+# dereplicate proteins in db
+nrfaarefseq=$(python $dbscripts/dereplicate_fasta.py $faarefseq)
+echo "$(dateprompt)-- $(grep -c '>' $nrfaarefseq) non-redundant proteins in dataset"
+
 export allfaarad=${seqdb}/all_proteomes
-rm -f ${allfaarad}*
-for ass in `ls ${assemblies}` ; do
- faa=$(ls ${assemblies}/${ass}/ | grep '.faa')
- zcat $faa >> ${allfaarad}.faa && echo $faa >> ${allfaarad}_list
-done
-wc -l ${allfaarad}_list
+if [[ "$(ls -A "${customassemb}/contigs/" 2>/dev/null)" ]] ; then
+  # combine Refseq and custom protomes
+  cp -f $nrfaarefseq ${allfaarad}.faa
+  for ass in `ls ${annot}/` ; do
+    cat ${annot}/$ass/*faa >> ${allfaarad}.faa
+  done
+else
+  mv $nrfaarefseq ${allfaarad}.faa
+fi
 grep -c '>' ${allfaarad}.faa
 
 ## clustering of identical protein sequences
@@ -293,7 +321,7 @@ python ${ptgscripts}/extract_full_prot_and_cds_family_alignments.py --nrprot_fam
  --prot_info ${genomeinfo}/assembly_info/allproteins_info.tab --repli_info ${genomeinfo}/assembly_info/allreplicons_info.tab --assemblies ${assemblies} \
  --dirout ${protali} --famprefix ${famprefix} --logs ${raplogs}/extract_full_prot_and_cds_family_alignments --identical_prots ${allfaarad}.identicals.list
 
-## check consistency of full reverse translated alignement set
+## check consistency of full reverse translated alignment set
 ok=1
 for fam in `ls $protali/full_cdsfam_alignments/ | cut -d'.' -f1` ; do 
 nseqin1=`grep -c '>' $protali/full_cdsfam_fasta/$fam.fasta`
@@ -305,7 +333,7 @@ if [[ "$nseqin1" != "$nseqout" || "$nseqin2" != "$nseqout" ]] ; then
   echo $fam
 fi
 done > $raptmp/pal2nal_missed_fams
-if [ ok -lt 1 ] ; then
+if [ $ok -lt 1 ] ; then
   >&2 echo "WARNING $(dateprompt): failure of pal2nal.pl reverse translation step for families: $(cat $raptmp/pal2nal_missed_fams | xargs)"
   >&2 echo "will use tranposeAlignmentProt2CDS.py instead, a less safe, but more permissive method for generating CDS alignment"
   for fam in `cat $raptmp/pal2nal_missed_fams` ; do
@@ -327,21 +355,23 @@ gzip ${protali}/all_families_genome_counts.mat
 
 export database=${rapdb}/03.database
 export sqldbname=${rapdbname,,}
+export sqldb=${database}/${sqldbname}
 mkdir -p ${database}
 cd ${database}
 ### create and populate SQLite database
 ${ptgscripts}/pantagruel_sqlitedb.sh ${database} ${sqldbname} ${genomeinfo}/metadata_${rapdbname} ${genomeinfo}/assembly_info ${protali} ${protfamseqs}.tab ${protorfanclust} ${cdsorfanclust}
 
 # dump reference table for translation of genome assembly names into short identifier codes (uing UniProt "5-letter" code when available).
-sqlite3 ${sqldbname} "select assembly_id, code from assemblies;" | sed -e 's/|/\t/g' > ${database}/genome_codes.tab
+sqlite3 ${sqldb} "select assembly_id, code from assemblies;" | sed -e 's/|/\t/g' > ${database}/genome_codes.tab
+sqlite3 ${sqldb} "select code, organism, strain from assemblies;" | sed -e 's/|/\t/g' > ${database}/organism_codes.tab
 # and for CDS names into code of type "SPECIES_CDSTAG" (ALE requires such a naming)
 # here split the lines with '|' and remove GenBank CDS prefix that is always 'lcl|'
-sqlite3 ${sqldbname} "select genbank_cds_id, cds_code from coding_sequences;" | sed -e 's/lcl|//g'  | sed -e 's/|/\t/g' > ${database}/cds_codes.tab
+sqlite3 ${sqldb} "select genbank_cds_id, cds_code from coding_sequences;" | sed -e 's/lcl|//g'  | sed -e 's/|/\t/g' > ${database}/cds_codes.tab
 
 # translates the header of the alignment files
-export cdsalifastacodedir=${protali}/full_cdsfam_alignments_species_code
 export protalifastacodedir=${protali}/full_protfam_alignments_species_code
-for mol in cds prot ; do
+export cdsalifastacodedir=${protali}/full_cdsfam_alignments_species_code
+for mol in prot cds ; do
   alifastacodedir=${protali}/full_${mol}fam_alignments_species_code
   mkdir -p ${alifastacodedir}
   eval "export ${mol}alifastacodedir=${alifastacodedir}"
@@ -357,13 +387,19 @@ done
 ## select psedo-core genome marker gene set
 export coregenome=${rapdb}/04.core_genome
 mkdir -p ${coregenome}/
-if [ -z ${pseudocoremingenomes} ] ; then
-  mkdir -p ${coregenome}/pseudo-coregenome_sets/
-  # have glimpse of (almost-)universal unicopy gene family distribution and select those intended for core-genome tree given pseudocoremingenomes threshold
-  ${ptgscripts}/select_pseudocore_genefams.r ${protali}/full_families_genome_counts-noORFans.mat ${database}/genome_codes.tab ${coregenome}/pseudo-coregenome_sets
-  # new value of pseudocoremingenomes stored in script exit status
-  export pseudocoremingenomes=$?
-fi
+#~ if [ -z ${pseudocoremingenomes} ] ; then
+  #~ mkdir -p ${coregenome}/pseudo-coregenome_sets/
+  #~ # have glimpse of (almost-)universal unicopy gene family distribution and select those intended for core-genome tree given pseudocoremingenomes threshold
+  #~ ${ptgscripts}/select_pseudocore_genefams.r ${protali}/full_families_genome_counts-noORFans.mat ${database}/genome_codes.tab ${coregenome}/pseudo-coregenome_sets
+  #~ # new value of pseudocoremingenomes stored in script exit status
+  #~ export pseudocoremingenomes=$?
+#~ fi
+unset pseudocoremingenomes
+mkdir -p ${coregenome}/pseudo-coregenome_sets/
+# have glimpse of (almost-)universal unicopy gene family distribution and select those intended for core-genome tree given pseudocoremingenomes threshold
+let "t = ($ngenomes * 3 / 4)" ; let "u = $t - ($t%20)" ; seq $u 20 $ngenomes | cat > ${raptmp}/mingenom ; echo "0" >> ${raptmp}/mingenom
+Rscript --vanilla --silent ${ptgscripts}/select_pseudocore_genefams.r ${protali}/full_families_genome_counts-noORFans.mat ${database}/genome_codes.tab ${coregenome}/pseudo-coregenome_sets < ${raptmp}/mingenom
+
 ## generate core genome alignment path list
 export pseudocore=${coregenome}/pseudo-core-${pseudocoremingenomes}-unicopy
 rm -f ${pseudocore}_cds_aln_list
