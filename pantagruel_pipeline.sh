@@ -21,6 +21,12 @@ export famprefix='REPLACEfamprefix'
 export rapdbname='aBoldDatabaseName' # mostly name of the top folder
 export famprefix='ABCDE'             # alphanumerical prefix (no number first) of the names for homologous protein/gene family clusters; will be appended with a 'P' for proteins and a 'C' for CDSs.
 
+# create head folders
+export rapdb=${raproot}/${rapdbname}
+export raplogs=${rapdb}/logs
+export raptmp=${rapdb}/tmp
+mkdir -p ${rapdb}/ ${raplogs}/ ${raptmp}/
+
 #### Set facultative environment variables / parameters
 export pseudocoremingenomes=''       # defaults to empty variable in which case will be set INTERACTIVELY at stage 04.core_genome of the pipeline
 envsourcescript=${HOME}/environ_pantagruel_${rapdbname}.sh
@@ -36,11 +42,14 @@ bash < ${raptmp}/sedenvvar.sh
 source ${envsourcescript}
 cat "source ${envsourcescript}" >> ~/.bashrc
 
-mkdir -p ${raplogs}/
-mkdir -p ${raptmp}/
+# folders for optional custom genomes
+export customassemb=${raproot}/user_genomes
 mkdir -p ${customassemb}/contigs/
+echo "sequencing.project.id,genus,species,strain,taxid,locus_tag_prefix" | tr ',' '\t' > ${straininfo}
 
 echo "please copy/link raw sequence (in multi-fasta format) files of custom (user-generated) assemblies into ${customassemb}/contigs/"
+echo "and fill up the information table ${straininfo} (tab-delimited fields) according to header:"
+cat ${straininfo}
 
 #################################
 ## 00. Data download and grooming
@@ -359,7 +368,7 @@ export sqldb=${database}/${sqldbname}
 mkdir -p ${database}
 cd ${database}
 ### create and populate SQLite database
-${ptgscripts}/pantagruel_sqlitedb.sh ${database} ${sqldbname} ${genomeinfo}/metadata_${rapdbname} ${genomeinfo}/assembly_info ${protali} ${protfamseqs}.tab ${protorfanclust} ${cdsorfanclust}
+${ptgscripts}/pantagruel_sqlitedb.sh ${database} ${sqldbname} ${genomeinfo}/metadata_${rapdbname} ${genomeinfo}/assembly_info ${protali} ${protfamseqs}.tab ${protorfanclust} ${cdsorfanclust} ${straininfo}
 
 # dump reference table for translation of genome assembly names into short identifier codes (uing UniProt "5-letter" code when available).
 sqlite3 ${sqldb} "select assembly_id, code from assemblies;" | sed -e 's/|/\t/g' > ${database}/genome_codes.tab
@@ -400,17 +409,23 @@ mkdir -p ${coregenome}/pseudo-coregenome_sets/
 let "t = ($ngenomes * 3 / 4)" ; let "u = $t - ($t%20)" ; seq $u 20 $ngenomes | cat > ${raptmp}/mingenom ; echo "0" >> ${raptmp}/mingenom
 Rscript --vanilla --silent ${ptgscripts}/select_pseudocore_genefams.r ${protali}/full_families_genome_counts-noORFans.mat ${database}/genome_codes.tab ${coregenome}/pseudo-coregenome_sets < ${raptmp}/mingenom
 
+mv ${rapdb}/environ_pantagruel_${rapdbname}.sh ${rapdb}/environ_pantagruel_${rapdbname}.sh0 && \
+ sed -e "s#'REPLACEpseudocoremingenomes'#$pseudocoremingenomes#" ${rapdb}/environ_pantagruel_${rapdbname}.sh0 > ${rapdb}/environ_pantagruel_${rapdbname}.sh
+ 
 ## generate core genome alignment path list
-export pseudocore=${coregenome}/pseudo-core-${pseudocoremingenomes}-unicopy
-rm -f ${pseudocore}_cds_aln_list
-for fam in `cat ${protali}/pseudo-core-${pseudocoremingenomes}-unicopy_families.tab` ; do ls ${alifastacodedir}/$fam.codes.aln >> ${pseudocore}_cds_aln_list ; done
-# concatenate pseudo-core CDS alignments
-python ${ptgscripts}/concat.py ${pseudocore}_cds_aln_list ${pseudocore}_concat_cds.aln
-rm ${alifastacodedir}/*_all_sp_new
+export pseudocore=pseudo-core-${pseudocoremingenomes}-unicopy
+rm -f ${coregenome}/pseudo-coregenome_sets/${pseudocore}_prot_aln_list
+for fam in `cat ${coregenome}/pseudo-coregenome_sets/${pseudocore}_families.tab` ; do
+ ls ${protalifastacodedir}/$fam.codes.aln >> ${coregenome}/pseudo-coregenome_sets/${pseudocore}_prot_aln_list
+done
+export pseudocorealn=${coregenome}/${pseudocore}_concat_prot.aln
+# concatenate pseudo-core prot alignments
+python ${ptgscripts}/concat.py ${coregenome}/pseudo-coregenome_sets/${pseudocore}_prot_aln_list ${pseudocorealn}
+rm ${protalifastacodedir}/*_all_sp_new
 
 ### compute species tree using RAxML
 export coretree=${coregenome}/raxml_tree
-export treename=${pseudocore}_concat_cds_${ngenomes}-genomes_${rapdbname}
+export treename=${pseudocore}_concat_prot_${ngenomes}-genomes_${rapdbname}
 mkdir -p ${raplogs}/raxml ${coretree}
 # define RAxML binary and options; uses options -T (threads) -j (checkpoints) 
 if [ ! -z $(grep -o avx2 /proc/cpuinfo | head -n 1) ] ; then
@@ -423,7 +438,7 @@ else
   raxmlflav=''
 fi
 raxmlbin="raxmlHPC-PTHREADS${raxmlflav} -T $(nproc)"
-raxmloptions="-n ${treename} -m GTRCATI -j -p 1753 -w ${coretree}"
+raxmloptions="-n ${treename} -m PROTCATLGX -j -p 1753 -w ${coretree}"
 
 ## first check the alignment for duplicate sequences and write a reduced alignment with  will be excluded
 $raxmlbin -s ${pseudocorealn} ${raxmloptions} -f c &> ${raplogs}/raxml/${treename}.check.log
@@ -445,17 +460,19 @@ mv ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_bipartitions.${tree
 
 ## root tree with MAD (Tria et al. Nat Ecol Evol (2017) Phylogenetic rooting using minimal ancestor deviation. s41559-017-0193 doi:10.1038/s41559-017-0193)
 nrbesttree=${coretree}/RAxML_bestTree.${treename}
+rootingmethod='MAD'
+nrrootedtree=${nrbesttree}.${rootingmethod}rooted
 R BATCH --vanilla --slave << EOF
 source('${ptgscripts}/mad_R/MAD.R')
 mad.rooting = MAD(readLines('${nrbesttree}'), 'full')
-write(mad.rooting[[1]], file='${nrbesttree}.MADrooted')
-save(mad.rooting, file='${nrbesttree}.MADrooting.RData}')
+write(mad.rooting[[1]], file='${nrrootedtree}')
+save(mad.rooting, file='${nrbesttree}.${rootingmethod}rooting.RData}')
 EOF
 
 # reintroduce excluded species name into the tree + root as MAD-rooted species tree
 nrbiparts=${nrbesttree/bestTree/bipartitions}
-export speciestree=${nrbiparts}.MADrooted.full
-python ${ptgscripts}/putidentseqbackintree.py --input.nr.tree=${nrbiparts} --ref.rooted.nr.tree=${nrbesttree}.MADrooted \
+export speciestree=${nrrootedtree}.full
+python ${ptgscripts}/putidentseqbackintree.py --input.nr.tree=${nrbiparts} --ref.rooted.nr.tree=${nrrootedtree} \
  --list.identical.seq=${pseudocorealn}.identical_sequences --output.tree=${speciestree}
 
 python ${ptgscripts}/code2orgnames_in_tree.py ${speciestree} $database/organism_codes.tab ${speciestree}.names

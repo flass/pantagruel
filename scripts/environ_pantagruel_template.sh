@@ -62,10 +62,13 @@ export colmethod='replaceCCinGasinS-collapsePOPinSnotinG'
 # other variables conditonal on prior creation of files
 if [ -e ${genomeinfo}/metadata_${rapdbname}/metadata.tab ] ; then
  export ngenomes=$((`wc -l ${genomeinfo}/metadata_${rapdbname}/metadata.tab | cut -d' ' -f1` - 1))
- export treename=${rapdbname}_${pseudocore}-concat-prot_${ngenomes}-genomes
+ export treename=${pseudocore}_concat_prot_${ngenomes}-genomes_${rapdbname}
  export pseudocorealn=${coregenome}/${treename}.aln
- export nrspeciestree=${coretree}/RAxML_bestTree.${treename}.MADrooted
- export nrspeciestreeBS=${coretree}/RAxML_bipartitions.${treename}
+ nrbesttree=${coretree}/RAxML_bestTree.${treename}
+ rootingmethod='outgroup'
+ nrrootedtree=${nrbesttree}.${rootingmethod}rooted
+ nrbiparts=${nrbesttree/bestTree/bipartitions}
+ export speciestree=${nrrootedtree}.full
 fi
 
 

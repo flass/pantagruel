@@ -22,16 +22,23 @@ nfoutspege = sprintf("%s_specific_genes.tab", filerad)
 
 # clade definitions
 if (!file.exists(nfcladedef)){
-	clade0 = c('RHIZOB16', 'RNT25')
-	outgroup0 = 'RTCK'
+#~ 	clade0 = c('RHIZOB16', 'RNT25')
+#~ 	clade0 = c('RHIZOB27', 'RHISP1')
+	clade0 = c('RHIZOB27', 'RNT25')
+#~ 	outgroup0 = 'RTCK'
+	outgroup0 = 'RHISP2'
 	clade1 = c(clade0, outgroup0)
 	clade2 = c('RKHAN', 'RHAB21', 'RFYW14')
+#~ 	clade2 = c('RHISP3', 'RHIHAL', 'RHIFLA')
 	clade12 = c(clade1, clade2)
 	clade3 = c('REQ54', 'REJC140')
+#~ 	clade3 = c('RHIEND1', 'RHIEND2')
 	clade123 = c(clade12, clade3)
-	clade4 = c('NEOGAL1', 'NEOGAL2', 'RHIZOB17')
+#~ 	clade4 = c('NEOGAL1', 'NEOGAL2', 'RHIZOB17')
+	clade4 = c('PSEPEL1', 'PSEPEL2', 'RHIMAR')
 	clade1234 = c(clade123, clade4)
-	outgroup = 'RHIZOB33'
+#~ 	outgroup = 'RHIZOB33'
+	outgroup = 'RHIZOB54'
 	clades = list(clade0=clade0, outgroup0=outgroup0, clade1=clade1, clade2=clade2, clade12=clade12, clade3=clade3, clade123=clade123, clade4=clade4, clade1234=clade1234, outgroup=outgroup)
 	sisterclades = list(clade0=outgroup0, outgroup0=clade0, clade1=clade2, clade2=clade1, clade12=clade3, clade3=clade12, clade123=clade4, clade4=clade123, clade1234=outgroup, outgroup=clade1234)
 	write.table(t(sapply(names(clades), function(cla){ sapply(list(clades, sisterclades), function(x){ paste(x[[cla]], collapse=',') }) })),

@@ -144,11 +144,11 @@ if [ "$pbresume" == 'yes' ] ; then
   # import files from previous interupted analysis
   echo "rsync -avz $outputdir/${pchain}* $TMPDIR/"
   rsync -avz $outputdir/${pchain}* $TMPDIR/
+  echo "copied previously computed chain files with exit status $?"
+  echo "ls ./"
+  ls ./
+  echo ""
 fi
-echo "copied previously computed chain files with exit status $?"
-echo "ls ./"
-ls ./
-echo ""
 
 pbmpicmd="$mpibin -n ${coreperchain} ${pbmpibin}"
 if [ "$pbresume" != 'yes' ] ; then
@@ -168,14 +168,15 @@ done
 pbpidorstr=$(echo ${pbpid[@]} | sed -e 's/ /\\|/g')
 
 rsynccmd="rsync -avz $TMPDIR/${pchain}* $outputdir/"
-echo "run '$rsynccmd' every $syncfreq"
+echo "will run '$rsynccmd' every ${syncfreq} (${syncf}s)"
 lastsync=0
 # run until the near end of time
 while [[ ${SECONDS} -lt $(( ${timelimit} - (2 * ${timelimit} / 100) )) ]] ; do
-  sleep 60s
+  sleep 60s ; echo -n "."
   lastsync=$(( ${lastsync} + 60 ))
-  if [[ ${lastsync} -gt ${syncf} ]] ; then
+  if [[ ${lastsync} -ge ${syncf} ]] ; then
     top -b -n1 -u $USER -b >> $TMPDIR/${pchain}.toplog
+    echo ""
     $rsynccmd >> $TMPDIR/${pchain}.rsynclog
     lastsync=0
   fi
@@ -189,6 +190,8 @@ while [[ ${SECONDS} -lt $(( ${timelimit} - (2 * ${timelimit} / 100) )) ]] ; do
     exit 1
   fi
 done
+# final account of activity, broken-down by thread
+top -H -b -n1 -u $USER -b >> $TMPDIR/${pchain}.toplog
 # request chains to stop
 for i in $(seq 1 ${nbchain}) ; do
   echo 0 > $TMPDIR/${pchain}.${i}.run
