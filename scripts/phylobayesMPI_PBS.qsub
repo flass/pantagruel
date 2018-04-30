@@ -196,6 +196,7 @@ while [[ ${SECONDS} -lt $(( ${timelimit} - (2 * ${timelimit} / 100) )) ]] ; do
       cat bpcomp.bpdiff | xargs
       if [ $(( $(grep 'maxdiff' bpcomp.bpdiff | awk '{print $NF}') * 10)) -lt 1 ] ; then
         echo "convergence of topologies between chains detected, will stop the runs now"
+        for fbpcomp in `ls bpcomp.*` ; do mv $fbpcomp ${pchain}.${fbpcomp#bpcomp.} ; done
         break
     fi
   fi
