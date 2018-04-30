@@ -162,10 +162,10 @@ fi
 pbmpicmd="$mpibin -n ${coreperchain} ${pbmpibin}"
 if [ "$pbresume" != 'yes' ] ; then
   pbmpicmd="${pbmpicmd} -d ${nfrad1} ${pboptions}"
-  # else just resume chain i
+  echo -e "##### Start PB chains\n"
+else
+  echo -e "##### Resume previous PB chains\n"  
 fi
-
-echo -e "##### Start PB chains\n"
 
 pbpid=()
 # start chains

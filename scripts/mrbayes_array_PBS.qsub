@@ -203,9 +203,10 @@ runmbandsync () {
   # monitor file updates and sync on the way
   nckp=0
   while [ ! -z $(ps -q $mbpid -o comm=) ] ; do
-    file1time=`stat -c %Y $TMPDIR/$ckp`
-    file2time=`stat -c %Y $outputdir/$ckp`
-    if [ $file1time -gt $file2time ]; then
+    #~ file1time=`stat -c %Y $TMPDIR/$ckp`
+    #~ file2time=`stat -c %Y $outputdir/$ckp`
+    #~ if [ $file1time -gt $file2time ]; then
+    if [ $TMPDIR/$ckp -gt $outputdir/$ckp ]; then
       date
       #echo "rsync -az ${excludesync[@]} ./*$nfrad2* $outputdir/"
       rsync -az ${excludesync[@]} ./*$nfrad2* $outputdir/
