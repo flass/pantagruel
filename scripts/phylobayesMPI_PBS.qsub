@@ -79,7 +79,7 @@ mkdir -p $outputdir/
 fi
 
 # variables with default values
-# define software
+# define software executables
 if [ -z $pbmpibin ] ; then
   pbmpibin='/home/flassall/software/pbmpi/data/pb_mpi'
   echo "set default pbmpibin='$pbmpibin'"
@@ -94,12 +94,15 @@ if [ ! -x $pbmpibin ] ; then
   echo "!!! ERROR : Phylobayes MPI binary '$pbmpibin' is not executable ; exit now"
   exit 1
 fi
-pbmpibindir=$(dirname $pbmpibin)
-if [ -x $pbmpibindir/bpcomp  ] ; then
-  bpcompbin=$pbmpibindir/bpcomp
+
+if [ -z $bpcompbin ] ; then
+  bpcompbin=$(dirname $pbmpibin)/bpcomp
+fi
+if [ -x $bpcompbin  ] ; then
   echo "will assess convergence with:"
   ls $bpcompbin
 else
+  echo "no bpcomp executable provided; will NOT assess convergence."
   bpcompbin=''
 fi
 
@@ -191,11 +194,15 @@ while [[ ${SECONDS} -lt $(( ${timelimit} - (2 * ${timelimit} / 100) )) ]] ; do
     $rsynccmd >> $TMPDIR/${pchain}.rsynclog
     lastsync=0
     # convergence diagnostic for possible early end of execution
-    if [ ! -z $bpcompbin ] ;then
+    if [ ! -z $bpcompbin ] ; then
       nburnin=$(( $(wc -l ${pchain}.1.treelist | cut -d' ' -f1) / 4 ))
       $bpcompbin -x $nburnin ${pchain}.*.chain
       cat bpcomp.bpdiff | xargs
-      if [ $(( $(grep 'maxdiff' bpcomp.bpdiff | awk '{print $NF}') * 10)) -lt 1 ] ; then
+      maxdiff=$(grep 'maxdiff' bpcomp.bpdiff | awk '{print $NF}')
+      if [ -z $maxdiff ] ; then maxdiff=1 ; fi
+      maxdiff10=$(python -c "md=float($maxdiff) ; print int(md*10)")
+      if [ $maxdiff10 -lt 1 ] ; then
+        # maxdiff < 0.1
         echo "convergence of topologies between chains detected, will stop the runs now"
         for fbpcomp in `ls bpcomp.*` ; do mv $fbpcomp ${pchain}.${fbpcomp#bpcomp.} ; done
         break
