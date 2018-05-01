@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import os, sys, glob
+import os, sys, glob, getopt
 import multiprocessing as mp
 import cPickle as pickle
 import itertools
@@ -319,16 +319,41 @@ PWMstats = [ \
 #~ 'PWMatchesTreeExtent', \
 #~ 'PWMatchesTreeExtentMinEvFq']
 
+def usage():
+	s = ""
+	s += "\t\t--dir_replaced\tfolder containing files listing replaced leaf labels (e.g. wen collapsing gene tree clades)\n"
+	return s
+
 if __name__=='__main__':
 
-	nfin = sys.argv[1]
-	dircons = sys.argv[2]
-	dirrepl = sys.argv[3]
-	nfpop = sys.argv[4]
-	nfrefspetree = sys.argv[5]
-	nfgenefamlist = sys.argv[6]
-	recordEvTypes = sys.argv[7]
-	nbthreads = int(sys.argv[8])
+	opts, args = getopt.getopt(sys.argv[1:], 'h', ['rec_sample_list=', 'pickled_events=', 'dir_constraints=', 'dir_replaced=', \
+	                                               'populations=', 'reftree=', 'genefams=', 'evtype=', \
+												   'threads=', 'help']) #, 'reuse=', 'verbose=', 'max.recursion.limit=', 'logfile='
+	dopt = dict(opts)
+	if ('-h' in dopt) or ('--help' in dopt):
+		print usage()
+		sys.exit(0)
+	
+	try:
+		nflnfrec = dopt['--rec_sample_list']
+		loaded = False
+	except KeyError:
+		try:
+			nfpickle = dopt['--pickled_events']
+			with open(nfpickle, 'rb') as fpickle:
+				dfamevents = pickle.load(fpickle)
+			print "loaded 'dfamevents' from file '%s'"%nfin
+			nflnfrec = nfpickle.split(pickletag)[0]
+			loaded = True
+		except KeyError:
+			raise ValueError, "must provide input file through either '--rec_sample_list' or '--pickled_events' options"
+	dircons = dopt['--dir_constraints']
+	dirrepl = dopt['--dir_replaced']
+	nfpop = dopt['--populations']
+	nfrefspetree = dopt['--reftree']
+	nfgenefamlist = dopt['--genefams']
+	recordEvTypes = dopt['--evtype']
+	nbthreads = int(dopt.get('--threads', 1))
 	
 	pickletag = '.parsedRecs.%s.pickle'%recordEvTypes
 
