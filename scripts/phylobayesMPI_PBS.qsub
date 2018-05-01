@@ -1,3 +1,4 @@
+#!/bin/bash
 #PBS -l walltime=72:00:00
 #PBS -l select=2:ncpus=32:mem=64gb
 #PBS -N phylobayesMPI
@@ -198,6 +199,7 @@ while [[ ${SECONDS} -lt $(( ${timelimit} - (2 * ${timelimit} / 100) )) ]] ; do
         echo "convergence of topologies between chains detected, will stop the runs now"
         for fbpcomp in `ls bpcomp.*` ; do mv $fbpcomp ${pchain}.${fbpcomp#bpcomp.} ; done
         break
+      fi
     fi
   fi
   # check the programs are still running...
