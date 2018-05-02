@@ -8,7 +8,7 @@ import numpy as np
 import tree2
 from replace_species_by_pop_in_gene_trees import annotatePopulationInSpeciesTree, parseMrBayesConstraints, getdspe2pop
 from mark_unresolved_clades import mean, median
-from plotALErec import parseRecGeneTree, parseALERecFile
+from parseALErec import parseRecGeneTree, parseALERecFile
 
 
 ############ Functions
@@ -24,7 +24,7 @@ def eventLineages(recgt, dnodeallevt, onlyLeaves=[]):
 		return eventpath
 	
 	evtlineages = {}	# only lineages from the leaves to be returned
-	allevtlineages = {}
+	allevtlineages = {} # cache dict for events at nodes shared by several leaves
 	leavesandlabels = [(leaf, leaf.label().split('.')[0]) for leaf in recgt.get_leaves()]
 	if onlyLeaves: leavesandlab = [x for x in leavesandlabels if (x[1] in onlyLeaves)]
 	else: leavesandlab = leavesandlabels
@@ -76,19 +76,25 @@ def translateEventList(ldtl, dcol2fullspenames):
 def translateEventLineage(deventlineages, dcol2fullspenames):
 	return {nodelab:[evtloc[:1]+tuple(dcol2fullspenames[x] for x in evtloc[1:]) for evtloc in levtloc] for nodelab, levtloc in deventlineages.iteritems()}
 
-def parseRec(nfrec, refspetree, onlyLineages=[], recordEvTypes='T'):
+def parseRec(nfrec, refspetree=None, onlyLineages=[], recordEvTypes='T', dirTableOut=None, noTranslateSpeTree=False):
 	print nfrec
 	# parse reconciliation file and extract collapsed species tree, mapping of events (with freq.) on the species tree, and reconciled gene trees
 	colspetree, subspetree, lrecgt, recgtlines, restrictlabs, dnodeevt = parseALERecFile(nfrec)
 	nsample = len(lrecgt)
 	recgtsample = ''.join(recgtlines)
-	tcolspetree, dcol2fullspenames = translateRecStree(colspetree, refspetree)
+	if not noTranslateSpeTree:
+		tcolspetree, dcol2fullspenames = translateRecStree(colspetree, refspetree)
+	else:
+		# no need to translate
+		tcolspetree, dcol2fullspenames = colspetree, {}
+		if refspetree:
+			assert refspetree.hasSameTopology(tcolspetree, checkInternalLabels=True)
 	# parse reconciled gene trees
 	# and extract (exact) event-wise event frequency
 	dexactevt = {}
 	allrectevtlineages = {}
 	for i, recgt in enumerate(lrecgt):
-		# gather scenario-scpecific events
+		# gather scenario-scpecific events (i.e. dependent on reconciled gene tree topology, whichc varies among the sample)
 		dlevt, dnodeallevt = parseRecGeneTree(recgt, colspetree, dexactevt, recgtsample, nsample, fillDTLSdict=False, recordEvTypes=recordEvTypes)
 		tdlevt = {etype:translateEventList(ldtl, dcol2fullspenames) for etype, ldtl in dlevt.iteritems()}
 		#~ print 'dnodeallevt', dnodeallevt
@@ -111,7 +117,37 @@ def parseRec(nfrec, refspetree, onlyLineages=[], recordEvTypes='T'):
 def eventLocSpeOrPop(evtup, dspe2pop):
 	return [evtup[:1]+tuple(y) for y in itertools.product(*[list(set([ x, dspe2pop.get(x, x) ])) for x in evtup[1:]])]	
 
-def matchEvents(dfamevents, genei, fami, genej, famj, blocks={}, dspe2pop={}, eventtypes='T', **kw):
+def matchEventLineages(dfamevents, genei, fami, genej, famj, blocks={}, dspe2pop={}, eventtypes='T', excludeNodeLabels=[], **kw):
+	"""match homologous events from different reconciled scenarios. Proceeds by dissecting gene tree tip-to-root lineages.
+	
+	It typically involes comparing scenarios from different gene families, 
+	but could aslo in theory be ued to compare scenarios from the same gene family, 
+	under different reconciliation inference settings (e.g. different DTL rates, 
+	or different reference tree collapsing). 
+	
+	These families can have different reference species tree, or more specifically, 
+	different collapsed version of the same full reference species tree.
+	
+	This function takes a input a dict-of-dict object 'dfamevents', containing the 
+	lists all the sampled event lineages, sorted by families and genes: 
+	dfamevents[fami][genei] should thus return a list of N tuples of DTL events, 
+	representing the gene lineages in the N reconciled gene family tree that were sampled.
+	
+	!!! Because closely related genes share lineage history that are duplicated in this representation,
+	!!! and that events data are not aggregated across the sampled reconciliation,
+	!!! this makes it a highly redundant representation and thus very heavy format.
+	
+	If 'dspe2pop' is provided, alaias addresses in the compared refence species tree will be generated,
+	so that events involving strains/lineage from within a population (in a species tree where it is not collapsed) 
+	and those involving the collapsed population can be recognised as homologous.
+	
+	However, it is though safer to not try and match events occurring below the population ancestor nodes,
+	because of the low reolution of the population subtree making inferences to be incertain, 
+	and to a lesser extant to match events occurring below the population ancestor nodes, 
+	due to the possibly poor quality of the heuristic used to tag populations on collapsed gene tree clades.
+	
+	Such events of uncertain qulity can be excluded from the comparison using 'excludeNodeLabels' argument.
+	"""
 	devi = dfamevents[fami][genei] #; print devi
 	devj = dfamevents[famj][genej] #; print devj
 	klause = genei=='ESCCOL13_5175' and genej=='ECOS51_ENTCGC014269_CC002'
@@ -127,8 +163,9 @@ def matchEvents(dfamevents, genei, fami, genej, famj, blocks={}, dspe2pop={}, ev
 					#~ yield [evtupi, devi[evtupi], devj[evtupj]]
 					#~ break # the for evtupj loop
 	for evtupi in evtupis:
+		# one event tuple per sampled recongiled gene tree, representing the gene lineage (= tip-to-root node path in gene tree)
 		if klause : print 'evtupi:', evtupi
-		# every event in genei lineage should be match at most once in genej lineage
+		# every event in genei lineage should be matching at most once in genej lineage
 		matched = False
 		if evtupi[0] not in eventtypes: continue
 		akaevtupis = eventLocSpeOrPop(evtupi, dspe2pop)
@@ -136,10 +173,11 @@ def matchEvents(dfamevents, genei, fami, genej, famj, blocks={}, dspe2pop={}, ev
 		for evtupj in devj:
 			if klause:  print 'evtupj:', evtupj 
 			if matched: break # the for evtupj loop
+			# mapping of aliases: species to collapsed population
 			akaevtupjs = eventLocSpeOrPop(evtupj, dspe2pop)
-			#~ print 'akaevtupjs:', akaevtupjs 
 			if klause:  print 'akaevtupjs:', akaevtupjs 
 			for akaevtupi in akaevtupis:
+				# one event lineage tuple per sampled recongiled gene tree
 				if akaevtupi in akaevtupjs:
 					if klause : print 'nosino'
 					if not (genej in blocks.get(evtupi, [])):
@@ -196,11 +234,15 @@ def loadRefPopTree(nfrefspetree, nfpop):
 	refspetree.write_newick(nfrefspetreeout, ignoreBS=True)
 	return (refspetree, dspe2pop)
 
-def treeExtantEventSet(levents, refspetree):
-	maxdist = 0
+def treeExtantEventSet(levents, refspetree, fun=max):
+	"""measure dispersion of a set of events on the species tree
+	
+	by default return maximum distance, can be average (fun=mean), minimum (fun=min)...
+	"""
+	ldist = []
 	if len(levents) <=1: return maxdist
 	# from the set of all (recipient) locations, compute the maximum distance on the species tree
-	# ... should do that on the gene tree!!!
+	# ... should do that on the consensus gene tree... if one could map each sampled reconciled gene tree to the consensus!!!
 	allTreeLocs = list(set(reduce(lambda x,y: x[-1:]+y[-1:], levents)))
 	for loci in allTreeLocs:
 		ni = refspetree[loci]
@@ -208,8 +250,9 @@ def treeExtantEventSet(levents, refspetree):
 			if loci!=locj:
 				nj = refspetree[locj]
 				d = ni.distance(nj)
-				maxdist = max(d, maxdist)
-	return maxdist
+				ldist.append(d
+	if fun is max: ldist.append(0)
+	return fun(ldist)
 	
 def reconstructBlocks(dfamevents, genefams, nfoutblocks, nfpicklePWMatches, dspe2pop={}, gapsize=-1):
 	foutblocks = open(nfoutblocks, 'w')
@@ -322,12 +365,14 @@ PWMstats = [ \
 def usage():
 	s = ""
 	s += "\t\t--dir_replaced\tfolder containing files listing replaced leaf labels (e.g. wen collapsing gene tree clades)\n"
+	s += "\t\t--genefams\ttabulated file with header containing at least those two fields: 'cds_code', 'gene_family_id'\n"
+	s += "\t\t\t\trows indicated the genes to be treated in the search, and to which gene family they belong (and hence in which reconciliation file to find them)\n"
 	return s
 
 if __name__=='__main__':
 
 	opts, args = getopt.getopt(sys.argv[1:], 'h', ['rec_sample_list=', 'pickled_events=', 'dir_constraints=', 'dir_replaced=', \
-	                                               'populations=', 'reftree=', 'genefams=', 'evtype=', \
+	                                               'populations=', 'reftree=', 'genefams=', 'evtype=', 'dir_table_out=', \
 												   'threads=', 'help']) #, 'reuse=', 'verbose=', 'max.recursion.limit=', 'logfile='
 	dopt = dict(opts)
 	if ('-h' in dopt) or ('--help' in dopt):
@@ -352,7 +397,8 @@ if __name__=='__main__':
 	nfpop = dopt['--populations']
 	nfrefspetree = dopt['--reftree']
 	nfgenefamlist = dopt['--genefams']
-	recordEvTypes = dopt['--evtype']
+	recordEvTypes = dopt.get('--evtype', 'DTS')
+	dirTableOut = dopt.get('--dir_table_out',)
 	nbthreads = int(dopt.get('--threads', 1))
 	
 	pickletag = '.parsedRecs.%s.pickle'%recordEvTypes
@@ -373,7 +419,7 @@ if __name__=='__main__':
 	if not loaded:	
 		ingenes = [genefam['replaced_cds_code'] for genefam in genefamlist if (genefam['gene_family_id'] in lfams)]
 		def parseRecSetArgs(nfrec):
-			return parseRec(nfrec, refspetree, onlyLineages=ingenes, recordEvTypes=recordEvTypes)
+			return parseRec(nfrec, refspetree, onlyLineages=ingenes, recordEvTypes=recordEvTypes, dirTableOut=dirTableOut)
 
 		if nbthreads==1:
 			ldevents = [parseRecSetArgs(nfrec) for nfrec in lnfrec]
