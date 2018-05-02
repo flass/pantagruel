@@ -9,11 +9,27 @@ def getOriSpeciesFromEventLab(eventlab, sgsep='_'):
 	return elab.split('->')[0].split(sgsep)[0]
 
 def parseRecGeneTree(recgt, spet, dexactevt, recgtsample, nsample, sgsep='_', restrictlabs=[], fillDTLSdict=True, recordEvTypes='DTL'):
-	"""extract list of events from reconciled gene trees as found in output of ALEml_undated (Szolosi et al., 2013; https://github.com/ssolo/ALE)
+	"""extract list of events from one reconciled gene tree as found in output of ALEml_undated (Szolosi et al., 2013; https://github.com/ssolo/ALE)
 	
-	Frequency of events is searched in the WHOLE reconciled gene tree sample provided as the list of pseudo-newick strings, using eact string matching (only for DT).
-	in case of the same pattern of event occurring repeatedly in the same tree, e.g. same T@DON->REC in two paralogous lineages 
-	(can likely happen with tandem duplicates...), the count will reflect the sum of all such events. REcords of event frequencies are thus NOT differentiated by lineage.
+	This function returns two objects:
+	
+	- a dict object 'dlevt', containing the (possibly redundant) list of unique events having occurred in the tree,
+	sorted by event type, which can be 'D', 'T', 'L' or 'S', for duplications, horizontal transfers, losses or speciations.
+	This record is a crude aggregate of what happened in the whole gene family, present for back-compatiility purposes.
+	The behaviour of filling up this record can be turned off to gain time and memory with fillDTLSdict=False.
+	
+	- a dict object 'dnodeallevt', containing the list all events in one reconciliation scenario
+	(a single scenario anomg the sample), sorted by gene tree node id. 
+	Event are represented as tuples of the following form: (X, rec, [don, ] freq),
+	where X is the event type
+	'rec' and optionally 'don' (for Ts only) are species tree node labels where the event where inferred,
+	and 'freq' the event frequency of this event in the whole sample.
+	
+	Frequency of events is searched in the WHOLE reconciled gene tree sample 
+	provided as the list of pseudo-newick strings, using exact string matching (only for DT).
+	In case of the same pattern of event occurring repeatedly in the same tree, e.g. same T@DON->REC in two paralogous lineages 
+	(can likely happen with tandem duplicates...), the count will reflect the sum of all such events. 
+	Records of event frequencies in both 'dlevt' and 'dnodeallevt' are thus NOT differentiated by lineage.
 	"""
 	dlevt = {'D':[], 'T':[], 'L':[], 'S':[]}
 	dnodeallevt = {}

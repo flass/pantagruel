@@ -94,31 +94,37 @@ def parseRec(nfrec, refspetree=None, onlyLineages=[], recordEvTypes='T', dirTabl
 	dexactevt = {}
 	allrectevtlineages = {}
 	for i, recgt in enumerate(lrecgt):
-		# gather scenario-scpecific events (i.e. dependent on reconciled gene tree topology, whichc varies among the sample)
+		# gather scenario-scpecific events (i.e. dependent on reconciled gene tree topology, which varies among the sample)
 		dlevt, dnodeallevt = parseRecGeneTree(recgt, colspetree, dexactevt, recgtsample, nsample, fillDTLSdict=False, recordEvTypes=recordEvTypes)
-		tdlevt = {etype:translateEventList(ldtl, dcol2fullspenames) for etype, ldtl in dlevt.iteritems()}
+		# dlevt is of no use and here returned empty because of fillDTLSdict=False
+		# would it not be empty, it could be translated to the full reference tree with:
+		# tdlevt = {etype:translateEventList(ldtl, dcol2fullspenames) for etype, ldtl in dlevt.iteritems()}
 		#~ print 'dnodeallevt', dnodeallevt
 		evtlineages = eventLineages(recgt, dnodeallevt, onlyLeaves=onlyLineages)
 		#~ print 'evtlineages', evtlineages
 		tevtlineages = translateEventLineage(evtlineages, dcol2fullspenames)
 		for geneleaflab, evtlineage in tevtlineages.iteritems():
 			allrectevtlineages.setdefault(geneleaflab, []).append(evtlineage)
+	
+	# allrectevtlineages contains all events in a lineage, 
+	# for all the lineages in reconciled gene tree, 
+	# for all the reconcile gene trees in the ALE sample.
+	# IT CAN BE A VERY HEAVY OBJECT.
+	
 	devtlineagecount = {}
 	for geneleaflab, allreclineages in allrectevtlineages.iteritems():
 		allrecevt = reduce(lambda x, y: x+y, allreclineages)
+		# combine event counts across the sample
 		devtlineagecount[geneleaflab] = {evtup:allrecevt.count(evtup) for evtup in set(allrecevt)} 
 	
 	#~ print 'dexactevt', dexactevt
 	#~ print 'allrectevtlineages', allrectevtlineages
 	#~ print 'devtlineagecount', devtlineagecount
 	#~ return [devtlineagecount, dexactevt, allrectevtlineages]
-	return devtlineagecount
+	return devtlineagecount	
 
-def eventLocSpeOrPop(evtup, dspe2pop):
-	return [evtup[:1]+tuple(y) for y in itertools.product(*[list(set([ x, dspe2pop.get(x, x) ])) for x in evtup[1:]])]	
-
-def matchEventLineages(dfamevents, genei, fami, genej, famj, blocks={}, dspe2pop={}, eventtypes='T', excludeNodeLabels=[], **kw):
-	"""match homologous events from different reconciled scenarios. Proceeds by dissecting gene tree tip-to-root lineages.
+def matchEventInLineages(dfamevents, genei, fami, genej, famj, blocks={}, dspe2pop={}, eventtypes='T', excludeNodeLabels=[], **kw):
+	"""Generator function yielding matched homologous events from different reconciled scenarios. Proceeds by dissecting gene tree tip-to-root lineages.
 	
 	It typically involes comparing scenarios from different gene families, 
 	but could aslo in theory be ued to compare scenarios from the same gene family, 
@@ -128,14 +134,18 @@ def matchEventLineages(dfamevents, genei, fami, genej, famj, blocks={}, dspe2pop
 	These families can have different reference species tree, or more specifically, 
 	different collapsed version of the same full reference species tree.
 	
-	This function takes a input a dict-of-dict object 'dfamevents', containing the 
+	This function takes a input a dict-of-dict-of dict object 'dfamevents', containing the 
 	lists all the sampled event lineages, sorted by families and genes: 
-	dfamevents[fami][genei] should thus return a list of N tuples of DTL events, 
-	representing the gene lineages in the N reconciled gene family tree that were sampled.
+	dfamevents[fami][genei] should thus return a dict of the following form: 
+	{(rec, [don, ]):freq, ...}, 
+	where keys are tuples of DTL event addresses containing 'rec' and optionally 'don' 
+	(for horizontal transfers), the labels in species tree of node wehre the event occurred,
+	and 'freq' the event frequency within the sample of N reconciled gene trees.
 	
 	!!! Because closely related genes share lineage history that are duplicated in this representation,
-	!!! and that events data are not aggregated across the sampled reconciliation,
-	!!! this makes it a highly redundant representation and thus very heavy format.
+	!!! this is a highly redundant representation and thus quite heavy format.
+	
+	This function is a generator and thus yields matched event tuples 
 	
 	If 'dspe2pop' is provided, alaias addresses in the compared refence species tree will be generated,
 	so that events involving strains/lineage from within a population (in a species tree where it is not collapsed) 
@@ -148,6 +158,9 @@ def matchEventLineages(dfamevents, genei, fami, genej, famj, blocks={}, dspe2pop
 	
 	Such events of uncertain qulity can be excluded from the comparison using 'excludeNodeLabels' argument.
 	"""
+	def eventLocSpeOrPop(evtup, dspe2pop):
+		return [evtup[:1]+tuple(y) for y in itertools.product(*[list(set([ x, dspe2pop.get(x, x) ])) for x in evtup[1:]])]
+	
 	devi = dfamevents[fami][genei] #; print devi
 	devj = dfamevents[famj][genej] #; print devj
 	klause = genei=='ESCCOL13_5175' and genej=='ECOS51_ENTCGC014269_CC002'
@@ -181,6 +194,7 @@ def matchEventLineages(dfamevents, genei, fami, genej, famj, blocks={}, dspe2pop
 				if akaevtupi in akaevtupjs:
 					if klause : print 'nosino'
 					if not (genej in blocks.get(evtupi, [])):
+						# avoid yielding the event match again if was previously spotted in a gene block
 						if klause : print 'rhhhoooooo', [evtupi, devi[evtupi], devj[evtupj]]
 						yield [evtupi, devi[evtupi], devj[evtupj]]
 					matched = True
@@ -255,6 +269,7 @@ def treeExtantEventSet(levents, refspetree, fun=max):
 	return fun(ldist)
 	
 def reconstructBlocks(dfamevents, genefams, nfoutblocks, nfpicklePWMatches, dspe2pop={}, gapsize=-1):
+	"""finds blocks of consecutive genes that share homologous events"""
 	foutblocks = open(nfoutblocks, 'w')
 	foutblocks.write('\t'.join(['event', 'don', 'rec', 'len.block', 'sum.freq', 'min.freq', 'max.freq', 'mean.freq', 'median.freq', 'genes', 'eventFreqs'])+'\n' )
 	dblockTs = {}
@@ -266,7 +281,7 @@ def reconstructBlocks(dfamevents, genefams, nfoutblocks, nfpicklePWMatches, dspe
 		genei, genri, fami = [genefams[i][f] for f in gefagr]
 		genej, genrj, famj = [genefams[j][f] for f in gefagr]
 		#print "%s: %s (%s) <-> %s: %s (%s)"%(fami, genei, genri, famj, genej, genrj)
-		for matchedT, fi, fj in matchEvents(dfamevents, genri, fami, genrj, famj, dspe2pop=dspe2pop, blocks=dblockTsReplGenes):
+		for matchedT, fi, fj in matchEventInLineages(dfamevents, genri, fami, genrj, famj, dspe2pop=dspe2pop, blocks=dblockTsReplGenes):
 			#print matchedT, 
 			dblockTs.setdefault(matchedT, [genei]).append(genej)
 			dblockTsReplGenes.setdefault(matchedT, [genri]).append(genrj)
@@ -281,7 +296,7 @@ def reconstructBlocks(dfamevents, genefams, nfoutblocks, nfpicklePWMatches, dspe
 			else: curgap = 1
 			while (k<len(genefams) and (moreTs or curgap>0)):
 				genek, genrk, famk = [genefams[k][f] for f in gefagr]
-				moreTs = [Tff for Tff in matchEvents(dfamevents, genri, fami, genrk, famk, dspe2pop=dspe2pop, blocks=dblockTsReplGenes, events=[matchedT])]
+				moreTs = [Tff for Tff in matchEventInLineages(dfamevents, genri, fami, genrk, famk, dspe2pop=dspe2pop, blocks=dblockTsReplGenes, events=[matchedT])]
 				if moreTs:
 					curgap = gapsize
 					fk = moreTs[0][2]
@@ -333,7 +348,7 @@ def searchPWMatches(dfamevents, genefams, nfoutblocks, nfpicklePWMatches, dspe2p
 		for j in range(i+1, len(genefams)):
 			genej, genrj, famj = [genefams[j][f] for f in gefagr]
 			#~ print genej, genrj, famj
-			for matchedT, fi, fj in matchEvents(dfamevents, genri, fami, genrj, famj, dspe2pop=dspe2pop, eventtypes=eventtypes):
+			for matchedT, fi, fj in matchEventInLineages(dfamevents, genri, fami, genrj, famj, dspe2pop=dspe2pop, eventtypes=eventtypes):
 				PWMatches.setdefault((genei, genej), []).append((matchedT, fi, fj)) 
 				
 	with open(nfpicklePWMatches, 'wb') as fpicklePWMatches:
