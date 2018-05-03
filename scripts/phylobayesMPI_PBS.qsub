@@ -110,9 +110,17 @@ fi
 if [ -z $coreperchain ] ; then
   coreperchain=8
 fi
+case ${coreperchain} in
+  0|1|*[!0-9]*) echo "!!! ERROR, number of core chains '\$coreperchain' must be an integer >=2" ; exit 1;;
+  *) echo good ;;
+esac
 if [ -z $nbchain ] ; then
   nbchain=2
 fi
+case ${nbchain} in
+  0|*[!0-9]*) echo "!!! ERROR, number of chains '\$nbchain' must be non-null positive integer" ; exit 1;;
+  *) echo good ;;
+esac
 # define software options
 if [ -z $pboptions ] ; then
   pboptions="-cat -gtr -dgam 4"
@@ -172,12 +180,18 @@ else
 fi
 
 pbpid=()
-# start chains
-for i in $(seq 1 ${nbchain}) ; do
-  echo -e "${pbmpicmd} ${pchain}.${i} &> ${pchain}.${i}.log &\n"
-  ${pbmpicmd} ${pchain}.${i} &> ${pchain}.${i}.log &
+# start chain(s)
+if [ $nbchain -eq 1 ] ; then
+  echo -e "${pbmpicmd} ${pchain} &> ${pchain}.log &\n"
+  ${pbmpicmd} ${pchain} &> ${pchain}.log &
   pbpid+=($!)
-done
+else
+  for i in $(seq 1 ${nbchain}) ; do
+    echo -e "${pbmpicmd} ${pchain}.${i} &> ${pchain}.${i}.log &\n"
+    ${pbmpicmd} ${pchain}.${i} &> ${pchain}.${i}.log &
+    pbpid+=($!)
+  done
+fi
 pbpidorstr=$(echo ${pbpid[@]} | sed -e 's/ /\\|/g')
 
 rsynccmd="rsync -avz $TMPDIR/${pchain}* $outputdir/"
