@@ -53,16 +53,14 @@ if [ $? != 0 ] ; then
   exit 1
 fi
 
+# test user-provided variables are correctly set
+## mandatory variables
 if [ -z $nfaln ] ; then
   echo "!!! ERROR : mandatory variable \$nfaln not declared ; exit now"
   exit 1
 fi
-
-# test user-provided variables are correctly set
-
-## mandatory variables
-if [ -z $nfaln ] ; then
-  echo "!!! ERROR : mandatory variable \$nfaln not declared ; exit now"
+if [ ! -e $nfaln ] ; then
+  echo "!!! ERROR : cannot access mandatory alignment file '$nfaln' ; exit now"
   exit 1
 fi
 nfrad1=$(basename $nfaln)
@@ -141,19 +139,7 @@ if [ $? != 0 ] ; then
   echo "!!! ERROR : wrong format for sync frequency: $syncfreq ; expect X{h,m,s} with X any integer ; exit now"
   exit 1
 fi
-## copy data locally
-cd $TMPDIR/
-echo "current directory is $PWD"
-rsync -avz $nfaln $TMPDIR/
-if [ $? != 0 ] ; then
-  echo "!!! ERROR : unable to copied input file $nfaln into $TMPDIR/ ; exit now"
-  exit 1
-else
-  echo "copied input files $nfaln succesfully"
-fi
-echo "ls ./"
-ls ./
-
+# chain name
 if [ -z $chainname ] ; then
   pchain=${nfrad2}.pb.chain
   echo "set default pchain='$pchain'"
@@ -161,8 +147,37 @@ else
   pchain=${chainname}
 fi
 
+# if a dry run
+if  [ "$dryrun" == 'yes' ] ; then
+  echo "# WOULD import files with this command:"
+  echo "rsync -avz $nfaln $TMPDIR/"
+  if [ "$pbresume" == 'yes' ] ; then
+    echo "# resuming previously begun analysis; WOULD import files with this command:"
+    echo "rsync -avz $outputdir/${pchain}* $TMPDIR/"
+    echo "# check presence of previous run files"
+    echo "ls $outputdir/${pchain}*"
+    ls $outputdir/${pchain}*
+  fi
+  ### end of dry run
+  echo "end of dry run ; exit now"
+  exit 0
+fi
+
+## copy data locally
+cd $TMPDIR/
+echo "current directory is $PWD"
+rsync -avz $nfaln $TMPDIR/
+if [ $? != 0 ] ; then
+  echo "!!! ERROR : unable to copy input file $nfaln into $TMPDIR/ ; exit now"
+  exit 1
+else
+  echo "copied input files $nfaln succesfully"
+fi
+echo "ls ./"
+ls ./
+
 if [ "$pbresume" == 'yes' ] ; then
-  # import files from previous interupted analysis
+ echo "# resuming previously begun analysis; import files:"
   echo "rsync -avz $outputdir/${pchain}* $TMPDIR/"
   rsync -avz $outputdir/${pchain}* $TMPDIR/
   echo "copied previously computed chain files with exit status $?"
@@ -171,6 +186,7 @@ if [ "$pbresume" == 'yes' ] ; then
   echo ""
 fi
 
+# set PB command
 pbmpicmd="$mpibin -n ${coreperchain} ${pbmpibin}"
 if [ "$pbresume" != 'yes' ] ; then
   pbmpicmd="${pbmpicmd} -d ${nfrad1} ${pboptions}"
@@ -179,8 +195,8 @@ else
   echo -e "##### Resume previous PB chains\n"  
 fi
 
-pbpid=()
 # start chain(s)
+pbpid=()
 if [ $nbchain -eq 1 ] ; then
   echo -e "${pbmpicmd} ${pchain} &> ${pchain}.log &\n"
   ${pbmpicmd} ${pchain} &> ${pchain}.log &
@@ -194,6 +210,7 @@ else
 fi
 pbpidorstr=$(echo ${pbpid[@]} | sed -e 's/ /\\|/g')
 
+# set and run daemon
 rsynccmd="rsync -avz $TMPDIR/${pchain}* $outputdir/"
 echo "will run '$rsynccmd' every ${syncfreq} (${syncf}s)"
 lastsync=0
