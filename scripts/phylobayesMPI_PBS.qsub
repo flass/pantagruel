@@ -105,19 +105,19 @@ else
 fi
 
 # define parallelism
-if [ -z $coreperchain ] ; then
-  coreperchain=8
-fi
-case ${coreperchain} in
-  0|1|*[!0-9]*) echo "!!! ERROR, number of core chains '\$coreperchain' must be an integer >=2" ; exit 1;;
-  *) echo good ;;
-esac
 if [ -z $nbchain ] ; then
   nbchain=2
 fi
 case ${nbchain} in
   0|*[!0-9]*) echo "!!! ERROR, number of chains '\$nbchain' must be non-null positive integer" ; exit 1;;
-  *) echo good ;;
+  *) echo "will run $nbchain separate chains" ;;
+esac
+if [ -z $coreperchain ] ; then
+  coreperchain=8
+fi
+case ${coreperchain} in
+  0|1|*[!0-9]*) echo "!!! ERROR, number of core chains '\$coreperchain' must be an integer >=2" ; exit 1;;
+  *) echo "will run each chain on $coreperchain cores" ;;
 esac
 # define software options
 if [ -z $pboptions ] ; then
@@ -227,7 +227,7 @@ while [[ ${SECONDS} -lt $(( ${timelimit} - (2 * ${timelimit} / 100) )) ]] ; do
     # convergence diagnostic for possible early end of execution
     if [ ! -z $bpcompbin ] ; then
       nburnin=$(( $(wc -l ${pchain}.1.treelist | cut -d' ' -f1) / 4 ))
-      $bpcompbin -x $nburnin ${pchain}.*.chain
+      $bpcompbin -x $nburnin $(ls ${pchain}.*.chain | sed -e 's/.chain$//g')
       cat bpcomp.bpdiff | xargs
       maxdiff=$(grep 'maxdiff' bpcomp.bpdiff | awk '{print $NF}')
       if [ -z $maxdiff ] ; then maxdiff=1 ; fi
