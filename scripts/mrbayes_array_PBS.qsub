@@ -206,7 +206,7 @@ runmbandsync () {
     #~ file1time=`stat -c %Y $TMPDIR/$ckp`
     #~ file2time=`stat -c %Y $outputdir/$ckp`
     #~ if [ $file1time -gt $file2time ]; then
-    if [ $TMPDIR/$ckp -gt $outputdir/$ckp ]; then
+    if [ $TMPDIR/$ckp -nt $outputdir/$ckp ]; then
       date
       #echo "rsync -az ${excludesync[@]} ./*$nfrad2* $outputdir/"
       rsync -az ${excludesync[@]} ./*$nfrad2* $outputdir/
