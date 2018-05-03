@@ -76,7 +76,7 @@ def translateEventList(ldtl, dcol2fullspenames):
 def translateEventLineage(deventlineages, dcol2fullspenames):
 	return {nodelab:[evtloc[:1]+tuple(dcol2fullspenames[x] for x in evtloc[1:]) for evtloc in levtloc] for nodelab, levtloc in deventlineages.iteritems()}
 
-def parseRec(nfrec, refspetree=None, onlyLineages=[], recordEvTypes='T', dirTableOut=None, noTranslateSpeTree=False):
+def parseRec(nfrec, refspetree=None, onlyLineages=[], recordEvTypes='T', dirTableOut=None, noTranslateSpeTree=False, allEventByLineageByGenetree=False):
 	print nfrec
 	# parse reconciliation file and extract collapsed species tree, mapping of events (with freq.) on the species tree, and reconciled gene trees
 	colspetree, subspetree, lrecgt, recgtlines, restrictlabs, dnodeevt = parseALERecFile(nfrec)
@@ -92,36 +92,55 @@ def parseRec(nfrec, refspetree=None, onlyLineages=[], recordEvTypes='T', dirTabl
 	# parse reconciled gene trees
 	# and extract (exact) event-wise event frequency
 	dexactevt = {}
+	devtlineagecount = {}
 	allrectevtlineages = {}
 	for i, recgt in enumerate(lrecgt):
 		# gather scenario-scpecific events (i.e. dependent on reconciled gene tree topology, which varies among the sample)
 		dlevt, dnodeallevt = parseRecGeneTree(recgt, colspetree, dexactevt, recgtsample, nsample, fillDTLSdict=False, recordEvTypes=recordEvTypes)
-		# dlevt is of no use and here returned empty because of fillDTLSdict=False
+		# * 'dexactevt' is used as cache to store frequencies of event s as inferred from regex searches of the event pattern
+		# these frequencies are not specific to gene lineages, but aggregate the counts over the whole gene family
+		# * 'dlevt' is of no use and here returned empty because of fillDTLSdict=False
 		# would it not be empty, it could be translated to the full reference tree with:
 		# tdlevt = {etype:translateEventList(ldtl, dcol2fullspenames) for etype, ldtl in dlevt.iteritems()}
-		#~ print 'dnodeallevt', dnodeallevt
 		evtlineages = eventLineages(recgt, dnodeallevt, onlyLeaves=onlyLineages)
-		#~ print 'evtlineages', evtlineages
 		tevtlineages = translateEventLineage(evtlineages, dcol2fullspenames)
-		for geneleaflab, evtlineage in tevtlineages.iteritems():
-			allrectevtlineages.setdefault(geneleaflab, []).append(evtlineage)
+		
+		if allEventByLineageByGenetree:
+			# one way to proceed is to build the object 'allrectevtlineages'
+			# a dict that contains all events in a lineage, 
+			# for all the lineages in reconciled gene tree, 
+			# for all the reconcile gene trees in the ALE sample.
+			# IT CAN BE A VERY HEAVY OBJECT.
+			for geneleaflab, evtlineage in tevtlineages.iteritems():
+				allrectevtlineages.setdefault(geneleaflab, []).append(evtlineage)
+		else:
+			# another way is to aggregate data immediately
+			# might be slower due to many updates of the 'devtlineagecount' dict,
+			# but mor efficient in memory use
+			for geneleaflab, evtlineage in tevtlineages.iteritems():
+				for evtup in evtlineage:
+					nevtup = devtlineagecount.setdefault(geneleaflab, {}).setdefault(evtup, 0)
+					devtlineagecount[geneleaflab][evtup] = nevtup + 1
 	
-	# allrectevtlineages contains all events in a lineage, 
-	# for all the lineages in reconciled gene tree, 
-	# for all the reconcile gene trees in the ALE sample.
-	# IT CAN BE A VERY HEAVY OBJECT.
-	
-	devtlineagecount = {}
-	for geneleaflab, allreclineages in allrectevtlineages.iteritems():
-		allrecevt = reduce(lambda x, y: x+y, allreclineages)
-		# combine event counts across the sample
-		devtlineagecount[geneleaflab] = {evtup:allrecevt.count(evtup) for evtup in set(allrecevt)} 
-	
+	if allEventByLineageByGenetree:
+		devtlineagecount = {}
+		for geneleaflab, allreclineages in allrectevtlineages.iteritems():
+			allrecevt = reduce(lambda x, y: x+y, allreclineages)
+			# combine event counts across the sample
+			devtlineagecount[geneleaflab] = {evtup:allrecevt.count(evtup) for evtup in set(allrecevt)} 
+		
 	#~ print 'dexactevt', dexactevt
 	#~ print 'allrectevtlineages', allrectevtlineages
 	#~ print 'devtlineagecount', devtlineagecount
 	#~ return [devtlineagecount, dexactevt, allrectevtlineages]
-	return devtlineagecount	
+	if allEventByLineageByGenetree:
+		retd = {}
+		retd['allrectevtlineages'] = allrectevtlineages
+		retd['devtlineagecount'] = devtlineagecount
+		retd['dexactevt'] = dexactevt
+		return retd
+	else:
+		return devtlineagecount
 
 def matchEventInLineages(dfamevents, genei, fami, genej, famj, blocks={}, dspe2pop={}, eventtypes='T', excludeNodeLabels=[], **kw):
 	"""Generator function yielding matched homologous events from different reconciled scenarios. Proceeds by dissecting gene tree tip-to-root lineages.
