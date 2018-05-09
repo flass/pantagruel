@@ -593,7 +593,7 @@ done
 
 
 #############################################
-## 06. gene tree/ Spcies tree reconciliations
+## 06. gene tree/ Species tree reconciliations
 #############################################
 
 ### edit collapsed gene trees to attribute an (ancestral) species identity to the leafs representing collapsed clades
@@ -642,7 +642,6 @@ mkdir -p $alelogs/ale_collapsed_undat $alelogs/ale_collapsed_dated
 outrecdir=${colrecs}/${collapsecond}/${colmethod}/ale_collapsed_undat
 mkdir -p $outrecdir
 
-# [on IC HPC as flassall@login-3-internal]
 Njob=`wc -l $tasklist | cut -f1 -d' '`
 qsubvars="tasklist=$tasklist, resultdir=$outrecdir, spetree=Stree.nwk, nrecs=1000, alealgo=ALEml_undated"
 qsub -J 1-$Njob -N ale_collapsed_undat -l select=1:ncpus=1:mem=20gb,walltime=24:00:00 -o $alelogs/ale_collapsed_undat -j oe -v "$qsubvars" $HOME/scripts/misc/ALE_array_PBS.qsub

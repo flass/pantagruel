@@ -225,7 +225,7 @@ while [[ ${SECONDS} -lt $(( ${timelimit} - (2 * ${timelimit} / 100) )) ]] ; do
     $rsynccmd >> $TMPDIR/${pchain}.rsynclog
     lastsync=0
     # convergence diagnostic for possible early end of execution
-    if [ ! -z $bpcompbin ] ; then
+    if [[ ! -z $bpcompbin && $nbchain -gt 1 ]] ; then
       nburnin=$(( $(wc -l ${pchain}.1.treelist | cut -d' ' -f1) / 4 ))
       $bpcompbin -x $nburnin $(ls ${pchain}.*.chain | sed -e 's/.chain$//g')
       cat bpcomp.bpdiff | xargs
