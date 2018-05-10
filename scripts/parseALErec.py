@@ -3,6 +3,8 @@ import tree2
 import sys, os, getopt
 import re
 
+eventTypes = 'DTLS'
+
 def getOriSpeciesFromEventLab(eventlab, sgsep='_'):
 	# split at DT location separator '@', then possibly at T don/rec seprator '->', and finally shorten the species label if node is a leaf
 	elab = eventlab.split('@')[1] if '@' in eventlab else eventlab
@@ -31,7 +33,7 @@ def parseRecGeneTree(recgt, spet, dexactevt, recgtsample, nsample, sgsep='_', re
 	(can likely happen with tandem duplicates...), the count will reflect the sum of all such events. 
 	Records of event frequencies in both 'dlevt' and 'dnodeallevt' are thus NOT differentiated by lineage.
 	"""
-	dlevt = {'D':[], 'T':[], 'L':[], 'S':[]}
+	dlevt = {e:[] for e in eventTypes}
 	dnodeallevt = {}
 	for node in recgt:
 		nodelab = node.label()

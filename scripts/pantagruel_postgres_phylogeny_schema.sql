@@ -11,10 +11,10 @@ CREATE TABLE species_tree (
 CREATE TYPE eventtype AS ENUM ('D', 'T', 'S', 'SL', 'L', 'O');
 
 CREATE TABLE species_tree_events (
-  event_id SERIAL PRIMARY KEY,
+  event_id INT PRIMARY KEY,
+  event_type eventtype NOT NULL
   rec_branch_id SMALLINT NOT NULL, -- refers to species_tree (branch_id)
   don_branch_id SMALLINT,          -- refers to species_tree (branch_id)
-  event_type eventtype NOT NULL
 );
 
 CREATE INDEX ON species_tree_events (event_type);
