@@ -93,9 +93,9 @@ def parseRecGeneTree(recgt, spet, dexactevt, recgtsample, nsample, sgsep='_', re
 					#~ # a simple speciation event ; already delt with
 					#~ pass
 		if excludeTaggedClades:
-			alllabext = [x.split('_', 1)[1]for x in node.get_leaf_labels()]
-			if (len(set(alllabext))) == 1 and (excludeTaggedClade in salllabext[0]):
-				# the subtree below this node is an artificil addition to the reconciled gene tree and should be skipped
+			alllabext = [lab.split('_', 1)[1] for lab in node.get_leaf_labels()]
+			if (len(set(alllabext)) == 1) and (excludeTaggedClades in alllabext[0]):
+				# the subtree below this node is an artificial addition to the reconciled gene tree and should be skipped
 				return
 		for child in node.get_children():
 			# use recursion to be able to exclude subtrees
