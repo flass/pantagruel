@@ -10,7 +10,7 @@ def getOriSpeciesFromEventLab(eventlab, sgsep='_'):
 	elab = eventlab.split('@')[1] if '@' in eventlab else eventlab
 	return elab.split('->')[0].split(sgsep)[0]
 
-def parseRecGeneTree(recgt, spet, dexactevt, recgtsample, nsample, sgsep='_', restrictlabs=[], fillDTLSdict=True, recordEvTypes='DTL'):
+def parseRecGeneTree(recgt, spet, dexactevt, recgtsample, nsample, sgsep='_', restrictlabs=[], fillDTLSdict=True, recordEvTypes='DTL', excludeTaggedClades='_RC-clade'):
 	"""extract list of events from one reconciled gene tree as found in output of ALEml_undated (Szolosi et al., 2013; https://github.com/ssolo/ALE)
 	
 	This function returns two objects:
@@ -33,9 +33,7 @@ def parseRecGeneTree(recgt, spet, dexactevt, recgtsample, nsample, sgsep='_', re
 	(can likely happen with tandem duplicates...), the count will reflect the sum of all such events. 
 	Records of event frequencies in both 'dlevt' and 'dnodeallevt' are thus NOT differentiated by lineage.
 	"""
-	dlevt = {e:[] for e in eventTypes}
-	dnodeallevt = {}
-	for node in recgt:
+	def parseRecGTNode(node, dlevt, dnodeallevt):
 		nodelab = node.label()
 		nodeid = node.nodeid()
 		if not nodelab:
@@ -94,6 +92,19 @@ def parseRecGeneTree(recgt, spet, dexactevt, recgtsample, nsample, sgsep='_', re
 				#~ else:
 					#~ # a simple speciation event ; already delt with
 					#~ pass
+		if excludeTaggedClades:
+			alllabext = [x.split('_', 1)[1]for x in node.get_leaf_labels()]
+			if (len(set(alllabext))) == 1 and (excludeTaggedClade in salllabext[0]):
+				# the subtree below this node is an artificil addition to the reconciled gene tree and should be skipped
+				return
+		for child in node.get_children():
+			# use recursion to be able to exclude subtrees
+			parseRecGTNode(child, dlevt, dnodeallevt)
+		return
+	
+	dnodeallevt = {}
+	dlevt = {e:[] for e in eventTypes}
+	parseRecGTNode(recgt, dlevt, dnodeallevt) # recursive function call
 	return dlevt, dnodeallevt
 
 def parseALERecFile(nfrec, reftreelen=None, restrictclade=None, skipEventFreq=False):

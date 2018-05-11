@@ -151,7 +151,7 @@ def parseRec(nfrec, refspetree=None, drefspeeventTup2Ids=None, onlyLineages=[], 
 	allrectevtlineages = {}
 	for i, recgt in enumerate(lrecgt):
 		# gather scenario-scpecific events (i.e. dependent on reconciled gene tree topology, which varies among the sample)
-		dlevt, dnodeallevt = pAr.parseRecGeneTree(recgt, colspetree, dexactevt, recgtsample, nsample, fillDTLSdict=False, recordEvTypes=recordEvTypes)
+		dlevt, dnodeallevt = pAr.parseRecGeneTree(recgt, colspetree, dexactevt, recgtsample, nsample, fillDTLSdict=False, recordEvTypes=recordEvTypes, excludeTaggedClades='_RC-clade')
 		# * 'dexactevt' is used as cache to store frequencies of event s as inferred from regex searches of the event pattern
 		# these frequencies are not specific to gene lineages, but aggregate the counts over the whole gene family
 		# * 'dlevt' is of no use and here returned empty because of fillDTLSdict=False
@@ -189,8 +189,8 @@ def parseRec(nfrec, refspetree=None, drefspeeventTup2Ids=None, onlyLineages=[], 
 			devtlineagecount[geneleaflab] = fevent
 	elif minFreqReport>0:
 		# cleanup by deleting low-frequency events a posteriori
-		for geneleaflab in devtlineagecount:
-			for evtup, fevent in devtlineagecount[geneleaflab].iteritems():
+		for geneleaflab in devtlineagecount.keys():
+			for evtup, fevent in devtlineagecount[geneleaflab].items():
 				if float(fevent)/nsample < minFreqReport:
 					del devtlineagecount[geneleaflab][evtup]
 	
@@ -207,6 +207,7 @@ def parseRec(nfrec, refspetree=None, drefspeeventTup2Ids=None, onlyLineages=[], 
 					else: fTableOut.write('\t'.join((geneleaflab,)+evtup+(str(freq),))+'\n')
 		print "stored events listed by gene lineage in '%s'"%nfTableOut
 	
+	sys.stdout.flush()
 	if allEventByLineageByGenetree:
 		retd = {}
 		retd['allrectevtlineages'] = allrectevtlineages
@@ -241,6 +242,7 @@ def loadNamesAndListRecFiles(nflnfrec, nfgenefamlist, dircons, dirrepl, verbose=
 		if len(lnfreplaced)!=1:
 			sys.stderr.write("Warning! will use first file among those found matching pattern '%s'\nas reference for collapsed gene tree tip label aliases:\n%s\n"%( globreplaced, '\n'.join(lnfreplaced) ))
 		nfreplaced = lnfreplaced[0]
+		prevclaorgene = ''
 		with open(nfreplaced, 'r') as freplaced:
 			for line in freplaced:
 				claorgene, repllab = line.rstrip('\n').split('\t')
@@ -248,7 +250,17 @@ def loadNamesAndListRecFiles(nflnfrec, nfgenefamlist, dircons, dirrepl, verbose=
 					for genelab in constraintclades[claorgene]:
 						dreplacedlab[genelab] = repllab
 				else:
+					if claorgene == prevclaorgene: continue
+					# NOTE: this will always leave only one leaf label associated with a collapsed clade,
+					# even when gene tree collapsed clade was replaced by replacement clde (tagged 'RC')
+					# with multiple leaves, mimicking the species tree : because these clades are artificially
+					# introduced in the gene trees and will always show perfect agreement with the species trere,
+					# spurious association of S events with total support would be seen between similar RC clades
+					# in different gene families.
+					# (events recorded withtin such RC clade are actually discarded in pAr.parseRecGeneTree(),
+					# as they detected as clade encompassing allleaves with identical RC tag)
 					dreplacedlab[claorgene] = repllab
+				prevclaorgene = claorgene
 	
 	for genefam in genefamlist:
 		genelab = genefam['cds_code']
@@ -533,7 +545,7 @@ def parse_events(lnfrec, lfams, genefamlist, refspetree=None, drefspeeventTup2Id
 	return dfamevents
 
 def match_events(genefamlist, lfams, dfamevents,recordEvTypes, drefspeeventId2Tups, writeOutDir=None):
-	
+	"""from dictionary of reported events, by family and gene lineage, return matrix of pairwise gene event profile similarity"""
 	genefams = [genefam for genefam in genefamlist if (genefam['gene_family_id'] in lfams)]
 	
 	if writeOutDir:
@@ -617,7 +629,7 @@ if __name__=='__main__':
 	nbthreads = int(dopt.get('--threads', 1))
 	verbose = ('-v' in dopt) or ('--verbose' in dopt)
 	runmode = dopt.get('--runmode', 'all')
-	if runmode in ['parse','match','all']:
+	if not runmode in ['parse','match','all']:
 		raise ValueError, "run mode must be one of {parse|match|all}"
 	
 	pickletag = '.parsedRecs.%s.pickle'%recordEvTypes
