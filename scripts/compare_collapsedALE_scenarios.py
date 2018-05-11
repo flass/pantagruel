@@ -32,6 +32,10 @@ PWMstats = [ \
 ############ Functions
 
 def eventLineages(recgt, dnodeallevt, onlyLeaves=[]):
+	"""oreder events by gene lineage in the reconciled gene tree
+	
+	from a reconciled gene tree and the dict containing all the events in this tree in the format {node_id:(X, rec[, don]), ...}, 
+	return a list of event tuples for each gene lineage in the reconciled gene tree, i.e. events located above every tip of the tree"""
 	def get_eventlineage(node, dnodeallevt, allevtlineages):
 		if not node: return []
 		nodeid = node.nodeid()
@@ -51,7 +55,7 @@ def eventLineages(recgt, dnodeallevt, onlyLeaves=[]):
 	return evtlineages
 
 def translateRecStree(colspetree, refspetree):	
-	"""edit labels of input collapsed species tree in reference to fully labelled, uncollapsed species tree and return dictionary of changed labels"""
+	"""matching branches of input collapsed species tree with those of full (i.e. uncollapsed) reference species tree; edit labels of collapsed tree and return dictionary of changed labels"""
 	dcol2fullspenames = {}
 	tcolspetree = colspetree.deepcopybelow()
 	for node in tcolspetree:
@@ -64,6 +68,7 @@ def translateRecStree(colspetree, refspetree):
 	return [tcolspetree, dcol2fullspenames]
 	
 def translateRecTs(nfrec, dcol2fullspenames, mode='undated'):
+	"""edit input transfer report file, replacing collapsed species tree labels with full (i.e. uncollapsed) species treee labels; return dictionary of translated events and write out translated file"""
 	devents = {}
 	nfevent = nfrec.replace('ml_rec', 'Ts')
 	fevent = open(nfevent, 'r')
@@ -85,6 +90,7 @@ def translateRecTs(nfrec, dcol2fullspenames, mode='undated'):
 	return devents
 
 def translateEventList(ldtl, dcol2fullspenames):
+	"""translate vector of events, replacing collapsed species tree labels with full (i.e. uncollapsed) species treee labels"""
 	if len(ldtl)>0:
 		if isinstance(str, ldtl[0]): return [dcol2fullspenames[loc] for loc in ldtl]
 		else: return [tuple(dcol2fullspenames[x] for x in loc) for loc in ldtl]
@@ -92,6 +98,11 @@ def translateEventList(ldtl, dcol2fullspenames):
 		return ldtl
 		
 def translateEventLineage(deventlineages, dcol2fullspenames, drefspeeventTup2Ids=None, verbose=False):
+	"""translate vectors of events stored in a dict by gene lineage, replacing collapsed species tree labels with full (i.e. uncollapsed) species treee labels
+	
+	if drefspeeventTup2Ids is provided, translated events will be stored using unique species tree event id (int) 
+	instead of event tuple describing its type and location: (X, rec[, don]).
+	"""
 	trline = {}
 	for nodelab, levtloc in deventlineages.iteritems():
 		trltups = []
@@ -111,6 +122,16 @@ def translateEventLineage(deventlineages, dcol2fullspenames, drefspeeventTup2Ids
 		return {nodelab:[drefspeeventTup2Ids[evtup] for evtup in levtup] for nodelab, levtup in trline.iteritems()}
 
 def parseRec(nfrec, refspetree=None, drefspeeventTup2Ids=None, onlyLineages=[], recordEvTypes='T', minFreqReport=0, lineageTableOutDir=None, noTranslateSpeTree=False, allEventByLineageByGenetree=False):
+	"""parse reconciled gene tree sample, returning sampled events by gene lineage
+	
+	if allEventByLineageByGenetree is True, return more detailed data, stored in a dict with the following elements: 
+	{
+	 'allrectevtlineages': <dict of all single observed events by lineage by gene tree in the sample>, 
+	 'devtlineagecount': <dict of all events and total observed frequency by lineage>, 
+	 'dexactevt': <dict of frequencies of events, irrespective of the lineage in which they ocurred>'
+	}
+	otherwise (default), only the 'devtlineagecount' is returned.
+	"""
 	print nfrec
 	# parse reconciliation file and extract collapsed species tree, mapping of events (with freq.) on the species tree, and reconciled gene trees
 	colspetree, subspetree, lrecgt, recgtlines, restrictlabs, dnodeevt = pAr.parseALERecFile(nfrec)
@@ -196,6 +217,11 @@ def parseRec(nfrec, refspetree=None, drefspeeventTup2Ids=None, onlyLineages=[], 
 		return devtlineagecount
 			
 def loadNamesAndListRecFiles(nflnfrec, nfgenefamlist, dircons, dirrepl, verbose=False):
+	"""parse data relating to the genes and gene families to process.
+	
+	This includes the table of labels that were changed between original collapsed gene trees (as produced by script mark_unresolved_clades.py)
+	and the species/population-tagged collapsed gene trees (as produced by script replace_species_by_pop_in_gene_trees.py)
+	"""
 	with open(nflnfrec, 'r') as flnfrec:
 		lnfrec = [line.rstrip('\n') for line in flnfrec]
 	with open(nfgenefamlist, 'r') as fgenefamlist:
