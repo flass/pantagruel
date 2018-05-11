@@ -555,7 +555,7 @@ def parse_events(lnfrec, lfams, genefamlist=None, refspetree=None, drefspeeventT
 	
 	return dfamevents
 
-def match_events(lfams, dfamevents, recordEvTypes, drefspeeventId2Tups, genefamlist=None, writeOutDir=None):
+def match_events(lfams, dfamevents, recordEvTypes, drefspeeventId2Tups, genefamlist=None, writeOutDirRad=None):
 	"""from dictionary of reported events, by family and gene lineage, return matrix of pairwise gene event profile similarity"""
 	if genefamlist:
 		genefams = [(genefam.get('replaced_cds_code', genefam['cds_code']), genefam['gene_family_id']) for genefam in genefamlist if (genefam['gene_family_id'] in lfams)]
@@ -564,10 +564,10 @@ def match_events(lfams, dfamevents, recordEvTypes, drefspeeventId2Tups, genefaml
 		for fam in lfams:
 			genefams += [(cdscode, fam) for cdscode in dfamevents[fam]]
 	
-	if writeOutDir:
-		writeOutRad =  os.path.join(writeOutDir, os.path.basename(nfgenefamlist).rsplit('.', 1)[0])
+	if writeOutDirRad:
 		nfpicklePWMatches = writeOutRad+'.PWgeneEventMatches.%s.pickle'%recordEvTypes
 		nfoutblocks =  writeOutRad+'.matchedEventGeneBlocks.%s.tab'%recordEvTypes
+		
 	else:
 		nfpicklePWMatches = nfoutblocks = None
 
@@ -591,12 +591,12 @@ def match_events(lfams, dfamevents, recordEvTypes, drefspeeventId2Tups, genefaml
 		#~ PWMmats['PWMatchesTreeExtent'][genepairi] = treeExtantEventSet(pwmatches, refspetree)
 		#~ PWMmats['PWMatchesTreeExtentMinEvFq'][genepairi] = treeExtantEventSet(pwmatchesMinEvFq, refspetree)
 
-	if writeOut:
+	if writeOutDirRad:
 		# write output
 		for PWMstat, PWMmat in PWMmats.iteritems():
 			nfmat = nfgenefamlist.rsplit('.', 1)[0]+'.%s.%s.csv'%(PWMstat, recordEvTypes)
 			with open(nfmat, 'w') as fmat:
-				fmat.write(','+','.join(genelist)+'\n')
+				nfmat = writeOutRad+'.%s.%s.csv'%(PWMstat, recordEvTypes)
 				#~ PWMmat.tofile(fmat, sep=',')
 				for i, gene in enumerate(genelist):
 					fmat.write(','.join([gene]+[str(x) for x in PWMmat[i,]])+'\n')
@@ -636,7 +636,7 @@ if __name__=='__main__':
 	
 	nfpop = dopt['--populations']
 	nfrefspetree = dopt['--reftree']
-	nfgenefamlist = dopt['--genefams']
+	nfgenefamlist = dopt.get('--genefams')
 	dircons = dopt.get('--dir_constraints')
 	dirrepl = dopt.get('--dir_replaced')
 	recordEvTypes = dopt.get('--evtype', 'DTS')
@@ -674,4 +674,6 @@ if __name__=='__main__':
 	##
 	
 	if runmode in ['match','all']:
-		match_events(lfams, dfamevents,recordEvTypes, genefamlist, drefspeeventId2Tups)
+		if dirTableOut: writeOutDirRad = os.path.join(dirTableOut, 'gene_event_matches', (os.path.basename(genefamlist).rsplit('.', 1)[0] if genefamlist else 'gene_event_matches'))
+		else: writeOutDirRad = None
+		match_events(lfams, dfamevents,recordEvTypes, genefamlist, drefspeeventId2Tups, writeOutDirRad)
