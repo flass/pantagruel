@@ -425,13 +425,13 @@ def matchEventInLineages(dfamevents, genei, fami, genej, famj, noSameFam=True, b
 def searchPWMatches(dfamevents, genefams, nfpicklePWMatches=None, dspe2pop={}, drefspeeventId2Tups={}, eventtypes='T'):
 	PWMatches = {}
 	for i in range(len(genefams)-1):
-		genei, genri, fami = [genefams[i][f] for f in gefagr]
-		print genei, genri, fami
+		genri, fami = genefams[i]
+		#~ print genri, fami
 		for j in range(i+1, len(genefams)):
 			genej, genrj, famj = [genefams[j][f] for f in gefagr]
-			#~ print genej, genrj, famj
+			#~ print genrj, famj
 			for matchedT, fi, fj in matchEventInLineages(dfamevents, genri, fami, genrj, famj, dspe2pop=dspe2pop, drefspeeventId2Tups=drefspeeventId2Tups, eventtypes=eventtypes):
-				PWMatches.setdefault((genei, genej), []).append((matchedT, fi, fj)) 
+				PWMatches.setdefault((genri, genrj), []).append((matchedT, fi, fj)) 
 	if nfpicklePWMatches:
 		with open(nfpicklePWMatches, 'wb') as fpicklePWMatches:
 			 pickle.dump(PWMatches, fpicklePWMatches, protocol=2)
@@ -555,9 +555,14 @@ def parse_events(lnfrec, lfams, genefamlist=None, refspetree=None, drefspeeventT
 	
 	return dfamevents
 
-def match_events(genefamlist, lfams, dfamevents,recordEvTypes, drefspeeventId2Tups, writeOutDir=None):
+def match_events(lfams, dfamevents, recordEvTypes, drefspeeventId2Tups, genefamlist=None, writeOutDir=None):
 	"""from dictionary of reported events, by family and gene lineage, return matrix of pairwise gene event profile similarity"""
-	genefams = [genefam for genefam in genefamlist if (genefam['gene_family_id'] in lfams)]
+	if genefamlist:
+		genefams = [(genefam.get('replaced_cds_code', genefam['cds_code']), genefam['gene_family_id']) for genefam in genefamlist if (genefam['gene_family_id'] in lfams)]
+	else:
+		genefams = []
+		for fam in lfams:
+			genefams += [(cdscode, fam) for cdscode in dfamevents[fam]]
 	
 	if writeOutDir:
 		writeOutRad =  os.path.join(writeOutDir, os.path.basename(nfgenefamlist).rsplit('.', 1)[0])
@@ -669,4 +674,4 @@ if __name__=='__main__':
 	##
 	
 	if runmode in ['match','all']:
-		match_events(genefamlist, lfams, dfamevents,recordEvTypes, drefspeeventId2Tups)
+		match_events(lfams, dfamevents,recordEvTypes, genefamlist, drefspeeventId2Tups)
