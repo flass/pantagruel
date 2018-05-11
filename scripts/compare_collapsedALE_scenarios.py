@@ -218,6 +218,12 @@ def parseRec(nfrec, refspetree=None, drefspeeventTup2Ids=None, onlyLineages=[], 
 	else:
 		return devtlineagecount
 
+# 
+def parseRecTupArgs(args):
+	"""wrapper function with arguments passed as a tuple"""
+	nfrec, refspetree, drefspeeventTup2Ids, onlyLineages, recordEvTypes, minFreqReport, lineageTableOutDir = args
+	return parseRec(nfrec, refspetree, drefspeeventTup2Ids, onlyLineages, recordEvTypes, minFreqReport, lineageTableOutDir)
+
 def loadLabelAliases(nfgenefamlist, dircons=None, dirrepl=None, nbthreads=1, verbose=False):
 	with open(nfgenefamlist, 'r') as fgenefamlist:
 		header = fgenefamlist.readline().strip(' \n').split(',')
@@ -535,16 +541,19 @@ def parse_events(lnfrec, lfams, genefamlist=None, refspetree=None, drefspeeventT
 	if genefamlist: ingenes = [genefam.get('replaced_cds_code', genefam['cds_code']) for genefam in genefamlist if (genefam['gene_family_id'] in lfams)]
 	else: ingenes=[]
 	
-	# define wrapper function with set arguments, but the input reconciliation file
-	def parseRecSetArgs(nfrec):
-		return parseRec(nfrec, refspetree, drefspeeventTup2Ids, onlyLineages=ingenes, recordEvTypes=recordEvTypes, minFreqReport=minFreqReport, \
-						lineageTableOutDir=(os.path.join(dirTableOut, 'gene_tree_lineages') if dirTableOut else None))
+	#~ # define wrapper function with set arguments, but the input reconciliation file
+	#~ def parseRecSetArgs(nfrec):
+		#~ return parseRec(nfrec, refspetree, drefspeeventTup2Ids, onlyLineages=ingenes, recordEvTypes=recordEvTypes, minFreqReport=minFreqReport, \
+						#~ lineageTableOutDir=(os.path.join(dirTableOut, 'gene_tree_lineages') if dirTableOut else None))
+	largs = [(nfrec, refspetree, drefspeeventTup2Ids, ingenes, recordEvTypes, minFreqReport, (os.path.join(dirTableOut, 'gene_tree_lineages') if dirTableOut else None)) for nfrec in lnfrec]
 
 	if nbthreads==1:
-		ldevents = [parseRecSetArgs(nfrec) for nfrec in lnfrec]
+		#~ ldevents = [parseRecSetArgs(nfrec) for nfrec in lnfrec]
+		ldevents = [parseRecTupArgs(args) for args in largs]
 	else:
 		pool = mp.Pool(processes=nbthreads)
-		ldevents = pool.map(parseRecSetArgs, lnfrec)
+		#~ ldevents = pool.map(parseRecSetArgs, lnfrec)
+		ldevents = pool.map(parseRecTupArgs, largs)
 		
 	dfamevents = dict(zip(lfams, ldevents))
 	
