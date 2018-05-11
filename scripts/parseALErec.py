@@ -10,7 +10,7 @@ def getOriSpeciesFromEventLab(eventlab, sgsep='_'):
 	elab = eventlab.split('@')[1] if '@' in eventlab else eventlab
 	return elab.split('->')[0].split(sgsep)[0]
 
-def parseRecGeneTree(recgt, spet, dexactevt, recgtsample, nsample, sgsep='_', restrictlabs=[], fillDTLSdict=True, recordEvTypes='DTL', excludeTaggedClades='_RC-clade'):
+def parseRecGeneTree(recgt, spet, dexactevt, recgtsample, nsample, sgsep='_', restrictlabs=[], fillDTLSdict=True, recordEvTypes='DTL', excludeTaggedLeaves=None, excludeTaggedSubtrees=None):
 	"""extract list of events from one reconciled gene tree as found in output of ALEml_undated (Szolosi et al., 2013; https://github.com/ssolo/ALE)
 	
 	This function returns two objects:
@@ -35,6 +35,10 @@ def parseRecGeneTree(recgt, spet, dexactevt, recgtsample, nsample, sgsep='_', re
 	"""
 	def parseRecGTNode(node, dlevt, dnodeallevt):
 		nodelab = node.label()
+		if node.is_leaf() and (excludeTaggedLeaves in nodelab):
+			# the species assignment of this leaf is not certain (inferred)
+			# and thus events leading directly to this leaf are not to be trusted and should be skipped
+			return
 		nodeid = node.nodeid()
 		if not nodelab:
 			print node
@@ -92,9 +96,9 @@ def parseRecGeneTree(recgt, spet, dexactevt, recgtsample, nsample, sgsep='_', re
 				#~ else:
 					#~ # a simple speciation event ; already delt with
 					#~ pass
-		if excludeTaggedClades:
+		if excludeTaggedSubtrees:
 			alllabext = [lab.split('_', 1)[1] for lab in node.get_leaf_labels()]
-			if (len(set(alllabext)) == 1) and (excludeTaggedClades in alllabext[0]):
+			if (len(set(alllabext)) == 1) and (excludeTaggedSubtrees in alllabext[0]):
 				# the subtree below this node is an artificial addition to the reconciled gene tree and should be skipped
 				return
 		for child in node.get_children():
