@@ -217,8 +217,55 @@ def parseRec(nfrec, refspetree=None, drefspeeventTup2Ids=None, onlyLineages=[], 
 		return retd
 	else:
 		return devtlineagecount
-			
-def loadNamesAndListRecFiles(nflnfrec, nfgenefamlist, dircons, dirrepl, verbose=False):
+
+def loadLabelAliases(nfgenefamlist, dircons=None, dirrepl=None, nbthreads=1, verbose=False):
+	with open(nfgenefamlist, 'r') as fgenefamlist:
+		header = fgenefamlist.readline().strip(' \n').split(',')
+		# remove trailing whitespace present after gene_family_id ; account for PostgreSQL footer line count of fetched rows
+		genefamlist = [dict(zip(header, line.replace(' ,', ',').strip(' \n').split(','))) for line in fgenefamlist if (not line.endswith('rows)\n'))] 
+	dreplacedlab = {}
+	for fam in lfams:
+		if dircons:
+			globcons = "%s/%s/*%s*"%(dircons, fam, constrainttag)
+			if verbose: print globcons
+			lnfcons = glob.glob(globcons)
+			constraintclades = parseMrBayesConstraints(lnfcons)
+		else:
+			constraintclades = []
+		if dirrepl:
+			globreplaced = "%s/%s*%s"%(dirrepl, fam, replacedtag)
+			if verbose: print globreplaced
+			lnfreplaced = glob.glob(globreplaced)
+			if len(lnfreplaced)!=1:
+				sys.stderr.write("Warning! will use first file among those found matching pattern '%s'\nas reference for collapsed gene tree tip label aliases:\n%s\n"%( globreplaced, '\n'.join(lnfreplaced) ))
+			nfreplaced = lnfreplaced[0]
+			prevclaorgene = ''
+			with open(nfreplaced, 'r') as freplaced:
+				for line in freplaced:
+					claorgene, repllab = line.rstrip('\n').split('\t')
+					if claorgene in constraintclades:
+						for genelab in constraintclades[claorgene]:
+							dreplacedlab[genelab] = repllab
+					else:
+						if claorgene == prevclaorgene: continue
+						# NOTE: this will always leave only one leaf label associated with a collapsed clade,
+						# even when gene tree collapsed clade was replaced by replacement clde (tagged 'RC')
+						# with multiple leaves, mimicking the species tree : because these clades are artificially
+						# introduced in the gene trees and will always show perfect agreement with the species trere,
+						# spurious association of S events with total support would be seen between similar RC clades
+						# in different gene families.
+						# (events recorded withtin such RC clade are actually discarded in pAr.parseRecGeneTree(),
+						# as they detected as clade encompassing allleaves with identical RC tag)
+						dreplacedlab[claorgene] = repllab
+					prevclaorgene = claorgene
+	
+	for genefam in genefamlist:
+		genelab = genefam['cds_code']
+		if genelab in dreplacedlab:
+			genefam['replaced_cds_code'] = dreplacedlab[genelab]
+	return genefamlist
+
+def loadLabelAliasesAndListRecFiles(nflnfrec, nfgenefamlist=None, dircons=None, dirrepl=None, nbthreads=1, verbose=False):
 	"""parse data relating to the genes and gene families to process.
 	
 	This includes the table of labels that were changed between original collapsed gene trees (as produced by script mark_unresolved_clades.py)
@@ -226,47 +273,9 @@ def loadNamesAndListRecFiles(nflnfrec, nfgenefamlist, dircons, dirrepl, verbose=
 	"""
 	with open(nflnfrec, 'r') as flnfrec:
 		lnfrec = [line.rstrip('\n') for line in flnfrec]
-	with open(nfgenefamlist, 'r') as fgenefamlist:
-		header = fgenefamlist.readline().strip(' \n').split(',')
-		# remove trailing whitespace present after gene_family_id ; account for PostgreSQL footer line count of fetched rows
-		genefamlist = [dict(zip(header, line.replace(' ,', ',').strip(' \n').split(','))) for line in fgenefamlist if (not line.endswith('rows)\n'))] 
 	lfams = [os.path.basename(nfrec).split('-')[0] for nfrec in lnfrec]
-	dreplacedlab = {}
-	for fam in lfams:
-		globcons = "%s/%s/*%s*"%(dircons, fam, constrainttag)
-		if verbose: print globcons
-		lnfcons = glob.glob(globcons)
-		constraintclades = parseMrBayesConstraints(lnfcons)
-		globreplaced = "%s/%s*%s"%(dirrepl, fam, replacedtag)
-		if verbose: print globreplaced
-		lnfreplaced = glob.glob(globreplaced)
-		if len(lnfreplaced)!=1:
-			sys.stderr.write("Warning! will use first file among those found matching pattern '%s'\nas reference for collapsed gene tree tip label aliases:\n%s\n"%( globreplaced, '\n'.join(lnfreplaced) ))
-		nfreplaced = lnfreplaced[0]
-		prevclaorgene = ''
-		with open(nfreplaced, 'r') as freplaced:
-			for line in freplaced:
-				claorgene, repllab = line.rstrip('\n').split('\t')
-				if claorgene in constraintclades:
-					for genelab in constraintclades[claorgene]:
-						dreplacedlab[genelab] = repllab
-				else:
-					if claorgene == prevclaorgene: continue
-					# NOTE: this will always leave only one leaf label associated with a collapsed clade,
-					# even when gene tree collapsed clade was replaced by replacement clde (tagged 'RC')
-					# with multiple leaves, mimicking the species tree : because these clades are artificially
-					# introduced in the gene trees and will always show perfect agreement with the species trere,
-					# spurious association of S events with total support would be seen between similar RC clades
-					# in different gene families.
-					# (events recorded withtin such RC clade are actually discarded in pAr.parseRecGeneTree(),
-					# as they detected as clade encompassing allleaves with identical RC tag)
-					dreplacedlab[claorgene] = repllab
-				prevclaorgene = claorgene
-	
-	for genefam in genefamlist:
-		genelab = genefam['cds_code']
-		genrep = dreplacedlab.get(genelab, genelab)
-		genefam['replaced_cds_code'] = genrep
+	if nfgenefamlist: genefamlist = loadLabelAliases(nfgenefamlist, dircons=dircons, dirrepl=dirrepl, nbthreads=nbthreads, verbose=verbose)
+	else: genefamlist = []
 	return [lnfrec, lfams, genefamlist]
 	
 def loadRefPopTree(nfrefspetree, nfpop):
@@ -521,9 +530,10 @@ def treeExtantEventSet(levents, refspetree, fun=max):
 	if fun is max: ldist.append(0)
 	return fun(ldist)
 
-def parse_events(lnfrec, lfams, genefamlist, refspetree=None, drefspeeventTup2Ids={}, recordEvTypes='DTS', minFreqReport=0, dirTableOut=None, nbthreads=1):
+def parse_events(lnfrec, lfams, genefamlist=None, refspetree=None, drefspeeventTup2Ids={}, recordEvTypes='DTS', minFreqReport=0, dirTableOut=None, nbthreads=1):
 	"""from list of reconciliation files, families and genes to consider, return dictionary of reported events, by family and gene lineage"""
-	ingenes = [genefam['replaced_cds_code'] for genefam in genefamlist if (genefam['gene_family_id'] in lfams)]
+	if genefamlist: ingenes = [genefam.get('replaced_cds_code', genefam['cds_code']) for genefam in genefamlist if (genefam['gene_family_id'] in lfams)]
+	else: ingenes=[]
 	
 	# define wrapper function with set arguments, but the input reconciliation file
 	def parseRecSetArgs(nfrec):
@@ -619,11 +629,11 @@ if __name__=='__main__':
 		except KeyError:
 			raise ValueError, "must provide input file through either '--rec_sample_list' or '--pickled_events' options"
 	
-	dircons = dopt['--dir_constraints']
-	dirrepl = dopt['--dir_replaced']
 	nfpop = dopt['--populations']
 	nfrefspetree = dopt['--reftree']
 	nfgenefamlist = dopt['--genefams']
+	dircons = dopt.get('--dir_constraints')
+	dirrepl = dopt.get('--dir_replaced')
 	recordEvTypes = dopt.get('--evtype', 'DTS')
 	minFreqReport = float(dopt.get('--minfreq', 0))
 	dirTableOut = dopt.get('--dir_table_out',)
@@ -644,7 +654,7 @@ if __name__=='__main__':
 	refspetree, dspe2pop = loadRefPopTree(nfrefspetree, nfpop)
 	drefspeeventTup2Ids, drefspeeventId2Tups = generateEventRefDB(refspetree, model='undated', refTreeTableOutDir=(os.path.join(dirTableOut, 'ref_species_tree') if dirTableOut else None))
 	
-	lnfrec, lfams, genefamlist = loadNamesAndListRecFiles(nflnfrec, nfgenefamlist, dircons, dirrepl)
+	lnfrec, lfams, genefamlist = loadLabelAliasesAndListRecFiles(nflnfrec, nfgenefamlist, dircons, dirrepl, nbthreads=nbthreads)
 
 	if loaddfamevents:
 		with open(nfpickle, 'rb') as fpickle:
