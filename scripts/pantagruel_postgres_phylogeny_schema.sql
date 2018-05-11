@@ -5,7 +5,8 @@ SET search_path = phylogeny;
 CREATE TABLE species_tree (
   branch_id SMALLINT PRIMARY KEY,
   parent_branch_id SMALLINT,
-  branch_name VARCHAR(50) DEFAULT NULL    -- only for tips and clade/populationancestors
+  branch_name VARCHAR(50) DEFAULT NULL,   -- only for tips and clade/populationancestors
+  is_tip BOOL 
 );
 
 CREATE TYPE eventtype AS ENUM ('D', 'T', 'S', 'SL', 'L', 'O');

@@ -73,15 +73,26 @@ def translateEventList(ldtl, dcol2fullspenames):
 	else:
 		return ldtl
 		
-def translateEventLineage(deventlineages, dcol2fullspenames, drefspeeventTup2Ids=None):
-	tline = {nodelab:[evtloc[:1]+tuple(dcol2fullspenames[x] for x in evtloc[1:]) for evtloc in levtloc] for nodelab, levtloc in deventlineages.iteritems()}
-	if not drefspeevents:
-		return tline
+def translateEventLineage(deventlineages, dcol2fullspenames, drefspeeventTup2Ids=None, verbose=False):
+	trline = {}
+	for nodelab, levtloc in deventlineages.iteritems():
+		trltups = []
+		for evtloc in levtloc:
+			trloc = tuple(dcol2fullspenames[x] for x in evtloc[1:])
+			if len(trloc)>1 and len(set(trloc))==1:
+				# trivial transfer event due to donor and the recipient in the collapsed species tree being nested in the full tree
+				if verbose: print "ignore:", evtloc, ' ->', trloc
+				continue
+			trtup = evtloc[:1]+trloc
+			trltups.append(trtup)
+		trline[nodelab] = trltups
+	if not drefspeeventTup2Ids:
+		return trline
 	else:
 		# lighter version encoding events just by an integer referring to species tree events reference table
-		return {nodelab:drefspeeventTup2Ids[evtup] for nodelab, evtup in tline.iteritems()}
+		return {nodelab:[drefspeeventTup2Ids[evtup] for evtup in levtup] for nodelab, levtup in trline.iteritems()}
 
-def parseRec(nfrec, refspetree=None, drefspeeventTup2Ids=None, onlyLineages=[], recordEvTypes='T', dirTableOut=None, noTranslateSpeTree=False, allEventByLineageByGenetree=False):
+def parseRec(nfrec, refspetree=None, drefspeeventTup2Ids=None, onlyLineages=[], recordEvTypes='T', minFreqReport=0, lineageTableOutDir=None, noTranslateSpeTree=False, allEventByLineageByGenetree=False):
 	print nfrec
 	# parse reconciliation file and extract collapsed species tree, mapping of events (with freq.) on the species tree, and reconciled gene trees
 	colspetree, subspetree, lrecgt, recgtlines, restrictlabs, dnodeevt = pAr.parseALERecFile(nfrec)
@@ -132,7 +143,17 @@ def parseRec(nfrec, refspetree=None, drefspeeventTup2Ids=None, onlyLineages=[], 
 		for geneleaflab, allreclineages in allrectevtlineages.iteritems():
 			allrecevt = reduce(lambda x, y: x+y, allreclineages)
 			# combine event counts across the sample
-			devtlineagecount[geneleaflab] = {evtup:allrecevt.count(evtup) for evtup in set(allrecevt)} 
+			fevent = {evtup:allrecevt.count(evtup) for evtup in set(allrecevt)}
+			if minFreqReport>0:
+				# skips the low-frequency events
+				if float(fevent)/nsample < minFreqReport: continue
+			devtlineagecount[geneleaflab] = fevent
+	elif minFreqReport>0:
+		# cleanup by deleting low-frequency events a posteriori
+		for geneleaflab in devtlineagecount:
+			for evtup, fevent in devtlineagecount[geneleaflab].iteritems():
+				if float(fevent)/nsample < minFreqReport:
+					del devtlineagecount[geneleaflab][evtup]
 	
 	# optionally write out events gene by gene (those that occured at least once above a gene in [rooted] reconciled gene tree, and at which frequency)
 	if lineageTableOutDir:
@@ -143,7 +164,8 @@ def parseRec(nfrec, refspetree=None, drefspeeventTup2Ids=None, onlyLineages=[], 
 			for geneleaflab in geneleaflabs:
 				eventlineage = devtlineagecount[geneleaflab]
 				for evtup, freq in eventlineage.iteritems():
-					fTableOut.write('\t'.join((geneleaflab,)+evtup+(str(freq),))+'\n')
+					if drefspeeventTup2Ids: fTableOut.write('\t'.join((geneleaflab, str(evtup), str(freq)))+'\n')
+					else: fTableOut.write('\t'.join((geneleaflab,)+evtup+(str(freq),))+'\n')
 		print "stored events listed by gene lineage in '%s'"%nfTableOut
 	
 	if allEventByLineageByGenetree:
@@ -200,6 +222,7 @@ def loadRefPopTree(nfrefspetree, nfpop):
 			lnamepops.append((lsp[0], tuple(lsp[1].split())))
 	refspetree = tree2.AnnotatedNode(file=nfrefspetree)
 	refspetree.complete_internal_labels(order=0, ffel=True)
+	refspetree.complete_node_ids(force=True)
 	annotatePopulationInSpeciesTree(refspetree, lnamepops, returnCopy=False, returnAncNodes=False)
 	dspe2pop = getdspe2pop(lnamepops)
 	nfrefspetreeout = nfrefspetree.rsplit('.', 1)[0]+'_internalPopulations.nwk'
@@ -220,8 +243,9 @@ def generateEventRefDB(refspetree, model='undated', refTreeTableOutDir=None):
 	for node in refspetree:
 		nid = node.nodeid()
 		nlab = node.label()
+		fnid = node.father_nodeid()
 		if model=='undated':
-			if refTreeTableOutDir: foutspetree.write('\t'.join((str(nid), str(node.father_nodeid()), nlab))+'\n')
+			if refTreeTableOutDir: foutspetree.write('\t'.join((str(nid), str(fnid if fnid else ''), nlab, str(int(node.is_leaf()))))+'\n')
 			for et in pAr.eventTypes:
 				evtup = (et, nlab)
 				if et!='T':
@@ -469,7 +493,8 @@ PWMstats = [ \
 if __name__=='__main__':
 
 	opts, args = getopt.getopt(sys.argv[1:], 'hv', ['rec_sample_list=', 'pickled_events=', 'dir_constraints=', 'dir_replaced=', \
-	                                               'populations=', 'reftree=', 'genefams=', 'evtype=', 'dir_table_out=', \
+	                                               'populations=', 'reftree=', 'genefams=', \
+	                                               'evtype=', 'minfreq=', 'dir_table_out=', \
 												   'threads=', 'help', 'verbose']) #, 'reuse=', 'verbose=', 'max.recursion.limit=', 'logfile='
 	dopt = dict(opts)
 	
@@ -497,6 +522,7 @@ if __name__=='__main__':
 	nfrefspetree = dopt['--reftree']
 	nfgenefamlist = dopt['--genefams']
 	recordEvTypes = dopt.get('--evtype', 'DTS')
+	minFreqReport = float(dopt.get('--minfreq', 0))
 	dirTableOut = dopt.get('--dir_table_out',)
 	nbthreads = int(dopt.get('--threads', 1))
 	verbose = ('-v' in dopt) or ('--verbose' in dopt)
@@ -518,7 +544,8 @@ if __name__=='__main__':
 		ingenes = [genefam['replaced_cds_code'] for genefam in genefamlist if (genefam['gene_family_id'] in lfams)]
 		# define wrapper function with set arguments, but the input reconciliation file
 		def parseRecSetArgs(nfrec):
-			return parseRec(nfrec, refspetree, drefspeeventTup2Ids, onlyLineages=ingenes, recordEvTypes=recordEvTypes, lineageTableOutDir=(os.path.join(dirTableOut, 'gene_tree_lineages') if dirTableOut else None))
+			return parseRec(nfrec, refspetree, drefspeeventTup2Ids, onlyLineages=ingenes, recordEvTypes=recordEvTypes, minFreqReport=minFreqReport, \
+			                lineageTableOutDir=(os.path.join(dirTableOut, 'gene_tree_lineages') if dirTableOut else None))
 
 		if nbthreads==1:
 			ldevents = [parseRecSetArgs(nfrec) for nfrec in lnfrec]
