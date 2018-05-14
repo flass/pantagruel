@@ -536,8 +536,9 @@ def treeExtantEventSet(levents, refspetree, fun=max):
 	if fun is max: ldist.append(0)
 	return fun(ldist)
 
-def parse_events(lnfrec, lfams, genefamlist=None, refspetree=None, drefspeeventTup2Ids={}, recordEvTypes='DTS', minFreqReport=0, dirTableOut=None, nbthreads=1):
+def parse_events(lnfrec, lfams=None, genefamlist=None, refspetree=None, drefspeeventTup2Ids={}, recordEvTypes='DTS', minFreqReport=0, dirTableOut=None, nbthreads=1):
 	"""from list of reconciliation files, families and genes to consider, return dictionary of reported events, by family and gene lineage"""
+	if not lfams: lfams = [os.path.basename(nfrec).split('-')[0] for nfrec in lnfrec]
 	if genefamlist: ingenes = [genefam.get('replaced_cds_code', genefam['cds_code']) for genefam in genefamlist if (genefam['gene_family_id'] in lfams)]
 	else: ingenes=[]
 	
@@ -555,6 +556,7 @@ def parse_events(lnfrec, lfams, genefamlist=None, refspetree=None, drefspeeventT
 		#~ ldevents = pool.map(parseRecSetArgs, lnfrec)
 		ldevents = pool.map(parseRecTupArgs, largs)
 		
+	lfams = [os.path.basename(nfrec).split('-')[0] for nfrec in lnfrec]
 	dfamevents = dict(zip(lfams, ldevents))
 	
 	nfpickle = nflnfrec+pickletag
