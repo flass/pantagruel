@@ -634,24 +634,27 @@ def connectpostgresdb(dbname, **kw):
 	psycopg2 = __import__('psycopg2')
 	return psycopg2.connect(dbname=dbname, **kw)
 	
-def connectpostgresdb(dbname):
+def connectsqlitedb(dbname):
 	sqlite3 = __import__('sqlite3')
 	return sqlite3.connect(dbname)
 
-def query_matching_events(dbcon, nsample=1.0, lfams=None, evtypes=None, genefamlist=None, writeOutDirRad=None, dbengine='postgres'): #, returnDict=False
-	dbcur = dbcon.cursor()
-	dbcul = dbcon.cursor()
-	if writeOutDirRad: nfout = os.path.join(writeOutDirRad, 'matching_events', 'matching_events.tab')
-	
+def get_dbconnection(dbname, dbengine, **kw):
 	if (dbengine.lower() in ['postgres', 'postgresql', 'psql', 'pg']):
+		dbcon = connectpostgresdb(dbname, **kw)
 		dbtype = 'postgres'
 		valtoken='%s'
 		dbcur.execute("set search_path = genome, phylogeny;")
 	elif (dbengine.lower() in ['sqlite', 'sqlite3']):
+		dbcon = connectsqlitedb(dbname)
 		dbtype = 'sqlite'
 		valtoken='?'
 	else:
 		raise ValueError,  "wrong DB type provided: '%s'; select one of dbengine={'postgres[ql]'|'sqlite[3]'}"%dbengine
+	return (dbcon, dbtype, valtoken)
+
+def _query_matching_events(args):
+	evtid, dbname, nsample, lfams, evtypes, genefamlist, writeOutDirRad, dbtype = args
+	
 	if lfams:
 		dbcur.execute("create temp table lfams (gene_family_id, VARCHAR(20);" )
 		#~ insertq = "insert into lfams values (%s), VARCHAR(20);"%valtoken
@@ -660,34 +663,45 @@ def query_matching_events(dbcon, nsample=1.0, lfams=None, evtypes=None, genefaml
 		dbcur.executemany("insert into lfams values (%s), VARCHAR(20);"%valtoken, lfams)
 		lfamrestrict = "inner join lfams using (gene_family_id) "
 	else:
-		#~ dbcur.execute("create temp view lfams as select gene_family_id from gene_families;")
 		lfamrestrict = ""
+	
+	fout = open(nfout, 'w')
+	dbcul = dbcon.cursor()
+	# get all the genes which event lineage features this event
+	dbcul.execute("""select cds_code, gene_family_id, freq 
+					 from gene_lineage_events 
+					 inner join coding_sequences using (cds_code) %s 
+					 where event_id=%s ;"""%(lfamrestrict, valtoken), (evtid,))
+	matchgenes = dbcul.fetchall()
+	for genetup1, genetup2 in itertools.combinations(matchgenes, 2):
+		gene1, fam1, freq1 = genetup1
+		gene2, fam2, freq2 = genetup2
+		if fam1!=fam2: # filter genes from same families
+			f1 = max(float(freq1)/nsample, 1.0)
+			f2 = max(float(freq2)/nsample, 1.0)
+			dgenepaircummulfreq.setdefault((gene1, gene2), 0.0)
+			dgenepaircummulfreq[(gene1, gene2)] += f1*f2
+	evtid = dbcur.fetchone()
+	return dgenepaircummulfreq
+	
+def dbquery_matching_events(dbname, nsample=1.0, lfams=None, evtypes=None, genefamlist=None, writeOutDirRad=None, dbengine='postgres', threads=1, **kw): #, returnDict=False
+	if writeOutDirRad: nfout = os.path.join(writeOutDirRad, 'gene_event_matches', 'matching_events.tab')
+	dbcon, dbtype, valtoken = get_dbconnection(dbname, dbengine, **kw)
+	dbcur = dbcon.cursor()
+	
 	if isinstance(evtypes, str): evtyperestrict = "where event_type in %s"%repr(tuple(evtypes.split('')))
 	elif (isinstance(evtypes, list) or isinstance(evtypes, tuple)):  evtyperestrict = "where event_type in %s"%repr(tuple(evtypes))
 	else: evtyperestrict = ""
-		
 	
 	# get set of events
 	dgenepaircummulfreq = {}
 	dbcur.execute("select distinct event_id from gene_lineage_events %;"%(evtyperestrict))
-	evtid = dbcur.fetchone()
-	fout = open(nfout, 'w')
-	while evtid:
-		# get all the genes which event lineage features this event
-		dbcul.execute("""select cds_code, gene_family_id, freq 
-		                 from gene_lineage_events 
-		                 inner join coding_sequences using (cds_code) %s 
-		                 where event_id=%s ;"""%(lfamrestrict, valtoken), (evtid,))
-		matchgenes = dbcul.fetchall()
-		for genetup1, genetup2 in itertools.combinations(matchgenes, 2):
-			gene1, fam1, freq1 = genetup1
-			gene2, fam2, freq2 = genetup2
-			if fam1!=fam2: # filter genes from same families
-				f1 = max(float(freq1)/nsample, 1.0)
-				f2 = max(float(freq2)/nsample, 1.0)
-				dgenepaircummulfreq.setdefault((gene1, gene2), 0.0)
-				dgenepaircummulfreq[(gene1, gene2)] += f1*f2
-		evtid = dbcur.fetchone()
+	ltevtids = dbcur.fetchall()
+	
+	if trheads==1:
+		for tevtid in ltevtids:
+			dgenepaircummulfreq.update( _query_matching_events((tevtid[0], dbname, nsample, lfams, evtypes, genefamlist, writeOutDirRad, dbtype)) )
+		
 	if writeOutDirRad: 
 		for genepair, cummulfreq in dgenepaircummulfreq.iteritems():
 			fout.write('%s\t%f\n'%('\t'.join(genepair), cummulfreq))
@@ -720,25 +734,24 @@ if __name__=='__main__':
 	
 	if '--rec_sample_list' in dopt:
 		nflnfrec = dopt['--rec_sample_list']
+		dbengine = None
 		loaddfamevents = False
 	elif '--events_from_pickle' in dopt:
 		nfpickle = dopt['--events_from_pickle']
 		loaddfamevents = True
 	elif '--events_from_postgresql_db' in dopt:
 		dbname = dopt['--events_from_postgresql_db']
-		dbcon = connectpostgresdb(dbname)
+		dbengine = 'postgres'
 		loaddfamevents = True
 	elif '--events_from_sqlite_db' in dopt:
 		dbname = dopt['--events_from_sqlite_db']
-		dbcon = connectsqlitedb(dbname)
+		dbengine = 'sqlite'
 		loaddfamevents = True
 	else:
 		raise ValueError, "must provide input file through either '--rec_sample_list' or '--pickled_events' options"
 	
 	dirTableOut = dopt.get('--dir_table_out')
 	nfpickleOut = dopt.get('--events_to_pickle')
-	if (runmode in ['parse','all']) and not (nfpickleOut or dirTableOut):
-		raise ValueError, "an output option for parsed reconciliation must be chosen between '--dir_table_out' and '--events_to_pickle'"
 	
 	nfpop = dopt['--populations']
 	nfrefspetree = dopt['--reftree']
@@ -752,6 +765,8 @@ if __name__=='__main__':
 	runmode = dopt.get('--runmode', 'all')
 	if not runmode in ['parse','match','all']:
 		raise ValueError, "run mode must be one of {parse|match|all}"
+	if (runmode in ['parse','all']) and not (nfpickleOut or dirTableOut):
+		raise ValueError, "an output option for parsed reconciliation must be chosen between '--dir_table_out' and '--events_to_pickle'"
 	
 	pickletag = '.parsedRecs.%s.pickle'%recordEvTypes
 	
@@ -781,4 +796,11 @@ if __name__=='__main__':
 	if runmode in ['match','all']:
 		if dirTableOut: writeOutDirRad = os.path.join(dirTableOut, 'gene_event_matches', (os.path.basename(genefamlist).rsplit('.', 1)[0] if genefamlist else 'gene_event_matches'))
 		else: writeOutDirRad = None
-		match_events(lfams, dfamevents,recordEvTypes, genefamlist, drefspeeventId2Tups, writeOutDirRad)
+		if not dbengine:
+			# rely on loaded or just-computed python objects containing parsed events
+			match_events(lfams, dfamevents,recordEvTypes, genefamlist, drefspeeventId2Tups, writeOutDirRad)
+		else:
+			# rely on database records of parsed events
+			
+			
+			
