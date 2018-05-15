@@ -14,8 +14,8 @@ CREATE TYPE phylogeny.eventtype AS ENUM ('D', 'T', 'S', 'SL', 'L', 'O');
 CREATE TABLE phylogeny.species_tree_events (
   event_id INT PRIMARY KEY,
   event_type eventtype NOT NULL,
-  rec_branch_id SMALLINT NOT NULL, -- refers to species_tree (branch_id)
-  don_branch_id SMALLINT          -- refers to species_tree (branch_id)
+  don_branch_id SMALLINT,          -- refers to species_tree (branch_id)
+  rec_branch_id SMALLINT NOT NULL  -- refers to species_tree (branch_id)
 );
 
 CREATE INDEX ON species_tree_events (event_type);

@@ -22,7 +22,7 @@ def parseRecGeneTree(recgt, spet, dexactevt, recgtsample, nsample, sgsep='_', re
 	
 	- a dict object 'dnodeallevt', containing the list all events in one reconciliation scenario
 	(a single scenario anomg the sample), sorted by gene tree node id. 
-	Event are represented as tuples of the following form: (X, rec, [don, ] freq),
+	Event are represented as tuples of the following form: (X, [don, ] rec, freq),
 	where X is the event type
 	'rec' and optionally 'don' (for Ts only) are species tree node labels where the event where inferred,
 	and 'freq' the event frequency of this event in the whole sample.

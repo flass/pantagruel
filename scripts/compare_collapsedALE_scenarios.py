@@ -23,18 +23,19 @@ gefagr = ['cds_code','replaced_cds_code','gene_family_id']
 # stat summary param
 threshMinEventFreq = 10
 PWMstats = [ \
-'PWMatchesSummedFreq']#, \
-#~ 'PWMatchesUniqueCount', \
-#~ 'PWMatchesUniqueCountMinEvFq', \
-#~ 'PWMatchesTreeExtent', \
-#~ 'PWMatchesTreeExtentMinEvFq']
-
+'PWMatchesSummedJointFreq', \
+'PWMatchesSummedMeanFreq', \
+'PWMatchesUniqueCount', \
+'PWMatchesUniqueCountMinEvFq', \
+'PWMatchesTreeExtent', \
+'PWMatchesTreeExtentMinEvFq', \
+]
 ############ Functions
 
 def eventLineages(recgt, dnodeallevt, onlyLeaves=[]):
 	"""oreder events by gene lineage in the reconciled gene tree
 	
-	from a reconciled gene tree and the dict containing all the events in this tree in the format {node_id:(X, rec[, don]), ...}, 
+	from a reconciled gene tree and the dict containing all the events in this tree in the format {node_id:(X, [don, ]rec), ...}, 
 	return a list of event tuples for each gene lineage in the reconciled gene tree, i.e. events located above every tip of the tree"""
 	def get_eventlineage(node, dnodeallevt, allevtlineages):
 		if not node: return []
@@ -101,7 +102,7 @@ def translateEventLineage(deventlineages, dcol2fullspenames, drefspeeventTup2Ids
 	"""translate vectors of events stored in a dict by gene lineage, replacing collapsed species tree labels with full (i.e. uncollapsed) species treee labels
 	
 	if drefspeeventTup2Ids is provided, translated events will be stored using unique species tree event id (int) 
-	instead of event tuple describing its type and location: (X, rec[, don]).
+	instead of event tuple describing its type and location: (X, [don, ]rec).
 	"""
 	trline = {}
 	for nodelab, levtloc in deventlineages.iteritems():
@@ -121,7 +122,7 @@ def translateEventLineage(deventlineages, dcol2fullspenames, drefspeeventTup2Ids
 		# lighter version encoding events just by an integer referring to species tree events reference table
 		return {nodelab:[drefspeeventTup2Ids[evtup] for evtup in levtup] for nodelab, levtup in trline.iteritems()}
 
-def parseRec(nfrec, refspetree=None, drefspeeventTup2Ids=None, onlyLineages=[], recordEvTypes='T', minFreqReport=0, lineageTableOutDir=None, noTranslateSpeTree=False, allEventByLineageByGenetree=False):
+def parseRec(nfrec, refspetree=None, drefspeeventTup2Ids=None, onlyLineages=[], recordEvTypes='T', minFreqReport=0, returnDict=True, lineageTableOutDir=None, noTranslateSpeTree=False, allEventByLineageByGenetree=False):
 	"""parse reconciled gene tree sample, returning sampled events by gene lineage
 	
 	if allEventByLineageByGenetree is True, return more detailed data, stored in a dict with the following elements: 
@@ -132,6 +133,7 @@ def parseRec(nfrec, refspetree=None, drefspeeventTup2Ids=None, onlyLineages=[], 
 	}
 	otherwise (default), only the 'devtlineagecount' is returned.
 	"""
+	if not (returnDict or lineageTableOutDir): raise ValueError, "no output option chosen"
 	print nfrec
 	# parse reconciliation file and extract collapsed species tree, mapping of events (with freq.) on the species tree, and reconciled gene trees
 	colspetree, subspetree, lrecgt, recgtlines, restrictlabs, dnodeevt = pAr.parseALERecFile(nfrec)
@@ -209,20 +211,23 @@ def parseRec(nfrec, refspetree=None, drefspeeventTup2Ids=None, onlyLineages=[], 
 		print "stored events listed by gene lineage in '%s'"%nfTableOut
 	
 	sys.stdout.flush()
-	if allEventByLineageByGenetree:
-		retd = {}
-		retd['allrectevtlineages'] = allrectevtlineages
-		retd['devtlineagecount'] = devtlineagecount
-		retd['dexactevt'] = dexactevt
-		return retd
+	if returnDict:
+		if allEventByLineageByGenetree:
+			retd = {}
+			retd['allrectevtlineages'] = allrectevtlineages
+			retd['devtlineagecount'] = devtlineagecount
+			retd['dexactevt'] = dexactevt
+			return retd
+		else:
+			return devtlineagecount
 	else:
-		return devtlineagecount
+		return
 
 # 
 def parseRecTupArgs(args):
 	"""wrapper function with arguments passed as a tuple"""
-	nfrec, refspetree, drefspeeventTup2Ids, onlyLineages, recordEvTypes, minFreqReport, lineageTableOutDir = args
-	return parseRec(nfrec, refspetree, drefspeeventTup2Ids, onlyLineages, recordEvTypes, minFreqReport, lineageTableOutDir)
+	nfrec, refspetree, drefspeeventTup2Ids, onlyLineages, recordEvTypes, minFreqReport, returnDict, lineageTableOutDir = args
+	return parseRec(nfrec, refspetree, drefspeeventTup2Ids, onlyLineages, recordEvTypes, minFreqReport, returnDict, lineageTableOutDir)
 
 def loadLabelAliases(nfgenefamlist, dircons=None, dirrepl=None, nbthreads=1, verbose=False):
 	with open(nfgenefamlist, 'r') as fgenefamlist:
@@ -302,7 +307,7 @@ def loadRefPopTree(nfrefspetree, nfpop):
 	return (refspetree, dspe2pop)
 	
 def generateEventRefDB(refspetree, model='undated', refTreeTableOutDir=None):
-	"""generates a dict of event tuples (of the form (X, rec, [don, ])). 
+	"""generates a dict of event tuples (of the form (X, [don, ]rec)). 
 	
 	Optionally writes out the reference species tree branches and event info to table files
 	"""
@@ -338,6 +343,40 @@ def generateEventRefDB(refspetree, model='undated', refTreeTableOutDir=None):
 		foutspeevents.close()
 	return (drefspeeventTup2Ids, drefspeeventId2Tups)
 
+def parse_events(lnfrec, lfams=None, genefamlist=None, refspetree=None, \
+                 drefspeeventTup2Ids={}, recordEvTypes='DTS', minFreqReport=0, \
+                 nfpickleOut=None, dirTableOut=None, nbthreads=1):
+	"""from list of reconciliation files, families and genes to consider, return dictionary of reported events, by family and gene lineage"""
+	if not lfams: lfams = [os.path.basename(nfrec).split('-')[0] for nfrec in lnfrec]
+	if genefamlist: ingenes = [genefam.get('replaced_cds_code', genefam['cds_code']) for genefam in genefamlist if (genefam['gene_family_id'] in lfams)]
+	else: ingenes=[]
+	
+	#~ # define wrapper function with set arguments, but the input reconciliation file
+	#~ def parseRecSetArgs(nfrec):
+		#~ return parseRec(nfrec, refspetree, drefspeeventTup2Ids, onlyLineages=ingenes, recordEvTypes=recordEvTypes, minFreqReport=minFreqReport, \
+						#~ lineageTableOutDir=(os.path.join(dirTableOut, 'gene_tree_lineages') if dirTableOut else None))
+	diroutab = (os.path.join(dirTableOut, 'gene_tree_lineages') if dirTableOut else None)
+	returndict = bool(nfpickleOut)
+	largs = [(nfrec, refspetree, drefspeeventTup2Ids, ingenes, recordEvTypes, minFreqReport, returndict, diroutab) for nfrec in lnfrec]
+
+	if nbthreads==1:
+		#~ ldevents = [parseRecSetArgs(nfrec) for nfrec in lnfrec]
+		ldevents = [parseRecTupArgs(args) for args in largs]
+	else:
+		pool = mp.Pool(processes=nbthreads)
+		#~ ldevents = pool.map(parseRecSetArgs, lnfrec)
+		ldevents = pool.map(parseRecTupArgs, largs)
+		
+	lfams = [os.path.basename(nfrec).split('-')[0] for nfrec in lnfrec]
+	dfamevents = dict(zip(lfams, ldevents))
+	
+	if nfpickleOut:
+		with open(nfpickleOut, 'wb') as fpickleOut:
+			pickle.dump(dfamevents, fpickleOut, protocol=2)
+		print "saved 'dfamevents' to file '%s'"%nfpickleOut
+	
+	return dfamevents
+
 def matchEventInLineages(dfamevents, genei, fami, genej, famj, noSameFam=True, blocks={}, dspe2pop={}, drefspeeventId2Tups={}, eventtypes='T', excludeNodeLabels=[], **kw):
 	"""Generator function yielding matched homologous events from different reconciled scenarios. Proceeds by dissecting gene tree tip-to-root lineages.
 	
@@ -352,7 +391,7 @@ def matchEventInLineages(dfamevents, genei, fami, genej, famj, noSameFam=True, b
 	This function takes a input a dict-of-dict-of dict object 'dfamevents', containing the 
 	lists all the sampled event lineages, sorted by families and genes: 
 	dfamevents[fami][genei] should thus return a dict of the following form: 
-	{(X, rec, [don, ]):freq, ...}, 
+	{(X, [don, ]rec, ):freq, ...}, 
 	where keys are tuples of DTL event types ('X' in {D,T,L,S}) and addresses, defined as 'rec' and optionally 'don' 
 	(for horizontal transfers), the labels in species tree of node where the event occurred,
 	OR, if drefspeeventId2Tups is provided:
@@ -385,49 +424,36 @@ def matchEventInLineages(dfamevents, genei, fami, genej, famj, noSameFam=True, b
 	
 	devi = dfamevents[fami][genei] #; print devi
 	devj = dfamevents[famj][genej] #; print devj
-	klause = genei=='ESCCOL13_5175' and genej=='ECOS51_ENTCGC014269_CC002'
+	verbose = kw.get('verbose')
 	evtupis = kw.get('events', devi.keys())
-	#~ for evtupi in evtupis:
-		#~ # every event in genei lineage should be match at most once in genej lineage
-		#~ if evtupi[0] not in eventtypes: continue
-		#~ for akaevtupi in eventLocSpeOrPop(evtupi, dspe2pop):
-			#~ for evtupj in devj:
-				#~ akaevtupjs = eventLocSpeOrPop(evtupj, dspe2pop)
-				#~ if akaevtupi in akaevtupjs:
-					#~ if genej in blocks.get(evtupi, []): continue
-					#~ yield [evtupi, devi[evtupi], devj[evtupj]]
-					#~ break # the for evtupj loop
 	for evtupi in evtupis:
 		# one event tuple per sampled recongiled gene tree, representing the gene lineage (= tip-to-root node path in gene tree)
-		if klause : print 'evtupi:', evtupi
+		if verbose : print 'evtupi:', evtupi
 		# every event in genei lineage should be matching at most once in genej lineage
 		matched = False
 		if drefspeeventId2Tups.get(evtupi, evtupi)[0] not in eventtypes: continue
 		if dspe2pop: akaevtupis = eventLocSpeOrPop(evtupi, dspe2pop)
 		else: akaevtupis = (evtupi,)
-		if klause : print 'akaevtupis:', akaevtupis 
+		if verbose : print 'akaevtupis:', akaevtupis 
 		for evtupj in devj:
-			if klause:  print 'evtupj:', evtupj 
+			if verbose:  print 'evtupj:', evtupj 
 			if matched: break # the for evtupj loop
 			# mapping of aliases: species to collapsed population
 			if dspe2pop: akaevtupjs = eventLocSpeOrPop(evtupj, dspe2pop)
 			else: akaevtupjs = (evtupj,)
-			if klause:  print 'akaevtupjs:', akaevtupjs 
+			if verbose:  print 'akaevtupjs:', akaevtupjs 
 			for akaevtupi in akaevtupis:
 				# one event lineage tuple per sampled recongiled gene tree
 				if akaevtupi in akaevtupjs:
-					if klause : print 'nosino'
+					if verbose : print 'nosino'
 					if not (genej in blocks.get(evtupi, [])):
 						# avoid yielding the event match again if was previously spotted in a gene block
-						if klause : print 'rhhhoooooo', [evtupi, devi[evtupi], devj[evtupj]]
+						if verbose : print 'rhhhoooooo', [evtupi, devi[evtupi], devj[evtupj]]
 						yield [evtupi, devi[evtupi], devj[evtupj]]
 					matched = True
 					# only one alias should be matched (as with alias vs. alias matching, it can give up to 2^len(evloc) matches)
 					break # the for akaevtupi loop
-					
-	#~ if klause: raise ValueError
-	
-	
+
 def searchPWMatches(dfamevents, genefams, nfpicklePWMatches=None, dspe2pop={}, drefspeeventId2Tups={}, eventtypes='T'):
 	PWMatches = {}
 	for i in range(len(genefams)-1):
@@ -516,55 +542,51 @@ def reconstructBlocks(dfamevents, genefams, nfoutblocks=None, nfpicklePWMatches=
 		print "saved 'PWMatches' to file '%s'"%nfpicklePWMatches
 	return PWMatches				
 
-def treeExtantEventSet(levents, refspetree, fun=max):
-	"""measure dispersion of a set of events on the species tree
+#~ def treeExtantEventSet(levents, refspetree, fun=max):
+	#~ """measure dispersion of a set of events on the species tree
 	
-	by default return maximum distance, can be average (fun=mean), minimum (fun=min)...
-	"""
-	ldist = []
-	if len(levents) <=1: return maxdist
-	# from the set of all (recipient) locations, compute the maximum distance on the species tree
-	# ... should do that on the consensus gene tree... if one could map each sampled reconciled gene tree to the consensus!!!
-	allTreeLocs = list(set(reduce(lambda x,y: x[-1:]+y[-1:], levents)))
-	for loci in allTreeLocs:
-		ni = refspetree[loci]
-		for locj in allTreeLocs:
-			if loci!=locj:
-				nj = refspetree[locj]
-				d = ni.distance(nj)
-				ldist.append(d)
-	if fun is max: ldist.append(0)
-	return fun(ldist)
+	#~ by default return maximum distance, can be average (fun=mean), minimum (fun=min)...
+	#~ """
+	#~ ldist = []
+	#~ if len(levents) <=1: return maxdist
+	#~ # from the set of all (recipient) locations, compute the maximum distance on the species tree
+	#~ # ... should do that on the consensus gene tree... if one could map each sampled reconciled gene tree to the consensus!!!
+	#~ # on levents a list of tuples such as:  ([don, ] rec)
+	#~ allTreeLocs = list(set(reduce(lambda x,y: x[-1:]+y[-1:], levents)))
+	#~ for loci in allTreeLocs:
+		#~ ni = refspetree[loci]
+		#~ for locj in allTreeLocs:
+			#~ if loci!=locj:
+				#~ nj = refspetree[locj]
+				#~ d = ni.distance(nj)
+				#~ ldist.append(d)
+	#~ if fun is max: ldist.append(0)
+	#~ return fun(ldist)
 
-def parse_events(lnfrec, lfams=None, genefamlist=None, refspetree=None, drefspeeventTup2Ids={}, recordEvTypes='DTS', minFreqReport=0, dirTableOut=None, nbthreads=1):
-	"""from list of reconciliation files, families and genes to consider, return dictionary of reported events, by family and gene lineage"""
-	if not lfams: lfams = [os.path.basename(nfrec).split('-')[0] for nfrec in lnfrec]
-	if genefamlist: ingenes = [genefam.get('replaced_cds_code', genefam['cds_code']) for genefam in genefamlist if (genefam['gene_family_id'] in lfams)]
-	else: ingenes=[]
-	
-	#~ # define wrapper function with set arguments, but the input reconciliation file
-	#~ def parseRecSetArgs(nfrec):
-		#~ return parseRec(nfrec, refspetree, drefspeeventTup2Ids, onlyLineages=ingenes, recordEvTypes=recordEvTypes, minFreqReport=minFreqReport, \
-						#~ lineageTableOutDir=(os.path.join(dirTableOut, 'gene_tree_lineages') if dirTableOut else None))
-	largs = [(nfrec, refspetree, drefspeeventTup2Ids, ingenes, recordEvTypes, minFreqReport, (os.path.join(dirTableOut, 'gene_tree_lineages') if dirTableOut else None)) for nfrec in lnfrec]
+def PWMatchesUniqueCount(levff, **kw):
+	return len(levff)
 
-	if nbthreads==1:
-		#~ ldevents = [parseRecSetArgs(nfrec) for nfrec in lnfrec]
-		ldevents = [parseRecTupArgs(args) for args in largs]
-	else:
-		pool = mp.Pool(processes=nbthreads)
-		#~ ldevents = pool.map(parseRecSetArgs, lnfrec)
-		ldevents = pool.map(parseRecTupArgs, largs)
-		
-	lfams = [os.path.basename(nfrec).split('-')[0] for nfrec in lnfrec]
-	dfamevents = dict(zip(lfams, ldevents))
+def PWMatchesSummedMeanFreq(levff, **kw):
+	#~ return float(sum(reduce(lambda x,y: x[1:]+y[1:], levff, (0,))))/2
+	return sum(float(fi+fj)/2 for ev,fi,fj in levff)
 	
-	nfpickle = nflnfrec+pickletag
-	with open(nfpickle, 'wb') as fpickle:
-		pickle.dump(dfamevents, fpickle, protocol=2)
-	print "saved 'dfamevents' to file '%s'"%nfpickle
-	
-	return dfamevents
+#~ def PWMatchesTreeExtent(pwmatches, refspetree, **kw):
+	#~ treeExtantEventSet(pwmatches, refspetree)
+
+def PWMatchesSummedJointFreq(levff, **kw):
+	return float(sum(fi*fj for ev,fi,fj in levff))
+
+def matchStats(PWMmats, genepairi, levff, reportStats=['PWMatchesSummedJointFreq'], threshMinEventFreq=[], refspetree=None):
+	lminflevff = []
+	for t in threshMinEventFreq:
+		lminflevff.append( [evff for evff in levff if (evff[1]>=t and evff[2]>=t)] )
+	for pwstat in PWMstats:
+		if pwstat in reportStats:
+			pwstatfun = pwstat.rsplit('MinEvFq', 1)[0]
+			#~ PWMmats.setdefault(pwstat, {})[genepairi] = eval(pwstat)(levff=levff, pwmatches=pwm, refspetree=refspetree)
+			PWMmats.setdefault(pwstat, {})[genepairi] = eval(pwstat)(levff)
+			for t, minflevff in zip(threshMinEventFreq, lminflevff):
+				PWMmats.setdefault(pwstat+'_MinEventFreq_%f'%float(t), {})[genepairi] = eval(pwstat)(minflevff)
 
 def match_events(lfams, dfamevents, recordEvTypes, drefspeeventId2Tups, genefamlist=None, writeOutDirRad=None):
 	"""from dictionary of reported events, by family and gene lineage, return matrix of pairwise gene event profile similarity"""
@@ -594,14 +616,8 @@ def match_events(lfams, dfamevents, recordEvTypes, drefspeeventId2Tups, genefaml
 	PWMmats = {PWMstat:np.zeros((len(genelist), len(genelist)), dtype=float) for PWMstat in PWMstats}
 	for genepair, levff in PWMatches.iteritems():
 		genepairi = tuple(genelist.index(geni) for geni in genepair)
-		pwmatches = [ev for ev, fi, fj in levff]
-		PWMmats['PWMatchesSummedFreq'][genepairi] = float(sum(reduce(lambda x,y: x[1:]+y[1:], levff, (0,))))/2
-		#~ pwmatchesMinEvFq = [ev for ev, fi, fj in levff if (fi>=threshMinEventFreq or fj>=threshMinEventFreq)]
-		#~ PWMmats['PWMatchesUniqueCount'][genepairi] = len(pwmatches) 
-		#~ PWMmats['PWMatchesUniqueCountMinEvFq'][genepairi] = len(pwmatchesMinEvFq) 
-		#~ PWMmats['PWMatchesTreeExtent'][genepairi] = treeExtantEventSet(pwmatches, refspetree)
-		#~ PWMmats['PWMatchesTreeExtentMinEvFq'][genepairi] = treeExtantEventSet(pwmatchesMinEvFq, refspetree)
-
+		matchStats(PWMmats, genepairi, levff)
+	
 	if writeOutDirRad:
 		# write output
 		for PWMstat, PWMmat in PWMmats.iteritems():
@@ -614,8 +630,73 @@ def match_events(lfams, dfamevents, recordEvTypes, drefspeeventId2Tups, genefaml
 				print "wrote %s output into file '%s'"%(PWMstat, nfmat)
 	return (PWMstat, PWMmat)
 
+def connectpostgresdb(dbname, **kw):
+	psycopg2 = __import__('psycopg2')
+	return psycopg2.connect(dbname=dbname, **kw)
+	
+def connectpostgresdb(dbname):
+	sqlite3 = __import__('sqlite3')
+	return sqlite3.connect(dbname)
+
+def query_matching_events(dbcon, nsample=1.0, lfams=None, evtypes=None, genefamlist=None, writeOutDirRad=None, dbengine='postgres'): #, returnDict=False
+	dbcur = dbcon.cursor()
+	dbcul = dbcon.cursor()
+	if writeOutDirRad: nfout = os.path.join(writeOutDirRad, 'matching_events', 'matching_events.tab')
+	
+	if (dbengine.lower() in ['postgres', 'postgresql', 'psql', 'pg']):
+		dbtype = 'postgres'
+		valtoken='%s'
+		dbcur.execute("set search_path = genome, phylogeny;")
+	elif (dbengine.lower() in ['sqlite', 'sqlite3']):
+		dbtype = 'sqlite'
+		valtoken='?'
+	else:
+		raise ValueError,  "wrong DB type provided: '%s'; select one of dbengine={'postgres[ql]'|'sqlite[3]'}"%dbengine
+	if lfams:
+		dbcur.execute("create temp table lfams (gene_family_id, VARCHAR(20);" )
+		#~ insertq = "insert into lfams values (%s), VARCHAR(20);"%valtoken
+		#~ if dbtype == 'sqlite': dbcur.executemany(insertq, lfams)
+		#~ elif dbtype == 'postgres': dbcur.extras.execute_batch(insertq, lfams)
+		dbcur.executemany("insert into lfams values (%s), VARCHAR(20);"%valtoken, lfams)
+		lfamrestrict = "inner join lfams using (gene_family_id) "
+	else:
+		#~ dbcur.execute("create temp view lfams as select gene_family_id from gene_families;")
+		lfamrestrict = ""
+	if isinstance(evtypes, str): evtyperestrict = "where event_type in %s"%repr(tuple(evtypes.split('')))
+	elif (isinstance(evtypes, list) or isinstance(evtypes, tuple)):  evtyperestrict = "where event_type in %s"%repr(tuple(evtypes))
+	else: evtyperestrict = ""
+		
+	
+	# get set of events
+	dgenepaircummulfreq = {}
+	dbcur.execute("select distinct event_id from gene_lineage_events %;"%(evtyperestrict))
+	evtid = dbcur.fetchone()
+	fout = open(nfout, 'w')
+	while evtid:
+		# get all the genes which event lineage features this event
+		dbcul.execute("""select cds_code, gene_family_id, freq 
+		                 from gene_lineage_events 
+		                 inner join coding_sequences using (cds_code) %s 
+		                 where event_id=%s ;"""%(lfamrestrict, valtoken), (evtid,))
+		matchgenes = dbcul.fetchall()
+		for genetup1, genetup2 in itertools.combinations(matchgenes, 2):
+			gene1, fam1, freq1 = genetup1
+			gene2, fam2, freq2 = genetup2
+			if fam1!=fam2: # filter genes from same families
+				f1 = max(float(freq1)/nsample, 1.0)
+				f2 = max(float(freq2)/nsample, 1.0)
+				dgenepaircummulfreq.setdefault((gene1, gene2), 0.0)
+				dgenepaircummulfreq[(gene1, gene2)] += f1*f2
+		evtid = dbcur.fetchone()
+	if writeOutDirRad: 
+		for genepair, cummulfreq in dgenepaircummulfreq.iteritems():
+			fout.write('%s\t%f\n'%('\t'.join(genepair), cummulfreq))
+	return dgenepaircummulfreq
+
 def usage():
-	s = ""
+	s = "Usage: [HELP MESSAGE INCOMPLETE]\N"
+	s += "python %s --rec_sample_list /path/to/list_of_reconciliation_file_paths [OPTIONS]\n"%sys.argv[0]
+	s += "Facultative options:"
 	s += "\t\t--dir_replaced\tfolder containing files listing replaced leaf labels (e.g. wen collapsing gene tree clades)\n"
 	s += "\t\t--genefams\ttabulated file with header containing at least those two fields: 'cds_code', 'gene_family_id'\n"
 	s += "\t\t\t\trows indicated the genes to be treated in the search, and to which gene family they belong (and hence in which reconciliation file to find them)\n"
@@ -625,25 +706,39 @@ def usage():
 
 if __name__=='__main__':
 
-	opts, args = getopt.getopt(sys.argv[1:], 'hv', ['rec_sample_list=', 'pickled_events=', 'dir_constraints=', 'dir_replaced=', \
-	                                               'populations=', 'reftree=', 'genefams=', \
-	                                               'evtype=', 'minfreq=', 'dir_table_out=', \
-	                                               'runmode=', 'threads=', 'help', 'verbose']) #, 'reuse=', 'max.recursion.limit=', 'logfile='
+	opts, args = getopt.getopt(sys.argv[1:], 'hv', ['rec_sample_list=', 'ALE_algo=', \
+	                                                'events_from_pickle=', 'events_from_postgresql_db=', 'events_from_sqlite_db=', \
+	                                                'dir_constraints=', 'dir_replaced=', \
+	                                                'populations=', 'reftree=', 'genefams=', \
+	                                                'evtype=', 'minfreq=', 'dir_table_out=', 'events_to_pickle=', \
+	                                                'runmode=', 'threads=', 'help', 'verbose']) #, 'reuse=', 'max.recursion.limit=', 'logfile='
 	dopt = dict(opts)
 	
 	if ('-h' in dopt) or ('--help' in dopt):
 		print usage()
 		sys.exit(0)
 	
-	try:
+	if '--rec_sample_list' in dopt:
 		nflnfrec = dopt['--rec_sample_list']
 		loaddfamevents = False
-	except KeyError:
-		try:
-			nfpickle = dopt['--pickled_events']
-			loaddfamevents = True
-		except KeyError:
-			raise ValueError, "must provide input file through either '--rec_sample_list' or '--pickled_events' options"
+	elif '--events_from_pickle' in dopt:
+		nfpickle = dopt['--events_from_pickle']
+		loaddfamevents = True
+	elif '--events_from_postgresql_db' in dopt:
+		dbname = dopt['--events_from_postgresql_db']
+		dbcon = connectpostgresdb(dbname)
+		loaddfamevents = True
+	elif '--events_from_sqlite_db' in dopt:
+		dbname = dopt['--events_from_sqlite_db']
+		dbcon = connectsqlitedb(dbname)
+		loaddfamevents = True
+	else:
+		raise ValueError, "must provide input file through either '--rec_sample_list' or '--pickled_events' options"
+	
+	dirTableOut = dopt.get('--dir_table_out')
+	nfpickleOut = dopt.get('--events_to_pickle')
+	if (runmode in ['parse','all']) and not (nfpickleOut or dirTableOut):
+		raise ValueError, "an output option for parsed reconciliation must be chosen between '--dir_table_out' and '--events_to_pickle'"
 	
 	nfpop = dopt['--populations']
 	nfrefspetree = dopt['--reftree']
@@ -652,7 +747,6 @@ if __name__=='__main__':
 	dirrepl = dopt.get('--dir_replaced')
 	recordEvTypes = dopt.get('--evtype', 'DTS')
 	minFreqReport = float(dopt.get('--minfreq', 0))
-	dirTableOut = dopt.get('--dir_table_out',)
 	nbthreads = int(dopt.get('--threads', 1))
 	verbose = ('-v' in dopt) or ('--verbose' in dopt)
 	runmode = dopt.get('--runmode', 'all')
@@ -678,9 +772,9 @@ if __name__=='__main__':
 		print "loaded 'dfamevents' from file '%s'"%nfin
 		nflnfrec = nfpickle.split(pickletag)[0]
 	elif runmode in ['parse','all']:
-		dfamevents = parse_events(lnfrec, lfams, genefamlist, refspetree, drefspeeventTup2Ids, recordEvTypes, minFreqReport, dirTableOut, nbthreads)
+		dfamevents = parse_events(lnfrec, lfams, genefamlist, refspetree, drefspeeventTup2Ids, recordEvTypes, minFreqReport, nfpickleOut, dirTableOut, nbthreads)
 	else:
-		print "no previously parsed events to load (via '--pickled_events') and run modes 'parse' or 'all' not selected: nothing to work on; exit now."
+		print "no previously parsed events to load (via '--events_from_*' options) and run modes 'parse' or 'all' not selected: nothing to work on; exit now."
 		sys.exit(2)
 	##
 	
