@@ -258,7 +258,11 @@ if [ ! -s $nfrad2.mb.noconv ] ; then
   rm $nfrad2.mb.noconv
 fi
 # and remove it from the list of files not to be synced: if not empty, it will be copied in the end
-unset ${excludesync[2]}
+excludesync=($(python << EOF
+nosyncmbout="$nosyncmbout".lower().split()
+print ' '.join(['--exclude=*.mb.%s'%ext for ext in nosyncmbout if (not 'noconv' in ext)])
+EOF
+))
 
 # final sync
 #echo "rsync -avz ${excludesync[@]} ./*$nfrad2.mb* $outputdir/"
