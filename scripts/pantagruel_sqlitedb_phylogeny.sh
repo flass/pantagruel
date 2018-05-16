@@ -57,6 +57,7 @@ for nffamgtevt in os.listdir(dirgtevt):
 
 dbcon.commit()
 EOF
+consider using the following for speeding up:
 #~ df = pandas.read_csv(csvfile)
 #~ df.to_sql(table_name, conn, if_exists='append', index=False)
 
