@@ -65,25 +65,6 @@ CREATE TABLE gene_families (
         protein_family_id VARCHAR(20) NOT NULL
 );
 
-CREATE TABLE criteria_collapse_gene_tree_clades (
-		criterion_id INT PRIMARY KEY,
-		criterion_name	VARCHAR(50) NOT NULL,
-		criterion_definition TEXT,
-		collapsed_clade_collection_creation DATE
-);
-
-
-CREATE TABLE collapsed_gene_tree_clades (
-		gene_family_id VARCHAR(20) NOT NULL,
-		col_clade VARCHAR(8) NOT NULL,
-		cds_code VARCHAR(20) NOT NULL,
-		criterion_id INT NOT NULL,
-		replacement_label VARCHAR(60) DEFAULT NULL
-);
-
-CREATE INDEX col_clades_gene_family_id_key ON collapsed_gene_tree_clades (gene_family_id);
-CREATE INDEX col_clades_cds_code_key ON collapsed_gene_tree_clades (cds_code);
-
 CREATE TABLE uniptrotcode2taxid (
 		code varchar(5) UNIQUE NOT NULL,
 		taxid integer UNIQUE NOT NULL

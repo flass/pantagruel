@@ -2,6 +2,8 @@ CREATE SCHEMA phylogeny;
 
 SET search_path = phylogeny;
 
+-- reference tree
+
 CREATE TABLE phylogeny.species_tree (
   branch_id SMALLINT PRIMARY KEY,
   parent_branch_id SMALLINT,
@@ -24,12 +26,12 @@ CREATE INDEX ON species_tree_events (rec_branch_id);
 
 CREATE TABLE phylogeny.gene_lineage_events ( --to be a large table
   event_id SERIAL,
-  cds_code VARCHAR(50) NOT NULL,   -- refers to genome.coding_sequences (cds_code)
+  cds_code VARCHAR(50) NOT NULL,             -- refers to genome.coding_sequences (cds_code)
   freq INT NOT NULL,
-  reconciliation_id SMALLINT       -- to distinguish reconciliation sets; can be NULL if not to be redundant
+  reconciliation_id SMALLINT DEFAULT NULL    -- to distinguish reconciliation sets; can be NULL if not to be redundant
 );
 
-CREATE TABLE phylogeny.reconciliations (
+CREATE TABLE phylogeny.reconciliation_collections (
   reconciliation_id SMALLINT NOT NULL,
   reconciliation_name VARCHAR NOT NULL,
   software VARCHAR NOT NULL,
@@ -38,6 +40,8 @@ CREATE TABLE phylogeny.reconciliations (
   reconciliation_date TIMESTAMP,
   notes TEXT
 );
+
+-- gene trees
 
 CREATE TABLE phylogeny.criteria_collapse_gene_tree_clades (
   criterion_id INT PRIMARY KEY,
@@ -77,7 +81,7 @@ CREATE TABLE phylogeny.replaced_gene_tree_clades (
 
 -- ~ CREATE INDEX ON collapsed_gene_tree_clades (gene_family_id);
 -- ~ CREATE INDEX ON collapsed_gene_tree_clades (cds_code);
--- ~ CREATE INDEX ON collapsed_gene_tree_clades (gene_family_id, col_clade_id);
+-- ~ CREATE INDEX ON collapsed_gene_tree_clades (gene_family_id, col_clade);
 
--- ~ CREATE INDEX ON replaced_gene_tree_clades (gene_family_id, col_clade_id);
+-- ~ CREATE INDEX ON replaced_gene_tree_clades (gene_family_id, col_clade_or_cds_code);
 -- ~ CREATE INDEX ON replaced_gene_tree_clades (replacement_label);
