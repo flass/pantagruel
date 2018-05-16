@@ -819,6 +819,4 @@ if __name__=='__main__':
 			match_events(lfams, dfamevents,recordEvTypes, genefamlist, drefspeeventId2Tups, writeOutDirRad)
 		else:
 			# rely on database records of parsed events
-			
-			
-			
+			dbquery_matching_events(dbname, nsample=1000.0, lfams=lfams, evtypes=recordEvTypes, genefamlist=genefamlist, writeOutDirRad=dirTableOut, dbengine=dbengine, nbthreads=nbthreads, **kw)
