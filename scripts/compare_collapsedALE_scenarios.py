@@ -328,7 +328,7 @@ def generateEventRefDB(refspetree, model='undated', refTreeTableOutDir=None):
 				if et!='T':
 					drefspeeventTup2Ids[evtup] = eventid
 					drefspeeventId2Tups[eventid] = evtup
-					if refTreeTableOutDir: foutspeevents.write('\t'.join((str(eventid), et, str(nid), ''))+'\n')
+					if refTreeTableOutDir: foutspeevents.write('\t'.join((str(eventid), et, '', str(nid)))+'\n')
 					eventid += 1
 				else:
 					for donnode in refspetree:
@@ -336,7 +336,7 @@ def generateEventRefDB(refspetree, model='undated', refTreeTableOutDir=None):
 							evtupt = evtup + (donnode.label(),)
 							drefspeeventTup2Ids[evtupt] = eventid
 							drefspeeventId2Tups[eventid] = evtupt
-							if refTreeTableOutDir: foutspeevents.write('\t'.join([str(e) for e in (eventid, et, nid, donnode.nodeid())])+'\n')
+							if refTreeTableOutDir: foutspeevents.write('\t'.join([str(e) for e in (eventid, et, donnode.nodeid(), nid)])+'\n')
 							eventid += 1
 	if refTreeTableOutDir:
 		foutspetree.close()
@@ -684,7 +684,15 @@ def _query_matching_events(args):
 	evtid = dbcur.fetchone()
 	return dgenepaircummulfreq
 	
-def dbquery_matching_events(dbname, nsample=1.0, lfams=None, evtypes=None, genefamlist=None, writeOutDirRad=None, dbengine='postgres', threads=1, **kw): #, returnDict=False
+def sumdgenepaircummulfreq(ldgpcf):
+	dgenepaircummulfreq = {}
+	for d in ldgpcf:
+		for genepair in d:
+			dgenepaircummulfreq.setdefault(genepair, 0.0)
+			dgenepaircummulfreq[genepair] += d[genepair]
+	return dgenepaircummulfreq
+
+def dbquery_matching_events(dbname, nsample=1.0, lfams=None, evtypes=None, genefamlist=None, writeOutDirRad=None, dbengine='postgres', nbthreads=1, **kw): #, returnDict=False
 	if writeOutDirRad: nfout = os.path.join(writeOutDirRad, 'gene_event_matches', 'matching_events.tab')
 	dbcon, dbtype, valtoken = get_dbconnection(dbname, dbengine, **kw)
 	dbcur = dbcon.cursor()
@@ -698,9 +706,19 @@ def dbquery_matching_events(dbname, nsample=1.0, lfams=None, evtypes=None, genef
 	dbcur.execute("select distinct event_id from gene_lineage_events %;"%(evtyperestrict))
 	ltevtids = dbcur.fetchall()
 	
-	if trheads==1:
+	if nbtrheads==1:
 		for tevtid in ltevtids:
-			dgenepaircummulfreq.update( _query_matching_events((tevtid[0], dbname, nsample, lfams, evtypes, genefamlist, writeOutDirRad, dbtype)) )
+			dgenepaircummulfreq = _query_matching_events((tevtid[0], dbname, nsample, lfams, evtypes, genefamlist, writeOutDirRad, dbtype))
+			for genepair in d:
+				dgenepaircummulfreq.setdefault(genepair, 0.0)
+				dgenepaircummulfreq[genepair] += d[genepair]
+	else:
+		pool = mp.Pool(processes=nbthreads)
+		iterargs = ((tevtid[0], dbname, nsample, lfams, evtypes, genefamlist, writeOutDirRad, dbtype) for tevtid in ltevtids)
+		ldgpcf = pool.map(_query_matching_events, iterargs)
+		#~ dgenepaircummulfreq = reduce(ldgpcf, sumdgenepaircummulfreq, {})
+		dgenepaircummulfreq = sumdgenepaircummulfreq(ldgpcf)
+		
 		
 	if writeOutDirRad: 
 		for genepair, cummulfreq in dgenepaircummulfreq.iteritems():
