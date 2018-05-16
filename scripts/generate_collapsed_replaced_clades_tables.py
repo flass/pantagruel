@@ -3,7 +3,7 @@
 import sys, os, glob
 from replace_species_by_pop_in_gene_trees import annotatePopulationInSpeciesTree, parseMrBayesConstraints
 
-cladenameprefix = 'clade'
+#~ cladenameprefix = 'clade'
 replacedtag = 'leaflabels_Spe2Pop.txt'
 
 dircons = sys.argv[1]
@@ -21,8 +21,9 @@ for fam in os.listdir(dircons):
 	lnfcons = [os.path.join(dirfamcons, nf) for nf in os.listdir(dirfamcons)]
 	constraintclades = parseMrBayesConstraints(lnfcons)
 	for cla, leaflabs in constraintclades.iteritems():
-		claid = int(cla.split(cladenameprefix, 1)[-1])
-		foutcons.write('\n'.join(["%s\t%d\t%s"%(fam, claid, leaflab) for leaflab in leaflabs])+'\n')
+		#~ claid = int(cla.split(cladenameprefix, 1)[-1])
+		#~ foutcons.write('\n'.join(["%s\t%d\t%s"%(fam, claid, leaflab) for leaflab in leaflabs])+'\n')
+		foutcons.write('\n'.join(["%s\t%s\t%s"%(fam, cla, leaflab) for leaflab in leaflabs])+'\n')
 
 globreplaced = "%s/*%s"%(dirrepl, replacedtag)
 lnfreplaced = glob.glob(globreplaced)
@@ -30,6 +31,7 @@ for nfreplaced in lnfreplaced:
 	fam = os.path.basename(nfreplaced).split('-', 1)[0]
 	with open(nfreplaced, 'r') as freplaced:
 		for line in freplaced:
-			if line.startswith(cladenameprefix): li = line.split(cladenameprefix, 1)[1]
-			else: li = line
-			foutrepl.write(fam+'\t'+li)
+			#~ if line.startswith(cladenameprefix): li = line.split(cladenameprefix, 1)[1]
+			#~ else: li = line
+			#~ foutrepl.write(fam+'\t'+li)
+			foutrepl.write(fam+'\t'+line)
