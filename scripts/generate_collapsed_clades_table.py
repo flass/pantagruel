@@ -13,7 +13,7 @@ for fam in os.listdir(dircons):
 	dirfamcons = os.path.join(dircons, fam)
 	lnfcons = [os.path.join(dirfamcons, nf) for nf in os.listdir(dirfamcons)]
 	constraintclades = parseMrBayesConstraints(lnfcons)
-	for cla, leaflabs in constraintclades:
+	for cla, leaflabs in constraintclades.iteritems():
 		claid = int(cla.split(cladenameprefix, 1)[-1])
 		fout.write('\n'.join(["%s\t%d\t%s"%(fam, claid, leaflab) for leaflab in leaflabs])+'\n')
 			
