@@ -11,7 +11,7 @@ nfout = sys.argv[2]
 fout = open(nfout, 'w')
 for fam in os.listdir(dircons):
 	dirfamcons = os.path.join(dircons, fam)
-	lnfcons = os.listdir(dirfamcons)
+	lnfcons = [os.path.join(dirfamcons, nf) for nf in os.listdir(dirfamcons)]
 	constraintclades = parseMrBayesConstraints(lnfcons)
 	for cla, leaflabs in constraintclades:
 		claid = int(cla.split(cladenameprefix, 1)[-1])
