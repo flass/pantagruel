@@ -9,9 +9,9 @@ echo "This is job $PBS_JOBNAME, job_ID $PBS_JOBID (array_task_ID $PBS_ARRAY_INDE
 cat $PBS_NODEFILE
 
 # use parallel environment
-module -v load intel-suite
-#~ module -v load mpi
-#~ module -v load beagle-lib
+module load intel-suite
+#~ module load mpi
+#~ module load beagle-lib
 
 module list
 
@@ -104,6 +104,24 @@ echo "will discard $relburninfrac fraction of the tree chain as burn-in"
   
 alebin=$HOME/software/ALE/build/bin
 
+# resume from run with already estimated parameters,
+# to perform further reconciliation sampling
+# (also allows to sample from defined parameter set)
+if [ ${#DTLrates[@]} -eq 3 ] ; then
+  echo -e "will perform analysis with set DTL rate parameters:\n${DTLrates[@]}"
+elif [ ! -z $resumealefromtag ] ; then
+  estparam=($(ls ${nfchain}.ale.*ml_rec${resumealefromtag}))
+  if [ ! -z ${estparam} ] ; then
+    DTLrates=($(grep -A 1 "rate of" ${estparam} | grep 'ML' | awk '{print $2,$3,$4}'))
+    if [ ${#DTLrates[@]} -eq 3 ] ; then
+      echo -e "will resume analysis from previously estimated DTL rate parameters:\n${DTLrates[@]} \nas found in file:\n'$estparam'"
+      prevcomputetime=$(cat ${dnchain}/${nfrad}.ale.computetime${resumealefromtag} | cut -f3)
+      if [ ! -z $prevcomputetime ] ; then
+        echo -e "will add previous computation time spent estimating parameters found in file:\n'${dnchain}/${nfrad}.ale.computetime${resumealefromtag}'\nto new record:\n'./${nfrad}.ale.computetime'"
+      fi
+    fi
+  fi
+fi
 
 if [ ! -e $nfchain.ale ] ; then
   # prepare ALE index
@@ -120,14 +138,24 @@ date
 # start timing in seconds
 SECONDS=0
 # run ALE reconciliation 
-echo "# ${alebin}/${alealgo} ${spetree} ${nfchain}.ale sample=${nrecs} separators=_"
-${alebin}/${alealgo} ${spetree} ${nfchain}.ale sample=${nrecs} separators=_
+if [ "$alealgo" == 'ALEml' ] ; then
+  alecmd="${alebin}/${alealgo} ${spetree} ${nfchain}.ale ${nrecs} _"
+  if [ ${#DTLrates[@]} -eq 3 ] ; then alecmd="${alecmd} ${DTLrates[@]}" ; fi
+elif [ "$alealgo" == 'ALEml_undated' ] ; then
+  alecmd="${alebin}/${alealgo} ${spetree} ${nfchain}.ale sample=${nrecs} separators=_"
+  if [ ${#DTLrates[@]} -eq 3 ] ; then alecmd="${alecmd} delta=${DTLrates[0]} tau=${DTLrates[0]} lambda=${DTLrates[0]}" ; fi
+else
+echo "# ${alecmd}"
+${alecmd}
+  
 echo ""
 echo "# # # #"
 
 ALETIME=$SECONDS
+if [ -z $prevcomputetime ] ; then ALETIME=$(( $ALETIME + $prevcomputetime )) ; fi
 echo -e "$nfrad\t$alealgo\t$ALETIME" > $nfrad.ale.computetime
-echo "reconciliation estimation took" $(date -u -d @${ALETIME} +"%Hh%Mm%Ss")
+echo "reconciliation estimation took" $(date -u -d @${ALETIME} +"%Hh%Mm%Ss") "total time"
+if [ -z $prevcomputetime ] ; then echo "(including ${prevcomputetime} in previous run)" ; fi
 
 echo "# ls"
 ls
