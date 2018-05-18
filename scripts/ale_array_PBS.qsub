@@ -103,6 +103,50 @@ fi
 echo "will discard $relburninfrac fraction of the tree chain as burn-in"
   
 alebin=$HOME/software/ALE/build/bin
+# watchmem
+echo "# watchmem:"
+if [ -z $watchmem ] ; then
+  aleexe="${alebin}/${alealgo}"
+else
+  if [[ "$watchmem"=="y" || "$watchmem"=="yes" || "$watchmem"=="true" ]] ; then
+    memusg="/apps/memusage/memusage"
+  else
+    memusg="$watchmem"
+  fi
+  aleexe="${memusg} ${alebin}/${alealgo}"
+  echo "will watch memory usage with '${memusg}'"
+fi
+# worklocal
+echo "# worklocal:"
+if [ -z $worklocal ] ; then
+  echo "(Use default)"
+  worklocal="yes"
+else
+  if [[ "$worklocal"=="n" || "$worklocal"=="false" ]] ; then
+    worklocal="no"
+  elif [[ "$worklocal"=="y" || "$worklocal"=="true" ]] ; then
+    worklocal="yes"
+  fi
+fi
+echo "will work (read/write) locally: ${worklocal}"
+echo ""
+echo "# # # #"
+
+####
+if [[ "$worklocal"=="yes" ]] ; then
+  # copy input files locally
+  rsync -az ${nfchain} ./
+  ls -lh ${bnchain}
+  if [ $? != 0 ] ; then
+    echo "ERROR: could not copy input file ${bnchain} locally; exit now"
+    exit 2
+  else
+    chain="./${bnchain}"
+  fi
+else
+  chain=${nfchain}
+fi
+
 
 # resume from run with already estimated parameters,
 # to perform further reconciliation sampling
@@ -110,12 +154,12 @@ alebin=$HOME/software/ALE/build/bin
 if [ ${#DTLrates[@]} -eq 3 ] ; then
   echo -e "will perform analysis with set DTL rate parameters:\n${DTLrates[@]}"
 elif [ ! -z $resumealefromtag ] ; then
-  estparam=($(ls ${nfchain}.ale.*ml_rec${resumealefromtag}))
+  estparam=($(ls ${resultdir}/${bnchain}.ale.*ml_rec${resumealefromtag}))
   if [ ! -z ${estparam} ] ; then
     DTLrates=($(grep -A 1 "rate of" ${estparam} | grep 'ML' | awk '{print $2,$3,$4}'))
     if [ ${#DTLrates[@]} -eq 3 ] ; then
       echo -e "will resume analysis from previously estimated DTL rate parameters:\n${DTLrates[@]} \nas found in file:\n'$estparam'"
-      prevcomputetime=$(cat ${dnchain}/${nfrad}.ale.computetime${resumealefromtag} | cut -f3)
+      prevcomputetime=$(cat ${resultdir}/${nfrad}.ale.computetime${resumealefromtag} | cut -f3)
       if [ ! -z $prevcomputetime ] ; then
         echo -e "will add previous computation time spent estimating parameters found in file:\n'${dnchain}/${nfrad}.ale.computetime${resumealefromtag}'\nto new record:\n'./${nfrad}.ale.computetime'"
       fi
@@ -123,26 +167,37 @@ elif [ ! -z $resumealefromtag ] ; then
   fi
 fi
 
-if [ ! -e $nfchain.ale ] ; then
+if [[ -e $nfchain.ale ]] ; then
+  if [[ "$worklocal"=="yes" ]] ; then
+   # copy input files locally
+   rsync -az ${nfchain}.ale ./
+  fi
+  echo "use pre-existing ALE index file:"
+  ls $nfchain.ale
+elif [[ -e ${resultdir}/${bnchain}.ale ]] ; then
+  if [[ "$worklocal"=="yes" ]] ; then
+   # copy input files locally
+   rsync -az ${resultdir}/${bnchain}.ale ./
+  fi
+  echo "use pre-existing ALE index file:"
+  ls -lh ${chain}.ale
+else
   # prepare ALE index
-  lenchain=`wc -l $nfchain | cut -d' ' -f1`
+  lenchain=`wc -l ${chain} | cut -d' ' -f1`
   burnin=`echo "$lenchain * $relburninfrac" | bc`
   echo "input tree chain is ${lenchain} long; burnin is set to ${burnin%%.*}"
   echo "# ${alebin}/ALEobserve $nfchain burnin=${burnin%%.*}"
   ${alebin}/ALEobserve $nfchain burnin=${burnin%%.*}
-else
-  echo "use pre-existing ALE index file:"
-  ls $nfchain.ale
 fi
 date
 # start timing in seconds
 SECONDS=0
 # run ALE reconciliation 
 if [ "$alealgo" == 'ALEml' ] ; then
-  alecmd="${alebin}/${alealgo} ${spetree} ${nfchain}.ale ${nrecs} _"
+  alecmd="${alebin}/${alealgo} ${spetree} ${chain}.ale ${nrecs} _"
   if [ ${#DTLrates[@]} -eq 3 ] ; then alecmd="${alecmd} ${DTLrates[@]}" ; fi
 elif [ "$alealgo" == 'ALEml_undated' ] ; then
-  alecmd="${alebin}/${alealgo} ${spetree} ${nfchain}.ale sample=${nrecs} separators=_"
+  alecmd="${alebin}/${alealgo} ${spetree} ${chain}.ale sample=${nrecs} separators=_"
   if [ ${#DTLrates[@]} -eq 3 ] ; then alecmd="${alecmd} delta=${DTLrates[0]} tau=${DTLrates[0]} lambda=${DTLrates[0]}" ; fi
 else
 echo "# ${alecmd}"
@@ -161,24 +216,30 @@ echo "# ls"
 ls
 
 # save files
-ls ./*.ale.* > /dev/null
+if [[ "$worklocal"=="yes" ]] ; then
+  # will rapartiate files ot output dir
+  savecmd="rsync -az"
+else
+  savecmd="mv -f"
+fi
+ls ./${nfrad}*.ale.* > /dev/null
 if [ $? == 0 ] ; then
-  echo "# rsync -az ./*.ale* $resultdir/"
-  rsync -az ./*.ale* $resultdir/
+  savecmd1="$savecmd ./${nfrad}*.ale* $resultdir/"
+  echo "# $savecmd1"
+  $savecmd1
   if [ $? != 0 ] ; then
     echo "ERROR: unable to save result files from $PWD/ to $resultdir/"
   fi
 else
-ls $nfchain.ale.* > /dev/null
+ls ${dnchain}/${nfrad}*.ale.* > /dev/null
 if [ $? == 0 ] ; then
-  echo "# rsync -az $nfchain.ale.* $resultdir/"
-  rsync -az $nfchain.ale.* $resultdir/
+  savecmd2="$savecmd ${dnchain}/${nfrad}*.ale.* $resultdir/"
+  echo "# $savecmd2"
+  $savecmd2
   if [ $? != 0 ] ; then
-    echo "ERROR: unable to save result files from $(dirname $nfchain) to $resultdir/"
+    echo "ERROR: unable to save result files from $dnchain to $resultdir/"
   fi
 else
   echo "ERROR: unable to find the result files"
 fi
 fi
-#~ echo "# rm ./*.ale.*"
-#~ rm ./*.ale.*
