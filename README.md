@@ -23,7 +23,7 @@
   ([R source code](https://www.mikrobio.uni-kiel.de/de/ag-dagan/ressourcen/mad-r-tar.gz))
 
 - **ALE/xODT** for gene tree / species tree reconciliation  
-  (Install from [source code](https://github.com/ssolo/ALE))
+  (Install from [source code](https://github.com/ssolo/ALE); version used and recommended: 0.4; notably depends on [Bio++ libs](https://github.com/BioPP) (v2.2.0))
   
 
 - R (version 3, >=3.2.3 recommended) + packages:

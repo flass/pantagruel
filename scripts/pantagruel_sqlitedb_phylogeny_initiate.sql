@@ -20,7 +20,7 @@ CREATE INDEX ON species_tree_events (rec_branch_id);
 
 CREATE TABLE gene_lineage_events ( --to be a large table
   event_id SERIAL,
-  cds_code VARCHAR(50) NOT NULL,             -- refers to genome.coding_sequences (cds_code)
+  replacement_label_or_cds_code VARCHAR(60) NOT NULL,    -- refers to genome.coding_sequences (cds_code) and phylogeny.replaced_gene_tree_clades (replacement_label)
   freq INT NOT NULL,
   reconciliation_id INT DEFAULT NULL    -- to distinguish reconciliation sets; can be NULL if not to be redundant
 );
@@ -64,3 +64,9 @@ CREATE TABLE replaced_gene_tree_clades (
   replacement_label VARCHAR(60) DEFAULT NULL,
   replace_criterion_id INT DEFAULT NULL
 );
+
+CREATE VIEW replacement_label_or_cds_code2gene_families AS 
+SELECT cds_code as replacement_label_or_cds_code, gene_family_id FROM coding_sequences
+UNION
+SELECT replacement_label as replacement_label_or_cds_code, gene_family_id FROM replaced_gene_tree_clades;
+

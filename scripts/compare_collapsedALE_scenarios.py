@@ -2,7 +2,8 @@
 
 import os, sys, glob, getopt
 import multiprocessing as mp
-import cPickle as pickle
+#~ import cPickle as pickle
+import shelve
 import itertools
 import numpy as np
 import tree2
@@ -199,8 +200,8 @@ def parseRec(nfrec, refspetree=None, drefspeeventTup2Ids=None, onlyLineages=[], 
 	
 	# optionally write out events gene by gene (those that occured at least once above a gene in [rooted] reconciled gene tree, and at which frequency)
 	if lineageTableOutDir:
-		nfTableOut = os.path.join(lineageTableOutDir, "%s.%s.eventlineages"%(os.path.basename(nfrec), recordEvTypes))
-		with open(nfTableOut, 'w') as fTableOut:
+		nfTableEventsOut = os.path.join(lineageTableOutDir, "%s.%s.eventlineages"%(os.path.basename(nfrec), recordEvTypes))
+		with open(nfTableEventsOut, 'w') as fTableOut:
 			geneleaflabs = devtlineagecount.keys()
 			geneleaflabs.sort()
 			for geneleaflab in geneleaflabs:
@@ -208,7 +209,7 @@ def parseRec(nfrec, refspetree=None, drefspeeventTup2Ids=None, onlyLineages=[], 
 				for evtup, freq in eventlineage.iteritems():
 					if drefspeeventTup2Ids: fTableOut.write('\t'.join((geneleaflab, str(evtup), str(freq)))+'\n')
 					else: fTableOut.write('\t'.join((geneleaflab,)+evtup+(str(freq),))+'\n')
-		print "stored events listed by gene lineage in '%s'"%nfTableOut
+		print "stored events listed by gene lineage in '%s'"%nfTableEventsOut
 	
 	sys.stdout.flush()
 	if returnDict:
@@ -282,8 +283,11 @@ def loadLabelAliasesAndListRecFiles(nflnfrec, nfgenefamlist=None, dircons=None, 
 	This includes the table of labels that were changed between original collapsed gene trees (as produced by script mark_unresolved_clades.py)
 	and the species/population-tagged collapsed gene trees (as produced by script replace_species_by_pop_in_gene_trees.py)
 	"""
-	with open(nflnfrec, 'r') as flnfrec:
-		lnfrec = [line.rstrip('\n') for line in flnfrec]
+	if nflnfrec:
+		with open(nflnfrec, 'r') as flnfrec:
+			lnfrec = [line.rstrip('\n') for line in flnfrec]
+	else:
+		lnfrec = []
 	lfams = [os.path.basename(nfrec).split('-')[0] for nfrec in lnfrec]
 	if nfgenefamlist: genefamlist = loadLabelAliases(nfgenefamlist, dircons=dircons, dirrepl=dirrepl, nbthreads=nbthreads, verbose=verbose)
 	else: genefamlist = []
@@ -345,7 +349,7 @@ def generateEventRefDB(refspetree, model='undated', refTreeTableOutDir=None):
 
 def parse_events(lnfrec, lfams=None, genefamlist=None, refspetree=None, \
                  drefspeeventTup2Ids={}, recordEvTypes='DTS', minFreqReport=0, \
-                 nfpickleOut=None, dirTableOut=None, nbthreads=1):
+                 nfpickleEventsOut=None, nfshelveEventsOut=None, dirTableOut=None, nbthreads=1):
 	"""from list of reconciliation files, families and genes to consider, return dictionary of reported events, by family and gene lineage"""
 	if not lfams: lfams = [os.path.basename(nfrec).split('-')[0] for nfrec in lnfrec]
 	if genefamlist: ingenes = [genefam.get('replaced_cds_code', genefam['cds_code']) for genefam in genefamlist if (genefam['gene_family_id'] in lfams)]
@@ -356,24 +360,29 @@ def parse_events(lnfrec, lfams=None, genefamlist=None, refspetree=None, \
 		#~ return parseRec(nfrec, refspetree, drefspeeventTup2Ids, onlyLineages=ingenes, recordEvTypes=recordEvTypes, minFreqReport=minFreqReport, \
 						#~ lineageTableOutDir=(os.path.join(dirTableOut, 'gene_tree_lineages') if dirTableOut else None))
 	diroutab = (os.path.join(dirTableOut, 'gene_tree_lineages') if dirTableOut else None)
-	returndict = bool(nfpickleOut)
-	largs = [(nfrec, refspetree, drefspeeventTup2Ids, ingenes, recordEvTypes, minFreqReport, returndict, diroutab) for nfrec in lnfrec]
-
+	returndict = bool(nfpickleEventsOut)
+	iterargs = ((nfrec, refspetree, drefspeeventTup2Ids, ingenes, recordEvTypes, minFreqReport, returndict, diroutab) for nfrec in lnfrec)
+	
 	if nbthreads==1:
-		#~ ldevents = [parseRecSetArgs(nfrec) for nfrec in lnfrec]
 		ldevents = [parseRecTupArgs(args) for args in largs]
 	else:
 		pool = mp.Pool(processes=nbthreads)
-		#~ ldevents = pool.map(parseRecSetArgs, lnfrec)
-		ldevents = pool.map(parseRecTupArgs, largs)
-		
-	lfams = [os.path.basename(nfrec).split('-')[0] for nfrec in lnfrec]
-	dfamevents = dict(zip(lfams, ldevents))
+		#~ ldevents = pool.map(parseRecTupArgs, largs)
+		# an iterator is returned by imap(); one needs to actually iterate over it to have the pool of parrallel workers to compute
+		ldevents = pool.imap(parseRecTupArgs, iterargs)
 	
-	if nfpickleOut:
-		with open(nfpickleOut, 'wb') as fpickleOut:
-			pickle.dump(dfamevents, fpickleOut, protocol=2)
-		print "saved 'dfamevents' to file '%s'"%nfpickleOut
+	if nfshelveEventsOut:
+		print "will gradually store event tuples in persistent dictionary (shelve) file: '%s'"%nfshelveEventsOut
+		dfamevents = shelve.open(nfshelveEventsOut)
+		for ifam, deventfam in enumerate(ldevents):
+			dfamevents[lfam[ifam]] = deventfam
+		print "saved 'dfamevents' to file '%s'"%nfpickleEventsOut
+	else:
+		dfamevents = dict(zip(lfams, ldevents))
+		if nfpickleEventsOut:
+			with open(nfpickleEventsOut, 'wb') as fpickleOut:
+				pickle.dump(dfamevents, fpickleOut, protocol=2)
+			print "saved 'dfamevents' to file '%s'"%nfpickleEventsOut
 	
 	return dfamevents
 
@@ -576,7 +585,7 @@ def PWMatchesSummedMeanFreq(levff, **kw):
 def PWMatchesSummedJointFreq(levff, **kw):
 	return float(sum(fi*fj for ev,fi,fj in levff))
 
-def matchStats(PWMmats, genepairi, levff, reportStats=['PWMatchesSummedJointFreq'], threshMinEventFreq=[], refspetree=None):
+def matchStats(PWMmats, genepairi, levff, reportStats=['PWMatchesSummedJointFreq'], threshMinEventFreq=[]): #, refspetree=None
 	lminflevff = []
 	for t in threshMinEventFreq:
 		lminflevff.append( [evff for evff in levff if (evff[1]>=t and evff[2]>=t)] )
@@ -653,25 +662,20 @@ def get_dbconnection(dbname, dbengine, **kw):
 	return (dbcon, dbtype, valtoken)
 
 def _query_matching_events(args):
-	evtid, dbname, nsample, lfams, evtypes, genefamlist, writeOutDirRad, dbtype = args
+	"""function handling one event_id query, designed for parallel use
 	
-	if lfams:
-		dbcur.execute("create temp table lfams (gene_family_id, VARCHAR(20);" )
-		#~ insertq = "insert into lfams values (%s), VARCHAR(20);"%valtoken
-		#~ if dbtype == 'sqlite': dbcur.executemany(insertq, lfams)
-		#~ elif dbtype == 'postgres': dbcur.extras.execute_batch(insertq, lfams)
-		dbcur.executemany("insert into lfams values (%s), VARCHAR(20);"%valtoken, lfams)
-		lfamrestrict = "inner join lfams using (gene_family_id) "
-	else:
-		lfamrestrict = ""
+	fetching all gene lineages with such events and computing the joint frequency of this events for pairs of gene lineages
+	"""
+	evtid, dbname, nsample, evtypes, dbtype = args
 	
 	fout = open(nfout, 'w')
 	dbcul = dbcon.cursor()
+	if dbtype == 'postgres': dbcul.execute("set search_path = genome, phylogeny;")
 	# get all the genes which event lineage features this event
-	dbcul.execute("""select cds_code, gene_family_id, freq 
+	dbcul.execute("""select replacement_label_or_cds_code, gene_family_id, freq 
 					 from gene_lineage_events 
-					 inner join coding_sequences using (cds_code) %s 
-					 where event_id=%s ;"""%(lfamrestrict, valtoken), (evtid,))
+					 inner join replacement_label_or_cds_code2gene_families using (replacement_label_or_cds_code) %s 
+					 where event_id=%s ;"""%valtoken, (evtid,))
 	matchgenes = dbcul.fetchall()
 	for genetup1, genetup2 in itertools.combinations(matchgenes, 2):
 		gene1, fam1, freq1 = genetup1
@@ -681,19 +685,22 @@ def _query_matching_events(args):
 			f2 = max(float(freq2)/nsample, 1.0)
 			dgenepaircummulfreq.setdefault((gene1, gene2), 0.0)
 			dgenepaircummulfreq[(gene1, gene2)] += f1*f2
-	evtid = dbcur.fetchone()
-	return dgenepaircummulfreq
+			
+	return dgenepaircummulfr
 	
-def sumdgenepaircummulfreq(ldgpcf):
-	dgenepaircummulfreq = {}
+def sumdgenepaircummulfreq(ldgpcf, dgenepaircummulfreq=None):
+	if dgenepaircummulfreq: dgpcf = dgenepaircummulfreq
+	else: dgpcf = {}
 	for d in ldgpcf:
 		for genepair in d:
-			dgenepaircummulfreq.setdefault(genepair, 0.0)
-			dgenepaircummulfreq[genepair] += d[genepair]
-	return dgenepaircummulfreq
+			dgpcf.setdefault(genepair, 0.0)
+			dgpcf[genepair] += d[genepair]
+	return dgpcf
 
-def dbquery_matching_events(dbname, nsample=1.0, lfams=None, evtypes=None, genefamlist=None, writeOutDirRad=None, dbengine='postgres', nbthreads=1, **kw): #, returnDict=False
-	if writeOutDirRad: nfout = os.path.join(writeOutDirRad, 'gene_event_matches', 'matching_events.tab')
+def dbquery_matching_events(dbname, nsample=1.0, evtypes=None, genefamlist=None, \
+                            nbthreads=1, dbengine='postgres', \
+                            matchesOutDirRad=None, returnDict=False, nfpickleMatchesOut=None, nfshelveMatchesOut=None, **kw):
+								
 	dbcon, dbtype, valtoken = get_dbconnection(dbname, dbengine, **kw)
 	dbcur = dbcon.cursor()
 	
@@ -701,28 +708,58 @@ def dbquery_matching_events(dbname, nsample=1.0, lfams=None, evtypes=None, genef
 	elif (isinstance(evtypes, list) or isinstance(evtypes, tuple)):  evtyperestrict = "where event_type in %s"%repr(tuple(evtypes))
 	else: evtyperestrict = ""
 	
+	if genefamlist:
+		# create real table so can be seen by other processes
+		ingenefams = [genefam.get('replaced_cds_code', genefam['cds_code']) for genefam in genefamlist]
+		dbcur.execute("create table ingenefams (replacement_label_or_cds_code VARCHAR(60), gene_family_id VARCHAR(20));" )
+		dbcur.executemany("insert into ingenefams values (%s), VARCHAR(20);"%valtoken, ingenefams)
+		dbcon.commit()
+		# query modifiers
+		genefamrestrict = "inner join ingenefams using (replacement_label_or_cds_code, gene_family_id) "
+		generestrict = "inner join ingenefams using (replacement_label_or_cds_code) "
+	else:
+		genefamrestrict = ""
+		generestrict = ""
+	
 	# get set of events
 	dgenepaircummulfreq = {}
-	dbcur.execute("select distinct event_id from gene_lineage_events %;"%(evtyperestrict))
+	dbcur.execute("select distinct event_id from gene_lineage_events % %;"%(evtyperestrict, generestrict))
 	ltevtids = dbcur.fetchall()
 	
 	if nbtrheads==1:
 		for tevtid in ltevtids:
-			dgenepaircummulfreq = _query_matching_events((tevtid[0], dbname, nsample, lfams, evtypes, genefamlist, writeOutDirRad, dbtype))
+			dgenepaircummulfreq = _query_matching_events((tevtid[0], dbname, nsample, evtypes, dbtype))
 			for genepair in d:
 				dgenepaircummulfreq.setdefault(genepair, 0.0)
 				dgenepaircummulfreq[genepair] += d[genepair]
 	else:
 		pool = mp.Pool(processes=nbthreads)
-		iterargs = ((tevtid[0], dbname, nsample, lfams, evtypes, genefamlist, writeOutDirRad, dbtype) for tevtid in ltevtids)
-		ldgpcf = pool.map(_query_matching_events, iterargs)
-		#~ dgenepaircummulfreq = reduce(ldgpcf, sumdgenepaircummulfreq, {})
-		dgenepaircummulfreq = sumdgenepaircummulfreq(ldgpcf)
-		
-		
-	if writeOutDirRad: 
-		for genepair, cummulfreq in dgenepaircummulfreq.iteritems():
-			fout.write('%s\t%f\n'%('\t'.join(genepair), cummulfreq))
+		iterargs = ((tevtid[0], dbname, nsample, evtypes, dbtype) for tevtid in ltevtids)
+		iterdgpcf = pool.imap_unordered(_query_matching_events, iterargs, chunksize=100)
+		# an iterator is returned by imap_unordered(); one needs to actually iterate over it to have the pool of parrallel workers to compute
+	
+	if nfshelveMatchesOut:
+		print "will gradually store event tuples in persistent dictionary (shelve) file: '%s'"%nfshelveMatchesOut
+		dgenepaircummulfreq = shelve.open(nfshelveMatchesOut)
+		for dgpcf in iterdgpcf:
+			sumdgenepaircummulfreq([dgpcf], dgenepaircummulfreq)
+	else:
+		dgenepaircummulfreq = sumdgenepaircummulfreq(iterdgpcf)
+		if nfpickleMatchesOut:
+			with open(nfpickleMatchesOut, 'wb') as fpickleOut:
+				pickle.dump(dgenepaircummulfreq, fpickleOut, protocol=2)
+			print "saved 'dgenepaircummulfreq' to file '%s'"%nfpickleMatchesOut
+	
+	if matchesOutDirRad: 
+		nfout = os.path.join(matchesOutDirRad, 'matching_events.tab')
+		with open(nfout, 'w') as fout:
+			for genepair, cummulfreq in dgenepaircummulfreq.iteritems():
+				fout.write('%s\t%f\n'%('\t'.join(genepair), cummulfreq))
+	
+	if genefamlist:
+		dbcur.execute("drop table ingenefams;")
+		dbcon.commit()
+	dbcon.close()	
 	return dgenepaircummulfreq
 
 def usage():
@@ -739,84 +776,114 @@ def usage():
 if __name__=='__main__':
 
 	opts, args = getopt.getopt(sys.argv[1:], 'hv', ['rec_sample_list=', 'ALE_algo=', \
-	                                                'events_from_pickle=', 'events_from_postgresql_db=', 'events_from_sqlite_db=', \
+	                                                'events_from_pickle=', 'events_from_shelve=', 'events_from_postgresql_db=', 'events_from_sqlite_db=', \
 	                                                'dir_constraints=', 'dir_replaced=', \
 	                                                'populations=', 'reftree=', 'genefams=', \
-	                                                'evtype=', 'minfreq=', 'dir_table_out=', 'events_to_pickle=', \
+	                                                'evtype=', 'minfreq=', \
+	                                                'dir_table_out=', 'events_to_pickle=', 'events_to_shelve=', 'matches_to_shelve=', \
 	                                                'runmode=', 'threads=', 'help', 'verbose']) #, 'reuse=', 'max.recursion.limit=', 'logfile='
 	dopt = dict(opts)
+	
+	runmode = dopt.get('--runmode', 'all')
+	if not runmode in ['genref', 'parse','match','all']:
+		raise ValueError, "run mode must be one of {parse|match|all}"
+	if (runmode in ['parse','all']) and not (nfpickleEventsOut or nfshelveEventsOut or dirTableEventsOut):
+		raise ValueError, "an output option for parsed reconciliation must be chosen between '--dir_table_out', '--events_to_pickle' or '--events_to_shelve'"
 	
 	if ('-h' in dopt) or ('--help' in dopt):
 		print usage()
 		sys.exit(0)
 	
-	if '--rec_sample_list' in dopt:
-		nflnfrec = dopt['--rec_sample_list']
+	# reconciliation collection / parsed events input options
+	nflnfrec = dopt.get('--rec_sample_list')
+	nfpickleEventsIn = dopt.get('--events_from_pickle')
+	nfshelveEventsIn = dopt.get('--events_from_shelve')
+	dbname   = dopt.get('--events_from_postgresql_db', dopt.get('--events_from_sqlite_db'))
+	if nflnfrec:
 		dbengine = None
 		loaddfamevents = False
-	elif '--events_from_pickle' in dopt:
-		nfpickle = dopt['--events_from_pickle']
-		loaddfamevents = True
-	elif '--events_from_postgresql_db' in dopt:
-		dbname = dopt['--events_from_postgresql_db']
-		dbengine = 'postgres'
-		loaddfamevents = True
-	elif '--events_from_sqlite_db' in dopt:
-		dbname = dopt['--events_from_sqlite_db']
-		dbengine = 'sqlite'
-		loaddfamevents = True
+	elif nfshelve:
+		loaddfamevents = 'shelve'
+	elif nfpickle:
+		loaddfamevents = 'pickle'
+	elif dbname and ('--events_from_postgresql_db' in dopt):
+		loaddfamevents = 'postgres'
+	elif dbname and ('--events_from_sqlite_db' in dopt):
+		loaddfamevents = 'sqlite'
 	else:
-		raise ValueError, "must provide input file through either '--rec_sample_list' or '--pickled_events' options"
+		raise ValueError, "must provide input file through either '--rec_sample_list', '--events_from_pickle', '--events_from_shelve', '--events_from_sqlite_db' or '--events_from_postgresql_db' options"
 	
+	# parsed events / matched events output options
 	dirTableOut = dopt.get('--dir_table_out')
-	nfpickleOut = dopt.get('--events_to_pickle')
+	nfpickleEventsOut = dopt.get('--events_to_pickle')
+	nfshelveEventsOut = dopt.get('--events_to_shelve')
+	nfpickleMatchesOut = dopt.get('--matches_to_pickle')
+	nfshelveMatchesOut = dopt.get('--matches_to_shelve')
 	
-	nfpop = dopt['--populations']
-	nfrefspetree = dopt['--reftree']
+	# other params
+	# facultative input files
+	nfpop = dopt.get('--populations')
+	nfrefspetree = dopt.get('--reftree')
 	nfgenefamlist = dopt.get('--genefams')
 	dircons = dopt.get('--dir_constraints')
 	dirrepl = dopt.get('--dir_replaced')
+	
+	# event filters
 	recordEvTypes = dopt.get('--evtype', 'DTS')
 	minFreqReport = float(dopt.get('--minfreq', 0))
+	
+	# runtime params
 	nbthreads = int(dopt.get('--threads', 1))
 	verbose = ('-v' in dopt) or ('--verbose' in dopt)
-	runmode = dopt.get('--runmode', 'all')
-	if not runmode in ['parse','match','all']:
-		raise ValueError, "run mode must be one of {parse|match|all}"
-	if (runmode in ['parse','all']) and not (nfpickleOut or dirTableOut):
-		raise ValueError, "an output option for parsed reconciliation must be chosen between '--dir_table_out' and '--events_to_pickle'"
-	
-	pickletag = '.parsedRecs.%s.pickle'%recordEvTypes
 	
 	if dirTableOut:
-		for td in ['ref_species_tree', 'gene_tree_lineages']:
+		ltd = []
+		if 'refgen' in runmode: ltd += ['ref_species_tree']
+		if 'parse' in runmode: ltd += ['gene_tree_lineages']
+		if 'match' in runmode: ltd += ['gene_event_matches']
+		for td in ltd:
 			ptd = os.path.join(dirTableOut, td)
 			if not os.path.isdir(ptd):
 				os.mkdir(ptd)
 	
-	refspetree, dspe2pop = loadRefPopTree(nfrefspetree, nfpop)
-	drefspeeventTup2Ids, drefspeeventId2Tups = generateEventRefDB(refspetree, model='undated', refTreeTableOutDir=(os.path.join(dirTableOut, 'ref_species_tree') if dirTableOut else None))
-	
 	lnfrec, lfams, genefamlist = loadLabelAliasesAndListRecFiles(nflnfrec, nfgenefamlist, dircons, dirrepl, nbthreads=nbthreads)
-
+	
+	
 	if loaddfamevents:
-		with open(nfpickle, 'rb') as fpickle:
-			dfamevents = pickle.load(fpickle)
-		print "loaded 'dfamevents' from file '%s'"%nfin
-		nflnfrec = nfpickle.split(pickletag)[0]
-	elif runmode in ['parse','all']:
-		dfamevents = parse_events(lnfrec, lfams, genefamlist, refspetree, drefspeeventTup2Ids, recordEvTypes, minFreqReport, nfpickleOut, dirTableOut, nbthreads)
+		if loaddfamevents=='shelve'
+			with open(nfshelveEventsIn, 'rb') as fshelveEventsIn:
+				dfamevents = shelve.open(fshelveEventsIn)
+			print "loaded 'dfamevents' from shelve file '%s'"%nfshelveEventsIn
+		elif loaddfamevents=='pickle'
+			with open(nfpickleEventsIn, 'rb') as fpickleEventsIn:
+				dfamevents = pickle.load(fpickleEventsIn)
+			print "loaded 'dfamevents' from pickle file '%s'"%nfpickleEventsIn
+		lfams = dfamevents.keys()
+	else:
+		if runmode in ['refgen', 'parse', 'match','all']:
+			refspetree, dspe2pop = loadRefPopTree(nfrefspetree, nfpop)
+			drefspeeventTup2Ids, drefspeeventId2Tups = generateEventRefDB(refspetree, model='undated', refTreeTableOutDir=(os.path.join(dirTableOut, 'ref_species_tree') if dirTableOut else None))
+		if runmode in ['parse','all']:
+			dfamevents = parse_events(lnfrec, lfams, genefamlist, refspetree, drefspeeventTup2Ids, recordEvTypes, minFreqReport, \
+									  nfpickleEventsOut, nfshelveEventsOut, dirTableOut, nbthreads)
 	else:
 		print "no previously parsed events to load (via '--events_from_*' options) and run modes 'parse' or 'all' not selected: nothing to work on; exit now."
 		sys.exit(2)
 	##
 	
 	if runmode in ['match','all']:
-		if dirTableOut: writeOutDirRad = os.path.join(dirTableOut, 'gene_event_matches', (os.path.basename(genefamlist).rsplit('.', 1)[0] if genefamlist else 'gene_event_matches'))
-		else: writeOutDirRad = None
-		if not dbengine:
+		if dirTableOut:
+			matchesOutRad = os.path.basename(nfgenefamlist).rsplit('.', 1)[0] if nfgenefamlist else ''
+			matchesOutDirRad = os.path.join(dirTableOut, 'gene_event_matches', matchesOutRad)
+		else:
+			matchesOutDirRad = None
+		if loaddfamevents not in ['postgres', 'sqlite']:
+			print "deprecated matching engine; should prefer database query-based mtaching"
 			# rely on loaded or just-computed python objects containing parsed events
-			match_events(lfams, dfamevents,recordEvTypes, genefamlist, drefspeeventId2Tups, writeOutDirRad)
+			match_events(lfams, dfamevents, recordEvTypes, genefamlist, drefspeeventId2Tups, writeOutDirRad)
 		else:
 			# rely on database records of parsed events
-			dbquery_matching_events(dbname, nsample=1000.0, lfams=lfams, evtypes=recordEvTypes, genefamlist=genefamlist, writeOutDirRad=dirTableOut, dbengine=dbengine, nbthreads=nbthreads, **kw)
+			dbquery_matching_events(dbname, dbengine=loaddfamevents, genefamlist=genefamlist, \
+			                        nsample=1000.0, evtypes=recordEvTypes, \
+			                        nfpickleMatchesOut=nfpickleMatchesOut, nfshelveMatchesOut=nfshelveMatchesOut, matchesOutDirRad=matchesOutDirRad, \
+			                        nbthreads=nbthreads, **kw)

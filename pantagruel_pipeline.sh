@@ -669,38 +669,4 @@ python $ptgscripts/compare_collapsedALE_scenarios.py --rec_sample_list ${reclist
  --threads 8 --runmode 'parse'  &> $entlogs/compare_collapsedALE_scenarios.log &
 
 ## load parsed reconciliation data into database
-
-
-# load phylogeny_schema
-psql -d ${sqldbname} < $ptgscripts/pantagruel_postgres_phylogeny_schema.sql
-# load data on collapsed gene tree clades and their replacement in reconciled gene trees
-psql -d ${sqldbname} << EOF 
-INSERT INTO phylogeny.criteria_collapse_gene_tree_clades (criterion_id, criterion_name, criterion_definition, collapsed_clade_collection_creation)
- VALUES (1, 'bs_stem70_withinmedian35', E'--clade_stem_conds="[(\'bs\', \'>=\', 70)]" --within_clade_conds="[(\'median\', \'bs\', \'<=\', 35, -1), (\'max\', \'bs\', \'<\', 70, -1)]"', '2017-11-15') ;
-INSERT INTO phylogeny.criteria_replace_gene_tree_clades (criterion_id, criterion_name, criterion_definition, replaced_clade_collection_creation)
- VALUES (1, 'replaceCCinGasinS-collapsePOPinSnotinG', '', '2018-02-20') ;
-EOF
-# create big table files for collapsed gene tree clades and replaced clades in reconciled gene trees
-python $ptgscripts/generate_collapsed_replaced_clades_tables.py \
- ${colalinexuscodedir}/${collapsecond}/mbconstraints ${coltreechains}/${collapsecond}/${colmethod} \
- ${database}/phylogeny_collapsed_gene_tree_clades.tab ${database}/phylogeny_replaced_gene_tree_clades.tab 
-# load the in db
-psql -d ${sqldbname} << EOF 
-\copy phylogeny.collapsed_gene_tree_clades (gene_family_id, col_clade, cds_code) from '${database}/phylogeny_collapsed_gene_tree_clades.tab'
-UPDATE phylogeny.collapsed_gene_tree_clades SET collapse_criterion_id=1 WHERE collapse_criterion_id IS NULL;
-\copy phylogeny.replaced_gene_tree_clades (gene_family_id, col_clade_or_cds_code, replacement_label) from '${database}/phylogeny_replaced_gene_tree_clades.tab'
-UPDATE phylogeny.replaced_gene_tree_clades SET replace_criterion_id=1 WHERE replace_criterion_id IS NULL;
-EOF
-# load the parsed reconciliation events
-python << EOF 
-import psycopg2, os
-dbname = '${sqldbname}'
-dbcon = psycopg2.connect(dbname=dbname)
-dbcur = dbcon.cursor()
-dirgtevt = '${compoutdir}/ale_collapsed_undat/gene_tree_lineages'
-for nffamgtevt in os.listdir(dirgtevt):
-  with open(os.path.join(dirgtevt, nffamgtevt)) as ffamgtevt:
-    dbcur.copy_from(ffamgtevt, 'phylogeny.gene_lineage_events', columns=('cds_code', 'event_id', 'freq'))
-
-dbcon.commit()
-EOF
+$ptgscripts/pantagruel_sqlitedb_phylogeny.sh ${database} ${sqldb}
