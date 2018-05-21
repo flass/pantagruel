@@ -288,10 +288,9 @@ def loadLabelAliasesAndListRecFiles(nflnfrec, nfgenefamlist=None, dircons=None, 
 			lnfrec = [line.rstrip('\n') for line in flnfrec]
 	else:
 		lnfrec = []
-	lfams = [os.path.basename(nfrec).split('-')[0] for nfrec in lnfrec]
 	if nfgenefamlist: genefamlist = loadLabelAliases(nfgenefamlist, dircons=dircons, dirrepl=dirrepl, nbthreads=nbthreads, verbose=verbose)
 	else: genefamlist = []
-	return [lnfrec, lfams, genefamlist]
+	return [lnfrec, genefamlist]
 	
 def loadRefPopTree(nfrefspetree, nfpop):
 	# annotate reference species tree with ancestral population node labels
@@ -347,11 +346,11 @@ def generateEventRefDB(refspetree, model='undated', refTreeTableOutDir=None):
 		foutspeevents.close()
 	return (drefspeeventTup2Ids, drefspeeventId2Tups)
 
-def parse_events(lnfrec, lfams=None, genefamlist=None, refspetree=None, \
+def parse_events(lnfrec, genefamlist=None, refspetree=None, \
                  drefspeeventTup2Ids={}, recordEvTypes='DTS', minFreqReport=0, \
                  nfpickleEventsOut=None, nfshelveEventsOut=None, dirTableOut=None, nbthreads=1):
 	"""from list of reconciliation files, families and genes to consider, return dictionary of reported events, by family and gene lineage"""
-	if not lfams: lfams = [os.path.basename(nfrec).split('-')[0] for nfrec in lnfrec]
+	lfams = [os.path.basename(nfrec).split('-')[0] for nfrec in lnfrec]
 	if genefamlist: ingenes = [genefam.get('replaced_cds_code', genefam['cds_code']) for genefam in genefamlist if (genefam['gene_family_id'] in lfams)]
 	else: ingenes=[]
 	
@@ -597,8 +596,9 @@ def matchStats(PWMmats, genepairi, levff, reportStats=['PWMatchesSummedJointFreq
 			for t, minflevff in zip(threshMinEventFreq, lminflevff):
 				PWMmats.setdefault(pwstat+'_MinEventFreq_%f'%float(t), {})[genepairi] = eval(pwstat)(minflevff)
 
-def match_events(lfams, dfamevents, recordEvTypes, drefspeeventId2Tups, genefamlist=None, writeOutDirRad=None):
+def match_events(dfamevents, recordEvTypes, drefspeeventId2Tups, genefamlist=None, writeOutDirRad=None):
 	"""from dictionary of reported events, by family and gene lineage, return matrix of pairwise gene event profile similarity"""
+	lfams = dfamevents.keys()
 	if genefamlist:
 		genefams = [(genefam.get('replaced_cds_code', genefam['cds_code']), genefam['gene_family_id']) for genefam in genefamlist if (genefam['gene_family_id'] in lfams)]
 	else:
@@ -652,44 +652,51 @@ def get_dbconnection(dbname, dbengine, **kw):
 		dbcon = connectpostgresdb(dbname, **kw)
 		dbtype = 'postgres'
 		valtoken='%s'
+		dbcur = dbcon.cursor()
 		dbcur.execute("set search_path = genome, phylogeny;")
 	elif (dbengine.lower() in ['sqlite', 'sqlite3']):
 		dbcon = connectsqlitedb(dbname)
+		dbcur = dbcon.cursor()
 		dbtype = 'sqlite'
 		valtoken='?'
 	else:
 		raise ValueError,  "wrong DB type provided: '%s'; select one of dbengine={'postgres[ql]'|'sqlite[3]'}"%dbengine
-	return (dbcon, dbtype, valtoken)
+	return (dbcon, dbcur, dbtype, valtoken)
 
 def _query_matching_events(args):
 	"""function handling one event_id query, designed for parallel use
 	
 	fetching all gene lineages with such events and computing the joint frequency of this events for pairs of gene lineages
 	"""
-	evtid, dbname, nsample, evtypes, dbtype = args
+	evtid, dbname, dbengine, nsamplesq, evtypes, dbtype = args
+	dbcon, dbcul, dbtype, valtoken = get_dbconnection(dbname, dbengine)
+	dgenepaircummulfreq = {}
 	
-	fout = open(nfout, 'w')
-	dbcul = dbcon.cursor()
-	if dbtype == 'postgres': dbcul.execute("set search_path = genome, phylogeny;")
 	# get all the genes which event lineage features this event
-	dbcul.execute("""select replacement_label_or_cds_code, gene_family_id, freq 
-					 from gene_lineage_events 
-					 inner join replacement_label_or_cds_code2gene_families using (replacement_label_or_cds_code) %s 
-					 where event_id=%s ;"""%valtoken, (evtid,))
+	dbcul.execute("""create temp table genefams as select replacement_label_or_cds_code as gene, gene_family_id as fam, freq 
+					   from (select replacement_label_or_cds_code, freq 
+						 from gene_lineage_events
+						 where event_id=%s ) s1
+					   inner join replacement_label_or_cds_code2gene_families using (replacement_label_or_cds_code) ;
+				  """%valtoken, (evtid,))
+	dbcul.execute("""select genefams1.gene, genefams1.fam, genefams2.gene, genefams2.fam, (genefams1.freq * genefams2.freq / %s )::real
+					 from genefams as genefams1, genefams as genefams2
+					 where genefams1.fam != genefams2.fam and genefams1.gene > genefams2.gene;"""%valtoken, (nsamplesq,))
 	matchgenes = dbcul.fetchall()
 	for genetup1, genetup2 in itertools.combinations(matchgenes, 2):
 		gene1, fam1, freq1 = genetup1
 		gene2, fam2, freq2 = genetup2
 		if fam1!=fam2: # filter genes from same families
-			f1 = max(float(freq1)/nsample, 1.0)
-			f2 = max(float(freq2)/nsample, 1.0)
-			dgenepaircummulfreq.setdefault((gene1, gene2), 0.0)
-			dgenepaircummulfreq[(gene1, gene2)] += f1*f2
-			
-	return dgenepaircummulfr
+			f1 = min(float(freq1)/nsample, 1.0)
+			f2 = min(float(freq2)/nsample, 1.0)
+			# can only be seen once
+			dgenepaircummulfreq[(gene1, gene2)] = f1*f2
 	
-def sumdgenepaircummulfreq(ldgpcf, dgenepaircummulfreq=None):
-	if dgenepaircummulfreq: dgpcf = dgenepaircummulfreq
+	return dgenepaircummulfreq
+	
+def cumSumDictNumVal(ldgpcf, dcumsum=None):
+	"""merge dict objects by summing their numerical values"""
+	if dcumsum: dgpcf = dcumsum
 	else: dgpcf = {}
 	for d in ldgpcf:
 		for genepair in d:
@@ -699,13 +706,12 @@ def sumdgenepaircummulfreq(ldgpcf, dgenepaircummulfreq=None):
 
 def dbquery_matching_events(dbname, nsample=1.0, evtypes=None, genefamlist=None, \
                             nbthreads=1, dbengine='postgres', \
-                            matchesOutDirRad=None, returnDict=False, nfpickleMatchesOut=None, nfshelveMatchesOut=None, **kw):
+                            matchesOutDirRad=None, nfpickleMatchesOut=None, nfshelveMatchesOut=None, **kw):
 								
-	dbcon, dbtype, valtoken = get_dbconnection(dbname, dbengine, **kw)
-	dbcur = dbcon.cursor()
+	dbcon, dbcur, dbtype, valtoken = get_dbconnection(dbname, dbengine, **kw)
+	nsamplesq = nsample*nsample
 	
-	if isinstance(evtypes, str): evtyperestrict = "where event_type in %s"%repr(tuple(evtypes.split('')))
-	elif (isinstance(evtypes, list) or isinstance(evtypes, tuple)):  evtyperestrict = "where event_type in %s"%repr(tuple(evtypes))
+	if evtypes: evtyperestrict = "inner join species_tree_events using (event_id) where event_type in %s"%repr(tuple(e for e in evtypes))
 	else: evtyperestrict = ""
 	
 	if genefamlist:
@@ -715,26 +721,24 @@ def dbquery_matching_events(dbname, nsample=1.0, evtypes=None, genefamlist=None,
 		dbcur.executemany("insert into ingenefams values (%s), VARCHAR(20);"%valtoken, ingenefams)
 		dbcon.commit()
 		# query modifiers
-		genefamrestrict = "inner join ingenefams using (replacement_label_or_cds_code, gene_family_id) "
 		generestrict = "inner join ingenefams using (replacement_label_or_cds_code) "
 	else:
-		genefamrestrict = ""
 		generestrict = ""
 	
 	# get set of events
 	dgenepaircummulfreq = {}
-	dbcur.execute("select distinct event_id from gene_lineage_events % %;"%(evtyperestrict, generestrict))
+	dbcur.execute("select distinct event_id from gene_lineage_events %s %s;"%(generestrict, evtyperestrict))
 	ltevtids = dbcur.fetchall()
 	
-	if nbtrheads==1:
+	if nbthreads==1:
 		for tevtid in ltevtids:
-			dgenepaircummulfreq = _query_matching_events((tevtid[0], dbname, nsample, evtypes, dbtype))
+			dgenepaircummulfreq = _query_matching_events((tevtid[0], dbname, dbengine, nsamplesq, evtypes, dbtype))
 			for genepair in d:
 				dgenepaircummulfreq.setdefault(genepair, 0.0)
 				dgenepaircummulfreq[genepair] += d[genepair]
 	else:
 		pool = mp.Pool(processes=nbthreads)
-		iterargs = ((tevtid[0], dbname, nsample, evtypes, dbtype) for tevtid in ltevtids)
+		iterargs = ((tevtid[0], dbname, dbengine, nsamplesq, evtypes, dbtype) for tevtid in ltevtids)
 		iterdgpcf = pool.imap_unordered(_query_matching_events, iterargs, chunksize=100)
 		# an iterator is returned by imap_unordered(); one needs to actually iterate over it to have the pool of parrallel workers to compute
 	
@@ -742,9 +746,9 @@ def dbquery_matching_events(dbname, nsample=1.0, evtypes=None, genefamlist=None,
 		print "will gradually store event tuples in persistent dictionary (shelve) file: '%s'"%nfshelveMatchesOut
 		dgenepaircummulfreq = shelve.open(nfshelveMatchesOut)
 		for dgpcf in iterdgpcf:
-			sumdgenepaircummulfreq([dgpcf], dgenepaircummulfreq)
+			cumSumDictNumVal([dgpcf], dgenepaircummulfreq)
 	else:
-		dgenepaircummulfreq = sumdgenepaircummulfreq(iterdgpcf)
+		dgenepaircummulfreq = cumSumDictNumVal(iterdgpcf)
 		if nfpickleMatchesOut:
 			with open(nfpickleMatchesOut, 'wb') as fpickleOut:
 				pickle.dump(dgenepaircummulfreq, fpickleOut, protocol=2)
@@ -802,9 +806,9 @@ if __name__=='__main__':
 	if nflnfrec:
 		dbengine = None
 		loaddfamevents = False
-	elif nfshelve:
+	elif nfshelveEventsIn:
 		loaddfamevents = 'shelve'
-	elif nfpickle:
+	elif nfpickleEventsIn:
 		loaddfamevents = 'pickle'
 	elif dbname and ('--events_from_postgresql_db' in dopt):
 		loaddfamevents = 'postgres'
@@ -846,29 +850,28 @@ if __name__=='__main__':
 			if not os.path.isdir(ptd):
 				os.mkdir(ptd)
 	
-	lnfrec, lfams, genefamlist = loadLabelAliasesAndListRecFiles(nflnfrec, nfgenefamlist, dircons, dirrepl, nbthreads=nbthreads)
+	lnfrec, genefamlist = loadLabelAliasesAndListRecFiles(nflnfrec, nfgenefamlist, dircons, dirrepl, nbthreads=nbthreads)
 	
 	
 	if loaddfamevents:
-		if loaddfamevents=='shelve'
+		if loaddfamevents=='shelve':
 			with open(nfshelveEventsIn, 'rb') as fshelveEventsIn:
 				dfamevents = shelve.open(fshelveEventsIn)
 			print "loaded 'dfamevents' from shelve file '%s'"%nfshelveEventsIn
-		elif loaddfamevents=='pickle'
+		elif loaddfamevents=='pickle':
 			with open(nfpickleEventsIn, 'rb') as fpickleEventsIn:
 				dfamevents = pickle.load(fpickleEventsIn)
 			print "loaded 'dfamevents' from pickle file '%s'"%nfpickleEventsIn
-		lfams = dfamevents.keys()
 	else:
 		if runmode in ['refgen', 'parse', 'match','all']:
 			refspetree, dspe2pop = loadRefPopTree(nfrefspetree, nfpop)
 			drefspeeventTup2Ids, drefspeeventId2Tups = generateEventRefDB(refspetree, model='undated', refTreeTableOutDir=(os.path.join(dirTableOut, 'ref_species_tree') if dirTableOut else None))
 		if runmode in ['parse','all']:
-			dfamevents = parse_events(lnfrec, lfams, genefamlist, refspetree, drefspeeventTup2Ids, recordEvTypes, minFreqReport, \
+			dfamevents = parse_events(lnfrec, genefamlist, refspetree, drefspeeventTup2Ids, recordEvTypes, minFreqReport, \
 									  nfpickleEventsOut, nfshelveEventsOut, dirTableOut, nbthreads)
-	else:
-		print "no previously parsed events to load (via '--events_from_*' options) and run modes 'parse' or 'all' not selected: nothing to work on; exit now."
-		sys.exit(2)
+		else:
+			print "no previously parsed events to load (via '--events_from_*' options) and run modes 'parse' or 'all' not selected: nothing to work on; exit now."
+			sys.exit(2)
 	##
 	
 	if runmode in ['match','all']:
@@ -880,10 +883,10 @@ if __name__=='__main__':
 		if loaddfamevents not in ['postgres', 'sqlite']:
 			print "deprecated matching engine; should prefer database query-based mtaching"
 			# rely on loaded or just-computed python objects containing parsed events
-			match_events(lfams, dfamevents, recordEvTypes, genefamlist, drefspeeventId2Tups, writeOutDirRad)
+			match_events(dfamevents, recordEvTypes, genefamlist, drefspeeventId2Tups, writeOutDirRad)
 		else:
 			# rely on database records of parsed events
 			dbquery_matching_events(dbname, dbengine=loaddfamevents, genefamlist=genefamlist, \
 			                        nsample=1000.0, evtypes=recordEvTypes, \
 			                        nfpickleMatchesOut=nfpickleMatchesOut, nfshelveMatchesOut=nfshelveMatchesOut, matchesOutDirRad=matchesOutDirRad, \
-			                        nbthreads=nbthreads, **kw)
+			                        nbthreads=nbthreads)

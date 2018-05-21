@@ -62,4 +62,29 @@ EOF
 #~ df = pandas.read_csv(csvfile)
 #~ df.to_sql(table_name, conn, if_exists='append', index=False)
 
+sqlite3 ${dbfile} << EOF 
 
+INSERT INTO reconciliation_collections (reconciliation_id, reconciliation_name, software, version, algorithm, reconciliation_date, notes)
+ VALUES (1, 'ale_collapsed_undat', 'ALE', 'v0.4', 'ALEml_undated', '2018-02-28', E'program compiled from source code from branch \'master\' of https://github.com/ssolo/ALE commit 63f0a3c964074a15f61fd45156ab9e10b5dd45ef') ;
+UPDATE gene_lineage_events SET reconciliation_id=1 WHERE reconciliation_id IS NULL;
+
+CREATE INDEX ON gene_lineage_events (reconciliation_id);
+CREATE INDEX ON gene_lineage_events (replacement_label_or_cds_code);
+CREATE INDEX ON gene_lineage_events (event_id);
+CREATE INDEX ON gene_lineage_events (freq);
+ALTER TABLE gene_lineage_events ADD PRIMARY KEY (event_id, cds_code, reconciliation_id);
+
+CREATE INDEX ON collapsed_gene_tree_clades (gene_family_id);
+CREATE INDEX ON collapsed_gene_tree_clades (cds_code);
+CREATE INDEX ON collapsed_gene_tree_clades (gene_family_id, col_clade);
+
+CREATE INDEX ON replaced_gene_tree_clades (gene_family_id, col_clade_or_cds_code);
+CREATE INDEX ON replaced_gene_tree_clades (replacement_label);
+
+CREATE TABLE replacement_label_or_cds_code2gene_families AS 
+SELECT cds_code as replacement_label_or_cds_code, gene_family_id FROM coding_sequences
+UNION
+SELECT replacement_label as replacement_label_or_cds_code, gene_family_id FROM replaced_gene_tree_clades;
+CREATE INDEX ON replacement_label_or_cds_code2gene_families (replacement_label_or_cds_code);
+CREATE INDEX ON replacement_label_or_cds_code2gene_families (gene_family_id);
+EOF
