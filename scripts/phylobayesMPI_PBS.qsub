@@ -43,14 +43,19 @@ echo "  syncfreq=${syncfreq}"
 #~ export INCLUDE_PATH=${HOME}/libraries/openmpi-1.8.8/include:${C_INCLUDE_PATH}
 #~ export MANPATH=${HOME}/libraries/openmpi-1.8.8/share/man:${MANPATH}
 
-
-mpibin='mpiexec'
-#~ mpibin='mpirun'
-echo "using $mpibin:"
-which $mpibin
-if [ $? != 0 ] ; then
-  echo "!!! ERROR : unable to find $mpibin ; exit now"
-  exit 1
+if [ -z $mpibin ] ; then
+  mpibin='mpiexec'
+  #~ mpibin='mpirun'
+fi
+if [ "$mpibin" == 'none' ] ; then
+  echo "WILL NOT USE MPI"
+else
+  echo "using $mpibin:"
+  which $mpibin
+  if [ $? != 0 ] ; then
+    echo "!!! ERROR : unable to find $mpibin ; exit now"
+    exit 1
+  fi
 fi
 
 # test user-provided variables are correctly set
@@ -187,7 +192,11 @@ if [ "$pbresume" == 'yes' ] ; then
 fi
 
 # set PB command
-pbmpicmd="$mpibin -n ${coreperchain} ${pbmpibin}"
+if [ "$mpibin" == 'none' ] ; then
+   pbmpicmd="${pbmpibin}" 
+else
+  pbmpicmd="$mpibin -n ${coreperchain} ${pbmpibin}"
+fi
 if [ "$pbresume" != 'yes' ] ; then
   pbmpicmd="${pbmpicmd} -d ${nfrad1} ${pboptions}"
   echo -e "##### Start PB chains\n"
