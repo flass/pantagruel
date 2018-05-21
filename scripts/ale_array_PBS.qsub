@@ -190,14 +190,15 @@ else
   ${alebin}/ALEobserve $nfchain burnin=${burnin%%.*}
 fi
 date
+
 # start timing in seconds
 SECONDS=0
 # run ALE reconciliation 
 if [ "$alealgo" == 'ALEml' ] ; then
-  alecmd="${alebin}/${alealgo} ${spetree} ${chain}.ale ${nrecs} _"
+  alecmd="${aleexe} ${spetree} ${chain}.ale ${nrecs} _"
   if [ ${#DTLrates[@]} -eq 3 ] ; then alecmd="${alecmd} ${DTLrates[@]}" ; fi
 elif [ "$alealgo" == 'ALEml_undated' ] ; then
-  alecmd="${alebin}/${alealgo} ${spetree} ${chain}.ale sample=${nrecs} separators=_"
+  alecmd="${aleexe} ${spetree} ${chain}.ale sample=${nrecs} separators=_"
   if [ ${#DTLrates[@]} -eq 3 ] ; then alecmd="${alecmd} delta=${DTLrates[0]} tau=${DTLrates[0]} lambda=${DTLrates[0]}" ; fi
 else
 echo "# ${alecmd}"
