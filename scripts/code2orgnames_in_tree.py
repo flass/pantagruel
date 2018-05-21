@@ -32,6 +32,11 @@ with open(nfref, 'r') as fref:
 		orga = orga.replace('.', '').replace(':', '_').replace(' ', '_')
 		orga += '__'+code
 		print code, orga
-		t[code].edit_label(orga)
+		node = t[code]
+		if node:
+			t[code].edit_label(orga)
+			print orga
+		else:
+			print "could not find %s in tree"%code
 
 t.write_newick(nfout)
