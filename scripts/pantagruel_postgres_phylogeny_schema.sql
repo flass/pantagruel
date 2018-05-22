@@ -93,3 +93,19 @@ CREATE TABLE phylogeny.replaced_gene_tree_clades (
 -- ~ );
 -- ~ CREATE INDEX ON replacement_label_or_cds_code2gene_families (replacement_label_or_cds_code);
 -- ~ CREATE INDEX ON replacement_label_or_cds_code2gene_families (gene_family_id);
+
+-- ~ CREATE TABLE gene_tree_label2cds_code (replacement_label_or_cds_code, cds_code) AS
+  -- ~ SELECT replacement_label_or_cds_code, replacement_label_or_cds_code as cds_code
+   -- ~ FROM gene_lineage_events
+   -- ~ WHERE char_length(replacement_label_or_cds_code) < 20
+ -- ~ UNION 
+  -- ~ SELECT rgtc1.replacement_label as replacement_label_or_cds_code, rgtc1.col_clade_or_cds_code as cds_code
+   -- ~ FROM replaced_gene_tree_clades AS rgtc1
+   -- ~ WHERE rgtc1.col_clade_or_cds_code NOT LIKE 'clade%'
+ -- ~ UNION
+  -- ~ SELECT rgtc2.replacement_label as replacement_label_or_cds_code, cgtc.cds_code
+   -- ~ FROM replaced_gene_tree_clades AS rgtc2
+   -- ~ INNER JOIN collapsed_gene_tree_clades AS cgtc ON rgtc2.col_clade_or_cds_code=cgtc.col_clade AND rgtc2.gene_family_id=cgtc.gene_family_id
+-- ~ ;
+-- ~ CREATE INDEX ON gene_tree_label2cds_code (replacement_label_or_cds_code);
+-- ~ CREATE INDEX ON gene_tree_label2cds_code (cds_code);
