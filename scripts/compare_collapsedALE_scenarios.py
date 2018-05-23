@@ -11,12 +11,16 @@ import tree2
 from replace_species_by_pop_in_gene_trees import annotatePopulationInSpeciesTree, parseMrBayesConstraints, getdspe2pop
 from mark_unresolved_clades import mean, median
 import parseALErec as pAr
-
+import re
 
 ## Parameters
 # file parsing parameter
 constrainttag='mbconstraints'
 replacedtag='-leaflabels_Spe2Pop.txt'
+
+collapsedcladetag = '_CC-clade'
+replacementcladetag = '_RC-clade'
+replacementcladepat = re.compile('^.+_(.+_RC-clade[0-9]+)$')
 
 # block reconstruction
 gapsize = 2
@@ -34,7 +38,7 @@ PWMstats = [ \
 ]
 ############ Functions
 
-def eventLineages(recgt, dnodeallevt, onlyLeaves=[]):
+def eventLineages(recgt, dnodeallevt, onlyLeaves=[], deDupMatching=replacementcladepat):
 	"""oreder events by gene lineage in the reconciled gene tree
 	
 	from a reconciled gene tree and the dict containing all the events in this tree in the format {node_id:(X, [don, ]rec), ...}, 
@@ -53,6 +57,19 @@ def eventLineages(recgt, dnodeallevt, onlyLeaves=[]):
 	leavesandlabels = [(leaf, leaf.label().split('.')[0]) for leaf in recgt.get_leaves()]
 	if onlyLeaves: leavesandlab = [x for x in leavesandlabels if (x[1] in onlyLeaves)]
 	else: leavesandlab = leavesandlabels
+	if deDupMatching:
+		lela = []
+		srctags = set([])
+		for leaf, leaflab in leavesandlab:
+			matchrc = deDupMatching.search(leaflab)
+			if matchrc:
+				rctag = matchrc.groups()[0]
+				if not rctag in srctags:
+					lela.append((leaf, leaflab))
+					srctags.add(rctag)
+			else:
+				lela.append((leaf, leaflab))
+		leavesandlab = lela
 	for leaf, leaflab in leavesandlab:
 		evtlineages[leaflab] = get_eventlineage(leaf, dnodeallevt, allevtlineages)
 	return evtlineages
@@ -155,7 +172,7 @@ def parseRec(nfrec, refspetree=None, drefspeeventTup2Ids=None, onlyLineages=[], 
 	allrectevtlineages = {}
 	for i, recgt in enumerate(lrecgt):
 		# gather scenario-scpecific events (i.e. dependent on reconciled gene tree topology, which varies among the sample)
-		dlevt, dnodeallevt = pAr.parseRecGeneTree(recgt, colspetree, dexactevt, recgtsample, nsample, fillDTLSdict=False, recordEvTypes=recordEvTypes, excludeTaggedLeaves='_CC-clade', excludeTaggedSubtrees='_RC-clade')
+		dlevt, dnodeallevt = pAr.parseRecGeneTree(recgt, colspetree, dexactevt, recgtsample, nsample, fillDTLSdict=False, recordEvTypes=recordEvTypes, excludeTaggedLeaves=collapsedcladetag, excludeTaggedSubtrees=replacementcladetag)
 		# here events involving a replcement clade (RC) or leaf (CC) are excluded
 		# * 'dexactevt' is used as cache to store frequencies of event s as inferred from regex searches of the event pattern
 		# these frequencies are not specific to gene lineages, but aggregate the counts over the whole gene family
