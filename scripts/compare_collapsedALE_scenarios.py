@@ -5,6 +5,7 @@ import multiprocessing as mp
 #~ import cPickle as pickle
 import shelve
 import itertools
+import gc
 import numpy as np
 import tree2
 from replace_species_by_pop_in_gene_trees import annotatePopulationInSpeciesTree, parseMrBayesConstraints, getdspe2pop
@@ -668,29 +669,82 @@ def mulBoundInt2Float(a, b, scale, maxval=1.0):
 	f2 = min(float(b)/scale, maxval)
 	return f1*f2
 
-def _query_events_by_lineage(gene, rlocdsidcol, dbcur, dbtype, valtoken):
-	dbcur.execute("""select event_id, freq 
-					   from gene_lineage_events
-					   inner join replacement_label_or_cds_code2gene_families using (replacement_label_or_cds_code)
-					 where %s=%s ;
-				  """%(rlocdsidcol, valtoken), (gene,)) 
+def _select_event_by_lineage_query_factory(rlocdsidcol, evtypes, valtoken):
+	if rlocdsidcol=='replacement_label_or_cds_code':
+		rlocdsIJ = ""
+	else:
+		rlocdsIJ = "INNER JOIN replacement_label_or_cds_code2gene_families USING (replacement_label_or_cds_code)"
+	if evtypes:
+		evtyperestrictIJ = "INNER JOIN species_tree_events USING (event_id)"
+		evtyperestrictWH = "AND event_type IN %s"%repr(tuple(e for e in evtypes))
+	else:
+		evtyperestrictWH = evtyperestrict = ""
+	tqfields = (rlocdsIJ, evtyperestrictIJ, rlocdsidcol, valtoken, evtyperestrictWH)
+	preq = "SELECT event_id, freq FROM gene_lineage_events %s %s WHERE %s=%s %s ;"%tqfields
+	return preq
+
+def _query_events_by_lineage(gene, preq, dbcur):
+	dbcur.execute(preq, (gene,)) 
 	return sorted(dbcur.fetchall(), key=lambda x: x[0])
 
-
-def _query_matching_events_by_lineage(args, returDict=True, use_gene_labels=False, timing=False, arraysize=10000):
+def _query_matching_lineage_event_profiles(args, returDict=True, use_gene_labels=False, timing=False, arraysize=10000):
 	
 	if timing: time = __import__('time')
-	evtid, dbname, dbengine, nsample, evtypes = args
+	lineage_id, dbname, dbengine, nsample, evtypes = args
 	dbcon, dbcul, dbtype, valtoken = get_dbconnection(dbname, dbengine)
 	if use_gene_labels: rlocdsidcol = 'replacement_label_or_cds_code'
 	elif dbtype=='postgres': rlocdsidcol = 'rlocds_id'
 	else: rlocdsidcol = 'oid'
 	if returDict: genepaircummulfreq = {}
 	else: genepaircummulfreq = []
+	# first get the vector of (event_id, freq) tuples in lineage
+	preq_evbyli = _select_event_by_lineage_query_factory(rlocdsidcol, evtypes, valtoken)
+	lineage_events = _query_events_by_lineage(lineage_id, preq_evbyli, dbcur)
+	
+	# then build a list of gene lineages to compare, based on common occurence of at least N event
+	dbcul.execute("""select %s, gene_family_id, freq 
+					   from gene_lineage_events
+					   inner join replacement_label_or_cds_code2gene_families using (replacement_label_or_cds_code)
+					 where event_id=%s ;
+				  """%(rlocdsidcol, valtoken), (evtid,)) 
+	matchgenes = dbcul.fetchall()
+	
+
+def dbquery_matching_lineage_event_profiles(dbname, nsample=1.0, evtypes=None, genefamlist=None, \
+                            nbthreads=1, dbengine='postgres', use_gene_labels=False, \
+                            matchesOutDirRad=None, nfpickleMatchesOut=None, **kw):
+	
+	timing = kw.get('timing')
+	if timing: time = __import__('time')							
+	dbcon, dbcur, dbtype, valtoken = get_dbconnection(dbname, dbengine, **kw)
+	nsamplesq = nsample*nsample
+	if use_gene_labels: rlocdsidcol = 'replacement_label_or_cds_code'
+	elif dbtype=='postgres': rlocdsidcol = 'rlocds_id'
+	else: rlocdsidcol = 'oid'
+	
+	if genefamlist:
+		# create real table so can be seen by other processes
+		ingenefams = [genefam.get('replaced_cds_code', genefam['cds_code']) for genefam in genefamlist]
+		dbcur.execute("create table ingenefams (replacement_label_or_cds_code VARCHAR(60), gene_family_id VARCHAR(20));" )
+		dbcur.executemany("insert into ingenefams values (%s), VARCHAR(20);"%valtoken, ingenefams)
+		dbcon.commit()
+		# query modifiers
+		generestrict = "inner join ingenefams using (replacement_label_or_cds_code) "
+	else:
+		generestrict = ""
+	
+	# get set of gene lineages
+	#~ dbcur.execute("select distinct %s from gene_lineage_events %s %s;"%(rlocdsidcol, generestrict, evtyperestrict))
+	dbcur.execute("select distinct %s from replacement_label_or_cds_code2gene_families %s %s;"%(rlocdsidcol, generestrict, evtyperestrict))
+	llineageids = dbcur.fetchall()
+	
+	for lineageid in llineageids:
+		
+		_query_matching_lineage_event_profiles((lineageid, evtypes, ))
 	
 	
 	
-def _query_matching_lineages_by_event(args, returDict=False, use_gene_labels=False, serverside=[], timing=False, arraysize=10000):
+def _query_matching_lineages_by_event(args, returDict=True, use_gene_labels=False, serverside=[], timing=False, arraysize=10000):
 	"""function handling one event_id query, designed for use in parallel
 	
 	fetching all gene lineages where the event 'event_id' occurred 
@@ -703,7 +757,7 @@ def _query_matching_lineages_by_event(args, returDict=False, use_gene_labels=Fal
 	"""
 	# test with evtid=1795683
 	# genefams of size 12,692
-	# at most (but probably close to) 12692*(12692-1)/2 = 80,537,086 comparisons (actually 79,360,180)
+	# at most (but probably close to) 12692*(12692-1)/2 = 80,537,086 gene lineage comparisons (actually 79,360,180)
 	# when storing (gene1, gene2):jfreq with full gene tree labels and float freq, it uses ~35Gb mem
 	# when storing (gene1, gene2):jfreq with int id of gene tree labels and float freq, it uses ~10Gb mem
 	
@@ -772,38 +826,67 @@ def _query_matching_lineages_by_event(args, returDict=False, use_gene_labels=Fal
 				if returDict: genepaircummulfreq[(gene1, gene2)] jfreq   # (gene1, gene2) can only be seen once so no need to do d.setdefault((g1,g2), 0) then add value
 				else: genepaircummulfreq.append(((gene1, gene2), jfreq))
 		if timing: t2 = time.time() ; print t2 - t1
-		# test takes ~ 9min with tuples of full gene tree label as keys
-		# test takes < 8min with tuples of int id of gene tree label as keys
 		# compared to server-side computation of combinations, less rows to fetch speeds up the process
-		
+		# test takes ~ 9min with tuples of full gene tree label as keys (store in dict)
+		# test takes ~ 8min with tuples of int id of gene tree label as keys (store in dict)
+		# test takes < 52min when storing tuples in a list rather than dict
 	return genepaircummulfreq
 
+def stripstr(obj, stripchar='()'):
+	return str(obj).strip(stripchar).replace(', ', ',')
+
 ## functions similar to dict.update() but performing cumulative sum of values rather than update
-def cumSumDictNumVal(ld, dcumsum=None):
-	"""merge dict objects by summing their numerical values; input: list of dict [, dict of initial values]; output: dict of summed values"""
-	if dcumsum: dgpcf = dcumsum
-	else: dgpcf = {}
+def cumSumDictNumVal(ld, dcumsum, funOnKey=None):
+	"""merge dict objects by summing their numerical values; 
+	
+	input: a list of dict, a [persistent] dict of initial values; output: dict of summed values.
+	if funOnKey is specified, the input value will be stored under funOnKey(key); 
+	this can be 'hash' or 'repr' or 'str', to enforce the integer or string formatting of the key (necessary for shelve persistant dict).
+	"""
 	for d in ld:
 		for key in d:
-			preval = dgpcf.setdefault(key, 0.0)
-			dgpcf[key] = preval + d[key]
-	return dgpcf
+			if funOnKey: k = funOnKey(key)
+			else: k = key
+			preval = dcumsum.setdefault(k, 0.0)
+			dcumsum[k] = preval + d[key]
 
-def cumSumSeqNumVal(llt, dcumsum=None):
-	"""merge dict objects by summing their numerical values; input: list of list of (key, val) tuples [, dict of initial values]; output: dict of summed values"""
-	if dcumsum: dgpcf = dcumsum
-	else: dgpcf = {}
+def cumSumSeqNumVal(llt, dcumsum, funOnKey=None):
+	"""merge dict objects by summing their numerical values; 
+	
+	input: a list of list of (key, val) tuples, a [persistent] dict of initial values; output: dict of summed values.
+	if a callable is specified via funOnKey, the input value will be stored under funOnKey(key); 
+	this can be 'hash' or 'repr' or 'str', to enforce the integer or string formatting of the key (necessary for shelve persistant dict).
+	"""
 	for lt in llt:
 		for key, val in lt:
-			preval = dgpcf.setdefault(key, 0.0)
-			dgpcf[key] = preval + val
-	return dgpcf
+			if funOnKey: k = funOnKey(key)
+			else: k = key
+			preval = dcumsum.setdefault(k, 0.0)
+			dcumsum[k] = preval + val
 
 def dbquery_matching_lineages_by_event(dbname, nsample=1.0, evtypes=None, genefamlist=None, \
                             nbthreads=1, dbengine='postgres', \
                             matchesOutDirRad=None, nfpickleMatchesOut=None, nfshelveMatchesOut=None, **kw):
+	"""look for common events between genes, and retrieve their joint probability of occurence (produce of their observation frequencies)
 	
-	if kw.get('timing'): time = __import__('time')							
+	to explore the entire set of lineage-to-lineage comparisons, of event sets, 
+	iterate over all events, getting the set of all gene lineages featuring that event
+	and retrieveing allpair combinations and joint probabilities.
+	
+	This function relies on sub-function calls handling one event each, usually in parallel;
+	The maps of (gene pairs)->(joint event prob) generated for each events are then summed over all events,
+	to return a map of all (gene pairs)->(frequency of joint occurence in scenarios).
+	
+	Turns out to be a very heavy approach, du to lots of intermediate results that need to be saved.
+	In the end, the number of gene lineage pairs explored is redibitory, not all can be saved:
+	Some pairs->freq items which joint freq score falls under a threshold must be discarded 
+	(but a account of the distribution of scores can be kept, by counting of how many pairs 
+	achieved a score falling in a finite number of bins); this however warants that the score 
+	of each gene pair is evaluated at once... not inmany times, like in this function.
+	"""
+	
+	timing = kw.get('timing')
+	if timing: time = __import__('time')							
 	dbcon, dbcur, dbtype, valtoken = get_dbconnection(dbname, dbengine, **kw)
 	nsamplesq = nsample*nsample
 	
@@ -827,21 +910,42 @@ def dbquery_matching_lineages_by_event(dbname, nsample=1.0, evtypes=None, genefa
 	
 	if nfshelveMatchesOut:
 		print "will gradually store event tuples in persistent dictionary (shelve) file: '%s'"%nfshelveMatchesOut
-		dgenepaircummulfreq = shelve.open(nfshelveMatchesOut)
+		dgenepaircummulfreq = shelve.open(nfshelveMatchesOut, protocol=2, writeback=True)
+		funk = stripstr
 	else:
 		dgenepaircummulfreq = {}
+		funk = None
 		
 	if nbthreads==1:
 		for tevtid in ltevtids:
 			dgpcf = _query_matching_lineages_by_event((tevtid[0], dbname, dbengine, nsamplesq, evtypes), returnDict=True)
-			cumSumDictNumVal([dgpcf], dgenepaircummulfreq)
+			cumSumDictNumVal([dgpcf], dgenepaircummulfreq, funOnKey=funk)
 	else:
 		pool = mp.Pool(processes=nbthreads)
 		iterargs = ((tevtid[0], dbname, dbengine, nsamplesq, evtypes) for tevtid in ltevtids)
-		itergpcf = pool.imap_unordered(_query_matching_lineages_by_events, iterargs, chunksize=100)
+		iterdgpcf = pool.imap_unordered(_query_matching_lineages_by_events, iterargs, chunksize=100)
 		# an iterator is returned by imap_unordered(); one needs to actually iterate over it to have the pool of parrallel workers to compute
-		for gpcf in itergpcf:
-			cumSumSeqNumVal([gpcf], dgenepaircummulfreq)
+		if timing: t2 = time.time()
+		for dgpcf in iterdgpcf:
+			#~ cumSumSeqNumVal([dgpcf], dgenepaircummulfreq, funOnKey=funk)
+			cumSumDictNumVal([dgpcf], dgenepaircummulfreq, funOnKey=funk)
+			if timing: t3 = time.time() ; print '+', t3 - t2 ; t2 = t3
+			# test take 2min when updating simple dict with list of tuples
+			# test take ~2.6h when updating shelve persistant dict with list of tuples
+			# storage in simple dict should be prefered as takes much less time to store with int tuple keys
+			# vs. str representation for shelve dict (also ultimately takes more space)
+			# and less time is spent pickling the dict (only writing once per key at the end = big one)
+			# vs. syncing the shelve many times on the same keys during the run
+			# only BIG issue is the concurent memory use maintaning a dict with up to 1e6 ^2 = 1e12 entries,
+			# that would be expected to use 100 TB mem...
+			# storing the data as plain text for 1e12 entries would take ~ 20TB disk space
+			# possible but silly...
+			# must discard pairs which score falls under a threshold (but keep count of pairs that achived a score, by bins of scores)
+			# this warants evaluation of gene pairs at once... not this function.
+			
+			if nfshelveMatchesOut:
+				dgenepaircummulfreq.sync()
+				if timing: t4 = time.time() ; print '+', t4 - t3 ; t2 = t4
 	
 	if matchesOutDirRad: 
 		nfout = os.path.join(matchesOutDirRad, 'matching_events.tab')
@@ -854,7 +958,8 @@ def dbquery_matching_lineages_by_event(dbname, nsample=1.0, evtypes=None, genefa
 	else:
 		if nfpickleMatchesOut:
 			with open(nfpickleMatchesOut, 'wb') as fpickleOut:
-				pickle.dump(dgenepaircummulfreq, fpickleOut, protocol=2)
+				pickle.dump(dgenepaircummulfreq, fpickleOut, protocol=pickle.HIGHEST_PROTOCOL)
+				# takes ~ 50min to save a dict that stores 80M entries ; cannot decently be used for every round.
 			print "saved 'dgenepaircummulfreq' to file '%s'"%nfpickleMatchesOut
 	
 	
@@ -866,8 +971,9 @@ def dbquery_matching_lineages_by_event(dbname, nsample=1.0, evtypes=None, genefa
 
 def usage():
 	s = "Usage: [HELP MESSAGE INCOMPLETE]\N"
-	s += "python %s --rec_sample_list /path/to/list_of_reconciliation_file_paths [OPTIONS]\n"%sys.argv[0]
+	s += "python %s [OPTIONS] runmode\n"%sys.argv[0]
 	s += "Facultative options:"
+	s += "\t\t--rec_sample_list path to list of reconciliation file paths\n"
 	s += "\t\t--dir_replaced\tfolder containing files listing replaced leaf labels (e.g. wen collapsing gene tree clades)\n"
 	s += "\t\t--genefams\ttabulated file with header containing at least those two fields: 'cds_code', 'gene_family_id'\n"
 	s += "\t\t\t\trows indicated the genes to be treated in the search, and to which gene family they belong (and hence in which reconciliation file to find them)\n"
@@ -886,7 +992,8 @@ if __name__=='__main__':
 	                                                'runmode=', 'threads=', 'help', 'verbose']) #, 'reuse=', 'max.recursion.limit=', 'logfile='
 	dopt = dict(opts)
 	
-	runmode = dopt.get('--runmode', 'all')
+	if len(args) > 0: runmode = args[0]
+	else: runmode = dopt.get('--runmode')
 	if not runmode in ['genref', 'parse','match','all']:
 		raise ValueError, "run mode must be one of {parse|match|all}"
 	if (runmode in ['parse','all']) and not (nfpickleEventsOut or nfshelveEventsOut or dirTableEventsOut):
