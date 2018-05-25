@@ -1,11 +1,11 @@
-#/usr/bin/R
-library(ape)
+#!/usr/bin/Rscript
+library('ape')
 
-#~ cargs = commandArgs(trailing=T)
-#~ nflineevt = cargs[1]
-#~ nfspetree = cargs[2]
-nflineevt = '/home/flassall/PanteroDB_v0.3/07.compare_scenarios/bs_stem70_withinmedian35/replaceCCinGasinS-collapsePOPinSnotinG/ale_collapsed_undat/summary_gene_tree_events'
-nfspetree = '/home/flassall/PanteroDB_v0.3/04.core_genome/raxml_tree/RAxML_bipartitions.pseudo-core-878-unicopy_concat_cds_880entero.166paramBS_MADrooted.full.lsd_internalPopulations.nwk'
+cargs = commandArgs(trailing=T)
+nflineevt = cargs[1]
+nfspetree = cargs[2]
+#~ nflineevt = '/home/flassall/PanteroDB_v0.3/07.compare_scenarios/bs_stem70_withinmedian35/replaceCCinGasinS-collapsePOPinSnotinG/ale_collapsed_undat/summary_gene_tree_events_minfreq0.25'
+#~ nfspetree = '/home/flassall/PanteroDB_v0.3/04.core_genome/raxml_tree/RAxML_bipartitions.pseudo-core-878-unicopy_concat_cds_880entero.166paramBS_MADrooted.full.lsd_internalPopulations.nwk'
 lineevt = read.table(nflineevt, h=T, sep='\t')
 spetree = read.tree(file=nfspetree)
 
@@ -14,6 +14,7 @@ metrics = c('nb_lineages', 'cum_freq')
 metric_texts = c('- # gene lineages featuring event', '- cummulative event observation frequency') ; names(metric_texts) = metrics
 recordons = c('rec_branch_name', 'don_branch_name')
 recordon_texts = c('by recipient branch', 'by donor branch') ; names(recordon_texts) = recordons
+cols = c('black', 'blue', 'green', 'gold', 'orange', 'red', 'purple')
 
 plot_eventcounts = function(event_counts, spetree, main, log10cex=T){
 	plot.spetree = plot.phylo(spetree, show.tip.label=F, show.node.label=T, main=main)
@@ -27,7 +28,13 @@ plot_eventcounts = function(event_counts, spetree, main, log10cex=T){
 	legend('topleft', legend=paste('1e', 0:(length(cols)-1), ' - 1e', 1:(length(cols)), sep=''), pch=1, col=cols, bg='white')	
 }
 
-cols = c('black', 'blue', 'green', 'gold', 'orange', 'red', 'purple')
+plot_estim_computetime = function(lineevt, addmain=''){
+	plot(lineevt$esttimeperevt ~ lineevt$nb_lineages, main=paste('total computation time:', round(sum(lineevt$esttimeperevt), 2), 'h', addmain),
+	 xlab='number of occurences of type species tree event', ylab='estimate computaiton time (hours)')
+}
+
+### main
+
 pdf(paste(nflineevt, 'species_tree_density.pdf', sep='.'), height=18, width=32)
 for (e in levels(lineevt$event_type)){
 	print(e)
@@ -52,10 +59,12 @@ for (e in levels(lineevt$event_type)){
 		}
 	}
 }
-dev.off()
 
 # compute estimated time to process these event data
-time1lineagepair = as.double(470.0)/79360180 # emprical estimate (in seconds) from parsing all lineage pairs for evtid=1795683
+time1lineagepair = as.double(900.0)/79360180 # emprical estimate (in seconds) from parsing all lineage pairs for evtid=1795683
 
-esttimeperevt = sapply(lineevt[['nb_lineages']], function(x){ x*(x-1)*time1lineagepair })
+lineevt$esttimeperevt = sapply(lineevt$nb_lineages, function(x){ x*(x-1)*time1lineagepair })/3600
+plot_estim_computetime(lineevt, '(all events)')
+plot_estim_computetime(lineevt[lineevt$nb_lineages < 1e5,], '(only events occurring in < 1e+05 lineages)')
 
+dev.off()

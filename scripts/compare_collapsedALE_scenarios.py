@@ -285,7 +285,7 @@ def loadLabelAliases(nfgenefamlist, dircons=None, dirrepl=None, nbthreads=1, ver
 						# spurious association of S events with total support would be seen between similar RC clades
 						# in different gene families.
 						# (events recorded withtin such RC clade are actually discarded in pAr.parseRecGeneTree(),
-						# as they detected as clade encompassing allleaves with identical RC tag)
+						# as they detected as clade encompassing all leaves with identical RC tag)
 						dreplacedlab[claorgene] = repllab
 					prevclaorgene = claorgene
 	
@@ -686,18 +686,26 @@ def mulBoundInt2Float(a, b, scale, maxval=1.0):
 	f2 = min(float(b)/scale, maxval)
 	return f1*f2
 
-def _select_event_by_lineage_query_factory(rlocdsidcol, evtypes, valtoken):
-	if rlocdsidcol=='replacement_label_or_cds_code':
-		rlocdsIJ = ""
-	else:
-		rlocdsIJ = "INNER JOIN replacement_label_or_cds_code2gene_families USING (replacement_label_or_cds_code)"
+def _select_lineage_event_clause_factory(rlocdsidcol, evtypes, valtoken):
+	if rlocdsidcol=='replacement_label_or_cds_code': rlocdsIJ = ""
+	else: rlocdsIJ = "INNER JOIN replacement_label_or_cds_code2gene_families USING (replacement_label_or_cds_code)"
 	if evtypes:
 		evtyperestrictIJ = "INNER JOIN species_tree_events USING (event_id)"
-		evtyperestrictWH = "AND event_type IN %s"%repr(tuple(e for e in evtypes))
+		evtyperestrictWC = "AND event_type IN %s"%repr(tuple(e for e in evtypes))
 	else:
-		evtyperestrictWH = evtyperestrict = ""
-	tqfields = (rlocdsIJ, evtyperestrictIJ, rlocdsidcol, valtoken, evtyperestrictWH)
-	preq = "SELECT event_id, freq FROM gene_lineage_events %s %s WHERE %s=%s %s ;"%tqfields
+		evtyperestrictWC = evtyperestrict = ""
+	return (rlocdsIJ, evtyperestrictIJ, evtyperestrictWC)
+
+def _select_lineage_by_event_query_factory(rlocdsidcol, evtypes, valtoken, addselcols=(), distinct=False, operator'=', addWhereClause=''):
+	rlocdsIJ, evtyperestrictIJ, evtyperestrictWC = _select_lineage_event_clause_factory(rlocdsidcol, evtypes, valtoken)
+	tqfields = (('DISTINCT' if distinct else ''), repr((rlocdsidcol,)+tuple(addselcols)).strip('()'), rlocdsIJ, evtyperestrictIJ, operator, valtoken, evtyperestrictWC, addWhereClause)
+	preq = "SELECT %s %s FROM gene_lineage_events %s %s WHERE event_id%s%s %s %s ;"
+	return preq
+
+def _select_event_by_lineage_query_factory(rlocdsidcol, evtypes, valtoken, addselcols=('freq',), distinct=False, operator'=', addWhereClause=''):
+	rlocdsIJ, evtyperestrictIJ, evtyperestrictWC = _select_lineage_event_clause_factory(rlocdsidcol, evtypes, valtoken)
+	tqfields = (('DISTINCT' if distinct else ''), repr(('event_id',)+tuple(addselcols)).strip('()'), rlocdsIJ, evtyperestrictIJ, rlocdsidcol, operator, valtoken, evtyperestrictWC, addWhereClause)
+	preq = "SELECT %s %s FROM gene_lineage_events %s %s WHERE %s=%s %s %s ;"%tqfields
 	return preq
 
 def _query_events_by_lineage(gene, preq, dbcur):
@@ -707,24 +715,32 @@ def _query_events_by_lineage(gene, preq, dbcur):
 def _query_matching_lineage_event_profiles(args, returDict=True, use_gene_labels=False, timing=False, arraysize=10000):
 	
 	if timing: time = __import__('time')
-	lineage_id, dbname, dbengine, nsample, evtypes = args
+	lineage_id, dbname, dbengine, nsample, evtypes, mineventfreq = args
 	dbcon, dbcul, dbtype, valtoken = get_dbconnection(dbname, dbengine)
 	if use_gene_labels: rlocdsidcol = 'replacement_label_or_cds_code'
 	elif dbtype=='postgres': rlocdsidcol = 'rlocds_id'
 	else: rlocdsidcol = 'oid'
 	if returDict: genepaircummulfreq = {}
 	else: genepaircummulfreq = []
+	if mineventfreq: mineventfreqWC = "AND freq >= %d"%int(mineventfreq) else ''
 	# first get the vector of (event_id, freq) tuples in lineage
-	preq_evbyli = _select_event_by_lineage_query_factory(rlocdsidcol, evtypes, valtoken)
-	lineage_events = _query_events_by_lineage(lineage_id, preq_evbyli, dbcur)
+	preq_evbyli = _select_event_by_lineage_query_factory(rlocdsidcol, evtypes, valtoken, addWhereClause=mineventfreqWC)
+	lineage_eventfreqs = _query_events_by_lineage(lineage_id, preq_evbyli, dbcur)
+	dlineage_eventfreqs = dict(lineage_eventfreqs)
+	lineage_events = tuple(ef[0] for ef in lineage_eventfreqs)
 	
-	# then build a list of gene lineages to compare, based on common occurence of at least N event
-	dbcul.execute("""select %s, gene_family_id, freq 
-					   from gene_lineage_events
-					   inner join replacement_label_or_cds_code2gene_families using (replacement_label_or_cds_code)
-					 where event_id=%s ;
-				  """%(rlocdsidcol, valtoken), (evtid,)) 
+	# then build a list of gene lineages to compare, based on common occurence of at least N event (here only 1 common event required)
+	preq_libyev = _select_lineage_by_event_query_factory(rlocdsidcol, evtypes, valtoken, operator' IN ', addWhereClause=mineventfreqWC)
+	preq_libyevin = preq_libyev.replace(valtoken, repr(lineage_events)))
+	dbcul.execute(preq_libyevin) 
 	matchgenes = dbcul.fetchall()
+	
+	jointfreq = 0
+	for matchgene in matchgenes:
+		mg_lineage_eventfreqs = _query_events_by_lineage(lineage_id, preq_evbyli, dbcur)
+		for eid, f in mg_lineage_eventfreqs:
+			f0 = dlineage_eventfreqs.get(eid)
+			if f0: jointfreq += mulBoundInt2Float(f0, f, scale, maxval=1.0)
 	
 
 def dbquery_matching_lineage_event_profiles(dbname, nsample=1.0, evtypes=None, genefamlist=None, \
@@ -773,10 +789,10 @@ def _query_matching_lineages_by_event(args, returDict=True, use_gene_labels=Fals
 	evtypes ({'D'|'T'|'S'|'L'}).
 	"""
 	# test with evtid=1795683
-	# genefams of size 12,692
-	# at most (but probably close to) 12692*(12692-1)/2 = 80,537,086 gene lineage comparisons (actually 79,360,180)
-	# when storing (gene1, gene2):jfreq with full gene tree labels and float freq, it uses ~35Gb mem
-	# when storing (gene1, gene2):jfreq with int id of gene tree labels and float freq, it uses ~10Gb mem
+	# genefams of size 8,647
+	# at most (but probably close to) 8647*(8647-1)/2 = 37,380,981 gene lineage comparisons (actually ???)
+	# when storing (gene1, gene2):jfreq with full gene tree labels and float freq, it uses ~12Gb mem
+	# when storing (gene1, gene2):jfreq with int id of gene tree labels and float freq, it uses ~5Gb mem
 	
 	if timing: time = __import__('time')
 	evtid, dbname, dbengine, nsample, evtypes = args
