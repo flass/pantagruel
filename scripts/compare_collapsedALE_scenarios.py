@@ -429,7 +429,7 @@ def dbquery_matching_lineage_event_profiles(dbname, dbengine='postgres', use_gen
 	else:
 		pool = mp.Pool(processes=nbthreads)
 		iterargs = (make_arg_tup(tlineageid[0]) for tlineageid in ltlineageids)
-		iterlm = pool.imap_unordered(_query_matching_lineages_by_events, iterargs, chunksize=100)
+		iterlm = pool.imap_unordered(_query_matching_lineage_event_profiles, iterargs, chunksize=100)
 		# an iterator is returned by imap_unordered(); one needs to actually iterate over it to have the pool of parrallel workers to compute
 		for lm in iterlm:
 			if (nfpickleMatchesOut or returnList): lmatches += lm
@@ -628,7 +628,7 @@ def dbquery_matching_lineages_by_event(dbname, nsample=1.0, evtypes=None, genefa
 	else:
 		pool = mp.Pool(processes=nbthreads)
 		iterargs = ((tevtid[0], dbname, dbengine, nsamplesq, evtypes) for tevtid in ltevtids)
-		iterdgpcf = pool.imap_unordered(_query_matching_lineages_by_events, iterargs, chunksize=100)
+		iterdgpcf = pool.imap_unordered(_query_matching_lineages_by_event, iterargs, chunksize=100)
 		# an iterator is returned by imap_unordered(); one needs to actually iterate over it to have the pool of parrallel workers to compute
 		if timing: t2 = time.time()
 		for dgpcf in iterdgpcf:
