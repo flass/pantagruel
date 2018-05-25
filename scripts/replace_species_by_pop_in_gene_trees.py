@@ -8,10 +8,8 @@ from scipy import stats
 import copy
 
 import multiprocessing as mp
-from Bio import File, AlignIO, Align
+from Bio import AlignIO
 from Bio.Phylo import BaseTree, NewickIO, NexusIO
-from Bio.Phylo import _io as PhyloIO
-from StringIO import StringIO
 import traceback
 
 supported_formats = {'newick': NewickIO, 'nexus': NexusIO}
@@ -20,149 +18,6 @@ maxreclimupfactor = 1 # range for tentative increase of the recursion limit that
 
 default_psc = [('lg', '>=', 0.0005), ('bs', '>=', 80)]
 default_wpc = [('max', 'lg', '<=', 0.0005, -1)]
-
-
-def repr_long_list(l, lenbeg=5, lenend=5):
-	assert type(l) is list
-	if len(l) <= lenbeg+lenend:
-		return repr(l)
-	else:
-		if lenbeg>0: a = '%s, '%( repr(l[:lenbeg]).strip('[]') )
-		else: a = ''
-		if lenend>0: b =', %s'%( repr(l[(-1*lenend):]).strip('[]') )
-		else: b = ''
-		return '[%s...%s] (%d items)'%(a, b, len(l))
-		
-		
-def addStrtoTuple(a, b):
-	"""addition for tuples, suporting appending of single str element; always return a single tuple"""
-	if type(a) is str:
-		if type(b) is str:
-			return (a, b)
-		elif type(b) is tuple:
-			return (a,) + b
-		else:
-			raise TypeError, "unexpected type for 'b': %s"%repr(b)
-	elif type(a) is tuple:
-		if type(b) is str:
-			return a + (b,)
-		elif type(b) is tuple:
-			return a + b
-		else:
-			raise TypeError, "unexpected type for 'b': %s"%repr(b)
-	else:
-		raise TypeError, "unexpected type for 'a': %s"%repr(a)
-
-
-def parseMrBayesConstraints(lnfcons):
-	constraintclades = {}
-	for nfcons in lnfcons:
-		with open(nfcons, 'r') as constraintsfile:
-			for line in constraintsfile:
-				if line.startswith('constraint'):
-					scla, sep, sleaves = line.rstrip(';\n').partition(' = ')
-					cla = scla.split()[1]
-					leaves = sleaves.split()
-					constraintclades[cla] = leaves
-	return constraintclades
-
-def treeappend(trees, file, format, **kwargs):
-    """appending version of Phylo._io.write()"""
-    if isinstance(trees, (BaseTree.Tree, BaseTree.Clade)):
-        # Passed a single tree instead of an iterable -- that's OK
-        trees = [trees]
-    with File.as_handle(file, 'a+') as fp:
-        n = getattr(supported_formats[format], 'write')(trees, fp, **kwargs)
-    return n
-
-def in2outChainFileName(nfchain, dirout, inchainfmt='nexus', outchainfmt='newick', **kw):
-	dfmtext = {'nexus':'nex', 'newick':'nwk'}
-	if os.path.isdir(dirout):
-		nfout = "%s/%s"%(dirout, dfmtext[outchainfmt].join(os.path.basename(nfchain).split(dfmtext[inchainfmt])))
-	else:
-		nfout = "%s.%s"%(dirout, dfmtext[outchainfmt])
-	return nfout
-
-def tree2toBioPhylo(node):
-	"""perform tree2.Node -> Newick -> Bio.Phylo.Newick.Tree conversion"""
-	return PhyloIO.read(StringIO(node.newick()), 'newick', rooted=True)
-
-def parseChain(lnfchains, dold2newname, nfchainout=None, inchainfmt='nexus', outchainfmt='newick', verbose=False):
-	"""parse a Nexus-format tree chain and re-write it in a Newick format; edit the tree on the fly, substituting tip labels or grafting trees on tips
-	
-	
-	"""
-	if verbose: print "parseChain('%s')"%repr(lnfchains)
-	ntree = 0
-	buffsize = 50
-	treebuffer = []
-	if nfchainout: nfout = nfchainout
-	else: nfout = n2outChainFileName(lnfchains[0], dirout, inchainfmt, outchainfmt)
-	dhandles = {}
-	for k, nfchain in enumerate(lnfchains):
-		dhandles[k] = PhyloIO.parse(nfchain, inchainfmt)
-	# intertwines the trees from separate chains, respecting their sequence
-	# so that the burn-in can still be defined as the first portion of trees in the sample.
-	sometreeleft = True
-	ichains = range(len(lnfchains))
-	while sometreeleft:
-		for k in ichains:
-			#~ sys.stdout.write('\rk'+str(k)) ; sys.stdout.flush()
-			try:
-				tree = dhandles[k].next()
-				#~ print tree
-				#~ sys.stdout.flush()
-			except StopIteration:
-				sometreeleft = False
-				# stops for all chains here, even if they had different length (which shoulld not be)
-				break # the for k loop
-			if dold2newname:
-				for tip in tree.get_terminals():
-					nutipname = dold2newname.get(tip.name)
-					if nutipname:
-						if isinstance(nutipname, str):
-							tip.name = nutipname
-						else:
-							if isinstance(nutipname, tree2.Node):
-								nusubtree = tree2toBioPhylo(nutipname)
-							elif isinstance(nutipname, BaseTree.TreeElement):
-								nusubtree = nutipname
-							else:
-								raise ValueError, "replacement value for a leaf must be either a string (to edit leaf label) of a tree object instance of classes tree2.Node or Bio.Phylo.TreeElement (or derivates)"
-							subtreelen = nusubtree.total_branch_length()/nusubtree.count_terminals()
-							if subtreelen:
-								# substract the subtree length to its branch length
-								tip.branch_length = max(0.0, tip.branch_length - subtreelen)
-							# attach subtree to tree
-							tip.clades = nusubtree.root.clades
-							tip.name = ''
-			treebuffer.append(tree)
-			ntree += 1
-			#~ sys.stdout.write('\rntree'+str(ntree)) ; sys.stdout.flush()
-			if len(treebuffer) >= buffsize:
-				if verbose:
-					sys.stdout.write('\r'+str(ntree)) ; sys.stdout.flush()
-				if ntree <= buffsize:
-					PhyloIO.write(treebuffer, nfout, outchainfmt)
-				else:
-					treeappend(treebuffer, nfout, outchainfmt)
-				treebuffer = []
-	if treebuffer: treeappend(treebuffer, nfout, outchainfmt)
-	print '%s%s ...done (%d trees)'%(('\n' if verbose else ''), nfout, ntree)
-	return None
-
-def getdspe2pop(lnamepops, spetree=None):
-	dspe2pop = {}
-	for popname, pop in lnamepops:
-		for spe in pop:
-			dspe2pop[spe] = popname
-	if spetree:
-		# completes with species on their own in species tree
-		for spe in spetree.get_leaf_labels():
-			if spe not in dspe2pop:
-				dspe2pop[spe] = spe
-				lnamepops.append((spe, (spe,)))
-	return dspe2pop
 
 def annotatePopulationInSpeciesTree(spetree, lnamepops, returnCopy=False, returnAncNodes=False):
 	"""use when species populations and their single species members can coexist in the species/gene trees.
@@ -395,9 +250,6 @@ def combineMonophyleticPopulations(dpopcount, poptree, dnamepops, dpopnd={}, max
 							dpopcount = combineMonophyleticPopulations(dpopcount, poptree, dnamepops, dpopnd=dpopnd, maxpopnodedist=maxpopnodedist, **kw)
 							return dpopcount
 	return dpopcount
-
-def getSpeFromGenes(leaflabs, species_sep='_', **kw):
-	return [leaflab.split(species_sep)[0] for leaflab in leaflabs]
 
 def getCladeAncestor(dpopcount, dnamepops, spetree, dspe2pop, medpopcountthresh=0.5, **kw):
 	"""rank populations or population groups based on a sequence of criteria tofind the most likely population of origin of the sequences in the collapsed clade.

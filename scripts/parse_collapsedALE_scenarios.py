@@ -5,7 +5,7 @@ import multiprocessing as mp
 import cPickle as pickle
 import shelve
 import tree2
-from replace_species_by_pop_in_gene_trees import annotatePopulationInSpeciesTree, parseMrBayesConstraints, getdspe2pop
+from replace_species_by_pop_in_gene_trees import annotatePopulationInSpeciesTree
 from ptg_utils import *
 import parseALErec as pAr
 
@@ -233,54 +233,7 @@ def parseRecTupArgs(args):
 	nfrec, refspetree, drefspeeventTup2Ids, onlyLineages, recordEvTypes, minFreqReport, returnDict, lineageTableOutDir = args
 	return parseRec(nfrec, refspetree, drefspeeventTup2Ids, onlyLineages, recordEvTypes, minFreqReport, returnDict, lineageTableOutDir)
 
-def loadLabelAliases(nfgenefamlist, dircons=None, dirrepl=None, nbthreads=1, verbose=False):
-	with open(nfgenefamlist, 'r') as fgenefamlist:
-		header = fgenefamlist.readline().strip(' \n').split(',')
-		# remove trailing whitespace present after gene_family_id ; account for PostgreSQL footer line count of fetched rows
-		genefamlist = [dict(zip(header, line.replace(' ,', ',').strip(' \n').split(','))) for line in fgenefamlist if (not line.endswith('rows)\n'))] 
-	dreplacedlab = {}
-	for fam in lfams:
-		if dircons:
-			globcons = "%s/%s/*%s*"%(dircons, fam, constrainttag)
-			if verbose: print globcons
-			lnfcons = glob.glob(globcons)
-			constraintclades = parseMrBayesConstraints(lnfcons)
-		else:
-			constraintclades = []
-		if dirrepl:
-			globreplaced = "%s/%s*%s"%(dirrepl, fam, replacedtag)
-			if verbose: print globreplaced
-			lnfreplaced = glob.glob(globreplaced)
-			if len(lnfreplaced)!=1:
-				sys.stderr.write("Warning! will use first file among those found matching pattern '%s'\nas reference for collapsed gene tree tip label aliases:\n%s\n"%( globreplaced, '\n'.join(lnfreplaced) ))
-			nfreplaced = lnfreplaced[0]
-			prevclaorgene = ''
-			with open(nfreplaced, 'r') as freplaced:
-				for line in freplaced:
-					claorgene, repllab = line.rstrip('\n').split('\t')
-					if claorgene in constraintclades:
-						for genelab in constraintclades[claorgene]:
-							dreplacedlab[genelab] = repllab
-					else:
-						if claorgene == prevclaorgene: continue
-						# NOTE: this will always leave only one leaf label associated with a collapsed clade,
-						# even when gene tree collapsed clade was replaced by replacement clde (tagged 'RC')
-						# with multiple leaves, mimicking the species tree : because these clades are artificially
-						# introduced in the gene trees and will always show perfect agreement with the species trere,
-						# spurious association of S events with total support would be seen between similar RC clades
-						# in different gene families.
-						# (events recorded withtin such RC clade are actually discarded in pAr.parseRecGeneTree(),
-						# as they detected as clade encompassing all leaves with identical RC tag)
-						dreplacedlab[claorgene] = repllab
-					prevclaorgene = claorgene
-	
-	for genefam in genefamlist:
-		genelab = genefam['cds_code']
-		if genelab in dreplacedlab:
-			genefam['replaced_cds_code'] = dreplacedlab[genelab]
-	return genefamlist
-
-def loadLabelAliasesAndListRecFiles(nflnfrec, nfgenefamlist=None, dircons=None, dirrepl=None, nbthreads=1, verbose=False):
+def loadRecGeneTreeLabelAliasesAndListRecFiles(nflnfrec, nfgenefamlist=None, dircons=None, dirrepl=None, nbthreads=1, verbose=False):
 	"""parse data relating to the genes and gene families to process.
 	
 	This includes the table of labels that were changed between original collapsed gene trees (as produced by script mark_unresolved_clades.py)
@@ -291,7 +244,7 @@ def loadLabelAliasesAndListRecFiles(nflnfrec, nfgenefamlist=None, dircons=None, 
 			lnfrec = [line.rstrip('\n') for line in flnfrec]
 	else:
 		lnfrec = []
-	if nfgenefamlist: genefamlist = loadLabelAliases(nfgenefamlist, dircons=dircons, dirrepl=dirrepl, nbthreads=nbthreads, verbose=verbose)
+	if nfgenefamlist: genefamlist = loadRecGeneTreeLabelAliases(nfgenefamlist, dircons=dircons, dirrepl=dirrepl, nbthreads=nbthreads, verbose=verbose)
 	else: genefamlist = []
 	return [lnfrec, genefamlist]
 	
@@ -436,7 +389,7 @@ def main():
 			if not os.path.isdir(ptd):
 				os.mkdir(ptd)
 	
-	lnfrec, genefamlist = loadLabelAliasesAndListRecFiles(nflnfrec, nfgenefamlist, dircons, dirrepl, nbthreads=nbthreads)
+	lnfrec, genefamlist = loadRecGeneTreeLabelAliasesAndListRecFiles(nflnfrec, nfgenefamlist, dircons, dirrepl, nbthreads=nbthreads)
 	
 	
 	refspetree, dspe2pop = loadRefPopTree(nfrefspetree, nfpop)
