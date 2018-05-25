@@ -292,9 +292,9 @@ def connectsqlitedb(dbname):
 	sqlite3 = __import__('sqlite3')
 	return sqlite3.connect(dbname)
 
-def get_dbconnection(dbname, dbengine, **kw):
+def get_dbconnection(dbname, dbengine):
 	if (dbengine.lower() in ['postgres', 'postgresql', 'psql', 'pg']):
-		dbcon = connectpostgresdb(dbname, **kw)
+		dbcon = connectpostgresdb(dbname)
 		dbtype = 'postgres'
 		valtoken='%s'
 		dbcur = dbcon.cursor()
@@ -323,59 +323,63 @@ def _select_lineage_event_clause_factory(rlocdsidcol, evtypes, valtoken):
 		evtyperestrictWC = evtyperestrict = ""
 	return (rlocdsIJ, evtyperestrictIJ, evtyperestrictWC)
 
-def _select_lineage_by_event_query_factory(rlocdsidcol, evtypes, valtoken, addselcols=(), distinct=False, operator='=', addWhereClause=''):
+def _select_lineage_event_query_factory(aBYb, rlocdsidcol, evtypes, valtoken, addselcols=(), distinct=False, operator='=', addWhereClause=''):
+	a, b = aBYb
 	rlocdsIJ, evtyperestrictIJ, evtyperestrictWC = _select_lineage_event_clause_factory(rlocdsidcol, evtypes, valtoken)
-	tqfields = (('DISTINCT' if distinct else ''), repr((rlocdsidcol,)+tuple(addselcols)).strip('()'), rlocdsIJ, evtyperestrictIJ, operator, valtoken, evtyperestrictWC, addWhereClause)
-	preq = "SELECT %s %s FROM gene_lineage_events %s %s WHERE event_id%s%s %s %s ;"
+	tqfields = (('DISTINCT' if distinct else ''), repr((a,)+tuple(addselcols)).strip('(,)').replace("'", ''), 
+				rlocdsIJ, evtyperestrictIJ, 
+				b, operator, valtoken, 
+				evtyperestrictWC, addWhereClause)
+	preq = "SELECT %s %s FROM gene_lineage_events %s %s WHERE %s%s%s %s %s ;"%tqfields
 	return preq
 
+def _select_lineage_by_event_query_factory(rlocdsidcol, evtypes, valtoken, addselcols=(), distinct=False, operator='=', addWhereClause=''):
+	return _select_lineage_event_query_factory((rlocdsidcol, 'event_id'), rlocdsidcol, evtypes, valtoken, addselcols, distinct, operator, addWhereClause)
+
 def _select_event_by_lineage_query_factory(rlocdsidcol, evtypes, valtoken, addselcols=('freq',), distinct=False, operator='=', addWhereClause=''):
-	rlocdsIJ, evtyperestrictIJ, evtyperestrictWC = _select_lineage_event_clause_factory(rlocdsidcol, evtypes, valtoken)
-	tqfields = (('DISTINCT' if distinct else ''), repr(('event_id',)+tuple(addselcols)).strip('()'), rlocdsIJ, evtyperestrictIJ, rlocdsidcol, operator, valtoken, evtyperestrictWC, addWhereClause)
-	preq = "SELECT %s %s FROM gene_lineage_events %s %s WHERE %s=%s %s %s ;"%tqfields
-	return preq
+	return _select_lineage_event_query_factory(('event_id', rlocdsidcol), rlocdsidcol, evtypes, valtoken, addselcols, distinct, operator, addWhereClause)
 
 def _query_events_by_lineage(gene, preq, dbcur):
 	dbcur.execute(preq, (gene,)) 
 	return sorted(dbcur.fetchall(), key=lambda x: x[0])
 
-def _query_matching_lineage_event_profiles(args, returDict=True, use_gene_labels=False, timing=False, arraysize=10000, verbose=False):
+def _query_matching_lineage_event_profiles(args, use_gene_labels=False, timing=False, arraysize=10000, verbose=False):
 	
 	if timing: time = __import__('time')
 	lineage_id, dbname, dbengine, nsample, evtypes, mineventfreq, maxeventfreq, minevjointfreq = args
+	if verbose: print 'lineage_id:', lineage_id
 	dbcon, dbcul, dbtype, valtoken = get_dbconnection(dbname, dbengine)
 	if use_gene_labels: rlocdsidcol = 'replacement_label_or_cds_code'
 	elif dbtype=='postgres': rlocdsidcol = 'rlocds_id'
 	else: rlocdsidcol = 'oid'
-	if returDict: genepaircummulfreq = {}
-	else: genepaircummulfreq = []
 	minevfWC = " AND freq >= %d"%int(mineventfreq*nsample) if mineventfreq>0 else ''
 	maxevfWC = " AND freq  < %d"%int(maxeventfreq*nsample) if maxeventfreq<1 else ''
 	# first get the vector of (event_id, freq) tuples in lineage
 	preq_evbyli = _select_event_by_lineage_query_factory(rlocdsidcol, evtypes, valtoken, addWhereClause=minevfWC+maxevfWC)
-	if verbose: print preq_libyevin%lineage_id
-	lineage_eventfreqs = _query_events_by_lineage(lineage_id, preq_evbyli, dbcur)
+	if verbose: print preq_evbyli%lineage_id
+	lineage_eventfreqs = _query_events_by_lineage(lineage_id, preq_evbyli, dbcul)
 	dlineage_eventfreqs = dict(lineage_eventfreqs)
 	lineage_events = tuple(ef[0] for ef in lineage_eventfreqs)
+	if not lineage_events: return []
 	
 	# then build a list of gene lineages to compare, based on common occurence of at least N event (here only 1 common event required)
 	# and the id of compared lineage to be > reference lineage, to avoid duplicate comparisons
-	lineageorderWC=" AND %s > %s"%(locdsidcol, str(lineage_id))
+	lineageorderWC=" AND %s > %s"%(rlocdsidcol, str(lineage_id))
 	preq_libyev = _select_lineage_by_event_query_factory(rlocdsidcol, evtypes, valtoken, operator=' IN ', addWhereClause=minevfWC+maxevfWC+lineageorderWC)
 	preq_libyevin = preq_libyev.replace(valtoken, repr(lineage_events))
 	if verbose: print preq_libyevin
 	dbcul.execute(preq_libyevin) 
-	matchgenes = dbcul.fetchall()
+	match_lineages = dbcul.fetchall()
 	
 	lmatches = []
 	for match_lineage_id in match_lineages:
 		jointfreq = 0.0
-		mg_lineage_eventfreqs = _query_events_by_lineage(match_lineage_id, preq_evbyli, dbcur)
+		mg_lineage_eventfreqs = _query_events_by_lineage(match_lineage_id, preq_evbyli, dbcul)
 		for eid, f in mg_lineage_eventfreqs:
 			f0 = dlineage_eventfreqs.get(eid)
 			if f0: jointfreq += mulBoundInt2Float(f0, f, nsample, maxval=1.0)
 		if jointfreq >= minevjointfreq:
-			lmatches.append( (lineage_id, match_lineage_id), jointfreq )
+			lmatches.append( ((lineage_id, match_lineage_id), jointfreq) )
 	
 	dbcon.close()
 	if verbose: print lmatches
@@ -384,10 +388,10 @@ def _query_matching_lineage_event_profiles(args, returDict=True, use_gene_labels
 def dbquery_matching_lineage_event_profiles(dbname, dbengine='postgres', use_gene_labels=False, \
                                             nsample=1.0, evtypes=None, mineventfreq=0.0, maxeventfreq=1.0, minevjointfreq=0.0, genefamlist=None, \
                                             matchesOutDirRad=None, nfpickleMatchesOut=None, returnList=False, \
-                                            nbthreads=1, **kw):
+                                            nbthreads=1, verbose=False, **kw):
 	timing = kw.get('timing')
 	if timing: time = __import__('time')							
-	dbcon, dbcur, dbtype, valtoken = get_dbconnection(dbname, dbengine, **kw)
+	dbcon, dbcur, dbtype, valtoken = get_dbconnection(dbname, dbengine)
 	nsamplesq = nsample*nsample
 	if use_gene_labels: rlocdsidcol = 'replacement_label_or_cds_code'
 	elif dbtype=='postgres': rlocdsidcol = 'rlocds_id'
@@ -397,6 +401,7 @@ def dbquery_matching_lineage_event_profiles(dbname, dbengine='postgres', use_gen
 	
 	def make_arg_tup(lineage_id):
 		return (lineage_id, dbname, dbengine, nsample, evtypes, mineventfreq, maxeventfreq, minevjointfreq)
+	
 	if genefamlist:
 		# create real table so can be seen by other processes
 		ingenefams = [genefam.get('replaced_cds_code', genefam['cds_code']) for genefam in genefamlist]
@@ -404,25 +409,26 @@ def dbquery_matching_lineage_event_profiles(dbname, dbengine='postgres', use_gen
 		dbcur.executemany("insert into ingenefams values (%s), VARCHAR(20);"%valtoken, ingenefams)
 		dbcon.commit()
 		# query modifiers
-		generestrict = "inner join ingenefams using (replacement_label_or_cds_code) "
+		generestrictIJ = "inner join ingenefams using (replacement_label_or_cds_code) "
 	else:
-		generestrict = ""
+		generestrictIJ = ""
 	
 	# get set of gene lineages
-	#~ dbcur.execute("select distinct %s from gene_lineage_events %s %s;"%(rlocdsidcol, generestrict, evtyperestrict))
-	dbcur.execute("select distinct %s from replacement_label_or_cds_code2gene_families %s %s;"%(rlocdsidcol, generestrict, evtyperestrict))
-	llineageids = dbcur.fetchall()
+	qlibyev = "select distinct %s from replacement_label_or_cds_code2gene_families %s;"%(rlocdsidcol, generestrictIJ)
+	if verbose: print qlibyev
+	dbcur.execute(qlibyev)
+	ltlineageids = dbcur.fetchall()
 				
 	if matchesOutDirRad:
 		fout = open(os.path.join(matchesOutDirRad, 'matching_events.tab'), 'w')
 	if (nfpickleMatchesOut or returnList): lmatches = []
 	if nbthreads==1:
-		for lineageid in llineageids:
-			lm = _query_matching_lineage_event_profiles(make_arg_tup(lineage_id))
+		for tlineageid in ltlineageids:
+			lm = _query_matching_lineage_event_profiles(make_arg_tup(tlineageid[0]), verbose=verbose)
 			if (nfpickleMatchesOut or returnList): lmatches += lm
 	else:
 		pool = mp.Pool(processes=nbthreads)
-		iterargs = (make_arg_tup(lineage_id) for lineageid in llineageids)
+		iterargs = (make_arg_tup(tlineageid[0]) for tlineageid in ltlineageids)
 		iterlm = pool.imap_unordered(_query_matching_lineages_by_events, iterargs, chunksize=100)
 		# an iterator is returned by imap_unordered(); one needs to actually iterate over it to have the pool of parrallel workers to compute
 		for lm in iterlm:
@@ -586,7 +592,7 @@ def dbquery_matching_lineages_by_event(dbname, nsample=1.0, evtypes=None, genefa
 	
 	timing = kw.get('timing')
 	if timing: time = __import__('time')							
-	dbcon, dbcur, dbtype, valtoken = get_dbconnection(dbname, dbengine, **kw)
+	dbcon, dbcur, dbtype, valtoken = get_dbconnection(dbname, dbengine)
 	nsamplesq = nsample*nsample
 	
 	if evtypes: evtyperestrict = "inner join species_tree_events using (event_id) where event_type in %s"%repr(tuple(e for e in evtypes))
