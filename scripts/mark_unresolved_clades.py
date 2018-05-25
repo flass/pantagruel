@@ -6,6 +6,7 @@ import multiprocessing
 from Bio import AlignIO, Align, Alphabet
 #~ from random import shuffle
 from random import randint
+from ptg_utils import *
 
 sys.setrecursionlimit(10000)
 
@@ -39,38 +40,6 @@ doutdext = {'mbc':('mbconstraints', 'mbconstraints'), \
 			'col':('collapsed_alns', 'collapsed'), \
 			'cgt':('coloured_genetrees', 'full_genetree.coloured')}
 
-### utils
-
-def mean(seq, ignoreNull=True):
-	l = [float(k) for k in seq if ((k is not None) or (not ignoreNull))]
-	if not l: return None
-	return sum(l)/len(l)
-
-def median(seq, ignoreNull=True):
-	l = [k for k in seq if ((k is not None) or (not ignoreNull))]
-	l.sort()
-	L = len(l)
-	if not l: return None
-	nmed = L/2
-	if L%2==1: return float(l[nmed])
-	else: return (float(l[nmed-1])+float(l[nmed]))/2
-
-def var(seq, correct=1):
-	m = mean(seq)
-	if m is None: return None
-	n = len([k for k in seq if (k is not None)])-correct
-	if n < 1:
-		return 'inf'		
-	else:
-		d = [(float(x) - m)**2 for x in seq]
-		return sum(d)/n
-
-def findSeqRecordIndexesFromSeqNames(aln, seqnames):
-	if isinstance(seqnames, list): return [k for k,seq in enumerate(aln) if seq.id in seqnames]
-	else:
-		for k,seq in enumerate(aln):
-			if seq.id in seqnames: return k
-	
 ##core functions
 	
 def select_clades_on_conditions(tree, clade_stem_conds, within_clade_conds, depth=1, testLeaves=True, testRoot=False, pruneSelected=True, nested=False, inclusive=True, order=2, verbose=2):

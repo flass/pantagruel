@@ -2,7 +2,8 @@
 
 import tree2
 import sys, os, getopt, glob
-from mark_unresolved_clades import select_clades_on_conditions, mean, median, var, colour_tree_with_constrained_clades
+from ptg_utils import *
+from mark_unresolved_clades import select_clades_on_conditions, colour_tree_with_constrained_clades
 from scipy import stats
 import copy
 
