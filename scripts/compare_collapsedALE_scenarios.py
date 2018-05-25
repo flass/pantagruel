@@ -712,40 +712,50 @@ def _query_events_by_lineage(gene, preq, dbcur):
 	dbcur.execute(preq, (gene,)) 
 	return sorted(dbcur.fetchall(), key=lambda x: x[0])
 
-def _query_matching_lineage_event_profiles(args, returDict=True, use_gene_labels=False, timing=False, arraysize=10000):
+def _query_matching_lineage_event_profiles(args, returDict=True, use_gene_labels=False, timing=False, arraysize=10000, verbose=False):
 	
 	if timing: time = __import__('time')
-	lineage_id, dbname, dbengine, nsample, evtypes, mineventfreq = args
+	lineage_id, dbname, dbengine, nsample, evtypes, mineventfreq, reportJFtrhesh = args
 	dbcon, dbcul, dbtype, valtoken = get_dbconnection(dbname, dbengine)
 	if use_gene_labels: rlocdsidcol = 'replacement_label_or_cds_code'
 	elif dbtype=='postgres': rlocdsidcol = 'rlocds_id'
 	else: rlocdsidcol = 'oid'
 	if returDict: genepaircummulfreq = {}
 	else: genepaircummulfreq = []
-	if mineventfreq: mineventfreqWC = "AND freq >= %d"%int(mineventfreq) else ''
+	if mineventfreq: mineventfreqWC = " AND freq >= %d"%int(mineventfreq) else ''
 	# first get the vector of (event_id, freq) tuples in lineage
 	preq_evbyli = _select_event_by_lineage_query_factory(rlocdsidcol, evtypes, valtoken, addWhereClause=mineventfreqWC)
+	if verbose: print preq_libyevin%lineage_id
 	lineage_eventfreqs = _query_events_by_lineage(lineage_id, preq_evbyli, dbcur)
 	dlineage_eventfreqs = dict(lineage_eventfreqs)
 	lineage_events = tuple(ef[0] for ef in lineage_eventfreqs)
 	
 	# then build a list of gene lineages to compare, based on common occurence of at least N event (here only 1 common event required)
-	preq_libyev = _select_lineage_by_event_query_factory(rlocdsidcol, evtypes, valtoken, operator' IN ', addWhereClause=mineventfreqWC)
+	# and the id of compared lineage to be > reference lineage, to avoid duplicate comparisons
+	lineageorderWC=" AND %s > %s"%(locdsidcol, str(lineage_id))
+	preq_libyev = _select_lineage_by_event_query_factory(rlocdsidcol, evtypes, valtoken, operator=' IN ', addWhereClause=mineventfreqWC+lineageorderWC)
 	preq_libyevin = preq_libyev.replace(valtoken, repr(lineage_events)))
+	if verbose: print preq_libyevin
 	dbcul.execute(preq_libyevin) 
 	matchgenes = dbcul.fetchall()
 	
-	jointfreq = 0
-	for matchgene in matchgenes:
-		mg_lineage_eventfreqs = _query_events_by_lineage(lineage_id, preq_evbyli, dbcur)
+	lmatches = []
+	for match_lineage_id in match_lineages:
+		jointfreq = 0.0
+		mg_lineage_eventfreqs = _query_events_by_lineage(match_lineage_id, preq_evbyli, dbcur)
 		for eid, f in mg_lineage_eventfreqs:
 			f0 = dlineage_eventfreqs.get(eid)
-			if f0: jointfreq += mulBoundInt2Float(f0, f, scale, maxval=1.0)
+			if f0: jointfreq += mulBoundInt2Float(f0, f, nsample, maxval=1.0)
+		if jointfreq >= reportJFtrhesh:
+			lmatches.append( (lineage_id, match_lineage_id), jointfreq )
 	
+	dbcon.close()
+	if verbose: print lmatches
+	return lmatches
 
 def dbquery_matching_lineage_event_profiles(dbname, nsample=1.0, evtypes=None, genefamlist=None, \
                             nbthreads=1, dbengine='postgres', use_gene_labels=False, \
-                            matchesOutDirRad=None, nfpickleMatchesOut=None, **kw):
+                            matchesOutDirRad=None, nfpickleMatchesOut=None, returnList=False, **kw):
 	
 	timing = kw.get('timing')
 	if timing: time = __import__('time')							
@@ -754,6 +764,10 @@ def dbquery_matching_lineage_event_profiles(dbname, nsample=1.0, evtypes=None, g
 	if use_gene_labels: rlocdsidcol = 'replacement_label_or_cds_code'
 	elif dbtype=='postgres': rlocdsidcol = 'rlocds_id'
 	else: rlocdsidcol = 'oid'
+	if not (matchesOutDirRad or nfpickleMatchesOut or returnList):
+		raise ValueError, "must specify at least one output option among: 'matchesOutDirRad', 'nfpickleMatchesOut', 'returnList'"	
+	if matchesOutDirRad:
+		fout = open(os.path.join(matchesOutDirRad, 'matching_events.tab'), 'w')
 	
 	if genefamlist:
 		# create real table so can be seen by other processes
@@ -770,12 +784,33 @@ def dbquery_matching_lineage_event_profiles(dbname, nsample=1.0, evtypes=None, g
 	#~ dbcur.execute("select distinct %s from gene_lineage_events %s %s;"%(rlocdsidcol, generestrict, evtyperestrict))
 	dbcur.execute("select distinct %s from replacement_label_or_cds_code2gene_families %s %s;"%(rlocdsidcol, generestrict, evtyperestrict))
 	llineageids = dbcur.fetchall()
-	
-	for lineageid in llineageids:
+			
+	if (nfpickleMatchesOut or returnList): lmatches = []
+	if nbthreads==1:
+		for lineageid in llineageids:
+			lm = _query_matching_lineage_event_profiles((lineageid, evtypes, ))
+			if (nfpickleMatchesOut or returnList): lmatches += lm
+	else:
+		pool = mp.Pool(processes=nbthreads)
+		iterargs = ((lineageid, evtypes, ) for ineageid in llineageids)
+		iterlm = pool.imap_unordered(_query_matching_lineages_by_events, iterargs, chunksize=100)
+		# an iterator is returned by imap_unordered(); one needs to actually iterate over it to have the pool of parrallel workers to compute
+		for lm in iterlm:
+			if (nfpickleMatchesOut or returnList): lmatches += lm
+			if matchesOutDirRad:
+				for genepair, cummulfreq in lm:
+						fout.write('%s\t%f\n'%('\t'.join(genepair), cummulfreq))
 		
-		_query_matching_lineage_event_profiles((lineageid, evtypes, ))
-	
-	
+		
+	if nfpickleMatchesOut:
+		with open(nfpickleMatchesOut, 'wb') as fpickleOut:
+			pickle.dump(lmatches, fpickleOut, protocol=pickle.HIGHEST_PROTOCOL)
+			# can be a more efficient option for disk space than a simple table,
+			# but the required writing time and the accumulated memory space might make it redibitory
+		print "saved 'lmatches' to file '%s'"%nfpickleMatchesOut
+			
+	if matchesOutDirRad:
+		fout.close()
 	
 def _query_matching_lineages_by_event(args, returDict=True, use_gene_labels=False, serverside=[], timing=False, arraysize=10000):
 	"""function handling one event_id query, designed for use in parallel
@@ -863,6 +898,7 @@ def _query_matching_lineages_by_event(args, returDict=True, use_gene_labels=Fals
 		# test takes ~ 9min with tuples of full gene tree label as keys (store in dict)
 		# test takes ~ 8min with tuples of int id of gene tree label as keys (store in dict)
 		# test takes < 52min when storing tuples in a list rather than dict
+	dbcon.close()
 	return genepaircummulfreq
 
 def stripstr(obj, stripchar='()'):
