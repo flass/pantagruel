@@ -711,7 +711,7 @@ def main():
 	nrecsample = dopt.get('--nrec_per_sample', 1000.0)
 	# facultative input files
 	nfgenefamlist = dopt.get('--genefams')
-	genefamlist = loadLabelAliases(nfgenefamlist, dircons, dirrepl, nbthreads=nbthreads, verbose=verbose):
+	genefamlist = loadRecGeneTreeLabelAliases(nfgenefamlist, dircons, dirrepl, nbthreads=nbthreads, verbose=verbose):
 	
 	# event filters
 	recordEvTypes = dopt.get('--event_type', 'DTS')

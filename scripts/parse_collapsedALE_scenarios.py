@@ -5,7 +5,6 @@ import multiprocessing as mp
 import cPickle as pickle
 import shelve
 import tree2
-from replace_species_by_pop_in_gene_trees import annotatePopulationInSpeciesTree
 from ptg_utils import *
 import parseALErec as pAr
 

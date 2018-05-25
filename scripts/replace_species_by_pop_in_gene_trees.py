@@ -19,22 +19,6 @@ maxreclimupfactor = 1 # range for tentative increase of the recursion limit that
 default_psc = [('lg', '>=', 0.0005), ('bs', '>=', 80)]
 default_wpc = [('max', 'lg', '<=', 0.0005, -1)]
 
-def annotatePopulationInSpeciesTree(spetree, lnamepops, returnCopy=False, returnAncNodes=False):
-	"""use when species populations and their single species members can coexist in the species/gene trees.
-	
-	i.e. if reconciliation can handle a gene tree with both extant  and ancestral species at its leaves.
-	"""
-	if returnCopy: poptree = copy.deepcopy(spetree)
-	else: poptree = spetree
-	lanc = []
-	for popname, pop in lnamepops:
-		popanc = poptree.mrca(pop)
-		popanc.edit_label(popname)
-		lanc.append(popanc)
-	if returnCopy: return poptree
-	elif returnAncNodes: return lanc
-	else: return None
-
 def speciesTreePopulations(spetree, pop_stem_conds, within_pop_conds, nested=False, inclusive=False, taglen=3, **kw):
 	"""find supported clades in the species tree
 	
