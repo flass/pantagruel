@@ -131,6 +131,7 @@ fi
 echo "will work (read/write) locally: ${worklocal}"
 echo ""
 echo "# # # #"
+echo ""
 
 ####
 if [[ "$worklocal"=="yes" ]] ; then
@@ -166,6 +167,7 @@ elif [ ! -z $resumealefromtag ] ; then
     fi
   fi
 fi
+echo ""
 
 if [[ -e $nfchain.ale ]] ; then
   if [[ "$worklocal"=="yes" ]] ; then
@@ -201,6 +203,9 @@ elif [ "$alealgo" == 'ALEml_undated' ] ; then
   alecmd="${aleexe} ${spetree} ${chain}.ale sample=${nrecs} separators=_"
   if [ ${#DTLrates[@]} -eq 3 ] ; then alecmd="${alecmd} delta=${DTLrates[0]} tau=${DTLrates[0]} lambda=${DTLrates[0]}" ; fi
 else
+  echo "ALE algorithm $alealgo not supported in this script, sorry; exit now"
+  exit 2
+fi
 echo "# ${alecmd}"
 ${alecmd}
   
