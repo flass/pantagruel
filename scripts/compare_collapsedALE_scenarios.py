@@ -284,9 +284,9 @@ def match_events(dfamevents, recordEvTypes, drefspeeventId2Tups, genefamlist=Non
 				print "wrote %s output into file '%s'"%(PWMstat, nfmat)
 	return (PWMstat, PWMmat)
 
-def connectpostgresdb(dbname):
+def connectpostgresdb(dbname, **kw):
 	psycopg2 = __import__('psycopg2')
-	return psycopg2.connect(dbname=dbname)
+	return psycopg2.connect(dbname=dbname, **kw)
 
 def connectsqlitedb(dbname):
 	sqlite3 = __import__('sqlite3')
