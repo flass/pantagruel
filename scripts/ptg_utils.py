@@ -79,6 +79,8 @@ def getdspe2pop(lnamepops, spetree=None):
 	return dspe2pop
 
 def loadRecGeneTreeLabelAliases(nfgenefamlist, dircons=None, dirrepl=None, nbthreads=1, verbose=False):
+	if not nfgenefamlist: 
+		return []
 	with open(nfgenefamlist, 'r') as fgenefamlist:
 		header = fgenefamlist.readline().strip(' \n').split(',')
 		# remove trailing whitespace present after gene_family_id ; account for PostgreSQL footer line count of fetched rows

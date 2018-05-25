@@ -243,9 +243,8 @@ def loadRecGeneTreeLabelAliasesAndListRecFiles(nflnfrec, nfgenefamlist=None, dir
 			lnfrec = [line.rstrip('\n') for line in flnfrec]
 	else:
 		lnfrec = []
-	if nfgenefamlist: genefamlist = loadRecGeneTreeLabelAliases(nfgenefamlist, dircons=dircons, dirrepl=dirrepl, nbthreads=nbthreads, verbose=verbose)
-	else: genefamlist = []
-	return [lnfrec, genefamlist]
+	genefamlist = loadRecGeneTreeLabelAliases(nfgenefamlist, dircons=dircons, dirrepl=dirrepl, nbthreads=nbthreads, verbose=verbose)
+	return (lnfrec, genefamlist)
 	
 def loadRefPopTree(nfrefspetree, nfpop):
 	# annotate reference species tree with ancestral population node labels
@@ -343,8 +342,8 @@ def parse_events(lnfrec, genefamlist=None, refspetree=None, \
 def main():
 
 	opts, args = getopt.getopt(sys.argv[1:], 'hv', ['rec_sample_list=', 'ALE_algo=', \
-	                                                'dir_constraints=', 'dir_replaced=', \
-	                                                'populations=', 'reftree=', 'genefams=', \
+	                                                'genefams=', 'dir_constraints=', 'dir_replaced=', \
+	                                                'populations=', 'reftree=', \
 	                                                'evtype=', 'minfreq=', \
 	                                                'dir_table_out=', 'events_to_pickle=', 'events_to_shelve=', \
 	                                                'threads=', 'help', 'verbose']) #, 'reuse=', 'max.recursion.limit=', 'logfile='
@@ -399,10 +398,11 @@ def main():
 
 
 def usage():
-	s = "Usage: [HELP MESSAGE INCOMPLETE]\N"
+	s = "Usage: [HELP MESSAGE INCOMPLETE]\n"
 	s += "python %s --rec_sample_list /path/to/list_of_reconciliation_file_paths [OPTIONS]\n"%sys.argv[0]
-	s += "Facultative options:"
-	s += "\t\t--dir_replaced\tfolder containing files listing replaced leaf labels (e.g. wen collapsing gene tree clades)\n"
+	s += "Facultative options:\n"
+	s += "\t\t--dir_constraints\tfolder containing files listing leaf labels of collapsed gene tree clades\n"
+	s += "\t\t--dir_replaced\tfolder containing files listing replaced leaf labels (e.g. when giving a species identity to collapsed gene tree clades)\n"
 	s += "\t\t--genefams\ttabulated file with header containing at least those two fields: 'cds_code', 'gene_family_id'\n"
 	s += "\t\t\t\trows indicate the genes to be treated in the search, and to which gene family they belong\n"
 	s += "\t\t\t\t(and hence in which reconciliation file to find them).\n"

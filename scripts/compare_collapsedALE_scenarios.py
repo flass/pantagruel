@@ -671,6 +671,7 @@ def dbquery_matching_lineages_by_event(dbname, nsample=1.0, evtypes=None, genefa
 def main():
 
 	opts, args = getopt.getopt(sys.argv[1:], 'hv', ['ALE_algo=', 'event_type=', 'min_freq=', 'max_freq=', 'min_joint_freq=', 'method=', 'nrec_per_sample=', \
+	                                                'genefams=', 'dir_constraints=', 'dir_replaced=', \
 	                                                'events_from_pickle=', 'events_from_shelve=', 'events_from_postgresql_db=', 'events_from_sqlite_db=', \
 	                                                'matches_to_shelve=', 'dir_table_out=', \
 	                                                'threads=', 'help', 'verbose']) #, 'reuse=', 'max.recursion.limit=', 'logfile='
@@ -711,7 +712,8 @@ def main():
 	nrecsample = dopt.get('--nrec_per_sample', 1000.0)
 	# facultative input files
 	nfgenefamlist = dopt.get('--genefams')
-	genefamlist = loadRecGeneTreeLabelAliases(nfgenefamlist, dircons, dirrepl, nbthreads=nbthreads, verbose=verbose):
+	dircons = dopt.get('--dir_constraints')
+	dirrepl = dopt.get('--dir_replaced')
 	
 	# event filters
 	recordEvTypes = dopt.get('--event_type', 'DTS')
@@ -728,6 +730,8 @@ def main():
 			ptd = os.path.join(dirTableOut, td)
 			if not os.path.isdir(ptd):
 				os.mkdir(ptd)
+	
+	genefamlist = loadRecGeneTreeLabelAliases(nfgenefamlist, dircons, dirrepl, nbthreads=nbthreads, verbose=verbose)
 	
 	if dirTableOut:
 		matchesOutRad = os.path.basename(nfgenefamlist).rsplit('.', 1)[0] if nfgenefamlist else ''
@@ -753,7 +757,12 @@ def main():
 def usage():
 	s = "Usage: [HELP MESSAGE INCOMPLETE]\n"
 	s += "python %s --events_from_{pickle|shelve|postgresql_db|sqlite_db} source [--dir_table_out dest] [--matches_to_{pickle|shelve} dest] [OTHER OPTIONS]\n"%sys.argv[0]
-	s += "Facultative options:"
+	s += "Facultative options:\n"
+	s += "\t\t--dir_constraints\tfolder containing files listing leaf labels of collapsed gene tree clades\n"
+	s += "\t\t--dir_replaced\tfolder containing files listing replaced leaf labels (e.g. when giving a species identity to collapsed gene tree clades)\n"
+	s += "\t\t--genefams\ttabulated file with header containing at least those two fields: 'cds_code', 'gene_family_id'\n"
+	s += "\t\t\t\trows indicate the genes to be treated in the search, and to which gene family they belong\n"
+	s += "\t\t\t\t(and hence in which reconciliation file to find them).\n"
 	return s
 
 ################## Main execution
