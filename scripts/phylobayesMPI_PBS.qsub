@@ -10,14 +10,12 @@ SECONDS=0
 
 ## load modules
 module load intel-suite
-module load mpi
-module list
 
 echo "passed variables:"
 echo "  nfaln=${nfaln}"
 echo "  outputdir=${outputdir}"
 echo "  chainname=${chainname}"
-echo "  pbmpibin=${pbmpibin}"
+echo "  pbbin=${pbbin}"
 echo "  coreperchain=${coreperchain}"
 echo "  nbchain=${nbchain}"
 echo "  pboptions=${pboptions}"
@@ -50,6 +48,8 @@ fi
 if [ "$mpibin" == 'none' ] ; then
   echo "WILL NOT USE MPI"
 else
+  module load mpi
+  module list
   echo "using $mpibin:"
   which $mpibin
   if [ $? != 0 ] ; then
@@ -83,23 +83,34 @@ fi
 
 # variables with default values
 # define software executables
-if [ -z $pbmpibin ] ; then
-  pbmpibin='/home/flassall/software/pbmpi/data/pb_mpi'
-  echo "set default pbmpibin='$pbmpibin'"
+# pb
+if [ "$mpibin" != 'none' ] ; then
+  if [ -z $pbbin ] ; then
+    pbbin='/home/flassall/software/pbmpi/data/pb_mpi'
+    echo "set default pbbin='$pbbin'"
+  fi
+  echo "will use Phylobayes MPI binary:"
+  ls $pbbin
+else
+  if [ -z $pbbin ] ; then
+    pbbin='/home/flassall/software/phylobayes4.1c/data/pb'
+    echo "set default pbbin='$pbbin'"
+  fi
+  echo "will use Phylobayes binary:"
+  ls $pbbin
 fi
-echo "will use Phylobayes MPI binary:"
-ls $pbmpibin
 if [ $? != 0 ] ; then
   echo "!!! ERROR : unable to access Phylobayes MPI binary ; exit now"
   exit 1
 fi
-if [ ! -x $pbmpibin ] ; then
-  echo "!!! ERROR : Phylobayes MPI binary '$pbmpibin' is not executable ; exit now"
+if [ ! -x $pbbin ] ; then
+  echo "!!! ERROR : Phylobayes MPI binary '$pbbin' is not executable ; exit now"
   exit 1
 fi
 
+# bpcomp
 if [ -z $bpcompbin ] ; then
-  bpcompbin=$(dirname $pbmpibin)/bpcomp
+  bpcompbin=$(dirname $pbbin)/bpcomp
 fi
 if [ -x $bpcompbin  ] ; then
   echo "will assess convergence with:"
@@ -109,21 +120,24 @@ else
   bpcompbin=''
 fi
 
-# define parallelism
-if [ -z $nbchain ] ; then
-  nbchain=2
+# define parallelism parameters
+if [ "$mpibin" != 'none' ] ; then
+  if [ -z $nbchain ] ; then
+    nbchain=2
+  fi
+  case ${nbchain} in
+    0|*[!0-9]*) echo "!!! ERROR, number of chains '\$nbchain' must be non-null positive integer" ; exit 1;;
+    *) echo "will run $nbchain separate chains" ;;
+  esac
+  if [ -z $coreperchain ] ; then
+    coreperchain=8
+  fi
+  case ${coreperchain} in
+    0|1|*[!0-9]*) echo "!!! ERROR, number of core chains '\$coreperchain' must be an integer >=2" ; exit 1;;
+    *) echo "will run each chain on $coreperchain cores" ;;
+  esac
 fi
-case ${nbchain} in
-  0|*[!0-9]*) echo "!!! ERROR, number of chains '\$nbchain' must be non-null positive integer" ; exit 1;;
-  *) echo "will run $nbchain separate chains" ;;
-esac
-if [ -z $coreperchain ] ; then
-  coreperchain=8
-fi
-case ${coreperchain} in
-  0|1|*[!0-9]*) echo "!!! ERROR, number of core chains '\$coreperchain' must be an integer >=2" ; exit 1;;
-  *) echo "will run each chain on $coreperchain cores" ;;
-esac
+
 # define software options
 if [ -z $pboptions ] ; then
   pboptions="-cat -gtr -dgam 4"
@@ -193,12 +207,12 @@ fi
 
 # set PB command
 if [ "$mpibin" == 'none' ] ; then
-   pbmpicmd="${pbmpibin}" 
+   pbmpicmd="${pbbin}" 
 else
-  pbmpicmd="$mpibin -n ${coreperchain} ${pbmpibin}"
+  pbmpicmd="$mpibin -n ${coreperchain} ${pbbin}"
 fi
 if [ "$pbresume" != 'yes' ] ; then
-  pbmpicmd="${pbmpicmd} -d ${nfrad1} ${pboptions}"
+  pbcmd="${pbcmd} -d ${nfrad1} ${pboptions}"
   echo -e "##### Start PB chains\n"
 else
   echo -e "##### Resume previous PB chains\n"  
@@ -207,13 +221,13 @@ fi
 # start chain(s)
 pbpid=()
 if [ $nbchain -eq 1 ] ; then
-  echo -e "${pbmpicmd} ${pchain} &> ${pchain}.log &\n"
-  ${pbmpicmd} ${pchain} &> ${pchain}.log &
+  echo -e "${pbcmd} ${pchain} &> ${pchain}.log &\n"
+  ${pbcmd} ${pchain} &> ${pchain}.log &
   pbpid+=($!)
 else
   for i in $(seq 1 ${nbchain}) ; do
-    echo -e "${pbmpicmd} ${pchain}.${i} &> ${pchain}.${i}.log &\n"
-    ${pbmpicmd} ${pchain}.${i} &> ${pchain}.${i}.log &
+    echo -e "${pbcmd} ${pchain}.${i} &> ${pchain}.${i}.log &\n"
+    ${pbcmd} ${pchain}.${i} &> ${pchain}.${i}.log &
     pbpid+=($!)
   done
 fi
@@ -252,7 +266,7 @@ while [[ ${SECONDS} -lt $(( ${timelimit} - (2 * ${timelimit} / 100) )) ]] ; do
   # check the programs are still running...
   if [ -z "$(ps | grep $pbpidorstr)" ] ; then
     echo ""
-    echo "!!! ERROR : unexpected termination of all pbmpi chains ; perform last rsync and exit"
+    echo "!!! ERROR : unexpected termination of all pb chains ; perform last rsync and exit"
     $rsynccmd
     exit 1
   fi
