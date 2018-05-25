@@ -1,4 +1,7 @@
 #!/usr/bin/python
+"""Select tree clades based on branch/node attributes and define constraint clades for MrBayesfor further bayesian tree inference, 
+or produces alignments with collapsed clades (i.e. replace sets of sequences with a single representative of the clade).
+"""
 
 import os, sys, glob, getopt
 import tree2, copy
@@ -28,11 +31,6 @@ def adddepth(depths, key, val):
 def rmdepth(depths, key):
 	del depths[key]
 	checkmaxdepthandsetreclim(depths)
-
-"""
-
-
-"""
 # output folders and file extension for main function
 doutdext = {'mbc':('mbconstraints', 'mbconstraints'), \
 			'ccs':('constrained_clade_subalns', 'outgroup'), \
@@ -334,36 +332,6 @@ def write_out_MrBayes_clade_constraints(constraints, outgroup, nfout, allowin=Fa
 			fout.write("constraint clade%d -1 = %s\n"%(i, ' '.join(constraint)))
 			clades.append("clade%d"%i)
 		fout.write("prset topologypr=constraints(%s)\n"%(', '.join(clades)))
-
-def colour_tree_with_constrained_clades(tree, constraints, palette=[], **kw):
-	"""paints constrained clades with a colour pallette; take a tree and a list of leaf sets as input.
-	
-	Paints the clades (i.e. all the branches at the stema and below a node) in a reverse order relative to input leaf set list,
-	as it is supposed to be the ouput of select_clades_on_conditions(..., order=2), explored from tips to root (post-order traversal),
-	gradually removing clades, which means ealier picked constrained clades can be nested in later ones. The later clades are thus 
-	painted fist, and then nested ealier clades are painted over.
-	
-	Palette defaults to a random RGB combination.
-	"""
-	#~ def colorWheel(i, n):
-		#~ assert i < n
-		#~ j = float(i)
-		#~ return tuple(int((256*((float(k)/3)+(j/n)))%256) for k in range(3))
-	def colorWheel():
-		return tuple(randint(0, 255) for k in range(3))
-
-	if not palette:
-		# make up one colour palette
-		nc = len(constraints)
-		cols = [colorWheel() for i in range(nc)]
-	else:
-		cols = palette
-	
-	for k, cons in enumerate(reversed(constraints)):
-		# start from the last assigned node constraint, so that ealier nested clades will be painted over at a further iteration
-		n = tree.mrca(cons)
-		for c in n.get_all_children():
-			c.edit_color(cols[k])
 
 def main(nfgenetree, diraln, dirout, outtag, mkdircons=True, **kw):
 	aliformatin = kw.get('aliformatin')

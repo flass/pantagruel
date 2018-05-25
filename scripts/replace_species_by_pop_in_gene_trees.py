@@ -3,7 +3,7 @@
 import tree2
 import sys, os, getopt, glob
 from ptg_utils import *
-from mark_unresolved_clades import select_clades_on_conditions, colour_tree_with_constrained_clades
+from mark_unresolved_clades import select_clades_on_conditions
 from scipy import stats
 import copy
 
