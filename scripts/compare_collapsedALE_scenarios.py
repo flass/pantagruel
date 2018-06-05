@@ -339,54 +339,62 @@ def _select_lineage_by_event_query_factory(rlocdsidcol, evtypes, valtoken, addse
 def _select_event_by_lineage_query_factory(rlocdsidcol, evtypes, valtoken, addselcols=('freq',), distinct=False, operator='=', addWhereClause=''):
 	return _select_lineage_event_query_factory(('event_id', rlocdsidcol), rlocdsidcol, evtypes, valtoken, addselcols, distinct, operator, addWhereClause)
 
+def _query_events_by_lineage_sorted(gene, preq, dbcur, sortfield=0):
+	dbcur.execute(preq, (gene,)) 
+	return sorted(dbcur.fetchall(), key=lambda x: x[sortfield])
+
 def _query_events_by_lineage(gene, preq, dbcur):
 	dbcur.execute(preq, (gene,)) 
-	return sorted(dbcur.fetchall(), key=lambda x: x[0])
+	return dbcur.fetchall()
 
 def _query_matching_lineage_event_profiles(args, use_gene_labels=False, timing=False, arraysize=10000, verbose=False):
 	
 	if timing: time = __import__('time')
-	lineage_id, dbname, dbengine, nsample, evtypes, mineventfreq, maxeventfreq, minevjointfreq = args
-	if verbose: print 'lineage_id:', lineage_id
+	lineageidfam, dbname, dbengine, nsample, evtypes, mineventfreq, maxeventfreq, minevjointfreq = args
+	lineage_id, fam = lineageidfam
+	if verbose: print 'lineage_id:', lineage_id, fam
 	dbcon, dbcul, dbtype, valtoken = get_dbconnection(dbname, dbengine)
 	if use_gene_labels: rlocdsidcol = 'replacement_label_or_cds_code'
 	elif dbtype=='postgres': rlocdsidcol = 'rlocds_id'
 	else: rlocdsidcol = 'oid'
+	diffamWC = " AND gene_family_id != '%s'"%fam
 	minevfWC = " AND freq >= %d"%int(mineventfreq*nsample) if mineventfreq>0 else ''
 	maxevfWC = " AND freq  < %d"%int(maxeventfreq*nsample) if maxeventfreq<1 else ''
 	# first get the vector of (event_id, freq) tuples in lineage
-	preq_evbyli = _select_event_by_lineage_query_factory(rlocdsidcol, evtypes, valtoken, addWhereClause=minevfWC+maxevfWC)
+	preq_evbyli = _select_event_by_lineage_query_factory(rlocdsidcol, evtypes, valtoken, addWhereClause=diffamWC+minevfWC+maxevfWC)
 	if verbose: print preq_evbyli%lineage_id
 	lineage_eventfreqs = _query_events_by_lineage(lineage_id, preq_evbyli, dbcul)
 	dlineage_eventfreqs = dict(lineage_eventfreqs)
 	lineage_events = tuple(ef[0] for ef in lineage_eventfreqs)
 	if not lineage_events: return []
+	if verbose: print lineage_events
 	
 	# then build a list of gene lineages to compare, based on common occurence of at least N event (here only 1 common event required)
 	# and the id of compared lineage to be > reference lineage, to avoid duplicate comparisons
 	lineageorderWC=" AND %s > %s"%(rlocdsidcol, str(lineage_id))
-	preq_libyev = _select_lineage_by_event_query_factory(rlocdsidcol, evtypes, valtoken, operator=' IN ', addWhereClause=minevfWC+maxevfWC+lineageorderWC)
-	preq_libyevin = preq_libyev.replace(valtoken, repr(lineage_events))
+	preq_libyev = _select_lineage_by_event_query_factory(rlocdsidcol, evtypes, valtoken, distinct=True, operator=' IN ', addWhereClause=minevfWC+maxevfWC+lineageorderWC)
+	preq_libyevin = preq_libyev.replace(valtoken, repr(lineage_events).replace(',)', ')'))
 	if verbose: print preq_libyevin
 	dbcul.execute(preq_libyevin) 
 	match_lineages = dbcul.fetchall()
 	
 	lmatches = []
-	for match_lineage_id in match_lineages:
+	for tmatch_lineage_id in match_lineages:
 		jointfreq = 0.0
+		match_lineage_id = tmatch_lineage_id[0]
 		mg_lineage_eventfreqs = _query_events_by_lineage(match_lineage_id, preq_evbyli, dbcul)
 		for eid, f in mg_lineage_eventfreqs:
 			f0 = dlineage_eventfreqs.get(eid)
 			if f0: jointfreq += mulBoundInt2Float(f0, f, nsample, maxval=1.0)
 		if jointfreq >= minevjointfreq:
-			lmatches.append( ((lineage_id, match_lineage_id), jointfreq) )
+			lmatches.append( (lineage_id, match_lineage_id, jointfreq) )
 	
 	dbcon.close()
 	if verbose: print lmatches
 	return lmatches
 
 def dbquery_matching_lineage_event_profiles(dbname, dbengine='postgres', use_gene_labels=False, \
-                                            nsample=1.0, evtypes=None, mineventfreq=0.0, maxeventfreq=1.0, minevjointfreq=0.0, genefamlist=None, \
+                                            nsample=1.0, evtypes=None, mineventfreq=0.0, maxeventfreq=1.0, minevjointfreq=0.0, genefamlist=None, exclRecSpeBranches=[], \
                                             matchesOutDirRad=None, nfpickleMatchesOut=None, returnList=False, \
                                             nbthreads=1, verbose=False, **kw):
 	timing = kw.get('timing')
@@ -402,6 +410,16 @@ def dbquery_matching_lineage_event_profiles(dbname, dbengine='postgres', use_gen
 	def make_arg_tup(lineage_id):
 		return (lineage_id, dbname, dbengine, nsample, evtypes, mineventfreq, maxeventfreq, minevjointfreq)
 	
+	def output_match_line(lm, fout, lmatches):
+		if (nfpickleMatchesOut or returnList): lmatches += lm
+		if matchesOutDirRad or verbose:
+			for tgpcf in lm:
+				matchline = '%d\t%d\t%f\n'%tgpcf
+				if matchesOutDirRad: fout.write(matchline)
+				#~ if verbose:
+					#~ print ' # '+matchline+' #'
+					#~ sys.stdout.flush()
+	
 	if genefamlist:
 		# create real table so can be seen by other processes
 		ingenefams = [genefam.get('replaced_cds_code', genefam['cds_code']) for genefam in genefamlist]
@@ -412,31 +430,39 @@ def dbquery_matching_lineage_event_profiles(dbname, dbengine='postgres', use_gen
 		generestrictIJ = "inner join ingenefams using (replacement_label_or_cds_code) "
 	else:
 		generestrictIJ = ""
+		
+	#~ if exclRecSpeBranches:
+		#~ # create a filtered version of gene_lineage_events table
+		#~ dbcur.execute("""create table gene_lineage_events2 as
+		                  #~ (select gene_lineage_events.* 
+		                   #~ from gene_lineage_events 
+		                   #~ inner join species_tree_events using (event_id)
+		                   #~ inner join species_tree on rec_branch_id=branch_id
+		                   #~ where branch_name not in %s ) ;"""%repr(tuple(exclRecSpeBranches)) )
+		                   #~ # ('N1', 'N3', 'N5', 'N7', 'N9', 'N11', 'N21', 'N23', 'N25', 'N27', 'N31', 'N33', 'N63', 'N73', 'N349', 'N351', 'N353', 'N355', 'N357', 'N359', 'N361', 'N447', 'N449', 'N451', 'N457', 'N459', 'N1629', 'N1631', 'N1633')
 	
 	# get set of gene lineages
-	qlibyev = "select distinct %s from replacement_label_or_cds_code2gene_families %s;"%(rlocdsidcol, generestrictIJ)
+	qlibyev = "select %s, gene_family_id from replacement_label_or_cds_code2gene_families %s;"%(rlocdsidcol, generestrictIJ)
 	if verbose: print qlibyev
 	dbcur.execute(qlibyev)
-	ltlineageids = dbcur.fetchall()
+	ltlineageidfams = dbcur.fetchall()
 				
-	if matchesOutDirRad:
-		fout = open(os.path.join(matchesOutDirRad, 'matching_events.tab'), 'w')
-	if (nfpickleMatchesOut or returnList): lmatches = []
+	
+	fout = open(os.path.join(matchesOutDirRad, 'matching_events.tab'), 'w') if matchesOutDirRad else None
+	lmatches = []
 	if nbthreads==1:
-		for tlineageid in ltlineageids:
-			lm = _query_matching_lineage_event_profiles(make_arg_tup(tlineageid[0]), verbose=verbose)
-			if (nfpickleMatchesOut or returnList): lmatches += lm
+		for i, tlineageidfam in enumerate(ltlineageidfams):
+			lm = _query_matching_lineage_event_profiles(make_arg_tup(tlineageidfam), verbose=max(verbose-1, 0))
+			output_match_line(lm, fout, lmatches)
+			if verbose: sys.stdout.write("\r%d\t"%i)
 	else:
 		pool = mp.Pool(processes=nbthreads)
-		iterargs = (make_arg_tup(tlineageid[0]) for tlineageid in ltlineageids)
+		iterargs = (make_arg_tup(tlineageidfam) for tlineageidfam in ltlineageidfams)
 		iterlm = pool.imap_unordered(_query_matching_lineage_event_profiles, iterargs, chunksize=100)
 		# an iterator is returned by imap_unordered(); one needs to actually iterate over it to have the pool of parrallel workers to compute
 		for lm in iterlm:
-			if (nfpickleMatchesOut or returnList): lmatches += lm
-			if matchesOutDirRad:
-				for genepair, cummulfreq in lm:
-					fout.write('%s\t%f\n'%('\t'.join(genepair), cummulfreq))
-		
+			output_match_line(lm, fout, lmatches)
+	
 	if nfpickleMatchesOut:
 		with open(nfpickleMatchesOut, 'wb') as fpickleOut:
 			pickle.dump(lmatches, fpickleOut, protocol=pickle.HIGHEST_PROTOCOL)
@@ -570,7 +596,7 @@ def cumSumSeqNumVal(llt, dcumsum, funOnKey=None):
 			dcumsum[k] = preval + val
 
 def dbquery_matching_lineages_by_event(dbname, nsample=1.0, evtypes=None, genefamlist=None, \
-                            nbthreads=1, dbengine='postgres', mineventfreq=0.0, maxeventfreq=1.0, minevjointfreq=0.0, \
+                            nbthreads=1, dbengine='postgres', mineventfreq=0.0, maxeventfreq=1.0, minevjointfreq=0.0, exclRecSpeBranches=[], \
                             matchesOutDirRad=None, nfpickleMatchesOut=None, nfshelveMatchesOut=None, **kw):
 	"""look for common events between genes, and retrieve their joint probability of occurence (produce of their observation frequencies)
 	
@@ -623,7 +649,7 @@ def dbquery_matching_lineages_by_event(dbname, nsample=1.0, evtypes=None, genefa
 		
 	if nbthreads==1:
 		for tevtid in ltevtids:
-			dgpcf = _query_matching_lineages_by_event((tevtid[0], dbname, dbengine, nsamplesq, evtypes), returnDict=True)
+			dgpcf = _query_matching_lineages_by_event((tevtid[0], dbname, dbengine, nsamplesq, evtypes), returnDict=True, verbose=max(verbose-1, 0))
 			cumSumDictNumVal([dgpcf], dgenepaircummulfreq, funOnKey=funk)
 	else:
 		pool = mp.Pool(processes=nbthreads)
@@ -675,12 +701,18 @@ def dbquery_matching_lineages_by_event(dbname, nsample=1.0, evtypes=None, genefa
 	return dgenepaircummulfreq
 
 def main():
-
-	opts, args = getopt.getopt(sys.argv[1:], 'hv', ['ALE_algo=', 'event_type=', 'min_freq=', 'max_freq=', 'min_joint_freq=', 'method=', 'nrec_per_sample=', \
+	# options relating to:
+	#  - scenario format
+	#  - event matching filters and method
+	#  - event dataset input
+	#  - matched events output
+	#  - program runtime
+	opts, args = getopt.getopt(sys.argv[1:], 'hv', ['ALE_algo=', 'nrec_per_sample=', \
+	                                                'exclude_species_tree_branches=', 'event_type=', 'min_freq=', 'max_freq=', 'min_joint_freq=', 'method=', \
 	                                                'genefams=', 'dir_constraints=', 'dir_replaced=', \
 	                                                'events_from_pickle=', 'events_from_shelve=', 'events_from_postgresql_db=', 'events_from_sqlite_db=', \
 	                                                'matches_to_shelve=', 'dir_table_out=', \
-	                                                'threads=', 'help', 'verbose']) #, 'reuse=', 'max.recursion.limit=', 'logfile='
+	                                                'threads=', 'help', 'verbose=']) #, 'reuse=', 'max.recursion.limit=', 'logfile='
 	dopt = dict(opts)
 	
 	if ('-h' in dopt) or ('--help' in dopt):
@@ -726,9 +758,10 @@ def main():
 	minFreqReport = float(dopt.get('--min_freq', 0.0))
 	maxFreqReport = float(dopt.get('--max_freq', 1.0))
 	minJointFreqReport = float(dopt.get('--min_joint_freq', 0.0))
+	exclRecSpeBranches = str(dopt.get('--exclude_species_tree_branches', '')).split(',')
 	# runtime params
 	nbthreads = int(dopt.get('--threads', 1))
-	verbose = ('-v' in dopt) or ('--verbose' in dopt)
+	verbose = int(dopt.get('--verbose', dopt.get('-v', 0)))
 	
 	if dirTableOut:
 		ltd = ['gene_event_matches']
@@ -756,7 +789,7 @@ def main():
 			raise ValueError, "deprecated matching engine; only works with pre-computed python objects, not DB queries"
 		dbquery_matchfun = eval('dbquery_'+matchMethod)
 		dbquery_matchfun(dbname, dbengine=loaddfamevents, genefamlist=genefamlist, nsample=nrecsample, \
-                         evtypes=recordEvTypes, mineventfreq=minFreqReport, maxeventfreq=maxFreqReport, minevjointfreq=minJointFreqReport, \
+                         evtypes=recordEvTypes, mineventfreq=minFreqReport, maxeventfreq=maxFreqReport, minevjointfreq=minJointFreqReport, exclRecSpeBranches=exclRecSpeBranches, \
                          nfpickleMatchesOut=nfpickleMatchesOut, nfshelveMatchesOut=nfshelveMatchesOut, matchesOutDirRad=matchesOutDirRad, \
                          nbthreads=nbthreads, verbose=verbose)
 
