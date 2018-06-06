@@ -86,7 +86,8 @@ def loadRecGeneTreeLabelAliases(nfgenefamlist, dircons=None, dirrepl=None, nbthr
 		# remove trailing whitespace present after gene_family_id ; account for PostgreSQL footer line count of fetched rows
 		genefamlist = [dict(zip(header, line.replace(' ,', ',').strip(' \n').split(','))) for line in fgenefamlist if (not line.endswith('rows)\n'))] 
 	dreplacedlab = {}
-	for fam in lfams:
+	for dgenefam in genefamlist:
+		fam = dgenefam['gene_family_id']
 		if dircons:
 			globcons = "%s/%s/*%s*"%(dircons, fam, constrainttag)
 			if verbose: print globcons
@@ -122,7 +123,7 @@ def loadRecGeneTreeLabelAliases(nfgenefamlist, dircons=None, dirrepl=None, nbthr
 					prevclaorgene = claorgene
 	
 	for genefam in genefamlist:
-		genelab = genefam['cds_code']
+		genelab = genefam.get('cds_code')
 		if genelab in dreplacedlab:
 			genefam['replaced_cds_code'] = dreplacedlab[genelab]
 	return genefamlist
