@@ -78,18 +78,18 @@ def getdspe2pop(lnamepops, spetree=None):
 				lnamepops.append((spe, (spe,)))
 	return dspe2pop
 
-def loadRecGeneTreeLabelAliases(nfgenefamlist, dircons=None, dirrepl=None, nbthreads=1, verbose=False):
+def loadRecGeneTreeLabelAliases(nfgenefamlist, dircons=None, dirrepl=None, sep='\t', nbthreads=1, verbose=False):
 	if not nfgenefamlist: 
 		return []
 	with open(nfgenefamlist, 'r') as fgenefamlist:
-		header = fgenefamlist.readline().strip(' \n').split(',') 
+		header = fgenefamlist.readline().strip(' \n').split(sep) 
 		# remove trailing whitespace present after gene_family_id ; account for PostgreSQL footer line count of fetched rows
-		genefamlist = [dict(zip(header, line.replace(' ,', ',').strip(' \n').split(','))) for line in fgenefamlist if (not line.endswith('rows)\n'))] 
+		genefamlist = [dict(zip(header, line.replace(' '+sep, sep).strip(' \n').split(sep))) for line in fgenefamlist if (not line.endswith('rows)\n'))] 
 		if verbose: print 'load restricted gene lineage and family table with header:', header, 'and %d lines'%len(genefamlist)
 	dreplacedlab = {}
 	if dircons or dirrepl:
-		for dgenefam in genefamlist:
-			fam = dgenefam['gene_family_id']
+		for genefam in genefamlist:
+			fam = genefam['gene_family_id']
 			if dircons:
 				globcons = "%s/%s/*%s*"%(dircons, fam, constrainttag)
 				if verbose: print globcons
