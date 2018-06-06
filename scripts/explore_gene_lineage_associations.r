@@ -72,7 +72,7 @@ if (!is.null(nfrefrepliordlineages)){
 
 
 
-	nfpdf = paste(nfmatchevents, sprintf('co-evol_scores_projection_%s.pdf', refrepli) sep='.')
+	nfpdf = paste(nfmatchevents, sprintf('co-evol_scores_projection_%s.pdf', refrepli), sep='.')
 	pdf(nfpdf, height=20, width=20)
 	plotHMevents(matmatchev, sprintf('co-evolution scores projected on %s map', refrepli))
 	dev.off()
