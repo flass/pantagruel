@@ -70,7 +70,9 @@ UPDATE gene_lineage_events SET reconciliation_id=1 WHERE reconciliation_id IS NU
 
 CREATE INDEX ON gene_lineage_events (reconciliation_id);
 CREATE INDEX ON gene_lineage_events (replacement_label_or_cds_code);
+CREATE INDEX ON gene_lineage_events USING HASH (replacement_label_or_cds_code);
 CREATE INDEX ON gene_lineage_events (event_id);
+CREATE INDEX ON gene_lineage_events USING HASH (event_id);
 CREATE INDEX ON gene_lineage_events (freq);
 CREATE INDEX ON gene_lineage_events (replacement_label_or_cds_code, event_id);
 ALTER TABLE gene_lineage_events ADD PRIMARY KEY (reconciliation_id, replacement_label_or_cds_code, event_id);
