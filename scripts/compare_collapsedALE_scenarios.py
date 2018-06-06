@@ -505,9 +505,6 @@ def dbquery_matching_lineage_event_profiles(dbname, dbengine='postgres', use_gen
 		print "saved 'lmatches' to file '%s'"%nfpickleMatchesOut
 	if matchesOutDirRad:
 		fout.close()
-	if genefamlist:
-		dbcur.execute("drop table ingenefams;")
-		dbcon.commit()
 	dbcon.close()
 	if returnList:
 		return lmatches
