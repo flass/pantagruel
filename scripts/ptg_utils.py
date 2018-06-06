@@ -82,45 +82,47 @@ def loadRecGeneTreeLabelAliases(nfgenefamlist, dircons=None, dirrepl=None, nbthr
 	if not nfgenefamlist: 
 		return []
 	with open(nfgenefamlist, 'r') as fgenefamlist:
-		header = fgenefamlist.readline().strip(' \n').split(',')
+		header = fgenefamlist.readline().strip(' \n').split(',') 
 		# remove trailing whitespace present after gene_family_id ; account for PostgreSQL footer line count of fetched rows
 		genefamlist = [dict(zip(header, line.replace(' ,', ',').strip(' \n').split(','))) for line in fgenefamlist if (not line.endswith('rows)\n'))] 
+		if verbose: print 'load restricted gene lineage and family table with header:', header, 'and %d lines'%len(genefamlist)
 	dreplacedlab = {}
-	for dgenefam in genefamlist:
-		fam = dgenefam['gene_family_id']
-		if dircons:
-			globcons = "%s/%s/*%s*"%(dircons, fam, constrainttag)
-			if verbose: print globcons
-			lnfcons = glob.glob(globcons)
-			constraintclades = parseMrBayesConstraints(lnfcons)
-		else:
-			constraintclades = []
-		if dirrepl:
-			globreplaced = "%s/%s*%s"%(dirrepl, fam, replacedtag)
-			if verbose: print globreplaced
-			lnfreplaced = glob.glob(globreplaced)
-			if len(lnfreplaced)!=1:
-				sys.stderr.write("Warning! will use first file among those found matching pattern '%s'\nas reference for collapsed gene tree tip label aliases:\n%s\n"%( globreplaced, '\n'.join(lnfreplaced) ))
-			nfreplaced = lnfreplaced[0]
-			prevclaorgene = ''
-			with open(nfreplaced, 'r') as freplaced:
-				for line in freplaced:
-					claorgene, repllab = line.rstrip('\n').split('\t')
-					if claorgene in constraintclades:
-						for genelab in constraintclades[claorgene]:
-							dreplacedlab[genelab] = repllab
-					else:
-						if claorgene == prevclaorgene: continue
-						# NOTE: this will always leave only one leaf label associated with a collapsed clade,
-						# even when gene tree collapsed clade was replaced by replacement clde (tagged 'RC')
-						# with multiple leaves, mimicking the species tree : because these clades are artificially
-						# introduced in the gene trees and will always show perfect agreement with the species trere,
-						# spurious association of S events with total support would be seen between similar RC clades
-						# in different gene families.
-						# (events recorded withtin such RC clade are actually discarded in pAr.parseRecGeneTree(),
-						# as they detected as clade encompassing all leaves with identical RC tag)
-						dreplacedlab[claorgene] = repllab
-					prevclaorgene = claorgene
+	if dircons or dirrepl:
+		for dgenefam in genefamlist:
+			fam = dgenefam['gene_family_id']
+			if dircons:
+				globcons = "%s/%s/*%s*"%(dircons, fam, constrainttag)
+				if verbose: print globcons
+				lnfcons = glob.glob(globcons)
+				constraintclades = parseMrBayesConstraints(lnfcons)
+			else:
+				constraintclades = []
+			if dirrepl:
+				globreplaced = "%s/%s*%s"%(dirrepl, fam, replacedtag)
+				if verbose: print globreplaced
+				lnfreplaced = glob.glob(globreplaced)
+				if len(lnfreplaced)!=1:
+					sys.stderr.write("Warning! will use first file among those found matching pattern '%s'\nas reference for collapsed gene tree tip label aliases:\n%s\n"%( globreplaced, '\n'.join(lnfreplaced) ))
+				nfreplaced = lnfreplaced[0]
+				prevclaorgene = ''
+				with open(nfreplaced, 'r') as freplaced:
+					for line in freplaced:
+						claorgene, repllab = line.rstrip('\n').split('\t')
+						if claorgene in constraintclades:
+							for genelab in constraintclades[claorgene]:
+								dreplacedlab[genelab] = repllab
+						else:
+							if claorgene == prevclaorgene: continue
+							# NOTE: this will always leave only one leaf label associated with a collapsed clade,
+							# even when gene tree collapsed clade was replaced by replacement clde (tagged 'RC')
+							# with multiple leaves, mimicking the species tree : because these clades are artificially
+							# introduced in the gene trees and will always show perfect agreement with the species trere,
+							# spurious association of S events with total support would be seen between similar RC clades
+							# in different gene families.
+							# (events recorded withtin such RC clade are actually discarded in pAr.parseRecGeneTree(),
+							# as they detected as clade encompassing all leaves with identical RC tag)
+							dreplacedlab[claorgene] = repllab
+						prevclaorgene = claorgene
 	
 	for genefam in genefamlist:
 		genelab = genefam.get('cds_code')
