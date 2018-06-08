@@ -490,9 +490,12 @@ def dbquery_matching_lineage_event_profiles(dbname, dbengine='postgres', use_gen
 	ltlineageidfams = dbcur.fetchall()
 				
 	
-	#~ fout = open(os.path.join(matchesOutDirRad, 'matching_events.tab'), 'w') if matchesOutDirRad else None
-	nfoutrad = os.path.join(matchesOutDirRad, 'matching_events.tab') if matchesOutDirRad else None
-	kfout = 0
+	if matchesOutDirRad:
+		nfoutrad = os.path.join(matchesOutDirRad, 'matching_events.tab')
+		kfout = 0
+		fout = open(nfoutrad+'.%d'%kfout, 'w')
+	else:
+		kfout = nfoutrad = fout = None
 	lmatches = []
 	if nbthreads==1:
 		for i, tlineageidfam in enumerate(ltlineageidfams):
