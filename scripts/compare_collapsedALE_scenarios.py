@@ -422,15 +422,23 @@ def dbquery_matching_lineage_event_profiles(dbname, dbengine='postgres', use_gen
                                             matchesOutDirRad=None, nfpickleMatchesOut=None, returnList=False, \
                                             nbthreads=1, verbose=False, **kw):
 	
-	def output_match_line(lm, fout, lmatches):
+	def output_match_line(lm, lmatches, fout, nfoutrad, kfout, foutMaxSize=1024**3):
+		# check if output file max size has been reached
+		if fout: 
+			foutsize = tout.tell()
+			if foutsize >= foutMaxSize:
+				fout.close()
+				kfout +=1
+				fout = open(nfoutrad+'.%d'%kfout, 'w')
 		if (nfpickleMatchesOut or returnList): lmatches += lm
 		if matchesOutDirRad or verbose:
 			for tgpcf in lm:
 				matchline = '%d\t%d\t%f\n'%tgpcf
-				if matchesOutDirRad: fout.write(matchline)
+				if fout: fout.write(matchline)
 			if verbose:
 				print len(lm), 'matches'
 				sys.stdout.flush()
+		return (fout, kfout)
 	
 	timing = kw.get('timing')
 	if timing: time = __import__('time')							
@@ -482,12 +490,14 @@ def dbquery_matching_lineage_event_profiles(dbname, dbengine='postgres', use_gen
 	ltlineageidfams = dbcur.fetchall()
 				
 	
-	fout = open(os.path.join(matchesOutDirRad, 'matching_events.tab'), 'w') if matchesOutDirRad else None
+	#~ fout = open(os.path.join(matchesOutDirRad, 'matching_events.tab'), 'w') if matchesOutDirRad else None
+	nfoutrad = os.path.join(matchesOutDirRad, 'matching_events.tab') if matchesOutDirRad else None
+	kfout = 0
 	lmatches = []
 	if nbthreads==1:
 		for i, tlineageidfam in enumerate(ltlineageidfams):
 			lm = _query_matching_lineage_event_profiles(make_arg_tup(tlineageidfam), verbose=max(verbose-1, 0))
-			output_match_line(lm, fout, lmatches)
+			fout, kfout = output_match_line(lm, lmatches, fout, nfoutrad, kfout)
 			if verbose: sys.stdout.write("\r%d\t"%i)
 	else:
 		pool = mp.Pool(processes=nbthreads)
@@ -495,7 +505,7 @@ def dbquery_matching_lineage_event_profiles(dbname, dbengine='postgres', use_gen
 		iterlm = pool.imap_unordered(_query_matching_lineage_event_profiles, iterargs, chunksize=1)
 		# an iterator is returned by imap_unordered(); one needs to actually iterate over it to have the pool of parrallel workers to compute
 		for lm in iterlm:
-			output_match_line(lm, fout, lmatches)
+			fout, kfout = output_match_line(lm, lmatches, fout, nfoutrad, kfout)
 	
 	if nfpickleMatchesOut:
 		with open(nfpickleMatchesOut, 'wb') as fpickleOut:
