@@ -425,7 +425,7 @@ def dbquery_matching_lineage_event_profiles(dbname, dbengine='postgres', use_gen
 	def output_match_line(lm, lmatches, fout, nfoutrad, kfout, foutMaxSize=1024**3):
 		# check if output file max size has been reached
 		if fout: 
-			foutsize = tout.tell()
+			foutsize = fout.tell()
 			if foutsize >= foutMaxSize:
 				fout.close()
 				kfout +=1
