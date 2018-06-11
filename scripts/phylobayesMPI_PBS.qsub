@@ -207,9 +207,9 @@ fi
 
 # set PB command
 if [ "$mpibin" == 'none' ] ; then
-   pbmpicmd="${pbbin}" 
+  pbcmd="${pbbin}" 
 else
-  pbmpicmd="$mpibin -n ${coreperchain} ${pbbin}"
+  pbcmd="$mpibin -n ${coreperchain} ${pbbin}"
 fi
 if [ "$pbresume" != 'yes' ] ; then
   pbcmd="${pbcmd} -d ${nfrad1} ${pboptions}"
