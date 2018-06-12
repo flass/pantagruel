@@ -641,9 +641,10 @@ alelogs=${rapdb}/logs/ALE
 mkdir -p $alelogs/ale_collapsed_undat $alelogs/ale_collapsed_dated
 outrecdir=${colrecs}/${collapsecond}/${colmethod}/ale_collapsed_undat
 mkdir -p $outrecdir
+export recsamplesize=1000
 
 Njob=`wc -l $tasklist | cut -f1 -d' '`
-qsubvars="tasklist=$tasklist, resultdir=$outrecdir, spetree=Stree.nwk, nrecs=1000, alealgo=ALEml_undated"
+qsubvars="tasklist=$tasklist, resultdir=$outrecdir, spetree=Stree.nwk, nrecs=${recsamplesize}, alealgo=ALEml_undated"
 qsub -J 1-$Njob -N ale_collapsed_undat -l select=1:ncpus=1:mem=20gb,walltime=24:00:00 -o $alelogs/ale_collapsed_undat -j oe -v "$qsubvars" $HOME/scripts/misc/ALE_array_PBS.qsub
 
 
@@ -656,17 +657,78 @@ mkdir -p ${comparerecs}
 export compoutdir=${comparerecs}/${collapsecond}/${colmethod}
 mkdir -p ${compoutdir}/ale_collapsed_undat ${compoutdir}/ale_collapsed_dated
 
+export evtypeparse='ST'
+export minevfreqparse=0.1
+export minevfreqmatch=0.5
+export minjoinevfreqmatch=1.0
 
 ## analyse blocks of co-transfer!!
 ## normalise the species tree branch labels across gene families
 ## and look for correlated transfer events across gene families
 reclist=$outrecdir/ale_collapsed_undat_uml_rec_list
 $dbscripts/lsfullpath.py $outrecdir/ale_collapsed_undat uml_rec > $reclist
-
-python $ptgscripts/compare_collapsedALE_scenarios.py --rec_sample_list ${reclist} \
+ 
+python $ptgscripts/parse_collapsedALE_scenarios.py --rec_sample_list ${reclist} \
  --populations ${speciestreeBS%.*}_populations --reftree ${speciestreeBS}.lsd.newick \
- --dir_table_out ${compoutdir}/ale_collapsed_undat --evtype 'ST' --minfreq 0.1 \
- --threads 8 --runmode 'parse'  &> $entlogs/compare_collapsedALE_scenarios.log &
+ --dir_table_out ${compoutdir}/ale_collapsed_undat --evtype ${evtypeparse} --minfreq ${minevfreqparse} \
+ --threads 8  &> $entlogs/parse_collapsedALE_scenarios.log &
 
 ## load parsed reconciliation data into database
 $ptgscripts/pantagruel_sqlitedb_phylogeny.sh ${database} ${sqldb}
+
+# rapid survey of event density over the reference tree
+nsample=1000
+for freqthresh in 0.1 0.25 0.5 ; do
+psql -separator '\t' ${sqldb} """
+.mode tabs 
+select don_branch_id, don_branch_name, rec_branch_id, rec_branch_name, event_type, nb_lineages, cum_freq, cum_freq/nb_lineages as avg_support from (
+ select don_branch_id, don_stree.branch_name as don_branch_name, rec_branch_id, rec_stree.branch_name as rec_branch_name, event_type, count(*) as nb_lineages, sum(freq)::real/${nsample} as cum_freq
+  from gene_lineage_events 
+  inner join species_tree_events using (event_id) 
+  inner join species_tree as rec_stree on rec_branch_id=rec_stree.branch_id
+  left join species_tree as don_stree on don_branch_id=don_stree.branch_id
+ where freq >= ( ${freqthresh} * ${nsample} )
+ group by don_branch_id, don_branch_name, rec_branch_name, rec_branch_id, event_type 
+) as weg
+order by nb_lineages desc, avg_support desc;
+""" > ${compoutdir}/ale_collapsed_undat/summary_gene_tree_events_minfreq${freqthresh} 
+wc -l ${compoutdir}/ale_collapsed_undat/summary_gene_tree_events_minfreq${freqthresh} 
+$ptgscripts/plot_spetree_event_density.r ${compoutdir}/ale_collapsed_undat/summary_gene_tree_events_minfreq${freqthresh} ${speciestreeBS}.lsd_internalPopulations.nwk
+done &
+
+
+## look for correlated gene lineage histories through identification of matching speciation and transfer events
+
+# optionally truncate event table
+# excluding oldest branches to avoid unspecific matches:
+maxreftreeheight=0.25
+exclbrlist=${compoutdir}/branches_older_than_${maxreftreeheight}
+# YET TO CODE!! TO DO
+python $ptgscripts/list_branches --older_than ${maxreftreeheight} --out ${exclbrlist}
+exclbr=$(cat ${exclbrlist} | tr '\n' ',' | sed -e "s/,/', '/g")
+sqlite3 ${sqldb} << EOF
+ALTER TABLE gene_lineage_events RENAME TO gene_lineage_events_full;
+CREATE TABLE gene_lineage_events AS  
+(SELECT gene_lineage_events_full.* 
+ FROM gene_lineage_events_full 
+ INNER JOIN species_tree_events USING (event_id)
+ INNER JOIN species_tree on rec_branch_id=branch_id
+ WHERE branch_name NOT IN ('${exclbr}') )
+;
+CREATE INDEX ON gene_lineage_events (replacement_label_or_cds_code);
+CREATE INDEX ON gene_lineage_events USING HASH (replacement_label_or_cds_code);
+CREATE INDEX ON gene_lineage_events (event_id);
+CREATE INDEX ON gene_lineage_events USING HASH (event_id);
+CREATE INDEX ON gene_lineage_events (freq);
+ALTER TABLE gene_lineage_events ADD PRIMARY KEY (replacement_label_or_cds_code, event_id);
+ANALYZE;
+.quit
+EOF
+
+# collect data
+# BEWARE: GENERATES AN AWFUL LOT OF DATA, PREPARE DISK SPACE ACCORDINGLY
+# indication: with defaults settings evtypeparse='ST'; minevfreqmatch=0.5; minjoinevfreqmatch=1.0
+# on a 880 Enterobacteriaceae dataset, results in ~300 GB output (made to be split into ~1GB files)
+python $ptgscripts/compare_collapsedALE_scenarios.py --events_from_postgresql_db ${sqldbname} \
+ --event_type ${evtypeparse} --min_freq ${minevfreqmatch} --min_joint_freq ${minjointevfreqmatch} --threads 8 \
+ --dir_table_out ${compoutdir}/ale_collapsed_undat &> $entlogs/compare_collapsedALE_scenarios.match.log &
