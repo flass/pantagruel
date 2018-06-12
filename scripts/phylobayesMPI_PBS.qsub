@@ -10,6 +10,7 @@ SECONDS=0
 
 ## load modules
 module load intel-suite
+module load gsl
 
 echo "passed variables:"
 echo "  nfaln=${nfaln}"
@@ -85,18 +86,18 @@ fi
 # define software executables
 # pb
 if [ "$mpibin" != 'none' ] ; then
-  if [ -z $pbbin ] ; then
+  if [ -z "$pbbin" ] ; then
     pbbin='/home/flassall/software/pbmpi/data/pb_mpi'
     echo "set default pbbin='$pbbin'"
   fi
   echo "will use Phylobayes MPI binary:"
   ls $pbbin
 else
-  if [ -z $pbbin ] ; then
+  if [ -z "$pbbin" ] ; then
     pbbin='/home/flassall/software/phylobayes4.1c/data/pb'
     echo "set default pbbin='$pbbin'"
   fi
-  echo "will use Phylobayes binary:"
+  echo "will use Phylobayes (sequential version) binary:"
   ls $pbbin
 fi
 if [ $? != 0 ] ; then
@@ -109,10 +110,10 @@ if [ ! -x $pbbin ] ; then
 fi
 
 # bpcomp
-if [ -z $bpcompbin ] ; then
+if [ -z "$bpcompbin" ] ; then
   bpcompbin=$(dirname $pbbin)/bpcomp
 fi
-if [ -x $bpcompbin  ] ; then
+if [ -x "$bpcompbin"  ] ; then
   echo "will assess convergence with:"
   ls $bpcompbin
 else
@@ -122,14 +123,14 @@ fi
 
 # define parallelism parameters
 if [ "$mpibin" != 'none' ] ; then
-  if [ -z $nbchain ] ; then
+  if [ -z "$nbchain" ] ; then
     nbchain=2
   fi
   case ${nbchain} in
     0|*[!0-9]*) echo "!!! ERROR, number of chains '\$nbchain' must be non-null positive integer" ; exit 1;;
     *) echo "will run $nbchain separate chains" ;;
   esac
-  if [ -z $coreperchain ] ; then
+  if [ -z "$coreperchain" ] ; then
     coreperchain=8
   fi
   case ${coreperchain} in
@@ -139,17 +140,17 @@ if [ "$mpibin" != 'none' ] ; then
 fi
 
 # define software options
-if [ -z $pboptions ] ; then
+if [ -z "$pboptions" ] ; then
   pboptions="-cat -gtr -dgam 4"
   echo "set default pboptions='$pboptions'"
 fi
 # define running time limit
-if [ -z $timelimit ] ; then
+if [ -z "$timelimit" ] ; then
   timelimit=$(( 72 * 60 * 60 ))
   echo "set default timelimit=$timelimit"
 fi
 # sync frequency
-if [ -z $syncfreq ] ; then
+if [ -z "$syncfreq" ] ; then
   syncfreq=30m
   echo "set default syncfreq='$syncfreq'"
 fi
@@ -159,7 +160,7 @@ if [ $? != 0 ] ; then
   exit 1
 fi
 # chain name
-if [ -z $chainname ] ; then
+if [ -z "$chainname" ] ; then
   pchain=${nfrad2}.pb.chain
   echo "set default pchain='$pchain'"
 else
