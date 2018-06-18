@@ -574,10 +574,12 @@ sed -e "s#${collapsed_genetrees}/${collapsecond}/\(.\+\)\.mb\.con\.tre#${colalin
 tasklist=${colalinexuscodedir}/${collapsecond}_ali_list
 rm -f $tasklist
 ${ptgscripts}/lsfullpath.py ${colalinexuscodedir}/${collapsecond}/collapsed_alns > $tasklist
+# following 4 lines are for resuming after a stop in batch computing, or to collect those jobs that crashed (and may need to be re-ran with more mem/time allowance)
 sort $tasklist > $tasklist.sort
 sort $alreadytasklist > $alreadytasklist.sort
 dtag=$(date +"%Y-%m-%d-%H-%M-%S")
 comm -2 -3  $tasklist.sort $alreadytasklist.sort > ${tasklist}_todo_${dtag}
+# otherwise could just use $tasklist
 Njob=`wc -l ${tasklist}_todo_${dtag} | cut -f1 -d' '`
 chunksize=1000
 jobranges=($(${ptgscripts}/get_jobranges.py $chunksize $Njob))
@@ -613,7 +615,8 @@ repllogd=${rapdb}/logs/replspebypop
 repllogs=$repllogd/replace_species_by_pop_in_gene_trees
 replrun=$(date +'%d%m%Y')
 
-### INCORRECT WRITING OF TREES BY BioPython ; requires correction at line 338 of source file Bio.Phylo.NewickIO.py => reuires writing permission on lib files; usuall impossible on HPC systems
+### INCORRECT WRITING OF TREES BY BioPython ; requires correction at line 338 of source file Bio.Phylo.NewickIO.py
+# => requires writing permission on lib files; usually impossible on HPC systems
 
 # local parallel run
 python ${ptgscripts}/replace_species_by_pop_in_gene_trees.py -G ${tasklist} -c ${colalinexuscodedir}/${collapsecond} -S ${speciestree}.lsd.newick -o ${coltreechains}/${collapsecond} \
@@ -679,7 +682,7 @@ $ptgscripts/pantagruel_sqlitedb_phylogeny.sh ${database} ${sqldb}
 # rapid survey of event density over the reference tree
 nsample=1000
 for freqthresh in 0.1 0.25 0.5 ; do
-psql -separator '\t' ${sqldb} """
+sqlite3 -separator '\t' ${sqldb} """
 .mode tabs 
 select don_branch_id, don_branch_name, rec_branch_id, rec_branch_name, event_type, nb_lineages, cum_freq, cum_freq/nb_lineages as avg_support from (
  select don_branch_id, don_stree.branch_name as don_branch_name, rec_branch_id, rec_stree.branch_name as rec_branch_name, event_type, count(*) as nb_lineages, sum(freq)::real/${nsample} as cum_freq
