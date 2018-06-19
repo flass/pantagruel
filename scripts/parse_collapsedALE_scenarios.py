@@ -213,10 +213,10 @@ def parseRec(nfrec, refspetree=None, drefspeeventTup2Ids=None, onlyLineages=[], 
 			devtlineagecount[geneleaflab] = fevent
 	elif minFreqReport>0:
 		# cleanup by deleting low-frequency events a posteriori
-		for geneleaflab in devtlineagecount.keys():
-			for evtup, fevent in devtlineagecount[geneleaflab].items():
+		for geneleaflab, eventlineage in devtlineagecount.iteritems():
+			for evtup, fevent in eventlineage.items():
 				if float(fevent)/nsample < minFreqReport:
-					del devtlineagecount[geneleaflab][evtup]
+					del eventlineage[evtup]
 	
 	# optionally write out events gene by gene (those that occured at least once above a gene in [rooted] reconciled gene tree, and at which frequency)
 	if lineageTableOutDir:
