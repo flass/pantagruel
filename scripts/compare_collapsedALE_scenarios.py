@@ -305,9 +305,15 @@ def get_dbconnection(dbname, dbengine):
 		raise ValueError,  "wrong DB type provided: '%s'; select one of dbengine={'postgres[ql]'|'sqlite[3]'}"%dbengine
 	return (dbcon, dbcur, dbtype, valtoken)
 
-def mulBoundInt2Float(a, b, scale, maxval=1.0):
-	f1 = min(float(a)/scale, maxval)
-	f2 = min(float(b)/scale, maxval)
+#~ def mulBoundInt2Float(a, b, scale, maxval=1.0):
+	#~ f1 = min(float(a)/scale, maxval)
+	#~ f2 = min(float(b)/scale, maxval)
+	#~ return f1*f2
+
+# here there would be scope for Cython static defs as this is done a lot
+def mulBoundInt2Float(a, b, scale):
+	f1 = float(a)/scale
+	f2 = float(b)/scale
 	return f1*f2
 
 def _select_lineage_event_clause_factory(rlocdsidcol, evtypes, valtoken, lineagetable):
@@ -406,7 +412,8 @@ def _query_matching_lineage_event_profiles(args, use_gene_labels=False, timing=F
 		mg_lineage_eventfreqs = _query_events_by_lineage(match_lineage_id, preq_evbyli, dbcul)
 		for eid, f in mg_lineage_eventfreqs:
 			f0 = dlineage_eventfreqs.get(eid)
-			if f0: jointfreq += mulBoundInt2Float(f0, f, nsample, maxval=1.0)
+			#~ if f0: jointfreq += mulBoundInt2Float(f0, f, nsample, maxval=1.0)
+			if f0: jointfreq += mulBoundInt2Float(f0, f, nsample)
 		if jointfreq >= minevjointfreq:
 			lmatches.append( (lineage_id, match_lineage_id, jointfreq) )
 	
@@ -576,7 +583,8 @@ def _query_matching_lineages_by_event(args, returDict=True, use_gene_labels=Fals
 			matchgenes = dbcul.fetchmany()
 			while matchgenes:
 				for gene1, gene2, freq1, freq2  in matchgenes:
-					jfreq = mulBoundInt2Float(freq1, freq2, nsample, maxval=1.0)
+					#~ jfreq = mulBoundInt2Float(freq1, freq2, nsample, maxval=1.0)
+					jfreq = mulBoundInt2Float(freq1, freq2, nsample)
 					if returDict: genepaircummulfreq[(gene1, gene2)] = jfreq
 					else: genepaircummulfreq.append(((gene1, gene2), jfreq))
 				matchgenes = dbcul.fetchmany()
@@ -597,7 +605,8 @@ def _query_matching_lineages_by_event(args, returDict=True, use_gene_labels=Fals
 			gene1, fam1, freq1 = genetup1
 			gene2, fam2, freq2 = genetup2
 			if fam1!=fam2: # filter genes from same families
-				jfreq = mulBoundInt2Float(freq1, freq2, nsample, maxval=1.0)
+				#~ jfreq = mulBoundInt2Float(freq1, freq2, nsample, maxval=1.0)
+				jfreq = mulBoundInt2Float(freq1, freq2, nsample)
 				if returDict: genepaircummulfreq[(gene1, gene2)] = jfreq   # (gene1, gene2) can only be seen once so no need to do d.setdefault((g1,g2), 0) then add value
 				else: genepaircummulfreq.append(((gene1, gene2), jfreq))
 		if timing: t2 = time.time() ; print t2 - t1
