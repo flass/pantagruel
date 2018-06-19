@@ -26,7 +26,7 @@ def eventLineages(recgt, dnodeallevt, onlyLeaves=[], deDupMatching=replacementcl
 	"""oreder events by gene lineage in the reconciled gene tree
 	
 	from a reconciled gene tree and the dict containing all the events in this tree in the format {node_id:(X, [don, ]rec), ...}, 
-	return a list of event tuples for each gene lineage in the reconciled gene tree, i.e. events located above every tip of the tree"""
+	return a list of event tuples for each gene lineage in the reconciled gene tree, i.e. the chain of events located above every tip of the tree"""
 	def get_eventlineage(node, dnodeallevt, allevtlineages):
 		if not node: return []
 		nodeid = node.nodeid()
@@ -107,18 +107,33 @@ def translateEventLineage(deventlineages, dcol2fullspenames, drefspeeventTup2Ids
 	if drefspeeventTup2Ids is provided, translated events will be stored using unique species tree event id (int) 
 	instead of event tuple describing its type and location: (X, [don, ]rec).
 	"""
-	trline = {}
-	for nodelab, levtloc in deventlineages.iteritems():
-		trltups = []
-		for evtloc in levtloc:
-			trloc = tuple(dcol2fullspenames[x] for x in evtloc[1:])
-			if len(trloc)>1 and len(set(trloc))==1:
-				# trivial transfer event due to donor and the recipient in the collapsed species tree being nested in the full tree
-				if verbose: print "ignore:", evtloc, ' ->', trloc
-				continue
-			trtup = evtloc[:1]+trloc
-			trltups.append(trtup)
-		trline[nodelab] = trltups
+	if dcol2fullspenames:
+		trline = {}
+		for nodelab, levtloc in deventlineages.iteritems():
+			#~ trltups = []
+			trltups = set()
+			for evtloc in levtloc:
+				trloc = tuple(dcol2fullspenames[x] for x in evtloc[1:])
+				if len(trloc)>1 and len(set(trloc))==1:
+					# trivial transfer event due to donor and the recipient in the collapsed species tree being nested in the full tree
+					if verbose: print "ignore:", evtloc, ' ->', trloc
+					continue
+				trtup = evtloc[:1]+trloc
+				#~ trltups.append(trtup)
+				trltups.add(trtup)
+			# !!! BEWARE: the above translation of species tree referential will likely result 
+			# in several nodes of the (partially collapsed) reconciliation's species tree
+			# to map to a single node of the (fully collpased) reference species tree.
+			# Without accounting for this effect, the count of events observed
+			# at several nodes in the reconciliation's species tree would be pooled into one count,
+			# as though occurring at a single node of the reference species tree,
+			# which would artefactually increase the observed frequencies, and potentially lead to event proba > 1.
+			# This is wrong! Duplicate translated events must be removed by corecing event tuple list to a set,
+			# or not be added in the first place, using a set rather than list.
+			#~ trltups = list(set(trltups))
+			trline[nodelab] = trltups
+	else:
+		trline = deventlineages
 	if not drefspeeventTup2Ids:
 		return trline
 	else:
@@ -177,7 +192,7 @@ def parseRec(nfrec, refspetree=None, drefspeeventTup2Ids=None, onlyLineages=[], 
 		else:
 			# another way is to aggregate data immediately
 			# might be slower due to many updates of the 'devtlineagecount' dict,
-			# but mor efficient in memory use
+			# but more efficient in memory use
 			for geneleaflab, evtlineage in tevtlineages.iteritems():
 				for evtup in evtlineage:
 					nevtup = devtlineagecount.setdefault(geneleaflab, {}).setdefault(evtup, 0)
