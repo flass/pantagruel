@@ -8,11 +8,8 @@ import itertools
 import gc
 import numpy as np
 from ptg_utils import *
-import re
 
 ## Parameters
-replacementcladepat = re.compile('^.+_(.+_RC-clade[0-9]+)$')
-
 # block reconstruction
 gapsize = 2
 gefagr = ['cds_code','replaced_cds_code','gene_family_id']

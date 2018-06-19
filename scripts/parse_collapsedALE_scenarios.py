@@ -7,6 +7,7 @@ import shelve
 import tree2
 from ptg_utils import *
 import parseALErec as pAr
+import re
 
 ## Parameters
 # file parsing parameter
@@ -15,6 +16,8 @@ replacedtag='-leaflabels_Spe2Pop.txt'
 
 collapsedcladetag = '_CC-clade'
 replacementcladetag = '_RC-clade'
+replacementcladepat = re.compile('^.+_(.+_RC-clade[0-9]+)$')
+
 
 # block reconstruction
 gapsize = 2
