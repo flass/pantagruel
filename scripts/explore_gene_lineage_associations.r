@@ -214,8 +214,10 @@ if (!is.null(opt$db_name)){
 	u2 = unique(topmatchev$rlocdsid2)
 	u = intersect(u1, u2)
 	if (dbtype=="PostgreSQL"){ dbExecute(dbcon, "set search_path = genome , phylogeny;") }
+	
 	dbExecute(dbcon, "create temp table toplineages (rlocds_id int); ")
 	dbWriteTable(dbcon, "toplineages", value = data.frame(rlocds_id=u), append=T, row.names=F)
+	
 	topmatchlinedetails = dbGetQuery(dbcon, "
     select distinct rlocds_id, replacement_label_or_cds_code, max(product) as product, max(cds_code) as repr_cds_code
       from toplineages
@@ -224,6 +226,8 @@ if (!is.null(opt$db_name)){
       inner join coding_sequences using (cds_code)
       inner join proteins using (genbank_nr_protein_id)
     group by rlocds_id, replacement_label_or_cds_code order by repr_cds_code ;")
+    
+    dbExecute(dbcon, "drop table toplineages; ")
 	
 	topmatchevdetail = merge(merge(topmatchev, topmatchlinedetails, by.x='rlocdsid1', by.y='rlocds_id'), topmatchlinedetails, by.x='rlocdsid2', by.y='rlocds_id', suffixes=1:2)
 	topmatchevdetail = topmatchevdetail[order(topmatchevdetail$repr_cds_code1, topmatchevdetail$repr_cds_code2),c('rlocdsid1', 'rlocdsid2', 'freq', 'replacement_label_or_cds_code1', 'replacement_label_or_cds_code2', 'product1', 'product2', 'repr_cds_code1', 'repr_cds_code2')]

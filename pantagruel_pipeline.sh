@@ -708,7 +708,7 @@ maxreftreeheight=0.25
 exclbrlist=${compoutdir}/branches_older_than_${maxreftreeheight}
 # YET TO CODE!! TO DO
 python $ptgscripts/list_branches --older_than ${maxreftreeheight} --out ${exclbrlist}
-exclbr=$(cat ${exclbrlist} | tr '\n' ',' | sed -e "s/,/', '/g")
+exclbr=$(cat ${exclbrlist} | tr '\n' ',' | sed -e "s/,$/\n/g" | sed -e "s/,/', '/g")
 sqlite3 ${sqldb} << EOF
 ALTER TABLE gene_lineage_events RENAME TO gene_lineage_events_full;
 CREATE TABLE gene_lineage_events AS  
