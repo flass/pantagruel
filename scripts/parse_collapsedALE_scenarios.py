@@ -229,17 +229,15 @@ def parseRec(nfrec, refspetree=None, drefspeeventTup2Ids=None, onlyLineages=[], 
 		print "stored events listed by gene lineage in '%s'"%nfTableEventsOut
 	
 	sys.stdout.flush()
+	retd = {}
+	retd['nfrec'] = nfrec
 	if returnDict:
+		retd['devtlineagecount'] = devtlineagecount
 		if allEventByLineageByGenetree:
-			retd = {}
 			retd['allrectevtlineages'] = allrectevtlineages
-			retd['devtlineagecount'] = devtlineagecount
 			retd['dexactevt'] = dexactevt
-			return retd
-		else:
-			return devtlineagecount
 	else:
-		return
+		return retd
 
 # 
 def parseRecTupArgs(args):
@@ -331,26 +329,33 @@ def parse_events(lnfrec, genefamlist=None, refspetree=None, \
 	returndict = bool(nfpickleEventsOut)
 	iterargs = ((nfrec, refspetree, drefspeeventTup2Ids, ingenes, recordEvTypes, minFreqReport, returndict, diroutab) for nfrec in lnfrec)
 	
+	# prepare output
+	if nfshelveEventsOut:
+		print "will gradually store event tuples in persistent dictionary (shelve) file: '%s'"%nfshelveEventsOut
+		dfamevents = shelve.open(nfshelveEventsOut)
+	else:
+		dfamevents = {}
+	
 	if nbthreads==1:
-		ldevents = [parseRecTupArgs(args) for args in largs]
+		ildevents = (parseRecTupArgs(args) for args in iterargs)
 	else:
 		pool = mp.Pool(processes=nbthreads)
 		#~ ldevents = pool.map(parseRecTupArgs, largs)
 		# an iterator is returned by imap(); one needs to actually iterate over it to have the pool of parrallel workers to compute
-		ldevents = pool.imap(parseRecTupArgs, iterargs)
+		ildevents = pool.imap_unordered(parseRecTupArgs, iterargs)
+	
+	for deventfam in ildevents:
+		fam = os.path.basename(deventfam['nfrec']).split('-')[0]
+		devent = deventfam.get('devtlineagecount')
+		dfamevents[fam] = devent
 	
 	if nfshelveEventsOut:
-		print "will gradually store event tuples in persistent dictionary (shelve) file: '%s'"%nfshelveEventsOut
-		dfamevents = shelve.open(nfshelveEventsOut)
-		for ifam, deventfam in enumerate(ldevents):
-			dfamevents[lfam[ifam]] = deventfam
 		print "saved 'dfamevents' to file '%s'"%nfpickleEventsOut
-	else:
-		dfamevents = dict(zip(lfams, ldevents))
-		if nfpickleEventsOut:
-			with open(nfpickleEventsOut, 'wb') as fpickleOut:
-				pickle.dump(dfamevents, fpickleOut, protocol=2)
-			print "saved 'dfamevents' to file '%s'"%nfpickleEventsOut
+		dfamevents.close()
+	elif nfpickleEventsOut:
+		with open(nfpickleEventsOut, 'wb') as fpickleOut:
+			pickle.dump(dfamevents, fpickleOut, protocol=2)
+		print "saved 'dfamevents' to file '%s'"%nfpickleEventsOut
 	
 	return dfamevents
 
