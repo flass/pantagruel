@@ -383,7 +383,7 @@ def main():
 	dirTableOut = dopt.get('--dir_table_out')
 	nfpickleEventsOut = dopt.get('--events_to_pickle')
 	nfshelveEventsOut = dopt.get('--events_to_shelve')
-	if not (nfpickleEventsOut or nfshelveEventsOut or dirTableEventsOut):
+	if not (nfpickleEventsOut or nfshelveEventsOut or dirTableOut):
 		raise ValueError, "an output option for parsed reconciliation must be chosen between '--dir_table_out', '--events_to_pickle' or '--events_to_shelve'"
 	
 	# other params
