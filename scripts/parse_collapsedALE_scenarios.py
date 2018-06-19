@@ -372,9 +372,6 @@ def main():
 	                                                'threads=', 'help', 'verbose']) #, 'reuse=', 'max.recursion.limit=', 'logfile='
 	dopt = dict(opts)
 	
-	if not (nfpickleEventsOut or nfshelveEventsOut or dirTableEventsOut):
-		raise ValueError, "an output option for parsed reconciliation must be chosen between '--dir_table_out', '--events_to_pickle' or '--events_to_shelve'"
-	
 	if ('-h' in dopt) or ('--help' in dopt):
 		print usage()
 		sys.exit(0)
@@ -386,6 +383,8 @@ def main():
 	dirTableOut = dopt.get('--dir_table_out')
 	nfpickleEventsOut = dopt.get('--events_to_pickle')
 	nfshelveEventsOut = dopt.get('--events_to_shelve')
+	if not (nfpickleEventsOut or nfshelveEventsOut or dirTableEventsOut):
+		raise ValueError, "an output option for parsed reconciliation must be chosen between '--dir_table_out', '--events_to_pickle' or '--events_to_shelve'"
 	
 	# other params
 	# facultative input files
