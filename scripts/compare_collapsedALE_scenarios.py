@@ -99,7 +99,7 @@ def _query_events_by_lineage_sorted(gene, preq, dbcur, sortfield=0, with_create_
 def _query_matching_lineage_event_profiles(args, use_gene_labels=False, timing=False, arraysize=10000, verbose=False):
 	
 	if timing: time = __import__('time')
-	lineageidfam, dbname, dbengine, nsample, evtypes, mineventfreq, maxeventfreq, minevjointfreq, lineagetable = args
+	lineageidfam, dbname, dbengine, nsample, evtypes, matchScope, mineventfreq, maxeventfreq, minevjointfreq, lineagetable = args
 	lineage_id, fam = lineageidfam
 	if verbose: print 'lineage_id:', lineage_id, fam
 	dbcon, dbcul, dbtype, valtoken = get_dbconnection(dbname, dbengine)
@@ -121,7 +121,14 @@ def _query_matching_lineage_event_profiles(args, use_gene_labels=False, timing=F
 	# then build a list of gene lineages to compare, based on common occurence of at least N event (here only 1 common event required)
 	# and the id of compared lineage to be > reference lineage, to avoid duplicate comparisons
 	lineageorderWC=" AND %s > %s"%(rlocdsidcol, str(lineage_id))
-	diffamWC = " AND gene_family_id != '%s'"%fam
+	if matchScope=='between_fams':
+		diffamWC = " AND gene_family_id != '%s'"%fam
+	elif matchScope=='within_fams':
+		diffamWC = " AND gene_family_id = '%s'"%fam
+	elif matchScope=='all':
+		diffamWC = ""
+	else:
+		raise ValueError, "incorrect value '%s' for variable 'matchScope'"%repr(matchScope)
 	# use of IN condition is not optimal, should prefer an INNER JOIN over a temp table of
 	#~ preq_libyev = _select_lineage_by_event_query_factory(rlocdsidcol, evtypes, valtoken, lineagetable, distinct=True, operator=' IN ', addWhereClause=diffamWC+minevfWC+maxevfWC+lineageorderWC)
 	#~ preq_libyevin = preq_libyev.replace(valtoken, repr(lineage_events).replace(',)', ')'))
@@ -150,7 +157,8 @@ def _query_matching_lineage_event_profiles(args, use_gene_labels=False, timing=F
 	return lmatches
 
 def dbquery_matching_lineage_event_profiles(dbname, dbengine='postgres', use_gene_labels=False, \
-                                            nsample=1.0, evtypes=None, mineventfreq=0.0, maxeventfreq=1.0, minevjointfreq=0.0, genefamlist=None, exclRecSpeBranches=[], \
+                                            genefamlist=None, exclRecSpeBranches=[], matchScope='between_fams', \
+                                            nsample=1.0, evtypes=None, mineventfreq=0.0, maxeventfreq=1.0, minevjointfreq=0.0, \
                                             matchesOutDirRad=None, nfpickleMatchesOut=None, returnList=False, \
                                             nbthreads=1, verbose=False, **kw):
 	
@@ -203,7 +211,7 @@ def dbquery_matching_lineage_event_profiles(dbname, dbengine='postgres', use_gen
 		dbcon.commit()
 	
 	def make_arg_tup(lineage_id):
-		return (lineage_id, dbname, dbengine, nsample, evtypes, mineventfreq, maxeventfreq, minevjointfreq, lineagetable)
+		return (lineage_id, dbname, dbengine, nsample, evtypes, matchScope, mineventfreq, maxeventfreq, minevjointfreq, lineagetable)
 		
 	# get set of gene lineages
 	qlibyev = "select %s, gene_family_id from %s;"%(rlocdsidcol, lineagetable)
@@ -247,12 +255,12 @@ def dbquery_matching_lineage_event_profiles(dbname, dbengine='postgres', use_gen
 def main():
 	# options relating to:
 	#  - scenario format
-	#  - event matching filters and method
+	#  - event matching filters and scope
 	#  - event dataset input
 	#  - matched events output
 	#  - program runtime
 	opts, args = getopt.getopt(sys.argv[1:], 'hv', ['ALE_algo=', 'nrec_per_sample=', \
-	                                                'exclude_species_tree_branches=', 'event_type=', 'min_freq=', 'max_freq=', 'min_joint_freq=', \
+	                                                'exclude_species_tree_branches=', 'event_type=', 'min_freq=', 'max_freq=', 'min_joint_freq=', 'match_scope=', \
 	                                                'genefams=', 'dir_constraints=', 'dir_replaced=', \
 	                                                'events_from_pickle=', 'events_from_shelve=', 'events_from_postgresql_db=', 'events_from_sqlite_db=', \
 	                                                'matches_to_shelve=', 'dir_table_out=', \
@@ -262,6 +270,11 @@ def main():
 	if ('-h' in dopt) or ('--help' in dopt):
 		print usage()
 		sys.exit(0)
+	
+	matchScope = dopt.get('--match_scope', 'between_fams')
+	goodscopes = ['between_fams', 'within_fams', 'all']
+	if matchScope not in goodscopes:
+		raise ValueError, "valid values for --match_scope argument are: %s"%repr(goodscopes).strip('[]')
 	
 	# reconciliation collection / parsed events input options
 	nfpickleEventsIn = dopt.get('--events_from_pickle')
@@ -319,7 +332,8 @@ def main():
 	else:
 		matchesOutDirRad = None
 	dbquery_matching_lineage_event_profiles(dbname, dbengine=loaddfamevents, genefamlist=genefamlist, nsample=nrecsample, \
-                         evtypes=recordEvTypes, mineventfreq=minFreqReport, maxeventfreq=maxFreqReport, minevjointfreq=minJointFreqReport, exclRecSpeBranches=exclRecSpeBranches, \
+                         evtypes=recordEvTypes, exclRecSpeBranches=exclRecSpeBranches, matchScope=matchScope, \
+                         mineventfreq=minFreqReport, maxeventfreq=maxFreqReport, minevjointfreq=minJointFreqReport, \
                          nfpickleMatchesOut=nfpickleMatchesOut, nfshelveMatchesOut=nfshelveMatchesOut, matchesOutDirRad=matchesOutDirRad, \
                          nbthreads=nbthreads, verbose=verbose)
 
