@@ -346,6 +346,10 @@ def usage():
 	s += "\t\t--genefams\ttabulated file with header containing at least those two fields: 'cds_code', 'gene_family_id'\n"
 	s += "\t\t\t\trows indicate the genes to be treated in the search, and to which gene family they belong\n"
 	s += "\t\t\t\t(and hence in which reconciliation file to find them).\n"
+	s += "\t\t--match_scope={'between_fams'|'within_fams'|'all'} define scope where co-evolution score is to be evaluated:\n"
+	s += "\t\t\t\t- within or between gene families only, or both. Between families is the default behavioue;\n"
+	s += "\t\t\t\t- within_families can be chosen to allow to cluster closely related lineages with significantly shared ancestry within families\n"
+	s += "\t\t\t\t  and to restrict accordingly the search for matches between families\n."
 	return s
 
 ################## Main execution
