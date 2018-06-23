@@ -53,34 +53,21 @@ def _select_lineage_event_clause_factory(evtypes, valtoken, lineagetable):
 		evtyperestrictWC = evtyperestrict = ""
 	return (rlocdsIJ, evtyperestrictIJ, evtyperestrictWC)
 
-def _select_lineage_event_query_withjoin_factory(aBYb, evtypes, valtoken, lineagetable, joinTable, addselcols=(), distinct=False, addWhereClause=''):
+def _select_lineage_event_query_factory(aBYb, evtypes, valtoken, lineagetable, joinTable=None, addselcols=(), distinct=False, operator='=', addWhereClause=''):
 	a, b = aBYb
 	rlocdsIJ, evtyperestrictIJ, evtyperestrictWC = _select_lineage_event_clause_factory(evtypes, valtoken, lineagetable)
-	w = 'WHERE' if (evtyperestrictWC or addWhereClause) else ''
+	if joinTable:
+		bIJ = 'INNER JOIN %s USING (%s)'%(joinTable, b)
+		bWC = ''
+	else:
+		bIJ = ''
+		bWC = '%s%s%s'%(b, operator, valtoken)
+	w = 'WHERE' if (evtyperestrictWC or addWhereClause or bWC) else ''
 	tqfields = (('DISTINCT' if distinct else ''), repr((a,)+tuple(addselcols)).strip('(,)').replace("'", ''), 
-				rlocdsIJ, evtyperestrictIJ, 
-				'INNER JOIN '+joinTable+' USING', b,
-				w, evtyperestrictWC, addWhereClause)
-	preq = "SELECT %s %s FROM gene_lineage_events %s %s %s (%s) %s %s %s ;"%tqfields
+				rlocdsIJ, evtyperestrictIJ, bIJ,
+				w, evtyperestrictWC, bWC, addWhereClause)
+	preq = "SELECT %s %s FROM gene_lineage_events %s %s %s %s %s %s %s ;"%tqfields
 	return preq.replace('WHERE AND ', 'WHERE ')
-
-def _select_lineage_event_query_withcond_factory(aBYb, evtypes, valtoken, lineagetable, addselcols=(), distinct=False, operator='=', addWhereClause=''):
-	a, b = aBYb
-	rlocdsIJ, evtyperestrictIJ, evtyperestrictWC = _select_lineage_event_clause_factory(evtypes, valtoken, lineagetable)
-	tqfields = (('DISTINCT' if distinct else ''), repr((a,)+tuple(addselcols)).strip('(,)').replace("'", ''), 
-				rlocdsIJ, evtyperestrictIJ, 
-				b, operator, valtoken, 
-				evtyperestrictWC, addWhereClause)
-	preq = "SELECT %s %s FROM gene_lineage_events %s %s WHERE %s%s%s %s %s ;"%tqfields
-	return preq.replace('WHERE AND ', 'WHERE ')
-
-def _select_lineage_by_event_query_factory(rlocdsidcol, evtypes, valtoken, lineagetable, joinTable=None, addselcols=(), distinct=False, operator='=', addWhereClause=''):
-	if joinTable: return _select_lineage_event_query_withjoin_factory((rlocdsidcol, 'event_id'), evtypes, valtoken, lineagetable, joinTable, addselcols, distinct, addWhereClause)
-	else: return _select_lineage_event_query_withcond_factory((rlocdsidcol, 'event_id'), evtypes, valtoken, lineagetable, addselcols, distinct, operator, addWhereClause)
-
-def _select_event_by_lineage_query_factory(rlocdsidcol, evtypes, valtoken, lineagetable, joinTable=None, addselcols=('freq',), distinct=False, operator='=', addWhereClause=''):
-	if joinTable: return _select_lineage_event_query_withjoin_factory(('event_id', rlocdsidcol), evtypes, valtoken, lineagetable, joinTable, addselcols, distinct, addWhereClause)
-	else: return _select_lineage_event_query_withcond_factory(('event_id', rlocdsidcol), evtypes, valtoken, lineagetable, addselcols, distinct, operator, addWhereClause)
 
 def _query_events_by_lineage(gene, preq, dbcur, with_create_temp=None):
 	if with_create_temp:
@@ -101,14 +88,13 @@ def _query_matching_lineage_event_profiles(args, use_gene_labels=False, timing=F
 	lineage_id, fam = lineageidfam
 	if verbose: print 'lineage_id:', lineage_id, fam
 	dbcon, dbcul, dbtype, valtoken = get_dbconnection(dbname, dbengine)
-	#~ if use_gene_labels: rlocdsidcol = 'replacement_label_or_cds_code' # not tractable memory-wise
-	#~ elif dbtype=='postgres': rlocdsidcol = 'rlocds_id'
-	#~ else: rlocdsidcol = 'oid' # possible in sqlite, but neither portable, nor safe (big dataset could theoretically make the db oid generator go round)
-	rlocdsidcol = 'rlocds_id'
 	# first get the vector of (event_id, freq) tuples in lineage
-	preq_evbyli = _select_event_by_lineage_query_factory(rlocdsidcol, evtypes, valtoken, lineagetable, addWhereClause=minevfWC+maxevfWC)
+	preq_evbyli = _select_lineage_event_query_factory(('event_id', 'rlocds_id'), \
+	                                                  evtypes, valtoken, lineagetable, \
+	                                                  addselcols=('freq',), \
+	                                                  addWhereClause=minevfWC+maxevfWC)
 	if verbose: print preq_evbyli%lineage_id
-	templineagetable = 'lineages_%s%s'%(rlocdsidcol, str(lineage_id))
+	templineagetable = 'lineages_rlocds_id%d'%lineage_id
 	lineage_eventfreqs = _query_events_by_lineage_sorted(lineage_id, preq_evbyli, dbcul, with_create_temp=templineagetable)
 	dlineage_eventfreqs = dict(lineage_eventfreqs)
 	lineage_events = tuple(ef[0] for ef in lineage_eventfreqs)
@@ -119,10 +105,11 @@ def _query_matching_lineage_event_profiles(args, use_gene_labels=False, timing=F
 	# and filtering by {same|different|all} gene families
 	basefamWC = baseWC%fam if '%' in baseWC else baseWC
 	# and the id of compared lineage to be > reference lineage, to avoid duplicate comparisons
-	lineageorderWC=" AND %s > %s"%(rlocdsidcol, str(lineage_id))
-	preq_libyev = _select_lineage_by_event_query_factory(rlocdsidcol, evtypes, valtoken, lineagetable, \
-	                                                      joinTable=templineagetable, distinct=True, \
-	                                                      addWhereClause=basefamWC+lineageorderWC)
+	lineageorderWC=" AND rlocds_id > %d"%lineage_id
+	preq_libyev = _select_lineage_event_query_factory(('rlocds_id', 'event_id'), \
+	                                                  evtypes, valtoken, lineagetable, \
+	                                                  joinTable=templineagetable, distinct=True, \
+	                                                  addWhereClause=basefamWC+lineageorderWC)
 	if verbose: print preq_libyev
 	dbcul.execute(preq_libyev) 
 	match_lineages = dbcul.fetchall()
@@ -172,10 +159,6 @@ def dbquery_matching_lineage_event_profiles(dbname, dbengine='postgres', use_gen
 	if timing: time = __import__('time')							
 	dbcon, dbcur, dbtype, valtoken = get_dbconnection(dbname, dbengine)
 	nsamplesq = nsample*nsample
-	if use_gene_labels: rlocdsidcol = 'replacement_label_or_cds_code'
-	else: rlocdsidcol = 'rlocds_id'
-	#~ elif dbtype=='postgres': rlocdsidcol = 'rlocds_id'
-	#~ else: rlocdsidcol = 'oid'  # possible in sqlite, but neither portable, nor safe (big dataset could theoretically make the db oid generator go round)
 	if not (matchesOutDirRad or nfpickleMatchesOut or returnList):
 		raise ValueError, "must specify at least one output option among: 'matchesOutDirRad', 'nfpickleMatchesOut', 'returnList'"
 	
@@ -192,10 +175,10 @@ def dbquery_matching_lineage_event_profiles(dbname, dbengine='postgres', use_gen
 		dbcur.execute("create table ingenes (replacement_label_or_cds_code VARCHAR(60));" )
 		dbcur.executemany("insert into ingenes values (%s) ;"%(valtoken), ingenes)
 		dbcur.execute("drop table if exists %s;"%lineagetable)
-		dbcur.execute("""create table %s as select replacement_label_or_cds_code, gene_family_id, %s 
+		dbcur.execute("""create table %s as select replacement_label_or_cds_code, gene_family_id, rlocds_id 
 		                  from replacement_label_or_cds_code2gene_families 
 		                  inner join ingenes using (replacement_label_or_cds_code) ;
-		              """%(lineagetable, rlocdsidcol))
+		              """%(lineagetable, ))
 		dbcur.execute("drop table ingenes;")
 		dbcon.commit()
 	
@@ -216,7 +199,7 @@ def dbquery_matching_lineage_event_profiles(dbname, dbengine='postgres', use_gen
 		return (lineage_id, dbname, dbengine, nsample, evtypes, baseWC, minevjointfreq, lineagetable)
 		
 	# get set of gene lineages
-	qlibyev = "select %s, gene_family_id from %s;"%(rlocdsidcol, lineagetable)
+	qlibyev = "select rlocds_id, gene_family_id from %s;"%lineagetable
 	if verbose: print qlibyev
 	dbcur.execute(qlibyev)
 	ltlineageidfams = dbcur.fetchall()
