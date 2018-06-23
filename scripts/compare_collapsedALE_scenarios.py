@@ -44,9 +44,7 @@ def mulBoundInt2Float(a, b, scale):
 	f2 = float(b)/scale
 	return f1*f2
 
-def _select_lineage_event_clause_factory(rlocdsidcol, evtypes, valtoken, lineagetable):
-	#~ if rlocdsidcol=='replacement_label_or_cds_code': rlocdsIJ = ""
-	#~ else: rlocdsIJ = "INNER JOIN %s USING (replacement_label_or_cds_code)"%lineagetable
+def _select_lineage_event_clause_factory(evtypes, valtoken, lineagetable):
 	rlocdsIJ = "INNER JOIN %s USING (replacement_label_or_cds_code)"%lineagetable
 	if evtypes:
 		evtyperestrictIJ = "INNER JOIN species_tree_events USING (event_id)"
@@ -55,9 +53,9 @@ def _select_lineage_event_clause_factory(rlocdsidcol, evtypes, valtoken, lineage
 		evtyperestrictWC = evtyperestrict = ""
 	return (rlocdsIJ, evtyperestrictIJ, evtyperestrictWC)
 
-def _select_lineage_event_query_withjoin_factory(aBYb, rlocdsidcol, evtypes, valtoken, lineagetable, joinTable, addselcols=(), distinct=False, addWhereClause=''):
+def _select_lineage_event_query_withjoin_factory(aBYb, evtypes, valtoken, lineagetable, joinTable, addselcols=(), distinct=False, addWhereClause=''):
 	a, b = aBYb
-	rlocdsIJ, evtyperestrictIJ, evtyperestrictWC = _select_lineage_event_clause_factory(rlocdsidcol, evtypes, valtoken, lineagetable)
+	rlocdsIJ, evtyperestrictIJ, evtyperestrictWC = _select_lineage_event_clause_factory(evtypes, valtoken, lineagetable)
 	w = 'WHERE' if (evtyperestrictWC or addWhereClause) else ''
 	tqfields = (('DISTINCT' if distinct else ''), repr((a,)+tuple(addselcols)).strip('(,)').replace("'", ''), 
 				rlocdsIJ, evtyperestrictIJ, 
@@ -66,9 +64,9 @@ def _select_lineage_event_query_withjoin_factory(aBYb, rlocdsidcol, evtypes, val
 	preq = "SELECT %s %s FROM gene_lineage_events %s %s %s (%s) %s %s %s ;"%tqfields
 	return preq.replace('WHERE AND ', 'WHERE ')
 
-def _select_lineage_event_query_withcond_factory(aBYb, rlocdsidcol, evtypes, valtoken, lineagetable, addselcols=(), distinct=False, operator='=', addWhereClause=''):
+def _select_lineage_event_query_withcond_factory(aBYb, evtypes, valtoken, lineagetable, addselcols=(), distinct=False, operator='=', addWhereClause=''):
 	a, b = aBYb
-	rlocdsIJ, evtyperestrictIJ, evtyperestrictWC = _select_lineage_event_clause_factory(rlocdsidcol, evtypes, valtoken, lineagetable)
+	rlocdsIJ, evtyperestrictIJ, evtyperestrictWC = _select_lineage_event_clause_factory(evtypes, valtoken, lineagetable)
 	tqfields = (('DISTINCT' if distinct else ''), repr((a,)+tuple(addselcols)).strip('(,)').replace("'", ''), 
 				rlocdsIJ, evtyperestrictIJ, 
 				b, operator, valtoken, 
@@ -77,12 +75,12 @@ def _select_lineage_event_query_withcond_factory(aBYb, rlocdsidcol, evtypes, val
 	return preq.replace('WHERE AND ', 'WHERE ')
 
 def _select_lineage_by_event_query_factory(rlocdsidcol, evtypes, valtoken, lineagetable, joinTable=None, addselcols=(), distinct=False, operator='=', addWhereClause=''):
-	if joinTable: return _select_lineage_event_query_withjoin_factory((rlocdsidcol, 'event_id'), rlocdsidcol, evtypes, valtoken, lineagetable, joinTable, addselcols, distinct, addWhereClause)
-	else: return _select_lineage_event_query_withcond_factory((rlocdsidcol, 'event_id'), rlocdsidcol, evtypes, valtoken, lineagetable, addselcols, distinct, operator, addWhereClause)
+	if joinTable: return _select_lineage_event_query_withjoin_factory((rlocdsidcol, 'event_id'), evtypes, valtoken, lineagetable, joinTable, addselcols, distinct, addWhereClause)
+	else: return _select_lineage_event_query_withcond_factory((rlocdsidcol, 'event_id'), evtypes, valtoken, lineagetable, addselcols, distinct, operator, addWhereClause)
 
 def _select_event_by_lineage_query_factory(rlocdsidcol, evtypes, valtoken, lineagetable, joinTable=None, addselcols=('freq',), distinct=False, operator='=', addWhereClause=''):
-	if joinTable: return _select_lineage_event_query_withjoin_factory(('event_id', rlocdsidcol), rlocdsidcol, evtypes, valtoken, lineagetable, joinTable, addselcols, distinct, addWhereClause)
-	else: return _select_lineage_event_query_withcond_factory(('event_id', rlocdsidcol), rlocdsidcol, evtypes, valtoken, lineagetable, addselcols, distinct, operator, addWhereClause)
+	if joinTable: return _select_lineage_event_query_withjoin_factory(('event_id', rlocdsidcol), evtypes, valtoken, lineagetable, joinTable, addselcols, distinct, addWhereClause)
+	else: return _select_lineage_event_query_withcond_factory(('event_id', rlocdsidcol), evtypes, valtoken, lineagetable, addselcols, distinct, operator, addWhereClause)
 
 def _query_events_by_lineage(gene, preq, dbcur, with_create_temp=None):
 	if with_create_temp:
@@ -103,10 +101,10 @@ def _query_matching_lineage_event_profiles(args, use_gene_labels=False, timing=F
 	lineage_id, fam = lineageidfam
 	if verbose: print 'lineage_id:', lineage_id, fam
 	dbcon, dbcul, dbtype, valtoken = get_dbconnection(dbname, dbengine)
-	if use_gene_labels: rlocdsidcol = 'replacement_label_or_cds_code'
+	#~ if use_gene_labels: rlocdsidcol = 'replacement_label_or_cds_code' # not tractable memory-wise
 	#~ elif dbtype=='postgres': rlocdsidcol = 'rlocds_id'
 	#~ else: rlocdsidcol = 'oid' # possible in sqlite, but neither portable, nor safe (big dataset could theoretically make the db oid generator go round)
-	else rlocdsidcol = 'rlocds_id'
+	rlocdsidcol = 'rlocds_id'
 	# first get the vector of (event_id, freq) tuples in lineage
 	preq_evbyli = _select_event_by_lineage_query_factory(rlocdsidcol, evtypes, valtoken, lineagetable, addWhereClause=minevfWC+maxevfWC)
 	if verbose: print preq_evbyli%lineage_id
