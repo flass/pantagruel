@@ -23,10 +23,24 @@ def filterNode(node, minAge=None, maxAge=None, excluding=[], excluding_clade=[],
 			lnodes += filterNode(cnode, minAge=minAge, maxAge=maxAge, excluding=excluding, excluding_clade=excluding_clade, ageFromRoot=ageFromRoot)
 	return lnodes
 
-opts, args = getopt.getopt(sys.argv[1:], 'hv', ['intree=', 'out=', \
-                                                'older_than=', 'younger_than=', 'min_age=', 'max_age=', \
-                                                'only_below=', 'excluding=',  'excluding_clade=', \
-                                                'age_from_longest_tip', 'root_age='])
+longopts = ['intree=', 'out=', \
+            'older_than=', 'younger_than=', 'min_age=', 'max_age=', \
+            'only_below=', 'excluding=',  'excluding_clade=', \
+            'age_from_longest_tip', 'root_age=']
+
+def usage():
+	s = "Usage: [HELP MESSAGE INCOMPLETE]\n"
+	s += "python %s --intree /path/to/newick_tree --out /path/to/main_ouput_file [OTHER OPTIONS]\n"%sys.argv[0]
+	s += "Options:\n"
+	s += "--"+"\n\t--".join(longopts)+"\n"
+	return s
+
+opts, args = getopt.getopt(sys.argv[1:], 'hv', longopts)
+dopt = dict(opts)
+
+if ('-h' in dopt) or ('--help' in dopt):
+	print usage()
+	sys.exit(0)
 
 nfrefspetree = dopt['--intree']
 nfout = dopt['--out']
