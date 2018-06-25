@@ -26,7 +26,7 @@ def filterNode(node, minAge=None, maxAge=None, excluding=[], excluding_clade=[],
 opts, args = getopt.getopt(sys.argv[1:], 'hv', ['intree=', 'out=', \
                                                 'older_than=', 'younger_than=', 'min_age=', 'max_age=', \
                                                 'only_below=', 'excluding=',  'excluding_clade=', \
-                                                'age_from_longest_tip', 'root_age=']
+                                                'age_from_longest_tip', 'root_age='])
 
 nfrefspetree = dopt['--intree']
 nfout = dopt['--out']
