@@ -705,9 +705,9 @@ done &
 # optionally truncate event table
 # excluding oldest branches to avoid unspecific matches:
 maxreftreeheight=0.25
-exclbrlist=${compoutdir}/branches_older_than_${maxreftreeheight}
-# YET TO CODE!! TO DO
-python $ptgscripts/list_branches.py --intree ${speciestreeBS/.full/_collapsedPopulations.nwk} --older_than ${maxreftreeheight} --out ${exclbrlist}
+exclbrlist=${coretree}/branches_older_than_${maxreftreeheight}
+#~ python $ptgscripts/list_branches.py --intree ${speciestreeBS}.lsd.newick --root_age 1.0 --older_than ${maxreftreeheight} --out ${exclbrlist}
+python $ptgscripts/list_branches.py --intree ${speciestreeBS}.lsd_internalPopulations.nwk --root_age 1.0 --older_than ${maxreftreeheight} --out ${exclbrlist}
 exclbr=$(cat ${exclbrlist} | tr '\n' ',' | sed -e "s/,$/\n/g" | sed -e "s/,/', '/g")
 sqlite3 ${sqldb} << EOF
 ALTER TABLE gene_lineage_events RENAME TO gene_lineage_events_full;
