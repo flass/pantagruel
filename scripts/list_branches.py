@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 import tree2
-import sys, getopt
+import os, sys, getopt
 
 def nodeAge(node, fromRoot=False):
 	if fromRoot:
@@ -10,7 +10,7 @@ def nodeAge(node, fromRoot=False):
 		oneleaf = node.get_one_leaf()
 		return node.distance(oneleaf)
 
-def filterNode(node, minAge=None, maxAge=None, excluding=[''], excluding_clade=[''], ageFromRoot=False):
+def filterNode(node, minAge=None, maxAge=None, excluding=[], excluding_clade=[], ageFromRoot=False):
 	lnodes = []
 	nodeage = nodeAge(node, fromRoot=ageFromRoot)
 	skipclade = (node in excluding_clade)
@@ -44,12 +44,12 @@ if ('-h' in dopt) or ('--help' in dopt):
 
 nfrefspetree = dopt['--intree']
 nfout = dopt['--out']
-minAge = dopt.get('--older_than', dopt.get('--min_age'))
-maxAge = dopt.get('--younger_than', dopt.get('--max_age'))
-onlyAncs = dopt.get('--only_below', "").split(',')
-exclNodes = dopt.get('--excluding', "").split(',')
-exclClades = dopt.get('--excluding_clade', "").split(',')
-rootAge = float(opt.get('--root_age'))
+minAge = dopt.get('--older_than', dopt.get('--min_age')) ; minAge = float(minAge) if minAge else None       # thus value 0.0 is ignored
+maxAge = dopt.get('--younger_than', dopt.get('--max_age')) ; maxAge = float(miaxAge) if maxAge else None    # thus value 0.0 is ignored
+onlyAncs = dopt.get('--only_below') ; onlyAncs = onlyAncs.split(',') if onlyAncs else []
+exclNodes = dopt.get('--excluding') ; exclNodes = exclNodes.split(',') if exclNodes else []
+exclClades = dopt.get('--excluding_clade') ; exclClades = exclClades.split(',') if exclClades else []
+rootAge = float(dopt.get('--root_age'))
 ageFromMaxTip = ('--age_from_longest_tip' in dopt) # if not (default), assumes that counting age from any of the tips is equivalent,
                                                    # i.e. that the tree is ultrametric
 
@@ -76,8 +76,8 @@ else:
 
 lnodes = []
 for anchornode in anchornodes:
-		lnodes += filterNode(anchornode, minAge=minAge, maxAge=maxAge, excluding=excluding, \
-		                     excluding_clade=excluding_clade, ageFromRoot=ageFromMaxTip)
+		lnodes += filterNode(anchornode, minAge=minAge, maxAge=maxAge, excluding=exclNodes, \
+		                     excluding_clade=exclClades, ageFromRoot=ageFromMaxTip)
 
 with open(nfout, 'w') as fout:
 	for node in lnodes:
