@@ -42,6 +42,7 @@ def eventLineages(recgt, dnodeallevt, onlyLeaves=[], deDupMatching=replacementcl
 	evtlineages = {}	# only lineages from the leaves to be returned
 	allevtlineages = {} # cache dict for events at nodes shared by several leaves
 	leavesandlabels = [(leaf, leaf.label().split('.')[0]) for leaf in recgt.get_leaves()]
+	leavesandlabels.sort(key=lambda x: x[1]) # sort so that the representative first label to be captured by deDupMatching regex will be consistent across the recgt sample
 	if onlyLeaves: leavesandlab = [x for x in leavesandlabels if (x[1] in onlyLeaves)]
 	else: leavesandlab = leavesandlabels
 	if deDupMatching:
