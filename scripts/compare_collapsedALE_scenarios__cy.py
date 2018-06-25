@@ -39,18 +39,12 @@ def get_dbconnection(dbname, dbengine):
 	return (dbcon, dbcur, dbtype, valtoken)
 
 #### transferred to Cython module coevol_score.pyx
-#~ def mulBoundInt2Float(a, b, scale):
-	#~ f1 = float(a)/scale
-	#~ f2 = float(b)/scale
-	#~ return f1*f2
-
 #~ def coevol_score(mg_lineage_eventfreqs, dlineage_eventfreqs, nsample, minevjointfreq):
-	#~ jointfreq = 0.0
-	#~ for eid, f in mg_lineage_eventfreqs:
+	#~ jointfreq = 0
+	#~ for eid, f1 in mg_lineage_eventfreqs:
 		#~ f0 = dlineage_eventfreqs.get(eid)
-		#~ if f0: jointfreq += mulBoundInt2Float(f0, f, nsample)
-	#~ return jointfreq
-
+		#~ if f0: jointfreq += f0*f1
+	#~ return float(jointfreq)/(nsample**2)
 ####
 
 def _select_lineage_event_clause_factory(evtypes, valtoken, lineagetable):
@@ -103,7 +97,7 @@ def _query_matching_lineage_event_profiles(args, timing=False, verbose=False):
 	# first get the vector of (event_id, freq) tuples in focal lineage
 	preq_evbyli = _select_lineage_event_query_factory(('event_id', 'rlocds_id'), \
 	                                                  evtypes, valtoken, lineagetable, \
-	                                                  addselcols=('freq',), \
+	                                                  addselcols=('freq as f0',), \
 	                                                  addWhereClause=minevfWC+maxevfWC)
 	if verbose: print preq_evbyli%lineage_id
 	tempeventtable = 'events_of_rlocds_id%d'%lineage_id
@@ -120,19 +114,37 @@ def _query_matching_lineage_event_profiles(args, timing=False, verbose=False):
 	lineageorderWC=" AND rlocds_id > %d"%lineage_id
 	preq_libyev = _select_lineage_event_query_factory(('rlocds_id', 'event_id'), \
 	                                                  evtypes, valtoken, lineagetable, \
-	                                                  joinTable=tempeventtable, distinct=True, \
-	                                                  addWhereClause=basefamWC+lineageorderWC)
-	if verbose: print preq_libyev
-	dbcul.execute(preq_libyev) 
-	match_lineages = dbcul.fetchall()
-	dbcul.execute("drop table %s ;"%tempeventtable)
+	                                                  addselcols=('event_id', 'f0', 'freq as f1',), \
+	                                                  joinTable=tempeventtable, \
+	                                                  addWhereClause=basefamWC+lineageorderWC, orderBy='rlocds_id')
 	
 	coevollineages = []
-	for tmatch_lineage_id in match_lineages:
-		match_lineage_id = tmatch_lineage_id[0]
-		mg_lineage_eventfreqs = _query_events_lineage(match_lineage_id, preq_evbyli, dbcul)
-		coevollineages += coevol_score(mg_lineage_eventfreqs, dlineage_eventfreqs, nsample, minevjointfreq)
+	if verbose: print preq_libyev
+	dbcul.execute(preq_libyev) 
+	#~ match_lineages = dbcul.fetchall()
+	match_lineages = dbcul.fetchmany(1000)
+	currlineage_id = None
+	currlineage_matches = []
+	while match_lineages:
+		# seek boundaries of the lineage slices
+		for k, tmatch_line_ev_ff in enumerate(match_lineages):
+			match_lineage_id = tmatch_line_ev_ff[0]
+			if match_lineage_id != currlineage_id:
+				currlineage_matches += match_lineages[:k]
+				#~ coevollineages += coevol_score(mg_lineage_eventfreqs, dlineage_eventfreqs, nsample)
+				coevollineages.append( (currlineage_id, coevol_score(currlineage_matches, nsample)) )
+				# new lineage
+				currlineage_id = match_lineage_id
+				currlineage_matches = []
+		else:
+			currlineage_matches += match_lineages[k:]
+			#~ mg_lineage_eventfreqs = _query_events_lineage(match_lineage_id, preq_evbyli, dbcul)
+			
+		match_lineages = dbcul.fetchmany(1000)
+	else:
+		coevollineages.append( (currlineage_id, coevol_score(currlineage_matches, nsample)) )
 	
+	dbcul.execute("drop table %s ;"%tempeventtable)
 	dbcon.close()
 	if verbose: print coevollineages
 	return coevollineages
