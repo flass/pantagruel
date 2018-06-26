@@ -20,19 +20,21 @@ cdef double coevol_score(lineage_matches, unsigned long nsamplesq):
 #~ 		lmatch_ffs.append(tmatch_ff)
 #~ 	return lmatch_ffs
 
-cpdef coevol_lineages(dbcur, lineage_id, nsamplesq, fetchsize=10000):
+cpdef coevol_lineages(dbcur, lineage_id, int nsamplesq, double minevjointfreq, fetchsize=10000):
 	"""generates a list of tuples containing pairs of lineage ids and the corresponding co-evolution score
 	
 	takes as input:
 	- dbcur, a db cursor returning tuples from a querry with all integer values (rclocds_id, event_id, freq0, freq1), ordered by rclocds_id
 	- lineage_id, the query lineage id
-	- nsamplesq, the square of the number of sampled reconciliation, to scale the product of event frequencies into a probability
+	- nsamplesq, the square of the number of sampled reconciliation, to scale the product of event frequencies into a probability of the co-event
+	- minevjointfreq, the minimum observed co-evolution score ( = sum of co-event probabilities) to report a lineage pair
 	- fetchsize, (optional) the number of rows fetched at once from the database
 	"""
 	if dbcur.rowcount == 0: return []
 	cdef:
 		unsigned long match_lineage_id, currlineage_id
 		list  match_lineages, currlineage_matches = [], coevollineages = []
+		double coev
 	match_lineages = dbcur.fetchmany(fetchsize)
 	currlineage_id = match_lineages[0][0]
 	while match_lineages:
@@ -43,7 +45,8 @@ cpdef coevol_lineages(dbcur, lineage_id, nsamplesq, fetchsize=10000):
 				# finish parsing current lineage
 				currlineage_matches += match_lineages[:k]
 				# compute the lineages' co-evolution score
-				coevollineages.append( (lineage_id, currlineage_id, coevol_score(currlineage_matches, nsamplesq)) )
+				coev = coevol_score(currlineage_matches, nsamplesq)
+				if coev >= minevjointfreq: coevollineages.append( (lineage_id, currlineage_id, coev) )
 				# next lineage
 				currlineage_id = match_lineage_id
 				currlineage_matches = []
@@ -53,5 +56,6 @@ cpdef coevol_lineages(dbcur, lineage_id, nsamplesq, fetchsize=10000):
 			currlineage_matches += match_lineages
 			match_lineages = dbcur.fetchmany(fetchsize)
 	else:
-		coevollineages.append( (lineage_id, currlineage_id, coevol_score(currlineage_matches, nsamplesq)) )
+		coev = coevol_score(currlineage_matches, nsamplesq)
+		if coev >= minevjointfreq: coevollineages.append( (lineage_id, currlineage_id, coev) )
 	return coevollineages

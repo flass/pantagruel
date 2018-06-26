@@ -123,7 +123,7 @@ def _query_matching_lineage_event_profiles(args, timing=False, verbose=False):
 	if verbose: print preq_libyev
 	dbcul.execute(preq_libyev) 
 	nsamplesq = nsample**2
-	coevollineages = coevol_lineages(dbcul, querylineage_id, nsamplesq)
+	coevollineages = coevol_lineages(dbcul, querylineage_id, nsamplesq, minevjointfreq)
 	
 	dbcul.execute("drop table %s ;"%tempeventtable)
 	dbcon.close()
