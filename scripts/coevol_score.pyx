@@ -4,8 +4,8 @@ cdef float coevol_score(lineage_matches, unsigned long nsamplesq):
 	cdef int f0, f1
 	cdef unsigned long jointfreq = 0
 	for tmatch in lineage_matches:
-		f0 = tmatch[2]
-		f1 = tmatch[3]
+		f0 = tmatch[1]
+		f1 = tmatch[2]
 		jointfreq += f0*f1
 	return jointfreq/nsamplesq
 
@@ -35,7 +35,7 @@ cpdef coevol_lineages(dbcur, lineage_id, nsamplesq, fetchsize=10000):
 	currlineage_id = match_lineages[0][0]
 	while match_lineages:
 		# seek boundaries of the lineage slices
-		for k, tmatch_line_ev_ff in enumerate(match_lineages):
+		for k, tmatch_line_ff in enumerate(match_lineages):
 			match_lineage_id = tmatch_line_ev_ff[0]
 			if match_lineage_id != currlineage_id:
 				# finish parsing current lineage

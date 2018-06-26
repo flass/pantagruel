@@ -116,7 +116,7 @@ def _query_matching_lineage_event_profiles(args, timing=False, verbose=False):
 	lineageorderWC=" AND rlocds_id > %d"%querylineage_id
 	preq_libyev = _select_lineage_event_query_factory(('rlocds_id', 'event_id'), \
 	                                                  evtypes, valtoken, lineagetable, \
-	                                                  addselcols=('event_id', 'f0', 'freq as f1',), \
+	                                                  addselcols=('f0', 'freq as f1',), \
 	                                                  joinTable=tempeventtable, \
 	                                                  addWhereClause=basefamWC+lineageorderWC, orderBy='rlocds_id')
 	
