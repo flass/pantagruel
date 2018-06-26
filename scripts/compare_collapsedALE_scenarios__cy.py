@@ -12,7 +12,7 @@ from ptg_utils import *
 import pyximport
 #~ pyximport.install()
 pyximport.install(pyimport=True) # cythonize all the python modules avalaible
-from coevol_score import coevol_score
+from coevol_score import coevol_lineages
 
 def connectpostgresdb(dbname, **kw):
 	psycopg2 = __import__('psycopg2')
@@ -37,15 +37,6 @@ def get_dbconnection(dbname, dbengine):
 	else:
 		raise ValueError,  "wrong DB type provided: '%s'; select one of dbengine={'postgres[ql]'|'sqlite[3]'}"%dbengine
 	return (dbcon, dbcur, dbtype, valtoken)
-
-#### transferred to Cython module coevol_score.pyx
-#~ def coevol_score(mg_lineage_eventfreqs, dlineage_eventfreqs, nsample, minevjointfreq):
-	#~ jointfreq = 0
-	#~ for eid, f1 in mg_lineage_eventfreqs:
-		#~ f0 = dlineage_eventfreqs.get(eid)
-		#~ if f0: jointfreq += f0*f1
-	#~ return float(jointfreq)/(nsample**2)
-####
 
 def _select_lineage_event_clause_factory(evtypes, valtoken, lineagetable):
 	rlocdsIJ = "INNER JOIN %s USING (replacement_label_or_cds_code)"%lineagetable
@@ -75,6 +66,10 @@ def _select_lineage_event_query_factory(aBYb, evtypes, valtoken, lineagetable, \
 	preq = "SELECT %s %s FROM gene_lineage_events %s %s %s %s %s %s %s %s ;"%tqfields
 	return preq.replace('WHERE AND ', 'WHERE ')
 
+def _query_create_temp_events_lineage(gene, preq, dbcur, temptablename):
+	creq = "CREATE TEMP TABLE %s AS "%temptablename + preq
+	dbcur.execute(creq, (gene,)) 
+
 def _query_events_lineage(gene, preq, dbcur, with_create_temp=None):
 	if with_create_temp:
 		creq = "CREATE TEMP TABLE %s AS "%with_create_temp + preq
@@ -90,59 +85,45 @@ def _query_events_lineage_sorted(gene, preq, dbcur, sortfield=0, with_create_tem
 def _query_matching_lineage_event_profiles(args, timing=False, verbose=False):
 	
 	if timing: time = __import__('time')
-	lineageidfam, dbname, dbengine, nsample, evtypes, baseWC, minevjointfreq, lineagetable = args
-	lineage_id, fam = lineageidfam
-	if verbose: print 'lineage_id:', lineage_id, fam
+	querylineageidfam, dbname, dbengine, nsample, evtypes, baseWC, minevjointfreq, lineagetable = args
+	querylineage_id, queryfam = querylineageidfam
+	if verbose: print 'querylineage_id:', querylineage_id, queryfam
 	dbcon, dbcul, dbtype, valtoken = get_dbconnection(dbname, dbengine)
 	# first get the vector of (event_id, freq) tuples in focal lineage
 	preq_evbyli = _select_lineage_event_query_factory(('event_id', 'rlocds_id'), \
 	                                                  evtypes, valtoken, lineagetable, \
 	                                                  addselcols=('freq as f0',), \
 	                                                  addWhereClause=minevfWC+maxevfWC)
-	if verbose: print preq_evbyli%lineage_id
-	tempeventtable = 'events_of_rlocds_id%d'%lineage_id
-	lineage_eventfreqs = _query_events_lineage_sorted(lineage_id, preq_evbyli, dbcul, with_create_temp=tempeventtable)
-	dlineage_eventfreqs = dict(lineage_eventfreqs)
-	lineage_events = tuple(ef[0] for ef in lineage_eventfreqs)
-	if not lineage_events: return []
-	if verbose: print lineage_events
+	if verbose: print preq_evbyli%querylineage_id
+	tempeventtable = 'events_of_rlocds_id%d'%querylineage_id
+	#~ lineage_eventfreqs = _query_events_lineage_sorted(querylineage_id, preq_evbyli, dbcul, with_create_temp=tempeventtable)
+	_query_create_temp_events_lineage(querylineage_id, preq_evbyli, dbcul, tempeventtable)
+	#~ dlineage_eventfreqs = dict(lineage_eventfreqs)
+	#~ lineage_events = tuple(ef[0] for ef in lineage_eventfreqs)
+	#~ if not lineage_events: return []
+	#~ if verbose: print lineage_events
+	if dbcul.rowcount == 0:
+		# no events associated withthis lineage, return empty array
+		# -- this sort of pointless query should be avoided by
+		# not listing for query lineages without selectable events
+		# i.e. pre-filter input to this function call
+		return []
 	
 	# then build a list of gene lineages to compare, based on common occurence of at least N event (here only 1 common event required)
 	# and filtering by {same|different|all} gene families
-	basefamWC = baseWC%fam if '%' in baseWC else baseWC
+	basefamWC = baseWC%queryfam if '%' in baseWC else baseWC
 	# and the id of compared lineage to be > reference lineage, to avoid duplicate comparisons
-	lineageorderWC=" AND rlocds_id > %d"%lineage_id
+	lineageorderWC=" AND rlocds_id > %d"%querylineage_id
 	preq_libyev = _select_lineage_event_query_factory(('rlocds_id', 'event_id'), \
 	                                                  evtypes, valtoken, lineagetable, \
 	                                                  addselcols=('event_id', 'f0', 'freq as f1',), \
 	                                                  joinTable=tempeventtable, \
 	                                                  addWhereClause=basefamWC+lineageorderWC, orderBy='rlocds_id')
 	
-	coevollineages = []
 	if verbose: print preq_libyev
 	dbcul.execute(preq_libyev) 
-	#~ match_lineages = dbcul.fetchall()
-	match_lineages = dbcul.fetchmany(1000)
-	currlineage_id = None
-	currlineage_matches = []
-	while match_lineages:
-		# seek boundaries of the lineage slices
-		for k, tmatch_line_ev_ff in enumerate(match_lineages):
-			match_lineage_id = tmatch_line_ev_ff[0]
-			if match_lineage_id != currlineage_id:
-				currlineage_matches += match_lineages[:k]
-				#~ coevollineages += coevol_score(mg_lineage_eventfreqs, dlineage_eventfreqs, nsample)
-				coevollineages.append( (currlineage_id, coevol_score(currlineage_matches, nsample)) )
-				# new lineage
-				currlineage_id = match_lineage_id
-				currlineage_matches = []
-		else:
-			currlineage_matches += match_lineages[k:]
-			#~ mg_lineage_eventfreqs = _query_events_lineage(match_lineage_id, preq_evbyli, dbcul)
-			
-		match_lineages = dbcul.fetchmany(1000)
-	else:
-		coevollineages.append( (currlineage_id, coevol_score(currlineage_matches, nsample)) )
+	nsamplesq = nsample**2
+	coevollineages = coevol_lineages(dbcul, lineage_id, nsamplesq, fetchsize=1000)
 	
 	dbcul.execute("drop table %s ;"%tempeventtable)
 	dbcon.close()
