@@ -57,7 +57,7 @@ def _select_lineage_event_query_factory(aBYb, evtypes, valtoken, lineagetable, \
 		bWC = ''
 	else:
 		bIJ = ''
-		bWC = '%s%s%s'%(b, operator, valtoken)
+		bWC = 'AND %s%s%s'%(b, operator, valtoken)
 	ob = "ORDER BY %s"%orderBy if orderBy else ''
 	w = 'WHERE' if (evtyperestrictWC or addWhereClause or bWC) else ''
 	tqfields = (('DISTINCT' if distinct else ''), repr((a,)+tuple(addselcols)).strip('(,)').replace("'", ''), 
