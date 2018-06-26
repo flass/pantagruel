@@ -36,7 +36,7 @@ cpdef coevol_lineages(dbcur, lineage_id, nsamplesq, fetchsize=10000):
 	while match_lineages:
 		# seek boundaries of the lineage slices
 		for k, tmatch_line_ff in enumerate(match_lineages):
-			match_lineage_id = tmatch_line_ev_ff[0]
+			match_lineage_id = tmatch_line_ff[0]
 			if match_lineage_id != currlineage_id:
 				# finish parsing current lineage
 				currlineage_matches += match_lineages[:k]
