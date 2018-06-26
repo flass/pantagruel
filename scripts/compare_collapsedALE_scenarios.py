@@ -85,7 +85,7 @@ def _query_events_lineage_sorted(gene, preq, dbcur, sortfield=0, with_create_tem
 def _query_matching_lineage_event_profiles(args, timing=False, verbose=False):
 	
 	if timing: time = __import__('time')
-	querylineageidfam, dbname, dbengine, nsample, evtypes, baseWC, minevjointfreq, lineagetable = args
+	querylineageidfam, dbname, dbengine, nsample, evtypes, baseWC, diffamWC, minevjointfreq, lineagetable = args
 	querylineage_id, queryfam = querylineageidfam
 	if verbose: print 'querylineage_id:', querylineage_id, queryfam
 	dbcon, dbcul, dbtype, valtoken = get_dbconnection(dbname, dbengine)
@@ -93,7 +93,7 @@ def _query_matching_lineage_event_profiles(args, timing=False, verbose=False):
 	preq_evbyli = _select_lineage_event_query_factory(('event_id', 'rlocds_id'), \
 	                                                  evtypes, valtoken, lineagetable, \
 	                                                  addselcols=('freq as f0',), \
-	                                                  addWhereClause=minevfWC+maxevfWC)
+	                                                  addWhereClause=baseWC)
 	if verbose: print preq_evbyli%querylineage_id
 	tempeventtable = 'events_of_rlocds_id%d'%querylineage_id
 	#~ lineage_eventfreqs = _query_events_lineage_sorted(querylineage_id, preq_evbyli, dbcul, with_create_temp=tempeventtable)
@@ -111,14 +111,14 @@ def _query_matching_lineage_event_profiles(args, timing=False, verbose=False):
 	
 	# then build a list of gene lineages to compare, based on common occurence of at least N event (here only 1 common event required)
 	# and filtering by {same|different|all} gene families
-	basefamWC = baseWC%queryfam if '%' in baseWC else baseWC
+	diffamWC = diffamWC%queryfam if '%' in diffamWC else diffamWC
 	# and the id of compared lineage to be > reference lineage, to avoid duplicate comparisons
 	lineageorderWC=" AND rlocds_id > %d"%querylineage_id
 	preq_libyev = _select_lineage_event_query_factory(('rlocds_id', 'event_id'), \
 	                                                  evtypes, valtoken, lineagetable, \
 	                                                  addselcols=('f0', 'freq as f1',), \
 	                                                  joinTable=tempeventtable, \
-	                                                  addWhereClause=basefamWC+lineageorderWC, orderBy='rlocds_id')
+	                                                  addWhereClause=diffamWC+basefamWC+lineageorderWC, orderBy='rlocds_id')
 	
 	if verbose: print preq_libyev
 	dbcul.execute(preq_libyev) 
@@ -184,6 +184,7 @@ def dbquery_matching_lineage_event_profiles(dbname, dbengine='postgres', \
 	# prepare invariant segments of by-lineage queries
 	minevfWC = " AND gene_lineage_events.freq >= %d"%int(mineventfreq*nsample) if mineventfreq>0 else ''
 	maxevfWC = " AND gene_lineage_events.freq  < %d"%int(maxeventfreq*nsample) if maxeventfreq<1 else ''
+	baseWC = minevfWC+maxevfWC
 	if matchScope=='between_fams':
 		diffamWC = " AND gene_family_id != '%s'" # %fam to plugged in in child function call
 	elif matchScope=='within_fams':
@@ -192,10 +193,9 @@ def dbquery_matching_lineage_event_profiles(dbname, dbengine='postgres', \
 		diffamWC = ""
 	else:
 		raise ValueError, "incorrect value '%s' for variable 'matchScope'"%repr(matchScope)
-	baseWC = diffamWC+minevfWC+maxevfWC
 	def make_arg_tup(lineage_id):
 		#~ return (lineage_id, dbname, dbengine, nsample, evtypes, matchScope, mineventfreq, maxeventfreq, minevjointfreq, lineagetable)
-		return (lineage_id, dbname, dbengine, nsample, evtypes, baseWC, minevjointfreq, lineagetable)
+		return (lineage_id, dbname, dbengine, nsample, evtypes, baseWC, diffamWC, minevjointfreq, lineagetable)
 		
 	# get set of gene lineages
 	qlibyev = "select rlocds_id, gene_family_id from %s;"%lineagetable
