@@ -111,14 +111,14 @@ def _query_matching_lineage_event_profiles(args, timing=False, verbose=False):
 	
 	# then build a list of gene lineages to compare, based on common occurence of at least N event (here only 1 common event required)
 	# and filtering by {same|different|all} gene families
-	diffamWC = diffamWC%queryfam if '%' in diffamWC else diffamWC
+	famWC = diffamWC%queryfam if '%' in diffamWC else diffamWC
 	# and the id of compared lineage to be > reference lineage, to avoid duplicate comparisons
 	lineageorderWC=" AND rlocds_id > %d"%querylineage_id
 	preq_libyev = _select_lineage_event_query_factory(('rlocds_id', 'event_id'), \
 	                                                  evtypes, valtoken, lineagetable, \
 	                                                  addselcols=('f0', 'freq as f1',), \
 	                                                  joinTable=tempeventtable, \
-	                                                  addWhereClause=diffamWC+basefamWC+lineageorderWC, orderBy='rlocds_id')
+	                                                  addWhereClause=famWC+baseWC+lineageorderWC, orderBy='rlocds_id')
 	
 	if verbose: print preq_libyev
 	dbcul.execute(preq_libyev) 
