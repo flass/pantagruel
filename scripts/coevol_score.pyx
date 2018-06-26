@@ -1,12 +1,14 @@
 #!/usr/bin/python
 
-cdef float coevol_score(lineage_matches, unsigned long nsamplesq):
+cdef double coevol_score(lineage_matches, unsigned long nsamplesq):
 	cdef int f0, f1
-	cdef unsigned long jointfreq = 0
+	cdef unsigned long jf = 0
+	cdef double jointfreq
 	for tmatch in lineage_matches:
 		f0 = tmatch[1]
 		f1 = tmatch[2]
-		jointfreq += f0*f1
+		jf += f0*f1
+	jointfreq = jf
 	return jointfreq/nsamplesq
 
 #~ cdef chop_array(currlineage_matches, keepfields, chunksize=1000):
