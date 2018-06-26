@@ -10,8 +10,8 @@ import numpy as np
 from ptg_utils import *
 # try the power of Cython
 import pyximport
-#~ pyximport.install()
-pyximport.install(pyimport=True) # cythonize all the python modules avalaible
+pyximport.install()
+#~ pyximport.install(pyimport=True) # cythonize all the python modules avalaible
 from coevol_score import coevol_lineages
 
 def connectpostgresdb(dbname, **kw):
