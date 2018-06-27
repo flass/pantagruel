@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
-from ptgutils import parseChain
+import sys, getopt, os
+from ptg_utils import parseChain
 import multiprocessing as mp
 
 

@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+import sys
 from Bio.Phylo import BaseTree, NewickIO, NexusIO, _io as PhyloIO
 from StringIO import StringIO
 
