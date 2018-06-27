@@ -1,8 +1,9 @@
 #!/usr/bin/python
 
-from Bio.Phylo import BaseTree
-from Bio.Phylo import _io as PhyloIO
+from Bio.Phylo import BaseTree, NewickIO, NexusIO, _io as PhyloIO
 from StringIO import StringIO
+
+supported_formats = {'newick': NewickIO, 'nexus': NexusIO}
 
 ### general purpose functions
 
@@ -217,11 +218,8 @@ def tree2toBioPhylo(node):
 	"""perform tree2.Node -> Newick -> Bio.Phylo.Newick.Tree conversion"""
 	return PhyloIO.read(StringIO(node.newick()), 'newick', rooted=True)
 
-def parseChain(lnfchains, dold2newname, nfchainout=None, inchainfmt='nexus', outchainfmt='newick', verbose=False):
-	"""parse a Nexus-format tree chain and re-write it in a Newick format; edit the tree on the fly, substituting tip labels or grafting trees on tips
-	
-	
-	"""
+def parseChain(lnfchains, dold2newname={}, nfchainout=None, inchainfmt='nexus', outchainfmt='newick', verbose=False):
+	"""parse a Nexus-format tree chain and re-write it in a Newick format; edit the tree on the fly, substituting tip labels or grafting trees on tips"""
 	if verbose: print "parseChain('%s')"%repr(lnfchains)
 	ntree = 0
 	buffsize = 50

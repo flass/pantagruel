@@ -9,10 +9,9 @@ import copy
 
 import multiprocessing as mp
 from Bio import AlignIO
-from Bio.Phylo import BaseTree, NewickIO, NexusIO
+from Bio.Phylo import BaseTree
 import traceback
 
-supported_formats = {'newick': NewickIO, 'nexus': NexusIO}
 phyloproftag='phyloprofiles'
 maxreclimupfactor = 1 # range for tentative increase of the recursion limit that was set by default or via command-line argument when it is not enogh to read a gene tree; e.g. 1.5 allows for 50% increase, 1 allows for none
 

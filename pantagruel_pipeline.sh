@@ -17,6 +17,7 @@ datepad="                     "
 export myemail='me.myself@respectable-institu.ti.on'
 export raproot='/path/to/base/folder/for/all/this/business'
 export ptgscripts='/path/to/pantagruel_pipeline/scripts'
+export PYTHONPATH=$PYTHONPATH:${ptgscripts}
 export famprefix='REPLACEfamprefix'
 export rapdbname='aBoldDatabaseName' # mostly name of the top folder
 export famprefix='ABCDE'             # alphanumerical prefix (no number first) of the names for homologous protein/gene family clusters; will be appended with a 'P' for proteins and a 'C' for CDSs.
@@ -614,9 +615,6 @@ ls $collapsed_genetrees/${collapsecond}/*run1.t > $tasklist
 repllogd=${rapdb}/logs/replspebypop
 repllogs=$repllogd/replace_species_by_pop_in_gene_trees
 replrun=$(date +'%d%m%Y')
-
-### INCORRECT WRITING OF TREES BY BioPython ; requires correction at line 338 of source file Bio.Phylo.NewickIO.py
-# => requires writing permission on lib files; usually impossible on HPC systems
 
 # local parallel run
 python ${ptgscripts}/replace_species_by_pop_in_gene_trees.py -G ${tasklist} -c ${colalinexuscodedir}/${collapsecond} -S ${speciestree}.lsd.newick -o ${coltreechains}/${collapsecond} \

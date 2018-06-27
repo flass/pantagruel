@@ -11,6 +11,8 @@ export ptgscripts='REPLACEptgscripts'
 export famprefix='REPLACEfamprefix'
 export pseudocoremingenomes='REPLACEpseudocoremingenomes'
 
+export PYTHONPATH=$PYTHONPATH:${ptgscripts}
+
 # head folders
 export ncbiass=${raproot}/NCBI/Assembly
 export ncbitax=${raproot}/NCBI/Taxonomy
