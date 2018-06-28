@@ -188,8 +188,8 @@ else
   lenchain=`wc -l ${chain} | cut -d' ' -f1`
   burnin=`echo "$lenchain * $relburninfrac" | bc`
   echo "input tree chain is ${lenchain} long; burnin is set to ${burnin%%.*}"
-  echo "# ${alebin}/ALEobserve $nfchain burnin=${burnin%%.*}"
-  ${alebin}/ALEobserve $nfchain burnin=${burnin%%.*}
+  echo "# ${alebin}/ALEobserve ${chain} burnin=${burnin%%.*}"
+  ${alebin}/ALEobserve ${chain} burnin=${burnin%%.*}
 fi
 date
 
@@ -213,10 +213,10 @@ echo ""
 echo "# # # #"
 
 ALETIME=$SECONDS
-if [ -z $prevcomputetime ] ; then ALETIME=$(( $ALETIME + $prevcomputetime )) ; fi
+if [ ! -z $prevcomputetime ] ; then ALETIME=$(( $ALETIME + $prevcomputetime )) ; fi
 echo -e "$nfrad\t$alealgo\t$ALETIME" > $nfrad.ale.computetime
 echo "reconciliation estimation took" $(date -u -d @${ALETIME} +"%Hh%Mm%Ss") "total time"
-if [ -z $prevcomputetime ] ; then echo "(including ${prevcomputetime} in previous run)" ; fi
+if [ ! -z $prevcomputetime ] ; then echo "(including ${prevcomputetime} in previous run)" ; fi
 
 echo "# ls"
 ls
