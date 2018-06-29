@@ -36,6 +36,7 @@
   - [scipy/numpy](https://www.scipy.org/scipylib/download.html)
   - [tree2](https://github.com/flass/tree2)
   - [BioPython](http://biopython.org/wiki/Download)
+  - [Cython](https://pypi.org/project/Cython/)
 
 - Other software:
   - [sqlite3](https://www.sqlite.org) (available as a Debian package)
