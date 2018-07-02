@@ -7,17 +7,20 @@ library(parallel)
 library(RPostgreSQL)
 
 plotCoEvolQuantiles = function(qmatchev, detail.quant, sample.name=''){
-	layout(matric(c(1,1,1,2), 1, 4, byrow=T)
-	plot(qmatchev[as.character(0:100/100)], xlab='quantiles', 'co-evolution score',
+	layout(matrix(c(1,1,1,2), 1, 4, byrow=T))
+	plot(qmatchev[as.character(0:100/100)], xlab='quantiles', ylab='co-evolution score',
 	 main=sprintf("distribution of co-evolution score\nin sample %s", sample.name))
-	plot(qmatchev[(c(detail.quant, 1.0)], xlab='quantiles')
+	plot(qmatchev[c(detail.quant, 1.0)], xlab='quantiles')
 }
 
 parseMatchEventFile = function(nfmatchevents, quant.only=F, nmaxrlocsid=NULL, refrepliordlineages=NULL,
                                 detail.quant=c(.999, .9999, .99999), top.quant.cutoff=.99999, top.val.cutoff=NULL,
-                                comp.quant=T, plot.quant=F){
+                                comp.quant=T, plot.quant=F, verbose=F){
 	# load (partial) gene lineage match report
-	matchev = unique(read.table(nfmatchevents)) ; colnames(matchev) = c('rlocdsid1', 'rlocdsid2', 'freq')
+	if (verbose) print(nfmatchevents, quote=F)
+#~ 	matchev = unique(read.table(nfmatchevents))
+	matchev = read.table(nfmatchevents, sep='\t', header=F, colClasses="numeric")
+	colnames(matchev) = c('rlocdsid1', 'rlocdsid2', 'freq')
 	p = unique(sort(c(0:99/100, detail.quant, top.quant.cutoff, 1.0)))
 	ncomp = nrow(matchev)
 	# every ~1.1Gb table has ~46.7M rows of reported pairwise associations, each using between 6 and 8 Gb of memory when loaded
@@ -31,9 +34,8 @@ parseMatchEventFile = function(nfmatchevents, quant.only=F, nmaxrlocsid=NULL, re
 	}else{
 		qmatchev = NULL
 	}
-	print(nfmatchevents, quote=F)
 	qn = c(qmatchev, ncomp) ; names(qn) = c(names(qmatchev), 'nb.reported.comp')
-#~ 	print(qn, quote=F)
+	if (verbose) print(c(sprintf("%s ... done. quantiles:", nfmatchevents), qn) quote=F)
 	# can stop here
 	if (quant.only){ return( qn ) }
 	## get set of unique query lineages and can derive the total count of comparisons that could have been attempted
@@ -57,7 +59,7 @@ parseMatchEventFile = function(nfmatchevents, quant.only=F, nmaxrlocsid=NULL, re
 			})
 		}))
 	}else{ matmatchev = NULL }
-	
+	if (verbose){ print(sprintf("%s ... done. Top co-evolution scores:", nfmatchevents), quote=F) ; print(head(topmatchev)) ; print(sprintf("... (%d lines)", nrow(topmatchev))) }
 	return( list(quantiles=qmatchev, unique.query.rlocdsid=urlocdsid1, nb.reported.comp=ncomp, tot.comp=totcomp, top.matches=topmatchev, ref.repli.proj.mat=matmatchev) )
 }
 
@@ -101,7 +103,7 @@ spec = matrix(c(
   'output_dir',         'o', 2, "character", "path to folder where to write output files; default to the parent folder of input match event folder",
   'output_prefix',      'p', 2, "character", "prefix for output files; default to the name of input match event folder",
   'quant_cutoff',       'q', 2, "double",    "cut-off fraction of co-evolution score distribution over which to to report top gene lineage associations",
-  'score_cutoff',       'q', 2, "double",    "cut-off co-evolution score over which to to report top gene lineage associations (bypass quantile computation)",
+  'score_cutoff',       's', 2, "double",    "cut-off co-evolution score over which to to report top gene lineage associations (bypass quantile computation)",
   'db_name',            'D', 2, "character", "name of database containing detailed gene annotation information, to be collated for top asocciated gene lineages",
   'db_type',            'T', 2, "character", "SQL database type; default to PostgreSQL",
   'db_host',            'H', 2, "character", "SQL database host; default to 'localhost' (only relevant for DB with client/server system, e.g. PostgreSQL, but not for file-based systems like SQLite)",
@@ -116,9 +118,13 @@ if ( is.null(opt$dir_match_events  ) ){
 }else{ 
 	dirmatchevents = gsub('/$', '', opt$dir_match_events) 
 }
-lnfmatchevents = Sys.glob(file.path(dirmatchevents, 'matching_events.tab*'), full.names=T)
+patnfmatchevents = file.path(dirmatchevents, 'matching_events.tab*')
+#~ print(patnfmatchevents)
+lnfmatchevents = Sys.glob(patnfmatchevents)
+#~ print(head(lnfmatchevents))
 if (length(lnfmatchevents)>1){
 	lnfmatchevents = lnfmatchevents[order(as.numeric((sapply(strsplit(lnfmatchevents, split='\\.'), function(x){ x[length(x)] }))))]
+	print(sprintf("will load lineage co-evolution scores from %d files matchin '%s'", length(lnfmatchevents), patnfmatchevents), quote=F)
 }
 if ( is.null(opt$output_dir) ){ 
 	dirout = dirname(dirmatchevents)  
@@ -151,6 +157,7 @@ if (!is.null(opt$replicon_annot_map)){
 
 if (!is.null(qcutoff)){
 	### first pass: parse data to extract co-evolution score quantiles
+	print("will load lineage co-evolution score tables a first time to estimate global distribution (collect quantiles)", quote=F)
 	lparsematchev = mclapply(lnfmatchevents, parseMatchEventFile, quant.only=T, top.quant.cutoff=qcutoff, mc.cores=6)
 	names(lparsematchev) = basename(lnfmatchevents)
 
