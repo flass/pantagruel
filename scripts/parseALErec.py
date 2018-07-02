@@ -10,7 +10,51 @@ def getOriSpeciesFromEventLab(eventlab, sgsep='_'):
 	elab = eventlab.split('@')[1] if '@' in eventlab else eventlab
 	return elab.split('->')[0].split(sgsep)[0]
 
-def parseRecGeneTree(recgt, spet, dexactevt, recgtsample, nsample, sgsep='_', restrictlabs=[], fillDTLSdict=True, recordEvTypes='DTL', excludeTaggedLeaves=None, excludeTaggedSubtrees=None):
+def parseALERecFile(nfrec, reftreelen=None, restrictclade=None, skipEventFreq=False):
+	line = ''
+	lrecgt = []
+	restrictlabs = []
+	frec = open(nfrec, 'r')
+	while not line.startswith('S:\t'):
+		line = frec.readline()
+	# extract node labels from reconciled species tree
+	spetree = tree2.AnnotatedNode(nwk=line.strip('\n').split('\t')[1], namesAsNum=True)
+	spetree.complete_node_ids()
+	if reftreelen:
+		if not spetree.hasSameTopology(reftreelen): raise IndexError, "reference tree from $2 has not the same topology as that extracted from reconciliation output file $1"
+		for node in spetree:
+			# extract branch length from topologically identical tree from $2
+			matchclade = reftreelen.map_to_node(node.get_leaf_labels())
+			node.set_lg(matchclade.lg())
+	if restrictclade:
+		for restrictnodelab in restrictclade.split(','):
+			restrictlabs += spetree[restrictnodelab].get_children_labels()
+		subspetree = spetree.restrictToLeaves(restrictlabs, force=True)
+	else:
+		subspetree = spetree
+	while not line.endswith('reconciled G-s:\n'):
+		line = frec.readline()
+	for i in range(2): line = frec.readline() # skips 2 lines
+	# extract reconciled gene tree(s)
+	recgtlines = []
+	while not line.startswith('#'):
+		recgtlines.append(line)
+		rectree = tree2.AnnotatedNode(nwk=line.strip('\n'), namesAsNum=True)
+		rectree.complete_node_ids()
+		lrecgt.append(rectree)
+		line = frec.readline()
+	dnodeevt = {}
+	if not skipEventFreq:
+		for i in range(3): line = frec.readline() # skips 3 lines
+		# extract node-wise event frequency / copy number info
+		for line in frec:
+			if line=='\n': continue
+			lsp = line.strip('\n').split('\t')
+			dnodeevt[lsp[1]] = [float(s) for s in lsp[2:]]
+	frec.close()
+	return [spetree, subspetree, lrecgt, recgtlines, restrictlabs, dnodeevt]
+
+def parseUndatedRecGeneTree(recgt, spet, dexactevt={}, recgtsample=None, nsample=1, sgsep='_', restrictlabs=[], fillDTLSdict=True, recordEvTypes='DTL', excludeTaggedLeaves=None, excludeTaggedSubtrees=None):
 	"""extract list of events from one reconciled gene tree as found in output of ALEml_undated (Szolosi et al., 2013; https://github.com/ssolo/ALE)
 	
 	This function returns two objects:
@@ -111,46 +155,28 @@ def parseRecGeneTree(recgt, spet, dexactevt, recgtsample, nsample, sgsep='_', re
 	parseRecGTNode(recgt, dlevt, dnodeallevt) # recursive function call
 	return dlevt, dnodeallevt
 
-def parseALERecFile(nfrec, reftreelen=None, restrictclade=None, skipEventFreq=False):
-	line = ''
-	lrecgt = []
-	restrictlabs = []
-	frec = open(nfrec, 'r')
-	while not line.startswith('S:\t'):
-		line = frec.readline()
-	# extract node labels from reconciled species tree
-	spetree = tree2.AnnotatedNode(nwk=line.strip('\n').split('\t')[1], namesAsNum=True)
-	spetree.complete_node_ids()
-	if reftreelen:
-		if not spetree.hasSameTopology(reftreelen): raise IndexError, "reference tree from $2 has not the same topology as that extracted from reconciliation output file $1"
-		for node in spetree:
-			# extract branch length from topologically identical tree from $2
-			matchclade = reftreelen.map_to_node(node.get_leaf_labels())
-			node.set_lg(matchclade.lg())
-	if restrictclade:
-		for restrictnodelab in restrictclade.split(','):
-			restrictlabs += spetree[restrictnodelab].get_children_labels()
-		subspetree = spetree.restrictToLeaves(restrictlabs, force=True)
-	else:
-		subspetree = spetree
-	while not line.endswith('reconciled G-s:\n'):
-		line = frec.readline()
-	for i in range(2): line = frec.readline() # skips 2 lines
-	# extract reconciled gene tree(s)
-	recgtlines = []
-	while not line.startswith('#'):
-		recgtlines.append(line)
-		rectree = tree2.AnnotatedNode(nwk=line.strip('\n'), namesAsNum=True)
-		rectree.complete_node_ids()
-		lrecgt.append(rectree)
-		line = frec.readline()
-	dnodeevt = {}
-	if not skipEventFreq:
-		for i in range(3): line = frec.readline() # skips 3 lines
-		# extract node-wise event frequency / copy number info
-		for line in frec:
-			if line=='\n': continue
-			lsp = line.strip('\n').split('\t')
-			dnodeevt[lsp[1]] = [float(s) for s in lsp[2:]]
-	frec.close()
-	return [spetree, subspetree, lrecgt, recgtlines, restrictlabs, dnodeevt]
+def parseRecGeneTree(recgt, spet, ALEmodel='undated', **kw):
+	if ALEmodel=='undated':
+		return parseUndatedRecGeneTree(recgt, spet, **kw)
+	elif ALEmodel=='dated':
+		return parseDatedRecGeneTree(recgt, spet, **kw)
+
+def getOrthologues(recgt, spet, ALEmodel='dated'):
+	"""prune reconciled gene tree at transfer or duplication branches to identify subs of orthologues"""
+	for node in recgt.get_postordertraversal_children():
+		nodelab = node.label()
+		if node.is_leaf() and (excludeTaggedLeaves in nodelab):
+			# the species assignment of this leaf is not certain (inferred)
+			# and thus events leading directly to this leaf are not to be trusted and should be skipped
+			return
+		nodeid = node.nodeid()
+		if not nodelab:
+			print node
+			raise ValueError, "unannotated node"
+		# line of events to be read left-to-right backward in time
+		lineage = nodelab.split('.')
+		for i in range(1, len(lineage)):
+			eventlab = lineage[i]
+		
+	
+	
