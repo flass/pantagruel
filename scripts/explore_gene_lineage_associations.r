@@ -104,12 +104,14 @@ spec = matrix(c(
   'output_prefix',      'p', 2, "character", "prefix for output files; default to the name of input match event folder",
   'quant_cutoff',       'q', 2, "double",    "cut-off fraction of co-evolution score distribution over which to to report top gene lineage associations",
   'score_cutoff',       's', 2, "double",    "cut-off co-evolution score over which to to report top gene lineage associations (bypass quantile computation)",
+  'load_quantiles',     'Q', 0, "character", "will attempt to load quantile information from R object archive file saved in a previous run; file must be named like `dir_match_events` argument value with prefix '.co-evolution_quantiles.RData', and contain a data.frame bearing the name `matchevdf` (bypass quantile computation)",
   'db_name',            'D', 2, "character", "name of database containing detailed gene annotation information, to be collated for top asocciated gene lineages",
   'db_type',            'T', 2, "character", "SQL database type; default to PostgreSQL",
   'db_host',            'H', 2, "character", "SQL database host; default to 'localhost' (only relevant for DB with client/server system, e.g. PostgreSQL, but not for file-based systems like SQLite)",
   'db_pw',              'W', 2, "character", "SQL database password; default to none",
   'db_user',            'U', 2, "character", "SQL database user; default to system user executing this script",
-  'db_port',            'P', 2, "character", "SQL database port; default to 5432"
+  'db_port',            'P', 2, "character", "SQL database port; default to 5432",
+  'threads',         't', 2, "integere",  "number of parrallel threads for input data processing (each process may use from 6 to 10 Gb when loading a 1 Gb table file)"
 ), byrow=TRUE, ncol=5);
 opt = getopt(spec, opt=commandArgs(trailingOnly=T))
 
@@ -154,15 +156,28 @@ if (!is.null(opt$replicon_annot_map)){
 }else{
 	refrepliordlineages = NULL
 }
+if (is.null(opt$threads)){
+	ncores = 6
+}else{
+	ncores = opt$threads
+}
 
 if (!is.null(qcutoff)){
-	### first pass: parse data to extract co-evolution score quantiles
-	print("will load lineage co-evolution score tables a first time to estimate global distribution (collect quantiles)", quote=F)
-	lparsematchev = mclapply(lnfmatchevents, parseMatchEventFile, quant.only=T, top.quant.cutoff=qcutoff, mc.cores=6)
-	names(lparsematchev) = basename(lnfmatchevents)
+	nfsavematchev = paste(file.path(dirout, prefixout), 'co-evolution_quantiles.RData', sep='.')
+	if (opt$load_quantiles & file.exists(nfsavematchev)){
+		load(nfsavematchev)
+		print(sprintf("loaded quantiles of co-evolution score from pre-exesting file: '%s", nfsavematchev), quote=F)
+	}else{
+		### first pass: parse data to extract co-evolution score quantiles
+		print("will load lineage co-evolution score tables a first time to compute quantiles", quote=F)
+		lparsematchev = mclapply(lnfmatchevents, parseMatchEventFile, quant.only=T, top.quant.cutoff=qcutoff, mc.cores=ncores)
+		names(lparsematchev) = basename(lnfmatchevents)
 
-	matchevdf = as.data.frame(t(simplify2array(lparsematchev)))
+		matchevdf = as.data.frame(t(simplify2array(lparsematchev)))
 
+		save(matchevdf, file=nfsavematchev)
+		print(sprintf("saved quantiles of co-evolution score to file: '%s", nfsavematchev), quote=F)
+	}
 	pdf(paste(file.path(dirout, prefixout), 'associations_perfile.pdf', sep='.'), height=10, width=10)
 	layout(matrix(c(1,1,1,2), 1, 4, byrow=T))
 	q1 = as.character(0:100/100)
@@ -175,7 +190,7 @@ if (!is.null(qcutoff)){
 	totrepcomp = sum(matchevdf[,'nb.reported.comp'])
 	avg.cutoff.val = sum(matchevdf[,as.character(qcutoff)]*matchevdf[,'nb.reported.comp'])/totrepcomp
 
-	save(matchevdf, totrepcomp, avg.cutoff.val, file=paste(file.path(dirout, prefixout), 'co-evolution_quantiles.RData', sep='.'))
+#~ 	save(matchevdf, totrepcomp, avg.cutoff.val, file=paste(file.path(dirout, prefixout), 'co-evolution_quantiles.RData', sep='.'))
 
 	print(sprintf("found an average value of %f for quantiles at p=%f of empircal distribution of co-evolution scores over %g reported gene lineage comparisons (stored within %d separate files)",
 				   avg.cutoff.val, qcutoff, totrepcomp, length()), quote=F)
@@ -184,7 +199,7 @@ if (!is.null(qcutoff)){
 
 ### second pass: parse data to extract top co-evolution scores
 lparsematchev = mclapply(lnfmatchevents, parseMatchEventFile, comp.quant=F, top.val.cutoff=avg.cutoff.val, 
-                         refrepliordlineages=refrepliordlineages, mc.cores=6)
+                         refrepliordlineages=refrepliordlineages, mc.cores=ncores)
 save(lparsematchev, file=paste(file.path(dirout, prefixout), 'top_association.RData', sep='.'))
 topmatchev = lparsematchev[[1]]$top.matches
 for (i in 2:length(lparsematchev)){
