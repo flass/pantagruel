@@ -275,7 +275,15 @@ def main(dbname, protorfanclust, cdsorfanclust, nfspeclist, nfusergenomeinfo):
 	CREATE INDEX cds_genomic_accession_key ON coding_sequences (genomic_accession);
 	CREATE INDEX cds_genomic_accession_cds_begin_key ON coding_sequences (genomic_accession, cds_begin);
 	CREATE INDEX cds_nr_protein_id_key ON coding_sequences (nr_protein_id);
-	CREATE VIEW gene_family_sizes AS SELECT gene_family_id, count(*) as size from coding_sequences group by gene_family_id;
+	CREATE TABLE gene_family_sizes AS
+	 SELECT gene_family_id, count(*) as size, count(distinct assembly_id) as genome_present
+	  FROM coding_sequences 
+	  INNER JOIN replicons USING (genomic_accession)
+	 WHERE gene_family_id IS NOT NULL
+	GROUP BY gene_family_id;
+	ALTER TABLE gene_family_sizes ADD PRIMARY KEY (gene_family_id);
+	CREATE INDEX ON gene_family_sizes (size);
+	CREATE INDEX ON gene_family_sizes (genome_present);
 	""")
 	conn.commit()
 

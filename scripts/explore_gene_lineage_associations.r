@@ -17,7 +17,7 @@ parseMatchEventFile = function(nfmatchevents, quant.only=F, nmaxrlocsid=NULL, re
                                 detail.quant=c(.999, .9999, .99999), top.quant.cutoff=.99999, top.val.cutoff=NULL,
                                 comp.quant=T, plot.quant=F, verbose=F){
 	# load (partial) gene lineage match report
-	if (verbose) print(nfmatchevents, quote=F)
+	if (verbose) print(sprintf("loading %s ...", nfmatchevents), quote=F)
 #~ 	matchev = unique(read.table(nfmatchevents))
 	matchev = read.table(nfmatchevents, sep='\t', header=F, colClasses="numeric")
 	colnames(matchev) = c('rlocdsid1', 'rlocdsid2', 'freq')
@@ -35,7 +35,7 @@ parseMatchEventFile = function(nfmatchevents, quant.only=F, nmaxrlocsid=NULL, re
 		qmatchev = NULL
 	}
 	qn = c(qmatchev, ncomp) ; names(qn) = c(names(qmatchev), 'nb.reported.comp')
-	if (verbose) print(c(sprintf("%s ... done. quantiles:", nfmatchevents), qn) quote=F)
+	if (verbose) print(c(sprintf("%s ... done. quantiles:", nfmatchevents), qn), quote=F)
 	# can stop here
 	if (quant.only){ return( qn ) }
 	## get set of unique query lineages and can derive the total count of comparisons that could have been attempted
@@ -45,8 +45,10 @@ parseMatchEventFile = function(nfmatchevents, quant.only=F, nmaxrlocsid=NULL, re
 	## reduce the table to top hits
 	if (!is.null(top.val.cutoff)){
 		topmatchev = matchev[matchev$freq>=top.val.cutoff,]
+		topstr = sprintf("scores >= %.2g", top.val.cutoff)
 	}else{
 		topmatchev = matchev[matchev$freq>=qmatchev[as.character(top.quant.cutoff)],]
+		topstr = sprintf("top %.g", 1-top.quant.cutoff)
 	}
 	## can project results on a reference replicon map (the resulting matrix can be summed with those from other partial results)
 	if (!is.null(refrepliordlineages)){
@@ -59,7 +61,7 @@ parseMatchEventFile = function(nfmatchevents, quant.only=F, nmaxrlocsid=NULL, re
 			})
 		}))
 	}else{ matmatchev = NULL }
-	if (verbose){ print(sprintf("%s ... done. Top co-evolution scores:", nfmatchevents), quote=F) ; print(head(topmatchev)) ; print(sprintf("... (%d lines)", nrow(topmatchev))) }
+	if (verbose){ print(sprintf("%s ... done. Top co-evolution scores (%s):", nfmatchevents, topstr), quote=F) ; print(head(topmatchev)) ; print(sprintf("... (%d lines)", nrow(topmatchev))) }
 	return( list(quantiles=qmatchev, unique.query.rlocdsid=urlocdsid1, nb.reported.comp=ncomp, tot.comp=totcomp, top.matches=topmatchev, ref.repli.proj.mat=matmatchev) )
 }
 
@@ -90,7 +92,7 @@ plotHMevents = function(mat, matname, cap=99){
 #~ dirmatchevents = '/enterobac/PanteroDB_v0.3/07.compare_scenarios/bs_stem70_withinmedian35/replaceCCinGasinS-collapsePOPinSnotinG/ale_collapsed_undat/gene_event_matches_10253genes_06062018/plasmid2genefamily.mat_excl-transposases.NC_022651.1-centred_community_size13'
 #~ refrepli = 'NC_022651.1'
 #~ nfrefrepliordlineages = '/enterobac/PanteroDB_v0.3/07.compare_scenarios/bs_stem70_withinmedian35/replaceCCinGasinS-collapsePOPinSnotinG/ale_collapsed_undat/gene_event_matches_10253genes_06062018/plasmid2genefamily.mat_excl-transposases.NZ_CP008933.1-centred_community_size24/NC_022651.1_ordered_gene_lineage_products.tab'
-#~ nftopmatchlinedetails = '/enterobac/PanteroDB_v0.3/07.compare_scenarios/bs_stem70_withinmedian35/replaceCCinGasinS-collapsePOPinSnotinG/ale_collapsed_undat/gene_event_matches_10253genes_06062018/covered_10253genes_lineages.details'
+#~ nftoplinereprannot = '/enterobac/PanteroDB_v0.3/07.compare_scenarios/bs_stem70_withinmedian35/replaceCCinGasinS-collapsePOPinSnotinG/ale_collapsed_undat/gene_event_matches_10253genes_06062018/covered_10253genes_lineages.details'
 #~ nmaxrlocsid = 640228
 #~ opt = list()
 
@@ -104,14 +106,20 @@ spec = matrix(c(
   'output_prefix',      'p', 2, "character", "prefix for output files; default to the name of input match event folder",
   'quant_cutoff',       'q', 2, "double",    "cut-off fraction of co-evolution score distribution over which to to report top gene lineage associations",
   'score_cutoff',       's', 2, "double",    "cut-off co-evolution score over which to to report top gene lineage associations (bypass quantile computation)",
-  'load_quantiles',     'Q', 0, "character", "will attempt to load quantile information from R object archive file saved in a previous run; file must be named like `dir_match_events` argument value with prefix '.co-evolution_quantiles.RData', and contain a data.frame bearing the name `matchevdf` (bypass quantile computation)",
   'db_name',            'D', 2, "character", "name of database containing detailed gene annotation information, to be collated for top asocciated gene lineages",
   'db_type',            'T', 2, "character", "SQL database type; default to PostgreSQL",
   'db_host',            'H', 2, "character", "SQL database host; default to 'localhost' (only relevant for DB with client/server system, e.g. PostgreSQL, but not for file-based systems like SQLite)",
   'db_pw',              'W', 2, "character", "SQL database password; default to none",
   'db_user',            'U', 2, "character", "SQL database user; default to system user executing this script",
   'db_port',            'P', 2, "character", "SQL database port; default to 5432",
-  'threads',         't', 2, "integere",  "number of parrallel threads for input data processing (each process may use from 6 to 10 Gb when loading a 1 Gb table file)"
+  'threads',            't', 2, "integer",   "number of parrallel threads for input data processing (each process may use from 6 to 10 Gb when loading a 1 Gb table file)",
+  'verbose',            'v', 0, "logical",   "verbose mode",
+  'parse_max_files',    'X', 2, "integer",   "maximum number of files from input list that will actually be parsed (in order from the list)",
+  'load_quantiles',     'Q', 0, "logical",   "will attempt to load quantile information from R object archive file saved in a previous run; file must be named like `dir_match_events` argument value with prefix '.co-evolution_quantiles.RData', and contain a data.frame named `matchevdf` (bypass quantile computation)",
+  'load_top_ass',       'A', 0, "logical",   "will attempt to load top lineage association table from R object archive file saved in a previous run; file must be named like `dir_match_events` argument value with prefix '.top_association.RData', and contain a list named `lparsematchev` (bypass quantile computation and top association retrieval)",
+  'load_top_network',   'N', 0, "logical",   "will attempt to load top lineage association network from R object archive file saved in a previous run; file must be named like `dir_match_events` argument value with prefix '.top_association_network.RData', and contain a list named `lparsematchev` (bypass quantile computation, top association retrieval and graph computation)",
+  'load_up_to_step',    'L', 2, "integer",   "will attempt to load data from R object archive file saved during a previous run, up to the desired step (1:quantile computation; 2:top association retrieval; 3:top association graph computation; 4:top associated lineage annotation retrival from SQL db)",
+  'stop_after_step',    'Z', 2, "integer",   "will run until reaching the desired progress of computation, then quit (steps: quantile computation=1; top association retrieval=2; top association graph computation=3; top associated lineage annotation retrival from SQL db=4; plot top association network with metadata=5; plot heatmaps of lineages association intensity as projected on maps of selected replicons [end])"
 ), byrow=TRUE, ncol=5);
 opt = getopt(spec, opt=commandArgs(trailingOnly=T))
 
@@ -123,6 +131,9 @@ if ( is.null(opt$dir_match_events  ) ){
 patnfmatchevents = file.path(dirmatchevents, 'matching_events.tab*')
 #~ print(patnfmatchevents)
 lnfmatchevents = Sys.glob(patnfmatchevents)
+if (!is.null(opt$parse_max_files)){
+	lnfmatchevents = lnfmatchevents[1:opt$parse_max_files]
+}
 #~ print(head(lnfmatchevents))
 if (length(lnfmatchevents)>1){
 	lnfmatchevents = lnfmatchevents[order(as.numeric((sapply(strsplit(lnfmatchevents, split='\\.'), function(x){ x[length(x)] }))))]
@@ -161,16 +172,26 @@ if (is.null(opt$threads)){
 }else{
 	ncores = opt$threads
 }
-
+verbose = opt$verbose
+if (is.null(opt$stop_after_step)){
+	endscript = 10
+}else{
+	endscript = opt$stop_after_step
+}
+if (is.null(opt$load_up_to_step)){
+	loadup = 0
+}else{
+	loadup = opt$load_up_to_step
+}
 if (!is.null(qcutoff)){
 	nfsavematchev = paste(file.path(dirout, prefixout), 'co-evolution_quantiles.RData', sep='.')
-	if (opt$load_quantiles & file.exists(nfsavematchev)){
+	if ((opt$load_quantiles | loadup>=1) & file.exists(nfsavematchev)){
 		load(nfsavematchev)
 		print(sprintf("loaded quantiles of co-evolution score from pre-exesting file: '%s", nfsavematchev), quote=F)
 	}else{
-		### first pass: parse data to extract co-evolution score quantiles
+		### step 1: parse data to extract co-evolution score quantiles
 		print("will load lineage co-evolution score tables a first time to compute quantiles", quote=F)
-		lparsematchev = mclapply(lnfmatchevents, parseMatchEventFile, quant.only=T, top.quant.cutoff=qcutoff, mc.cores=ncores)
+		lparsematchev = mclapply(lnfmatchevents, parseMatchEventFile, quant.only=T, top.quant.cutoff=qcutoff, verbose=verbose, mc.cores=ncores)
 		names(lparsematchev) = basename(lnfmatchevents)
 
 		matchevdf = as.data.frame(t(simplify2array(lparsematchev)))
@@ -178,14 +199,21 @@ if (!is.null(qcutoff)){
 		save(matchevdf, file=nfsavematchev)
 		print(sprintf("saved quantiles of co-evolution score to file: '%s", nfsavematchev), quote=F)
 	}
-	pdf(paste(file.path(dirout, prefixout), 'associations_perfile.pdf', sep='.'), height=10, width=10)
-	layout(matrix(c(1,1,1,2), 1, 4, byrow=T))
 	q1 = as.character(0:100/100)
-	boxplot(lapply(q1, function(j){ matchevdf[,j] }), names=q1, xlab='quantiles', 'co-evolution score',
-	 main="distribution of co-evolution score\nacross samples")
 	q2 = colnames(matchevdf)[!(colnames(matchevdf) %in% c(q1, 'nb.reported.comp'))]
+	pdf(paste(file.path(dirout, prefixout), 'co-evolution_quantiles.pdf', sep='.'), height=6, width=10)
+	layout(matrix(c(1,1,1,2), 1, 4, byrow=T))
+	plot(y=quantile(unlist(matchevdf[,q1]), probs=as.numeric(q1), names=F), x=q1, xlab='quantiles', ylab='co-evolution score',
+	 main="distribution of co-evolution scores")
+	plot(y=apply(matchevdf[,q2], 2, mean), x=q2, xlab='quantiles', ylab='co-evolution score')
+	dev.off()
+	pdf(paste(file.path(dirout, prefixout), 'co-evolution_quantiles_perfile.pdf', sep='.'), height=6, width=10)
+	layout(matrix(c(1,1,1,2), 1, 4, byrow=T))
+	boxplot(lapply(q1, function(j){ matchevdf[,j] }), names=q1, xlab='quantiles', ylab='co-evolution score',
+	 main="distribution of co-evolution scores\nacross data partitions")
 	boxplot(lapply(q2, function(j){ matchevdf[,j] }), names=q2, xlab='quantiles')
 	dev.off()
+	
 
 	totrepcomp = sum(matchevdf[,'nb.reported.comp'])
 	avg.cutoff.val = sum(matchevdf[,as.character(qcutoff)]*matchevdf[,'nb.reported.comp'])/totrepcomp
@@ -193,86 +221,164 @@ if (!is.null(qcutoff)){
 #~ 	save(matchevdf, totrepcomp, avg.cutoff.val, file=paste(file.path(dirout, prefixout), 'co-evolution_quantiles.RData', sep='.'))
 
 	print(sprintf("found an average value of %f for quantiles at p=%f of empircal distribution of co-evolution scores over %g reported gene lineage comparisons (stored within %d separate files)",
-				   avg.cutoff.val, qcutoff, totrepcomp, length()), quote=F)
+				   avg.cutoff.val, qcutoff, totrepcomp, length(lnfmatchevents)), quote=F)
 	scutoff = avg.cutoff.val
 }
+if (endscript<=1){ quit(save='no') }
 
-### second pass: parse data to extract top co-evolution scores
-lparsematchev = mclapply(lnfmatchevents, parseMatchEventFile, comp.quant=F, top.val.cutoff=avg.cutoff.val, 
-                         refrepliordlineages=refrepliordlineages, mc.cores=ncores)
-save(lparsematchev, file=paste(file.path(dirout, prefixout), 'top_association.RData', sep='.'))
+### step 2: parse data to extract top co-evolution scores
+nftopass = paste(file.path(dirout, prefixout), 'top_associations.RData', sep='.')
+if ((opt$load_top_ass | loadup>=2) & file.exists(nftopass)){
+	load(nftopass)
+}else{
+	lparsematchev = mclapply(lnfmatchevents, parseMatchEventFile, comp.quant=F, top.val.cutoff=avg.cutoff.val, 
+						     refrepliordlineages=refrepliordlineages, verbose=verbose, mc.cores=ncores)
+	save(lparsematchev, file=nftopass)
+}
 topmatchev = lparsematchev[[1]]$top.matches
 for (i in 2:length(lparsematchev)){
 	topmatchev = rbind(topmatchev, lparsematchev[[i]]$top.matches)
 }
 write.table(topmatchev, file=paste(file.path(dirout, prefixout), 'top_associations.tab', sep='.'), sep='\t', row.names=F)
+if (endscript<=2){ quit(save='no') }
 
-# create network of gene lineage association
-graph_topmatchev = graph_from_data_frame(topmatchev, directed=F)
-save(graph_topmatchev, file=paste(file.path(dirout, prefixout), 'top_association_network.RData', sep='.'))
-pdf(file=paste(file.path(dirout, prefixout), 'top_association_network.pdf', sep='.'), height=30, width=30)
-plot(graph_topmatchev)
-dev.off()
+### step 3: create network of gene lineage association
+nftopassgraph = paste(file.path(dirout, prefixout), 'top_association_network.RData', sep='.')
+if ((opt$load_top_network | loadup>=3) & file.exists(nftopassgraph)){
+	load(nftopassgraph)
+}else{
+	graph_topmatchev = graph_from_data_frame(topmatchev, directed=F)
+	save(graph_topmatchev, file=nftopassgraph)
+}
+#~ pdf(file=paste(file.path(dirout, prefixout), 'top_association_network.pdf', sep='.'), height=30, width=30)
+#~ plot(graph_topmatchev)
+#~ dev.off()
+if (endscript<=3){ quit(save='no') }
 
-# collect detailed annotation data on top associated lineages
+### step 4: collect detailed annotation data on top associated lineages
 if (!is.null(opt$db_name)){
-	if (is.null(opt$db_type){ dbtype = "PostgreSQL" }else{ dbtype = opt$db_type }
-	if (grepl('postgres', dbtype, ignore.case=T){
-		library("RPostgreSQL")
-		dbdrv = dbDriver("PostgreSQL")
-		dbtype = "PostgreSQL"
-	}else{ if (grepl('sqlite', dbtype, ignore.case=T)){
-		library("RSQLite")
-		dbdrv = dbDriver("SQLite")
-		dbtype = "SQLite"
-	}else{ stop(sprintf("database system not supported: %s; please use either 'PostgreSQL' or 'SQLite'", dbtype)) }}
-	dbcon = dbConnect(dbdrv, 
-					  dbname   = opt$db_name,
-					  host     = ifelse(!is.null(opt$db_host), opt$db_host, "localhost"), 
-					  port     = ifelse(!is.null(opt$db_port), opt$db_port, 5432), 
-					  password = ifelse(!is.null(opt$db_password), opt$db_password, ''), 
-					  user     = ifelse(!is.null(opt$db_user), opt$db_user, Sys.info()["user"]))
-	u1 = unique(topmatchev$rlocdsid1)
-	u2 = unique(topmatchev$rlocdsid2)
-	u = intersect(u1, u2)
-	if (dbtype=="PostgreSQL"){ dbExecute(dbcon, "set search_path = genome , phylogeny;") }
+	nftopmatchevdetail = paste(file.path(dirout, prefixout), 'top_associations_annot.RData', sep='.')
+	if ((opt$load_top_annot | loadup>=4) & file.exists(nftopmatchevdetail)){
+		load(nftopmatchevdetail)
+	}else{
+		if (is.null(opt$db_type)){ dbtype = "PostgreSQL" }else{ dbtype = opt$db_type }
+		if (grepl('postgres', dbtype, ignore.case=T){
+			library("RPostgreSQL")
+			dbdrv = dbDriver("PostgreSQL")
+			dbtype = "PostgreSQL"
+		}else{ if (grepl('sqlite', dbtype, ignore.case=T)){
+			library("RSQLite")
+			dbdrv = dbDriver("SQLite")
+			dbtype = "SQLite"
+		}else{ stop(sprintf("database system not supported: %s; please use either 'PostgreSQL' or 'SQLite'", dbtype)) }}
+		dbcon = dbConnect(dbdrv, 
+						  dbname   = opt$db_name,
+						  host     = ifelse(!is.null(opt$db_host), opt$db_host, "localhost"), 
+						  port     = ifelse(!is.null(opt$db_port), opt$db_port, 5432), 
+						  password = ifelse(!is.null(opt$db_password), opt$db_password, ''), 
+						  user     = ifelse(!is.null(opt$db_user), opt$db_user, Sys.info()["user"]))
+		u1 = unique(topmatchev$rlocdsid1)
+		u2 = unique(topmatchev$rlocdsid2)
+		u = union(u1, u2)
+		if (dbtype=="PostgreSQL"){ dbExecute(dbcon, "set search_path = genome , phylogeny;") }
+		
+		dbExecute(dbcon, "create temp table toplineages (rlocds_id int); ")
+		dbWriteTable(dbcon, "toplineages", value = data.frame(rlocds_id=u), append=T, row.names=F)
+		
+		toplinereprannot = dbGetQuery(dbcon, "
+		select distinct rlocds_id, replacement_label_or_cds_code, max(product) as product, max(cds_code) as repr_cds_code,
+		 count(cds_code) as tot_lineage_freq, count(distinct assembly_id) as lineage_pres_freq, gene_family_id, size as fam_size, genome_present as fam_occurence,
+		 sum(case when replicon_type='chromosome' then 1 else 0 end) as count_chromosome, sum(case when replicon_type='plasmid' then 1 else 0 end) as count_plasmid
+		  from toplineages
+		  inner join replacement_label_or_cds_code2gene_families using (rlocds_id)
+		  inner join gene_tree_label2cds_code using (replacement_label_or_cds_code)
+		  inner join coding_sequences using (cds_code, gene_family_id)
+		  inner join proteins using (genbank_nr_protein_id)
+		  inner join replicons using (genomic_accession)
+		  inner join gene_family_sizes using (gene_family_id)
+		group by rlocds_id, replacement_label_or_cds_code, gene_family_id, size, genome_present 
+		order by repr_cds_code ;")
+		nb_genome = max(toplinereprannot$fam_occurence)
+		toplinereprannot$chromorplas = as.factor(ifelse(toplinereprannot$count_chromosome>0, ifelse(toplinereprannot$count_plasmid==0, 'chromosome', 'both'), ifelse(toplinereprannot$count_plasmid>0, 'plasmid', 'none')))
+		toplinereprannot$species_pop = as.factor(sapply(strsplit(as.character(toplinereprannot[,'replacement_label_or_cds_code']), split='_'), `[`, 1))
+		toplinereprannot$coreoracc = ifelse(toplinereprannot$fam_occurence >= nb_genome*0.98, "core", "accessory")
+		toplinereprannot$singmulti = ifelse((toplinereprannot$fam_size - toplinereprannot$fam_occurence)/toplinereprannot$fam_occurence <= 0.10, "single", "multi")
+		write.table(toplinereprannot, file=paste(file.path(dirout, prefixout), 'top_lineage_annot.tab', sep='.'), sep='\t', row.names=F)
+
+		topmatchevdetail = merge(merge(topmatchev, toplinereprannot, by.x='rlocdsid1', by.y='rlocds_id'), toplinereprannot, by.x='rlocdsid2', by.y='rlocds_id', suffixes=1:2)
+		topmatchevdetail = topmatchevdetail[order(topmatchevdetail$repr_cds_code1, topmatchevdetail$repr_cds_code2), ]
+		save(topmatchevdetail, file=nftopmatchevdetail)
+		write.table(topmatchevdetail, file=paste(file.path(dirout, prefixout), 'top_associations_repr_gene_annot.tab', sep='.'), sep='\t', row.names=F)
+		
+		toplinemultiannot = dbGetQuery(dbcon, "
+		select distinct rlocds_id, replacement_label_or_cds_code, cds_code, product, assembly_id, genomic_accession, replicon_type, replicon_size, cds_begin
+			  from toplineages
+			  inner join replacement_label_or_cds_code2gene_families using (rlocds_id)
+			  inner join gene_tree_label2cds_code using (replacement_label_or_cds_code)
+			  inner join coding_sequences using (cds_code)
+			  inner join proteins using (genbank_nr_protein_id)
+			  inner join replicons using (genomic_accession);")
+		repli.invar = c('assembly_id', 'genomic_accession', 'replicon_type', 'replicon_size')
+		# add the details of all genes represented in the lineages, but keep only rows where the associated genes are on the same replicon.
+		topmatchevmultidetail = merge(merge(topmatchev, toplinemultiannot, by.x='rlocdsid1', by.y='rlocds_id'),
+		                              toplinemultiannot, by.x=c('rlocdsid2', repli.invar), by.y=c('rlocds_id', repli.invar), suffixes=1:2)
+		topmatchevmultidetail = topmatchevmultidetail[order(topmatchevmultidetail$cds_code1, topmatchevmultidetail$cds_code2), c(repli.invar, sort(setdiff(colnames(topmatchevmultidetail), repli.invar)))]
+		topmatchevmultidetail$physical_dist = apply(topmatchevmultidetail[,c('cds_begin1', 'cds_begin2', 'replicon_size')], 1, function(x){
+			if (x[1] < x[2]){ a = x[1] ; b = x[2] }else{ b = x[1] ; a = x[2] }
+			min((b - a), (x[3] - b + a))
+		})
+		write.table(topmatchevmultidetail, file=paste(file.path(dirout, prefixout), 'top_associations_same-replicon_gene_annot.tab', sep='.'), sep='\t', row.names=F)
+		
+		dbExecute(dbcon, "drop table toplineages; ")
+	}
 	
-	dbExecute(dbcon, "create temp table toplineages (rlocds_id int); ")
-	dbWriteTable(dbcon, "toplineages", value = data.frame(rlocds_id=u), append=T, row.names=F)
 	
-	topmatchlinedetails = dbGetQuery(dbcon, "
-    select distinct rlocds_id, replacement_label_or_cds_code, max(product) as product, max(cds_code) as repr_cds_code
-      from toplineages
-      inner join replacement_label_or_cds_code2gene_families using (rlocds_id)
-      inner join gene_tree_label2cds_code using (replacement_label_or_cds_code)
-      inner join coding_sequences using (cds_code)
-      inner join proteins using (genbank_nr_protein_id)
-    group by rlocds_id, replacement_label_or_cds_code order by repr_cds_code ;")
-    
-    dbExecute(dbcon, "drop table toplineages; ")
+	if (endscript<=4){ quit(save='no') }
 	
-	topmatchevdetail = merge(merge(topmatchev, topmatchlinedetails, by.x='rlocdsid1', by.y='rlocds_id'), topmatchlinedetails, by.x='rlocdsid2', by.y='rlocds_id', suffixes=1:2)
-	topmatchevdetail = topmatchevdetail[order(topmatchevdetail$repr_cds_code1, topmatchevdetail$repr_cds_code2),c('rlocdsid1', 'rlocdsid2', 'freq', 'replacement_label_or_cds_code1', 'replacement_label_or_cds_code2', 'product1', 'product2', 'repr_cds_code1', 'repr_cds_code2')]
-	topmatchevdetail$species_pop1 = as.factor(sapply(strsplit(as.character(topmatchevdetail[,'replacement_label_or_cds_code1']), split='_'), `[`, 1))
-	topmatchevdetail$species_pop2 = as.factor(sapply(strsplit(as.character(topmatchevdetail[,'replacement_label_or_cds_code2']), split='_'), `[`, 1))
-	genome_cdspos1 = as.data.frame(t(simplify2array(strsplit(as.character(topmatchevdetail[,'repr_cds_code1']), split='_')))) ; colnames(genome_cdspos1) = c('genome1', 'cds_pos1')
-	genome_cdspos2 = as.data.frame(t(simplify2array(strsplit(as.character(topmatchevdetail[,'repr_cds_code2']), split='_')))) ; colnames(genome_cdspos2) = c('genome2', 'cds_pos2')
-	topmatchevdetail = cbind(topmatchevdetail, genome_cdspos1, genome_cdspos2)
-	write.table(topmatchevdetail, file=paste(file.path(dirout, prefixout), 'top_associations.detail.tab', sep='.'), sep='\t', row.names=F)
+	### step 5: plot network of top associated lineages along with associated metadata
 	
-	samegenometopmatches = topmatchevdetail[as.character(topmatchevdetail$genome1)==as.character(topmatchevdetail$genome2),]
-	pdf(paste(file.path(dirout, prefixout), 'same_genome_top_associations.jointfreq_vs_gene_dist.pdf', sep='.'), height=10, width=15)
-	plot(abs(as.numeric(samegenometopmatches$cds_pos1) - as.numeric(samegenometopmatches$cds_pos2)), samegenometopmatches$freq, xlab='gene-gene distance', ylab='Co-evolution score', main='Co-evolution score and inter-gene distance\n(lineages leading to genes residing in the same genome)')
+#~ 	graph_topmatchevdet = graph_from_data_frame(topmatchevdetail[,c('rlocdsid1', 'rlocdsid2')], directed=F)
+	
+	vertex_pop = as.factor(sapply(as.numeric(names(V(graph_topmatchev))), function(rlocdsid){
+		toplinereprannot[toplinereprannot$rlocds_id==rlocdsid,'species_pop']
+	}))
+	vertex_rep = as.factor(sapply(as.numeric(names(V(graph_topmatchev))), function(rlocdsid){
+		toplinereprannot[toplinereprannot$rlocds_id==rlocdsid,'chromorplas']
+	}))
+	vertex_famcopy = as.factor(sapply(as.numeric(names(V(graph_topmatchev))), function(rlocdsid){
+		toplinereprannot[toplinereprannot$rlocds_id==rlocdsid,'singmulti']
+	}))
+	vertex_fampan = as.factor(sapply(as.numeric(names(V(graph_topmatchev))), function(rlocdsid){
+		toplinereprannot[toplinereprannot$rlocds_id==rlocdsid,'coreoracc']
+	}))
+	colorpop = rainbow(nlevels(vertex_pop)) ; names(colorpop) = levels(vertex_pop)
+	shaperep = c("circle", "square", "csquare") ; names(shaperep) = c("chromosome", "plasmid", "both")
+	colorpan = c("black", "red") ; names(colorpan) = c("core", "accessory")
+	graph_topmatchev$color.pop = colorpop[as.character(vertex_pop)]
+	graph_topmatchev$shape.rep = shaperep[as.character(vertex_rep)]
+	graph_topmatchev$color.pan = colorpan[as.character(vertex_fampan)]
+	pdf(paste(file.path(dirout, prefixout), 'top_associations_population_colours.pdf', sep='.'), height=20, width=30)
+	plot(graph_topmatchev, vertex.color=graph_topmatchev$color.pop, vertex.shape=graph_topmatchev$shape.rep, vertex.label=NA, vertex.size=2.5, vertex.frame.color=graph_topmatchev$color.pan)
+	legend('topleft', legend=levels(vertex_pop), fill=colorpop, ncol=5)
 	dev.off()
 	
-	graph_topmatchevdet = graph_from_data_frame(topmatchevdetail[,c('repr_cds_code1', 'repr_cds_code2')], directed=F)
-	graph_topmatchevdet$color = rainbow(nlevels(topmatchevdetail$species_pop1))[as.integer(topmatchevdetail$species_pop1)]
-	pdf(paste(file.path(dirout, prefixout), 'top_associations_representative_host_colours.pdf', sep='.'), height=10, width=10)
-	plot(graph_topmatchevdet, vertex.color=graph_topmatchevdet$color, vertex.label=NA)
+#~ 	graph_topmatchev$color.repr = rainbow(nlevels(topmatchevdetail$repr_cds_code1))[as.integer(topmatchevdetail$repr_cds_code1)]
+#~ 	pdf(paste(file.path(dirout, prefixout), 'top_associations_representative_host_colours.pdf', sep='.'), height=10, width=10)
+#~ 	plot(graph_topmatchev, vertex.color=graph_topmatchev$color.repr, vertex.label=NA)
+#~ 	dev.off()
+
+	### step 5: plot relation between co-evolution scaore of top associated lineages and the physical or locus distance of their representatives on replicons
+	pdf(paste(file.path(dirout, prefixout), 'top_associations_same-replicon.jointfreq_vs_physical_dist.pdf', sep='.'), height=10, width=15)
+	plot(topmatchevmultidetail$physical_dist, topmatchevmultidetail$freq, xlab='physical distance', ylab='Co-evolution score', main='Co-evolution score and inter-gene distance\n(lineages leading to genes residing in the same genome)')
+	lmgenedistfreq = lm(topmatchevmultidetail$freq ~ topmatchevmultidetail$physical_dist)
+	abline(lmgenedistfreq, col='red')
+	print(summary(lmgenedistfreq))
 	dev.off()
 }
+if (endscript<=5){ quit(save='no') }
 
 
+### step 6: plot heatmap of lineages association intensity as projected on maps of selected replicons
 if (!is.null(refrepliordlineages)){
 	matmatchev = lparsematchev[[1]]$ref.repli.proj.mat
 	for (i in 2:length(lparsematchev)){
