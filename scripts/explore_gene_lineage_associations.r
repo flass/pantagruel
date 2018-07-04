@@ -123,6 +123,9 @@ spec = matrix(c(
 ), byrow=TRUE, ncol=5);
 opt = getopt(spec, opt=commandArgs(trailingOnly=T))
 
+print("options:", quote=F)
+print(opt)
+
 if ( is.null(opt$dir_match_events  ) ){ 
 	stop("path to input file folder required! please specify it through '--dir_match_events' option")  
 }else{ 
@@ -144,10 +147,10 @@ if ( is.null(opt$output_dir) ){
 }else{
 	dirout = opt$output_dir
 }
-if ( is.null(opt$output_repfix) ){ 
+if ( is.null(opt$output_prefix) ){ 
 	prefixout = basename(dirmatchevents)  
 }else{
-	prefixout = opt$output_repfix
+	prefixout = opt$output_prefix
 }
 qcutoff = scutoff = NULL
 if (is.null(opt$score_cutoff)){
@@ -183,9 +186,10 @@ if (is.null(opt$load_up_to_step)){
 }else{
 	loadup = opt$load_up_to_step
 }
+
 if (!is.null(qcutoff)){
 	nfsavematchev = paste(file.path(dirout, prefixout), 'co-evolution_quantiles.RData', sep='.')
-	if ((opt$load_quantiles | loadup>=1) & file.exists(nfsavematchev)){
+	if ((!is.null(opt$load_quantiles) | loadup>=1) & file.exists(nfsavematchev)){
 		load(nfsavematchev)
 		print(sprintf("loaded quantiles of co-evolution score from pre-exesting file: '%s", nfsavematchev), quote=F)
 	}else{
@@ -228,10 +232,10 @@ if (endscript<=1){ quit(save='no') }
 
 ### step 2: parse data to extract top co-evolution scores
 nftopass = paste(file.path(dirout, prefixout), 'top_associations.RData', sep='.')
-if ((opt$load_top_ass | loadup>=2) & file.exists(nftopass)){
+if ((!is.null(opt$load_top_ass) | loadup>=2) & file.exists(nftopass)){
 	load(nftopass)
 }else{
-	lparsematchev = mclapply(lnfmatchevents, parseMatchEventFile, comp.quant=F, top.val.cutoff=avg.cutoff.val, 
+	lparsematchev = mclapply(lnfmatchevents, parseMatchEventFile, comp.quant=F, top.val.cutoff=scutoff, 
 						     refrepliordlineages=refrepliordlineages, verbose=verbose, mc.cores=ncores)
 	save(lparsematchev, file=nftopass)
 }
@@ -244,7 +248,7 @@ if (endscript<=2){ quit(save='no') }
 
 ### step 3: create network of gene lineage association
 nftopassgraph = paste(file.path(dirout, prefixout), 'top_association_network.RData', sep='.')
-if ((opt$load_top_network | loadup>=3) & file.exists(nftopassgraph)){
+if ((!is.null(opt$load_top_network) | loadup>=3) & file.exists(nftopassgraph)){
 	load(nftopassgraph)
 }else{
 	graph_topmatchev = graph_from_data_frame(topmatchev, directed=F)
@@ -258,7 +262,7 @@ if (endscript<=3){ quit(save='no') }
 ### step 4: collect detailed annotation data on top associated lineages
 if (!is.null(opt$db_name)){
 	nftopmatchevdetail = paste(file.path(dirout, prefixout), 'top_associations_annot.RData', sep='.')
-	if ((opt$load_top_annot | loadup>=4) & file.exists(nftopmatchevdetail)){
+	if ((!is.null(opt$load_top_annot) | loadup>=4) & file.exists(nftopmatchevdetail)){
 		load(nftopmatchevdetail)
 	}else{
 		if (is.null(opt$db_type)){ dbtype = "PostgreSQL" }else{ dbtype = opt$db_type }
