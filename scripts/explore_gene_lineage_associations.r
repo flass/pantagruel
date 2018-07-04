@@ -5,6 +5,9 @@ library(igraph)
 library(getopt)
 library(parallel)
 library(RPostgreSQL)
+outannotcols = c('freq', sapply(1:2, function(i){ 
+	paste0( c("rlocdsid","replacement_label_or_cds_code","product","repr_cds_code","gene_family_id","tot_lineage_freq","chromorplas","species_pop","singmulti","coreoracc"), i)
+}))
 
 plotCoEvolQuantiles = function(qmatchev, detail.quant, sample.name=''){
 	layout(matrix(c(1,1,1,2), 1, 4, byrow=T))
@@ -243,6 +246,7 @@ topmatchev = lparsematchev[[1]]$top.matches
 for (i in 2:length(lparsematchev)){
 	topmatchev = rbind(topmatchev, lparsematchev[[i]]$top.matches)
 }
+rm(lparsematchev) ; gc()
 write.table(topmatchev, file=paste(file.path(dirout, prefixout), 'top_associations.tab', sep='.'), sep='\t', row.names=F)
 if (endscript<=2){ quit(save='no') }
 
@@ -266,7 +270,7 @@ if (!is.null(opt$db_name)){
 		load(nftopmatchevdetail)
 	}else{
 		if (is.null(opt$db_type)){ dbtype = "PostgreSQL" }else{ dbtype = opt$db_type }
-		if (grepl('postgres', dbtype, ignore.case=T){
+		if (grepl('postgres', dbtype, ignore.case=T)){
 			library("RPostgreSQL")
 			dbdrv = dbDriver("PostgreSQL")
 			dbtype = "PostgreSQL"
@@ -289,6 +293,7 @@ if (!is.null(opt$db_name)){
 		dbExecute(dbcon, "create temp table toplineages (rlocds_id int); ")
 		dbWriteTable(dbcon, "toplineages", value = data.frame(rlocds_id=u), append=T, row.names=F)
 		
+		# query annotations - 1 row / lineage, with a representative CDS
 		toplinereprannot = dbGetQuery(dbcon, "
 		select distinct rlocds_id, replacement_label_or_cds_code, max(product) as product, max(cds_code) as repr_cds_code,
 		 count(cds_code) as tot_lineage_freq, count(distinct assembly_id) as lineage_pres_freq, gene_family_id, size as fam_size, genome_present as fam_occurence,
@@ -310,10 +315,10 @@ if (!is.null(opt$db_name)){
 		write.table(toplinereprannot, file=paste(file.path(dirout, prefixout), 'top_lineage_annot.tab', sep='.'), sep='\t', row.names=F)
 
 		topmatchevdetail = merge(merge(topmatchev, toplinereprannot, by.x='rlocdsid1', by.y='rlocds_id'), toplinereprannot, by.x='rlocdsid2', by.y='rlocds_id', suffixes=1:2)
-		topmatchevdetail = topmatchevdetail[order(topmatchevdetail$repr_cds_code1, topmatchevdetail$repr_cds_code2), ]
-		save(topmatchevdetail, file=nftopmatchevdetail)
+		topmatchevdetail = topmatchevdetail[order(topmatchevdetail$repr_cds_code1, topmatchevdetail$repr_cds_code2), outannotcols]
 		write.table(topmatchevdetail, file=paste(file.path(dirout, prefixout), 'top_associations_repr_gene_annot.tab', sep='.'), sep='\t', row.names=F)
 		
+		# query annotations - for all CDS in the lineages
 		toplinemultiannot = dbGetQuery(dbcon, "
 		select distinct rlocds_id, replacement_label_or_cds_code, cds_code, product, assembly_id, genomic_accession, replicon_type, replicon_size, cds_begin
 			  from toplineages
@@ -322,6 +327,9 @@ if (!is.null(opt$db_name)){
 			  inner join coding_sequences using (cds_code)
 			  inner join proteins using (genbank_nr_protein_id)
 			  inner join replicons using (genomic_accession);")
+			  
+		dbExecute(dbcon, "drop table toplineages; ")
+		
 		repli.invar = c('assembly_id', 'genomic_accession', 'replicon_type', 'replicon_size')
 		# add the details of all genes represented in the lineages, but keep only rows where the associated genes are on the same replicon.
 		topmatchevmultidetail = merge(merge(topmatchev, toplinemultiannot, by.x='rlocdsid1', by.y='rlocds_id'),
@@ -333,15 +341,24 @@ if (!is.null(opt$db_name)){
 		})
 		write.table(topmatchevmultidetail, file=paste(file.path(dirout, prefixout), 'top_associations_same-replicon_gene_annot.tab', sep='.'), sep='\t', row.names=F)
 		
-		dbExecute(dbcon, "drop table toplineages; ")
+		# plot relation between co-evolution scaore of top associated lineages and the physical or locus distance of their representatives on replicons
+		pdf(paste(file.path(dirout, prefixout), 'top_associations_same-replicon.jointfreq_vs_physical_dist.pdf', sep='.'), height=10, width=15)
+		plot(topmatchevmultidetail$physical_dist, topmatchevmultidetail$freq, xlab='physical distance', ylab='Co-evolution score', main='Co-evolution score and inter-gene distance\n(lineages leading to genes residing in the same genome)')
+		lmgenedistfreq = lm(topmatchevmultidetail$freq ~ topmatchevmultidetail$physical_dist)
+		abline(lmgenedistfreq, col='red')
+		print(summary(lmgenedistfreq))
+		dev.off()
+		
+		save(toplinereprannot, topmatchevdetail, topmatchevmultidetail, lmgenedistfreq, file=nftopmatchevdetail)
 	}
-	
-	
-	if (endscript<=4){ quit(save='no') }
-	
-	### step 5: plot network of top associated lineages along with associated metadata
-	
-#~ 	graph_topmatchevdet = graph_from_data_frame(topmatchevdetail[,c('rlocdsid1', 'rlocdsid2')], directed=F)
+}
+if (endscript<=4){ quit(save='no') }
+
+nftopassannotgraph = paste(file.path(dirout, prefixout), 'top_association_annotated_network.RData', sep='.')
+if ((!is.null(opt$load_annot_graph) | loadup>=5) & file.exists(nftopassannotgraph)){
+	load(nftopassannotgraph)
+}else{
+	### step 5: compute and plot network of top associated lineages along with associated metadata
 	
 	vertex_pop = as.factor(sapply(as.numeric(names(V(graph_topmatchev))), function(rlocdsid){
 		toplinereprannot[toplinereprannot$rlocds_id==rlocdsid,'species_pop']
@@ -358,31 +375,61 @@ if (!is.null(opt$db_name)){
 	colorpop = rainbow(nlevels(vertex_pop)) ; names(colorpop) = levels(vertex_pop)
 	shaperep = c("circle", "square", "csquare") ; names(shaperep) = c("chromosome", "plasmid", "both")
 	colorpan = c("black", "red") ; names(colorpan) = c("core", "accessory")
-	graph_topmatchev$color.pop = colorpop[as.character(vertex_pop)]
-	graph_topmatchev$shape.rep = shaperep[as.character(vertex_rep)]
-	graph_topmatchev$color.pan = colorpan[as.character(vertex_fampan)]
-	pdf(paste(file.path(dirout, prefixout), 'top_associations_population_colours.pdf', sep='.'), height=20, width=30)
-	plot(graph_topmatchev, vertex.color=graph_topmatchev$color.pop, vertex.shape=graph_topmatchev$shape.rep, vertex.label=NA, vertex.size=2.5, vertex.frame.color=graph_topmatchev$color.pan)
-	legend('topleft', legend=levels(vertex_pop), fill=colorpop, ncol=5)
-	dev.off()
+	graph_topmatchev = set_vertex_attr(graph_topmatchev, "spe.pop", value=as.character(vertex_pop))
+	graph_topmatchev = set_vertex_attr(graph_topmatchev, "color.pop", value=colorpop[as.character(vertex_pop)])
+	graph_topmatchev = set_vertex_attr(graph_topmatchev, "repli.type", value=as.character(vertex_rep))
+	graph_topmatchev = set_vertex_attr(graph_topmatchev, "shape.rep", value=shaperep[as.character(vertex_rep)])
+	graph_topmatchev = set_vertex_attr(graph_topmatchev, "pang.fam.status", value=as.character(vertex_fampan))
+	graph_topmatchev = set_vertex_attr(graph_topmatchev, "color.pan", value=colorpan[as.character(vertex_fampan)])
+	graph_topmatchev = set_vertex_attr(graph_topmatchev, "nb.copy.fam", value=as.character(vertex_famcopy))
 	
-#~ 	graph_topmatchev$color.repr = rainbow(nlevels(topmatchevdetail$repr_cds_code1))[as.integer(topmatchevdetail$repr_cds_code1)]
-#~ 	pdf(paste(file.path(dirout, prefixout), 'top_associations_representative_host_colours.pdf', sep='.'), height=10, width=10)
-#~ 	plot(graph_topmatchev, vertex.color=graph_topmatchev$color.repr, vertex.label=NA)
-#~ 	dev.off()
-
-	### step 5: plot relation between co-evolution scaore of top associated lineages and the physical or locus distance of their representatives on replicons
-	pdf(paste(file.path(dirout, prefixout), 'top_associations_same-replicon.jointfreq_vs_physical_dist.pdf', sep='.'), height=10, width=15)
-	plot(topmatchevmultidetail$physical_dist, topmatchevmultidetail$freq, xlab='physical distance', ylab='Co-evolution score', main='Co-evolution score and inter-gene distance\n(lineages leading to genes residing in the same genome)')
-	lmgenedistfreq = lm(topmatchevmultidetail$freq ~ topmatchevmultidetail$physical_dist)
-	abline(lmgenedistfreq, col='red')
-	print(summary(lmgenedistfreq))
+	pdf(paste(file.path(dirout, prefixout), 'top_associations_network_population_colours.pdf', sep='.'), height=20, width=30)
+	plot(graph_topmatchev, vertex.color=vertex_attr(graph_topmatchev, "color.pop"), vertex.shape=vertex_attr(graph_topmatchev, "shape.rep"), vertex.label=NA, vertex.size=2.5, vertex.frame.color=graph_topmatchev$color.pan)
+	legend('topleft', legend=levels(vertex_pop), fill=colorpop, ncol=(nlevels(vertex_pop)%/%100)+1)
 	dev.off()
+
+	save(graph_topmatchev, colorpop, shaperep, colorpan, file=nftopassannotgraph)
 }
+
 if (endscript<=5){ quit(save='no') }
 
+### step 6: community analysis: clustering and plot 
 
-### step 6: plot heatmap of lineages association intensity as projected on maps of selected replicons
+communities_louvain_topmatchev = cluster_louvain(graph_topmatchev, weight=graph_topmatchev$freq)
+communities_fast_greedy_topmatchev = cluster_fast_greedy(graph_topmatchev, weight=graph_topmatchev$freq, merges=T, membership=T)
+#~ communities_edge_betweenness_topmatchev = cluster_edge_betweenness(graph_topmatchev, weight=graph_topmatchev$freq, merges=T, membership=T)
+communities_infomap_topmatchev = cluster_infomap(graph_topmatchev, e.weight=graph_topmatchev$freq)
+communities_label_prop_topmatchev = cluster_label_prop(graph_topmatchev, weight=graph_topmatchev$freq)
+
+comm.algos = c("louvain", "fast_greedy", "infomap", "label_prop")
+comm_topmatchev = lapply(comm.algos, function(a){ get(sprintf("communities_%s_topmatchev", a)) }) ; names(comm_topmatchev) = comm.algos
+comm.sizes = lapply(comm_topmatchev, function(comm){ sort(sapply(groups(comm), length)) })
+
+for (coma in comm.algos){
+	print(sprintf("plotting %s communities", coma))
+	dircoma = paste(file.path(dirout, prefixout), sprintf("top_associations_network-%s_communities", coma), sep='.')
+	dir.create(dircoma, showWarnings=F)
+	pdf(paste(file.path(dirout, prefixout), sprintf("top_associations_network-%s_communities_population_colours.pdf", coma), sep='.'), height=12, width=20)
+	comm = comm_topmatchev[[coma]]
+	for (icomg in 1:length(groups(comm))){
+		comg = groups(comm)[[icomg]]
+		sg = induced_subgraph(graph_topmatchev, comg)
+		plot(sg, vertex.color=vertex_attr(sg, "color.pop"), vertex.shape=vertex_attr(sg, "shape.rep"), vertex.label=NA, vertex.size=2.5, vertex.frame.color=sg$color.pan)
+		prespop = sort(unique(vertex_attr(sg, "spe.pop")))
+		legend('topleft', legend=prespop, fill=colorpop[prespop], ncol=(length(prespop)%/%20)+1)
+		
+		# save tables describing communities
+#~ 		submultiannot = toplinemultiannot[toplinemultiannot$rlocds_id %in% as.numeric(comg),]
+#~ 		submultidetail = merge(merge(topmatchev, submultiannot, by.x='rlocdsid1', by.y='rlocds_id'), submultiannot, by.x=c('rlocdsid2', repli.invar), by.y=c('rlocds_id', repli.invar), suffixes=1:2)
+		subreprannot = toplinereprannot[toplinereprannot$rlocds_id %in% as.numeric(comg),]
+		subreprdetail = merge(merge(topmatchev, subreprannot, by.x='rlocdsid1', by.y='rlocds_id'), subreprannot, by.x='rlocdsid2', by.y="rlocds_id", suffixes=1:2)
+		subreprdetail = subreprdetail[order(subreprdetail$repr_cds_code1, subreprdetail$repr_cds_code2), outannotcols]
+		write.table(subreprdetail, file=paste(file.path(dircoma, sprintf("top_associations_network-%s_community%d_repr_gene_annot.tab", coma, icomg))), sep='\t', row.names=F)
+	}
+	dev.off()
+}
+
+### step 7: plot heatmap of lineages association intensity as projected on maps of selected replicons
 if (!is.null(refrepliordlineages)){
 	matmatchev = lparsematchev[[1]]$ref.repli.proj.mat
 	for (i in 2:length(lparsematchev)){
