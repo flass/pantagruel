@@ -365,17 +365,21 @@ def _prune_nested_candidate_orthologs(leaflabs, lspe, extraspe, candidateOGs, re
 	verbose = kw.get('verbose')
 	orthologGroups = []
 	sleaflabs = set(leaflabs)
-	cOGs = [set(cOG) for cOG in candidateOGs if set(cOG) <= sleaflabs]
 	# score the last-gain defined OGs based on their capacity to remove the extra species or copies from the leaf set
 	sextraleaflabs = set([leaflab for leaflab in leaflabs if (getSpe(leaflab, sp0, sp1) in extraspe)])
-	cOGs.sort(key=lambda x: len(sextraleaflabs & x), reverse=True) # sort first the cOG with the hihest score of leaf set overlap
+	cOGs = []
+	for cOG in candidateOGs:
+		scOG = set(cOG)
+		if (scOG <= sleaflabs) and (scOG & sextraleaflabs):
+			cOGs.append(scOG)
+	cOGs.sort(key=lambda x: len(sextraleaflabs & x), reverse=True) # sort first the cOG with the highest score of leaf set overlap
 	clspe = copy.copy(lspe)
 	for k, cOG in enumerate(cOGs):
 		if verbose: print 'try substracting last-gain OG: %s'%repr(tuple(cOG))
 		for ll in cOG:
 			clspe.remove(getSpe(ll, sp0, sp1))
 		if refspetree: extraspe = getExtraNumerarySpe(clspe, ancclade)
-		else: extraspe = getExtraNumerarySpe(lspe)
+		else: extraspe = getExtraNumerarySpe(clspe)
 		if not extraspe:
 			# first add the retained last-gain OGs to the final list of OGs
 			orthologGroups += [tuple(sorted(cOG)) for cOG in cOGs[:(k+1)]]
