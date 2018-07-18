@@ -437,7 +437,7 @@ def _prune_orthologs_top_down(node, **kw):
 			if verbose: print 'U-OG!'
 		elif candidateOGs:
 			if verbose: print 'extraspe:', extraspe
-			OGs, rcOGs = _prune_nested_candidate_orthologs(leaflabs, lspe, extraspe, candidateOGs, **kw)
+			OGs, rcOGs = _prune_nested_candidate_orthologs(leaflabs, lspe, extraspe, **kw)
 			if OGs:
 				orthologGroups += OGs
 				candidateOGs = rcOGs
