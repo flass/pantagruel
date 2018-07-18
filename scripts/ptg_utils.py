@@ -4,6 +4,7 @@ import sys
 from Bio import File
 from Bio.Phylo import BaseTree, NewickIO, NexusIO, _io as PhyloIO
 from StringIO import StringIO
+from random import randint
 
 supported_formats = {'newick': NewickIO, 'nexus': NexusIO}
 
@@ -161,35 +162,56 @@ def parseMrBayesConstraints(lnfcons):
 					constraintclades[cla] = leaves
 	return constraintclades
 
-def colour_tree_with_constrained_clades(tree, constraints, palette=[], **kw):
-	"""paints constrained clades with a colour pallette; take a tree and a list of leaf sets as input.
-	
-	Paints the clades (i.e. all the branches at the stema and below a node) in a reverse order relative to input leaf set list,
-	as it is supposed to be the ouput of select_clades_on_conditions(..., order=2), explored from tips to root (post-order traversal),
-	gradually removing clades, which means ealier picked constrained clades can be nested in later ones. The later clades are thus 
-	painted fist, and then nested ealier clades are painted over.
-	
-	Palette defaults to a random RGB combination.
-	"""
-	#~ def colorWheel(i, n):
-		#~ assert i < n
-		#~ j = float(i)
-		#~ return tuple(int((256*((float(k)/3)+(j/n)))%256) for k in range(3))
-	def colorWheel():
-		return tuple(randint(0, 255) for k in range(3))
+#~ def colorWheel(i, n):
+	#~ assert i < n
+	#~ j = float(i)
+	#~ return tuple(int((256*((float(k)/3)+(j/n)))%256) for k in range(3))
+def colorWheel():
+	return tuple(randint(0, 255) for k in range(3))
 
-	if not palette:
-		# make up one colour palette
-		nc = len(constraints)
-		cols = [colorWheel() for i in range(nc)]
-	else:
-		cols = palette
+def colour_tree_parts(tree, **kw):
+	"""paints a tree with a colour pallette; take a tree and a list of leaf sets as input.
 	
-	for k, cons in enumerate(reversed(constraints)):
-		# start from the last assigned node constraint, so that ealier nested clades will be painted over at a further iteration
-		n = tree.mrca(cons)
-		for c in n.get_all_children():
-			c.edit_color(cols[k])
+	the painting method is defined by the name of argument the list of leaf sets is passed with:
+	'constraints' defines contraint clades:
+		Paints the clades (i.e. all the branches at the stema and below a node) 
+		in a reverse order relative to input leaf set list, as it is supposed 
+		to be the ouput of select_clades_on_conditions(..., order=2), explored 
+		from tips to root (post-order traversal), gradually removing clades, 
+		which means ealier picked constrained clades can be nested in later ones. 
+		The later clades are thus painted fist, and then nested ealier clades are 
+		painted over.
+	'leafgroups' defines arbitrary groups of leaves
+	
+	other optional keyword arguments:
+	'palette' defines the colour palette; if not specified, defaults to a random RGB combination.
+	'dalias' provides an optional alias dict to search for leaves in the tree.
+	"""
+	dalias = kw.get('dalias', {})
+	if ('constraints' in kw) and ('leafgroups' in kw):
+		raise ValueError, "cannot pass both arguments 'constraints' and 'leafgroups' at the same time"
+	leafsets = kw.get('constraints', kw.get('leafgroups'))
+	cols = kw.get('palette', [colorWheel() for i in range(len(leafsets))])	
+	if ('constraints' in kw):
+		for k, cons in enumerate(reversed(leafsets)):
+			# start from the last assigned node constraint, so that ealier nested clades will be painted over at a further iteration
+			n = tree.mrca([dalias.get(ll, ll) for ll in cons])
+			for c in n.get_all_children():
+				c.edit_color(cols[k])
+	elif ('leafgroups' in kw):
+		for k, lg in enumerate(leafsets):
+			for ll in lg:
+				tree[dalias.get(ll, ll)].edit_color(cols[k])
+	else:
+		raise ValueError, "need to pass on leaf set list through either 'constraints' or 'leafgroups' arguments"
+
+def colour_tree_with_constrained_clades(tree, constraints, **kw):
+	"""paints constrained clades with a colour pallette; take a tree and a list of leaf sets as input. cf. colour_tree_parts()."""
+	colour_tree_parts(tree, constraints=constraints, **kw)
+			
+def colour_tree_with_leaf_groups(tree, leafgroups, **kw):
+	"""paints arbitrary sets of leaves with a colour pallette; take a tree and a list of leaf sets as input. cf. colour_tree_parts()."""
+	colour_tree_parts(tree, leafgroups=leafgroups, **kw)
 
 ## BioPython-using functions
 

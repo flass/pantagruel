@@ -393,41 +393,48 @@ if ((!is.null(opt$load_annot_graph) | loadup>=5) & file.exists(nftopassannotgrap
 
 if (endscript<=5){ quit(save='no') }
 
-### step 6: community analysis: clustering and plot 
+nftopassannotcomm = paste(file.path(dirout, prefixout), 'top_association_annotated_network_communities.RData', sep='.')
+if ((!is.null(opt$load_annot_graph) | loadup>=6) & file.exists(nftopassannotcomm)){
+	load(nftopassannotcomm)
+}else{
+	### step 6: community analysis: clustering and plot 
 
-communities_louvain_topmatchev = cluster_louvain(graph_topmatchev, weight=graph_topmatchev$freq)
-communities_fast_greedy_topmatchev = cluster_fast_greedy(graph_topmatchev, weight=graph_topmatchev$freq, merges=T, membership=T)
-#~ communities_edge_betweenness_topmatchev = cluster_edge_betweenness(graph_topmatchev, weight=graph_topmatchev$freq, merges=T, membership=T)
-communities_infomap_topmatchev = cluster_infomap(graph_topmatchev, e.weight=graph_topmatchev$freq)
-communities_label_prop_topmatchev = cluster_label_prop(graph_topmatchev, weight=graph_topmatchev$freq)
+	communities_louvain_topmatchev = cluster_louvain(graph_topmatchev, weight=graph_topmatchev$freq)
+	communities_fast_greedy_topmatchev = cluster_fast_greedy(graph_topmatchev, weight=graph_topmatchev$freq, merges=T, membership=T)
+	#~ communities_edge_betweenness_topmatchev = cluster_edge_betweenness(graph_topmatchev, weight=graph_topmatchev$freq, merges=T, membership=T)
+	communities_infomap_topmatchev = cluster_infomap(graph_topmatchev, e.weight=graph_topmatchev$freq)
+	communities_label_prop_topmatchev = cluster_label_prop(graph_topmatchev, weight=graph_topmatchev$freq)
 
-comm.algos = c("louvain", "fast_greedy", "infomap", "label_prop")
-comm_topmatchev = lapply(comm.algos, function(a){ get(sprintf("communities_%s_topmatchev", a)) }) ; names(comm_topmatchev) = comm.algos
-comm.sizes = lapply(comm_topmatchev, function(comm){ sort(sapply(groups(comm), length)) })
+	comm.algos = c("louvain", "fast_greedy", "infomap", "label_prop")
+	comm_topmatchev = lapply(comm.algos, function(a){ get(sprintf("communities_%s_topmatchev", a)) }) ; names(comm_topmatchev) = comm.algos
+	comm.sizes = lapply(comm_topmatchev, function(comm){ sort(sapply(groups(comm), length)) })
 
-for (coma in comm.algos){
-	print(sprintf("plotting %s communities", coma))
-	dircoma = paste(file.path(dirout, prefixout), sprintf("top_associations_network-%s_communities", coma), sep='.')
-	dir.create(dircoma, showWarnings=F)
-	pdf(paste(file.path(dirout, prefixout), sprintf("top_associations_network-%s_communities_population_colours.pdf", coma), sep='.'), height=12, width=20)
-	comm = comm_topmatchev[[coma]]
-	for (icomg in 1:length(groups(comm))){
-		comg = groups(comm)[[icomg]]
-		sg = induced_subgraph(graph_topmatchev, comg)
-		plot(sg, vertex.color=vertex_attr(sg, "color.pop"), vertex.shape=vertex_attr(sg, "shape.rep"), vertex.label=NA, vertex.size=2.5, vertex.frame.color=sg$color.pan)
-		prespop = sort(unique(vertex_attr(sg, "spe.pop")))
-		legend('topleft', legend=prespop, fill=colorpop[prespop], ncol=(length(prespop)%/%20)+1)
-		
-		# save tables describing communities
-#~ 		submultiannot = toplinemultiannot[toplinemultiannot$rlocds_id %in% as.numeric(comg),]
-#~ 		submultidetail = merge(merge(topmatchev, submultiannot, by.x='rlocdsid1', by.y='rlocds_id'), submultiannot, by.x=c('rlocdsid2', repli.invar), by.y=c('rlocds_id', repli.invar), suffixes=1:2)
-		subreprannot = toplinereprannot[toplinereprannot$rlocds_id %in% as.numeric(comg),]
-		subreprdetail = merge(merge(topmatchev, subreprannot, by.x='rlocdsid1', by.y='rlocds_id'), subreprannot, by.x='rlocdsid2', by.y="rlocds_id", suffixes=1:2)
-		subreprdetail = subreprdetail[order(subreprdetail$repr_cds_code1, subreprdetail$repr_cds_code2), outannotcols]
-		write.table(subreprdetail, file=paste(file.path(dircoma, sprintf("top_associations_network-%s_community%d_repr_gene_annot.tab", coma, icomg))), sep='\t', row.names=F)
+	for (coma in comm.algos){
+		print(sprintf("plotting %s communities", coma))
+		dircoma = paste(file.path(dirout, prefixout), sprintf("top_associations_network-%s_communities", coma), sep='.')
+		dir.create(dircoma, showWarnings=F)
+		pdf(paste(file.path(dirout, prefixout), sprintf("top_associations_network-%s_communities_population_colours.pdf", coma), sep='.'), height=12, width=20)
+		comm = comm_topmatchev[[coma]]
+		for (icomg in 1:length(groups(comm))){
+			comg = groups(comm)[[icomg]]
+			sg = induced_subgraph(graph_topmatchev, comg)
+			plot(sg, vertex.color=vertex_attr(sg, "color.pop"), vertex.shape=vertex_attr(sg, "shape.rep"), vertex.label=NA, vertex.size=2.5, vertex.frame.color=sg$color.pan)
+			prespop = sort(unique(vertex_attr(sg, "spe.pop")))
+			legend('topleft', legend=prespop, fill=colorpop[prespop], ncol=(length(prespop)%/%20)+1)
+			
+			# save tables describing communities
+	#~ 		submultiannot = toplinemultiannot[toplinemultiannot$rlocds_id %in% as.numeric(comg),]
+	#~ 		submultidetail = merge(merge(topmatchev, submultiannot, by.x='rlocdsid1', by.y='rlocds_id'), submultiannot, by.x=c('rlocdsid2', repli.invar), by.y=c('rlocds_id', repli.invar), suffixes=1:2)
+			subreprannot = toplinereprannot[toplinereprannot$rlocds_id %in% as.numeric(comg),]
+			subreprdetail = merge(merge(topmatchev, subreprannot, by.x='rlocdsid1', by.y='rlocds_id'), subreprannot, by.x='rlocdsid2', by.y="rlocds_id", suffixes=1:2)
+			subreprdetail = subreprdetail[order(subreprdetail$repr_cds_code1, subreprdetail$repr_cds_code2), outannotcols]
+			write.table(subreprdetail, file=paste(file.path(dircoma, sprintf("top_associations_network-%s_community%d_repr_gene_annot.tab", coma, icomg))), sep='\t', row.names=F)
+		}
+		dev.off()
 	}
-	dev.off()
+	save(comm_topmatchev, file=nftopassannotcomm)
 }
+if (endscript<=6){ quit(save='no') }
 
 ### step 7: plot heatmap of lineages association intensity as projected on maps of selected replicons
 if (!is.null(refrepliordlineages)){
