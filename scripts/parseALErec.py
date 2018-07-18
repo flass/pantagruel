@@ -415,6 +415,7 @@ def _prune_orthologs_top_down(node, **kw):
 	refspetree = kw.get('refspetree')
 	candidateOGs = kw.get('candidateOGs')
 	verbose = kw.get('verbose')
+	if verbose and candidateOGs: print 'using mixed criterion'
 	if not dlabs:	
 		# first establish the dictionary of actual leaf lables, without the trailing event chain
 		for leaflabevchain in node.iter_leaf_labels():
@@ -435,7 +436,8 @@ def _prune_orthologs_top_down(node, **kw):
 			orthologGroups.append(ortho)
 			if verbose: print 'U-OG!'
 		elif candidateOGs:
-			OGs, rcOGs = _prune_nested_candidate_orthologs(leaflabs, lspe, extraspe, candidateOGs)
+			if verbose: print 'extraspe:' extraspe
+			OGs, rcOGs = _prune_nested_candidate_orthologs(leaflabs, lspe, extraspe, candidateOGs, **kw)
 			if OGs:
 				orthologGroups += OGs
 				candidateOGs = rcOGs
@@ -460,7 +462,8 @@ def _prune_orthologs_top_down(node, **kw):
 				if verbose: print 'U-OG!'
 				break # for event loop
 			elif candidateOGs:
-				OGs, rcOGs = _prune_nested_candidate_orthologs(leaflabs, lspe, extraspe, candidateOGs, refspetree=refspetree, anclade=anclade)
+				if verbose: print 'extraspe:' extraspe
+				OGs, rcOGs = _prune_nested_candidate_orthologs(leaflabs, lspe, extraspe, candidateOGs, refspetree=refspetree, anclade=anclade, **kw)
 				if OGs:
 					orthologGroups += OGs
 					candidateOGs = rcOGs
@@ -469,7 +472,7 @@ def _prune_orthologs_top_down(node, **kw):
 	if extraspe:
 		# if did not find the clade to be an orthologous group, recurse down the tree:
 		for child in node.children:
-			for arg in ('orthologGroups', 'dlabs'): kw[arg] = eval(arg)
+			for arg in ('orthologGroups', 'dlabs', 'candidateOGs'): kw[arg] = eval(arg)
 			orthologGroups, dlabs = _prune_orthologs_top_down(child, **kw)
 	return orthologGroups, dlabs
 

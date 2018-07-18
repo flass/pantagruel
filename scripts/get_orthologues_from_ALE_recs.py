@@ -59,7 +59,7 @@ for nfrec in lnfrec:
 	print "overlap strict_ogs with mixed_ogs:", o13
 	print "overlap unicopy_ogs with mixed_ogs:", o23
 	
-	foutdiffog.write('\t%s\t%d\t%d\t%d\t%d\t%d\t%d\n'%(fam, n1, n2, n3, o12, o13, o23))
+	foutdiffog.write('%s\t%d\t%d\t%d\t%d\t%d\t%d\n'%(fam, n1, n2, n3, o12, o13, o23))
 	
 	for node in recgenetree:
 		if node.is_leaf():
@@ -70,7 +70,7 @@ for nfrec in lnfrec:
 	for method, ogs in dogs.iteritems():
 		ptg.colour_tree_with_leaf_groups(recgenetree, ogs)
 		#~ ptg.colour_tree_with_constrained_clades(recgenetree, ogs)
-		nfoutrad = os.path.join(outortdir, method, "%s_%s"%(fam, method)
+		nfoutrad = os.path.join(outortdir, method, "%s_%s"%(fam, method))
 		recgenetree.write_nexus(nfoutrad+"_orthologous_groups.nex", ignoreBS=True)
 		with open(nfoutrad+".orthologs", 'w') as foutort:
 			foutort.write('\n'.join([' '.join(x) for x in ogs])+'\n')
