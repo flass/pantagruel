@@ -15,7 +15,7 @@ for d in methods:
 		os.mkdir(pd)
 
 foutdiffog = open(os.path.join(outortdir, 'diff_ortho_methods'), 'w')
-foutdiffog.write('\t'.join(['family', 'nOG_strict', 'nOG_unicopy', 'nOG_mixed', 'overlap_strict_unicopy', 'overlap_strict_mixed', 'overlap_unicopy_mixed')+'\n')
+foutdiffog.write('\t'.join(['family', 'nOG_strict', 'nOG_unicopy', 'nOG_mixed', 'overlap_strict_unicopy', 'overlap_strict_mixed', 'overlap_unicopy_mixed'])+'\n')
 
 #~ refspetree = tree2.AnnotatedNode(file='%s/ref_species_tree_41NeoPseudo_dated.nhx'%alerecdir, namesAsNum=True)
 
@@ -31,14 +31,14 @@ def summaryOGs(ogs, dlabs, N):
 lnfrec = glob.glob('%s/*ale.ml_rec'%(alerecdir))
 for nfrec in lnfrec:
 	fam = os.path.basename(nfrec).split('-', 1)[0]
-	
+	print fam
 	# just sample the first tree
 	with open(nfrec, 'r') as frec:
 		for i in range(12): frec.readline()
 		recgtline = frec.readline()
 		recgenetree = tree2.AnnotatedNode(nwk=recgtline, namesAsNum=True)
 	#~ spetree, subspetree, lrecgt, recgtlines, restrictlabs, dnodeevt = parseALERecFile(nfrec, skipEventFreq=True)
-		
+	print recgenetree
 	print "\n# # # #\n"
 	N = recgenetree.nb_leaves()
 	print "strict_ogs"
@@ -50,7 +50,7 @@ for nfrec in lnfrec:
 	n2 = summaryOGs(unicopy_ogs, dlabs2, N)
 	print "\n# # # #\n"
 	print "mixed_ogs"
-	mixed_ogs, dlabs3 = getOrthologues(recgenetree, ALEmodel='dated', method='mixed', verbose=True) #, refspetree=refspetree
+	mixed_ogs, dlabs3 = getOrthologues(recgenetree, ALEmodel='dated', method='mixed', gain_ogs=strict_ogs, verbose=True) #, refspetree=refspetree
 	n3 = summaryOGs(mixed_ogs, dlabs3, N)
 	o12 = sum([int(o in strict_ogs) for o in unicopy_ogs])
 	o13 = sum([int(o in strict_ogs) for o in mixed_ogs])
@@ -70,8 +70,9 @@ for nfrec in lnfrec:
 	for method, ogs in dogs.iteritems():
 		ptg.colour_tree_with_leaf_groups(recgenetree, ogs)
 		#~ ptg.colour_tree_with_constrained_clades(recgenetree, ogs)
-		recgenetree.write_nexus(nftree.replace(".nhx", "_%s_orthologous_groups.nex"%method), ignoreBS=True)
-		with open(os.path.join(outortdir, method, "%s_%s.orthologs"%(fam, method), 'w') as foutort:
+		nfoutrad = os.path.join(outortdir, method, "%s_%s"%(fam, method)
+		recgenetree.write_nexus(nfoutrad+"_orthologous_groups.nex", ignoreBS=True)
+		with open(nfoutrad+".orthologs", 'w') as foutort:
 			foutort.write('\n'.join([' '.join(x) for x in ogs])+'\n')
 	
 	print "\n# # # # # # # #\n # # # # # # # \n"

@@ -200,22 +200,12 @@ def splitSingleDatedEvent(nodelab, isleaf=False, verbose=False, **kw):
 	
 	if isleaf=True, assumes the branch led to a leaf, and the leaf label is yielded as the last item.
 	"""
-	if isleaf:
-		leaflab = extractLabelfromDatedEventLeaf(nodelab)
-		# remove leaf label prefix before parsing (possible) trailing event chain
-		s = nodelab[len(leaflab):]
-		if verbose>1: print 'leaflab: %s;'%leaflab,
-	else:
-		s = nodelab
-	if verbose>1: print 'events:',
-	while s:
-		reception = False
-		# process separators in order
+	def process_event(s):
+		# process possible event separators in order
 		if s.startswith('.T@'):
 			# immeadiate transfer-loss (should be only present on the beginning of the event chain)
 			# emission of transfer by donor followed by loss of resident copy; just changes species identity of the gene tree branch (from donor to recipent species)
 			# will be followed by transfer reception event
-			reception = True
 			thisev = 3
 			evtype = 'TdL'
 		elif s.startswith('.'):
@@ -238,10 +228,6 @@ def splitSingleDatedEvent(nodelab, isleaf=False, verbose=False, **kw):
 			# duplication = gain
 			thisev = 2
 			evtype = 'D'
-		elif isleaf:
-			# final speciation
-			evtype = 'S'
-			thisev = 0
 		else:
 			raise ValueError
 		nextev = findNextDatedEventSlice(s[thisev:]) #, receptionOK=reception)
@@ -260,9 +246,29 @@ def splitSingleDatedEvent(nodelab, isleaf=False, verbose=False, **kw):
 			evdate = evlocdate
 		else:
 			evdate, evloc = evlocdate.split('|')
+		return s, evtype, evloc, int(evdate)
+	
+	# initiate
+	if isleaf:
+		leaflab = extractLabelfromDatedEventLeaf(nodelab)
+		# remove leaf label prefix before parsing (possible) trailing event chain
+		s = nodelab[len(leaflab):]
+		if verbose>1: print 'leaflab: %s;'%leaflab,
+	else:
+		s = nodelab
+	# parse string describing the event chain
+	if verbose>1: print 'events:',
+	while s:
+		s, evtype, evloc, evdate = process_event(s)
 		yield (evtype, evloc, evdate)
 		if verbose>1: print (evtype, evloc, evdate),
 	if isleaf:
+		# add the final speciation
+		evtype = 'S'
+		evdate = 0
+		evloc = leaflab
+		yield (evtype, evloc, evdate)
+		if verbose>1: print 'leaflab: %s;'%leaflab,
 		# last yield
 		yield leaflab
 	if verbose>1: print ''
@@ -286,7 +292,7 @@ def splitEventChain(nodelab, isleaf=False, ALEmodel='dated', **kw):
 	return (lineage, leaflab)
 
 def _prune_orthologs_bottom_up(node, ALEmodel='dated', **kw):
-	"""strict definition of ortholous groups: only those related by a line of speciation events (no transfer, no duplication) are orthologs"""
+	"""'last-gain' (strict) definition of ortholous groups: only those genes related by a line of speciation events (no transfer, no duplication) are orthologs"""
 	# initiate at root
 	unclassified = set([])
 	orthologGroups = kw.get('orthologGroups', [])
@@ -332,14 +338,58 @@ def _prune_orthologs_bottom_up(node, ALEmodel='dated', **kw):
 			unclassified = set([])
 			if verbose: print 'D-OG! D-OG!'
 			break # for event loop
-	if verbose: print "unclassified:", unclassified
+	#~ if verbose: print "unclassified:", unclassified
 	if node.is_root():
 		# any remaining unclassified leaf is to be alloacted to a backbone orthologous group
-		# (= gene lineage unaffected by transfers since the origin of the family)
+		# (= paraphyletic gene lineage unaffected by transfers since the origin of the family)
 			ortho = tuple(sorted(unclassified))
 			orthologGroups.append(ortho)
 			if verbose: print 'backbone OG!'
 	return orthologGroups, unclassified, dlabs
+
+def getSpe(lab, sp0, sp1):
+	return lab.split(sp0, sp1)[0]
+
+def getExtraNumerarySpe(lspe, ancclade=[]):
+	sspe = set(lspe)
+	if ancclade: baselist = ancclade
+	else: baselist = list(sspe)
+	return reduce(lambda x,y: x+y, [[spe]*(lspe.count(spe) - baselist.count(spe)) for spe in sspe], [])
+
+def _prune_nested_candidate_orthologs(leaflabs, lspe, extraspe, candidateOGs, refspetree=None, anclade=None, **kw):
+	""""""
+	# first filter out the last-gain defined OGs that do not map completely under this clade 
+	# this is to remove a potential "backbone" OG = extremely paraphyletic group 
+	# that is the remainder of the tree after the removal of all others last-gain OGs
+	sp0, sp1 = kw.get('splitparam', ('_',1))
+	verbose = kw.get('verbose')
+	orthologGroups = []
+	sleaflabs = set(leaflabs)
+	cOGs = [set(cOG) for cOG in candidateOGs if set(cOG) <= sleaflabs]
+	# score the last-gain defined OGs based on their capacity to remove the extra species or copies from the leaf set
+	sextraleaflabs = set([leaflab for leaflab in leaflabs if (getSpe(leaflab, sp0, sp1) in extraspe)])
+	cOGs.sort(key=lambda x: len(sextraleaflabs & x), reverse=True) # sort first the cOG with the hihest score of leaf set overlap
+	clspe = copy.copy(lspe)
+	for k, cOG in enumerate(cOGs):
+		if verbose: print 'try substracting last-gain OG: %s'%repr(tuple(cOG))
+		for ll in cOG:
+			clspe.remove(getSpe(ll, sp0, sp1))
+		if refspetree: extraspe = getExtraNumerarySpe(clspe, ancclade)
+		else: extraspe = getExtraNumerarySpe(lspe)
+		if not extraspe:
+			# first add the retained last-gain OGs to the final list of OGs
+			orthologGroups += [tuple(sorted(cOG)) for cOG in cOGs[:(k+1)]]
+			# then substract them from the current clade
+			for cOG in cOGs[:(k+1)]:
+				sleaflabs -= cOG
+			ortho = tuple(sorted(sleaflabs))
+			orthologGroups.append(ortho)
+			if verbose: print 'U-OG! - '+' '.join(['G-OG!']*(k+1))
+			rcOGs = [cOG for cOG in candidateOGs if (not cOG in orthologGroups)]
+			break # for cOG loop
+	else:
+		rcOGs = candidateOGs
+	return orthologGroups, rcOGs
 
 def _prune_orthologs_top_down(node, **kw):
 	"""from a ALE-reconciled gene tree, return a list of orthologous groups and the dict of leaf labels to the actual gene sequence name (removing the trailing annotation of event chain)
@@ -361,7 +411,7 @@ def _prune_orthologs_top_down(node, **kw):
 	# # # # initiate paramaters
 	orthologGroups = kw.get('orthologGroups', [])
 	dlabs = kw.get('dlabs', {})
-	splitparam0, splitparam1 = kw.get('splitparam', ('_',1))
+	sp0, sp1 = kw.get('splitparam', ('_',1))
 	refspetree = kw.get('refspetree')
 	candidateOGs = kw.get('candidateOGs')
 	verbose = kw.get('verbose')
@@ -369,120 +419,108 @@ def _prune_orthologs_top_down(node, **kw):
 		# first establish the dictionary of actual leaf lables, without the trailing event chain
 		for leaflabevchain in node.iter_leaf_labels():
 			dlabs[leaflabevchain] = extractLabelfromDatedEventLeaf(leaflabevchain)
-	# # # # functions
-	def getSpe(lab):
-		return lab.split(splitparam0, splitparam1)[0]
-	def getExtraNumeralSpe(lspe, ancclade=[]):
-		sspe = set(lspe)
-		if ancclade: baselist = ancclade
-		else: baselist = list(sspe)
-		return reduce(lambda x,y: x+y, [[spe]*(lspe.count(spe) - baselist.count(spe)) for spe in sspe], [])
+	
 	# # # # test at current node
 	nodelab = node.label()
 	if not nodelab: raise ValueError, "unannotated node:\n%s"%str(node)
 	print repr(node)+';', ('leaf' if node.is_leaf() else 'internal')+';',
 	leaflabs = [dlabs[leaflabevchain] for leaflabevchain in node.iter_leaf_labels()]
-	lspe = [getSpe(leaflab) for leaflab in leaflabs]
-	lineage, leaflab = splitEventChain(nodelab, isleaf=node.is_leaf(), **kw)
-	# list of events goes BACKWARD in time when read left-to-right
-	for event in lineage:
-		# latest event primes
-		evtype, evloc, evdate = event
-		if evtype in {'Td', 'TdL'}: 
-			# emissionof transfer: irrelevant to gene content of the clade below this ancestor
-			continue # the for event loop
-		if refspetree:
-			speanc = refspetree[evloc]
-			assert isinstance(speanc, tree2.Node)
-			if verbose: print 'evaluate orthology under ancestor:', evloc
-			ancclade = speanc.get_leaf_labels()
-			extraspe = getExtraNumeralSpe(lspe, ancclade)
-		else:
-			if verbose: print 'evaluate orthology under event:', nodelab
-			extraspe = getExtraNumeralSpe(lspe)
+	lspe = [getSpe(leaflab, sp0, sp1) for leaflab in leaflabs]
+	extraspe = True # initiate
+	if not refspetree:
+		if verbose: print 'evaluate orthology under gene tree node', nodelab
+		extraspe = getExtraNumerarySpe(lspe)
 		if not extraspe:
 			ortho = tuple(sorted(leaflabs))
 			orthologGroups.append(ortho)
 			if verbose: print 'U-OG!'
-			break # for event loop
 		elif candidateOGs:
-			# filter out the strictly defined OGs that do not map completely under this clade 
-			# this is to remove a potential "backbone" OG = extremely paraphyletic group 
-			# that is the remainder of the tree after the removal of all others strict OGs
-			sleaflabs = set(leaflabs)
-			cOGs = [set(cOG) for cOG in candidateOGs if set(cOG) <= sleaflabs]
-			# score the strictly defined OGs based on their capacity to remove the extra species or copies from the leaf set
-			sextraleaflabs = set([leaflab for leaflab in leaflabs if (getSpe(leaflab) in extraspe)])
-			cOGs.sort(key=lambda x: len(sextraleaflabs & x), reverse=True) # sort first the cOG with the hihest score of leaf set overlap
-			clspe = copy.copy(lspe)
-			for k, cOG in enumerate(cOGs):
-				if verbose: print 'try substracting strict OG: %s'%repr(tuple(cOG))
-				for ll in cOG:
-					print ll, getSpe(ll)
-					clspe.remove(getSpe(ll))
-				if refspetree: extraspe = getExtraNumeralSpe(clspe, ancclade)
-				else: extraspe = getExtraNumeralSpe(lspe)
-				if not extraspe:
-					# first add the retained strict OGs to the final list of OGs
-					orthologGroups += [tuple(sorted(cOG)) for cOG in cOGs[:(k+1)]]
-					# then substract them from the current clade
-					for cOG in cOGs[:(k+1)]:
-						sleaflabs -= cOG
-					ortho = tuple(sorted(sleaflabs))
-					orthologGroups.append(ortho)
-					if verbose: print 'U-OG! - '+' '.join(['G-OG!']*(k+1))
-					break # for cOG loop
-			else:
-				continue # for event loop
-			break # for event loop if broke for cOG loop
+			OGs, rcOGs = _prune_nested_candidate_orthologs(leaflabs, lspe, extraspe, candidateOGs)
+			if OGs:
+				orthologGroups += OGs
+				candidateOGs = rcOGs
+				extraspe = []
 	else:
+		lineage, tiplab = splitEventChain(nodelab, isleaf=node.is_leaf(), **kw)
+		# list of events goes BACKWARD in time when read left-to-right
+		for event in lineage:
+			# latest event primes
+			evtype, evloc, evdate = event
+			if evtype in {'Td', 'TdL'}: 
+				# emission of transfer: irrelevant to gene content of the clade below this ancestor
+				continue # the for event loop
+			speanc = refspetree[evloc]
+			assert isinstance(speanc, tree2.Node)
+			if verbose: print 'evaluate orthology under gene tree event', evtype, 'at ancestor', evloc
+			ancclade = speanc.get_leaf_labels()
+			extraspe = getExtraNumerarySpe(lspe, ancclade)
+			if not extraspe:
+				ortho = tuple(sorted(leaflabs))
+				orthologGroups.append(ortho)
+				if verbose: print 'U-OG!'
+				break # for event loop
+			elif candidateOGs:
+				OGs, rcOGs = _prune_nested_candidate_orthologs(leaflabs, lspe, extraspe, candidateOGs, refspetree=refspetree, anclade=anclade)
+				if OGs:
+					orthologGroups += OGs
+					candidateOGs = rcOGs
+					extraspe = []
+					break
+	if extraspe:
 		# if did not find the clade to be an orthologous group, recurse down the tree:
 		for child in node.children:
-			#~ orthologGroups, dlabs = _prune_orthologs_top_down(child, orthologGroups=orthologGroups, dlabs=dlabs, refspetree=refspetree, ALEmodel=ALEmodel)
 			for arg in ('orthologGroups', 'dlabs'): kw[arg] = eval(arg)
 			orthologGroups, dlabs = _prune_orthologs_top_down(child, **kw)
 	return orthologGroups, dlabs
 
-def getOrthologues(recgt, ALEmodel='dated', method='strict', **kw):
+def getOrthologues(recgt, ALEmodel='dated', method='last-gain', **kw):
 	"""prune reconciled gene tree at transfer or duplication branches to identify orthologous groups (OGs) of genes. 
 	
 	mandatory argument: 'method'
 	several methods are possible:
-	'strict':
+	'last-gain' (alias: 'strict'):
 	    bottom-up approach (tip-to-root) where only those leaves related by a 
 	    line of speciation events (no transfer, no duplication) are orthologs; 
 	    the search is achieved by 
 	'unicopy':
 	    top-down approach (root-to-tips) where orthologous groups are defined as 
-	    the gene tree clades containing only unique representatives of species  
-	    that belong to the species clade below the ancestor to which a gene gain 
-	    is mapped (last recipient of the gene if several gain events occurred 
-	    on the gene tree branch). This allows to recognize as orthologous groups 
-	    clades where transfer events within the clade that do not induce change of 
+	    the gene tree clades containing only unique representatives of species.
+	    This allows to recognize as orthologous groups clades where 
+	    transfer events within the clade that do not induce change of 
 	    copy number (when considering the sum of all events in the subtree), 
 	    i.e. gene conversion events
 	'mixed': (heuristic ?) approach mixing the two previous: 
 	    when exploring the tree with the top-own inclusve approach, presence of
 	    excess leaves causing rejection of the OG clade status can be salvaged by 
-	    pruning of strict OG detected in the bottom-up approach may reveal 
+	    pruning of last-gain OG detected in the bottom-up approach may reveal 
 	    bona-fide unicopy OGs (even though not clades because of excluded 
 	    secondary gains, treated as other OGs).
 	
-	using the last two options requires to provide a reference species tree, passed on with the keyword argument 'refspetree'.
-	
 	other optional keyword arguments:
-	'refspetree' : tree object of class tree2.Node (or a derived class). This tree must be annotated with the same internal node label as used in the reconciliation ()
+	'refspetree':
+	    tree object of class tree2.Node (or a derived class). This tree must be annotated with 
+	    the same internal node label as used in the reconciliation (as from the header of ALE 
+	    reconciliation file)
+	    Useful only when using the 'unicopy' or 'mixed' methods, the reference species tree 
+	    allow to constrain the scope of unicopy clades: represented species 
+	    must all belong to the species clade below the ancestor to which a gene gain is mapped 
+	    on the gene tree branch (last recipient of the gene if several gain events occurred).
+	
+	'refspetree' : 
 	'ALEmodel'   : {'dated', 'undated'} specify the algorithm under which was generated the reconciliation (different parser)
 	'verbose'    : integer (0-2)
 	"""
-	if method=='strict':
+	if method in ['last-gain', 'strict']:
 		ogs, unclassified, dlabs = _prune_orthologs_bottom_up(recgt, ALEmodel=ALEmodel, **kw)
 	elif method=='unicopy':
 		ogs, dlabs = _prune_orthologs_top_down(recgt, ALEmodel=ALEmodel, **kw)
 	elif method=='mixed':
-		verbose = int(kw.setdefault('verbose', 0)) ; del kw['verbose']
-		strict_ogs, unclassified, dlabs = _prune_orthologs_bottom_up(recgt, ALEmodel=ALEmodel, verbose=max(verbose-1, 0), **kw)
-		ogs, dlabs = _prune_orthologs_top_down(recgt, ALEmodel=ALEmodel, candidateOGs=strict_ogs, dlabs=dlabs, verbose=verbose, **kw)
+		if 'gain_ogs' in kw:
+			gain_ogs = kw['gain_ogs']
+			dlabs = {}
+		else:
+			gain_ogs, unclassified, dlabs = _prune_orthologs_bottom_up(recgt, ALEmodel=ALEmodel, **kw)
+		ogs, dlabs = _prune_orthologs_top_down(recgt, ALEmodel=ALEmodel, candidateOGs=gain_ogs, dlabs=dlabs, **kw)
 	return ogs, dlabs
 
 		
