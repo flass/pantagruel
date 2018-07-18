@@ -463,7 +463,7 @@ def _prune_orthologs_top_down(node, **kw):
 				break # for event loop
 			elif candidateOGs:
 				if verbose: print 'extraspe:', extraspe
-				OGs, rcOGs = _prune_nested_candidate_orthologs(leaflabs, lspe, extraspe, candidateOGs, refspetree=refspetree, anclade=anclade, **kw)
+				OGs, rcOGs = _prune_nested_candidate_orthologs(leaflabs, lspe, extraspe, anclade=anclade, **kw)
 				if OGs:
 					orthologGroups += OGs
 					candidateOGs = rcOGs
