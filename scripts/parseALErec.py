@@ -56,11 +56,10 @@ def parseALERecFile(nfrec, reftreelen=None, restrictclade=None, skipEventFreq=Fa
 			lsp = line.strip('\n').split('\t')
 			dnodeevt[lsp[1]] = [float(s) for s in lsp[2:]]
 	frec.close()
-	returnItems = ['spetree', 'subspetree', 'lrecgt', 'recgtlines', 'restrictlabs', 'dnodeevt']
 	if returnDict:
-		return {key:eval(key, locals=locals()) for key in returnItems}
+		return {'spetree':spetree, 'subspetree':subspetree, 'lrecgt':lrecgt, 'recgtlines':recgtlines, 'restrictlabs':restrictlabs, 'dnodeevt':dnodeevt}
 	else:
-		return [eval(key, locals=locals()) for key in returnItems]
+		return [spetree, subspetree, lrecgt, recgtlines, restrictlabs, dnodeevt]
 
 def parseUndatedRecGeneTree(recgt, spet, dexactevt={}, recgtsample=None, nsample=1, sgsep='_', restrictlabs=[], fillDTLSdict=True, recordEvTypes='DTL', excludeTaggedLeaves=None, excludeTaggedSubtrees=None):
 	"""extract list of events from one reconciled gene tree as found in output of ALEml_undated (Szolosi et al., 2013; https://github.com/ssolo/ALE)
