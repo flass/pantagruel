@@ -522,7 +522,7 @@ def _prune_orthologs_top_down(node, **kw):
 			orthologGroups, dlabs = _prune_orthologs_top_down(child, **kw)
 	return orthologGroups, dlabs
 
-def getOrthologues(recgt, ALEmodel='dated', method='last-gain', **kw):
+def getOrthologues(recgt, method='mixed', **kw):
 	"""prune reconciled gene tree at transfer or duplication branches to identify orthologous groups (OGs) of genes. 
 	
 	mandatory argument: 'method'
@@ -542,7 +542,7 @@ def getOrthologues(recgt, ALEmodel='dated', method='last-gain', **kw):
 	    transfer events within the clade that do not induce change of 
 	    copy number (when considering the sum of all events in the subtree), 
 	    i.e. gene conversion events
-	'mixed': (heuristic ?) approach mixing the two previous: 
+	'mixed': heuristic approach mixing the two previous: 
 	    when exploring the tree with the top-own inclusve approach, presence of
 	    excess leaves causing rejection of the OG clade status can be salvaged by 
 	    pruning of last-gain OG detected in the bottom-up approach may reveal 
@@ -565,24 +565,23 @@ def getOrthologues(recgt, ALEmodel='dated', method='last-gain', **kw):
 	"""
 	verbose = kw.get('verbose')
 	if method in ['last-gain', 'strict']:
-		ogs, unclassified, dlabs = _prune_orthologs_bottom_up(recgt, ALEmodel=ALEmodel, **kw)
+		ogs, unclassified, dlabs = _prune_orthologs_bottom_up(recgt, **kw)
 	elif method=='unicopy':
-		ogs, dlabs = _prune_orthologs_top_down(recgt, ALEmodel=ALEmodel, **kw)
+		ogs, dlabs = _prune_orthologs_top_down(recgt, **kw)
+		unclassified = None
 	elif method=='mixed':
-		if 'gain_ogs' in kw:
-			gain_ogs = kw['gain_ogs']
-		else:
-			strict_ogs, unclassified, dlabs = _prune_orthologs_bottom_up(recgt, ALEmodel=ALEmodel, **kw)
-			# remove a potential "backbone" OG = extremely paraphyletic group 
-			# that is the remainder of the tree after the removal of all others last-gain OGs
-			bbgog = tuple(sorted(unclassified))
-			print strict_ogs
-			print bbgog
-			gain_ogs = [og for og in strict_ogs if og!=bbgog]
-			if verbose and len(strict_ogs)!=len(gain_ogs): print "removed backbone OG from candidate OG list:", bbgog
+		strict_ogs = kw.get('strict_ogs')
+		unclassified = kw.get('unclassified')
+		if not (strict_ogs and unclassified):
+			strict_ogs, unclassified, dlabs = _prune_orthologs_bottom_up(recgt, **kw)
 			kw['dlabs'] = dlabs
-		ogs, dlabs = _prune_orthologs_top_down(recgt, ALEmodel=ALEmodel, candidateOGs=gain_ogs, **kw)
-	return ogs, dlabs
+			bbgog = tuple(sorted(unclassified))
+		# remove a potential "backbone" OG = extremely paraphyletic group 
+		# that is the remainder of the tree after the removal of all others last-gain OGs
+		gain_ogs = [og for og in strict_ogs if og!=bbgog]
+		if verbose and len(strict_ogs)!=len(gain_ogs): print "removed backbone OG from candidate OG list:", bbgog
+		ogs, dlabs = _prune_orthologs_top_down(recgt, candidateOGs=gain_ogs, **kw)
+	return ogs, unclassified, dlabs
 
 		
 	
