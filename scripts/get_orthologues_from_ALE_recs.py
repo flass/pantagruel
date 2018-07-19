@@ -1,10 +1,10 @@
 #!/usr/bin/python
-from parseALErec import getOrthologues
+from parseALErec import parseALERecFile, getOrthologues
 import ptg_utils as ptg
 import tree2
 import os, glob, sys, getopt
 
-methods = ['strict', 'unicopy', 'mixed']
+allmethods = ['strict', 'unicopy', 'mixed']
 
 def summaryOGs(ogs, dlabs, N):
 	n = len(ogs)
@@ -43,19 +43,19 @@ def orthoFromSampleRecs(nfrec, foutdiffog=None, nsample=[], methods=['mixed'], c
 			strict_ogs, dlabs = getOrthologues(recgenetree, method='strict', refspetree=refspetree, dlabs=dlabs, **kw)
 			n1 = str(summaryOGs(strict_ogs, dlabs1, N))
 		else:
-			strict_ogs = None, n1 = 'NA'
+			strict_ogs = None; n1 = 'NA'
 		if 'unicopy' in methods:
 			if verbose: print "\n# unicopy_ogs:\n"
 			unicopy_ogs, dlabs = getOrthologues(recgenetree, method='unicopy', refspetree=refspetree, dlabs=dlabs, **kw)
 			n2 = summaryOGs(unicopy_ogs, dlabs2, N)
 		else:
-			unicopy_ogs = None, n2 = 'NA'
+			unicopy_ogs = None; n2 = 'NA'
 		if 'mixed' in methods:
 			if verbose: print "\n# mixed_ogs:\n"
 			mixed_ogs, dlabs = getOrthologues(recgenetree, method='mixed', gain_ogs=strict_ogs, refspetree=refspetree, dlabs=dlabs, **kw) #
 			n3 = summaryOGs(mixed_ogs, dlabs3, N)
 		else:
-			mixed_ogs = None, n3 = 'NA'
+			mixed_ogs = None; n3 = 'NA'
 		
 		if foutdiffog or verbose: 
 			o12 = str(sum([int(o in strict_ogs) for o in unicopy_ogs])) if (strict_ogs and unicopy_ogs) else 'NA'
@@ -125,16 +125,26 @@ def main(alerecdir, outortdir, summaryOverlap=False, **kw):
 
 	if summaryOverlap: foutdiffog.close()
 
-def usage():
-	s =  'python %s -i /path/to/input.reconciliation.dir -o /path/to/output.dir [OPTIONS]\n'%sys.argv[0]
-	s += ' Options:\n'
-	s += '  --verbose {0,1,2}\tverbose mode, from none to plenty.\n'
-	s += '  -v\t\t\tequivalent to --verbose=1.\n'
+def usage(mini=False):
+	basics = "Usage:\n python %s -i /path/to/input.reconciliation.dir -o /path/to/output.dir [OPTIONS]\n"%sys.argv[0]
+	if mini: return basics
+	s =  "Script for orthologous group (OG) assignment based on ALE reconciliation scenarios.\n\n"
+	s += basics
+	s += " Options:\n"
+	s += "  --sample\t\t(comma-separated list of) index(es) of sampled reconciled gene trees to parse (default: all).\n"
+	s += "  --methods\t\t(comma-separated list of) method(s) for orthologous group delineation."
+	s += "\t\t\t\t\tCan be any non-empty combination of %s (default to 'mixed').\n"%repr(allmethods)
+	s += "\t\t\t\t\t. NB: 'unicopy' method does not rely on ALE results other than the topology of sampled reconciled gene trees.\n"
+	s += "  --use.species.tree\t\tadd species-tree based constraints on ortholo(only for methods 'unicopy' and 'mixed').\n"
+	s += "  --threads\t\t\tnumber of parralel processes to run.\n"
+	s += "  --verbose {0,1,2}\tverbose mode, from none to plenty.\n"
+	s += "  -v\t\t\tequivalent to --verbose=1.\n"
 	return s
 
 if __name__=='__main__':	
-	opts, args = getopt.getopt(sys.argv[1:], 'i:o:hv', ['input.reconciliation.dir=', 'output.dir=', 'methods=', \
-														'summary', 'max.frac.extra.spe=', \
+	opts, args = getopt.getopt(sys.argv[1:], 'i:o:T:hv', ['input.reconciliation.dir=', 'output.dir=', 'ale.model=', 'sample=', \
+														'methods=', 'max.frac.extra.spe=', 'use.species.tree', \
+														'colour.tree', 'summary', \
 														'threads=', 'verbose=', 'help'])
 	dopt = dict(opts)
 	if ('-h' in dopt) or ('--help' in dopt):
@@ -144,15 +154,22 @@ if __name__=='__main__':
 	alerecdir = dopt.get('--input.reconciliation.dir', dopt.get('-i'))
 	outortdir = dopt.get('--output.dir', dopt.get('-o'))
 	if not (alerecdir and outortdir):
-		print "missing mandatory arguments"
-		print usage()
+		print "Error: missing mandatory arguments"
+		print usage(mini=True)
 		sys.exit(2)
 	
 	userefspetree = dopt.get('--use.species.tree')
 	verbose = int(dopt.get('--verbose', ('-v' in dopt)))
-	ALEmodel = dopt.get('--ALE.model', 'dated')
+	ALEmodel = dopt.get('--ale.model', 'dated')
 	summaryOverlap = ('--summary' in dopt)
+	colourTree = ('--colour.tree' in dopt)
 	trheshExtraSpe = float(dopt.get('--max.frac.extra.spe', 0.1))
+	nsample = dopt.get('--sample', '').split(',')
+	methods = dopt.get('--methods', 'mixed').split(',')
+	if not methods or set(methods) > set(allmethods):
+		raise ValueError, "values for --methods must be any non-empty combination of %s (default to 'mixed').\n"%repr()
+	nbtrheads = dopt.get('--threads', dopt.get('-T', 1))
 	
-	main(alerecdir, outortdir, summaryOverlap=summaryOverlap, ALEmodel=ALEmodel, userefspetree=userefspetree, \
-	     trheshExtraSpe=trheshExtraSpe, verbose=verbose)
+	main(alerecdir, outortdir, nsample=nsample, ALEmodel=ALEmodel, \
+	     methods=methods, userefspetree=userefspetree, trheshExtraSpe=trheshExtraSpe, \
+	     summaryOverlap=summaryOverlap, colourTree=colourTree, verbose=verbose)
