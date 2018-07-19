@@ -345,10 +345,11 @@ def _prune_orthologs_bottom_up(node, ALEmodel='dated', **kw):
 			break # for event loop
 	#~ if verbose: print "unclassified:", unclassified
 	if node.is_root():
-		# any remaining unclassified leaf is to be alloacted to a backbone orthologous group
-		# (= paraphyletic gene lineage unaffected by transfers since the origin of the family)
-			ortho = tuple(sorted(unclassified))
-			orthologGroups.append(ortho)
+		if unclassified:
+			# any remaining unclassified leaf is to be alloacted to a backbone orthologous group
+			# (= paraphyletic gene lineage unaffected by transfers since the origin of the family)
+			bbortho = tuple(sorted(unclassified))
+			orthologGroups.append(bbortho)
 			if verbose: print 'backbone OG!'
 	return orthologGroups, unclassified, dlabs
 
@@ -381,8 +382,6 @@ def _prune_nested_candidate_orthologs(node, dsbal, leaflabs, lspe, extraspe, can
 			scOG = set(cOG)
 			if (scOG <= sleaflabs) and (scOG & sextraleaflabs):
 				# first keep only the last-gain defined OGs that map completely under this clade 
-				#   (this is to remove a potential "backbone" OG = extremely paraphyletic group 
-				#   that is the remainder of the tree after the removal of all others last-gain OGs)
 				# second keep only those that intersect with the set of possible leaves to remove
 				cOGs.append(scOG)
 		# sort first the cOG with the highest score of leaf set overlap, then smallest size, then higher branching point in gene tree
@@ -532,7 +531,11 @@ def getOrthologues(recgt, ALEmodel='dated', method='last-gain', **kw):
 	'last-gain' (alias: 'strict'):
 	    bottom-up approach (tip-to-root) where only those leaves related by a 
 	    line of speciation events (no transfer, no duplication) are orthologs; 
-	    the search is achieved by 
+	    the search is achieved by reccursive pruning of  gene groups at branches
+	    where occurred the last gain event (duplication or transfer) on the lineage.
+	    NB: if this apporach does not classify all leaves in OGs, a last OG
+	    is created that covers the remainder of the tree (this 'backbone' 
+	    is excluded as candidate in the 'mixed' approch).
 	'unicopy':
 	    top-down approach (root-to-tips) where orthologous groups are defined as 
 	    the gene tree clades containing only unique representatives of species.
@@ -569,7 +572,11 @@ def getOrthologues(recgt, ALEmodel='dated', method='last-gain', **kw):
 		if 'gain_ogs' in kw:
 			gain_ogs = kw['gain_ogs']
 		else:
-			gain_ogs, unclassified, dlabs = _prune_orthologs_bottom_up(recgt, ALEmodel=ALEmodel, **kw)
+			strict_ogs, unclassified, dlabs = _prune_orthologs_bottom_up(recgt, ALEmodel=ALEmodel, **kw)
+			# remove a potential "backbone" OG = extremely paraphyletic group 
+			# that is the remainder of the tree after the removal of all others last-gain OGs
+			bbgog = tuple(sorted(unclassified)
+			gain_ogs = [og for og in strict_ogs if og!=bbgog]
 			kw['dlabs'] = dlabs
 		ogs, dlabs = _prune_orthologs_top_down(recgt, ALEmodel=ALEmodel, candidateOGs=gain_ogs, **kw)
 	return ogs, dlabs

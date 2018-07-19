@@ -29,15 +29,15 @@ def orthoFromSampleRecs(nfrec, foutdiffog=None, nsample=[], methods=['mixed'], c
 		refspetree = None
 	
 	ddogs = {}
-	dlabs = {}
-	dnexuslabev2num = {}
 	dnexustrans = {}
+	drevnexustrans = {}
 	for i, recgenetree in enumerate(lrecgt):
 		if nsample: g = nsample[i]
 		else: g = i
 		if verbose: print recgenetree
 		if verbose: print "\n# # reconciliation sample %d"%g
 		N = recgenetree.nb_leaves()
+		dlabs = {}
 		if set(['strict', 'mixed']) & set(methods):
 			if verbose: print "\n# strict_ogs:\n"
 			strict_ogs, dlabs = getOrthologues(recgenetree, method='strict', refspetree=refspetree, dlabs=dlabs, **kw)
@@ -67,19 +67,22 @@ def orthoFromSampleRecs(nfrec, foutdiffog=None, nsample=[], methods=['mixed'], c
 			print "overlap strict_ogs with mixed_ogs:", o13
 			print "overlap unicopy_ogs with mixed_ogs:", o23
 		if foutdiffog:
-			foutdiffog.write('\t'.join([fam, g, n1, n2, n3, o12, o13, o23])+'\n')
+			foutdiffog.write('\t'.join([fam, str(g), n1, n2, n3, o12, o13, o23])+'\n')
 		
 		if colourTree:
-			if not dnexuslabev2num:
-				for l, leaf in enumerate(recgenetree.get_leaves()):
-					labev = leaf.label()
-					lab = dlabs[labev]
-					dnexuslabev2num[labev] = l
-					dnexustrans[l] = lab
-				ltaxnexus = [dnexustrans[l] for l in range(len(dnexustrans))]
+			dnexuslabev2num = {}
+			for l, leaf in enumerate(recgenetree.get_leaves()):
+				sl = str(l)
+				labev = leaf.label()
+				lab = dlabs[labev]
+				dnexuslabev2num[labev] = sl
+				if i==0:
+					dnexustrans[sl] = lab
+					drevnexustrans[lab] = sl
+			ltaxnexus = [dnexustrans[str(sl)] for sl in range(len(dnexustrans))]
 			for node in recgenetree:
 				if node.is_leaf():
-					node.edit_label(str(dnexuslabev2num[node.label()]))
+					node.edit_label(dnexuslabev2num[node.label()])
 				else:
 					node.edit_label('')
 		ddogs[g] = {'strict':strict_ogs, 'unicopy':unicopy_ogs, 'mixed':mixed_ogs, 'recgenetree':recgenetree}
@@ -93,10 +96,10 @@ def orthoFromSampleRecs(nfrec, foutdiffog=None, nsample=[], methods=['mixed'], c
 			for g in gs:
 				recgenetree = ddogs[g]['recgenetree']
 				ogs = ddogs[g][method]
-				ptg.colour_tree_with_leaf_groups(recgenetree, ogs)
+				ptg.colour_tree_with_leaf_groups(recgenetree, [[drevnexustrans[ll] for ll in og] for og in ogs])
 				#~ ptg.colour_tree_with_constrained_clades(recgenetree, ogs)
 				ltrees.append(recgenetree)
-			tree2.write_nexus(ltrees, nfout=nfoutrad+"_orthologous_groups.nex", ltax=ltaxnexus, dtranslate=dnexustrans, ignoreBS=True)
+			tree2.write_nexus(ltrees, nfout=nfoutrad+"_orthologous_groups.nex", treenames=["tree_%d" for g in gs], ltax=ltaxnexus, dtranslate=dnexustrans, ignoreBS=True)
 		with open(nfoutrad+".orthologs", 'w') as foutort:
 			for g in gs:
 				ogs = ddogs[g][method]
