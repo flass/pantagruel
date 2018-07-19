@@ -308,7 +308,6 @@ def _prune_orthologs_bottom_up(node, ALEmodel='dated', **kw):
 		# post-order traversal recursion:
 		for child in node.children:
 			# first explore children
-			#~ orthologGroups, uncl, dlabs = _prune_orthologs_bottom_up(child, orthologGroups=orthologGroups, dlabs=dlabs, **kw)
 			for arg in ('orthologGroups', 'dlabs'): kw[arg] = eval(arg)
 			orthologGroups, uncl, dlabs = _prune_orthologs_bottom_up(child, **kw)
 			unclassified |= uncl
@@ -356,44 +355,69 @@ def getExtraNumerarySpe(lspe, ancclade=[]):
 	else: baselist = list(sspe)
 	return reduce(lambda x,y: x+y, [[spe]*(lspe.count(spe) - baselist.count(spe)) for spe in sspe], [])
 
-def _prune_nested_candidate_orthologs(leaflabs, lspe, extraspe, candidateOGs, refspetree=None, anclade=None, **kw):
+def _prune_nested_candidate_orthologs(node, dsbal, leaflabs, lspe, extraspe, candidateOGs, refspetree=None, anclade=None, **kw):
 	""""""
-	# first filter out the last-gain defined OGs that do not map completely under this clade 
-	# this is to remove a potential "backbone" OG = extremely paraphyletic group 
-	# that is the remainder of the tree after the removal of all others last-gain OGs
+	cacheBranDep={}
+	def branching_depth(leaflabset):
+		tsleaflabset = tuple(sorted(leaflabset))
+		if tsleaflabset in cacheBranDep: return cacheBranDep[tsleaflabset]
+		m = node.mrca([dsbal[ll] for ll in tsleaflabset])
+		f = m.go_father()
+		if f: d = f.max_leaf_distance()
+		else: d = m.max_leaf_distance()
+		cacheBranDep[tsleaflabset] = d
+		return d
+	
+	def get_extra_spe_leaf_labs(extraspe, sleaflabs, candidateOGs):
+		sextraleaflabs = set([leaflab for leaflab in leaflabs if (getSpe(leaflab, sp0, sp1) in extraspe)])
+		cOGs = []
+		for cOG in candidateOGs:
+			scOG = set(cOG)
+			if (scOG <= sleaflabs) and (scOG & sextraleaflabs):
+				# first keep only the last-gain defined OGs that map completely under this clade 
+				#   (this is to remove a potential "backbone" OG = extremely paraphyletic group 
+				#   that is the remainder of the tree after the removal of all others last-gain OGs)
+				# second keep only those that intersect with the set of possible leaves to remove
+				cOGs.append(scOG)
+		# sort first the cOG with the highest score of leaf set overlap, then smallest size, then higher branching point in gene tree
+		cOGs.sort(key=lambda x: (len(sextraleaflabs & x), -len(x), branching_depth(x)), reverse=True) 
+		return cOGs, sextraleaflabs
+	
 	sp0, sp1 = kw.get('splitparam', ('_',1))
 	verbose = kw.get('verbose')
 	orthologGroups = []
 	sleaflabs = set(leaflabs)
 	# score the last-gain defined OGs based on their capacity to remove the extra species or copies from the leaf set
-	sextraleaflabs = set([leaflab for leaflab in leaflabs if (getSpe(leaflab, sp0, sp1) in extraspe)])
-	cOGs = []
-	for cOG in candidateOGs:
-		scOG = set(cOG)
-		if (scOG <= sleaflabs) and (scOG & sextraleaflabs):
-			cOGs.append(scOG)
-	cOGs.sort(key=lambda x: len(sextraleaflabs & x), reverse=True) # sort first the cOG with the highest score of leaf set overlap
+	cOGs, sextraleaflabs = get_extra_spe_leaf_labs(extraspe, sleaflabs, candidateOGs)
+	if verbose: print 'sextraleaflabs:', sextraleaflabs
+	if verbose: print 'cOGs:', cOGs
 	clspe = copy.copy(lspe)
-	for k, cOG in enumerate(cOGs):
-		if verbose: print 'try substracting last-gain OG: %s'%repr(tuple(cOG))
+	retainedcOGs = []
+	while cOGs:
+		cOG = cOGs.pop(0)
+		if verbose: print 'try substracting last-gain OG: %s'%repr(tuple(cOG)), (len(sextraleaflabs & cOG), branching_depth(cOG), -len(cOG))
 		for ll in cOG:
 			clspe.remove(getSpe(ll, sp0, sp1))
+		retainedcOGs.append(cOG)
 		if refspetree: extraspe = getExtraNumerarySpe(clspe, ancclade)
 		else: extraspe = getExtraNumerarySpe(clspe)
 		if not extraspe:
 			# first add the retained last-gain OGs to the final list of OGs
-			orthologGroups += [tuple(sorted(cOG)) for cOG in cOGs[:(k+1)]]
+			orthologGroups += [tuple(sorted(recOG)) for recOG in retainedcOGs]
+			if verbose: print ' '.join(['G-OG!']*len(retainedcOGs)),
 			# then substract them from the current clade
-			for cOG in cOGs[:(k+1)]:
-				sleaflabs -= cOG
+			for recOG in retainedcOGs:
+				sleaflabs -= recOG
 			ortho = tuple(sorted(sleaflabs))
 			orthologGroups.append(ortho)
-			if verbose: print 'U-OG! - '+' '.join(['G-OG!']*(k+1))
-			rcOGs = [cOG for cOG in candidateOGs if (not cOG in orthologGroups)]
+			if verbose: print ' -- U-OG!'
+			remainingcOGs = [cOG for cOG in candidateOGs if (not cOG in retainedcOGs)]
 			break # for cOG loop
+		else:
+			cOGs, sextraleaflabs = get_extra_spe_leaf_labs(extraspe, sleaflabs, cOGs)
 	else:
-		rcOGs = candidateOGs
-	return orthologGroups, rcOGs
+		remainingcOGs = candidateOGs
+	return orthologGroups, remainingcOGs
 
 def _prune_orthologs_top_down(node, **kw):
 	"""from a ALE-reconciled gene tree, return a list of orthologous groups and the dict of leaf labels to the actual gene sequence name (removing the trailing annotation of event chain)
@@ -409,8 +433,13 @@ def _prune_orthologs_top_down(node, **kw):
 	if 'candidateOGs' is specified:
 	    this argument allow to pass on other putative OGs (typically of smaller span), which the function attempts to prune 
 	    from clades that are not unicopy so to obtain an unicopy group. This is useful to implement mixed criterion, where
-	    for instance late gains (by transfer from a distant donor or duplication) can be removed to capture the orthologous 
-	    backbone of a clade.
+	    for instance leaves resulting from late gains (by transfer from a distant donor or duplication) can be removed to 
+	    capture the orthologous backbone of a clade.
+	if 'trheshExtraSpe' is positive (default 0.1):
+	    the mixed criterion (i.e. pruning of late gains in non-unicopy clades see above) is only applied when the fraction of 
+	    extra-numerary species is below the specified threahold; this is to avoid the pruning to be too agressive, i.e. 
+	    the lower the threhold, the more this operation will only be attempted far from the genee tree root, practically 
+	    targetting almost-unicopy clades disrupted by late gains.
 	"""
 	# # # # initiate paramaters
 	orthologGroups = kw.get('orthologGroups', [])
@@ -418,12 +447,16 @@ def _prune_orthologs_top_down(node, **kw):
 	sp0, sp1 = kw.get('splitparam', ('_',1))
 	refspetree = kw.get('refspetree')
 	candidateOGs = kw.get('candidateOGs')
+	trheshExtraSpe = float(kw.get('trheshExtraSpe', 0.1))
 	verbose = kw.get('verbose')
 	if verbose and candidateOGs: print 'using mixed criterion'
 	if not dlabs:	
 		# first establish the dictionary of actual leaf lables, without the trailing event chain
 		for leaflabevchain in node.iter_leaf_labels():
 			dlabs[leaflabevchain] = extractLabelfromDatedEventLeaf(leaflabevchain)
+	# make reverse dict of leaf labs
+	# TO DO: this could be simplified by editinig the tree leaf labels and only using the rev. dict for accessing leaf event chains
+	dsbal = {val:key for key, val in dlabs.iteritems()}
 	
 	# # # # test at current node
 	nodelab = node.label()
@@ -431,6 +464,7 @@ def _prune_orthologs_top_down(node, **kw):
 	print repr(node)+';', ('leaf' if node.is_leaf() else 'internal')+';',
 	leaflabs = [dlabs[leaflabevchain] for leaflabevchain in node.iter_leaf_labels()]
 	lspe = [getSpe(leaflab, sp0, sp1) for leaflab in leaflabs]
+	nspe = len(set(lspe))
 	extraspe = True # initiate
 	if not refspetree:
 		if verbose: print 'evaluate orthology under gene tree node', nodelab
@@ -440,12 +474,14 @@ def _prune_orthologs_top_down(node, **kw):
 			orthologGroups.append(ortho)
 			if verbose: print 'U-OG!'
 		elif candidateOGs:
-			if verbose: print 'extraspe:', extraspe
-			OGs, rcOGs = _prune_nested_candidate_orthologs(leaflabs, lspe, extraspe, **kw)
-			if OGs:
-				orthologGroups += OGs
-				candidateOGs = rcOGs
-				extraspe = []
+			lex = float(len(set(extraspe)))
+			if lex/nspe <= trheshExtraSpe:
+				if verbose: print 'extraspe:', extraspe, "(%d nr species, %.0f%% of the represented set)"%(int(lex), 100*lex/nspe)
+				OGs, remainingcOGs = _prune_nested_candidate_orthologs(node, dsbal, leaflabs, lspe, extraspe, **kw)
+				if OGs:
+					orthologGroups += OGs
+					candidateOGs = remainingcOGs
+					extraspe = []
 	else:
 		lineage, tiplab = splitEventChain(nodelab, isleaf=node.is_leaf(), **kw)
 		# list of events goes BACKWARD in time when read left-to-right
@@ -466,13 +502,15 @@ def _prune_orthologs_top_down(node, **kw):
 				if verbose: print 'U-OG!'
 				break # for event loop
 			elif candidateOGs:
-				if verbose: print 'extraspe:', extraspe
-				OGs, rcOGs = _prune_nested_candidate_orthologs(leaflabs, lspe, extraspe, anclade=anclade, **kw)
-				if OGs:
-					orthologGroups += OGs
-					candidateOGs = rcOGs
-					extraspe = []
-					break
+				lex = float(len(set(extraspe)))
+				if lex/nspe <= trheshExtraSpe:
+					if verbose: print 'extraspe:', extraspe, "(%d nr species, %.0f%% of the represented set)"%(int(lex), 100*lex/nspe)
+					OGs, remainingcOGs = _prune_nested_candidate_orthologs(node, dsbal, leaflabs, lspe, extraspe, anclade=anclade, **kw)
+					if OGs:
+						orthologGroups += OGs
+						candidateOGs = remainingcOGs
+						extraspe = []
+						break
 	if extraspe:
 		# if did not find the clade to be an orthologous group, recurse down the tree:
 		for child in node.children:
