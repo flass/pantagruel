@@ -40,11 +40,11 @@ def parseALERecFile(nfrec, reftreelen=None, restrictclade=None, skipEventFreq=Fa
 	recgtlines = []
 	k = 0
 	while not line.startswith('#'):
-		if (nsample) and (k not in nsample): continue
-		recgtlines.append(line)
-		rectree = tree2.AnnotatedNode(nwk=line.strip('\n'), namesAsNum=True)
-		rectree.complete_node_ids()
-		lrecgt.append(rectree)
+		if (not nsample) or (k in nsample):
+			recgtlines.append(line)
+			rectree = tree2.AnnotatedNode(nwk=line.strip('\n'), namesAsNum=True)
+			rectree.complete_node_ids()
+			lrecgt.append(rectree)
 		line = frec.readline()
 		k += 1
 	dnodeevt = {}
