@@ -330,7 +330,7 @@ def _prune_orthologs_bottom_up(node, ALEmodel='dated', **kw):
 			ortho = tuple(sorted(unclassified))
 			orthologGroups.append(ortho)
 			unclassified = set([])
-			if verbose: print 'T-OG!'
+			if verbose: print 'T-OG!', len(ortho)
 			break # for event loop
 		elif evtype=='D':
 			# gene was duplicated here by species ancestor:
@@ -340,17 +340,16 @@ def _prune_orthologs_bottom_up(node, ALEmodel='dated', **kw):
 				subuncl = set([dlabs[leaflabevchain] for leaflabevchain in child.iter_leaf_labels()]) & unclassified
 				ortho = tuple(sorted(subuncl))
 				orthologGroups.append(ortho)
+				if verbose: print 'D-OG!', len(ortho)
 			unclassified = set([])
-			if verbose: print 'D-OG! D-OG!'
 			break # for event loop
 	#~ if verbose: print "unclassified:", unclassified
-	if node.is_root():
-		if unclassified:
-			# any remaining unclassified leaf is to be alloacted to a backbone orthologous group
-			# (= paraphyletic gene lineage unaffected by transfers since the origin of the family)
-			bbortho = tuple(sorted(unclassified))
-			orthologGroups.append(bbortho)
-			if verbose: print 'backbone OG!'
+	if node.is_root() and unclassified:
+		# any remaining unclassified leaf is to be alloacted to a backbone orthologous group
+		# (= paraphyletic gene lineage unaffected by transfers since the origin of the family)
+		bbortho = tuple(sorted(unclassified))
+		orthologGroups.append(bbortho)
+		if verbose: print 'backbone OG!', len(bbortho)
 	return orthologGroups, unclassified, dlabs
 
 def getSpe(lab, sp0, sp1):
@@ -409,13 +408,13 @@ def _prune_nested_candidate_orthologs(node, dsbal, leaflabs, lspe, extraspe, can
 		if not extraspe:
 			# first add the retained last-gain OGs to the final list of OGs
 			orthologGroups += [tuple(sorted(recOG)) for recOG in retainedcOGs]
-			if verbose: print ' '.join(['G-OG!']*len(retainedcOGs)),
+			if verbose: print ' '.join(['G-OG! %d'%len(recOG) for recOG in retainedcOGs]),
 			# then substract them from the current clade
 			for recOG in retainedcOGs:
 				sleaflabs -= recOG
 			ortho = tuple(sorted(sleaflabs))
 			orthologGroups.append(ortho)
-			if verbose: print ' -- U-OG!'
+			if verbose: print '-- U-OG!', len(ortho)
 			remainingcOGs = [cOG for cOG in candidateOGs if (not cOG in retainedcOGs)]
 			break # for cOG loop
 		else:
@@ -564,6 +563,7 @@ def getOrthologues(recgt, ALEmodel='dated', method='last-gain', **kw):
 	'ALEmodel'   : {'dated', 'undated'} specify the algorithm under which was generated the reconciliation (different parser)
 	'verbose'    : integer (0-2)
 	"""
+	verbose = kw.get('verbose')
 	if method in ['last-gain', 'strict']:
 		ogs, unclassified, dlabs = _prune_orthologs_bottom_up(recgt, ALEmodel=ALEmodel, **kw)
 	elif method=='unicopy':
@@ -576,6 +576,7 @@ def getOrthologues(recgt, ALEmodel='dated', method='last-gain', **kw):
 			# remove a potential "backbone" OG = extremely paraphyletic group 
 			# that is the remainder of the tree after the removal of all others last-gain OGs
 			bbgog = tuple(sorted(unclassified))
+			if verbose: print "remove backbone OG from candidate OG list" bbog
 			gain_ogs = [og for og in strict_ogs if og!=bbgog]
 			kw['dlabs'] = dlabs
 		ogs, dlabs = _prune_orthologs_top_down(recgt, ALEmodel=ALEmodel, candidateOGs=gain_ogs, **kw)
