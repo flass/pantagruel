@@ -575,9 +575,9 @@ def getOrthologues(recgt, method='mixed', **kw):
 		if not (strict_ogs and unclassified):
 			strict_ogs, unclassified, dlabs = _prune_orthologs_bottom_up(recgt, **kw)
 			kw['dlabs'] = dlabs
-			bbgog = tuple(sorted(unclassified))
 		# remove a potential "backbone" OG = extremely paraphyletic group 
 		# that is the remainder of the tree after the removal of all others last-gain OGs
+		bbgog = tuple(sorted(unclassified))
 		gain_ogs = [og for og in strict_ogs if og!=bbgog]
 		if verbose and len(strict_ogs)!=len(gain_ogs): print "removed backbone OG from candidate OG list:", bbgog
 		ogs, dlabs = _prune_orthologs_top_down(recgt, candidateOGs=gain_ogs, **kw)

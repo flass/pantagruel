@@ -43,10 +43,10 @@ def orthoFromSampleRecs(nfrec, foutdiffog=None, nsample=[], methods=['mixed'], c
 			strict_ogs, unclassified, dlabs = getOrthologues(recgenetree, method='strict', refspetree=refspetree, dlabs=dlabs, **kw)
 			n1 = str(summaryOGs(strict_ogs, dlabs, N))
 		else:
-			strict_ogs = None; n1 = 'NA'
+			strict_ogs = unclassified = None; n1 = 'NA'
 		if 'unicopy' in methods:
 			if verbose: print "\n# unicopy_ogs:\n"
-			unicopy_ogs, unclassified, dlabs = getOrthologues(recgenetree, method='unicopy', refspetree=refspetree, dlabs=dlabs, **kw)
+			unicopy_ogs, notrelevant, dlabs = getOrthologues(recgenetree, method='unicopy', refspetree=refspetree, dlabs=dlabs, **kw)
 			n2 = summaryOGs(unicopy_ogs, dlabs, N)
 		else:
 			unicopy_ogs = None; n2 = 'NA'
