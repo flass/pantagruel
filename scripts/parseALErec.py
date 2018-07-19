@@ -576,6 +576,8 @@ def getOrthologues(recgt, ALEmodel='dated', method='last-gain', **kw):
 			# remove a potential "backbone" OG = extremely paraphyletic group 
 			# that is the remainder of the tree after the removal of all others last-gain OGs
 			bbgog = tuple(sorted(unclassified))
+			print strict_ogs
+			print bbgog
 			gain_ogs = [og for og in strict_ogs if og!=bbgog]
 			if verbose and len(strict_ogs)!=len(gain_ogs): print "removed backbone OG from candidate OG list:", bbgog
 			kw['dlabs'] = dlabs
