@@ -37,6 +37,7 @@
   - [tree2](https://github.com/flass/tree2)
   - [BioPython](http://biopython.org/wiki/Download)
   - [Cython](https://pypi.org/project/Cython/)
+  - [igraph](http://igraph.org/python/) (available as a Debian package)
 
 - Other software:
   - [sqlite3](https://www.sqlite.org) (available as a Debian package)

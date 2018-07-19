@@ -465,7 +465,7 @@ def _prune_orthologs_top_down(node, **kw):
 	# # # # test at current node
 	nodelab = node.label()
 	if not nodelab: raise ValueError, "unannotated node:\n%s"%str(node)
-	print repr(node)+';', ('leaf' if node.is_leaf() else 'internal')+';',
+	if verbose: print repr(node), ('(leaf)' if node.is_leaf() else '(internal)')+';',
 	leaflabs = [dlabs[leaflabevchain] for leaflabevchain in node.iter_leaf_labels()]
 	lspe = [getSpe(leaflab, sp0, sp1) for leaflab in leaflabs]
 	nspe = len(set(lspe))
