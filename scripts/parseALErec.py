@@ -11,7 +11,7 @@ def getOriSpeciesFromEventLab(eventlab, sgsep='_'):
 	elab = eventlab.split('@')[1] if '@' in eventlab else eventlab
 	return elab.split('->')[0].split(sgsep)[0]
 
-def parseALERecFile(nfrec, reftreelen=None, restrictclade=None, skipEventFreq=False, nsample=[]):
+def parseALERecFile(nfrec, reftreelen=None, restrictclade=None, skipEventFreq=False, skipLines=False, nsample=[]):
 	line = ''
 	lrecgt = []
 	restrictlabs = []
@@ -41,7 +41,7 @@ def parseALERecFile(nfrec, reftreelen=None, restrictclade=None, skipEventFreq=Fa
 	k = 0
 	while not line.startswith('#'):
 		if (not nsample) or (k in nsample):
-			recgtlines.append(line)
+			if not skipLines: recgtlines.append(line)
 			rectree = tree2.AnnotatedNode(nwk=line.strip('\n'), namesAsNum=True)
 			rectree.complete_node_ids()
 			lrecgt.append(rectree)
