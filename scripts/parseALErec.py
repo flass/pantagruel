@@ -11,7 +11,7 @@ def getOriSpeciesFromEventLab(eventlab, sgsep='_'):
 	elab = eventlab.split('@')[1] if '@' in eventlab else eventlab
 	return elab.split('->')[0].split(sgsep)[0]
 
-def parseALERecFile(nfrec, reftreelen=None, restrictclade=None, skipEventFreq=False, skipLines=False, nsample=[]):
+def parseALERecFile(nfrec, reftreelen=None, restrictclade=None, skipEventFreq=False, skipLines=False, nsample=[], returnDict=False):
 	line = ''
 	lrecgt = []
 	restrictlabs = []
@@ -56,7 +56,11 @@ def parseALERecFile(nfrec, reftreelen=None, restrictclade=None, skipEventFreq=Fa
 			lsp = line.strip('\n').split('\t')
 			dnodeevt[lsp[1]] = [float(s) for s in lsp[2:]]
 	frec.close()
-	return [spetree, subspetree, lrecgt, recgtlines, restrictlabs, dnodeevt]
+	returnItems = ['spetree', 'subspetree', 'lrecgt', 'recgtlines', 'restrictlabs', 'dnodeevt']
+	if returnDict:
+		return {key:eval(key) for key in returnItems}
+	else:
+		return [eval(key) for key in returnItems]
 
 def parseUndatedRecGeneTree(recgt, spet, dexactevt={}, recgtsample=None, nsample=1, sgsep='_', restrictlabs=[], fillDTLSdict=True, recordEvTypes='DTL', excludeTaggedLeaves=None, excludeTaggedSubtrees=None):
 	"""extract list of events from one reconciled gene tree as found in output of ALEml_undated (Szolosi et al., 2013; https://github.com/ssolo/ALE)
