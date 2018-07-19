@@ -41,19 +41,19 @@ def orthoFromSampleRecs(nfrec, foutdiffog=None, nsample=[], methods=['mixed'], c
 		if set(['strict', 'mixed']) & set(methods):
 			if verbose: print "\n# strict_ogs:\n"
 			strict_ogs, dlabs = getOrthologues(recgenetree, method='strict', refspetree=refspetree, dlabs=dlabs, **kw)
-			n1 = str(summaryOGs(strict_ogs, dlabs1, N))
+			n1 = str(summaryOGs(strict_ogs, dlabs, N))
 		else:
 			strict_ogs = None; n1 = 'NA'
 		if 'unicopy' in methods:
 			if verbose: print "\n# unicopy_ogs:\n"
 			unicopy_ogs, dlabs = getOrthologues(recgenetree, method='unicopy', refspetree=refspetree, dlabs=dlabs, **kw)
-			n2 = summaryOGs(unicopy_ogs, dlabs2, N)
+			n2 = summaryOGs(unicopy_ogs, dlabs, N)
 		else:
 			unicopy_ogs = None; n2 = 'NA'
 		if 'mixed' in methods:
 			if verbose: print "\n# mixed_ogs:\n"
 			mixed_ogs, dlabs = getOrthologues(recgenetree, method='mixed', gain_ogs=strict_ogs, refspetree=refspetree, dlabs=dlabs, **kw) #
-			n3 = summaryOGs(mixed_ogs, dlabs3, N)
+			n3 = summaryOGs(mixed_ogs, dlabs, N)
 		else:
 			mixed_ogs = None; n3 = 'NA'
 		
@@ -85,7 +85,7 @@ def orthoFromSampleRecs(nfrec, foutdiffog=None, nsample=[], methods=['mixed'], c
 		ddogs[g] = {'strict':strict_ogs, 'unicopy':unicopy_ogs, 'mixed':mixed_ogs, 'recgenetree':recgenetree}
 		if verbose: print "\n# # # # # # # #"
 	
-	gs = namsample if namsample else range(len(lrecgt))
+	gs = nsample if nsample else range(len(lrecgt))
 	for method in methods:
 		ltrees = []
 		nfoutrad = os.path.join(outortdir, method, "%s_%s"%(fam, method))
@@ -164,7 +164,7 @@ if __name__=='__main__':
 	summaryOverlap = ('--summary' in dopt)
 	colourTree = ('--colour.tree' in dopt)
 	trheshExtraSpe = float(dopt.get('--max.frac.extra.spe', 0.1))
-	nsample = dopt.get('--sample', '').split(',')
+	nsample = [int(k) for k in dopt.get('--sample', '').split(',')]
 	methods = dopt.get('--methods', 'mixed').split(',')
 	if not methods or set(methods) > set(allmethods):
 		raise ValueError, "values for --methods must be any non-empty combination of %s (default to 'mixed').\n"%repr()

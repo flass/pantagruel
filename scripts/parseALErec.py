@@ -568,10 +568,10 @@ def getOrthologues(recgt, ALEmodel='dated', method='last-gain', **kw):
 	elif method=='mixed':
 		if 'gain_ogs' in kw:
 			gain_ogs = kw['gain_ogs']
-			dlabs = {}
 		else:
 			gain_ogs, unclassified, dlabs = _prune_orthologs_bottom_up(recgt, ALEmodel=ALEmodel, **kw)
-		ogs, dlabs = _prune_orthologs_top_down(recgt, ALEmodel=ALEmodel, candidateOGs=gain_ogs, dlabs=dlabs, **kw)
+			kw['dlabs'] = dlabs
+		ogs, dlabs = _prune_orthologs_top_down(recgt, ALEmodel=ALEmodel, candidateOGs=gain_ogs, **kw)
 	return ogs, dlabs
 
 		
