@@ -6,6 +6,7 @@ from parseALErec import parseALERecFile, getOrthologues
 import igraph
 from itertools import combinations
 import multiprocessing as mp
+import cPickle as pickle
 
 allmethods = ['strict', 'unicopy', 'mixed']
 
@@ -18,8 +19,26 @@ def summaryOGs(ogs, dlabs, N, verbose):
 		raise ValueError, "unclassified leaves:%s"%(repr(set(dlabs.values()) - set(reduce(lambda x,y: list(x)+list(y), ogs, []))))
 	return str(n)
 
+def writeRecGeneTreesColouredByOrthologs(lrecgt, logs, nfout, drevnexustrans, **kw):
+	for recgt, ogs in zip(lrecgt, logs):
+		ptg.colour_tree_with_leaf_groups(recgt, [[drevnexustrans[ll] for ll in og] for og in ogs])
+		#~ ptg.colour_tree_with_constrained_clades(recgt, ogs)
+	tree2.write_nexus(lrecgt, nfout=nfout, **kw)
+
+def writeGraphCombinedOrthologs(nfoutrad, graph, clustering, recgt, llabs, drevnexustrans, colourCombinedTree, tag, **kw):
+	# save the graph
+	with open(nfoutrad+".orthologs.%s.pickle"%tag, 'w') as foutortgraphp:
+		pickle.dump(graph, foutortgraphp, pickle.HIGHEST_PROTOCOL)
+	# write out clustering = synthesis of OGs over the sample
+	with open(nfoutrad+".orthologs.%s"%tag, 'w') as foutortgraphclust:
+		foutortgraphclust.write('\n'.join(['%s\t%d'%(lab, mem) for lab, mem in zip(llabs, clustering.membership)])+'\n')
+	# write a tree with coloured tips for graphic fun
+	if colourCombinedTree:
+		gcogs = [[graph.vs[v]['name'] for v in cluster] for cluster in clustering]
+		writeRecGeneTreesColouredByOrthologs([recgt], [gcogs], nfoutrad+".orthologs.%s.nex"%tag, drevnexustrans, **kw)
+
 def orthoFromSampleRecs(nfrec, outortdir, nsample=[], methods=['mixed'], \
-                        foutdiffog=None, outputOGperTree=True, colourTree=False, \
+                        foutdiffog=None, outputOGperSampledRecGT=True, colourTreePerSampledRecGT=False, \
                         graphCombine=None, majRuleCombine=None, **kw):
 	""""""
 	verbose = kw.get('verbose')
@@ -36,6 +55,7 @@ def orthoFromSampleRecs(nfrec, outortdir, nsample=[], methods=['mixed'], \
 	ddogs = {}
 	dnexustrans = {}
 	drevnexustrans = {}
+	ltaxnexus = []
 	llabs = []
 	for i, recgenetree in enumerate(lrecgt):
 		if nsample: g = nsample[i]
@@ -75,7 +95,7 @@ def orthoFromSampleRecs(nfrec, outortdir, nsample=[], methods=['mixed'], \
 		if foutdiffog:
 			foutdiffog.write('\t'.join([fam, str(g), n1, n2, n3, o12, o13, o23])+'\n')
 		
-		if colourTree:
+		if colourTreePerSampledRecGT or colourCombinedTree:
 			dnexuslabev2num = {}
 			for l, leaf in enumerate(recgenetree.get_leaves()):
 				sl = str(l)
@@ -85,13 +105,13 @@ def orthoFromSampleRecs(nfrec, outortdir, nsample=[], methods=['mixed'], \
 				if i==0:
 					dnexustrans[sl] = lab
 					drevnexustrans[lab] = sl
-			ltaxnexus = [dnexustrans[str(sl)] for sl in range(len(dnexustrans))]
+					ltaxnexus = [dnexustrans[str(sl)] for sl in range(len(dnexustrans))]
 			for node in recgenetree:
 				if node.is_leaf():
 					node.edit_label(dnexuslabev2num[node.label()])
 				else:
 					node.edit_label('')
-		ddogs[g] = {'strict':strict_ogs, 'unicopy':unicopy_ogs, 'mixed':mixed_ogs, 'recgenetree':recgenetree}
+		ddogs[g] = {'strict':strict_ogs, 'unicopy':unicopy_ogs, 'mixed':mixed_ogs}
 		if verbose: print "\n# # # # # # # #"
 		if i==0:
 			# collect the leaf labels; just do once
@@ -103,74 +123,73 @@ def orthoFromSampleRecs(nfrec, outortdir, nsample=[], methods=['mixed'], \
 	for method in methods:
 		ltrees = []
 		nfoutrad = os.path.join(outortdir, method, "%s_%s"%(fam, method))
-		if colourTree:
-			for g in gs:
-				recgenetree = ddogs[g]['recgenetree']
-				ogs = ddogs[g][method]
-				ptg.colour_tree_with_leaf_groups(recgenetree, [[drevnexustrans[ll] for ll in og] for og in ogs])
-				#~ ptg.colour_tree_with_constrained_clades(recgenetree, ogs)
-				ltrees.append(recgenetree)
-			tree2.write_nexus(ltrees, nfout=nfoutrad+"_orthologous_groups.nex", treenames=["tree_%d" for g in gs], ltax=ltaxnexus, dtranslate=dnexustrans, ignoreBS=True)
-		if outputOGperTree:
+		if colourTreePerSampledRecGT:
+			logs = [ddogs[g][method] for g in gs]
+			writeRecGeneTreesColouredByOrthologs(lrecgt, logs, nfoutrad+"_orthologous_groups.nex", drevnexustrans, \
+				treenames=["tree_%d" for g in gs], ltax=ltaxnexus, dtranslate=dnexustrans, figtree=True)
+		if outputOGperSampledRecGT:
 			with open(nfoutrad+".orthologs.per_sampled_tree", 'w') as foutort:
 				for g in gs:
 					ogs = ddogs[g][method]
 					foutort.write('\n'.join([' '.join(x) for x in ogs])+'\n#\n')
 		
 		if graphCombine or majRuleCombine:
-			# first make a dict of edge frequencies
+			## for later output
+			recgt0 = lrecgt[0] if colourCombinedTree else None 
+			# could also use the ALE consensus tree, which has branch supports but has no lengths
+			## first make a dict of edge frequencies
 			dedgefreq = {}
 			for g in gs:
 				ogs = ddogs[g][method]
 				for og in ogs:
-					# get all pairs of genes in the OG
-					combogs = combinations(sorted(og), 2)
-					# add the counts
-					for combo in combog:
+					if len(og)==1:
+						orfan = og[0] ; combo = (orfan, orfan)
 						dedgefreq[combo] = dedgefreq.get(combo, 0) + 1
-			# build a graph of connectivity of the genes in OGs, integrating over the sample
+					else:
+						# get all pairs of genes in the OG
+						combogs = combinations(sorted(og), 2)
+						# add the counts
+						for combo in combogs:
+							dedgefreq[combo] = dedgefreq.get(combo, 0) + 1
+			## build a graph of connectivity of the genes in OGs, integrating over the sample
 			gOG = igraph.Graph()
 			gOG.add_vertices(len(llabs))
-			gOG.vs['label'] = llabs
+			gOG.vs['name'] = llabs
 			if majRuleCombine:
-				# make a majority rule unweighted graph
+				## make a majority rule unweighted graph
 				mjgOG = gOG.copy()
 				# drop edges with frequency below the threshold
 				mjedges = []
 				minfreq = majRuleCombine*R
-				for e, f in dedgefreq:
+				for e, f in dedgefreq.iteritems():
 					# use strict majority (assuming the parameter majRuleCombine=0.5, the default) to avoid obtaining family-wide single components
 					if f > minfreq: mjedges.append(e)
 				# add the edges to the graph
 				mjgOG.add_edges(mjedges)
 				# find connected components (i.e. perform clustering)
 				compsOGs = mjgOG.components()
-				# write out connected components = synthesis of OGs over the sample
-				with open(nfoutrad+".orthologs.majrule_combined_%f"%graphCombine, 'w') as foutortgc:
-					#~ foutortmj.write('\n'.join([' '.join([gOG.vs[e]['label'] for e in compOG]) for compOG in compOGs])+'\n')
-					foutortmj.write('\n'.join(['%s\t%d'%(lab, mem) for lab, mem in zip(llabs, compsOGs.membership)])+'\n')
+				writeGraphCombinedOrthologs(nfoutrad, mjgOG, compsOGs, recgt0, llabs, drevnexustrans, colourCombinedTree, \
+					tag="majrule_combined_%f"%majRuleCombine, ltax=ltaxnexus, dtranslate=dnexustrans, ltreenames=["tree_0"], figtree=True)
 			if graphCombine:
-				# make a full weighted graph
+				## make a full weighted graph
 				# add the edges to the graph
 				edges, freqs = zip(*dedgefreq.iteritems())
 				gOG.add_edges(edges)
-				gOG.es['freq'] = freqs
+				gOG.es['weight'] = freqs
 				# find communities (i.e. perform clustering)
-				graphcommfun = getattr(g, "community_"+graphCombine)
+				graphcommfun = getattr(igraph.Graph, "community_"+graphCombine)
 				try:
-					commsOGs = graphcommfun(g, weights='freq')
+					commsOGs = graphcommfun(gOG, weights='weight')
 				except TypeError:
 					try:
-						commsOGs = graphcommfun(g, edge_weights='freq')
+						commsOGs = graphcommfun(gOG, edge_weights='weight')
 					except TypeError:
-						commsOGs = graphcommfun(g)
+						commsOGs = graphcommfun(gOG)
 				if isinstance(commsOGs, igraph.clustering.VertexDendrogram):
 					commsOGs = commsOGs.as_clustering()
 				assert isinstance(commsOGs, igraph.clustering.VertexClustering)
-				# write out clustering = synthesis of OGs over the sample
-				with open(nfoutrad+".orthologs.graph_combined_%s"%graphCombine, 'w') as foutortgc:
-					#~ foutortgc.write('\n'.join([' '.join([gOG.vs[e]['label'] for e in commOG]) for commOG in commsOGs])+'\n')
-					foutortgc.write('\n'.join(['%s\t%d'%(lab, mem) for lab, mem in zip(llabs, commsOGs.membership)])+'\n')
+				writeGraphCombinedOrthologs(nfoutrad, gOG, commsOGs, recgt0, llabs, drevnexustrans, colourCombinedTree, \
+					tag='graph_combined_%s'%graphCombine, ltax=ltaxnexus, dtranslate=dnexustrans, ltreenames=["tree_0"], figtree=True)
 
 def usage(mini=False):
 	basics = "Usage:\n python %s -i /path/to/input.reconciliation.dir -o /path/to/output.dir [OPTIONS]\n"%sys.argv[0]
@@ -192,7 +211,8 @@ if __name__=='__main__':
 	
 	opts, args = getopt.getopt(sys.argv[1:], 'i:o:T:hv', ['input.reconciliation.dir=', 'output.dir=', 'ale.model=', 'sample=', \
 														'methods=', 'max.frac.extra.spe=', 'use.species.tree', \
-														'colour.tree', 'ogs.per.tree', 'summary.per.tree', 'majrule.combine=', 'graph.combine=', \
+														'colour.sampled.trees', 'report.ogs.per.sampled.tree', 'summary.per.sampled.tree', \
+														'majrule.combine=', 'graph.combine=', 'colour.combined.tree', \
 														'threads=', 'verbose=', 'help'])
 	dopt = dict(opts)
 	if ('-h' in dopt) or ('--help' in dopt):
@@ -209,9 +229,10 @@ if __name__=='__main__':
 	userefspetree = dopt.get('--use.species.tree')
 	verbose = int(dopt.get('--verbose', ('-v' in dopt)))
 	ALEmodel = dopt.get('--ale.model', 'dated')
-	summaryOverlap = ('--summary.per.tree' in dopt)
-	outputOGperTree = ('--ogs.per.tree' in dopt)
-	colourTree = ('--colour.tree' in dopt)
+	summaryOverlap = ('--summary.per.sampled.tree' in dopt)
+	outputOGperSampledRecGT = ('--report.ogs.per.sampled.tree' in dopt)
+	colourTreePerSampledRecGT = ('--colour.sampled.trees' in dopt)
+	colourCombinedTree = ('--colour.combined.tree' in dopt)
 	trheshExtraSpe = float(dopt.get('--max.frac.extra.spe', 0.1))
 	nsample = [int(k) for k in dopt.get('--sample', '').split(',') if k.isdigit()]
 	methods = dopt.get('--methods', 'mixed').split(',')
@@ -250,13 +271,14 @@ if __name__=='__main__':
 	def orthoFromSampleRecsSetArgs(nfrec):
 		orthoFromSampleRecs(nfrec, outortdir, nsample=nsample, ALEmodel=ALEmodel, \
 							methods=methods, userefspetree=userefspetree, trheshExtraSpe=trheshExtraSpe, \
-							graphCombine=graphCombine, majRuleCombine=majRuleCombine, \
-							foutdiffog=foutdiffog, outputOGperTree=outputOGperTree, colourTree=colourTree, \
+							graphCombine=graphCombine, majRuleCombine=majRuleCombine, colourCombinedTree=colourCombinedTree, \
+							foutdiffog=foutdiffog, outputOGperSampledRecGT=outputOGperSampledRecGT, colourTreePerSampledRecGT=colourTreePerSampledRecGT, \
 							verbose=verbose)
 	
 	# run sequentially
 	if nbthreads==1:
 		for nfrec in lnfrec:
+			print nfrec
 			orthoFromSampleRecsSetArgs(nfrec)
 			if verbose: print " # # # # # # # \n"
 		if foutdiffog: foutdiffog.close()
