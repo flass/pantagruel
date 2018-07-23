@@ -14,7 +14,7 @@ def writefamrowout(currphyloprof, curfam, lgenomecodes, dfoutmatortho, lcurrt):
 	return (k==1)
 
 if len(sys.argv) < 2:
-	print "Missing arguments!\nUsage:\n%s /path/to/pantagruel/sqliteDBfile /path/to/output/[file_prefix] [/path/to/restricted_genome_code_list]"%os.path.basename(sys.argv[0])
+	print "Missing arguments!\nUsage:\n%s /path/to/pantagruel/sqliteDBfile /path/to/output/[file_prefix] [/path/to/restricted_genome_code_list] [ortholog_collection_id]"%os.path.basename(sys.argv[0])
 	sys.exit(2)
 
 nfsqldb = sys.argv[1]
@@ -26,6 +26,12 @@ if len(sys.argv) > 3:
 	nffocusgenomecodes = sys.argv[3]
 else:
 	nffocusgenomecodes = None
+	
+
+if len(sys.argv) > 4:
+	ortcolid = int(sys.argv[3])
+else:
+	ortcolid = None
 
 
 dbcon = sqlite3.connect(nfsqldb)
@@ -65,12 +71,13 @@ for s in ['singletons', 'no-singletons']:
 	dfoutmatortho[s]  = foutmatortho
 	foutmatortho.write('\t'.join(['']+lgenomecodes)+'\n')
 
+colWC = "WHERE ortholog_col_id=%d"%ortcolid if not (ortcolid is None) else ""
 dbcur.execute("""
 SELECT gene_family_id, og_id, code, count(cds_code)
 FROM cds_fam_code
-LEFT JOIN orthologous_groups using (cds_code, gene_family_id) 
+LEFT JOIN orthologous_groups using (cds_code, gene_family_id) %s
 GROUP BY gene_family_id, og_id, code
-ORDER BY gene_family_id, og_id;""")
+ORDER BY gene_family_id, og_id;"""%colWC)
 
 lnoorthofams = []
 lorthofams = []
