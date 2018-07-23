@@ -14,9 +14,9 @@ CREATE TABLE   species_tree_events (
   rec_branch_id INT NOT NULL  -- refers to species_tree (branch_id)
 );
 
-CREATE INDEX ON species_tree_events (event_type);
-CREATE INDEX ON species_tree_events (don_branch_id);
-CREATE INDEX ON species_tree_events (rec_branch_id);
+CREATE INDEX species_tree_events_ev_type_idx ON species_tree_events (event_type);
+CREATE INDEX species_tree_events_don_br_idx ON species_tree_events (don_branch_id);
+CREATE INDEX species_tree_events_rec_br_idx ON species_tree_events (rec_branch_id);
 
 CREATE TABLE gene_lineage_events ( --to be a large table
   event_id SERIAL,
@@ -70,3 +70,21 @@ SELECT cds_code as replacement_label_or_cds_code, gene_family_id FROM coding_seq
 UNION
 SELECT replacement_label as replacement_label_or_cds_code, gene_family_id FROM replaced_gene_tree_clades;
 
+
+CREATE TABLE ortholog_collections (
+  ortholog_col_id INT PRIMARY KEY,
+  ortholog_col_name VARCHAR(50) NOT NULL,
+  reconciliation_id INT NOT NULL,
+  software VARCHAR NOT NULL,
+  version VARCHAR NOT NULL,
+  algorithm VARCHAR,
+  ortholog_col_date TIMESTAMP,
+  notes TEXT
+);
+
+CREATE TABLE orthologous_groups (
+  cds_code VARCHAR(20) NOT NULL,
+  gene_family_id VARCHAR(20) NOT NULL,
+  og_id INT NOT NULL,
+  ortholog_col_id INT
+);
