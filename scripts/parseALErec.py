@@ -471,9 +471,14 @@ def _prune_orthologs_top_down(node, **kw):
 		if verbose: print "reroot gene tree for maximum balance"
 		node = node.reRoot_max_tree_balance()
 		if candidateOGs:
-			print "restrict set of candidate OGs from %d to"%len(candidateOGs),
-			candidateOGs = [cOG for cOG in candidateOGs if (node.mrca([dsbal[lab] for lab in cOG]) is not node)]
-			if verbose: print len(candidateOGs)
+			restrcandOGs = []
+			for cOG in candidateOGs:
+				trlabs = [dsbal[lab] for lab in cOG]
+				mrcacOG = node.mrca(trlabs)
+				if (mrcacOG is not node): restrcandOGs.append(mrcacOG)
+				elif verbose: print trlabs
+			if verbose: print "restrict set of candidate OGs from %d to %d"%(len(candidateOGs), len(restrcandOGs))
+			candidateOGs = restrcandOGs
 		kw['reRootMaxBalance'] = False # do not pass on parameter to avoid repeating action recursively
 	
 	# # # # test at current node
