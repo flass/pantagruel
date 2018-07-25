@@ -465,14 +465,14 @@ def _prune_orthologs_top_down(node, **kw):
 		for leaflabevchain in node.iter_leaf_labels():
 			dlabs[leaflabevchain] = extractLabelfromDatedEventLeaf(leaflabevchain)
 	# make reverse dict of leaf labs
-	# TO DO: this could be simplified by editinig the tree leaf labels and only using the rev. dict for accessing leaf event chains
+	# TO DO: this could be simplified by editing the tree leaf labels and only using the rev. dict for accessing leaf event chains
 	dsbal = {val:key for key, val in dlabs.iteritems()}
 	if kw.get('reRootMaxBalance'):
 		if verbose: print "reroot gene tree for maximum balance"
 		node = node.reRoot_max_tree_balance()
 		if candidateOGs:
 			print "restrict set of candidate OGs from %d to"%len(candidateOGs),
-			candidateOGs = [cOG for cOG in candidateOGs if node.mrca([dsbal[lab] for lab in cOG]) is node]
+			candidateOGs = [cOG for cOG in candidateOGs if (node.mrca([dsbal[lab] for lab in cOG]) is not node)]
 			if verbose: print len(candidateOGs)
 		kw['reRootMaxBalance'] = False # do not pass on parameter to avoid repeating action recursively
 	
