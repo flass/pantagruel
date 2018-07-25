@@ -19,10 +19,10 @@ for nfortho in lnfortho:
     lcdsog = [tuple(line.replace(' ', '').rstrip('\n').split('\t')) for line in fortho]
   dbcur.executemany("INSERT INTO orthologous_groups (cds_code, gene_family_id, og_id, ortholog_col_id) VALUES (?,?,?,?);", [(cds, fam, ogid, ortcolid) for cds, ogid in lcdsog])
 
-dbcur.execute("CREATE INDEX og_cds_idx ON orthologous_groups (cds_code)")
-dbcur.execute("CREATE INDEX og_fam_idx ON orthologous_groups (gene_family_id)")
-dbcur.execute("CREATE INDEX og_fam_ogid_idx ON orthologous_groups (gene_family_id, og_id)")
-dbcur.execute("CREATE UNIQUE INDEX og_cds_ogcol_idx ON orthologous_groups (cds_code, ortholog_col_id)")
+dbcur.execute("CREATE INDEX IF NOT EXISTS og_cds_idx ON orthologous_groups (cds_code)")
+dbcur.execute("CREATE INDEX IF NOT EXISTS og_fam_idx ON orthologous_groups (gene_family_id)")
+dbcur.execute("CREATE INDEX IF NOT EXISTS og_fam_ogid_idx ON orthologous_groups (gene_family_id, og_id)")
+dbcur.execute("CREATE UNIQUE INDEX IF NOT EXISTS og_cds_ogcol_idx ON orthologous_groups (cds_code, ortholog_col_id)")
 
 dbcon.commit()
 dbcon.close()
