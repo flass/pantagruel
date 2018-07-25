@@ -2,11 +2,11 @@
 import glob, os, sys
 import sqlite3
 
-nfsqldb = sys.arv[1]
-dirortho = sys.arv[2]
-orthomethod = sys.arv[3]
-clustmethod = sys.arv[4]
-ortcolid = int(sys.arv[5])
+nfsqldb = sys.argv[1]
+dirortho = sys.argv[2]
+orthomethod = sys.argv[3]
+clustmethod = sys.argv[4]
+ortcolid = int(sys.argv[5])
 
 dbcon = sqlite3.connect(nfsqldb)
 dbcur = dbcon.cursor()
