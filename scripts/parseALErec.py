@@ -448,7 +448,7 @@ def _prune_orthologs_top_down(node, **kw):
 	if 'reRootMaxBalance':
 		the tree is re-rooted according the the maximum branch length balance of sub-root trees; not that doing so, 
 		a lot of information from reconciliation is lost, only the possibly varried almagamated tology of the gene tree
-		may defiier between sampled receonciled gene trees. Not also that if using mixed criterion, the candidate OG
+		may differ between sampled receonciled gene trees. Not also that if using mixed criterion, the candidate OG
 		from strict gain scenario will not be necessarily monophyletic, in which case they'll be discarded.
 	"""
 	# # # # initiate paramaters
@@ -468,8 +468,8 @@ def _prune_orthologs_top_down(node, **kw):
 	# TO DO: this could be simplified by editing the tree leaf labels and only using the rev. dict for accessing leaf event chains
 	dsbal = {val:key for key, val in dlabs.iteritems()}
 	if kw.get('reRootMaxBalance'):
-		if verbose: print "reroot gene tree for maximum balance"
 		node = node.reRoot_max_tree_balance()
+		if verbose: print "rerooted gene tree for maximum balance:\n", node
 		if candidateOGs:
 			restrcandOGs = []
 			for cOG in candidateOGs:
