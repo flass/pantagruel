@@ -368,9 +368,10 @@ def _prune_nested_candidate_orthologs(node, dsbal, leaflabs, lspe, extraspe, can
 		tsleaflabset = tuple(sorted(leaflabset))
 		if tsleaflabset in cacheBranDep: return cacheBranDep[tsleaflabset]
 		m = node.mrca([dsbal[ll] for ll in tsleaflabset])
-		f = m.go_father()
-		if f: d = f.max_leaf_distance()
-		else: d = m.max_leaf_distance()
+		#~ f = m.go_father()
+		#~ if f: d = f.max_leaf_distance()
+		#~ else: d = m.max_leaf_distance()
+		d = node.depth()
 		cacheBranDep[tsleaflabset] = d
 		return d
 	
@@ -384,7 +385,7 @@ def _prune_nested_candidate_orthologs(node, dsbal, leaflabs, lspe, extraspe, can
 				# second keep only those that intersect with the set of possible leaves to remove
 				cOGs.append(scOG)
 		# sort first the cOG with the highest score of leaf set overlap, then smallest size, then higher branching point in gene tree
-		cOGs.sort(key=lambda x: (len(sextraleaflabs & x), -len(x), branching_depth(x)), reverse=True) 
+		cOGs.sort(key=lambda x: -(len(sextraleaflabs & x), len(x), branching_depth(x))) 
 		return cOGs, sextraleaflabs
 	
 	sp0, sp1 = kw.get('splitparam', ('_',1))
