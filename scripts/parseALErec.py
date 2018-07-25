@@ -445,6 +445,11 @@ def _prune_orthologs_top_down(node, **kw):
 	    extra-numerary species is below the specified threahold; this is to avoid the pruning to be too agressive, i.e. 
 	    the lower the threhold, the more this operation will only be attempted far from the genee tree root, practically 
 	    targetting almost-unicopy clades disrupted by late gains.
+	if 'reRootMaxBalance':
+		the tree is re-rooted according the the maximum branch length balance of sub-root trees; not that doing so, 
+		a lot of information from reconciliation is lost, only the possibly varried almagamated tology of the gene tree
+		may defiier between sampled receonciled gene trees. Not also that if using mixed criterion, the candidate OG
+		from strict gain scenario will not be necessarily monophyletic, in which case they'll be discarded.
 	"""
 	# # # # initiate paramaters
 	orthologGroups = kw.get('orthologGroups', [])
@@ -462,6 +467,10 @@ def _prune_orthologs_top_down(node, **kw):
 	# make reverse dict of leaf labs
 	# TO DO: this could be simplified by editinig the tree leaf labels and only using the rev. dict for accessing leaf event chains
 	dsbal = {val:key for key, val in dlabs.iteritems()}
+	if ('reRootMaxBalance' in kw):
+		node = node.reRoot_max_tree_balance()
+		if candidateOGs:
+			candidateOGs = [cOG forcOG if node.is_monophyletic([dsbal[lab] for lab in cOG])]
 	
 	# # # # test at current node
 	nodelab = node.label()
