@@ -568,8 +568,8 @@ def getOrthologues(recgt, method='mixed', **kw):
 	    allow to constrain the scope of unicopy clades: represented species 
 	    must all belong to the species clade below the ancestor to which a gene gain is mapped 
 	    on the gene tree branch (last recipient of the gene if several gain events occurred).
-	
-	'refspetree' : 
+	'reRootMaxBalance':
+	    boolean, only for 'unicopy' or 'mixed' methods.
 	'ALEmodel'   : {'dated', 'undated'} specify the algorithm under which was generated the reconciliation (different parser)
 	'verbose'    : integer (0-2)
 	"""

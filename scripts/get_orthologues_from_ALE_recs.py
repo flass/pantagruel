@@ -236,6 +236,7 @@ if __name__=='__main__':
 	trheshExtraSpe = float(dopt.get('--max.frac.extra.spe', 0.1))
 	nsample = [int(k) for k in dopt.get('--sample', '').split(',') if k.isdigit()]
 	methods = dopt.get('--methods', 'mixed').split(',')
+	reRootMaxBalance = ('reroot.max.balace' in dopt)
 	if not methods or set(methods) > set(allmethods):
 		raise ValueError, "values for --methods must be any non-empty combination of %s (default to 'mixed').\n"%repr()
 	graphCombine = dopt.get('graph.combine', 'fastgreedy')
@@ -270,7 +271,7 @@ if __name__=='__main__':
 			
 	def orthoFromSampleRecsSetArgs(nfrec):
 		orthoFromSampleRecs(nfrec, outortdir, nsample=nsample, ALEmodel=ALEmodel, \
-							methods=methods, userefspetree=userefspetree, trheshExtraSpe=trheshExtraSpe, \
+							methods=methods, userefspetree=userefspetree, trheshExtraSpe=trheshExtraSpe, reRootMaxBalance=reRootMaxBalance, \
 							graphCombine=graphCombine, majRuleCombine=majRuleCombine, colourCombinedTree=colourCombinedTree, \
 							foutdiffog=foutdiffog, outputOGperSampledRecGT=outputOGperSampledRecGT, colourTreePerSampledRecGT=colourTreePerSampledRecGT, \
 							verbose=verbose)
