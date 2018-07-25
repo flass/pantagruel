@@ -210,7 +210,7 @@ def usage(mini=False):
 if __name__=='__main__':
 	
 	opts, args = getopt.getopt(sys.argv[1:], 'i:o:T:hv', ['input.reconciliation.dir=', 'output.dir=', 'ale.model=', 'sample=', \
-														'methods=', 'max.frac.extra.spe=', 'use.species.tree', \
+														'methods=', 'max.frac.extra.spe=', 'use.species.tree', 'reroot.max.balace', \
 														'colour.sampled.trees', 'report.ogs.per.sampled.tree', 'summary.per.sampled.tree', \
 														'majrule.combine=', 'graph.combine=', 'colour.combined.tree', \
 														'threads=', 'verbose=', 'help'])
@@ -236,7 +236,7 @@ if __name__=='__main__':
 	trheshExtraSpe = float(dopt.get('--max.frac.extra.spe', 0.1))
 	nsample = [int(k) for k in dopt.get('--sample', '').split(',') if k.isdigit()]
 	methods = dopt.get('--methods', 'mixed').split(',')
-	reRootMaxBalance = ('reroot.max.balace' in dopt)
+	reRootMaxBalance = ('--reroot.max.balace' in dopt)
 	if not methods or set(methods) > set(allmethods):
 		raise ValueError, "values for --methods must be any non-empty combination of %s (default to 'mixed').\n"%repr()
 	graphCombine = dopt.get('graph.combine', 'fastgreedy')
