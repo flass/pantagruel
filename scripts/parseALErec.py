@@ -468,9 +468,12 @@ def _prune_orthologs_top_down(node, **kw):
 	# TO DO: this could be simplified by editinig the tree leaf labels and only using the rev. dict for accessing leaf event chains
 	dsbal = {val:key for key, val in dlabs.iteritems()}
 	if ('reRootMaxBalance' in kw):
+		if verbose: print "reroot gene tree for maximum balance"
 		node = node.reRoot_max_tree_balance()
 		if candidateOGs:
-			candidateOGs = [cOG for cOG in candidateOGs if node.is_monophyletic([dsbal[lab] for lab in cOG])]
+			print "restrict set of candidate OGs from %d to"%len(candidateOGs),
+			candidateOGs = [cOG for cOG in candidateOGs if node.is_mrca([dsbal[lab] for lab in cOG]) is node]
+			if verbose: print len(candidateOGs)
 	
 	# # # # test at current node
 	nodelab = node.label()
