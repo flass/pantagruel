@@ -470,7 +470,7 @@ def _prune_orthologs_top_down(node, **kw):
 	if ('reRootMaxBalance' in kw):
 		node = node.reRoot_max_tree_balance()
 		if candidateOGs:
-			candidateOGs = [cOG forcOG if node.is_monophyletic([dsbal[lab] for lab in cOG])]
+			candidateOGs = [cOG for cOG if node.is_monophyletic([dsbal[lab] for lab in cOG])]
 	
 	# # # # test at current node
 	nodelab = node.label()
