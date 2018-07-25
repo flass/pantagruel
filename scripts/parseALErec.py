@@ -475,7 +475,8 @@ def _prune_orthologs_top_down(node, **kw):
 			for cOG in candidateOGs:
 				trlabs = [dsbal[lab] for lab in cOG]
 				mrcacOG = node.mrca(trlabs)
-				if (mrcacOG is not node): restrcandOGs.append(mrcacOG)
+				assert mrcacOG is not None
+				if (mrcacOG is not node): restrcandOGs.append(cOG)
 				elif verbose: print trlabs, "excluded"
 			if verbose and len(candidateOGs)!=len(restrcandOGs): print "restrict set of candidate OGs from %d to %d"%(len(candidateOGs), len(restrcandOGs))
 			candidateOGs = restrcandOGs
