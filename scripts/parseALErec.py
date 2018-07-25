@@ -604,6 +604,9 @@ def getOrthologues(recgt, method='mixed', **kw):
 		gain_ogs = [og for og in strict_ogs if og!=bbgog]
 		if verbose and len(strict_ogs)!=len(gain_ogs): print "removed backbone OG from candidate OG list:", bbgog
 		ogs, dlabs = _prune_orthologs_top_down(recgt, candidateOGs=gain_ogs, **kw)
+	if any([(not og) for og in ogs]):
+		print ogs
+		raise ValueError, "one OG is empty"
 	return ogs, unclassified, dlabs
 
 		
