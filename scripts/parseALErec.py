@@ -294,7 +294,6 @@ def splitEventChain(nodelab, isleaf=False, ALEmodel='dated', **kw):
 		lineage = lineage[1:]
 	else:
 		leaflab = None
-	if verbose: print 'lineage:', lineage, ("leaflab: %s"%leaflab if leaflab else "")
 	return (lineage, leaflab)
 
 def _prune_orthologs_bottom_up(node, ALEmodel='dated', **kw):
@@ -317,6 +316,7 @@ def _prune_orthologs_bottom_up(node, ALEmodel='dated', **kw):
 			for arg in ('orthologGroups', 'dlabs'): kw[arg] = eval(arg)
 			orthologGroups, uncl, dlabs = _prune_orthologs_bottom_up(child, **kw)
 			unclassified |= uncl
+	if verbose: print 'lineage:', lineage, ("leaflab: %s"%leaflab if leaflab else "")
 	# then explore node itself
 	if not unclassified:
 		# all leaves below have been already classified in orthologous group; stop here.
@@ -336,13 +336,17 @@ def _prune_orthologs_bottom_up(node, ALEmodel='dated', **kw):
 			# gene was duplicated here by species ancestor:
 			# what was not yet classifed in the child subtrees
 			# of this subtree are each an orthologous group
+			nonemptychildren = False
 			for child in node.children:
 				subuncl = set([dlabs[leaflabevchain] for leaflabevchain in child.iter_leaf_labels()]) & unclassified
-				ortho = tuple(sorted(subuncl))
-				orthologGroups.append(ortho)
-				if verbose: print 'D-OG!', len(ortho)
-			unclassified = set([])
-			break # for event loop
+				if subuncl:
+					ortho = tuple(sorted(subuncl))
+					orthologGroups.append(ortho)
+					if verbose: print 'D-OG!', len(ortho)
+					nonemptychildren = True
+			if nonemptychildren:
+				unclassified = set([])
+				break # for event loop
 	#~ if verbose: print "unclassified:", unclassified
 	if node.is_root() and unclassified:
 		# any remaining unclassified leaf is to be alloacted to a backbone orthologous group
@@ -446,10 +450,11 @@ def _prune_orthologs_top_down(node, **kw):
 	    the lower the threhold, the more this operation will only be attempted far from the genee tree root, practically 
 	    targetting almost-unicopy clades disrupted by late gains.
 	if 'reRootMaxBalance':
-		the tree is re-rooted according the the maximum branch length balance of sub-root trees; not that doing so, 
+		the tree is re-rooted according the the maximum branch length balance of sub-root trees; note that doing so, 
 		a lot of information from reconciliation is lost, only the possibly varried almagamated tology of the gene tree
-		may differ between sampled receonciled gene trees. Not also that if using mixed criterion, the candidate OG
-		from strict gain scenario will not be necessarily monophyletic, in which case they'll be discarded.
+		may differ between sampled receonciled gene trees. The 'refspetree' option is therefore unvalid and overridden by this one. 
+		Note also that if using mixed criterion, a candidate OG from strict gain scenario may have covered a subtree that contained 
+		the new root, in which case it is discarded.
 	"""
 	# # # # initiate paramaters
 	orthologGroups = kw.get('orthologGroups', [])
@@ -467,7 +472,8 @@ def _prune_orthologs_top_down(node, **kw):
 	# make reverse dict of leaf labs
 	# TO DO: this could be simplified by editing the tree leaf labels and only using the rev. dict for accessing leaf event chains
 	dsbal = {val:key for key, val in dlabs.iteritems()}
-	if kw.get('reRootMaxBalance'):
+	rerootMBgt = kw.get('reRootMaxBalance')
+	if rerootMBgt:
 		node = node.reRoot_max_tree_balance()
 		if verbose: print "rerooted gene tree for maximum balance:\n", node
 		if candidateOGs:
@@ -493,7 +499,7 @@ def _prune_orthologs_top_down(node, **kw):
 	lspe = [getSpe(leaflab, sp0, sp1) for leaflab in leaflabs]
 	nspe = len(set(lspe))
 	extraspe = True # initiate
-	if not refspetree:
+	if (not refspetree) or rerootMBgt:
 		if verbose: print 'evaluate orthology under gene tree node', nodelab
 		extraspe = getExtraNumerarySpe(lspe)
 		if not extraspe:
@@ -511,6 +517,7 @@ def _prune_orthologs_top_down(node, **kw):
 					extraspe = []
 	else:
 		lineage, tiplab = splitEventChain(nodelab, isleaf=node.is_leaf(), **kw)
+		if verbose: print 'lineage:', lineage, ("leaflab: %s"%leaflab if leaflab else "")
 		# list of events goes BACKWARD in time when read left-to-right
 		for event in lineage:
 			# latest event primes
