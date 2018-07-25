@@ -476,7 +476,7 @@ def _prune_orthologs_top_down(node, **kw):
 				trlabs = [dsbal[lab] for lab in cOG]
 				mrcacOG = node.mrca(trlabs)
 				if mrcacOG is None:
-					print set(node.get_leaf_labels()) - set(trlabs)
+					print set(trlabs) - set(node.get_leaf_labels())
 					raise ValueError, "leaf set not fully covered by tree"
 				if (mrcacOG is not node): restrcandOGs.append(cOG)
 				elif verbose: print trlabs, "excluded"
