@@ -33,6 +33,7 @@ if len(sys.argv) > 4:
 else:
 	ortcolid = None
 
+verbose = False
 
 dbcon = sqlite3.connect(nfsqldb)
 dbcur = dbcon.cursor()
@@ -71,7 +72,16 @@ for s in ['singletons', 'no-singletons']:
 	dfoutmatortho[s]  = foutmatortho
 	foutmatortho.write('\t'.join(['']+lgenomecodes)+'\n')
 
-colWC = "WHERE ortholog_col_id=%d"%ortcolid if not (ortcolid is None) else ""
+if (ortcolid is None):
+	colWC = ""
+	# verify that there is only one collection in the db
+	dbcur.execute("SELECT DISTINCT ortholog_col_id FROM orthologous_groups;")
+	ogcolids = dbcur.fetchall()
+	if len(ogcolids)>1:
+		raise ValueError, "several orthologous group collections detected in database:\n%s\nOne of these must be specified as the argument 'ortholog_collection_id'"%('\n'.join([x[0] for x in ogcolids]))
+else:
+	print "retrieveing orthology classification from collection: ortholog_col_id=%d"%ortcolid
+	colWC = "WHERE ortholog_col_id=%d OR ortholog_col_id IS NULL"%ortcolid
 dbcur.execute("""
 SELECT gene_family_id, og_id, code, count(cds_code)
 FROM cds_fam_code
@@ -89,13 +99,13 @@ curfamog = None
 lcurrt = []
 currphyloprof = None
 for tfamcodeogn in dbcur:
+	if verbose: print tfamcodeogn
 	lcurrt.append(tfamcodeogn)
 	fam, ogid, code, n = tfamcodeogn
 	if fam != curfam:
 		curfam = fam
-		if ogid is not None: lorthofams.append(fam)
-		else:
-			lnoorthofams.append(fam)
+		if ogid is None: lnoorthofams.append(fam)
+		else: lorthofams.append(fam)
 	if (fam, ogid) != curfamog:
 		if curfamog:
 			singleton = writefamrowout(currphyloprof, curfamog, lgenomecodes, dfoutmatortho, lcurrt)
