@@ -73,7 +73,7 @@ for (i in 1:length(cladedefs)){
 	cla = names(cladedefs)[i]
 	print(cla)
 	a = as.logical(i-1)
-	write(paste(sprintf("# %s", cla), paste(c("# gene families present in all genomes of clade:", "and absent in all genomes of sister clade:"), cladedefcsv[cla,], sep=' ', collapse='; '), sep='\t\t\t\t\t'),
+	write(paste(sprintf("# %s", cla), paste(c("# gene families present in all genomes of clade:", "and absent in all genomes of sister clade:"), cladedefcsv[cla,], sep=' ', collapse='; '), sep='\t\t\t\t\t\t'),
 	 file=nfoutspege, append=a)
 	dbBegin(dbcon)
 	spefamogs = as.data.frame(t(sapply(strsplit(rownames(genocount)[specifigenes[[cla]]], split='-'), function(x){ if (length(x)==2) return(x) else return(c(x, NA)) })), stringsAsFactors=F)
@@ -86,7 +86,7 @@ for (i in 1:length(cladedefs)){
 	 "INNER JOIN proteins USING (nr_protein_id)",
 	 "INNER JOIN specific_genes USING (gene_family_id, og_id)",
 	 "WHERE cds_code LIKE :c AND ( ortholog_col_id=:o OR ortholog_col_id IS NULL) ;"),
-	 collapse=" "), params=list(c=sprintf("%s%%", cladedefs[[cla]]$clade[1])), o=)
+	 collapse=" "), params=list(c=sprintf("%s%%", cladedefs[[cla]]$clade[1])), o=ogcolid)
 	dbExecute(dbcon, "DROP TABLE specific_genes;")
 	dbCommit(dbcon)
 	write.table(spegeneinfo, file=nfoutspege, sep='\t', quote=F, row.names=F, col.names=T, append=T)
