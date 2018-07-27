@@ -85,7 +85,7 @@ for (i in 1:length(cladedefs)){
 	 "LEFT JOIN orthologous_groups USING (cds_code, gene_family_id)",
 	 "INNER JOIN proteins USING (nr_protein_id)",
 	 "INNER JOIN specific_genes USING (gene_family_id, og_id)",
-	 "WHERE cds_code LIKE :c AND ( ortholog_col_id=:o OR ortholog_col_id IS NULL) ;"),
+	 "WHERE cds_code LIKE :c AND ( ortholog_col_id = :o OR ortholog_col_id IS NULL) ;"),
 	 collapse=" "), params=list(c=sprintf("%s%%", cladedefs[[cla]]$clade[1])), o=ogcolid)
 	dbExecute(dbcon, "DROP TABLE specific_genes;")
 	dbCommit(dbcon)
