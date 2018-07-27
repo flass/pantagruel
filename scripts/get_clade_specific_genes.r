@@ -9,38 +9,40 @@ cargs = commandArgs(trailing=T)
 nffamgenomemat = cargs[1]
 sqldb = cargs[2]
 # genome subset-specific input files
-if (length(cargs)>2){
-	filerad = cargs[3]
-}else{
-	dircore = Sys.getenv('coregenome')
-	focus = Sys.getenv('NT26like')
-	filerad = file.path(dircore, focus, focus)
-	print(sprintf("example data subset: %s", filerad))
-}
+filerad = cargs[3]
+foutrad = cargs[4]
+#~ if (length(cargs)>2){
+#~ 	filerad = cargs[3]
+#~ }else{
+#~ 	dircore = Sys.getenv('coregenome')
+#~ 	focus = Sys.getenv('NT26like')
+#~ 	filerad = file.path(dircore, focus, focus)
+#~ 	print(sprintf("example data subset: %s", filerad))
+#~ }
 nfrestrictlist = sprintf("%s_genome_codes", filerad)
 nfcladedef = sprintf("%s_clade_defs", filerad)
 # output files
-nfabspresmat = sprintf("%s_gene_abspres.mat.RData", filerad)
-nfoutspege = sprintf("%s_specific_genes.tab", filerad)
+nfabspresmat = sprintf("%s_gene_abspres.mat.RData", foutrad)
+nfoutspege = sprintf("%s_specific_genes.tab", foutrad)
 
-# clade definitions
-if (!file.exists(nfcladedef)){
-	clade0 = c('RHIZOB27', 'RNT25')
-	outgroup0 = 'RHISP2'
-	clade1 = c(clade0, outgroup0)
-	clade2 = c('RKHAN', 'RHAB21', 'RFYW14')
-	clade12 = c(clade1, clade2)
-	clade3 = c('REQ54', 'REJC140')
-	clade123 = c(clade12, clade3)
-	clade4 = c('PSEPEL1', 'PSEPEL2', 'RHIMAR')
-	clade1234 = c(clade123, clade4)
-	outgroup = 'RHIZOB54'
-	clades = list(clade0=clade0, outgroup0=outgroup0, clade1=clade1, clade2=clade2, clade12=clade12, clade3=clade3, clade123=clade123, clade4=clade4, clade1234=clade1234, outgroup=outgroup)
-	sisterclades = list(clade0=outgroup0, outgroup0=clade0, clade1=clade2, clade2=clade1, clade12=clade3, clade3=clade12, clade123=clade4, clade4=clade123, clade1234=outgroup, outgroup=clade1234)
-	write.table(t(sapply(names(clades), function(cla){ sapply(list(clades, sisterclades), function(x){ paste(x[[cla]], collapse=',') }) })),
-	 sep='\t', quote=F, row.names=names(clades), col.names=c('clade', 'sisterclade'),
-	 file=nfcladedef)
-}
+#~ # clade definitions
+#~ if (!file.exists(nfcladedef)){
+#~ 	clade0 = c('RHIZOB27', 'RNT25')
+#~ 	outgroup0 = 'RHISP2'
+#~ 	clade1 = c(clade0, outgroup0)
+#~ 	clade2 = c('RKHAN', 'RHAB21', 'RFYW14')
+#~ 	clade12 = c(clade1, clade2)
+#~ 	clade3 = c('REQ54', 'REJC140')
+#~ 	clade123 = c(clade12, clade3)
+#~ 	clade4 = c('PSEPEL1', 'PSEPEL2', 'RHIMAR')
+#~ 	clade1234 = c(clade123, clade4)
+#~ 	outgroup = 'RHIZOB54'
+#~ 	clades = list(clade0=clade0, outgroup0=outgroup0, clade1=clade1, clade2=clade2, clade12=clade12, clade3=clade3, clade123=clade123, clade4=clade4, clade1234=clade1234, outgroup=outgroup)
+#~ 	sisterclades = list(clade0=outgroup0, outgroup0=clade0, clade1=clade2, clade2=clade1, clade12=clade3, clade3=clade12, clade123=clade4, clade4=clade123, clade1234=outgroup, outgroup=clade1234)
+#~ 	write.table(t(sapply(names(clades), function(cla){ sapply(list(clades, sisterclades), function(x){ paste(x[[cla]], collapse=',') }) })),
+#~ 	 sep='\t', quote=F, row.names=names(clades), col.names=c('clade', 'sisterclade'),
+#~ 	 file=nfcladedef)
+#~ }
 cladedefcsv = read.table(nfcladedef, sep='\t', header=T, row.names=1, stringsAsFactors=F)
 cladedefs = apply(cladedefcsv, 1, strsplit, split=',')
 
