@@ -8,9 +8,10 @@ cargs = commandArgs(trailing=T)
 #~ sqldb = Sys.getenv('sqldb')
 nffamgenomemat = cargs[1]
 sqldb = cargs[2]
+ogcolid = as.numeric(cargs[3])
 # genome subset-specific input files
-filerad = cargs[3]
-foutrad = cargs[4]
+filerad = cargs[4]
+foutrad = cargs[5]
 #~ if (length(cargs)>2){
 #~ 	filerad = cargs[3]
 #~ }else{
@@ -84,8 +85,8 @@ for (i in 1:length(cladedefs)){
 	 "LEFT JOIN orthologous_groups USING (cds_code, gene_family_id)",
 	 "INNER JOIN proteins USING (nr_protein_id)",
 	 "INNER JOIN specific_genes USING (gene_family_id, og_id)",
-	 "WHERE cds_code LIKE :c ;"),
-	 collapse=" "), params=list(c=sprintf("%s%%", cladedefs[[cla]]$clade[1])))
+	 "WHERE cds_code LIKE :c AND ( ortholog_col_id=:o OR ortholog_col_id IS NULL) ;"),
+	 collapse=" "), params=list(c=sprintf("%s%%", cladedefs[[cla]]$clade[1])), o=)
 	dbExecute(dbcon, "DROP TABLE specific_genes;")
 	dbCommit(dbcon)
 	write.table(spegeneinfo, file=nfoutspege, sep='\t', quote=F, row.names=F, col.names=T, append=T)
