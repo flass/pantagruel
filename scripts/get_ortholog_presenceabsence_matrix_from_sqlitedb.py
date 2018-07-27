@@ -29,7 +29,7 @@ else:
 	
 
 if len(sys.argv) > 4:
-	ortcolid = int(sys.argv[3])
+	ortcolid = int(sys.argv[4])
 else:
 	ortcolid = None
 
