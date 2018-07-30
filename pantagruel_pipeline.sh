@@ -14,13 +14,17 @@ alias dateprompt="date +'[%Y-%m-%d %H:%M:%S]'"
 datepad="                     "
 
 #### Set mandatory environment variables / parameters
-export myemail='me.myself@respectable-institu.ti.on'
-export raproot='/path/to/base/folder/for/all/this/business'
-export ptgscripts='/path/to/pantagruel_pipeline/scripts'
+export myemail="me.myself@respectable-institu.ti.on"
+export raproot="/path/to/base/folder/for/all/this/business"
+export ptgrepo="/path/to/pantagruel_repository"
+export famprefix="REPLACEfamprefix"
+export rapdbname="aBoldDatabaseName" # mostly name of the top folder
+export famprefix="ABCDE"             # alphanumerical prefix (no number first) of the names for homologous protein/gene family clusters; will be appended with a 'P' for proteins and a 'C' for CDSs.
+
+# derive other important environmnet variables
+export ptgscripts="${ptgrepo}/scripts"
 export PYTHONPATH=$PYTHONPATH:${ptgscripts}
-export famprefix='REPLACEfamprefix'
-export rapdbname='aBoldDatabaseName' # mostly name of the top folder
-export famprefix='ABCDE'             # alphanumerical prefix (no number first) of the names for homologous protein/gene family clusters; will be appended with a 'P' for proteins and a 'C' for CDSs.
+cd ${ptgrepo} ; export ptgversion=$(git log | grep commit) ; cd -
 
 # create head folders
 export rapdb=${raproot}/${rapdbname}
@@ -369,6 +373,8 @@ export sqldb=${database}/${sqldbname}
 mkdir -p ${database}
 cd ${database}
 ### create and populate SQLite database
+
+## Genome schema: initiate and populate
 ${ptgscripts}/pantagruel_sqlite_genome_db.sh ${database} ${sqldbname} ${genomeinfo}/metadata_${rapdbname} ${genomeinfo}/assembly_info ${protali} ${protfamseqs}.tab ${protorfanclust} ${cdsorfanclust} ${straininfo}
 
 # dump reference table for translation of genome assembly names into short identifier codes (uing UniProt "5-letter" code when available).
@@ -389,6 +395,9 @@ for mol in prot cds ; do
   ${ptgscripts}/lsfullpath.py ${protali}/full_${mol}fam_alignments .aln > ${protali}/full_${mol}fam_alignment_list
   ${ptgscripts}/genbank2code_fastaseqnames.py ${protali}/full_${mol}fam_alignment_list ${database}/cds_codes.tab ${alifastacodedir} > ${rapdb}/logs/genbank2code_fastaseqnames.${mol}.log
 done
+
+## Phylogeny schema: initiate
+sqlite3 ${dbfile} < $ptgscripts/pantagruel_sqlitedb_phylogeny_initiate.sql
 
 ###########################################
 ## 04. Core Genome Phylogeny (Species tree)
@@ -482,22 +491,36 @@ python ${ptgscripts}/code2orgnames_in_tree.py ${speciestree} $database/organism_
 ## use LSD (v 0.3 beta; To et al. Syst. Biol. 2015) to generate an ultrametric tree from the rooted ML tree (only assumin different, uncorrelated clocks for each branch)
 alnlen=$( head -n1 ${pseudocorealn}.reduced | cut -d' ' -f2 )
 lsd -i ${speciestree} -c -v 1 -s $alnlen -o ${speciestree}.lsd
-#~ Reading the tree 1...
-#~ The results correspond to the estimation of relative dates when T[mrca]=0.000 and T[tips]=1.000
-#~ rate 3.553e-01 , tMRCA 0.000 , objective function 1.176019e+05
-
-# tentative rooting with LSD
-lsd -i ${speciestree} -c -v 1 -r a -s $alnlen -o ${nrbiparts}.LSDrooted.full
-# LSD rooting very similar to MAD rooting;
-# only with LSD the root is a polytomy, with five branches: the pre-symbiotic species UNCENT1 and SHIBC1 (separately), the Cedecea and Cronobacter clades, and the main clade
-# whereas with MAD the root is bifurcated and the outgroup clade is (main, (Cronobacter, (Cedecea, (UNCENT1, SHIBC1)))). MAD rooting is preferred.
-
 
 ## delineate populations of near-identical strains (based on tree with branch lengths in subs/site) and generate the population tree, i.e. the species tree withs population collapsed
 python ${ptgscripts}/replace_species_by_pop_in_gene_trees.py -S ${speciestree} --threads=8 \
 --pop_stem_conds="[('lg', '>=', 0.0005), ('bs', '>=', 80)]" --within_pop_conds="[('max', 'lg', '<=', 0.0005, -1)]"
 nspepop=$(tail -n+3 ${speciestree%.*}_populations | wc -l)
 echo "Found $nspepop disctinct populations in the species tree"
+
+
+## extract sister clade pairs from the reference species tree for later clade-specific gene search
+python << EOF
+import tree2
+reftree = tree2.Node(file='${speciestree}')
+nfout = "${speciestree}_clade_defs"
+fout = open(nfout, 'w')
+fout.write('\t'.join(['', 'clade', 'sisterclade'])+'\n')
+k = 0
+for node in reftree:
+  if len(node.children) != 2: continue
+  for child in node.children:
+    if child.nb_leaves() <= 1: continue
+    focchildlab = child.label()
+    if not focchildlab:
+      focchildlab = "clade%d"%k
+      k += 1
+    focchildleaflabset = ','.join(sorted(child.get_leaf_labels()))
+    sischildleaflabset = ','.join(sorted(child.go_brother().get_leaf_labels()))
+    fout.write('\t'.join([focchildlab, focchildleaflabset, sischildleaflabset])+'\n')
+
+fout.close()
+EOF
 
 
 #############################################################
@@ -529,6 +552,7 @@ if [ "$(wc -l $cdsfam2phylo | cut -f1 -d' ')" -lt "$(wc -l $tasklist | cut -f1 -
 fi
 qsubvars="tasklist=$tasklist,outputdir=$mlgenetrees,reducedaln=true,nbthreads=${ncpus}"
 Njob=`wc -l ${tasklist} | cut -f1 -d' '`
+# accomodate with possible upper limit on number of tasks in an array job; assume chunks of 3000 tasks are fine
 chunksize=3000
 jobranges=($(${ptgscripts}/get_jobranges.py $chunksize $Njob))
 for jobrange in ${jobranges[@]} ; do
@@ -537,116 +561,223 @@ qsub -J $jobrange -l walltime=${wt}:00:00 -l select=1:ncpus=${ncpus}:mem=${mem}g
 done
 done
 
-## detect clades to be collapsed in gene trees
-export colalinexuscodedir=${protali}/collapsed_cdsfam_alignments_species_code
-cladesupp=70
-subcladesupp=35
-criterion='bs'
-withinfun='median'
-export collapsecond=${criterion}_stem${cladesupp}_within${withinfun}${subcladesupp}
-mkdir -p ${colalinexuscodedir}/${collapsecond}
-mlgenetreelist=${mlgenetrees%*s}_list
-${ptgscripts}/lsfullpath.py ${mlgenetrees}/${mainresulttag} | sort > ${mlgenetreelist}
 
-Njob=`wc -l ${mlgenetreelist} | cut -f1 -d' '`
-chunksize=3000
-jobranges=($(${ptgscripts}/get_jobranges.py $chunksize $Njob))
-ncpus=4
+#### OPTION: edit collapsed gene trees to attribute an (ancestral) species identity to the leafs representing collapsed clades = pre-reconciliation of recent gene history
+if [ -z collapseCladeOptions ] ; then
+  chaintype='fullgenetree'
+  export colalinexuscodedir=${protali}/${chaintype}_cdsfam_alignments_species_code
+  # not implemented yet
+  # only have to only convert the alignments from fasta to nexus
+  for aln in `ls ${alifastacodedir}` ; do
+    convalign  -i fasta -e nex -t dna nexus ${alifastacodedir}/$alnfa 
+  done
+  mv ${alifastacodedir}/*nex ${colalinexuscodedir}/
+  export nexusaln4chains=${colalinexuscodedir}
+  export mboutputdir=${bayesgenetrees}
+  
+else
+  chaintype='collapsed'
+  if [-z ${collapsecolid} ] ; then
+    collapsecolid=1
+  fi
+  eval "$collapseCladeOptions"
+  # e.g.:  eval "cladesupp=70 ; subcladesupp=35 ; criterion='bs' ; withinfun='median'"
 
-for jobrange in ${jobranges[@]} ; do
-beg=`echo $jobrange | cut -d'-' -f1`
-tail -n +${beg} ${mlgenetreelist} | head -n ${chunksize} > ${mlgenetreelist}_${jobrange}
-qsub -N mark_unresolved_clades -l select=1:ncpus=${ncpus}:mem=16gb,walltime=4:00:00 -o ${raplogs}/mark_unresolved_clades.${collapsecond}_${jobrange}.log -j oe -V -S /usr/bin/bash << EOF
-module load python
-python ${ptgscripts}/mark_unresolved_clades.py --in_gene_tree_list=${mlgenetreelist}_${jobrange} --diraln=${alifastacodedir} --fmt_aln_in='fasta' \
- --threads=${ncpus} --dirout=${colalinexuscodedir}/${collapsecond} --no_constrained_clade_subalns_output --dir_identseq=${mlgenetrees}/identical_sequences \
- --clade_stem_conds="[('$criterion', '>=', $cladesupp)]" --within_clade_conds="[('$withinfun', '$criterion', '<=', $subcladesupp, -1), ('max', '$criterion', '<', $cladesupp, -1)]"
+  ## detect clades to be collapsed in gene trees
+  export colalinexuscodedir=${protali}/${chaintype}_cdsfam_alignments_species_code
+  export collapsecond=${criterion}_stem${cladesupp}_within${withinfun}${subcladesupp}
+  export collapsecriteriondef="--clade_stem_conds=\"[('$criterion', '>=', $cladesupp)]\" --within_clade_conds=\"[('$withinfun', '$criterion', '<=', $subcladesupp, -1), ('max', '$criterion', '<', $cladesupp, -1)]\""
+  mkdir -p ${colalinexuscodedir}/${collapsecond}
+  mlgenetreelist=${mlgenetrees%*s}_list
+  ${ptgscripts}/lsfullpath.py ${mlgenetrees}/${mainresulttag} | sort > ${mlgenetreelist}
+  
+  # accomodate with possible upper limit on number of tasks in an array job; assume chunks of 3000 tasks are fine
+  Njob=`wc -l ${mlgenetreelist} | cut -f1 -d' '`
+  chunksize=3000
+  jobranges=($(${ptgscripts}/get_jobranges.py $chunksize $Njob))
+  ncpus=4
+
+  for jobrange in ${jobranges[@]} ; do
+  beg=`echo $jobrange | cut -d'-' -f1`
+  tail -n +${beg} ${mlgenetreelist} | head -n ${chunksize} > ${mlgenetreelist}_${jobrange}
+  qsub -N mark_unresolved_clades -l select=1:ncpus=${ncpus}:mem=16gb,walltime=4:00:00 -o ${raplogs}/mark_unresolved_clades.${collapsecond}_${jobrange}.log -j oe -V -S /usr/bin/bash << EOF
+  module load python
+  python ${ptgscripts}/mark_unresolved_clades.py --in_gene_tree_list=${mlgenetreelist}_${jobrange} --diraln=${alifastacodedir} --fmt_aln_in='fasta' \
+   --threads=${ncpus} --dirout=${colalinexuscodedir}/${collapsecond} --no_constrained_clade_subalns_output --dir_identseq=${mlgenetrees}/identical_sequences \
+   ${collapsecriteriondef}
 EOF
-done
+  done
+  export collapsecoldate=$(date +%Y-%m-%d)
+  export nexusaln4chains=${colalinexuscodedir}/${collapsecond}/collapsed_alns
+  export mboutputdir=${bayesgenetrees}/${collapsecond}
+  
+fi
+#### end OPTION
 
 ## run mrbayes on collapsed alignments
-export collapsed_genetrees=${genetrees}/collapsed_mrbayes_trees
-mkdir -p ${collapsed_genetrees}/${collapsecond}
-alreadytrees=${collapsed_genetrees}_${collapsecond}_list
-${ptgscripts}/lsfullpath.py ${collapsed_genetrees}/${collapsecond} con.tre > $alreadytrees
-alreadytasklist=${colalinexuscodedir}/${collapsecond}_ali_list_done
-sed -e "s#${collapsed_genetrees}/${collapsecond}/\(.\+\)\.mb\.con\.tre#${colalinexuscodedir}/${collapsecond}/collapsed_alns/\1\.nex#g" $alreadytrees > $alreadytasklist
-
-tasklist=${colalinexuscodedir}/${collapsecond}_ali_list
-rm -f $tasklist
-${ptgscripts}/lsfullpath.py ${colalinexuscodedir}/${collapsecond}/collapsed_alns > $tasklist
-# following 4 lines are for resuming after a stop in batch computing, or to collect those jobs that crashed (and may need to be re-ran with more mem/time allowance)
-sort $tasklist > $tasklist.sort
-sort $alreadytasklist > $alreadytasklist.sort
-dtag=$(date +"%Y-%m-%d-%H-%M-%S")
-comm -2 -3  $tasklist.sort $alreadytasklist.sort > ${tasklist}_todo_${dtag}
-# otherwise could just use $tasklist
-Njob=`wc -l ${tasklist}_todo_${dtag} | cut -f1 -d' '`
-chunksize=1000
-jobranges=($(${ptgscripts}/get_jobranges.py $chunksize $Njob))
+export bayesgenetrees=${genetrees}/${chaintype}_mrbayes_trees
+mkdir -p ${mboutputdir}
 nchains=4
 nruns=2
 ncpus=$(( $nchains * $nruns ))
-qsubvar="mbversion=3.2.6, tasklist=${tasklist}_todo_${dtag}, outputdir=${collapsed_genetrees}/${collapsecond}, mbmcmcpopt='Nruns=${nruns} Ngen=2000000 Nchains=${nchains}'"
-for jobrange in ${jobranges[@]}	; do
-echo $jobrange $qsubvar
-qsub -J $jobrange -N mb_panterodb -l select=1:ncpus=${ncpus}:mem=16gb -o ${raplogs}/mrbayes/collapsed_mrbayes_trees_${dtag}_${jobrange} -v "$qsubvar" ${ptgscripts}/mrbayes_array_PBS.qsub
+tasklist=${nexusaln4chains}_ali_list
+rm -f $tasklist
+${ptgscripts}/lsfullpath.py ${nexusaln4chains} > $tasklist
+
+#~ # following lines are for resuming after a stop in batch computing, or to collect those jobs that crashed (and may need to be re-ran with more mem/time allowance)
+#~ alreadytrees=${mboutputdir}_list
+#~ ${ptgscripts}/lsfullpath.py ${mboutputdir} con.tre > $alreadytrees
+#~ alreadytasklist=${nexusaln4chains}_ali_list_done
+#~ sed -e "s#${mboutputdir}/\(.\+\)\.mb\.con\.tre#${nexusaln4chains}/\1\.nex#g" $alreadytrees > $alreadytasklist
+#~ sort $tasklist > $tasklist.sort
+#~ sort $alreadytasklist > $alreadytasklist.sort
+#~ dtag=$(date +"%Y-%m-%d-%H-%M-%S")
+#~ comm -2 -3  $tasklist.sort $alreadytasklist.sort > ${tasklist}_todo_${dtag}
+#~ Njob=`wc -l ${tasklist}_todo_${dtag} | cut -f1 -d' '`
+#~ qsubvar="mbversion=3.2.6, tasklist=${tasklist}_todo_${dtag}, outputdir=${mboutputdir}, mbmcmcpopt='Nruns=${nruns} Ngen=2000000 Nchains=${nchains}'"
+# otherwise could just use $tasklist
+Njob=`wc -l ${tasklist} | cut -f1 -d' '`
+chunksize=1000
+jobranges=($(${ptgscripts}/get_jobranges.py $chunksize $Njob))
+qsubvar="mbversion=3.2.6, tasklist=${tasklist}, outputdir=${mboutputdir}, mbmcmcpopt='Nruns=${nruns} Ngen=2000000 Nchains=${nchains}'"
+for jobrange in ${jobranges[@]} ; do
+ echo $jobrange $qsubvar
+ qsub -J $jobrange -N mb_panterodb -l select=1:ncpus=${ncpus}:mem=16gb -o ${raplogs}/mrbayes/collapsed_mrbayes_trees_${dtag}_${jobrange} -v "$qsubvar" ${ptgscripts}/mrbayes_array_PBS.qsub
 done
 
+#### OPTION: were the rake lades in gene trees collapsed? if yes, these need to be replaced by mock population leaves
+if [ -z collapseCladeOptions ] ; then
+  export chaintype='fullgenetree'
+  export coltreechains=${genetrees}/${chaintype}_tree_chains
+  # not implemented yet
+  # must generalize the script to only convert the tree chains, not replacing anything in them
+  #~ python ${ptgscripts}/replace_species_by_pop_in_gene_trees.py -G ${tasklist} -o ${coltreechains} --threads=${ncpus} --reuse=0 --verbose=0 --logfile=${repllogs}_${replrun}.log &
+
+  else
+    if [-z ${replacecolid} ] ; then
+     replacecolid=1
+    fi
+  export chaintype='collapsed'
+  export coltreechains=${genetrees}/${chaintype}_tree_chains
+  export colmethod='replaceCCinGasinS-collapsePOPinSnotinG'
+  mkdir -p ${coltreechains}/${collapsecond}
+
+  ## edit the gene trees, producing the corresponding (potentially collapsed) species tree based on the 'time'-tree backbone
+  mkdir -p ${rapdb}/logs/replspebypop
+  tasklist=${coltreechains}_${collapsecond}_nexus_list
+  ls $bayesgenetrees/${collapsecond}/*run1.t > $tasklist
+  repllogd=${rapdb}/logs/replspebypop
+  repllogs=$repllogd/replace_species_by_pop_in_gene_trees
+  replrun=$(date +'%d%m%Y')
+
+  # local parallel run
+  python ${ptgscripts}/replace_species_by_pop_in_gene_trees.py -G ${tasklist} -c ${colalinexuscodedir}/${collapsecond} -S ${speciestree}.lsd.newick -o ${coltreechains}/${collapsecond} \
+   --populations=${speciestree%.*}_populations --population_tree=${speciestree%.*}_collapsedPopulations.nwk --population_node_distance=${speciestree%.*}_interNodeDistPopulations \
+   --dir_full_gene_trees=${mlgenetrees}/rootedTree --method=${colmethod} --threads=${ncpus} --reuse=0 --verbose=0 --max.recursion.limit=12000 --logfile=${repllogs}_${replrun}.log &
+
+  ## OR
+
+  #~ # PBS-submitted parallel job
+  #~ qsub -N replSpePopinGs -l select=1:ncpus=${ncpus}:mem=64gb,walltime=24:00:00 -o $repllogd -j oe -V << EOF
+  #~ module load python
+  #~ python ${ptgscripts}/replace_species_by_pop_in_gene_trees.py -G ${tasklist} -c ${colalinexuscodedir}/${collapsecond} -S ${speciestree}.lsd.newick -o ${coltreechains}/${collapsecond} \
+   #~ --populations=${speciestree%.*}_populations --population_tree=${speciestree%.*}_collapsedPopulations.nwk --population_node_distance=${speciestree%.*}_interNodeDistPopulations \
+   #~ --dir_full_gene_trees=${mlgenetrees}/rootedTree --method=${colmethod} --threads=${ncpus} --reuse=0 --max.recursion.limit=12000 --logfile=${repllogs}_${replrun}.log
+  #~ EOF
+
+  export replacecoldate=$(date +%Y-%m-%d)
+
+  ## load these information into the database
+  ${ptgscripts}/pantagruel_sqlitedb_phylogeny_populate_collapsed_clades.sh ${database} ${dbfile} ${colalinexuscodedir} ${coltreechains} ${collapsecond} ${colmethod} ${collapsecriteriondef} ${collapsecolid} ${replacecolid} ${collapsecoldate} ${replacecoldate}
+
+fi
+#### end OPTION
 
 
 #############################################
 ## 06. gene tree/ Species tree reconciliations
 #############################################
 
-### edit collapsed gene trees to attribute an (ancestral) species identity to the leafs representing collapsed clades
-## = pre-reconciliation of recent gene history
-
 export alerec=${rapdb}/06.ALE_reconciliation
 mkdir -p ${alerec}
-export coltreechains=${alerec}/collapsed_tree_chains
-export colmethod='replaceCCinGasinS-collapsePOPinSnotinG'
-mkdir -p ${coltreechains}/${collapsecond}
 
-## edit the gene trees, producing the corresponding (potentially collapsed) species tree based on the 'time'-tree backbone
-mkdir -p ${rapdb}/logs/replspebypop
-tasklist=${coltreechains}_${collapsecond}_nexus_list
-ls $collapsed_genetrees/${collapsecond}/*run1.t > $tasklist
-repllogd=${rapdb}/logs/replspebypop
-repllogs=$repllogd/replace_species_by_pop_in_gene_trees
-replrun=$(date +'%d%m%Y')
+### perform reconciliations with ALE
 
-# local parallel run
-python ${ptgscripts}/replace_species_by_pop_in_gene_trees.py -G ${tasklist} -c ${colalinexuscodedir}/${collapsecond} -S ${speciestree}.lsd.newick -o ${coltreechains}/${collapsecond} \
- --populations=${speciestree%.*}_populations --population_tree=${speciestree%.*}_collapsedPopulations.nwk --population_node_distance=${speciestree%.*}_interNodeDistPopulations \
- --dir_full_gene_trees=${mlgenetrees}/rootedTree --method=${colmethod} --threads=${ncpus} --reuse=0 --verbose=0 --max.recursion.limit=12000 --logfile=${repllogs}_${replrun}.log &
+# parameters to be set
+export ALEversion='v0.4'
+export ALEalgo='ALEml_undated'
+export recsamplesize=1000
+export ALEsourcenote='program compiled from source code from of https://github.com/ssolo/ALE/commits/63f0a3c964074a15f61fd45156ab9e10b5dd45ef'
+if [-z ${reccolid} ] ; then
+ reccolid=1
+fi
+# derived parameters
+if [ ${ALEalgo} == 'ALEml_undated' ] ; then
+  export rectype='undat'
+else
+  export rectype='dated'
+fi
+export reccol="ale_${chaintype}_${rectype}_${reccolid}"
+export recs=${alerec}/${chaintype}_recs
 
-### OR
-
-# PBS-submitted parallel job
-qsub -N replSpePopinGs -l select=1:ncpus=${ncpus}:mem=64gb,walltime=24:00:00 -o $repllogd -j oe -V << EOF
-module load python
-python ${ptgscripts}/replace_species_by_pop_in_gene_trees.py -G ${tasklist} -c ${colalinexuscodedir}/${collapsecond} -S ${speciestree}.lsd.newick -o ${coltreechains}/${collapsecond} \
- --populations=${speciestree%.*}_populations --population_tree=${speciestree%.*}_collapsedPopulations.nwk --population_node_distance=${speciestree%.*}_interNodeDistPopulations \
- --dir_full_gene_trees=${mlgenetrees}/rootedTree --method=${colmethod} --threads=${ncpus} --reuse=0 --max.recursion.limit=12000 --logfile=${repllogs}_${replrun}.log
-EOF
-
-## here some tasks may have failed dur to gene trees being too big for the set Python recursion limit (set to 4000 by default)
-## on recover from failed runs, can use --reuse=2 (if confident there are no partially written files)
-
-### perform reconciliations with ALE on that
-export colrecs=${alerec}/collapsed_recs
 tasklist=${coltreechains}/${collapsecond}/${colmethod}_Gtrees_list
 ls ${coltreechains}/${collapsecond}/${colmethod}/*-Gtrees.nwk > $tasklist
 alelogs=${rapdb}/logs/ALE
-mkdir -p $alelogs/ale_collapsed_undat $alelogs/ale_collapsed_dated
-outrecdir=${colrecs}/${collapsecond}/${colmethod}/ale_collapsed_undat
+mkdir -p $alelogs/${reccol}
+outrecdir=${recs}/${collapsecond}/${colmethod}/${reccol}
 mkdir -p $outrecdir
-export recsamplesize=1000
 
 Njob=`wc -l $tasklist | cut -f1 -d' '`
-qsubvars="tasklist=$tasklist, resultdir=$outrecdir, spetree=Stree.nwk, nrecs=${recsamplesize}, alealgo=ALEml_undated"
-qsub -J 1-$Njob -N ale_collapsed_undat -l select=1:ncpus=1:mem=20gb,walltime=24:00:00 -o $alelogs/ale_collapsed_undat -j oe -v "$qsubvars" $HOME/scripts/misc/ALE_array_PBS.qsub
+qsubvars="tasklist=$tasklist, resultdir=$outrecdir, spetree=Stree.nwk, nrecs=${recsamplesize}, alealgo=${ALEalgo}"
+qsub -J 1-$Njob -N ${reccol} -l select=1:ncpus=1:mem=20gb,walltime=24:00:00 -o $alelogs/${reccol} -j oe -v "$qsubvars" ${ptgscripts}/ALE_array_PBS.qsub
+
+export reccoldate=$(date +%Y-%m-%d)
+
+### parse the inferred scenarios
+# parameters to be set
+export evtypeparse='ST'
+export minevfreqparse=0.1
+if [ -z $parsedreccolid ] ; then
+  parsedreccolid=1
+fi
+# derived parameters
+export parsedreccol=${reccol}_parsed_${parsedreccolid}
+export parsedrecs=${alerec}/parsed_recs/${parsedreccol}
+
+mkdir -p ${parsedrecs}
+reclist=$outrecdir/ale_collapsed_undat_uml_rec_list
+${ptgscripts}/lsfullpath.py $outrecdir/ale_collapsed_undat uml_rec > $reclist
+ 
+## normalise the species tree branch labels across gene families
+## and look for correlated transfer events across gene families
+python ${ptgscripts}/parse_collapsedALE_scenarios.py --rec_sample_list ${reclist} \
+ --populations ${speciestreeBS%.*}_populations --reftree ${speciestreeBS}.lsd.newick \
+ --dir_table_out ${parsedrecs} --evtype ${evtypeparse} --minfreq ${minevfreqparse} \
+ --threads 8  &> $entlogs/parse_collapsedALE_scenarios.log &
+
+export parsedreccoldate=$(date +%Y-%m-%d)
+
+## store reconciliation parameters and load parsed reconciliation data into database
+${ptgscripts}/pantagruel_sqlitedb_phylogeny_populate_reconciliations.sh ${database} ${sqldb} ${parsedrecs} ${ALEversion} ${ALEalgo} ${ALEsourcenote} ${parsedreccol} ${parsedreccolid} ${parsedreccoldate}
+
+# rapid survey of event density over the reference tree
+for freqthresh in 0.1 0.25 0.5 ; do
+sqlite3 ${sqldb} """
+.mode tabs 
+select don_branch_id, don_branch_name, rec_branch_id, rec_branch_name, event_type, nb_lineages, cum_freq, cum_freq/nb_lineages as avg_support from (
+ select don_branch_id, don_stree.branch_name as don_branch_name, rec_branch_id, rec_stree.branch_name as rec_branch_name, event_type, count(*) as nb_lineages, sum(freq)::real/${nsample} as cum_freq
+  from gene_lineage_events 
+  inner join species_tree_events using (event_id) 
+  inner join species_tree as rec_stree on rec_branch_id=rec_stree.branch_id
+  left join species_tree as don_stree on don_branch_id=don_stree.branch_id
+ where freq >= ( ${freqthresh} * ${recsamplesize} )
+ group by don_branch_id, don_branch_name, rec_branch_name, rec_branch_id, event_type 
+) as weg
+order by nb_lineages desc, avg_support desc;
+""" > ${parsedrecs}/summary_gene_tree_events_minfreq${freqthresh} 
+wc -l ${parsedrecs}/summary_gene_tree_events_minfreq${freqthresh} 
+${ptgscripts}/plot_spetree_event_density.r ${parsedrecs}/summary_gene_tree_events_minfreq${freqthresh} ${speciestreeBS}.lsd_internalPopulations.nwk
+done &
 
 
 ###########################################
@@ -655,81 +786,104 @@ qsub -J 1-$Njob -N ale_collapsed_undat -l select=1:ncpus=1:mem=20gb,walltime=24:
 
 export comparerecs=${entdb}/07.compare_scenarios
 mkdir -p ${comparerecs}
-export compoutdir=${comparerecs}/${collapsecond}/${colmethod}
-mkdir -p ${compoutdir}/ale_collapsed_undat ${compoutdir}/ale_collapsed_dated
+export compoutdir=${comparerecs}/${parsedreccol}
+mkdir -p ${compoutdir}/
 
-export evtypeparse='ST'
-export minevfreqparse=0.1
+
+## analyse of co-evolution!!
 export minevfreqmatch=0.5
 export minjoinevfreqmatch=1.0
-
-## analyse blocks of co-transfer!!
-## normalise the species tree branch labels across gene families
-## and look for correlated transfer events across gene families
-reclist=$outrecdir/ale_collapsed_undat_uml_rec_list
-$dbscripts/lsfullpath.py $outrecdir/ale_collapsed_undat uml_rec > $reclist
- 
-python $ptgscripts/parse_collapsedALE_scenarios.py --rec_sample_list ${reclist} \
- --populations ${speciestreeBS%.*}_populations --reftree ${speciestreeBS}.lsd.newick \
- --dir_table_out ${compoutdir}/ale_collapsed_undat --evtype ${evtypeparse} --minfreq ${minevfreqparse} \
- --threads 8  &> $entlogs/parse_collapsedALE_scenarios.log &
-
-## load parsed reconciliation data into database
-$ptgscripts/pantagruel_sqlitedb_phylogeny.sh ${database} ${sqldb}
-
-# rapid survey of event density over the reference tree
-nsample=1000
-for freqthresh in 0.1 0.25 0.5 ; do
-sqlite3 -separator '\t' ${sqldb} """
-.mode tabs 
-select don_branch_id, don_branch_name, rec_branch_id, rec_branch_name, event_type, nb_lineages, cum_freq, cum_freq/nb_lineages as avg_support from (
- select don_branch_id, don_stree.branch_name as don_branch_name, rec_branch_id, rec_stree.branch_name as rec_branch_name, event_type, count(*) as nb_lineages, sum(freq)::real/${nsample} as cum_freq
-  from gene_lineage_events 
-  inner join species_tree_events using (event_id) 
-  inner join species_tree as rec_stree on rec_branch_id=rec_stree.branch_id
-  left join species_tree as don_stree on don_branch_id=don_stree.branch_id
- where freq >= ( ${freqthresh} * ${nsample} )
- group by don_branch_id, don_branch_name, rec_branch_name, rec_branch_id, event_type 
-) as weg
-order by nb_lineages desc, avg_support desc;
-""" > ${compoutdir}/ale_collapsed_undat/summary_gene_tree_events_minfreq${freqthresh} 
-wc -l ${compoutdir}/ale_collapsed_undat/summary_gene_tree_events_minfreq${freqthresh} 
-$ptgscripts/plot_spetree_event_density.r ${compoutdir}/ale_collapsed_undat/summary_gene_tree_events_minfreq${freqthresh} ${speciestreeBS}.lsd_internalPopulations.nwk
-done &
-
+if [ -z $parsedreccolid ] ; then
+  parsedreccolid=1
+fi
 
 ## look for correlated gene lineage histories through identification of matching speciation and transfer events
 
-# optionally truncate event table
-# excluding oldest branches to avoid unspecific matches:
-maxreftreeheight=0.25
-exclbrlist=${coretree}/branches_older_than_${maxreftreeheight}
-#~ python $ptgscripts/list_branches.py --intree ${speciestreeBS}.lsd.newick --root_age 1.0 --older_than ${maxreftreeheight} --out ${exclbrlist}
-python $ptgscripts/list_branches.py --intree ${speciestreeBS}.lsd_internalPopulations.nwk --root_age 1.0 --older_than ${maxreftreeheight} --out ${exclbrlist}
-exclbr=$(cat ${exclbrlist} | tr '\n' ',' | sed -e "s/,$/\n/g" | sed -e "s/,/', '/g")
-sqlite3 ${sqldb} << EOF
-ALTER TABLE gene_lineage_events RENAME TO gene_lineage_events_full;
-CREATE TABLE gene_lineage_events AS  
-(SELECT gene_lineage_events_full.* 
- FROM gene_lineage_events_full 
- INNER JOIN species_tree_events USING (event_id)
- INNER JOIN species_tree on rec_branch_id=branch_id
- WHERE branch_name NOT IN ('${exclbr}') )
-;
-CREATE INDEX ON gene_lineage_events (replacement_label_or_cds_code);
-CREATE INDEX ON gene_lineage_events USING HASH (replacement_label_or_cds_code);
-CREATE INDEX ON gene_lineage_events (event_id);
-CREATE INDEX ON gene_lineage_events USING HASH (event_id);
-CREATE INDEX ON gene_lineage_events (freq);
-ALTER TABLE gene_lineage_events ADD PRIMARY KEY (replacement_label_or_cds_code, event_id);
-ANALYZE;
-.quit
+### OPTION: exclude oldest species tree branches to avoid unspecific matches (and speed-up search):
+if [ ! -z maxreftreeheight ]
+  # e.g.: maxreftreeheight=0.25
+  exclbrlist=${coretree}/branches_older_than_${maxreftreeheight}
+  python ${ptgscripts}/list_branches.py --intree ${speciestreeBS}.lsd_internalPopulations.nwk --root_age 1.0 --older_than ${maxreftreeheight} --out ${exclbrlist}
+  exclbr=$(cat ${exclbrlist} | tr '\n' ',' | sed -e "s/,$/\n/g" | sed -e "s/,/', '/g")
+
+  # create smaller table with only desired event
+  sqlite3 ${sqldb} << EOF
+  ALTER TABLE gene_lineage_events RENAME TO gene_lineage_events_full;
+  CREATE TABLE gene_lineage_events AS  
+  (SELECT gene_lineage_events_full.* 
+   FROM gene_lineage_events_full 
+   INNER JOIN species_tree_events USING (event_id)
+   INNER JOIN species_tree on rec_branch_id=branch_id
+   WHERE branch_name NOT IN ('${exclbr}') )
+   AND reconciliation_id=${parsedreccolid}
+  ;
+  CREATE INDEX ON gene_lineage_events (replacement_label_or_cds_code);
+  CREATE INDEX ON gene_lineage_events USING HASH (replacement_label_or_cds_code);
+  CREATE INDEX ON gene_lineage_events (event_id);
+  CREATE INDEX ON gene_lineage_events USING HASH (event_id);
+  CREATE INDEX ON gene_lineage_events (freq);
+  ALTER TABLE gene_lineage_events ADD PRIMARY KEY (replacement_label_or_cds_code, event_id);
+  ANALYZE;
+  .quit
 EOF
+
+fi
+### end OPTION
 
 # collect data
 # BEWARE: GENERATES AN AWFUL LOT OF DATA, PREPARE DISK SPACE ACCORDINGLY
-# indication: with defaults settings evtypeparse='ST'; minevfreqmatch=0.5; minjoinevfreqmatch=1.0
+# indication: with defaults settings evtypeparse='ST'; minevfreqmatch=0.5; minjoinevfreqmatch=1.0; maxreftreeheight=0.25
 # on a 880 Enterobacteriaceae dataset, results in ~300 GB output (made to be split into ~1GB files)
 python $ptgscripts/compare_collapsedALE_scenarios.py --events_from_postgresql_db ${sqldbname} \
  --event_type ${evtypeparse} --min_freq ${minevfreqmatch} --min_joint_freq ${minjointevfreqmatch} --threads 8 \
- --dir_table_out ${compoutdir}/ale_collapsed_undat &> $entlogs/compare_collapsedALE_scenarios.match.log &
+ --dir_table_out ${compoutdir} &> $entlogs/compare_collapsedALE_scenarios.${parsedreccol}.log &
+
+# should add constraint like reconciliation_id=${parsedreccolid} to ensure events are not matched across collections
+
+###############################################
+## 08. orthologous and clade-specific gene sets
+###############################################
+
+export orthogenes=${rapdb}/08.orthologs
+mkdir -p ${orthogenes}
+
+cd ${ptgrepo} ; export ptgversion=$(git log | grep commit | cut -d' ' -f2) ; cd -
+
+# classify genes into orthologous groups for each gene of the reconciled gene tree sample
+# do not report detailed results but, using graph analysis, combine the sample-wide classification into one classification for the gene family
+# run in parallel
+
+## for the moment only coded for dated ALE model (ALEml reconciliations)
+## and with no colpased gene tree clades (need to discard events below replacement clade subtree roots [as in parse_collapsedALE_scenarios.py]
+## and to transpose orthologus group classification of collapsed clade to member genes)
+
+if [-z ${getOrpthologuesOptions} ] ; then
+  getOrpthologuesOptions=" --ale.model='dated' --methods='mixed' --max.frac.extra.spe=0.5 --majrule.combine=0.5 --colour.combined.tree"
+fi
+if [-z ${orthoColId} ] ; then
+  orthocolid=1
+fi
+# generate Ortholog Collection
+orthocol=ortholog_collection_${orthoColId}
+mkdir -p ${orthogenes}/${orthocol}
+${ptgscripts}/get_orthologues_from_ALE_recs.py -i ${outrecdir} -o ${orthogenes}/${orthocol} ${getOrpthologuesOptions} -T 8 &> $raplogs/get_orthologues_from_ALE_recs_${orthocol}.log
+
+# import ortholog classification into database
+sqlite3 ${sqldb} """INSERT INTO ortholog_collections (ortholog_col_id, ortholog_col_name, reconciliation_id, software, version, algorithm, ortholog_col_date, notes) VALUES 
+(${orthocolid}, '${orthocol}', ${parsedreccolid}, 'pantagruel/scripts/get_orthologues_from_ALE_recs.py', '${ptgversion:0:7}', 'getOrthologues(method=''mixed'')', '2018-07-20', 
+'source from https://github.com/flass/pantagruel/commits/${ptgversion}, call: ''scripts/get_orthologues_from_ALE_recs.py ${getOrpthologuesOptions}''')
+;
+"""
+python ${ptgscripts}/pantagruel_sqlitedb_load_orthologous_groups.py ${sqldb} ${orthogenes}/ortholog_collection_1 "mixed" "majrule_combined_0.500000" ${orthocolid}
+
+
+# generate abs/pres matrix
+orthocol=ortholog_collection_${orthocolid}
+echo $orthocol
+orthomatrad=${orthogenes}/${orthocol}/mixed_majrule_combined_0.5.orthologs
+python ${ptgscripts}/get_ortholog_presenceabsence_matrix_from_sqlitedb.py ${sqldb} ${orthomatrad} ${coregenome}/${focus}/${focus}_genome_codes ${orthocolid}
+${ptgscripts}/get_clade_specific_genes.r ${orthomatrad}_genome_counts.no-singletons.mat ${sqldb} ${orthocolid} ${coregenome}/${focus}/${focus} ${orthomatrad}
+
+# list clade-specific orthologs
+export orthomatrad=${orthogenes}/${orthocol}/mixed_majrule_combined_0.5.orthologs
+
