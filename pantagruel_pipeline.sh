@@ -34,7 +34,7 @@ mkdir -p ${rapdb}/ ${raplogs}/ ${raptmp}/
 
 #### Set facultative environment variables / parameters
 export pseudocoremingenomes=''       # defaults to empty variable in which case will be set INTERACTIVELY at stage 04.core_genome of the pipeline
-envsourcescript=${HOME}/environ_pantagruel_${rapdbname}.sh
+envsourcescript=${raproot}/environ_pantagruel.sh
 
 rm -f ${raptmp}/sedenvvar.sh
 echo -n "cat ${ptgscripts}/environ_pantagruel_template.sh" > ${raptmp}/sedenvvar.sh
@@ -45,7 +45,6 @@ echo -n " > ${envsourcescript}" >> ${raptmp}/sedenvvar.sh
 bash < ${raptmp}/sedenvvar.sh
 ## load generic environment variables derived from the above
 source ${envsourcescript}
-cat "source ${envsourcescript}" >> ~/.bashrc
 
 # folders for optional custom genomes
 export customassemb=${raproot}/user_genomes
