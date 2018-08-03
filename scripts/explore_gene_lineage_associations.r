@@ -103,7 +103,7 @@ computeCommunities = function(graph, method="louvain"){
 	if (method=="infomap") return( cluster_infomap(graph, e.weight=graph$freq) )
 	if (method=="label_prop") return( cluster_label_prop(graph, weight=graph$freq) )
 #~ 	stop("incorrect method specified")
-)
+}
 
 #~ dirmatchevents = '/enterobac/PanteroDB_v0.3/07.compare_scenarios/bs_stem70_withinmedian35/replaceCCinGasinS-collapsePOPinSnotinG/ale_collapsed_undat/gene_event_matches'
 #~ dirmatchevents = '/enterobac/PanteroDB_v0.3/07.compare_scenarios/bs_stem70_withinmedian35/replaceCCinGasinS-collapsePOPinSnotinG/ale_collapsed_undat/gene_event_matches_10253genes_06062018/plasmid2genefamily.mat_excl-transposases.NC_022651.1-centred_community_size13'
