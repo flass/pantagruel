@@ -96,6 +96,14 @@ plotHMevents = function(mat, matname, cap=99){
 	})/nsample, las=2, main=sprintf("%s\nsummed matched event freq. excluding %d next genes", matname, n))
 }
 
+computeCommunities = function(graph, method="louvain"){
+	if (method=="louvain") return( cluster_louvain(graph, weight=graph$freq) )
+	if (method=="fast_greedy") return( cluster_fast_greedy(graph, weight=graph$freq, merges=T, membership=T) )
+	if (method=="edge_betweenness") return( cluster_edge_betweenness(graph, weight=graph$freq, merges=T, membership=T) )
+	if (method=="infomap") return( cluster_infomap(graph, e.weight=graph$freq) )
+	if (method=="label_prop") return( cluster_label_prop(graph, weight=graph$freq) )
+	stop("incorrect method specified")
+)
 
 #~ dirmatchevents = '/enterobac/PanteroDB_v0.3/07.compare_scenarios/bs_stem70_withinmedian35/replaceCCinGasinS-collapsePOPinSnotinG/ale_collapsed_undat/gene_event_matches'
 #~ dirmatchevents = '/enterobac/PanteroDB_v0.3/07.compare_scenarios/bs_stem70_withinmedian35/replaceCCinGasinS-collapsePOPinSnotinG/ale_collapsed_undat/gene_event_matches_10253genes_06062018/plasmid2genefamily.mat_excl-transposases.NC_022651.1-centred_community_size13'
@@ -435,15 +443,17 @@ if ((!is.null(opt$load_annot_graph) | loadup>=6) & file.exists(nftopassannotcomm
 	if (verbose) print(sprintf("loaded community structures of network of top associated gene lineages from file: '%s'", nftopassannotcomm))
 }else{
 	### step 6: community analysis: clustering and plot 
-	if (verbose) print("compute community structures of network of top associated gene lineages, and plot the components separately")
-	communities_louvain_topmatchev = cluster_louvain(graph_topmatchev, weight=graph_topmatchev$freq)
-	communities_fast_greedy_topmatchev = cluster_fast_greedy(graph_topmatchev, weight=graph_topmatchev$freq, merges=T, membership=T)
-	#~ communities_edge_betweenness_topmatchev = cluster_edge_betweenness(graph_topmatchev, weight=graph_topmatchev$freq, merges=T, membership=T)
-	communities_infomap_topmatchev = cluster_infomap(graph_topmatchev, e.weight=graph_topmatchev$freq)
-	communities_label_prop_topmatchev = cluster_label_prop(graph_topmatchev, weight=graph_topmatchev$freq)
+	if (verbose) print("compute community structures of network of top associated gene lineages, and plot/write annotation of the components separately")
+#~ 	communities_louvain_topmatchev = cluster_louvain(graph_topmatchev, weight=graph_topmatchev$freq)
+#~ 	communities_fast_greedy_topmatchev = cluster_fast_greedy(graph_topmatchev, weight=graph_topmatchev$freq, merges=T, membership=T)
+#~ 	communities_edge_betweenness_topmatchev = cluster_edge_betweenness(graph_topmatchev, weight=graph_topmatchev$freq, merges=T, membership=T)
+#~ 	communities_infomap_topmatchev = cluster_infomap(graph_topmatchev, e.weight=graph_topmatchev$freq)
+#~ 	communities_label_prop_topmatchev = cluster_label_prop(graph_topmatchev, weight=graph_topmatchev$freq)
 
 	comm.algos = c("louvain", "fast_greedy", "infomap", "label_prop")
-	comm_topmatchev = lapply(comm.algos, function(a){ get(sprintf("communities_%s_topmatchev", a)) }) ; names(comm_topmatchev) = comm.algos
+	
+#~ 	comm_topmatchev = lapply(comm.algos, function(a){ get(sprintf("communities_%s_topmatchev", a)) }) ; names(comm_topmatchev) = comm.algos
+	comm_topmatchev = mclapply(comm.algos, computeCommunities, graph=graph_topmatchev, mc.cores=nbcores) ; names(comm_topmatchev) = comm.algos
 	comm.sizes = lapply(comm_topmatchev, function(comm){ sort(sapply(groups(comm), length)) })
 
 	for (coma in comm.algos){
@@ -492,7 +502,7 @@ if ((!is.null(opt$load_annot_graph) | loadup>=6) & file.exists(nftopassannotcomm
 					inner join replacement_label_or_cds_code2gene_families using (replacement_label_or_cds_code) 
 					inner join phylogeny.species_tree_events using (event_id) inner join phylogeny.species_tree as rec on rec_branch_id=rec.branch_id 
 					left join phylogeny.species_tree as don on don_branch_id=don.branch_id 
-					where rlocds_id=%d;", rlocdsid)
+					where rlocds_id=%s;", rlocdsid)
 					if (verbose) print(lineageeventsquery)
 					alleventsonlineage = dbGetQuery(dbcon, lineageeventsquery)
 					if (is.null(alleventsincomm)){ alleventsincomm = alleventsonlineage
