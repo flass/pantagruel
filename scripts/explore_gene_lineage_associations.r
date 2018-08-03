@@ -128,7 +128,7 @@ spec = matrix(c(
   'load_top_ass',       'A', 0, "logical",   "will attempt to load top lineage association table from R object archive file saved in a previous run; file must be named like `dir_match_events` argument value with prefix '.top_association.RData', and contain a list named `lparsematchev` (bypass quantile computation and top association retrieval)",
   'load_top_network',   'N', 0, "logical",   "will attempt to load top lineage association network from R object archive file saved in a previous run; file must be named like `dir_match_events` argument value with prefix '.top_association_network.RData', and contain a list named `lparsematchev` (bypass quantile computation, top association retrieval and graph computation)",
   'load_up_to_step',    'L', 2, "integer",   "will attempt to load data from R object archive file saved during a previous run, up to the desired step (1:quantile computation; 2:top association retrieval; 3:top association graph computation; 4:top associated lineage annotation retrival from SQL db)",
-  'plot-network',       'n', 0, "logical",   "enable plotting of the networks (long)",
+  'plot_network',       'n', 0, "logical",   "enable plotting of the networks (long)",
   'stop_after_step',    'Z', 2, "integer",   "will run until reaching the desired progress of computation, then quit (steps: quantile computation=1; top association retrieval=2; top association graph computation=3; top associated lineage annotation retrival from SQL db=4; plot top association network with metadata=5; plot heatmaps of lineages association intensity as projected on maps of selected replicons [end])"
 ), byrow=TRUE, ncol=5);
 opt = getopt(spec, opt=commandArgs(trailingOnly=T))
@@ -137,7 +137,7 @@ print("options:", quote=F)
 print(opt)
 
 if (!is.null(opt$verbose)){ verbose = TRUE }else{ verbose = FALSE }
-if (!is.null(opt$plot-network)){ plotnw = TRUE }else{ plotnw = FALSE }
+if (!is.null(opt$plot_network)){ plotnw = TRUE }else{ plotnw = FALSE }
 
 if ( is.null(opt$dir_match_events  ) ){ 
 	stop("path to input file folder required! please specify it through '--dir_match_events' option")  
