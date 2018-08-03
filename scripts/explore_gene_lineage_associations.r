@@ -5,6 +5,12 @@ library(igraph)
 library(getopt)
 library(parallel)
 library(RPostgreSQL)
+
+eventstablim = 50
+plotlabellim = 100
+
+repli.invar = c('assembly_id', 'genomic_accession', 'replicon_type', 'replicon_size')
+
 outannotcols = c('freq', sapply(1:2, function(i){ 
 	paste0( c("rlocdsid","replacement_label_or_cds_code","product","repr_cds_code","gene_family_id","tot_lineage_freq","chromorplas","species_pop","singmulti","coreoracc"), i)
 }))
@@ -307,6 +313,7 @@ if (!is.null(opt$db_name)){
 		  inner join gene_family_sizes using (gene_family_id)
 		group by rlocds_id, replacement_label_or_cds_code, gene_family_id, size, genome_present 
 		order by repr_cds_code ;")
+		toplinereprannot$gene_family_id = as.factor(trimws(as.character(toplinereprannot$gene_family_id)))
 		nb_genome = max(toplinereprannot$fam_occurence)
 		toplinereprannot$chromorplas = as.factor(ifelse(toplinereprannot$count_chromosome>0, ifelse(toplinereprannot$count_plasmid==0, 'chromosome', 'both'), ifelse(toplinereprannot$count_plasmid>0, 'plasmid', 'none')))
 		toplinereprannot$species_pop = as.factor(sapply(strsplit(as.character(toplinereprannot[,'replacement_label_or_cds_code']), split='_'), `[`, 1))
@@ -320,7 +327,7 @@ if (!is.null(opt$db_name)){
 		
 		# query annotations - for all CDS in the lineages
 		toplinemultiannot = dbGetQuery(dbcon, "
-		select distinct rlocds_id, replacement_label_or_cds_code, cds_code, product, assembly_id, genomic_accession, replicon_type, replicon_size, cds_begin
+		select distinct rlocds_id, replacement_label_or_cds_code, cds_code, product, assembly_id, genomic_accession, replicon_type, replicon_size, gene_family_id, cds_begin
 			  from toplineages
 			  inner join replacement_label_or_cds_code2gene_families using (rlocds_id)
 			  inner join gene_tree_label2cds_code using (replacement_label_or_cds_code)
@@ -329,8 +336,10 @@ if (!is.null(opt$db_name)){
 			  inner join replicons using (genomic_accession);")
 			  
 		dbExecute(dbcon, "drop table toplineages; ")
+		toplinemultiannot$assembly_id = as.factor(trimws(as.character(toplinemultiannot$assembly_id)))
+		toplinemultiannot$replicon_type = as.factor(trimws(as.character(toplinemultiannot$replicon_type)))
+		toplinemultiannot$gene_family_id = as.factor(trimws(as.character(toplinemultiannot$gene_family_id)))
 		
-		repli.invar = c('assembly_id', 'genomic_accession', 'replicon_type', 'replicon_size')
 		# add the details of all genes represented in the lineages, but keep only rows where the associated genes are on the same replicon.
 		topmatchevmultidetail = merge(merge(topmatchev, toplinemultiannot, by.x='rlocdsid1', by.y='rlocds_id'),
 		                              toplinemultiannot, by.x=c('rlocdsid2', repli.invar), by.y=c('rlocds_id', repli.invar), suffixes=1:2)
@@ -349,7 +358,7 @@ if (!is.null(opt$db_name)){
 		print(summary(lmgenedistfreq))
 		dev.off()
 		
-		save(toplinereprannot, topmatchevdetail, topmatchevmultidetail, lmgenedistfreq, file=nftopmatchevdetail)
+		save(toplinereprannot, topmatchevdetail, toplinemultiannot, topmatchevmultidetail, lmgenedistfreq, file=nftopmatchevdetail)
 	}
 }
 if (endscript<=4){ quit(save='no') }
@@ -366,6 +375,9 @@ if ((!is.null(opt$load_annot_graph) | loadup>=5) & file.exists(nftopassannotgrap
 	vertex_rep = as.factor(sapply(as.numeric(names(V(graph_topmatchev))), function(rlocdsid){
 		toplinereprannot[toplinereprannot$rlocds_id==rlocdsid,'chromorplas']
 	}))
+	vertex_fam = as.factor(sapply(as.numeric(names(V(graph_topmatchev))), function(rlocdsid){
+		toplinereprannot[toplinereprannot$rlocds_id==rlocdsid,'gene_family_id']
+	}))
 	vertex_famcopy = as.factor(sapply(as.numeric(names(V(graph_topmatchev))), function(rlocdsid){
 		toplinereprannot[toplinereprannot$rlocds_id==rlocdsid,'singmulti']
 	}))
@@ -379,6 +391,7 @@ if ((!is.null(opt$load_annot_graph) | loadup>=5) & file.exists(nftopassannotgrap
 	graph_topmatchev = set_vertex_attr(graph_topmatchev, "color.pop", value=colorpop[as.character(vertex_pop)])
 	graph_topmatchev = set_vertex_attr(graph_topmatchev, "repli.type", value=as.character(vertex_rep))
 	graph_topmatchev = set_vertex_attr(graph_topmatchev, "shape.rep", value=shaperep[as.character(vertex_rep)])
+	graph_topmatchev = set_vertex_attr(graph_topmatchev, "fam", value=as.character(vertex_fam))
 	graph_topmatchev = set_vertex_attr(graph_topmatchev, "pang.fam.status", value=as.character(vertex_fampan))
 	graph_topmatchev = set_vertex_attr(graph_topmatchev, "color.pan", value=colorpan[as.character(vertex_fampan)])
 	graph_topmatchev = set_vertex_attr(graph_topmatchev, "nb.copy.fam", value=as.character(vertex_famcopy))
@@ -414,23 +427,52 @@ if ((!is.null(opt$load_annot_graph) | loadup>=6) & file.exists(nftopassannotcomm
 		dircoma = paste(file.path(dirout, prefixout), sprintf("top_associations_network-%s_communities", coma), sep='.')
 		dir.create(dircoma, showWarnings=F)
 		pdf(paste(file.path(dirout, prefixout), sprintf("top_associations_network-%s_communities_population_colours.pdf", coma), sep='.'), height=12, width=20)
+		devbare = dev.cur()
+		pdf(paste(file.path(dirout, prefixout), sprintf("top_associations_network-%s_communities_genefam_colours.pdf", coma), sep='.'), height=12, width=20)
+		devlabel = dev.cur()
 		comm = comm_topmatchev[[coma]]
 		for (icomg in 1:length(groups(comm))){
 			comg = groups(comm)[[icomg]]
 			sg = induced_subgraph(graph_topmatchev, comg)
-			plot(sg, vertex.color=vertex_attr(sg, "color.pop"), vertex.shape=vertex_attr(sg, "shape.rep"), vertex.label=NA, vertex.size=2.5, vertex.frame.color=sg$color.pan)
-			prespop = sort(unique(vertex_attr(sg, "spe.pop")))
+			if (length(comg)<=plotlabellim){ vlabs = vertex_attr(sg, "name")
+			}else{ vlabs = NA }
+			dev.set(devbare)
+			prespop = unique(sort(vertex_attr(sg, "spe.pop")))
+			plot(sg, vertex.color=vertex_attr(sg, "color.pop"), vertex.shape=vertex_attr(sg, "shape.rep"), vertex.label=vlabs, vertex.label.dist=0.2, vertex.size=2.5, vertex.frame.color=sg$color.pan)
 			legend('topleft', legend=prespop, fill=colorpop[prespop], ncol=(length(prespop)%/%20)+1)
-			
+			dev.set(devlabel)
+			presfam = unique(sort(vertex_attr(sg, "fam")))
+			colorfam = rainbow(length(presfam)) ; names(colorfam) = presfam
+			graph_topmatchev = set_vertex_attr(graph_topmatchev, "color.fam", value=colorfam[as.character(vertex_fam)])
+			plot(sg, vertex.color=colorfam[vertex_attr(sg, "fam")], vertex.shape=vertex_attr(sg, "shape.rep"), vertex.label=vlabs, vertex.label.dist=0.2, vertex.size=2.5, vertex.frame.color=sg$color.pan)
+			legend('topleft', legend=presfam, fill=colorfam[presfam], ncol=(length(presfam)%/%20)+1)
 			# save tables describing communities
-	#~ 		submultiannot = toplinemultiannot[toplinemultiannot$rlocds_id %in% as.numeric(comg),]
-	#~ 		submultidetail = merge(merge(topmatchev, submultiannot, by.x='rlocdsid1', by.y='rlocds_id'), submultiannot, by.x=c('rlocdsid2', repli.invar), by.y=c('rlocds_id', repli.invar), suffixes=1:2)
+			submultiannot = toplinemultiannot[toplinemultiannot$rlocds_id %in% as.numeric(comg),]
+			submultidetail = merge(merge(topmatchev, submultiannot, by.x='rlocdsid1', by.y='rlocds_id'), submultiannot, by.x=c('rlocdsid2', repli.invar), by.y=c('rlocds_id', repli.invar), suffixes=1:2)
+			write.table(submultidetail, file=paste(file.path(dircoma, sprintf("top_associations_network-%s_community%d_same-replicon_gene_annot.tab", coma, icomg))), sep='\t', row.names=F)
 			subreprannot = toplinereprannot[toplinereprannot$rlocds_id %in% as.numeric(comg),]
 			subreprdetail = merge(merge(topmatchev, subreprannot, by.x='rlocdsid1', by.y='rlocds_id'), subreprannot, by.x='rlocdsid2', by.y="rlocds_id", suffixes=1:2)
 			subreprdetail = subreprdetail[order(subreprdetail$repr_cds_code1, subreprdetail$repr_cds_code2), outannotcols]
 			write.table(subreprdetail, file=paste(file.path(dircoma, sprintf("top_associations_network-%s_community%d_repr_gene_annot.tab", coma, icomg))), sep='\t', row.names=F)
+			if (length(comg)<=eventstablim){ 
+				# get detail of event
+				alleventsincomm = NULL
+				for (rlocdsid in comg){
+					alleventsonlineage = dbGetQuery(dbcon, sprintf("
+					select gene_family_id, rlocds_id, event_id, freq, event_type, rec.branch_name, don.branch_name 
+					from phylogeny.gene_lineage_events 
+					inner join replacement_label_or_cds_code2gene_families using (replacement_label_or_cds_code) 
+					inner join phylogeny.species_tree_events using (event_id) inner join phylogeny.species_tree as rec on rec_branch_id=rec.branch_id 
+					left join phylogeny.species_tree as don on don_branch_id=don.branch_id 
+					where rlocds_id=%d;", rlocdsid)
+					if (is.null(alleventsincomm)){ alleventsincomm = alleventsonlineage
+					}else{ alleventsincomm = rbind(alleventsincomm, alleventsonlineage) }
+				}
+				write.table(alleventsincomm, file=paste(file.path(dircoma, sprintf("top_associations_network-%s_community%d_all_lineage_events.tab", coma, icomg))), sep='\t', row.names=F)
+			}
 		}
-		dev.off()
+		dev.off(devbare)
+		dev.off(devlabel)
 	}
 	save(comm_topmatchev, file=nftopassannotcomm)
 }

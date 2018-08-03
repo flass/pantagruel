@@ -418,8 +418,8 @@ mkdir -p ${coregenome}/pseudo-coregenome_sets/
 let "t = ($ngenomes * 3 / 4)" ; let "u = $t - ($t%20)" ; seq $u 20 $ngenomes | cat > ${raptmp}/mingenom ; echo "0" >> ${raptmp}/mingenom
 Rscript --vanilla --silent ${ptgscripts}/select_pseudocore_genefams.r ${protali}/full_families_genome_counts-noORFans.mat ${database}/genome_codes.tab ${coregenome}/pseudo-coregenome_sets < ${raptmp}/mingenom
 
-mv ${rapdb}/environ_pantagruel_${rapdbname}.sh ${rapdb}/environ_pantagruel_${rapdbname}.sh0 && \
- sed -e "s#'REPLACEpseudocoremingenomes'#$pseudocoremingenomes#" ${rapdb}/environ_pantagruel_${rapdbname}.sh0 > ${rapdb}/environ_pantagruel_${rapdbname}.sh
+mv ${raproot}/environ_pantagruel.sh ${raproot}/environ_pantagruel.sh0 && \
+ sed -e "s#'REPLACEpseudocoremingenomes'#$pseudocoremingenomes#" ${raproot}/environ_pantagruel.sh0 > ${raproot}/environ_pantagruel.sh
  
 ## generate core genome alignment path list
 export pseudocore=pseudo-core-${pseudocoremingenomes}-unicopy
