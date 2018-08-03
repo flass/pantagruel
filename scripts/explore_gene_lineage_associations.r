@@ -257,13 +257,13 @@ if ((!is.null(opt$load_top_ass) | loadup>=2) & file.exists(nftopasstab)){
 	lparsematchev = mclapply(lnfmatchevents, parseMatchEventFile, comp.quant=F, top.val.cutoff=scutoff, 
 						     refrepliordlineages=refrepliordlineages, verbose=verbose, mc.cores=ncores)
 	save(lparsematchev, file=nftopass)
-}
-topmatchev = lparsematchev[[1]]$top.matches
-for (i in 2:length(lparsematchev)){
-	topmatchev = rbind(topmatchev, lparsematchev[[i]]$top.matches)
-}
-rm(lparsematchev) ; gc()
-write.table(topmatchev, file=paste(nftopasstab, sep='\t', row.names=F)
+	}
+	topmatchev = lparsematchev[[1]]$top.matches
+	for (i in 2:length(lparsematchev)){
+		topmatchev = rbind(topmatchev, lparsematchev[[i]]$top.matches)
+	}
+	rm(lparsematchev) ; gc()
+	write.table(topmatchev, file=paste(nftopasstab, sep='\t', row.names=F))
 }
 if (endscript<=2){ quit(save='no') }
 
