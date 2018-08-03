@@ -102,7 +102,7 @@ computeCommunities = function(graph, method="louvain"){
 	if (method=="edge_betweenness") return( cluster_edge_betweenness(graph, weight=graph$freq, merges=T, membership=T) )
 	if (method=="infomap") return( cluster_infomap(graph, e.weight=graph$freq) )
 	if (method=="label_prop") return( cluster_label_prop(graph, weight=graph$freq) )
-	stop("incorrect method specified")
+#~ 	stop("incorrect method specified")
 )
 
 #~ dirmatchevents = '/enterobac/PanteroDB_v0.3/07.compare_scenarios/bs_stem70_withinmedian35/replaceCCinGasinS-collapsePOPinSnotinG/ale_collapsed_undat/gene_event_matches'
