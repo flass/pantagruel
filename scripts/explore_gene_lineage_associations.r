@@ -453,7 +453,7 @@ if ((!is.null(opt$load_annot_graph) | loadup>=6) & file.exists(nftopassannotcomm
 	comm.algos = c("louvain", "fast_greedy", "infomap", "label_prop")
 	
 #~ 	comm_topmatchev = lapply(comm.algos, function(a){ get(sprintf("communities_%s_topmatchev", a)) }) ; names(comm_topmatchev) = comm.algos
-	comm_topmatchev = mclapply(comm.algos, computeCommunities, graph=graph_topmatchev, mc.cores=nbcores) ; names(comm_topmatchev) = comm.algos
+	comm_topmatchev = mclapply(comm.algos, computeCommunities, graph=graph_topmatchev, mc.cores=ncores) ; names(comm_topmatchev) = comm.algos
 	comm.sizes = lapply(comm_topmatchev, function(comm){ sort(sapply(groups(comm), length)) })
 
 	for (coma in comm.algos){
