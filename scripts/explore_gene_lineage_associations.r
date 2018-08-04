@@ -96,6 +96,27 @@ plotHMevents = function(mat, matname, cap=99){
 	})/nsample, las=2, main=sprintf("%s\nsummed matched event freq. excluding %d next genes", matname, n))
 }
 
+connectionDB = function(opt){
+	if (is.null(opt$db_type)){ dbtype = "PostgreSQL" }else{ dbtype = opt$db_type }
+	if (grepl('postgres', dbtype, ignore.case=T)){
+		library("RPostgreSQL")
+		dbdrv = dbDriver("PostgreSQL")
+		dbtype = "PostgreSQL"
+	}else{ if (grepl('sqlite', dbtype, ignore.case=T)){
+		library("RSQLite")
+		dbdrv = dbDriver("SQLite")
+		dbtype = "SQLite"
+	}else{ stop(sprintf("database system not supported: %s; please use either 'PostgreSQL' or 'SQLite'", dbtype)) }}
+	dbcon = dbConnect(dbdrv, 
+					  dbname   = opt$db_name,
+					  host     = ifelse(!is.null(opt$db_host), opt$db_host, "localhost"), 
+					  port     = ifelse(!is.null(opt$db_port), opt$db_port, 5432), 
+					  password = ifelse(!is.null(opt$db_password), opt$db_password, ''), 
+					  user     = ifelse(!is.null(opt$db_user), opt$db_user, Sys.info()["user"]))
+	if (dbtype=="PostgreSQL"){ dbExecute(dbcon, "set search_path = genome , phylogeny;") }	
+	return(dbcon)
+}
+
 computeCommunities = function(graph, method="louvain"){
 	if (method=="louvain") return( cluster_louvain(graph, weight=graph$freq) )
 	if (method=="fast_greedy") return( cluster_fast_greedy(graph, weight=graph$freq, merges=T, membership=T) )
@@ -208,6 +229,8 @@ if (is.null(opt$load_up_to_step)){
 	loadup = opt$load_up_to_step
 }
 
+dbcon = NULL
+
 if (!is.null(qcutoff)){
 	nfsavematchev = paste(file.path(dirout, prefixout), 'co-evolution_quantiles.RData', sep='.')
 	if ((!is.null(opt$load_quantiles) | loadup>=1) & file.exists(nfsavematchev)){
@@ -298,26 +321,12 @@ if (!is.null(opt$db_name)){
 	if (verbose) print(sprintf("loaded annotation of (genes in) top associated gene lineages from file: '%s'", nftopmatchevdetail))
 	}else{
 		if (verbose) print(sprintf("retrieve annotation of (genes in) top associated gene lineages from %s database: '%s'", dbtype, opt$db_name))
-		if (is.null(opt$db_type)){ dbtype = "PostgreSQL" }else{ dbtype = opt$db_type }
-		if (grepl('postgres', dbtype, ignore.case=T)){
-			library("RPostgreSQL")
-			dbdrv = dbDriver("PostgreSQL")
-			dbtype = "PostgreSQL"
-		}else{ if (grepl('sqlite', dbtype, ignore.case=T)){
-			library("RSQLite")
-			dbdrv = dbDriver("SQLite")
-			dbtype = "SQLite"
-		}else{ stop(sprintf("database system not supported: %s; please use either 'PostgreSQL' or 'SQLite'", dbtype)) }}
-		dbcon = dbConnect(dbdrv, 
-						  dbname   = opt$db_name,
-						  host     = ifelse(!is.null(opt$db_host), opt$db_host, "localhost"), 
-						  port     = ifelse(!is.null(opt$db_port), opt$db_port, 5432), 
-						  password = ifelse(!is.null(opt$db_password), opt$db_password, ''), 
-						  user     = ifelse(!is.null(opt$db_user), opt$db_user, Sys.info()["user"]))
+		
+		if (is.null(dbcon)) dbcon = connectionDB(opt)
+		
 		u1 = unique(topmatchev$rlocdsid1)
 		u2 = unique(topmatchev$rlocdsid2)
 		u = union(u1, u2)
-		if (dbtype=="PostgreSQL"){ dbExecute(dbcon, "set search_path = genome , phylogeny;") }
 		
 		dbExecute(dbcon, "create temp table toplineages (rlocds_id int); ")
 		dbWriteTable(dbcon, "toplineages", value = data.frame(rlocds_id=u), append=T, row.names=F)
@@ -469,6 +478,9 @@ for (coma in comm.algos){
 	print(sprintf("plotting %s communities", coma))
 	dircoma = paste(file.path(dirout, prefixout), sprintf("top_associations_network-%s_communities", coma), sep='.')
 	dir.create(dircoma, showWarnings=F)
+	
+	if (is.null(dbcon)) dbcon = connectionDB(opt)
+	
 	if (plotnw){
 		pdf(paste(file.path(dirout, prefixout), sprintf("top_associations_network-%s_communities_population_colours.pdf", coma), sep='.'), height=12, width=20)
 		devbare = dev.cur()
