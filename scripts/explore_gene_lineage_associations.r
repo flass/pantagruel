@@ -437,12 +437,12 @@ if ((!is.null(opt$load_annot_graph) | loadup>=5) & file.exists(nftopassannotgrap
 
 if (endscript<=5){ quit(save='no') }
 
-nftopassannotcomm = paste(file.path(dirout, prefixout), 'top_association_annotated_network_communities.RData', sep='.')
-if ((!is.null(opt$load_annot_graph) | loadup>=6) & file.exists(nftopassannotcomm)){
-	load(nftopassannotcomm)
-	if (verbose) print(sprintf("loaded community structures of network of top associated gene lineages from file: '%s'", nftopassannotcomm))
+nftopasscomm = paste(file.path(dirout, prefixout), 'top_association_annotated_network_communities.RData', sep='.')
+if ((!is.null(opt$load_annot_graph) | loadup>=6) & file.exists(nftopasscomm)){
+	load(nftopasscomm)
+	if (verbose) print(sprintf("loaded community structures of network of top associated gene lineages from file: '%s'", nftopasscomm))
 }else{
-	### step 6: community analysis: clustering and plot 
+	### step 6: community analysis: clustering 
 	if (verbose) print("compute community structures of network of top associated gene lineages, and plot/write annotation of the components separately")
 #~ 	communities_louvain_topmatchev = cluster_louvain(graph_topmatchev, weight=graph_topmatchev$freq)
 #~ 	communities_fast_greedy_topmatchev = cluster_fast_greedy(graph_topmatchev, weight=graph_topmatchev$freq, merges=T, membership=T)
@@ -455,72 +455,80 @@ if ((!is.null(opt$load_annot_graph) | loadup>=6) & file.exists(nftopassannotcomm
 #~ 	comm_topmatchev = lapply(comm.algos, function(a){ get(sprintf("communities_%s_topmatchev", a)) }) ; names(comm_topmatchev) = comm.algos
 	comm_topmatchev = mclapply(comm.algos, computeCommunities, graph=graph_topmatchev, mc.cores=ncores) ; names(comm_topmatchev) = comm.algos
 	comm.sizes = lapply(comm_topmatchev, function(comm){ sort(sapply(groups(comm), length)) })
-
-	for (coma in comm.algos){
-		print(sprintf("plotting %s communities", coma))
-		dircoma = paste(file.path(dirout, prefixout), sprintf("top_associations_network-%s_communities", coma), sep='.')
-		dir.create(dircoma, showWarnings=F)
-		if (plotnw){
-			pdf(paste(file.path(dirout, prefixout), sprintf("top_associations_network-%s_communities_population_colours.pdf", coma), sep='.'), height=12, width=20)
-			devbare = dev.cur()
-			pdf(paste(file.path(dirout, prefixout), sprintf("top_associations_network-%s_communities_genefam_colours.pdf", coma), sep='.'), height=12, width=20)
-			devlabel = dev.cur()
-		}
-		comm = comm_topmatchev[[coma]]
-		for (icomg in 1:length(groups(comm))){
-			comg = groups(comm)[[icomg]]
-			sg = induced_subgraph(graph_topmatchev, comg)
-			if (plotnw){
-				if (length(comg)<=plotlabellim){ vlabs = vertex_attr(sg, "name")
-				}else{ vlabs = NA }
-				dev.set(devbare)
-				prespop = unique(sort(vertex_attr(sg, "spe.pop")))
-				plot(sg, vertex.color=vertex_attr(sg, "color.pop"), vertex.shape=vertex_attr(sg, "shape.rep"), vertex.label=vlabs, vertex.label.dist=0.2, vertex.size=2.5, vertex.frame.color=sg$color.pan)
-				legend('topleft', legend=prespop, fill=colorpop[prespop], ncol=(length(prespop)%/%20)+1)
-				dev.set(devlabel)
-				presfam = unique(sort(vertex_attr(sg, "fam")))
-				colorfam = rainbow(length(presfam)) ; names(colorfam) = presfam
-				graph_topmatchev = set_vertex_attr(graph_topmatchev, "color.fam", value=colorfam[as.character(vertex_fam)])
-				plot(sg, vertex.color=colorfam[vertex_attr(sg, "fam")], vertex.shape=vertex_attr(sg, "shape.rep"), vertex.label=vlabs, vertex.label.dist=0.2, vertex.size=2.5, vertex.frame.color=sg$color.pan)
-				legend('topleft', legend=presfam, fill=colorfam[presfam], ncol=(length(presfam)%/%20)+1)
-			}
-			# save tables describing communities
-			submultiannot = toplinemultiannot[toplinemultiannot$rlocds_id %in% as.numeric(comg),]
-			submultidetail = merge(merge(topmatchev, submultiannot, by.x='rlocdsid1', by.y='rlocds_id'), submultiannot, by.x=c('rlocdsid2', repli.invar), by.y=c('rlocds_id', repli.invar), suffixes=1:2)
-			write.table(submultidetail, file=paste(file.path(dircoma, sprintf("top_associations_network-%s_community%d_same-replicon_gene_annot.tab", coma, icomg))), sep='\t', row.names=F)
-			subreprannot = toplinereprannot[toplinereprannot$rlocds_id %in% as.numeric(comg),]
-			subreprdetail = merge(merge(topmatchev, subreprannot, by.x='rlocdsid1', by.y='rlocds_id'), subreprannot, by.x='rlocdsid2', by.y="rlocds_id", suffixes=1:2)
-			subreprdetail = subreprdetail[order(subreprdetail$repr_cds_code1, subreprdetail$repr_cds_code2), outannotcols]
-			write.table(subreprdetail, file=paste(file.path(dircoma, sprintf("top_associations_network-%s_community%d_repr_gene_annot.tab", coma, icomg))), sep='\t', row.names=F)
-			if (length(comg)<=eventstablim){ 
-				# get detail of event
-				alleventsincomm = NULL
-				for (rlocdsid in comg){
-					lineageeventsquery = sprintf("
-					select gene_family_id, rlocds_id, event_id, freq, event_type, rec.branch_name, don.branch_name 
-					from phylogeny.gene_lineage_events 
-					inner join replacement_label_or_cds_code2gene_families using (replacement_label_or_cds_code) 
-					inner join phylogeny.species_tree_events using (event_id) inner join phylogeny.species_tree as rec on rec_branch_id=rec.branch_id 
-					left join phylogeny.species_tree as don on don_branch_id=don.branch_id 
-					where rlocds_id=%s;", rlocdsid)
-					if (verbose) print(lineageeventsquery)
-					alleventsonlineage = dbGetQuery(dbcon, lineageeventsquery)
-					if (is.null(alleventsincomm)){ alleventsincomm = alleventsonlineage
-					}else{ alleventsincomm = rbind(alleventsincomm, alleventsonlineage) }
-				}
-				write.table(alleventsincomm, file=paste(file.path(dircoma, sprintf("top_associations_network-%s_community%d_all_lineage_events.tab", coma, icomg))), sep='\t', row.names=F)
-			}
-		}
-		if (plotnw){
-			dev.off(devbare)
-			dev.off(devlabel)
-		}
-	}
-	save(comm_topmatchev, file=nftopassannotcomm)
+	save(comm_topmatchev, comm.sizes, file=nftopasscomm)
 }
 if (endscript<=6){ quit(save='no') }
 
-### step 7: plot heatmap of lineages association intensity as projected on maps of selected replicons
+#~ nftopassannotcomm = paste(file.path(dirout, prefixout), 'top_association_annotated_network_communities.RData', sep='.')
+#~ if ((!is.null(opt$load_annot_graph) | loadup>=6) & file.exists(nftopassannotcomm)){
+#~ 	load(nftopassannotcomm)
+#~ 	if (verbose) print(sprintf("loaded community structures of network of top associated gene lineages from file: '%s'", nftopassannotcomm))
+#~ }else{
+### step 7: community analysis: plot 
+for (coma in comm.algos){
+	print(sprintf("plotting %s communities", coma))
+	dircoma = paste(file.path(dirout, prefixout), sprintf("top_associations_network-%s_communities", coma), sep='.')
+	dir.create(dircoma, showWarnings=F)
+	if (plotnw){
+		pdf(paste(file.path(dirout, prefixout), sprintf("top_associations_network-%s_communities_population_colours.pdf", coma), sep='.'), height=12, width=20)
+		devbare = dev.cur()
+		pdf(paste(file.path(dirout, prefixout), sprintf("top_associations_network-%s_communities_genefam_colours.pdf", coma), sep='.'), height=12, width=20)
+		devlabel = dev.cur()
+	}
+	comm = comm_topmatchev[[coma]]
+	for (icomg in 1:length(groups(comm))){
+		comg = groups(comm)[[icomg]]
+		sg = induced_subgraph(graph_topmatchev, comg)
+		if (plotnw){
+			if (length(comg)<=plotlabellim){ vlabs = vertex_attr(sg, "name")
+			}else{ vlabs = NA }
+			dev.set(devbare)
+			prespop = unique(sort(vertex_attr(sg, "spe.pop")))
+			plot(sg, vertex.color=vertex_attr(sg, "color.pop"), vertex.shape=vertex_attr(sg, "shape.rep"), vertex.label=vlabs, vertex.label.dist=0.2, vertex.size=2.5, vertex.frame.color=sg$color.pan)
+			legend('topleft', legend=prespop, fill=colorpop[prespop], ncol=(length(prespop)%/%20)+1)
+			dev.set(devlabel)
+			presfam = unique(sort(vertex_attr(sg, "fam")))
+			colorfam = rainbow(length(presfam)) ; names(colorfam) = presfam
+			graph_topmatchev = set_vertex_attr(graph_topmatchev, "color.fam", value=colorfam[as.character(vertex_fam)])
+			plot(sg, vertex.color=colorfam[vertex_attr(sg, "fam")], vertex.shape=vertex_attr(sg, "shape.rep"), vertex.label=vlabs, vertex.label.dist=0.2, vertex.size=2.5, vertex.frame.color=sg$color.pan)
+			legend('topleft', legend=presfam, fill=colorfam[presfam], ncol=(length(presfam)%/%20)+1)
+		}
+		# save tables describing communities
+		submultiannot = toplinemultiannot[toplinemultiannot$rlocds_id %in% as.numeric(comg),]
+		submultidetail = merge(merge(topmatchev, submultiannot, by.x='rlocdsid1', by.y='rlocds_id'), submultiannot, by.x=c('rlocdsid2', repli.invar), by.y=c('rlocds_id', repli.invar), suffixes=1:2)
+		write.table(submultidetail, file=paste(file.path(dircoma, sprintf("top_associations_network-%s_community%d_same-replicon_gene_annot.tab", coma, icomg))), sep='\t', row.names=F)
+		subreprannot = toplinereprannot[toplinereprannot$rlocds_id %in% as.numeric(comg),]
+		subreprdetail = merge(merge(topmatchev, subreprannot, by.x='rlocdsid1', by.y='rlocds_id'), subreprannot, by.x='rlocdsid2', by.y="rlocds_id", suffixes=1:2)
+		subreprdetail = subreprdetail[order(subreprdetail$repr_cds_code1, subreprdetail$repr_cds_code2), outannotcols]
+		write.table(subreprdetail, file=paste(file.path(dircoma, sprintf("top_associations_network-%s_community%d_repr_gene_annot.tab", coma, icomg))), sep='\t', row.names=F)
+		if (length(comg)<=eventstablim){ 
+			# get detail of event
+			alleventsincomm = NULL
+			for (rlocdsid in comg){
+				lineageeventsquery = sprintf("
+				select gene_family_id, rlocds_id, event_id, freq, event_type, rec.branch_name, don.branch_name 
+				from phylogeny.gene_lineage_events 
+				inner join replacement_label_or_cds_code2gene_families using (replacement_label_or_cds_code) 
+				inner join phylogeny.species_tree_events using (event_id) inner join phylogeny.species_tree as rec on rec_branch_id=rec.branch_id 
+				left join phylogeny.species_tree as don on don_branch_id=don.branch_id 
+				where rlocds_id=%s;", rlocdsid)
+				if (verbose) print(lineageeventsquery)
+				alleventsonlineage = dbGetQuery(dbcon, lineageeventsquery)
+				if (is.null(alleventsincomm)){ alleventsincomm = alleventsonlineage
+				}else{ alleventsincomm = rbind(alleventsincomm, alleventsonlineage) }
+			}
+			write.table(alleventsincomm, file=paste(file.path(dircoma, sprintf("top_associations_network-%s_community%d_all_lineage_events.tab", coma, icomg))), sep='\t', row.names=F)
+		}
+	}
+	if (plotnw){
+		dev.off(devbare)
+		dev.off(devlabel)
+	}
+}
+
+if (endscript<=7){ quit(save='no') }
+
+### step 8: plot heatmap of lineages association intensity as projected on maps of selected replicons
 if (!is.null(refrepliordlineages)){
 	matmatchev = lparsematchev[[1]]$ref.repli.proj.mat
 	for (i in 2:length(lparsematchev)){
