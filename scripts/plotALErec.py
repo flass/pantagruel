@@ -7,6 +7,7 @@ from parseALErec import *
 
 def main(nfrec, reftreelen=None, maxrecgt=1, sgsep='_', restrictclade=None):
 	spetree, subspetree, lrecgt, recgtlines, restrictlabs, dnodeevt = parseALERecFile(nfrec, reftreelen=reftreelen, restrictclade=restrictclade)
+	dnodefreq = dict([(node.label(), float(dnodeevt[node.label()][-1])) for node in spetree])
 	nsample = len(lrecgt)
 	recgtsample = ''.join(recgtlines)
 	# parse reconciled gene trees
@@ -23,7 +24,6 @@ def main(nfrec, reftreelen=None, maxrecgt=1, sgsep='_', restrictclade=None):
 			if restrictlabs and not (spe in restrictlabs): continue
 			dcopynum[spe] = dcopynum.setdefault(spe, 0) + 1
 		lcopynum = dcopynum.items()
-		dnodefreq = dict([(node.label(), float(dnodeevt[node.label()][-1])) for node in spetree])
 		# write SVG species tree
 		nfoutspe = '%s_%d_maprec2spetree.svg'%(nfrec, i)
 		if restrictclade: st = subspetree

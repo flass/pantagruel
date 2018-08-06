@@ -518,7 +518,7 @@ for (coma in comm.algos){
 			alleventsincomm = NULL
 			for (rlocdsid in comg){
 				lineageeventsquery = sprintf("
-				select gene_family_id, rlocds_id, event_id, freq, event_type, rec.branch_name, don.branch_name 
+				select gene_family_id, rlocds_id, event_id, freq, event_type, rec.branch_name as rec_branch, don.branch_name as don_branch
 				from phylogeny.gene_lineage_events 
 				inner join replacement_label_or_cds_code2gene_families using (replacement_label_or_cds_code) 
 				inner join phylogeny.species_tree_events using (event_id) inner join phylogeny.species_tree as rec on rec_branch_id=rec.branch_id 
@@ -526,10 +526,11 @@ for (coma in comm.algos){
 				where rlocds_id=%s;", rlocdsid)
 				if (verbose) print(lineageeventsquery)
 				alleventsonlineage = dbGetQuery(dbcon, lineageeventsquery)
+				alleventsonlineage$gene_family_id = as.factor(trimws(as.character(alleventsonlineage$gene_family_id)))
 				if (is.null(alleventsincomm)){ alleventsincomm = alleventsonlineage
 				}else{ alleventsincomm = rbind(alleventsincomm, alleventsonlineage) }
 			}
-			write.table(alleventsincomm, file=paste(file.path(dircoma, sprintf("top_associations_network-%s_community%d_all_lineage_events.tab", coma, icomg))), sep='\t', row.names=F)
+			write.table(alleventsincomm, file=paste(file.path(dircoma, sprintf("top_associations_network-%s_community%d_all_lineage_events.tab", coma, icomg))), sep='\t', row.names=F, quote=F)
 		}
 	}
 	if (plotnw){
