@@ -174,7 +174,7 @@ def dbquery_matching_lineage_event_profiles(dbname, dbengine='postgres', \
 		dbcur.execute("create table ingenes (replacement_label_or_cds_code VARCHAR(60));" )
 		dbcur.executemany("insert into ingenes values (%s) ;"%(valtoken), ingenes)
 		dbcur.execute("drop table if exists %s;"%lineagetable)
-		dbcur.execute("""create table %s as select replacement_label_or_cds_code, gene_family_id, rlocds_id 
+		dbcur.execute("""create table %s as select DISTINCT replacement_label_or_cds_code, gene_family_id, rlocds_id 
 		                  from replacement_label_or_cds_code2gene_families 
 		                  inner join ingenes using (replacement_label_or_cds_code) ;
 		              """%(lineagetable, ))
@@ -198,7 +198,7 @@ def dbquery_matching_lineage_event_profiles(dbname, dbengine='postgres', \
 		return (lineage_id, dbname, dbengine, nsample, evtypes, baseWC, diffamWC, minevjointfreq, lineagetable)
 		
 	# get set of gene lineages
-	qlibyev = "SELECT DISTINCT rlocds_id, gene_family_id FROM %s;"%lineagetable
+	qlibyev = "SELECT rlocds_id, gene_family_id FROM %s;"%lineagetable
 	if verbose: print qlibyev
 	dbcur.execute(qlibyev)
 	ltlineageidfams = dbcur.fetchall()
