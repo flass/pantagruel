@@ -198,7 +198,7 @@ def dbquery_matching_lineage_event_profiles(dbname, dbengine='postgres', \
 		return (lineage_id, dbname, dbengine, nsample, evtypes, baseWC, diffamWC, minevjointfreq, lineagetable)
 		
 	# get set of gene lineages
-	qlibyev = "select rlocds_id, gene_family_id from %s;"%lineagetable
+	qlibyev = "SELECT DISTINCT rlocds_id, gene_family_id FROM %s;"%lineagetable
 	if verbose: print qlibyev
 	dbcur.execute(qlibyev)
 	ltlineageidfams = dbcur.fetchall()
