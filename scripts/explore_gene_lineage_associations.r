@@ -488,12 +488,12 @@ if ((!is.null(opt$load_annot_graph) | loadup>=6) & file.exists(nftopasscomm)){
 }
 if (endscript<=6){ quit(save='no') }
 
-dircoma = paste(file.path(dirout, prefixout), sprintf("top_associations_network-%s_communities", coma), sep='.')
-if ((!is.null(opt$load_annot_graph) | loadup>=7) & file.exists(dircoma)){
-	if (verbose) print(sprintf("assume table and pdf output files for step 7 are already in folder: '%s'; SKIP step 7", dircoma))
-}else{
-	### step 7: community analysis: plot 
-	for (coma in comm.algos){
+### step 7: community analysis: plot 
+for (coma in comm.algos){
+	dircoma = paste(file.path(dirout, prefixout), sprintf("top_associations_network-%s_communities", coma), sep='.')
+	if ((!is.null(opt$load_annot_graph) | loadup>=7) & file.exists(dircoma)){
+		if (verbose) print(sprintf("assume table and pdf output files for step 7 (%s clustering) are already in folder: '%s'; SKIP step 7", coma, dircoma))
+	}else{
 		print(sprintf("plotting %s communities", coma))
 		dir.create(dircoma, showWarnings=F)
 		
