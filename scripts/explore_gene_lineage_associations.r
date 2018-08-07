@@ -9,7 +9,8 @@ library(RPostgreSQL)
 eventstablim = 50
 plotlabellim = 100
 
-repli.invar = c('assembly_id', 'genomic_accession', 'replicon_type', 'replicon_size')
+repli.invar = c("assembly_id", "genomic_accession", "replicon_type", "replicon_size")
+comm.algos =  c("louvain", "fast_greedy", "infomap", "label_prop")
 
 outannotcols = c('freq', sapply(1:2, function(i){ 
 	paste0( c("rlocdsid","replacement_label_or_cds_code","product","repr_cds_code","gene_family_id","tot_lineage_freq","chromorplas","species_pop","singmulti","coreoracc"), i)
@@ -473,15 +474,6 @@ if ((!is.null(opt$load_annot_graph) | loadup>=6) & file.exists(nftopasscomm)){
 }else{
 	### step 6: community analysis: clustering 
 	if (verbose) print("compute community structures of network of top associated gene lineages, and plot/write annotation of the components separately")
-#~ 	communities_louvain_topmatchev = cluster_louvain(graph_topmatchev, weight=graph_topmatchev$freq)
-#~ 	communities_fast_greedy_topmatchev = cluster_fast_greedy(graph_topmatchev, weight=graph_topmatchev$freq, merges=T, membership=T)
-#~ 	communities_edge_betweenness_topmatchev = cluster_edge_betweenness(graph_topmatchev, weight=graph_topmatchev$freq, merges=T, membership=T)
-#~ 	communities_infomap_topmatchev = cluster_infomap(graph_topmatchev, e.weight=graph_topmatchev$freq)
-#~ 	communities_label_prop_topmatchev = cluster_label_prop(graph_topmatchev, weight=graph_topmatchev$freq)
-
-	comm.algos = c("louvain", "fast_greedy", "infomap", "label_prop")
-	
-#~ 	comm_topmatchev = lapply(comm.algos, function(a){ get(sprintf("communities_%s_topmatchev", a)) }) ; names(comm_topmatchev) = comm.algos
 	comm_topmatchev = mclapply(comm.algos, computeCommunities, graph=graph_topmatchev, mc.cores=ncores) ; names(comm_topmatchev) = comm.algos
 	comm.sizes = lapply(comm_topmatchev, function(comm){ sort(sapply(groups(comm), length)) })
 	save(comm_topmatchev, comm.sizes, file=nftopasscomm)
