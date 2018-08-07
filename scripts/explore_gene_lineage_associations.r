@@ -372,9 +372,9 @@ if (!is.null(opt$db_name)){
 		select distinct rlocds_id, replacement_label_or_cds_code, cds_code, product,
 		  assembly_id, genomic_accession, replicon_type, replicon_size, gene_family_id, cds_begin
 		  from toplineages
-		  inner join replacement_label_or_cds_code2gene_families using (rlocds_id, gene_family_id)
+		  inner join replacement_label_or_cds_code2gene_families using (rlocds_id)
 		  inner join gene_tree_label2cds_code using (replacement_label_or_cds_code)
-		  inner join coding_sequences using (cds_code)
+		  inner join coding_sequences using (gene_family_id, cds_code)
 		  inner join proteins using (genbank_nr_protein_id)
 		  inner join replicons using (genomic_accession);
 		  "
