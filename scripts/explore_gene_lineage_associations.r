@@ -350,8 +350,9 @@ if (!is.null(opt$db_name)){
 		  inner join replicons using (genomic_accession)
 		  inner join gene_family_sizes using (gene_family_id)
 		group by rlocds_id, replacement_label_or_cds_code, gene_family_id, size, genome_present 
-		order by repr_cds_code ;"
-		if (verbose) print(annotreprquery)
+		order by repr_cds_code ;
+		"
+		if (verbose) cat(annotreprquery)
 		toplinereprannot = dbGetQuery(dbcon, annotreprquery)
 		toplinereprannot$gene_family_id = as.factor(trimws(as.character(toplinereprannot$gene_family_id)))
 		nb_genome = max(toplinereprannot$fam_occurence)
@@ -371,12 +372,13 @@ if (!is.null(opt$db_name)){
 		select distinct rlocds_id, replacement_label_or_cds_code, cds_code, product,
 		  assembly_id, genomic_accession, replicon_type, replicon_size, gene_family_id, cds_begin
 		  from toplineages
-		  inner join replacement_label_or_cds_code2gene_families using (rlocds_id)
+		  inner join replacement_label_or_cds_code2gene_families using (rlocds_id, gene_family_id)
 		  inner join gene_tree_label2cds_code using (replacement_label_or_cds_code)
 		  inner join coding_sequences using (cds_code)
 		  inner join proteins using (genbank_nr_protein_id)
-		  inner join replicons using (genomic_accession);"
-		if (verbose) print(multiannotquery)
+		  inner join replicons using (genomic_accession);
+		  "
+		if (verbose) cat(multiannotquery)
 		toplinemultiannot = dbGetQuery(dbcon, multiannotquery)
 		dbExecute(dbcon, "drop table toplineages; ")
 		toplinemultiannot$assembly_id = as.factor(trimws(as.character(toplinemultiannot$assembly_id)))
@@ -529,8 +531,9 @@ for (coma in comm.algos){
 				inner join replacement_label_or_cds_code2gene_families using (replacement_label_or_cds_code) 
 				inner join phylogeny.species_tree_events using (event_id) inner join phylogeny.species_tree as rec on rec_branch_id=rec.branch_id 
 				left join phylogeny.species_tree as don on don_branch_id=don.branch_id 
-				where rlocds_id=%s;", rlocdsid)
-				if (verbose) print(lineageeventsquery)
+				where rlocds_id=%s;
+				", rlocdsid)
+				if (verbose) cat(lineageeventsquery)
 				alleventsonlineage = dbGetQuery(dbcon, lineageeventsquery)
 				alleventsonlineage$gene_family_id = as.factor(trimws(as.character(alleventsonlineage$gene_family_id)))
 				if (is.null(alleventsincomm)){ alleventsincomm = alleventsonlineage
