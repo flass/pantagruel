@@ -94,10 +94,14 @@ plotHMevents = function(mat, matname, cap=99, excl.neighbour=5, fixed.max=30){
 	  mat[j,i] = mat[i,j]
 	}}
 	layout(matrix(1:2, 2,1))
-	barplot(apply(mat, 1, sum), las=2, main=sprintf("%s\nsummed matched event freq.", matname))
+	sme = apply(mat, 1, sum, na.rm=T)
+	sme[is.na(sme)] = 0
+	barplot(sme, las=2, main=sprintf("%s\nsummed matched event freq.", matname))
 	barplot(sapply(1:nrow(mat), function(i){
 		js = sapply(seq(i-excl.neighbour, i+excl.neighbour), function(k){ ifelse(k>0, ifelse(k<=ncol(mat), k, k-nrow(mat)), k+ncol(mat)) })
-		sum(mat[i,-js]) 
+		smen = sum(mat[i,-js], na.rm=T) 
+		smen[is.na(smen)] = 0
+		return(smen)
 	}), las=2, main=sprintf("%s\nsummed matched event freq. excluding %d next genes", matname, excl.neighbour))
 }
 
