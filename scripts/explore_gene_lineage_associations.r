@@ -290,9 +290,10 @@ if ((!is.null(opt$load_top_ass) | loadup>=2) & file.exists(nftopasstab)){
 	save(lparsematchev, file=nftopass)
 	}
 	topmatchev = lparsematchev[[1]]$top.matches
+	if (length(lparsematchev)>1){
 	for (i in 2:length(lparsematchev)){
 		topmatchev = rbind(topmatchev, lparsematchev[[i]]$top.matches)
-	}
+	}}
 	rm(lparsematchev) ; gc()
 	write.table(topmatchev, file=paste(nftopasstab, sep='\t', row.names=F))
 }
