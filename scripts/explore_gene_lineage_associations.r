@@ -555,10 +555,6 @@ if (endscript<=7){ quit(save='no') }
 
 ### step 8: plot heatmap of lineages association intensity as projected on maps of selected replicons
 if (!is.null(refrepliordlineages)){
-	matmatchev = lparsematchev[[1]]$ref.repli.proj.mat
-	for (i in 2:length(lparsematchev)){
-		matmatchev = matmatchev + lparsematchev[[i]]$ref.repli.proj.mat
-	}
 	nfpdf = paste(file.path(dirout, prefixout), sprintf('co-evol_scores_projection_%s.pdf', refrepli), sep='.')
 	pdf(nfpdf, height=20, width=20)
 	plotHMevents(matmatchev, sprintf('co-evolution scores projected on %s map', refrepli))
