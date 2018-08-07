@@ -208,7 +208,7 @@ refrepli = opt$ref_replicons
 nmaxrlocsid = opt$max_lineage_id
 nfrefrepliordlineages = opt$replicon_annot_map
 if (!is.null(opt$replicon_annot_map)){
-	refrepliordlineages = read.table(opt$replicon_annot_map, h=T, sep='\t')
+	refrepliordlineages = read.table(opt$replicon_annot_map, h=T, sep='\t', quote='')
 }else{
 	refrepliordlineages = NULL
 }
@@ -295,9 +295,11 @@ if ((!is.null(opt$load_top_ass) | loadup>=2) & file.exists(nftopasstab)){
 	save(lparsematchev, file=nftopass)
 	}
 	topmatchev = lparsematchev[[1]]$top.matches
+	if (!is.null(refrepliordlineages)){ matmatchev = lparsematchev[[1]]$ref.repli.proj.mat }
 	if (length(lparsematchev)>1){
 	for (i in 2:length(lparsematchev)){
 		topmatchev = rbind(topmatchev, lparsematchev[[i]]$top.matches)
+		if (!is.null(refrepliordlineages)){ matmatchev = matmatchev + lparsematchev[[i]]$ref.repli.proj.mat }
 	}}
 	rm(lparsematchev) ; gc()
 	write.table(topmatchev, file=nftopasstab, sep='\t', row.names=F)
