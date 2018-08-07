@@ -88,6 +88,7 @@ plotHMevents = function(mat, matname, cap=99, excl.neighbour=5, fixed.max=30){
 	print(brk)
 	print(summary(mat))
 	heatmap.2(mat, Rowv=F, Colv=F, dendrogram='none', scale='none', trace='none', breaks=brk, col=rainbow(30), na.col='white', main=matname)
+	heatmap.2(mat, scale='none', trace='none', breaks=brk, col=rainbow(30), na.col='white', main=matname)
 #~ 		heatmap.2(mat, Rowv=F, Colv=F, dendrogram='none', scale='none', trace='none', col=rainbow(30), na.col='white', main=matname)
 	for (i in 1:(ncol(mat)-1)){
 	 for (j in 2:ncol(mat)){
@@ -167,7 +168,7 @@ spec = matrix(c(
   'load_top_network',   'N', 0, "logical",   "will attempt to load top lineage association network from R object archive file saved in a previous run; file must be named like `dir_match_events` argument value with prefix '.top_association_network.RData', and contain a list named `lparsematchev` (bypass quantile computation, top association retrieval and graph computation)",
   'load_up_to_step',    'L', 2, "integer",   "will attempt to load data from R object archive file saved during a previous run, up to the desired step (1:quantile computation; 2:top association retrieval; 3:top association graph computation; 4:top associated lineage annotation retrival from SQL db)",
   'plot_network',       'n', 0, "logical",   "enable plotting of the networks (long)",
-  'stop_after_step',    'Z', 2, "integer",   "will run until reaching the desired progress of computation, then quit (steps: quantile computation=1; top association retrieval=2; top association graph computation=3; top associated lineage annotation retrival from SQL db=4; compute association network=5; search communities in network=6; plot top association network with metadata=7; plot heatmaps of lineages association intensity as projected on maps of selected replicons [end])"
+  'stop_after_step',    'Z', 2, "integer",   "will run until reaching the desired progress of computation, then quit (steps: quantile computation=1; top association retrieval (+OPTIONALLY: plot heatmaps of lineages association intensity as projected on maps of selected replicons)=2; top association graph computation=3; top associated lineage annotation retrival from SQL db=4; compute association network=5; search communities in network=6; plot top association network with metadata=7 [end])"
 ), byrow=TRUE, ncol=5);
 opt = getopt(spec, opt=commandArgs(trailingOnly=T))
 
@@ -305,12 +306,25 @@ if ((!is.null(opt$load_top_ass) | loadup>=2) & file.exists(nftopasstab) & is.nul
 		save(lparsematchev, file=nftopass)
 	}
 	topmatchev = lparsematchev[[1]]$top.matches
-	if (!is.null(refrepliordlineages)){ matmatchev = lparsematchev[[1]]$ref.repli.proj.mat }
 	if (length(lparsematchev)>1){
 		for (i in 2:length(lparsematchev)){
 			topmatchev = rbind(topmatchev, lparsematchev[[i]]$top.matches)
-			if (!is.null(refrepliordlineages)){ matmatchev = matmatchev + lparsematchev[[i]]$ref.repli.proj.mat }
 		}
+	}
+	### OPTIONAL: plot heatmap of lineages association intensity as projected on maps of selected replicons
+	if (!is.null(refrepliordlineages)){
+		matmatchev = lparsematchev[[1]]$ref.repli.proj.mat
+		if (length(lparsematchev)>1){
+			for (i in 2:length(lparsematchev)){
+				matmatchev = matmatchev + lparsematchev[[i]]$ref.repli.proj.mat
+			}
+		}
+		colnames(matmatchev) = rownames(matmatchev) = refrepliordlineages$cds_code
+		nfpdf = paste(file.path(dirout, prefixout), sprintf("co-evol_scores_projection_%s.pdf", refrepli), sep='.')
+		pdf(nfpdf, height=20, width=20)
+		plotHMevents(matmatchev, sprintf("co-evolution scores projected on %s map", refrepli))
+		dev.off()
+		print(nfpdf)
 	}
 	rm(lparsematchev) ; gc()
 	write.table(topmatchev, file=nftopasstab, sep='\t', row.names=F)
@@ -552,12 +566,3 @@ for (coma in comm.algos){
 }
 
 if (endscript<=7){ quit(save='no') }
-
-### step 8: plot heatmap of lineages association intensity as projected on maps of selected replicons
-if (!is.null(refrepliordlineages)){
-	nfpdf = paste(file.path(dirout, prefixout), sprintf('co-evol_scores_projection_%s.pdf', refrepli), sep='.')
-	pdf(nfpdf, height=20, width=20)
-	plotHMevents(matmatchev, sprintf('co-evolution scores projected on %s map', refrepli))
-	dev.off()
-	print(nfpdf)
-}
