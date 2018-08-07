@@ -72,12 +72,12 @@ parseMatchEventFile = function(nfmatchevents, quant.only=F, nmaxrlocsid=NULL, re
 				k = c(i1[j2], i2[j1])
 				if (length(k)==1){ return(matchev$freq[k])
 				}else{ if (length(k)==0){ return(NA) 
-				}else{ print(matchev[k,]) ; stop(sprintf('multiple co-evolution score values for lineage pair %d, %d', rlocdsid1, rlocdsid2)) }}
+				}else{ print(matchev[k,]) ; stop(sprintf("multiple co-evolution score values for lineage pair %d, %d", rlocdsid1, rlocdsid2)) }}
 			})
-			if (verbose) cat(rlocdsid1, ' ')
+			if (verbose) cat(rlocdsid1, " ")
 			return(rowmat) 
 		}))
-		if (verbose) cat('\n')
+		if (verbose) cat("... done.\n")
 	}else{ matmatchev = NULL }
 	return( list(quantiles=qmatchev, unique.query.rlocdsid=urlocdsid1, nb.reported.comp=ncomp, tot.comp=totcomp, top.matches=topmatchev, ref.repli.proj.mat=matmatchev) )
 }
@@ -290,25 +290,27 @@ if (endscript<=1){ quit(save='no') }
 ### step 2: parse data to extract top co-evolution scores
 nftopass = paste(file.path(dirout, prefixout), 'top_associations.RData', sep='.')
 nftopasstab = paste(file.path(dirout, prefixout), 'top_associations.tab', sep='.')
-if ((!is.null(opt$load_top_ass) | loadup>=2) & file.exists(nftopasstab)){
+if ((!is.null(opt$load_top_ass) | loadup>=2) & file.exists(nftopasstab) & is.null(refrepliordlineages)){
 	topmatchev = read.table(nftopasstab, sep='\t', header=T)
 	if (verbose) print(sprintf("loaded top association data from file: '%s'", nftopasstab))
-}else{ if ((!is.null(opt$load_top_ass) | loadup>=2) & file.exists(nftopass)){
+}else{
+	if ((!is.null(opt$load_top_ass) | loadup>=2) & file.exists(nftopass)){
 	load(nftopass)
 	if (verbose) print(sprintf("loaded top association data from file: '%s'", nftopass))
-}else{
-	if (verbose) print("extract top associations from bulk data")
-	lparsematchev = mclapply(lnfmatchevents, parseMatchEventFile, comp.quant=F, top.val.cutoff=scutoff, 
-						     refrepliordlineages=refrepliordlineages, verbose=verbose, mc.cores=ncores)
-	save(lparsematchev, file=nftopass)
+	}else{
+		if (verbose) print("extract top associations from bulk data")
+		lparsematchev = mclapply(lnfmatchevents, parseMatchEventFile, comp.quant=F, top.val.cutoff=scutoff, 
+								 refrepliordlineages=refrepliordlineages, verbose=verbose, mc.cores=ncores)
+		save(lparsematchev, file=nftopass)
 	}
 	topmatchev = lparsematchev[[1]]$top.matches
 	if (!is.null(refrepliordlineages)){ matmatchev = lparsematchev[[1]]$ref.repli.proj.mat }
 	if (length(lparsematchev)>1){
-	for (i in 2:length(lparsematchev)){
-		topmatchev = rbind(topmatchev, lparsematchev[[i]]$top.matches)
-		if (!is.null(refrepliordlineages)){ matmatchev = matmatchev + lparsematchev[[i]]$ref.repli.proj.mat }
-	}}
+		for (i in 2:length(lparsematchev)){
+			topmatchev = rbind(topmatchev, lparsematchev[[i]]$top.matches)
+			if (!is.null(refrepliordlineages)){ matmatchev = matmatchev + lparsematchev[[i]]$ref.repli.proj.mat }
+		}
+	}
 	rm(lparsematchev) ; gc()
 	write.table(topmatchev, file=nftopasstab, sep='\t', row.names=F)
 }
