@@ -59,18 +59,26 @@ parseMatchEventFile = function(nfmatchevents, quant.only=F, nmaxrlocsid=NULL, re
 		topmatchev = matchev[matchev$freq>=qmatchev[as.character(top.quant.cutoff)],]
 		topstr = sprintf("top %.g", 1-top.quant.cutoff)
 	}
+	if (verbose){ print(sprintf("%s ... done. Top co-evolution scores (%s):", nfmatchevents, topstr), quote=F) ; print(head(topmatchev)) ; print(sprintf("... (%d lines)", nrow(topmatchev))) }
 	## can project results on a reference replicon map (the resulting matrix can be summed with those from other partial results)
 	if (!is.null(refrepliordlineages)){
+		if (verbose){ print("build matrix of gene-to-gene coevolution scoore based on selected replicon map", quote=F) }
 		matmatchev = data.matrix(sapply(refrepliordlineages$rlocds_id, function(rlocdsid1){
-			sapply(refrepliordlineages$rlocds_id, function(rlocdsid2){
-				i = which((matchev$rlocdsid1==rlocdsid1 & matchev$rlocdsid2==rlocdsid2) | (matchev$rlocdsid1==rlocdsid2 & matchev$rlocdsid2==rlocdsid1))
-				if (length(i)==1){ return(matchev$freq[i])
-				}else{ if (length(i)==0){ return(NA) 
-				}else{ print(matchev[i,]) ; stop(sprintf('multiple co-evolution score values for lineage pair %d, %d', rlocdsid1, rlocdsid2)) }}
+			i1 = which(matchev$rlocdsid1==rlocdsid1)
+			i2 = which(matchev$rlocdsid2==rlocdsid1)
+			rowmat = sapply(refrepliordlineages$rlocds_id, function(rlocdsid2){
+				j1 = which(matchev$rlocdsid1[i2]==rlocdsid2)
+				j2 = which(matchev$rlocdsid2[i1]==rlocdsid2)
+				k = c(i1[j2], i2[j1])
+				if (length(k)==1){ return(matchev$freq[k])
+				}else{ if (length(k)==0){ return(NA) 
+				}else{ print(matchev[k,]) ; stop(sprintf('multiple co-evolution score values for lineage pair %d, %d', rlocdsid1, rlocdsid2)) }}
 			})
+			if (verbose) cat(rlocdsid1, ' ')
+			return(rowmat) 
 		}))
+		if (verbose) cat('\n')
 	}else{ matmatchev = NULL }
-	if (verbose){ print(sprintf("%s ... done. Top co-evolution scores (%s):", nfmatchevents, topstr), quote=F) ; print(head(topmatchev)) ; print(sprintf("... (%d lines)", nrow(topmatchev))) }
 	return( list(quantiles=qmatchev, unique.query.rlocdsid=urlocdsid1, nb.reported.comp=ncomp, tot.comp=totcomp, top.matches=topmatchev, ref.repli.proj.mat=matmatchev) )
 }
 
