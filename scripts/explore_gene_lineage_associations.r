@@ -86,22 +86,19 @@ plotHMevents = function(mat, matname, cap=99, excl.neighbour=5, fixed.max=30){
 	if (fixed.max){ brk = 0:fixed.max
 	}else{ brk = quantile(mat, (0:30)/30, na.rm=T) }
 	print(brk)
-	print(summary(mat))
+	mat[is.na(mat)] = 0
 	heatmap.2(mat, Rowv=F, Colv=F, dendrogram='none', scale='none', trace='none', breaks=brk, col=rainbow(30), na.col='white', main=matname)
 	heatmap.2(mat, scale='none', trace='none', breaks=brk, col=rainbow(30), na.col='white', main=matname)
-#~ 		heatmap.2(mat, Rowv=F, Colv=F, dendrogram='none', scale='none', trace='none', col=rainbow(30), na.col='white', main=matname)
-	for (i in 1:(ncol(mat)-1)){
-	 for (j in 2:ncol(mat)){
-	  mat[j,i] = mat[i,j]
-	}}
+#~ 	for (i in 1:(ncol(mat)-1)){
+#~ 	 for (j in 2:ncol(mat)){
+#~ 	  mat[j,i] = mat[i,j]
+#~ 	}}
 	layout(matrix(1:2, 2,1))
 	sme = apply(mat, 1, sum, na.rm=T)
-	sme[is.na(sme)] = 0
 	barplot(sme, las=2, main=sprintf("%s\nsummed matched event freq.", matname))
 	barplot(sapply(1:nrow(mat), function(i){
 		js = sapply(seq(i-excl.neighbour, i+excl.neighbour), function(k){ ifelse(k>0, ifelse(k<=ncol(mat), k, k-nrow(mat)), k+ncol(mat)) })
 		smen = sum(mat[i,-js], na.rm=T) 
-		smen[is.na(smen)] = 0
 		return(smen)
 	}), las=2, main=sprintf("%s\nsummed matched event freq. excluding %d next genes", matname, excl.neighbour))
 }
