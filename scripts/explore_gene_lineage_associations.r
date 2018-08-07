@@ -1,6 +1,5 @@
 #!/usr/bin/Rscript --vanilla
 library(gplots)
-library(RColorBrewer)
 library(igraph)
 library(getopt)
 library(parallel)
@@ -83,26 +82,23 @@ parseMatchEventFile = function(nfmatchevents, quant.only=F, nmaxrlocsid=NULL, re
 	return( list(quantiles=qmatchev, unique.query.rlocdsid=urlocdsid1, nb.reported.comp=ncomp, tot.comp=totcomp, top.matches=topmatchev, ref.repli.proj.mat=matmatchev) )
 }
 
-plotHMevents = function(mat, matname, cap=99){
-#~ 	qmat = quantile(mat, (1:100)/100, na.rm=T)
-#~ 	widthbin = qmat[cap]/8
-#~ 	brk = c(seq(from=0, to=qmat[cap], by=widthbin), max(mat, na.rm=T))
-	brk = quantile(mat, (0:9)/9, na.rm=T)
+plotHMevents = function(mat, matname, cap=99, excl.neighbour=5, fixed.max=30){
+	if (fixed.max){ brk = 0:fixed.max
+	}else{ brk = quantile(mat, (0:30)/30, na.rm=T) }
 	print(brk)
 	print(summary(mat))
-	heatmap.2(mat, Rowv=F, Colv=F, dendrogram='none', scale='none', trace='none', breaks=brk, col=brewer.pal(9, 'YlOrRd'), na.col='white', main=matname)
-#~ 		heatmap.2(mat, Rowv=F, Colv=F, dendrogram='none', scale='none', trace='none', col=brewer.pal(9, 'YlOrRd'), na.col='white', main=matname)
+	heatmap.2(mat, Rowv=F, Colv=F, dendrogram='none', scale='none', trace='none', breaks=brk, col=rainbow(30), na.col='white', main=matname)
+#~ 		heatmap.2(mat, Rowv=F, Colv=F, dendrogram='none', scale='none', trace='none', col=rainbow(30), na.col='white', main=matname)
 	for (i in 1:(ncol(mat)-1)){
 	 for (j in 2:ncol(mat)){
 	  mat[j,i] = mat[i,j]
 	}}
 	layout(matrix(1:2, 2,1))
 	barplot(apply(mat, 1, sum)/nsample, las=2, main=sprintf("%s\nsummed matched event freq.", matname))
-	n = 5
 	barplot(sapply(1:nrow(mat), function(i){
-		js = sapply(seq(i-n, i+n), function(k){ ifelse(k>0, ifelse(k<=ncol(mat), k, k-nrow(mat)), k+ncol(mat)) })
+		js = sapply(seq(i-excl.neighbour, i+excl.neighbour), function(k){ ifelse(k>0, ifelse(k<=ncol(mat), k, k-nrow(mat)), k+ncol(mat)) })
 		sum(mat[i,-js]) 
-	})/nsample, las=2, main=sprintf("%s\nsummed matched event freq. excluding %d next genes", matname, n))
+	}), las=2, main=sprintf("%s\nsummed matched event freq. excluding %d next genes", matname, excl.neighbour))
 }
 
 connectionDB = function(opt){
