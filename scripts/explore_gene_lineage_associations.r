@@ -230,6 +230,11 @@ if (is.null(opt$load_up_to_step)){
 }
 
 dbcon = NULL
+if (is.null(opt$db_type)){
+	dbtype = "PostgreSQL" 
+}else{ 
+	dbtype = opt$db_type 
+}
 
 if (!is.null(qcutoff)){
 	nfsavematchev = paste(file.path(dirout, prefixout), 'co-evolution_quantiles.RData', sep='.')
