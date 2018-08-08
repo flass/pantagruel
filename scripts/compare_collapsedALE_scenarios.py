@@ -42,7 +42,8 @@ def _select_lineage_event_clause_factory(evtypes, valtoken, lineagetable):
 	rlocdsIJ = "INNER JOIN %s USING (replacement_label_or_cds_code)"%lineagetable
 	if evtypes:
 		evtyperestrictIJ = "INNER JOIN species_tree_events USING (event_id)"
-		evtyperestrictWC = "AND event_type IN %s"%repr(tuple(e for e in evtypes))
+		if len(evtypes)>1: evtyperestrictWC = "AND event_type IN %s"%repr(tuple(e for e in evtypes))
+		else: evtyperestrictWC = "AND event_type='%s'"
 	else:
 		evtyperestrictWC = evtyperestrict = ""
 	return (rlocdsIJ, evtyperestrictIJ, evtyperestrictWC)
