@@ -38,7 +38,7 @@ def get_dbconnection(dbname, dbengine):
 		raise ValueError,  "wrong DB type provided: '%s'; select one of dbengine={'postgres[ql]'|'sqlite[3]'}"%dbengine
 	return (dbcon, dbcur, dbtype, valtoken)
 
-def _select_lineage_event_clause_factory(evtypes, valtoken, lineagetable):
+def _select_lineage_event_clause_factory(evtypes, lineagetable):
 	rlocdsIJ = "INNER JOIN %s USING (replacement_label_or_cds_code)"%lineagetable
 	if evtypes:
 		evtyperestrictIJ = "INNER JOIN species_tree_events USING (event_id)"
@@ -52,7 +52,7 @@ def _select_lineage_event_query_factory(aBYb, evtypes, valtoken, lineagetable, \
                                         joinTable=None, addselcols=(), distinct=False, \
                                         operator='=', addWhereClause='', orderBy=''):
 	a, b = aBYb
-	rlocdsIJ, evtyperestrictIJ, evtyperestrictWC = _select_lineage_event_clause_factory(evtypes, valtoken, lineagetable)
+	rlocdsIJ, evtyperestrictIJ, evtyperestrictWC = _select_lineage_event_clause_factory(evtypes, lineagetable)
 	if joinTable:
 		bIJ = 'INNER JOIN %s USING (%s)'%(joinTable, b)
 		bWC = ''
@@ -95,7 +95,7 @@ def _query_matching_lineage_event_profiles(args, timing=False, verbose=False):
 	                                                  evtypes, valtoken, lineagetable, \
 	                                                  addselcols=('freq as f0',), \
 	                                                  addWhereClause=baseWC)
-	if verbose: print preq_evbyli%querylineage_id
+	if verbose: print preq_evbyli, (querylineage_id,)
 	tempeventtable = 'events_of_rlocds_id%d'%querylineage_id
 	#~ lineage_eventfreqs = _query_events_lineage_sorted(querylineage_id, preq_evbyli, dbcul, with_create_temp=tempeventtable)
 	_query_create_temp_events_lineage(querylineage_id, preq_evbyli, dbcul, tempeventtable)
