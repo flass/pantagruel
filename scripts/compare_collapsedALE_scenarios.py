@@ -302,7 +302,7 @@ def main():
 	verbose = int(dopt.get('--verbose', dopt.get('-v', 0)))
 	
 	if dirTableOut:
-		ltd = ['gene_event_matches']
+		ltd = ['gene_lineage_assocations']
 		for td in ltd:
 			ptd = os.path.join(dirTableOut, td)
 			if not os.path.isdir(ptd):
@@ -312,8 +312,8 @@ def main():
 	
 	if dirTableOut:
 		#~ matchesOutRad = os.path.basename(nfgenefamlist).rsplit('.', 1)[0] if nfgenefamlist else ''
-		matchesOutRad = ''
-		matchesOutDirRad = os.path.join(dirTableOut, 'gene_lineage_assocations', matchScope+'_scores', matchesOutRad)
+		#~ matchesOutDirRad = os.path.join(dirTableOut, 'gene_lineage_assocations', matchScope+'_scores', matchesOutRad)
+		matchesOutDirRad = os.path.join(dirTableOut, 'gene_lineage_assocations', matchScope+'_scores')
 		if not os.path.isdir(matchesOutDirRad):
 			os.mkdir(matchesOutDirRad)
 	else:
