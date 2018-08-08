@@ -216,6 +216,10 @@ nmaxrlocsid = opt$max_lineage_id
 nfrefrepliordlineages = opt$replicon_annot_map
 if (!is.null(opt$replicon_annot_map)){
 	refrepliordlineages = read.table(opt$replicon_annot_map, h=T, sep='\t', quote='')
+	if ( is.null(refrepli) ){ 
+		# try some matching in file name...
+		refrepli = gsub("map_(.+)_cds.tab", "\\1", basename(opt$replicon_annot_map))
+	}
 }else{
 	refrepliordlineages = NULL
 }
@@ -310,13 +314,19 @@ if ((!is.null(opt$load_top_ass) | loadup>=2) & file.exists(nftopasstab) & is.nul
 	}
 	### OPTIONAL: plot heatmap of lineages association intensity as projected on maps of selected replicons
 	if (!is.null(refrepliordlineages)){
-		matmatchev = lparsematchev[[1]]$ref.repli.proj.mat
-		if (length(lparsematchev)>1){
-			for (i in 2:length(lparsematchev)){
-				matmatchev = matmatchev + lparsematchev[[i]]$ref.repli.proj.mat
+		nfmatrepli = paste(file.path(dirout, prefixout), sprintf("co-evol_scores_projection_%s.mat.RData", refrepli), sep='.')
+		if ((!is.null(opt$load_top_ass) | loadup>=2) & file.exists(nfmatrepli)){
+			load(nfmatrepli)
+		}else{
+			matmatchev = lparsematchev[[1]]$ref.repli.proj.mat
+			if (length(lparsematchev)>1){
+				for (i in 2:length(lparsematchev)){
+					matmatchev = matmatchev + lparsematchev[[i]]$ref.repli.proj.mat
+				}
 			}
+			colnames(matmatchev) = rownames(matmatchev) = refrepliordlineages$cds_code
+			save(matmatchev, file=nfmatrepli)
 		}
-		colnames(matmatchev) = rownames(matmatchev) = refrepliordlineages$cds_code
 		nfpdf = paste(file.path(dirout, prefixout), sprintf("co-evol_scores_projection_%s.pdf", refrepli), sep='.')
 		pdf(nfpdf, height=20, width=20)
 		plotHMevents(matmatchev, sprintf("co-evolution scores projected on %s map", refrepli))

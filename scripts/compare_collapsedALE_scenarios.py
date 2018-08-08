@@ -113,7 +113,8 @@ def _query_matching_lineage_event_profiles(args, timing=False, verbose=False):
 	# and filtering by {same|different|all} gene families
 	famWC = diffamWC%queryfam if '%' in diffamWC else diffamWC
 	# and the id of compared lineage to be > reference lineage, to avoid duplicate comparisons
-	lineageorderWC=" AND rlocds_id > %d"%querylineage_id
+	# or equal (for same-family scope mode), i.e. self-comparison, to evaluate the the maximum association score for this lineage
+	lineageorderWC=" AND rlocds_id >= %d"%querylineage_id
 	preq_libyev = _select_lineage_event_query_factory(('rlocds_id', 'event_id'), \
 	                                                  evtypes, valtoken, lineagetable, \
 	                                                  addselcols=('f0', 'freq as f1',), \
