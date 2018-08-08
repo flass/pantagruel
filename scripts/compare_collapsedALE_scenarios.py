@@ -312,7 +312,7 @@ def main():
 	if dirTableOut:
 		#~ matchesOutRad = os.path.basename(nfgenefamlist).rsplit('.', 1)[0] if nfgenefamlist else ''
 		matchesOutRad = ''
-		matchesOutDirRad = os.path.join(dirTableOut, 'gene_event_matches', matchScope, matchesOutRad)
+		matchesOutDirRad = os.path.join(dirTableOut, 'gene_lineage_assocations', matchScope+'_scores', matchesOutRad)
 		if not os.path.isdir(matchesOutDirRad):
 			os.mkdir(matchesOutDirRad)
 	else:
