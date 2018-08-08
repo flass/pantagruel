@@ -310,8 +310,9 @@ def main():
 	genefamlist = loadRecGeneTreeLabelAliases(nfgenefamlist, dircons, dirrepl, nbthreads=nbthreads, verbose=verbose)		
 	
 	if dirTableOut:
-		matchesOutRad = os.path.basename(nfgenefamlist).rsplit('.', 1)[0] if nfgenefamlist else ''
-		matchesOutDirRad = os.path.join(dirTableOut, 'gene_event_matches', matchesOutRad)
+		#~ matchesOutRad = os.path.basename(nfgenefamlist).rsplit('.', 1)[0] if nfgenefamlist else ''
+		matchesOutRad = ''
+		matchesOutDirRad = os.path.join(dirTableOut, 'gene_event_matches', matchScope, matchesOutRad)
 		if not os.path.isdir(matchesOutDirRad):
 			os.mkdir(matchesOutDirRad)
 	else:
