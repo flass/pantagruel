@@ -12,7 +12,7 @@ prokkablastdb=$(dirname $(dirname $(ls -l `which prokka` | awk '{ print $NF }'))
 
 echo "### assembly: $gproject; contig files from: ${allcontigs}/"
 head -n1 $refstrains
-taxo=(`grep $gproject $refstrains`)
+taxo=(`grep -P "^${gproject}\t"  ${refstrains}`)
 echo ${taxo[@]}
 genus=${taxo[1]} ; species=${taxo[2]%*.} ; strain=${taxo[3]} ; taxid=${taxo[4]} ; loctagprefix=${taxo[5]}
 if [[ -z $genus || -z $species || -z $strain || -z $taxid || -z $loctagprefix ]] ; then
