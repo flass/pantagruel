@@ -9,8 +9,8 @@
 
 # Copyright: Florent Lassalle (f.lassalle@imperial.ac.uk), 30 July 2018
 
-export raproot=$1
-envsourcescript=${raproot}/environ_pantagruel.sh
+export ptgroot=$1
+envsourcescript=${ptgroot}/environ_pantagruel.sh
 source $envsourcescript
 
 ###########################################
@@ -18,7 +18,7 @@ source $envsourcescript
 ###########################################
 
 ## select psedo-core genome marker gene set
-export coregenome=${rapdb}/04.core_genome
+export coregenome=${ptgdb}/04.core_genome
 mkdir -p ${coregenome}/
 
 if [ -z ${pseudocoremingenomes} ] ; then
@@ -39,8 +39,8 @@ rm ${protalifastacodedir}/*_all_sp_new
 
 ### compute species tree using RAxML
 export coretree=${coregenome}/raxml_tree
-export treename=${pseudocore}_concat_prot_${ngenomes}-genomes_${rapdbname}
-mkdir -p ${raplogs}/raxml ${coretree}
+export treename=${pseudocore}_concat_prot_${ngenomes}-genomes_${ptgdbname}
+mkdir -p ${ptglogs}/raxml ${coretree}
 # define RAxML binary and options; uses options -T (threads) -j (checkpoints) 
 if [ ! -z $(grep -o avx2 /proc/cpuinfo | head -n 1) ] ; then
   raxmlflav='-AVX2 -U'
@@ -55,18 +55,18 @@ raxmlbin="raxmlHPC-PTHREADS${raxmlflav} -T $(nproc)"
 raxmloptions="-n ${treename} -m PROTCATLGX -j -p 1753 -w ${coretree}"
 
 ## first check the alignment for duplicate sequences and write a reduced alignment with  will be excluded
-$raxmlbin -s ${pseudocorealn} ${raxmloptions} -f c &> ${raplogs}/raxml/${treename}.check.log
+$raxmlbin -s ${pseudocorealn} ${raxmloptions} -f c &> ${ptglogs}/raxml/${treename}.check.log
 # 117/880 exactly identical excluded
 grep 'exactly identical$' ${coretree}/RAxML_info.${treename} | sed -e 's/IMPORTANT WARNING: Sequences \(.\+\) and \(.\+\) are exactly identical/\1\t\2/g' > ${pseudocorealn}.identical_sequences
 rm ${coretree}/RAxML_info.${treename}
 ## first just single ML tree on reduced alignment
-$raxmlbin -s ${pseudocorealn}.reduced ${raxmloptions} &> ${raplogs}/raxml/${treename}.ML_run.log
+$raxmlbin -s ${pseudocorealn}.reduced ${raxmloptions} &> ${ptglogs}/raxml/${treename}.ML_run.log
 mv ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_bestTree.${treename}
 
-## RAxML, with rapid bootstrap
-$raxmlbin -s ${pseudocorealn}.reduced ${raxmloptions} -x 198237 -N 1000 &> ${raplogs}/raxml/${treename}_bs.log
-mv ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_bootstrap.${treename}
-$raxmlbin -s ${pseudocorealn}.reduced ${raxmloptions} -f b -z ${coretree}/RAxML_bootstrap.${treename} -t ${coretree}/RAxML_bestTree.${treename} 
+## RAxML, with ptgid bootstptg
+$raxmlbin -s ${pseudocorealn}.reduced ${raxmloptions} -x 198237 -N 1000 &> ${ptglogs}/raxml/${treename}_bs.log
+mv ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_bootstptg.${treename}
+$raxmlbin -s ${pseudocorealn}.reduced ${raxmloptions} -f b -z ${coretree}/RAxML_bootstptg.${treename} -t ${coretree}/RAxML_bestTree.${treename} 
 mv ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_bipartitions.${treename}
 #~ ## root ML tree
 #~ $raxmlbin -s ${pseudocorealn}.reduced ${raxmloptions} -f I -t RAxML_bipartitionsBranchLabels.${treename}  
@@ -91,7 +91,7 @@ python ${ptgscripts}/putidentseqbackintree.py --input.nr.tree=${nrbiparts} --ref
 
 python ${ptgscripts}/code2orgnames_in_tree.py ${speciestree} $database/organism_codes.tab ${speciestree}.names
 
-### generate ultrametric 'dated' species tree for more meaningfulgraphical representation of reconciliation AND to use the dated (original) version of ALE
+### generate ultrametric 'dated' species tree for more meaningfulgptghical representation of reconciliation AND to use the dated (original) version of ALE
 ## use LSD (v 0.3 beta; To et al. Syst. Biol. 2015) to generate an ultrametric tree from the rooted ML tree (only assumin different, uncorrelated clocks for each branch)
 alnlen=$( head -n1 ${pseudocorealn}.reduced | cut -d' ' -f2 )
 lsd -i ${speciestree} -c -v 1 -s $alnlen -o ${speciestree}.lsd

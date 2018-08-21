@@ -9,8 +9,8 @@
 
 # Copyright: Florent Lassalle (f.lassalle@imperial.ac.uk), 30 July 2018
 
-export raproot=$1
-envsourcescript=${raproot}/environ_pantagruel.sh
+export ptgroot=$1
+envsourcescript=${ptgroot}/environ_pantagruel.sh
 source $envsourcescript
 
 ###########################################

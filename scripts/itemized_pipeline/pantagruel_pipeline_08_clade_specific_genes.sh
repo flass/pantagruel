@@ -9,21 +9,21 @@
 
 # Copyright: Florent Lassalle (f.lassalle@imperial.ac.uk), 30 July 2018
 
-export raproot=$1
-envsourcescript=${raproot}/environ_pantagruel.sh
+export ptgroot=$1
+envsourcescript=${ptgroot}/environ_pantagruel.sh
 source $envsourcescript
 
 ###############################################
 ## 08. orthologous and clade-specific gene sets
 ###############################################
 
-export orthogenes=${rapdb}/08.orthologs
+export orthogenes=${ptgdb}/08.orthologs
 mkdir -p ${orthogenes}
 
 cd ${ptgrepo} ; export ptgversion=$(git log | grep commit | cut -d' ' -f2) ; cd -
 
 # classify genes into orthologous groups for each gene of the reconciled gene tree sample
-# do not report detailed results but, using graph analysis, combine the sample-wide classification into one classification for the gene family
+# do not report detailed results but, using gptgh analysis, combine the sample-wide classification into one classification for the gene family
 # run in parallel
 
 ## for the moment only coded for dated ALE model (ALEml reconciliations)
@@ -39,7 +39,7 @@ fi
 # generate Ortholog Collection
 orthocol=ortholog_collection_${orthoColId}
 mkdir -p ${orthogenes}/${orthocol}
-${ptgscripts}/get_orthologues_from_ALE_recs.py -i ${outrecdir} -o ${orthogenes}/${orthocol} ${getOrpthologuesOptions} -T 8 &> $raplogs/get_orthologues_from_ALE_recs_${orthocol}.log
+${ptgscripts}/get_orthologues_from_ALE_recs.py -i ${outrecdir} -o ${orthogenes}/${orthocol} ${getOrpthologuesOptions} -T 8 &> $ptglogs/get_orthologues_from_ALE_recs_${orthocol}.log
 
 # import ortholog classification into database
 sqlite3 ${sqldb} """INSERT INTO ortholog_collections (ortholog_col_id, ortholog_col_name, reconciliation_id, software, version, algorithm, ortholog_col_date, notes) VALUES 

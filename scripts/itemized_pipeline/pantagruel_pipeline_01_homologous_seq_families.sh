@@ -9,8 +9,8 @@
 
 # Copyright: Florent Lassalle (f.lassalle@imperial.ac.uk), 30 July 2018
 
-export raproot=$1
-envsourcescript=${raproot}/environ_pantagruel.sh
+export ptgroot=$1
+envsourcescript=${ptgroot}/environ_pantagruel.sh
 source $envsourcescript
 
 #############################
@@ -82,11 +82,11 @@ python ${ptgscripts}/allgenome_gff2db.py --assemb_list ${genomeinfo}/assemblies_
 # run mmseqs cluster with default parameters
 # used MMseqs2 Version: e5d64b2701789e7eef8fcec0812ccb910c8dfef3
 # compute the memory use of MMSeq2: M = (7 × N × L + 8 × a^k) bytes, N the number of sequences, L their average size, a the size of the alphabet
-mmseqslogs=${raplogs}/mmseqs && mkdir -p $mmseqslogs
+mmseqslogs=${ptglogs}/mmseqs && mkdir -p $mmseqslogs
 # create MMseqs2 db
 mmseqs createdb ${allfaarad}.nr.faa ${allfaarad}.nr.mmseqsdb &> $mmseqslogs/mmseqs-createdb.log
 # perform clustering
-mmseqstmp=${raptmp}/mmseqs && rm -rf $mmseqstmp && mkdir -p $mmseqstmp
+mmseqstmp=${ptgtmp}/mmseqs && rm -rf $mmseqstmp && mkdir -p $mmseqstmp
 export families=${seqdb}/protein_families && mkdir -p $families
 mmseqsclout=${families}/$(basename ${allfaarad}.nr).mmseqs_clusterdb_default
 # perform similarity search and clustering ; uses all CPU cores by default

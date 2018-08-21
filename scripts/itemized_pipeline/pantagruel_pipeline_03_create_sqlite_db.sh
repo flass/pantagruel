@@ -9,23 +9,23 @@
 
 # Copyright: Florent Lassalle (f.lassalle@imperial.ac.uk), 30 July 2018
 
-export raproot=$1
-envsourcescript=${raproot}/environ_pantagruel.sh
+export ptgroot=$1
+envsourcescript=${ptgroot}/environ_pantagruel.sh
 source $envsourcescript
 
 ##############################################
 ## 03. Create and Populate SQLite database
 ##############################################
 
-export database=${rapdb}/03.database
-export sqldbname=${rapdbname,,}
+export database=${ptgdb}/03.database
+export sqldbname=${ptgdbname,,}
 export sqldb=${database}/${sqldbname}
 mkdir -p ${database}
 cd ${database}
 ### create and populate SQLite database
 
 ## Genome schema: initiate and populate
-${ptgscripts}/pantagruel_sqlite_genome_db.sh ${database} ${sqldbname} ${genomeinfo}/metadata_${rapdbname} ${genomeinfo}/assembly_info ${protali} ${protfamseqs}.tab ${protorfanclust} ${cdsorfanclust} ${straininfo}
+${ptgscripts}/pantagruel_sqlite_genome_db.sh ${database} ${sqldbname} ${genomeinfo}/metadata_${ptgdbname} ${genomeinfo}/assembly_info ${protali} ${protfamseqs}.tab ${protorfanclust} ${cdsorfanclust} ${straininfo}
 
 # dump reference table for translation of genome assembly names into short identifier codes (uing UniProt "5-letter" code when available).
 sqlite3 ${sqldb} "select assembly_id, code from assemblies;" | sed -e 's/|/\t/g' > ${database}/genome_codes.tab
@@ -43,7 +43,7 @@ for mol in prot cds ; do
   eval "export ${mol}alifastacodedir=${alifastacodedir}"
   # use multiprocessing python script
   ${ptgscripts}/lsfullpath.py ${protali}/full_${mol}fam_alignments .aln > ${protali}/full_${mol}fam_alignment_list
-  ${ptgscripts}/genbank2code_fastaseqnames.py ${protali}/full_${mol}fam_alignment_list ${database}/cds_codes.tab ${alifastacodedir} > ${rapdb}/logs/genbank2code_fastaseqnames.${mol}.log
+  ${ptgscripts}/genbank2code_fastaseqnames.py ${protali}/full_${mol}fam_alignment_list ${database}/cds_codes.tab ${alifastacodedir} > ${ptgdb}/logs/genbank2code_fastaseqnames.${mol}.log
 done
 
 ## Phylogeny schema: initiate

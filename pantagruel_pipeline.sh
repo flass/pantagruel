@@ -15,10 +15,10 @@ datepad="                     "
 
 #### Set mandatory environment variables / parameters
 export myemail="me.myself@respectable-institu.ti.on"
-export raproot="/path/to/base/folder/for/all/this/business"
+export ptgroot="/path/to/base/folder/for/all/this/business"
 export ptgrepo="/path/to/pantagruel_repository"
 export famprefix="REPLACEfamprefix"
-export rapdbname="aBoldDatabaseName" # mostly name of the top folder
+export ptgdbname="aBoldDatabaseName" # mostly name of the top folder
 export famprefix="ABCDE"             # alphanumerical prefix (no number first) of the names for homologous protein/gene family clusters; will be appended with a 'P' for proteins and a 'C' for CDSs.
 
 # derive other important environmnet variables
@@ -27,27 +27,27 @@ export PYTHONPATH=$PYTHONPATH:${ptgscripts}
 cd ${ptgrepo} ; export ptgversion=$(git log | grep commit) ; cd -
 
 # create head folders
-export rapdb=${raproot}/${rapdbname}
-export raplogs=${rapdb}/logs
-export raptmp=${rapdb}/tmp
-mkdir -p ${rapdb}/ ${raplogs}/ ${raptmp}/
+export ptgdb=${ptgroot}/${ptgdbname}
+export ptglogs=${ptgdb}/logs
+export ptgtmp=${ptgdb}/tmp
+mkdir -p ${ptgdb}/ ${ptglogs}/ ${ptgtmp}/
 
 #### Set facultative environment variables / parameters
 export pseudocoremingenomes=''       # defaults to empty variable in which case will be set INTERACTIVELY at stage 04.core_genome of the pipeline
-envsourcescript=${raproot}/environ_pantagruel.sh
+envsourcescript=${ptgroot}/environ_pantagruel.sh
 
-rm -f ${raptmp}/sedenvvar.sh
-echo -n "cat ${ptgscripts}/environ_pantagruel_template.sh" > ${raptmp}/sedenvvar.sh
-for var in myemail raproot ptgscripts famprefix rapdbname famprefix pseudocoremingenomes ; do
-echo -n " | sed -e \"s#REPLACE${var}#${var}#\"" >> ${raptmp}/sedenvvar.sh
+rm -f ${ptgtmp}/sedenvvar.sh
+echo -n "cat ${ptgscripts}/environ_pantagruel_template.sh" > ${ptgtmp}/sedenvvar.sh
+for var in myemail ptgroot ptgscripts famprefix ptgdbname famprefix pseudocoremingenomes ; do
+echo -n " | sed -e \"s#REPLACE${var}#${var}#\"" >> ${ptgtmp}/sedenvvar.sh
 done
-echo -n " > ${envsourcescript}" >> ${raptmp}/sedenvvar.sh
-bash < ${raptmp}/sedenvvar.sh
+echo -n " > ${envsourcescript}" >> ${ptgtmp}/sedenvvar.sh
+bash < ${ptgtmp}/sedenvvar.sh
 ## load generic environment variables derived from the above
 source ${envsourcescript}
 
 # folders for optional custom genomes
-export customassemb=${raproot}/user_genomes
+export customassemb=${ptgroot}/user_genomes
 mkdir -p ${customassemb}/contigs/
 echo "sequencing.project.id,genus,species,strain,taxid,locus_tag_prefix" | tr ',' '\t' > ${straininfo}
 
@@ -68,7 +68,7 @@ host='ftp.ncbi.nlm.nih.gov'
 openparam=" -u $user,$pswd $host"
 source="/pub/taxonomy"
 files="taxcat.tar.gz* taxcat_readme.txt taxdump.tar.gz* taxdump_readme.txt"
-ncbitax="${raproot}/NCBI/Taxonomy"
+ncbitax="${ptgroot}/NCBI/Taxonomy"
 mkdir -p $ncbitax
 lftp -c "open $openparam; cd $source ; mget -O $ncbitax/ $files ; quit"
 mv $ncbitax/README $ncbitax/readme_accession2taxid
@@ -119,14 +119,14 @@ if [[ "$(ls -A "${customassemb}/contigs/" 2>/dev/null)" ]] ; then
 ls ${indata}/assemblies/*/*gbff.gz > ${indata}/assemblies_gbffgz_list
 parallel -a ${indata}/assemblies_gbffgz_list 'gunzip -k'
 # extract protein sequences
-prokka-genbank_to_fasta_db ${indata}/assemblies/*/*gbff > ${raptmp}/${refgenus}.faa >& ${raptmp}/prokka-genbank_to_fasta_db.log
+prokka-genbank_to_fasta_db ${indata}/assemblies/*/*gbff > ${ptgtmp}/${refgenus}.faa >& ${ptgtmp}/prokka-genbank_to_fasta_db.log
 # cluster similar sequences
-cdhit -i ${raptmp}/${refgenus}.faa -o ${raptmp}/${refgenus}_representative.faa -T 0 -M 0 -G 1 -s 0.8 -c 0.9 &> cdhit.log
+cdhit -i ${ptgtmp}/${refgenus}.faa -o ${ptgtmp}/${refgenus}_representative.faa -T 0 -M 0 -G 1 -s 0.8 -c 0.9 &> cdhit.log
 # 805428 representative proteins
-rm -fv ${raptmp}/${refgenus}.faa ${raptmp}/${refgenus}_representative.faa.clstr
+rm -fv ${ptgtmp}/${refgenus}.faa ${ptgtmp}/${refgenus}_representative.faa.clstr
 # replace database name for genus detection by Prokka 
 prokkablastdb=$(dirname $(dirname $(ls -l `which prokka` | awk '{ print $NF }')))/db/genus/
-cp -p ${raptmp}/${refgenus}_representative.faa ${prokkablastdb}/${refgenus}
+cp -p ${ptgtmp}/${refgenus}_representative.faa ${prokkablastdb}/${refgenus}
 cd ${prokkablastdb}/
 makeblastdb -dbtype prot -in ${refgenus}
 cd -
@@ -149,7 +149,7 @@ annotoutgbk=$(ls ${annot}/${gproject}/*.gbk)
 python $ptgscripts/add_taxid_feature2prokkaGBK.py ${annotoutgbk[0]} ${annotoutgbk[0]%*.gbk}.ptg.gbk ${straininfo}
 echo "done."
 date
-done &> $raptmp/prokka.log &
+done &> $ptgtmp/prokka.log &
 
 # create assembly directory and link/create relevant files
 export gblikeass=${customassemb}/genbank-format_assemblies
@@ -183,7 +183,7 @@ fi
 ${ptgscripts}/groom_refseq_data.sh ${indata}/assemblies ${indata}/assembly_stats
 
 manuin=${genomeinfo}/manual_input_metadata
-mkdir ${genomeinfo}/metadata_${rapdbname}/ ${manuin}/
+mkdir ${genomeinfo}/metadata_${ptgdbname}/ ${manuin}/
 touch ${manuin}/manual_metadata_dictionary.tab ${manuin}/manual_curated_metadata_dictionary.tab ${manuin}/manual_dbxrefs.tab
 rm -rf ${genomeinfo}/assemblies*
 ls ${assemblies}/* -d > ${genomeinfo}/assemblies_list
@@ -265,11 +265,11 @@ python ${ptgscripts}/allgenome_gff2db.py --assemb_list ${genomeinfo}/assemblies_
 # run mmseqs cluster with default parameters
 # used MMseqs2 Version: e5d64b2701789e7eef8fcec0812ccb910c8dfef3
 # compute the memory use of MMSeq2: M = (7 × N × L + 8 × a^k) bytes, N the number of sequences, L their average size, a the size of the alphabet
-mmseqslogs=${raplogs}/mmseqs && mkdir -p $mmseqslogs
+mmseqslogs=${ptglogs}/mmseqs && mkdir -p $mmseqslogs
 # create MMseqs2 db
 mmseqs createdb ${allfaarad}.nr.faa ${allfaarad}.nr.mmseqsdb &> $mmseqslogs/mmseqs-createdb.log
 # perform clustering
-mmseqstmp=${raptmp}/mmseqs && rm -rf $mmseqstmp && mkdir -p $mmseqstmp
+mmseqstmp=${ptgtmp}/mmseqs && rm -rf $mmseqstmp && mkdir -p $mmseqstmp
 export families=${seqdb}/protein_families && mkdir -p $families
 mmseqsclout=${families}/$(basename ${allfaarad}.nr).mmseqs_clusterdb_default
 # perform similarity search and clustering ; uses all CPU cores by default
@@ -289,9 +289,9 @@ echo "${datepad}-- (NB: some are not true ORFans as can be be present as identic
 
 ## prepare protein families for alignment
 export protfamseqs=${mmseqsclout}_clusters_fasta
-export protali=${rapdb}/02.gene_alignments
+export protali=${ptgdb}/02.gene_alignments
 nrprotali=$protali/nr_protfam_clustalo_alignments
-mkdir -p ${nrprotali}/ ${raplogs}/clustalo/
+mkdir -p ${nrprotali}/ ${ptglogs}/clustalo/
 # generate lists of many jobs to be executed by a single process (clustalo jobs are too short to be dispatched via a cluster array job)
 # clustalomega is already parallelized (for part of the computation, i.e. distance matrix calculation) 
 # so less threads than avalilable cores (e.g. use 1 process / 2 cores) are specified
@@ -302,11 +302,11 @@ python ${ptgscripts}/schedule_ali_task.py $protfamseqs.tab $protfamseqs $protali
 ## align non-redundant protein families
 for tasklist in `ls $protali/${protali##*.}_tasklist.*` ; do
   bntl=`basename $tasklist`
-  ${ptgscripts}/run_clustalo_sequential.sh $tasklist $nrprotali 2 &> $raplogs/clustalo/$bntl.clustalo.log &
+  ${ptgscripts}/run_clustalo_sequential.sh $tasklist $nrprotali 2 &> $ptglogs/clustalo/$bntl.clustalo.log &
 done
 
 ## check consistency of non-redundant protein sets
-mkdir -p $raptmp
+mkdir -p $ptgtmp
 protidfield=$(head -n 1 ${genomeinfo}/assembly_info/allproteins_info.tab |  tr '\t' '\n' | grep -n 'nr_protein_id' | cut -d':' -f1)
 if [ -z $protidfield ] ; then 
  protidfield=$(head -n 1 ${genomeinfo}/assembly_info/allproteins_info.tab |  tr '\t' '\n' | grep -n 'protein_id' | cut -d':' -f1)
@@ -314,13 +314,13 @@ fi
 cut -f $protidfield ${genomeinfo}/assembly_info/allproteins_info.tab | grep -v "^$\|protein_id" | sort -u > ${genomeinfo}/assembly_info/allproteins_in_gff
 grep '>' ${allfaarad}.nr.faa | cut -d' ' -f1 | cut -d'>' -f2 | sort -u > ${allfaarad}.nr_protlist
 # compare original dataset of nr protein (as described in the input GFF files) to the aligned nr proteome
-diff ${genomeinfo}/assembly_info/allproteins_in_gff ${allfaarad}.nr_protlist > $raptmp/diff_prot_info_fasta
-if [ -s $raptmp/diff_prot_info_fasta ] ; then 
+diff ${genomeinfo}/assembly_info/allproteins_in_gff ${allfaarad}.nr_protlist > $ptgtmp/diff_prot_info_fasta
+if [ -s $ptgtmp/diff_prot_info_fasta ] ; then 
   >&2 echo "ERROR $(dateprompt): inconsistent propagation of the protein dataset:"
   >&2 echo "present in aligned fasta proteome / absent in info table generated from input GFF:"
-  >&2 grep '>' $raptmp/diff_prot_info_fasta | cut -d' ' -f2
+  >&2 grep '>' $ptgtmp/diff_prot_info_fasta | cut -d' ' -f2
   >&2 echo "present in info table generated from input GFF / absent in aligned fasta proteome:"
-  >&2 grep '<' $raptmp/diff_prot_info_fasta | cut -d' ' -f2
+  >&2 grep '<' $ptgtmp/diff_prot_info_fasta | cut -d' ' -f2
   exit 1
 fi
 
@@ -329,10 +329,10 @@ fi
 for cg in `cat ${genomeinfo}/assemblies_list` ; do ls $cg/*_cds_from_genomic.fna.gz >> ${genomeinfo}/all_cds_fasta_list ; done
 
 # generate (full protein alignment, unaligned CDS fasta) file pairs and reverse-translate alignments to get CDS (gene family) alignments
-mkdir -p ${raplogs}/extract_full_prot_and_cds_family_alignments/
+mkdir -p ${ptglogs}/extract_full_prot_and_cds_family_alignments/
 python ${ptgscripts}/extract_full_prot_and_cds_family_alignments.py --nrprot_fam_alns ${nrprotali} --singletons ${protfamseqs}/${protorfanclust}.fasta \
  --prot_info ${genomeinfo}/assembly_info/allproteins_info.tab --repli_info ${genomeinfo}/assembly_info/allreplicons_info.tab --assemblies ${assemblies} \
- --dirout ${protali} --famprefix ${famprefix} --logs ${raplogs}/extract_full_prot_and_cds_family_alignments --identical_prots ${allfaarad}.identicals.list
+ --dirout ${protali} --famprefix ${famprefix} --logs ${ptglogs}/extract_full_prot_and_cds_family_alignments --identical_prots ${allfaarad}.identicals.list
 
 ## check consistency of full reverse translated alignment set
 ok=1
@@ -345,11 +345,11 @@ if [[ "$nseqin1" != "$nseqout" || "$nseqin2" != "$nseqout" ]] ; then
   ok=0
   echo $fam
 fi
-done > $raptmp/pal2nal_missed_fams
+done > $ptgtmp/pal2nal_missed_fams
 if [ $ok -lt 1 ] ; then
-  >&2 echo "WARNING $(dateprompt): failure of pal2nal.pl reverse translation step for families: $(cat $raptmp/pal2nal_missed_fams | xargs)"
+  >&2 echo "WARNING $(dateprompt): failure of pal2nal.pl reverse translation step for families: $(cat $ptgtmp/pal2nal_missed_fams | xargs)"
   >&2 echo "will use tranposeAlignmentProt2CDS.py instead, a less safe, but more permissive method for generating CDS alignment"
-  for fam in `cat $raptmp/pal2nal_missed_fams` ; do
+  for fam in `cat $ptgtmp/pal2nal_missed_fams` ; do
     ${ptgscripts}/tranposeAlignmentProt2CDS.py $protali/full_cdsfam_fasta/$fam.fasta $protali/full_protfam_alignments/$fam.aln $protali/full_cdsfam_alignments/$fam.aln
   done
 fi
@@ -366,15 +366,15 @@ gzip ${protali}/all_families_genome_counts.mat
 ## 03. Create and Populate SQLite database
 ##############################################
 
-export database=${rapdb}/03.database
-export sqldbname=${rapdbname,,}
+export database=${ptgdb}/03.database
+export sqldbname=${ptgdbname,,}
 export sqldb=${database}/${sqldbname}
 mkdir -p ${database}
 cd ${database}
 ### create and populate SQLite database
 
 ## Genome schema: initiate and populate
-${ptgscripts}/pantagruel_sqlite_genome_db.sh ${database} ${sqldbname} ${genomeinfo}/metadata_${rapdbname} ${genomeinfo}/assembly_info ${protali} ${protfamseqs}.tab ${protorfanclust} ${cdsorfanclust} ${straininfo}
+${ptgscripts}/pantagruel_sqlite_genome_db.sh ${database} ${sqldbname} ${genomeinfo}/metadata_${ptgdbname} ${genomeinfo}/assembly_info ${protali} ${protfamseqs}.tab ${protorfanclust} ${cdsorfanclust} ${straininfo}
 
 # dump reference table for translation of genome assembly names into short identifier codes (uing UniProt "5-letter" code when available).
 sqlite3 ${sqldb} "select assembly_id, code from assemblies;" | sed -e 's/|/\t/g' > ${database}/genome_codes.tab
@@ -392,7 +392,7 @@ for mol in prot cds ; do
   eval "export ${mol}alifastacodedir=${alifastacodedir}"
   # use multiprocessing python script
   ${ptgscripts}/lsfullpath.py ${protali}/full_${mol}fam_alignments .aln > ${protali}/full_${mol}fam_alignment_list
-  ${ptgscripts}/genbank2code_fastaseqnames.py ${protali}/full_${mol}fam_alignment_list ${database}/cds_codes.tab ${alifastacodedir} > ${rapdb}/logs/genbank2code_fastaseqnames.${mol}.log
+  ${ptgscripts}/genbank2code_fastaseqnames.py ${protali}/full_${mol}fam_alignment_list ${database}/cds_codes.tab ${alifastacodedir} > ${ptgdb}/logs/genbank2code_fastaseqnames.${mol}.log
 done
 
 ## Phylogeny schema: initiate
@@ -403,7 +403,7 @@ sqlite3 ${dbfile} < $ptgscripts/pantagruel_sqlitedb_phylogeny_initiate.sql
 ###########################################
 
 ## select psedo-core genome marker gene set
-export coregenome=${rapdb}/04.core_genome
+export coregenome=${ptgdb}/04.core_genome
 mkdir -p ${coregenome}/
 #~ if [ -z ${pseudocoremingenomes} ] ; then
   #~ mkdir -p ${coregenome}/pseudo-coregenome_sets/
@@ -415,11 +415,11 @@ mkdir -p ${coregenome}/
 unset pseudocoremingenomes
 mkdir -p ${coregenome}/pseudo-coregenome_sets/
 # have glimpse of (almost-)universal unicopy gene family distribution and select those intended for core-genome tree given pseudocoremingenomes threshold
-let "t = ($ngenomes * 3 / 4)" ; let "u = $t - ($t%20)" ; seq $u 20 $ngenomes | cat > ${raptmp}/mingenom ; echo "0" >> ${raptmp}/mingenom
-Rscript --vanilla --silent ${ptgscripts}/select_pseudocore_genefams.r ${protali}/full_families_genome_counts-noORFans.mat ${database}/genome_codes.tab ${coregenome}/pseudo-coregenome_sets < ${raptmp}/mingenom
+let "t = ($ngenomes * 3 / 4)" ; let "u = $t - ($t%20)" ; seq $u 20 $ngenomes | cat > ${ptgtmp}/mingenom ; echo "0" >> ${ptgtmp}/mingenom
+Rscript --vanilla --silent ${ptgscripts}/select_pseudocore_genefams.r ${protali}/full_families_genome_counts-noORFans.mat ${database}/genome_codes.tab ${coregenome}/pseudo-coregenome_sets < ${ptgtmp}/mingenom
 
-mv ${raproot}/environ_pantagruel.sh ${raproot}/environ_pantagruel.sh0 && \
- sed -e "s#'REPLACEpseudocoremingenomes'#$pseudocoremingenomes#" ${raproot}/environ_pantagruel.sh0 > ${raproot}/environ_pantagruel.sh
+mv ${ptgroot}/environ_pantagruel.sh ${ptgroot}/environ_pantagruel.sh0 && \
+ sed -e "s#'REPLACEpseudocoremingenomes'#$pseudocoremingenomes#" ${ptgroot}/environ_pantagruel.sh0 > ${ptgroot}/environ_pantagruel.sh
  
 ## generate core genome alignment path list
 export pseudocore=pseudo-core-${pseudocoremingenomes}-unicopy
@@ -434,8 +434,8 @@ rm ${protalifastacodedir}/*_all_sp_new
 
 ### compute species tree using RAxML
 export coretree=${coregenome}/raxml_tree
-export treename=${pseudocore}_concat_prot_${ngenomes}-genomes_${rapdbname}
-mkdir -p ${raplogs}/raxml ${coretree}
+export treename=${pseudocore}_concat_prot_${ngenomes}-genomes_${ptgdbname}
+mkdir -p ${ptglogs}/raxml ${coretree}
 # define RAxML binary and options; uses options -T (threads) -j (checkpoints) 
 if [ ! -z $(grep -o avx2 /proc/cpuinfo | head -n 1) ] ; then
   raxmlflav='-AVX2 -U'
@@ -450,18 +450,18 @@ raxmlbin="raxmlHPC-PTHREADS${raxmlflav} -T $(nproc)"
 raxmloptions="-n ${treename} -m PROTCATLGX -j -p 1753 -w ${coretree}"
 
 ## first check the alignment for duplicate sequences and write a reduced alignment with  will be excluded
-$raxmlbin -s ${pseudocorealn} ${raxmloptions} -f c &> ${raplogs}/raxml/${treename}.check.log
+$raxmlbin -s ${pseudocorealn} ${raxmloptions} -f c &> ${ptglogs}/raxml/${treename}.check.log
 # 117/880 exactly identical excluded
 grep 'exactly identical$' ${coretree}/RAxML_info.${treename} | sed -e 's/IMPORTANT WARNING: Sequences \(.\+\) and \(.\+\) are exactly identical/\1\t\2/g' > ${pseudocorealn}.identical_sequences
 rm ${coretree}/RAxML_info.${treename}
 ## first just single ML tree on reduced alignment
-$raxmlbin -s ${pseudocorealn}.reduced ${raxmloptions} &> ${raplogs}/raxml/${treename}.ML_run.log
+$raxmlbin -s ${pseudocorealn}.reduced ${raxmloptions} &> ${ptglogs}/raxml/${treename}.ML_run.log
 mv ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_bestTree.${treename}
 
-## RAxML, with rapid bootstrap
-$raxmlbin -s ${pseudocorealn}.reduced ${raxmloptions} -x 198237 -N 1000 &> ${raplogs}/raxml/${treename}_bs.log
-mv ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_bootstrap.${treename}
-$raxmlbin -s ${pseudocorealn}.reduced ${raxmloptions} -f b -z ${coretree}/RAxML_bootstrap.${treename} -t ${coretree}/RAxML_bestTree.${treename} 
+## RAxML, with ptgid bootstptg
+$raxmlbin -s ${pseudocorealn}.reduced ${raxmloptions} -x 198237 -N 1000 &> ${ptglogs}/raxml/${treename}_bs.log
+mv ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_bootstptg.${treename}
+$raxmlbin -s ${pseudocorealn}.reduced ${raxmloptions} -f b -z ${coretree}/RAxML_bootstptg.${treename} -t ${coretree}/RAxML_bestTree.${treename} 
 mv ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_bipartitions.${treename}
 #~ ## root ML tree
 #~ $raxmlbin -s ${pseudocorealn}.reduced ${raxmloptions} -f I -t RAxML_bipartitionsBranchLabels.${treename}  
@@ -486,7 +486,7 @@ python ${ptgscripts}/putidentseqbackintree.py --input.nr.tree=${nrbiparts} --ref
 
 python ${ptgscripts}/code2orgnames_in_tree.py ${speciestree} $database/organism_codes.tab ${speciestree}.names
 
-### generate ultrametric 'dated' species tree for more meaningfulgraphical representation of reconciliation AND to use the dated (original) version of ALE
+### generate ultrametric 'dated' species tree for more meaningfulgptghical representation of reconciliation AND to use the dated (original) version of ALE
 ## use LSD (v 0.3 beta; To et al. Syst. Biol. 2015) to generate an ultrametric tree from the rooted ML tree (only assumin different, uncorrelated clocks for each branch)
 alnlen=$( head -n1 ${pseudocorealn}.reduced | cut -d' ' -f2 )
 lsd -i ${speciestree} -c -v 1 -s $alnlen -o ${speciestree}.lsd
@@ -526,16 +526,16 @@ EOF
 ## 05. Gene trees (full [ML] and collapsed [bayesian sample])
 #############################################################
 
-export genetrees=${rapdb}/05.gene_trees
+export genetrees=${ptgdb}/05.gene_trees
 export mlgenetrees=${genetrees}/raxml_trees
 mkdir -p ${mlgenetrees}
-mkdir -p $raplogs/raxml/gene_trees
+mkdir -p $ptglogs/raxml/gene_trees
 
 basequery="select gene_family_id, size from gene_family_sizes where gene_family_id is not null and gene_family_id!='$cdsorfanclust'"
 python ${ptgscripts}/pantagruel_sqlitedb_query_gene_fam_sets.py --db=${sqldb} --outprefix='cdsfams' --dirout=${protali} \
  --base.query="${basequery}" --famsets.min.sizes="4,500,2000,10000" --famsets.max.sizes="499,1999,9999,"
 
-## compute first pass of gene trees with RAxML, using rapid bootstrap to estimate branch supports
+## compute first pass of gene trees with RAxML, using ptgid bootstptg to estimate branch supports
 allcdsfam2phylo=($(ls ${protali}/cdsfams_*))
 allmems=(4 8 32 64)
 allwalltimes=(24 24 72 72)
@@ -556,7 +556,7 @@ chunksize=3000
 jobranges=($(${ptgscripts}/get_jobranges.py $chunksize $Njob))
 for jobrange in ${jobranges[@]} ; do
 echo "jobrange=$jobrange"
-qsub -J $jobrange -l walltime=${wt}:00:00 -l select=1:ncpus=${ncpus}:mem=${mem}gb -N raxml_gene_trees_$(basename $cdsfam2phylo) -o $raplogs/raxml/gene_trees -j oe -v "$qsubvars" ${ptgscripts}/raxml_array_PBS.qsub
+qsub -J $jobrange -l walltime=${wt}:00:00 -l select=1:ncpus=${ncpus}:mem=${mem}gb -N raxml_gene_trees_$(basename $cdsfam2phylo) -o $ptglogs/raxml/gene_trees -j oe -v "$qsubvars" ${ptgscripts}/raxml_array_PBS.qsub
 done
 done
 
@@ -599,7 +599,7 @@ else
   for jobrange in ${jobranges[@]} ; do
   beg=`echo $jobrange | cut -d'-' -f1`
   tail -n +${beg} ${mlgenetreelist} | head -n ${chunksize} > ${mlgenetreelist}_${jobrange}
-  qsub -N mark_unresolved_clades -l select=1:ncpus=${ncpus}:mem=16gb,walltime=4:00:00 -o ${raplogs}/mark_unresolved_clades.${collapsecond}_${jobrange}.log -j oe -V -S /usr/bin/bash << EOF
+  qsub -N mark_unresolved_clades -l select=1:ncpus=${ncpus}:mem=16gb,walltime=4:00:00 -o ${ptglogs}/mark_unresolved_clades.${collapsecond}_${jobrange}.log -j oe -V -S /usr/bin/bash << EOF
   module load python
   python ${ptgscripts}/mark_unresolved_clades.py --in_gene_tree_list=${mlgenetreelist}_${jobrange} --diraln=${alifastacodedir} --fmt_aln_in='fasta' \
    --threads=${ncpus} --dirout=${colalinexuscodedir}/${collapsecond} --no_constrained_clade_subalns_output --dir_identseq=${mlgenetrees}/identical_sequences \
@@ -641,7 +641,7 @@ jobranges=($(${ptgscripts}/get_jobranges.py $chunksize $Njob))
 qsubvar="mbversion=3.2.6, tasklist=${tasklist}, outputdir=${mboutputdir}, mbmcmcpopt='Nruns=${nruns} Ngen=2000000 Nchains=${nchains}'"
 for jobrange in ${jobranges[@]} ; do
  echo $jobrange $qsubvar
- qsub -J $jobrange -N mb_panterodb -l select=1:ncpus=${ncpus}:mem=16gb -o ${raplogs}/mrbayes/collapsed_mrbayes_trees_${dtag}_${jobrange} -v "$qsubvar" ${ptgscripts}/mrbayes_array_PBS.qsub
+ qsub -J $jobrange -N mb_panterodb -l select=1:ncpus=${ncpus}:mem=16gb -o ${ptglogs}/mrbayes/collapsed_mrbayes_trees_${dtag}_${jobrange} -v "$qsubvar" ${ptgscripts}/mrbayes_array_PBS.qsub
 done
 
 #### OPTION: were the rake lades in gene trees collapsed? if yes, these need to be replaced by mock population leaves
@@ -662,10 +662,10 @@ if [ -z collapseCladeOptions ] ; then
   mkdir -p ${coltreechains}/${collapsecond}
 
   ## edit the gene trees, producing the corresponding (potentially collapsed) species tree based on the 'time'-tree backbone
-  mkdir -p ${rapdb}/logs/replspebypop
+  mkdir -p ${ptgdb}/logs/replspebypop
   tasklist=${coltreechains}_${collapsecond}_nexus_list
   ls $bayesgenetrees/${collapsecond}/*run1.t > $tasklist
-  repllogd=${rapdb}/logs/replspebypop
+  repllogd=${ptgdb}/logs/replspebypop
   repllogs=$repllogd/replace_species_by_pop_in_gene_trees
   replrun=$(date +'%d%m%Y')
 
@@ -697,7 +697,7 @@ fi
 ## 06. gene tree/ Species tree reconciliations
 #############################################
 
-export alerec=${rapdb}/06.ALE_reconciliation
+export alerec=${ptgdb}/06.ALE_reconciliation
 mkdir -p ${alerec}
 
 ### perform reconciliations with ALE
@@ -721,7 +721,7 @@ export recs=${alerec}/${chaintype}_recs
 
 tasklist=${coltreechains}/${collapsecond}/${colmethod}_Gtrees_list
 ls ${coltreechains}/${collapsecond}/${colmethod}/*-Gtrees.nwk > $tasklist
-alelogs=${rapdb}/logs/ALE
+alelogs=${ptgdb}/logs/ALE
 mkdir -p $alelogs/${reccol}
 outrecdir=${recs}/${collapsecond}/${colmethod}/${reccol}
 mkdir -p $outrecdir
@@ -759,7 +759,7 @@ export parsedreccoldate=$(date +%Y-%m-%d)
 ## store reconciliation parameters and load parsed reconciliation data into database
 ${ptgscripts}/pantagruel_sqlitedb_phylogeny_populate_reconciliations.sh ${database} ${sqldb} ${parsedrecs} ${ALEversion} ${ALEalgo} ${ALEsourcenote} ${parsedreccol} ${parsedreccolid} ${parsedreccoldate}
 
-# rapid survey of event density over the reference tree
+# ptgid survey of event density over the reference tree
 for freqthresh in 0.1 0.25 0.5 ; do
 sqlite3 ${sqldb} """
 .mode tabs 
@@ -843,13 +843,13 @@ python $ptgscripts/compare_collapsedALE_scenarios.py --events_from_postgresql_db
 ## 08. orthologous and clade-specific gene sets
 ###############################################
 
-export orthogenes=${rapdb}/08.orthologs
+export orthogenes=${ptgdb}/08.orthologs
 mkdir -p ${orthogenes}
 
 cd ${ptgrepo} ; export ptgversion=$(git log | grep commit | cut -d' ' -f2) ; cd -
 
 # classify genes into orthologous groups for each gene of the reconciled gene tree sample
-# do not report detailed results but, using graph analysis, combine the sample-wide classification into one classification for the gene family
+# do not report detailed results but, using gptgh analysis, combine the sample-wide classification into one classification for the gene family
 # run in parallel
 
 ## for the moment only coded for dated ALE model (ALEml reconciliations)
@@ -865,7 +865,7 @@ fi
 # generate Ortholog Collection
 orthocol=ortholog_collection_${orthoColId}
 mkdir -p ${orthogenes}/${orthocol}
-${ptgscripts}/get_orthologues_from_ALE_recs.py -i ${outrecdir} -o ${orthogenes}/${orthocol} ${getOrpthologuesOptions} -T 8 &> $raplogs/get_orthologues_from_ALE_recs_${orthocol}.log
+${ptgscripts}/get_orthologues_from_ALE_recs.py -i ${outrecdir} -o ${orthogenes}/${orthocol} ${getOrpthologuesOptions} -T 8 &> $ptglogs/get_orthologues_from_ALE_recs_${orthocol}.log
 
 # import ortholog classification into database
 sqlite3 ${sqldb} """INSERT INTO ortholog_collections (ortholog_col_id, ortholog_col_name, reconciliation_id, software, version, algorithm, ortholog_col_date, notes) VALUES 

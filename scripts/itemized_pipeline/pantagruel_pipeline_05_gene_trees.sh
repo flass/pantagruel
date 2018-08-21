@@ -9,8 +9,8 @@
 
 # Copyright: Florent Lassalle (f.lassalle@imperial.ac.uk), 30 July 2018
 
-export raproot=$1
-envsourcescript=${raproot}/environ_pantagruel.sh
+export ptgroot=$1
+envsourcescript=${ptgroot}/environ_pantagruel.sh
 source $envsourcescript
 
 collapseCladeOptions=$2
@@ -19,16 +19,16 @@ collapseCladeOptions=$2
 ## 05. Gene trees (full [ML] and collapsed [bayesian sample])
 #############################################################
 
-export genetrees=${rapdb}/05.gene_trees
+export genetrees=${ptgdb}/05.gene_trees
 export mlgenetrees=${genetrees}/raxml_trees
 mkdir -p ${mlgenetrees}
-mkdir -p $raplogs/raxml/gene_trees
+mkdir -p $ptglogs/raxml/gene_trees
 
 basequery="select gene_family_id, size from gene_family_sizes where gene_family_id is not null and gene_family_id!='$cdsorfanclust'"
 python ${ptgscripts}/pantagruel_sqlitedb_query_gene_fam_sets.py --db=${sqldb} --outprefix='cdsfams' --dirout=${protali} \
  --base.query="${basequery}" --famsets.min.sizes="4,500,2000,10000" --famsets.max.sizes="499,1999,9999,"
 
-## compute first pass of gene trees with RAxML, using rapid bootstrap to estimate branch supports
+## compute first pass of gene trees with RAxML, using ptgid bootstptg to estimate branch supports
 allcdsfam2phylo=($(ls ${protali}/cdsfams_*))
 allmems=(4 8 32 64)
 allwalltimes=(24 24 72 72)
@@ -49,7 +49,7 @@ chunksize=3000
 jobranges=($(${ptgscripts}/get_jobranges.py $chunksize $Njob))
 for jobrange in ${jobranges[@]} ; do
 echo "jobrange=$jobrange"
-qsub -J $jobrange -l walltime=${wt}:00:00 -l select=1:ncpus=${ncpus}:mem=${mem}gb -N raxml_gene_trees_$(basename $cdsfam2phylo) -o $raplogs/raxml/gene_trees -j oe -v "$qsubvars" ${ptgscripts}/raxml_array_PBS.qsub
+qsub -J $jobrange -l walltime=${wt}:00:00 -l select=1:ncpus=${ncpus}:mem=${mem}gb -N raxml_gene_trees_$(basename $cdsfam2phylo) -o $ptglogs/raxml/gene_trees -j oe -v "$qsubvars" ${ptgscripts}/raxml_array_PBS.qsub
 done
 done
 
@@ -92,7 +92,7 @@ else
   for jobrange in ${jobranges[@]} ; do
   beg=`echo $jobrange | cut -d'-' -f1`
   tail -n +${beg} ${mlgenetreelist} | head -n ${chunksize} > ${mlgenetreelist}_${jobrange}
-  qsub -N mark_unresolved_clades -l select=1:ncpus=${ncpus}:mem=16gb,walltime=4:00:00 -o ${raplogs}/mark_unresolved_clades.${collapsecond}_${jobrange}.log -j oe -V -S /usr/bin/bash << EOF
+  qsub -N mark_unresolved_clades -l select=1:ncpus=${ncpus}:mem=16gb,walltime=4:00:00 -o ${ptglogs}/mark_unresolved_clades.${collapsecond}_${jobrange}.log -j oe -V -S /usr/bin/bash << EOF
   module load python
   python ${ptgscripts}/mark_unresolved_clades.py --in_gene_tree_list=${mlgenetreelist}_${jobrange} --diraln=${alifastacodedir} --fmt_aln_in='fasta' \
    --threads=${ncpus} --dirout=${colalinexuscodedir}/${collapsecond} --no_constrained_clade_subalns_output --dir_identseq=${mlgenetrees}/identical_sequences \
@@ -134,7 +134,7 @@ jobranges=($(${ptgscripts}/get_jobranges.py $chunksize $Njob))
 qsubvar="mbversion=3.2.6, tasklist=${tasklist}, outputdir=${mboutputdir}, mbmcmcpopt='Nruns=${nruns} Ngen=2000000 Nchains=${nchains}'"
 for jobrange in ${jobranges[@]} ; do
  echo $jobrange $qsubvar
- qsub -J $jobrange -N mb_panterodb -l select=1:ncpus=${ncpus}:mem=16gb -o ${raplogs}/mrbayes/collapsed_mrbayes_trees_${dtag}_${jobrange} -v "$qsubvar" ${ptgscripts}/mrbayes_array_PBS.qsub
+ qsub -J $jobrange -N mb_panterodb -l select=1:ncpus=${ncpus}:mem=16gb -o ${ptglogs}/mrbayes/collapsed_mrbayes_trees_${dtag}_${jobrange} -v "$qsubvar" ${ptgscripts}/mrbayes_array_PBS.qsub
 done
 
 #### OPTION: were the rake lades in gene trees collapsed? if yes, these need to be replaced by mock population leaves
@@ -155,10 +155,10 @@ if [ -z collapseCladeOptions ] ; then
   mkdir -p ${coltreechains}/${collapsecond}
 
   ## edit the gene trees, producing the corresponding (potentially collapsed) species tree based on the 'time'-tree backbone
-  mkdir -p ${rapdb}/logs/replspebypop
+  mkdir -p ${ptgdb}/logs/replspebypop
   tasklist=${coltreechains}_${collapsecond}_nexus_list
   ls $bayesgenetrees/${collapsecond}/*run1.t > $tasklist
-  repllogd=${rapdb}/logs/replspebypop
+  repllogd=${ptgdb}/logs/replspebypop
   repllogs=$repllogd/replace_species_by_pop_in_gene_trees
   replrun=$(date +'%d%m%Y')
 

@@ -9,8 +9,11 @@
 
 # Copyright: Florent Lassalle (f.lassalle@imperial.ac.uk), 30 July 2018
 
-export raproot=$1
-envsourcescript=${raproot}/environ_pantagruel.sh
+if [ -z "$2" ] ; echo "missing mandatory parameters ptgdbname and ptgdbname" ; echo "Usage: $0 ptgdbname and ptgdbname" ; exit 1 ; fi
+export ptgdbname=$1
+export ptgroot=$2
+export ptgdb=${ptgroot}/${ptgdbname}
+envsourcescript=${ptgdb}/environ_pantagruel_${ptgdbname}.sh
 source $envsourcescript
 
 #################################
@@ -26,7 +29,7 @@ host='ftp.ncbi.nlm.nih.gov'
 openparam=" -u $user,$pswd $host"
 source="/pub/taxonomy"
 files="taxcat.tar.gz* taxcat_readme.txt taxdump.tar.gz* taxdump_readme.txt"
-ncbitax="${raproot}/NCBI/Taxonomy"
+ncbitax="${ptgroot}/NCBI/Taxonomy"
 mkdir -p $ncbitax
 lftp -c "open $openparam; cd $source ; mget -O $ncbitax/ $files ; quit"
 mv $ncbitax/README $ncbitax/readme_accession2taxid
@@ -77,14 +80,14 @@ if [[ "$(ls -A "${customassemb}/contigs/" 2>/dev/null)" ]] ; then
 ls ${indata}/assemblies/*/*gbff.gz > ${indata}/assemblies_gbffgz_list
 parallel -a ${indata}/assemblies_gbffgz_list 'gunzip -k'
 # extract protein sequences
-prokka-genbank_to_fasta_db ${indata}/assemblies/*/*gbff > ${raptmp}/${refgenus}.faa >& ${raptmp}/prokka-genbank_to_fasta_db.log
+prokka-genbank_to_fasta_db ${indata}/assemblies/*/*gbff > ${ptgtmp}/${refgenus}.faa >& ${ptgtmp}/prokka-genbank_to_fasta_db.log
 # cluster similar sequences
-cdhit -i ${raptmp}/${refgenus}.faa -o ${raptmp}/${refgenus}_representative.faa -T 0 -M 0 -G 1 -s 0.8 -c 0.9 &> cdhit.log
+cdhit -i ${ptgtmp}/${refgenus}.faa -o ${ptgtmp}/${refgenus}_representative.faa -T 0 -M 0 -G 1 -s 0.8 -c 0.9 &> cdhit.log
 # 805428 representative proteins
-rm -fv ${raptmp}/${refgenus}.faa ${raptmp}/${refgenus}_representative.faa.clstr
+rm -fv ${ptgtmp}/${refgenus}.faa ${ptgtmp}/${refgenus}_representative.faa.clstr
 # replace database name for genus detection by Prokka 
 prokkablastdb=$(dirname $(dirname $(ls -l `which prokka` | awk '{ print $NF }')))/db/genus/
-cp -p ${raptmp}/${refgenus}_representative.faa ${prokkablastdb}/${refgenus}
+cp -p ${ptgtmp}/${refgenus}_representative.faa ${prokkablastdb}/${refgenus}
 cd ${prokkablastdb}/
 makeblastdb -dbtype prot -in ${refgenus}
 cd -
@@ -101,13 +104,13 @@ echo "running Prokka..."
 $ptgscripts/run_prokka.sh ${gproject} ${customassemb}/contigs/${allcontigs} ${straininfo} ${annot}/${gproject} ${seqcentre}
 echo "fix prokka output to integrate region information into GFF files"
 annotoutgff=$(ls ${annot}/${gproject}/*.gff)
-python $ptgscripts/add_region_feature2prokkaGFF.py ${annotoutgff[0]} ${annotoutgff[0]%*.gff}.ptg.gff ${straininfo} ${customassemb}/contigs/${allcontigs} 'Unicycler:0.4.3'
+python $ptgscripts/add_region_feature2prokkaGFF.py ${annotoutgff[0]} ${annotoutgff[0]%*.gff}.ptg.gff ${straininfo} ${customassemb}/contigs/${allcontigs} ${assembler}
 echo "fix prokka output to integrate taxid information into GBK files"
 annotoutgbk=$(ls ${annot}/${gproject}/*.gbk)
 python $ptgscripts/add_taxid_feature2prokkaGBK.py ${annotoutgbk[0]} ${annotoutgbk[0]%*.gbk}.ptg.gbk ${straininfo}
 echo "done."
 date
-done &> $raptmp/prokka.log &
+done &> ${ptgtmp}/${ptgdbname}_customassembly_annot_prokka.log &
 
 # create assembly directory and link/create relevant files
 export gblikeass=${customassemb}/genbank-format_assemblies
@@ -141,7 +144,7 @@ fi
 ${ptgscripts}/groom_refseq_data.sh ${indata}/assemblies ${indata}/assembly_stats
 
 manuin=${genomeinfo}/manual_input_metadata
-mkdir ${genomeinfo}/metadata_${rapdbname}/ ${manuin}/
+mkdir ${genomeinfo}/metadata_${ptgdbname}/ ${manuin}/
 touch ${manuin}/manual_metadata_dictionary.tab ${manuin}/manual_curated_metadata_dictionary.tab ${manuin}/manual_dbxrefs.tab
 rm -rf ${genomeinfo}/assemblies*
 ls ${assemblies}/* -d > ${genomeinfo}/assemblies_list

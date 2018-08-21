@@ -9,15 +9,15 @@
 
 # Copyright: Florent Lassalle (f.lassalle@imperial.ac.uk), 30 July 2018
 
-export raproot=$1
-envsourcescript=${raproot}/environ_pantagruel.sh
+export ptgroot=$1
+envsourcescript=${ptgroot}/environ_pantagruel.sh
 source $envsourcescript
 
 #############################################
 ## 06. gene tree/ Species tree reconciliations
 #############################################
 
-export alerec=${rapdb}/06.ALE_reconciliation
+export alerec=${ptgdb}/06.ALE_reconciliation
 mkdir -p ${alerec}
 
 ### perform reconciliations with ALE
@@ -41,7 +41,7 @@ export recs=${alerec}/${chaintype}_recs
 
 tasklist=${coltreechains}/${collapsecond}/${colmethod}_Gtrees_list
 ls ${coltreechains}/${collapsecond}/${colmethod}/*-Gtrees.nwk > $tasklist
-alelogs=${rapdb}/logs/ALE
+alelogs=${ptgdb}/logs/ALE
 mkdir -p $alelogs/${reccol}
 outrecdir=${recs}/${collapsecond}/${colmethod}/${reccol}
 mkdir -p $outrecdir
@@ -79,7 +79,7 @@ export parsedreccoldate=$(date +%Y-%m-%d)
 ## store reconciliation parameters and load parsed reconciliation data into database
 ${ptgscripts}/pantagruel_sqlitedb_phylogeny_populate_reconciliations.sh ${database} ${sqldb} ${parsedrecs} ${ALEversion} ${ALEalgo} ${ALEsourcenote} ${parsedreccol} ${parsedreccolid} ${parsedreccoldate}
 
-# rapid survey of event density over the reference tree
+# ptgid survey of event density over the reference tree
 for freqthresh in 0.1 0.25 0.5 ; do
 sqlite3 ${sqldb} """
 .mode tabs 
