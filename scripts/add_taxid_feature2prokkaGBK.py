@@ -20,7 +20,7 @@ with open(nfstraininfo, 'r') as fstraininfo:
 for line in fgbkin:
 	fgbkout.write(line)
 	if line.startswith('                     /strain'):
-		strain = line.rstrip(' \n').split('=')[1].strip('"')
+		strain = line.rstrip(' \n').split('=')[1].strip('"').replace(' ', '')
 		straininfo = dstraininfo[strain]
 		# add a line with the taxid
 		taxidline =    '                     /db_xref="taxon:%s"\n'%straininfo['taxid']
