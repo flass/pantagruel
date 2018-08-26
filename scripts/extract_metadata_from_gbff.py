@@ -201,6 +201,7 @@ na = ''
 #~ na = 'NA'
 
 for assemb in lassemb:
+	print assemb
 	coun = dmetadata.get('country',{}).get(assemb, na).split(':')[0]
 	host = dmetadata.get('host',{}).get(assemb, na)
 	isol = dmetadata.get('isolation_source',{}).get(assemb, na).lower().strip(' "')
@@ -211,6 +212,7 @@ for assemb in lassemb:
 	isolate = dmetadata.get('isolate',{}).get(assemb, na)
 	sero = dmetadata.get('serovar',{}).get(assemb, na)
 	note = dmetadata.get('note',{}).get(assemb, na)
+	print dmetadata['db_xref'].get(assemb,na)
 	taxid = dict(dbxref.split(':') for dbxref in dmetadata.get('db_xref',{}).get(assemb,na).strip(' "').split(';'))['taxon']
 	subspe = na
 	ecol = na

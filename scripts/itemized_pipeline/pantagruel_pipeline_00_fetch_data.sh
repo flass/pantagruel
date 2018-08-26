@@ -29,26 +29,38 @@ host='ftp.ncbi.nlm.nih.gov'
 openparam=" -u $user,$pswd $host"
 source="/pub/taxonomy"
 files="taxcat.tar.gz* taxcat_readme.txt taxdump.tar.gz* taxdump_readme.txt"
-ncbitax="${ptgroot}/NCBI/Taxonomy"
 mkdir -p $ncbitax
 lftp -c "open $openparam; cd $source ; mget -O $ncbitax/ $files ; quit"
-mv $ncbitax/README $ncbitax/readme_accession2taxid
 # reduce taxonomic id2name reference file complexity
 for tgz in `ls $ncbitax/*.tar.gz` ; do md5sum -c $tgz.md5 && tar -xzf $tgz ; done
 
 ## using NCBI web interface:
 # Search Assembly database using a query defined as convenient:	
 # e.g.: 'txid543[Organism:exp] AND ("latest refseq"[filter] AND all[filter] NOT anomalous[filter]) AND ("complete genome"[filter])'
-# save assemblies (Download Assemblies > Source Database: RefSeq; File type: All file type (including assembly-structure directory)) as
-$indata/genome_assemblies.tar
+# save assemblies (Download Assemblies > Source Database: RefSeq; File type: All file type (including assembly-structure directory)) as $indata/genome_assemblies_DATASETTAG.tar
 # extract assembly data
-tar -C $indata/assemblies/ -xf genome_assemblies.tar
-assfolder=`ls -d $indata/ncbi-genomes-* | head -n 1`
-rm genome_assemblies.tar 
+mkdir -p  $indata/assemblies/
+cd $ncbiass/
+for tarf in `ls genome_assemblies_*.tar` ; do 
+  tartag=${tarf#genome_assemblies_*}
+  datasettag=${tartag%.*}
+  tar -tf genome_assemblies_${datasettag}.tar | cut -d'/' -f2 | sort -u | grep -v "README\|report" > $ncbiass/genome_assemblies_${datasettag}_list
+  tar -xf genome_assemblies_${datasettag}.tar 
+  mv report.txt report_${datasettag}.txt
+  assd=(`ls ncbi-genomes-* -d`)
+  for dass in `ls ${assd[0]}/ | grep -v README` ; do
+   if [ ! -z $dass ] ; then
+    rm -rf $ncbiass/$dass
+    mv ${assd[0]}/$dass $ncbiass/
+   fi
+  done
+  rm -r ${assd[0]}/ 
+done
+grep "# Organism name" $ncbiass/*/*_assembly_stats.txt > $ncbiass/all_assemblies_organism_names
+
 # store in centralised folder for NCBI assemblies and just record links
-mv $assfolder/* $ncbiass/
-mv $assfolder/ $indata/assemblies/
-for ass in `cut -f3 $indata/assembly_result.txt | tail -n +2` ; do ln -s $ncbiass/${ass}_* $indata/assemblies/  ; done
+mkdir -p $indata/assemblies/
+for ass in `cat $ncbiass/genome_assemblies_*_list` ; do ln -s $ncbiass/${ass}* $indata/assemblies/  ; done
 
 
 ### can be automated using NCBI Entrez tools
@@ -144,7 +156,7 @@ fi
 ${ptgscripts}/groom_refseq_data.sh ${indata}/assemblies ${indata}/assembly_stats
 
 manuin=${genomeinfo}/manual_input_metadata
-mkdir ${genomeinfo}/metadata_${ptgdbname}/ ${manuin}/
+mkdir -p ${genomeinfo}/metadata_${ptgdbname}/ ${manuin}/
 touch ${manuin}/manual_metadata_dictionary.tab ${manuin}/manual_curated_metadata_dictionary.tab ${manuin}/manual_dbxrefs.tab
 rm -rf ${genomeinfo}/assemblies*
 ls ${assemblies}/* -d > ${genomeinfo}/assemblies_list

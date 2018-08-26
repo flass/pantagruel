@@ -1,6 +1,5 @@
 #!/usr/bin/python
 import sys
-from os import path
 nfin = sys.argv[1]
 nfout = sys.argv[2]
 

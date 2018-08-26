@@ -7,7 +7,7 @@ if [ ! -z $3 ] ; then
   nbthreads=$3
 fi
 overwrite=0
-if [ $4 == 'overwrite' ] ; then
+if [[ $4 == 'overwrite' ]] ; then
   overwrite=1
 fi
 

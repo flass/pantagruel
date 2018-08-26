@@ -19,48 +19,32 @@ source $envsourcescript
 
 ## extract all the protein sequences into single proteome fasta files
 mkdir -p ${seqdb}
-faafiletag='protein'
-#~ faafiletag='translated_from_cds'
 
-### TO DO ###
-# using translated_from_cds could probably save some steps, 
-# even though would mean handling slightly bigger files at the first clustering step (clusthash_minseqid100)
-# after that, protein sequence files are already non-redundant step anyway
+# using 'translated_from_cds' instead of 'proteins' saves some processing steps, 
+# even though that mean handling slightly bigger files at the first clustering step (clusthash_minseqid100)
+# after that, protein sequence files are already non-redundant anyway
 # also would ensure consistency of protein and CDS sequence at the pal2nal step
+# however, an equivalent file is not provided out of the Prokka annotation so must fall back on 'protein' file
 
-#~ export allfaarad=${seqdb}/all_proteomes
-#~ rm -f ${allfaarad}*
-#~ for ass in `ls ${assemblies}` ; do
- #~ faa=$(ls ${assemblies}/${ass}/ | grep '${faafiletag}.faa')
- #~ zcat $faa >> ${allfaarad}.faa && echo $faa >> ${allfaarad}_list
-#~ done
-#~ wc -l ${allfaarad}_list
-
-ls ${indata}/assemblies/GC[AF]_* -d > ${genomeinfo}/refseq_assemblies_list
-sed -e 's#\(.\+\)/\([^/]\+$\)#\1/\2/\2_protein\.faa\.gz#g' ${genomeinfo}/refseq_assemblies_list > ${faarefseq}_list
-for faa in `cat ${faarefseq}_list` ; do zcat $faa >> ${faarefseq} ; echo $faa ; done 
-grep -c '>' ${faarefseq}
-# dereplicate proteins in db
-nrfaarefseq=$(python $dbscripts/dereplicate_fasta.py $faarefseq)
-echo "$(dateprompt)-- $(grep -c '>' $nrfaarefseq) non-redundant proteins in dataset"
-
-export allfaarad=${seqdb}/all_proteomes
-if [[ "$(ls -A "${customassemb}/contigs/" 2>/dev/null)" ]] ; then
-  # combine Refseq and custom protomes
-  cp -f $nrfaarefseq ${allfaarad}.faa
-  for ass in `ls ${annot}/` ; do
-    cat ${annot}/$ass/*faa >> ${allfaarad}.faa
-  done
-else
-  mv $nrfaarefseq ${allfaarad}.faa
-fi
+rm -f ${allfaarad}*
+for ass in `ls ${assemblies}` ; do
+ faa=$(ls ${assemblies}/${ass}/* | grep "translated_cds.faa")
+ if [ -z $faa ] ; then faa=$(ls ${assemblies}/${ass}/* | grep "protein.faa") ; fi
+ zcat ${faa} >> ${allfaarad}.faa && echo $faa >> ${allfaarad}_list
+done
+wc -l ${allfaarad}_list
 grep -c '>' ${allfaarad}.faa
+
+# dereplicate proteins in db
+python ${ptgscripts}/dereplicate_fasta.py ${allfaarad}.faa ${allfaarad}.nr.faa
+echo "$(dateprompt)-- $(grep -c '>' ${allfaarad}.nrnames.faa) non-redundant proteins in dataset"
+
 
 ## clustering of identical protein sequences
 # notably those from the custom assemblies to those from the public database (and those redudant between RefSeq and Genbank sets)
 # run mmseqs clusthash with 100% seq id threshold
 # used MMseqs2 Version: 6306925fa9ae6198116c26e605277132deff70d0
-mmseqs createdb ${allfaarad}.faa  ${allfaarad}.mmseqsdb
+mmseqs createdb ${allfaarad}.nrnames.faa  ${allfaarad}.mmseqsdb
 mmseqs clusthash --min-seq-id 1.0 ${allfaarad}.mmseqsdb ${allfaarad}.clusthashdb_minseqid100
 mmseqs clust ${allfaarad}.mmseqsdb ${allfaarad}.clusthashdb_minseqid100 ${allfaarad}.clusthashdb_minseqid100_clust
 mmseqs createseqfiledb ${allfaarad}.mmseqsdb ${allfaarad}.clusthashdb_minseqid100_clust ${allfaarad}.clusthashdb_minseqid100_clusters
@@ -87,7 +71,7 @@ mmseqslogs=${ptglogs}/mmseqs && mkdir -p $mmseqslogs
 mmseqs createdb ${allfaarad}.nr.faa ${allfaarad}.nr.mmseqsdb &> $mmseqslogs/mmseqs-createdb.log
 # perform clustering
 mmseqstmp=${ptgtmp}/mmseqs && rm -rf $mmseqstmp && mkdir -p $mmseqstmp
-export families=${seqdb}/protein_families && mkdir -p $families
+mkdir -p ${families}
 mmseqsclout=${families}/$(basename ${allfaarad}.nr).mmseqs_clusterdb_default
 # perform similarity search and clustering ; uses all CPU cores by default
 mmseqs cluster ${allfaarad}.nr.mmseqsdb $mmseqsclout $mmseqstmp &> $mmseqslogs/$(basename $mmseqsclout).log

@@ -27,10 +27,10 @@ mkdir -p ${nrprotali}/ ${ptglogs}/clustalo/
 # so less threads than avalilable cores (e.g. use 1 process / 2 cores) are specified
 # so each process can run at least at 100% and mobilize 2 cores when parrallel,
 # or more when cores unused by other concurent pocesses (during their sequential phase)
-python ${ptgscripts}/schedule_ali_task.py $protfamseqs.tab $protfamseqs $protali/$(basename ${protali})_tasklist $((`nproc` / 2))
+python ${ptgscripts}/schedule_ali_task.py $protfamseqs.tab $protfamseqs $protali/$(basename ${protfamseqs})_tasklist $((`nproc` / 2))
 
 ## align non-redundant protein families
-for tasklist in `ls $protali/${protali##*.}_tasklist.*` ; do
+for tasklist in `ls $protali/$(basename ${protfamseqs})_tasklist.*` ; do
   bntl=`basename $tasklist`
   ${ptgscripts}/run_clustalo_sequential.sh $tasklist $nrprotali 2 &> $ptglogs/clustalo/$bntl.clustalo.log &
 done
