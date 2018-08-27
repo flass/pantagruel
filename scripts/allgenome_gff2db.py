@@ -97,8 +97,10 @@ def compileFeatures(fgff, dfout, dgenbankcdsids, dgeneloctag, dgenenchild, diden
 			if len(dgenerangeprods[parentgene]) > 1:
 				if nprintmullicds==0: print "multiline feature:",
 				print productid,
-				nprintmullicds +=1
+				nprintmullicds += 1
 				if products[0]!=productid: raise IndexError, "multiline feature not pointing at the same product: %s and %s"%(products[0], productid)
+			else:
+				nprintmullicds = 0
 			if len(dgenerangeprods[parentgene])==dgenenchild[parentgene]:
 				# write out previous CDS/RNA gene info (potential synthesis of several lines)
 				lineout = [productid, seqreg, locustag, min(begs), max(ends), strand, desc.get('product', '')] + lineoutend
