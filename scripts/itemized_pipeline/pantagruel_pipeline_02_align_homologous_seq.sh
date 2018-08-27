@@ -17,42 +17,26 @@ source $envsourcescript
 ## 02. Homologous Sequence Alignemnt
 ####################################
 
-## prepare protein families for alignment
 export protfamseqs=${mmseqsclout}_clusters_fasta
 export protali=${ptgdb}/02.gene_alignments
+## prepare protein families for alignment
 nrprotali=$protali/nr_protfam_clustalo_alignments
 mkdir -p ${nrprotali}/ ${ptglogs}/clustalo/
-# generate lists of many jobs to be executed by a single process (clustalo jobs are too short to be dispatched via a cluster array job)
-# clustalomega is already parallelized (for part of the computation, i.e. distance matrix calculation) 
-# so less threads than avalilable cores (e.g. use 1 process / 2 cores) are specified
-# so each process can run at least at 100% and mobilize 2 cores when parrallel,
-# or more when cores unused by other concurent pocesses (during their sequential phase)
-python ${ptgscripts}/schedule_ali_task.py $protfamseqs.tab $protfamseqs $protali/$(basename ${protfamseqs})_tasklist $((`nproc` / 2))
+tasklist=$protali/$(basename ${protfamseqs})_tasklist
+python ${ptgscripts}/schedule_ali_task.py ${protfamseqs}.tab ${protfamseqs} ${tasklist} 1 "${famprefix}P000000"
 
 ## align non-redundant protein families
-for tasklist in `ls $protali/$(basename ${protfamseqs})_tasklist.*` ; do
-  bntl=`basename $tasklist`
-  ${ptgscripts}/run_clustalo_sequential.sh $tasklist $nrprotali 2 &> $ptglogs/clustalo/$bntl.clustalo.log &
-done
-
-## check consistency of non-redundant protein sets
-mkdir -p $ptgtmp
-protidfield=$(head -n 1 ${genomeinfo}/assembly_info/allproteins_info.tab |  tr '\t' '\n' | grep -n 'nr_protein_id' | cut -d':' -f1)
-if [ -z $protidfield ] ; then 
- protidfield=$(head -n 1 ${genomeinfo}/assembly_info/allproteins_info.tab |  tr '\t' '\n' | grep -n 'protein_id' | cut -d':' -f1)
-fi
-cut -f $protidfield ${genomeinfo}/assembly_info/allproteins_info.tab | grep -v "^$\|protein_id" | sort -u > ${genomeinfo}/assembly_info/allproteins_in_gff
-grep '>' ${allfaarad}.nr.faa | cut -d' ' -f1 | cut -d'>' -f2 | sort -u > ${allfaarad}.nr_protlist
-# compare original dataset of nr protein (as described in the input GFF files) to the aligned nr proteome
-diff ${genomeinfo}/assembly_info/allproteins_in_gff ${allfaarad}.nr_protlist > $ptgtmp/diff_prot_info_fasta
-if [ -s $ptgtmp/diff_prot_info_fasta ] ; then 
-  >&2 echo "ERROR $(dateprompt): inconsistent propagation of the protein dataset:"
-  >&2 echo "present in aligned fasta proteome / absent in info table generated from input GFF:"
-  >&2 grep '>' $ptgtmp/diff_prot_info_fasta | cut -d' ' -f2
-  >&2 echo "present in info table generated from input GFF / absent in aligned fasta proteome:"
-  >&2 grep '<' $ptgtmp/diff_prot_info_fasta | cut -d' ' -f2
-  exit 1
-fi
+run_clustalo_sequential () {
+  task=$1
+  bn=`basename ${task}`
+  fout=${bn/fasta/aln}
+  echo "task: $task" &> ${ptglogs}/clustalo/${bn}.clustalo.log
+  date +"%d/%m/%Y %H:%M:%S" &> ${ptglogs}/clustalo/${bn}.clustalo.log
+  clustalo --threads=1 -i ${task} -o ${nrprotali}/${fout} &> ${ptglogs}/clustalo/${bn}.clustalo.log
+  date +"%d/%m/%Y %H:%M:%S" &> ${ptglogs}/clustalo/${bn}.clustalo.log
+}
+export -f run_clustalo_sequential
+parrallel --joblog ${ptglogs}/run_clustalo_sequential.log run_clustalo_sequential :::: ${tasklist}
 
 ## reconstruct full (redundant) protein alignments
 # make list of CDS sets

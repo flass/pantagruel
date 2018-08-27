@@ -20,31 +20,24 @@ source $envsourcescript
 ## extract all the protein sequences into single proteome fasta files
 mkdir -p ${seqdb}
 
-# using 'translated_from_cds' instead of 'proteins' saves some processing steps, 
-# even though that mean handling slightly bigger files at the first clustering step (clusthash_minseqid100)
-# after that, protein sequence files are already non-redundant anyway
-# also would ensure consistency of protein and CDS sequence at the pal2nal step
-# however, an equivalent file is not provided out of the Prokka annotation so must fall back on 'protein' file
-
 rm -f ${allfaarad}*
 for ass in `ls ${assemblies}` ; do
- faa=$(ls ${assemblies}/${ass}/* | grep "translated_cds.faa")
- if [ -z $faa ] ; then faa=$(ls ${assemblies}/${ass}/* | grep "protein.faa") ; fi
+ faa=$(ls ${assemblies}/${ass}/* | grep "protein.faa")
  zcat ${faa} >> ${allfaarad}.faa && echo $faa >> ${allfaarad}_list
 done
 wc -l ${allfaarad}_list
 grep -c '>' ${allfaarad}.faa
+sed ${allfaarad}.faa -e 's/>lcl|.\+_prot_\(.\+\)_[0-9]\+ .\+$/>\1/g' | sed -e 's/\(>[^ ]\+\) .\+$/\1/g' > ${allfaarad}.shortnames.faa
 
 # dereplicate proteins in db
-python ${ptgscripts}/dereplicate_fasta.py ${allfaarad}.faa ${allfaarad}.nr.faa
-echo "$(dateprompt)-- $(grep -c '>' ${allfaarad}.nrnames.faa) non-redundant proteins in dataset"
-
+python ${ptgscripts}/dereplicate_fasta.py ${allfaarad}.shortnames.faa ${allfaarad}.nrprotids.faa
+echo "$(dateprompt)-- $(grep -c '>' ${allfaarad}.nrprotids.faa) non-redundant proteins in dataset"
 
 ## clustering of identical protein sequences
 # notably those from the custom assemblies to those from the public database (and those redudant between RefSeq and Genbank sets)
 # run mmseqs clusthash with 100% seq id threshold
 # used MMseqs2 Version: 6306925fa9ae6198116c26e605277132deff70d0
-mmseqs createdb ${allfaarad}.nrnames.faa  ${allfaarad}.mmseqsdb
+mmseqs createdb ${allfaarad}.nrprotids.faa  ${allfaarad}.mmseqsdb
 mmseqs clusthash --min-seq-id 1.0 ${allfaarad}.mmseqsdb ${allfaarad}.clusthashdb_minseqid100
 mmseqs clust ${allfaarad}.mmseqsdb ${allfaarad}.clusthashdb_minseqid100 ${allfaarad}.clusthashdb_minseqid100_clust
 mmseqs createseqfiledb ${allfaarad}.mmseqsdb ${allfaarad}.clusthashdb_minseqid100_clust ${allfaarad}.clusthashdb_minseqid100_clusters
@@ -53,11 +46,30 @@ mmseqs createseqfiledb ${allfaarad}.mmseqsdb ${allfaarad}.clusthashdb_minseqid10
 python ${ptgscripts}/split_mmseqs_clustdb_fasta.py ${allfaarad}.clusthashdb_minseqid100_clusters "NRPROT" ${allfaarad}.clusthashdb_minseqid100_families 6 0 0
 grep -v NRPROT000000 ${allfaarad}.clusthashdb_minseqid100_families.tab > ${allfaarad}.identicals.tab
 python ${ptgscripts}/genefam_table_as_list.py ${allfaarad}.identicals.tab ${allfaarad}.identicals.list 0
-python ${ptgscripts}/remove_identical_seqs.py ${allfaarad}.faa ${allfaarad}.identicals.list ${allfaarad}.nr.faa
+python ${ptgscripts}/remove_identical_seqs.py ${allfaarad}.shortnames.faa ${allfaarad}.identicals.list ${allfaarad}.nr.faa
 
 ## collect data from assemblies, including matching of (nr) protein to CDS sequence ids
 python ${ptgscripts}/allgenome_gff2db.py --assemb_list ${genomeinfo}/assemblies_list --dirout ${genomeinfo}/assembly_info \
  --ncbi_taxonomy ${ncbitax} --identical_prots ${allfaarad}.identicals.list
+
+## check consistency of non-redundant protein sets
+mkdir -p $ptgtmp
+protidfield=$(head -n 1 ${genomeinfo}/assembly_info/allproteins_info.tab |  tr '\t' '\n' | grep -n 'nr_protein_id' | cut -d':' -f1)
+if [ -z $protidfield ] ; then 
+ protidfield=$(head -n 1 ${genomeinfo}/assembly_info/allproteins_info.tab |  tr '\t' '\n' | grep -n 'protein_id' | cut -d':' -f1)
+fi
+cut -f $protidfield ${genomeinfo}/assembly_info/allproteins_info.tab | grep -v "^$\|protein_id" | sort -u > ${genomeinfo}/assembly_info/allproteins_in_gff
+grep '>' ${allfaarad}.nr.faa | cut -d' ' -f1 | cut -d'>' -f2 | sort -u > ${allfaarad}.nr_protlist
+# compare original dataset of nr protein (as described in the input GFF files) to the aligned nr proteome
+diff ${genomeinfo}/assembly_info/allproteins_in_gff ${allfaarad}.nr_protlist > $ptgtmp/diff_prot_info_fasta
+if [ -s $ptgtmp/diff_prot_info_fasta ] ; then 
+  >&2 echo "ERROR $(dateprompt): inconsistent propagation of the protein dataset:"
+  >&2 echo "present in aligned fasta proteome / absent in info table generated from input GFF:"
+  >&2 grep '>' $ptgtmp/diff_prot_info_fasta | cut -d' ' -f2
+  >&2 echo "present in info table generated from input GFF / absent in aligned fasta proteome:"
+  >&2 grep '<' $ptgtmp/diff_prot_info_fasta | cut -d' ' -f2
+  exit 1
+fi
 
 ## clustering of proteome db with  MMSeqs2 
 # (https://github.com/soedinglab/MMseqs2,  Steinegger M and Soeding J. Sensitive protein sequence searching for the analysis of massive data sets. bioRxiv, doi: 10.1101/079681 (2016))
