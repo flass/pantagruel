@@ -99,8 +99,8 @@ def compileFeatures(fgff, dfout, dgenbankcdsids, dgeneloctag, dgenenchild, diden
 				print productid,
 				nprintmullicds += 1
 				if products[0]!=productid: raise IndexError, "multiline feature not pointing at the same product: %s and %s"%(products[0], productid)
-			else:
-				nprintmullicds = 0
+			elif nprintmullicds>0:
+				nprintmullicds = 0 ; print ''
 			if len(dgenerangeprods[parentgene])==dgenenchild[parentgene]:
 				# write out previous CDS/RNA gene info (potential synthesis of several lines)
 				lineout = [productid, seqreg, locustag, min(begs), max(ends), strand, desc.get('product', '')] + lineoutend
@@ -111,7 +111,7 @@ def compileFeatures(fgff, dfout, dgenbankcdsids, dgeneloctag, dgenenchild, diden
 		raise IndexError, "some genes not written:\n%s"%(repr(dgenenchild))
 	#~ if lineout:
 		#~ raise IndexError, "extra unwritten line:\n%s"%lineout
-	if nprintmullicds>0: print	'\n'
+
 
 
 def parseAssemb(dirassemb, dfout, dtaxid2sciname={}, dmergedtaxid={}, didentseq={}):
