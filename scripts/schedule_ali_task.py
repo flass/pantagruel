@@ -34,8 +34,11 @@ famsizes = dsizefam.keys()
 famsizes.sort(reverse=True)
 
 dtaskout = {}
-for t in range(nparalleltasks):
-	dtaskout[t] = open("%s.%d"%(nfoutalitasklit, t), 'w')
+if nparalleltasks > 1:
+	for t in range(nparalleltasks):
+		dtaskout[t] = open("%s.%d"%(nfoutalitasklit, t), 'w')
+else:
+	dtaskout[0] = open(nfoutalitasklit, 'w')
 
 # distribute task among task lists for similar-load parallel execution
 n = 0
