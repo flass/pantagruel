@@ -67,7 +67,7 @@ for line in fgffin:
 			#~ print nreg, seqreg
 			# add region info line
 			iscircular = dcontigs[lcontignames[nreg]].get('circular', 'false')
-			replitype = 'chromosome' if (nreg==0 and lregionlens[nreg][1]>minchrlen) else ('plasmid' if iscircular=='true' else 'contig')
+			replitype = 'chromosome' if (nreg==0 and int(lregionlens[nreg][1])>minchrlen) else ('plasmid' if iscircular=='true' else 'contig')
 			extfeat = ['ID=id%d'%nreg, 'Dbxref=taxon:%s'%straininfo['taxid'], 'Is_circular=%s'%iscircular, 'gbkey=Src', 'genome=%s'%replitype, 'mol_type=genomic DNA', 'strain=%s'%straininfo['strain']]
 			cols = [seqreg, assemblervers, 'region', lregionlens[nreg][0], lregionlens[nreg][1], '.', '+', '.', ';'.join(extfeat)]
 			regline = '\t'.join(cols)+'\n'
