@@ -109,16 +109,16 @@ export annot=${customassemb}/prokka_annotation
 export straininfo=${customassemb}/strain_infos.txt
 mkdir -p $annot
 for allcontigs in `ls ${customassemb}/contigs/` ; do
-gproject=${allcontigs%_assembly*}
+gproject=${allcontigs%%_*}
 date
 echo "### assembly: $gproject; contig files from: ${customassemb}/contigs/${allcontigs}"
 echo "running Prokka..."
 $ptgscripts/run_prokka.sh ${gproject} ${customassemb}/contigs/${allcontigs} ${straininfo} ${annot}/${gproject} ${seqcentre}
 echo "fix prokka output to integrate region information into GFF files"
-annotoutgff=$(ls ${annot}/${gproject}/*.gff)
+annotoutgff=($(ls ${annot}/${gproject}/*.gff))
 python $ptgscripts/add_region_feature2prokkaGFF.py ${annotoutgff[0]} ${annotoutgff[0]%*.gff}.ptg.gff ${straininfo} ${customassemb}/contigs/${allcontigs} ${assembler}
 echo "fix prokka output to integrate taxid information into GBK files"
-annotoutgbk=$(ls ${annot}/${gproject}/*.gbk)
+annotoutgbk=($(ls ${annot}/${gproject}/*.gbk))
 python $ptgscripts/add_taxid_feature2prokkaGBK.py ${annotoutgbk[0]} ${annotoutgbk[0]%*.gbk}.ptg.gbk ${straininfo}
 echo "done."
 date
@@ -156,7 +156,7 @@ fi
 ${ptgscripts}/groom_refseq_data.sh ${indata}/assemblies ${indata}/assembly_stats
 
 manuin=${genomeinfo}/manual_input_metadata
-mkdir -p ${genomeinfo}/metadata_${ptgdbname}/ ${manuin}/
+mkdir -p ${manuin}/
 touch ${manuin}/manual_metadata_dictionary.tab ${manuin}/manual_curated_metadata_dictionary.tab ${manuin}/manual_dbxrefs.tab
 rm -rf ${genomeinfo}/assemblies*
 ls ${assemblies}/* -d > ${genomeinfo}/assemblies_list

@@ -63,12 +63,12 @@ done > $ptgtmp/pal2nal_missed_fams
 if [ $ok -lt 1 ] ; then
   >&2 echo "WARNING $(dateprompt): failure of pal2nal.pl reverse translation step for families: $(cat $ptgtmp/pal2nal_missed_fams | xargs)"
   >&2 echo "will use tranposeAlignmentProt2CDS.py instead, a less safe, but more permissive method for generating CDS alignment"
+  # some protein alignments do not match the CDS sequences
+  # transpose the CDS into the positions of the aligned protein; assumes no indels, only mismatches and possibly shortenned sequences
   for fam in `cat $ptgtmp/pal2nal_missed_fams` ; do
     ${ptgscripts}/tranposeAlignmentProt2CDS.py $protali/full_cdsfam_fasta/$fam.fasta $protali/full_protfam_alignments/$fam.aln $protali/full_cdsfam_alignments/$fam.aln
   done
 fi
-# protein alignments do not match the CDS sequences
-# transpose the CDS into the positions of the aligned protein; assumes no indels, only mismatches and possibly shortenned sequences
 
 # join non-ORFan and ORFan family count matrices
 rm -f ${protali}/all_families_genome_counts.mat*

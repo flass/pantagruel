@@ -27,10 +27,9 @@ for ass in `ls ${assemblies}` ; do
 done
 wc -l ${allfaarad}_list
 grep -c '>' ${allfaarad}.faa
-sed ${allfaarad}.faa -e 's/>lcl|.\+_prot_\(.\+\)_[0-9]\+ .\+$/>\1/g' | sed -e 's/\(>[^ ]\+\) .\+$/\1/g' > ${allfaarad}.shortnames.faa
 
-# dereplicate proteins in db
-python ${ptgscripts}/dereplicate_fasta.py ${allfaarad}.shortnames.faa ${allfaarad}.nrprotids.faa
+# dereplicate proteins in db based on their identifier
+python ${ptgscripts}/dereplicate_fasta.py ${allfaarad}.nrprotids.faa
 echo "$(dateprompt)-- $(grep -c '>' ${allfaarad}.nrprotids.faa) non-redundant proteins in dataset"
 
 ## clustering of identical protein sequences
@@ -46,7 +45,7 @@ mmseqs createseqfiledb ${allfaarad}.mmseqsdb ${allfaarad}.clusthashdb_minseqid10
 python ${ptgscripts}/split_mmseqs_clustdb_fasta.py ${allfaarad}.clusthashdb_minseqid100_clusters "NRPROT" ${allfaarad}.clusthashdb_minseqid100_families 6 0 0
 grep -v NRPROT000000 ${allfaarad}.clusthashdb_minseqid100_families.tab > ${allfaarad}.identicals.tab
 python ${ptgscripts}/genefam_table_as_list.py ${allfaarad}.identicals.tab ${allfaarad}.identicals.list 0
-python ${ptgscripts}/remove_identical_seqs.py ${allfaarad}.shortnames.faa ${allfaarad}.identicals.list ${allfaarad}.nr.faa
+python ${ptgscripts}/remove_identical_seqs.py ${allfaarad}.nrprotids.faa ${allfaarad}.identicals.list ${allfaarad}.nr.faa
 
 ## collect data from assemblies, including matching of (nr) protein to CDS sequence ids
 python ${ptgscripts}/allgenome_gff2db.py --assemb_list ${genomeinfo}/assemblies_list --dirout ${genomeinfo}/assembly_info \
