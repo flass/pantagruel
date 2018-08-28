@@ -27,8 +27,8 @@ def nr2fullprotali(cdsfam, protid, dprotseq, dprotinfo, dprotfiletasks, dcdsfile
 		if sproduct: product = " [product=%s]"%(sproduct.groups()[0].replace('MULTISPECIES: ', ''))
 		else: product = ''
 	# increment CDS count in family
-	dcdsfamsize[cdsfam] = dcdsfamsize.get(cdsfam, 0) + len(dprotinfo[protid])
 	ltasks = dprotinfo[protid]
+	dcdsfamsize[cdsfam] = dcdsfamsize.get(cdsfam, 0) + len(ltasks)
 	ltasks.sort()
 	for task in ltasks:
 		cdsid = task[1]
@@ -81,16 +81,22 @@ def castMultiPal2Nal(argtup):
 	returns pal2nal.pl verbose log (text string)"""
         try:
             # with multiprocessing
-	        cdsfam, dirfullprotout, dirfullcdsseqout, dirfullcdsaliout, fpal2nallog, queue = argtup
-	        nfprotali = "%s/%s.aln"%(dirfullprotout, cdsfam)
-	        nfcdsseq = "%s/%s.fasta"%(dirfullcdsseqout, cdsfam)
-	        p2ncmd = ["pal2nal.pl", "-output", "fasta", "-codontable", "11", nfprotali, nfcdsseq]
-	        #~ print ' '.join(p2ncmd)
-	        nfoutalnc = "%s/%s.aln"%(dirfullcdsaliout, cdsfam)
-	        foutalnc = open(nfoutalnc, 'w')
-	        p2npipe = subprocess.Popen(p2ncmd, stdout=foutalnc, stderr=subprocess.PIPE)
-	        foutalnc.close()
-	        queue.put(cdsfam)
+            if len(argtup)==6:
+				cdsfam, dirfullprotout, dirfullcdsseqout, dirfullcdsaliout, fpal2nallog, queue = argtup
+			elif len(argtup)==5:
+				cdsfam, dirfullprotout, dirfullcdsseqout, dirfullcdsaliout, fpal2nallog = argtup
+				queue = None
+			else:
+				raise ValueError,  "incorrect number of arguments: the argument tuple should contain (cdsfam, dirfullprotout, dirfullcdsseqout, dirfullcdsaliout, fpal2nallog [, queue])"
+			nfprotali = "%s/%s.aln"%(dirfullprotout, cdsfam)
+			nfcdsseq = "%s/%s.fasta"%(dirfullcdsseqout, cdsfam)
+			p2ncmd = ["pal2nal.pl", "-output", "fasta", "-codontable", "11", nfprotali, nfcdsseq]
+			#~ print ' '.join(p2ncmd)
+			nfoutalnc = "%s/%s.aln"%(dirfullcdsaliout, cdsfam)
+			foutalnc = open(nfoutalnc, 'w')
+			p2npipe = subprocess.Popen(p2ncmd, stdout=foutalnc, stderr=subprocess.PIPE)
+			foutalnc.close()
+			if queue: queue.put(cdsfam)
 	        return p2npipe.stderr.read()
         except Exception, e:
                 print "caught exception:"
@@ -99,14 +105,14 @@ def castMultiPal2Nal(argtup):
                 raise e
 	#~ fpal2nallog.write(p2npipe.stderr.read())
 	
-def castMultiBMGE(argtup):
-	"""multi-threaded call to BMGE alignment trimming/filtering program
+#~ def castMultiBMGE(argtup):
+	#~ """multi-threaded call to BMGE alignment trimming/filtering program
 	
-	Requires Java >1.6.
-	"""
-	pass
+	#~ Requires Java >1.6.
+	#~ """
+	#~ pass
 
-def main(dirnrprotaln, nfsingletonfasta, nfprotinfotab, nfreplinfotab, dirassemb, dirout, fam_prefix, dirlogs, nfidentseq=None):
+def main(dirnrprotaln, nfsingletonfasta, nfprotinfotab, nfreplinfotab, dirassemb, dirout, fam_prefix, dirlogs, nfidentseq=None, nbcores=1):
 
 	# define output folders
 	suffdirout = os.path.basename(dirout)
@@ -259,6 +265,7 @@ def main(dirnrprotaln, nfsingletonfasta, nfprotinfotab, nfreplinfotab, dirassemb
 	print "# parsing nr protein alignments"
 	nnrprot = 0
 	# then parse the regular diverse protein families
+	nbprotaln = len(lnfnrprotaln)
 	for nfnrprotaln in lnfnrprotaln:
 		protfam = os.path.basename(nfnrprotaln).rsplit('.', 1)[0]
 		cdsfam = prefixcdsfam+(protfam.split(prefixprotfam)[-1])
@@ -273,9 +280,7 @@ def main(dirnrprotaln, nfsingletonfasta, nfprotinfotab, nfreplinfotab, dirassemb
 				for prottask in sorttasksbysource(dprotfiletasks):
 					foutfullprot.writelines(dprotfiletasks[prottask])				
 		nnrprot += 1
-		sys.stdout.write("\r%d / %d"%(nnrprot, len(lnfnrprotaln)))
-		
-	sys.stdout.write("\n")			
+		if nnrprot%1000==0: print "%d / %d"%(nnrprot, nbprotaln))			
 
 	lassemb = []
 	print "# write gene family lists and genome gene content matrices"
@@ -294,11 +299,13 @@ def main(dirnrprotaln, nfsingletonfasta, nfprotinfotab, nfreplinfotab, dirassemb
 	# matrix genome x ORFans (unique CDS ids)
 	dorfanassembcount = dict([(orfan, [0]*len(lnfcdsfasta)) for orfan in orfans])
 
+	assidpat = re.compile("([^\.]+\.[1-9])_.+?$")
 	foutfamcontent = open("%s/full_families_info-noORFans.tab"%(dirout), 'w')
 	foutorfancontent = open("%s/%s_info-ORFans.tab"%(dirout, orfanfam), 'w')
 	for i, nfcdsfasta in enumerate(lnfcdsfasta):
 		assemblyidname = dassemb[nfcdsfasta]
-		assemblyid = '_'.join(assemblyidname.split('_', 2)[:2])
+		assemblyid = assidpat.search(assemblyidname).groups()[0]
+		#~ assemblyid = '_'.join(assemblyidname.split('_', 2)[:2])
 		for task in dcdsfiletasks[nfcdsfasta]:
 			cdsid, cdsfam = task
 			if cdsfam==orfanfam:
@@ -398,11 +405,11 @@ def main(dirnrprotaln, nfsingletonfasta, nfprotinfotab, nfreplinfotab, dirassemb
 			#~ sys.stdout.write("\r%d\t/%d"%(np2p, len(allcdsfam)))
 		
 		# with multithreading ; using map_assync and a queue, untested
-		nbcores = multiprocessing.cpu_count()
 		pool = multiprocessing.Pool(processes=nbcores)
-		manag = multiprocessing.Manager()
-		queue = manag.Queue()
-		p2nlog = pool.map(castMultiPal2Nal, ((cdsfam, dirfullprotout, dirfullcdsseqout, dirfullcdsaliout, fpal2nallog, queue) for cdsfam in allcdsfam))
+		#~ manag = multiprocessing.Manager()
+		#~ queue = manag.Queue()
+		#~ p2nlog = pool.map(castMultiPal2Nal, ((cdsfam, dirfullprotout, dirfullcdsseqout, dirfullcdsaliout, fpal2nallog, queue) for cdsfam in allcdsfam))
+		p2nlog = pool.map(castMultiPal2Nal, ((cdsfam, dirfullprotout, dirfullcdsseqout, dirfullcdsaliout, fpal2nallog) for cdsfam in allcdsfam))
 		#~ result = pool.map_async(castMultiPal2Nal, ((cdsfam, dirfullprotout, dirfullcdsseqout, dirfullcdsaliout, fpal2nallog, queue) for cdsfam in allcdsfam))
 		#~ # monitor loop
 		#~ while True:
@@ -436,11 +443,9 @@ def usage():
 	s += '--famprefix\t\tstring used sa prefix for protein and CDS families (without the trailing \'C\' or \'P\' and family id numerals)\n'
 	s += 'Other options:\n'
 	s += '--logs\t\tpath to log folder (default to \'dirout/logs\')\n'
-	s += '--identical_seqs\t\tpath to table of identical protein sequences'
+	s += '--identical_seqs\t\tpath to table of identical protein sequences\n'
+	s += '--threads\t\tnumber of threads for running Pal2Nal in parallel (defaut to full CPU core capacity)'
 	return s
-
-
-
 
 ## script
 if __name__ == '__main__':
@@ -448,7 +453,7 @@ if __name__ == '__main__':
 	opts, args = getopt.getopt(sys.argv[1:], 'h', ['nrprot_fam_alns=', 'assemblies=', 'singletons=', \
 	                                               'prot_info=', 'repli_info=', 'identical_prots=', \
 	                                               'famprefix=', \
-	                                               'dirout=', 'logs=', 'help'])
+	                                               'dirout=', 'logs=', 'threads=', 'help'])
 	dopt = dict(opts)
 	if ('-h' in dopt) or ('--help' in dopt):
 		print usage()
@@ -463,8 +468,9 @@ if __name__ == '__main__':
 	fam_prefix = dopt['--famprefix']
 	dirlogs = dopt.get('--logs', "%s/logs"%(dirout))
 	nfidentseq = dopt.get('--identical_prots')
+	nbcores = int(dopt.get('--threads', multiprocessing.cpu_count()))
 	
-	main(dirnrprotaln, nfsingletonfasta, nfprotinfotab, nfreplinfotab, dirassemb, dirout, fam_prefix, dirlogs, nfidentseq)
+	main(dirnrprotaln, nfsingletonfasta, nfprotinfotab, nfreplinfotab, dirassemb, dirout, fam_prefix, dirlogs, nfidentseq, nbcores)
 	
         
        
