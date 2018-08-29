@@ -281,8 +281,8 @@ def main(dbname, protorfanclust, cdsorfanclust, nfspeclist, nfusergenomeinfo):
 	  INNER JOIN replicons USING (genomic_accession)
 	 WHERE gene_family_id IS NOT NULL
 	 GROUP BY gene_family_id;
-	CREATE INDEX ON gene_family_sizes (size);
-	CREATE INDEX ON gene_family_sizes (genome_present);
+	CREATE INDEX genefamsize_size_key ON gene_family_sizes (size);
+	CREATE INDEX genefamsize_gpres_key ON gene_family_sizes (genome_present);
 	""")
 	conn.commit()
 
