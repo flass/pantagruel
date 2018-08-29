@@ -67,7 +67,7 @@ CREATE TABLE gene_families (
 
 CREATE TABLE uniptrotcode2taxid (
 		code varchar(5) UNIQUE NOT NULL,
-		taxid integer UNIQUE NOT NULL
+		taxid integer NOT NULL
 );
 
 CREATE INDEX uniprot_code_key ON uniptrotcode2taxid (code);
