@@ -13,6 +13,8 @@ export ptgroot=$1
 envsourcescript=${ptgroot}/environ_pantagruel.sh
 source $envsourcescript
 
+pseudocoremingenomes=$2
+
 ###########################################
 ## 04. Core Genome Phylogeny (Species tree)
 ###########################################
@@ -21,7 +23,7 @@ source $envsourcescript
 export coregenome=${ptgdb}/04.core_genome
 mkdir -p ${coregenome}/
 
-if [ -z ${pseudocoremingenomes} ] ; then
+if [[ -z ${pseudocoremingenomes} || "${pseudocoremingenomes}"=='REPLACEpseudocoremingenomes' ]] ; then
   echo "Error: 'pseudocoremingenomes' variable is not set; please run $ptgscripts/choose_min_genome_occurrence_pseudocore_genes.sh (interactive) to choose a sensible value."
   exit 1
 fi

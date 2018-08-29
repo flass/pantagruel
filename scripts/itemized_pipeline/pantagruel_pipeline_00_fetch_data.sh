@@ -14,7 +14,7 @@ export ptgdbname=$1
 export ptgroot=$2
 export ptgdb=${ptgroot}/${ptgdbname}
 envsourcescript=${ptgdb}/environ_pantagruel_${ptgdbname}.sh
-source $envsourcescript
+source ${envsourcescript}
 
 #################################
 ## 00. Data download and grooming
@@ -167,4 +167,9 @@ python ${ptgscripts}/extract_metadata_from_gbff.py --assembly_folder_list=${geno
 --default_species_name="unclassified organism" --output=${genomeinfo}/assembly_metadata
 
 export ngenomes=$((`wc -l ${genomeinfo}/assembly_metadata/metadata.tab | cut -d' ' -f1` - 1))
+
+mv ${ptgdb}/environ_pantagruel_${ptgdbname}.sh ${ptgdb}/environ_pantagruel_${ptgdbname}.sh0 && \
+ sed -e "s#'REPLACEngenomes'#$ngenomes#" ${ptgdb}/environ_pantagruel_${ptgdbname}.sh0 > ${ptgdb}/environ_pantagruel_${ptgdbname}.sh && \
+ rm ${ptgdb}/environ_pantagruel_${ptgdbname}.sh0
+
 echo "work with a database of $ngenomes genomes (excluding lab strains)"

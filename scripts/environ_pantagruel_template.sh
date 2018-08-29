@@ -6,12 +6,16 @@ datepad="                     "
 
 ## primary variables
 
-# variables to be automaticly replaced by user-defined environment variables at init stage
+# variables to be automaticly replaced by user-defined environment variables
+# at init stage
 export ptgroot='REPLACEptgroot'
 export ptgdbname='REPLACEptgdbname'
 export ptgscripts='REPLACEptgscripts'
-export pseudocoremingenomes='REPLACEpseudocoremingenomes'
 export famprefix='REPLACEfamprefix'
+# at 00.input_data stage
+export ngenomes='REPLACEngenomes'
+# at 04.core_genome stage
+export pseudocoremingenomes='REPLACEpseudocoremingenomes'
 
 
 # parameters to be set; default values:
@@ -79,16 +83,14 @@ export pseudocorealn=${coregenome}/${pseudocore}_concat_cds.aln
 export coretree=${coregenome}/raxml_tree
 export collapsecond=${criterion}_stem${cladesupp}_within${withinfun}${subcladesupp}
 
-# other secondary variables that depend on prior creation of files
-if [ -e ${genomeinfo}/metadata_${rapdbname}/metadata.tab ] ; then
- export ngenomes=$((`wc -l ${genomeinfo}/metadata_${rapdbname}/metadata.tab | cut -d' ' -f1` - 1))
- export treename=${pseudocore}_concat_prot_${ngenomes}-genomes_${rapdbname}
- export pseudocorealn=${coregenome}/${treename}.aln
- nrbesttree=${coretree}/RAxML_bestTree.${treename}
- rootingmethod='outgroup'
- nrrootedtree=${nrbesttree}.${rootingmethod}rooted
- nrbiparts=${nrbesttree/bestTree/bipartitions}
- export speciestree=${nrrootedtree}.full
-fi
+export ngenomes=$((`wc -l ${genomeinfo}/assembly_metadata/metadata.tab | cut -d' ' -f1` - 1))
+export treename=${pseudocore}_concat_prot_${ngenomes}-genomes_${ptgdbname}
+export pseudocorealn=${coregenome}/${treename}.aln
+nrbesttree=${coretree}/RAxML_bestTree.${treename}
+rootingmethod='outgroup'
+nrrootedtree=${nrbesttree}.${rootingmethod}rooted
+nrbiparts=${nrbesttree/bestTree/bipartitions}
+export speciestree=${nrrootedtree}.full
+
 
 
