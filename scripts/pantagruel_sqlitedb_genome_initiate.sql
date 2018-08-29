@@ -65,7 +65,7 @@ CREATE TABLE gene_families (
         protein_family_id VARCHAR(20) NOT NULL
 );
 
-CREATE TABLE gene_family sizes (
+CREATE TABLE gene_family_sizes (
         gene_family_id VARCHAR(20) PRIMARY KEY,
         size INT NOT NULL,
         genome_present INT NOT NULL
