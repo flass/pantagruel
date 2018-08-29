@@ -47,4 +47,4 @@ for mol in prot cds ; do
 done
 
 ## Phylogeny schema: initiate
-sqlite3 ${dbfile} < $ptgscripts/pantagruel_sqlitedb_phylogeny_initiate.sql
+sqlite3 ${sqldb} < $ptgscripts/pantagruel_sqlitedb_phylogeny_initiate.sql
