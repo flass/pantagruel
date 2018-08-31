@@ -115,6 +115,11 @@ if (length(cargs) > 5){
 }else{
 	nfrestrictlist = NULL
 }
+if (length(cargs) > 6){
+	restricttag = cargs[6]
+}else{
+	restricttag = strsplit(basename(nfrestrictlist), split='_genome_codes')[[1]][1]
+}
 cat("Loading matrix of gene families counts in genomes...\n")
 genocount = data.matrix(read.table(file=nffamgenomemat))
 lasscode = read.table(nflasscode, row.names=1, stringsAsFactors=F)
@@ -123,6 +128,7 @@ colnames(genocount) = lasscode[colnames(genocount),1]
 if (!is.null(nfrestrictlist)){
 	restrictgenomelist = readLines(nfrestrictlist)
 	genocount = genocount[,restrictgenomelist]
+	write.table(genocount, file=sprintf("%s_restricted_%s", nffamgenomemat, restricttag), sep='\t', quote=F)
 }
 
 onlyunicopy = apply(genocount, 1, function(x){ max(x)==1 })
