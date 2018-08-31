@@ -116,7 +116,7 @@ if (length(cargs) > 5){
 	nfrestrictlist = NULL
 }
 if (length(cargs) > 6){
-	restricttag = cargs[6]
+	restricttag = cargs[7]
 }else{
 	restricttag = strsplit(basename(nfrestrictlist), split='_genome_codes')[[1]][1]
 }
@@ -128,6 +128,7 @@ colnames(genocount) = lasscode[colnames(genocount),1]
 if (!is.null(nfrestrictlist)){
 	restrictgenomelist = readLines(nfrestrictlist)
 	genocount = genocount[,restrictgenomelist]
+    cat("Saving restricted matrix of gene families counts in genomes...\n")
 	write.table(genocount, file=sprintf("%s_restricted_%s", nffamgenomemat, restricttag), sep='\t', quote=F)
 }
 
