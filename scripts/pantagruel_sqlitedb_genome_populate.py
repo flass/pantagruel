@@ -198,7 +198,8 @@ def main(dbname, protorfanclust, cdsorfanclust, nfspeclist, nfusergenomeinfo):
 				code, taxid = CODEmatch.groups()
 				fout.write("%s\t%s\n"%(code, taxid))
 				codetaxids.append((code, taxid))
-
+	
+	dcustomasscode = {}
 	if nfusergenomeinfo:
 		with open(nfusergenomeinfo, 'r') as fusergenomeinfo:
 			uginfheader = fusergenomeinfo.readline().rstrip('\n').split('\t')
@@ -208,6 +209,7 @@ def main(dbname, protorfanclust, cdsorfanclust, nfspeclist, nfusergenomeinfo):
 				code, taxid = (duginfo['locus_tag_prefix'], duginfo['taxid'])
 				fout.write("%s\t%s\n"%(code, taxid))
 				codetaxids.append((code, taxid))
+				dcustomasscode[duginfo['sequencing_project_id']] = duginfo['locus_tag_prefix']
 
 	fout.close()
 	cur.executemany("INSERT INTO uniptrotcode2taxid VALUES (?, ?);", codetaxids)
@@ -227,6 +229,7 @@ def main(dbname, protorfanclust, cdsorfanclust, nfspeclist, nfusergenomeinfo):
 	dcodeass = {}
 	for ass, code, spe in lasscode:
 		print ass, code, spe
+		code = dcustomasscode.get(ass, code)
 		if code:
 			c = str(code)
 		else:
