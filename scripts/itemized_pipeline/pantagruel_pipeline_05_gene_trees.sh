@@ -28,7 +28,7 @@ basequery="select gene_family_id, size from gene_family_sizes where gene_family_
 python ${ptgscripts}/pantagruel_sqlitedb_query_gene_fam_sets.py --db=${sqldb} --outprefix='cdsfams' --dirout=${protali} \
  --base.query="${basequery}" --famsets.min.sizes="4,500,2000,10000" --famsets.max.sizes="499,1999,9999,"
 
-## compute first pass of gene trees with RAxML, using ptgid bootstptg to estimate branch supports
+## compute first pass of gene trees with RAxML, using rapid bootstrap to estimate branch supports
 allcdsfam2phylo=($(ls ${protali}/cdsfams_*))
 allmems=(4 8 32 64)
 allwalltimes=(24 24 72 72)
@@ -118,7 +118,7 @@ ${ptgscripts}/lsfullpath.py ${nexusaln4chains} > $tasklist
 
 #~ # following lines are for resuming after a stop in batch computing, or to collect those jobs that crashed (and may need to be re-ran with more mem/time allowance)
 #~ alreadytrees=${mboutputdir}_list
-#~ ${ptgscripts}/lsfullpath.py ${mboutputdir} con.tre > $alreadytrees
+#~ ${ptgscripts}/lsfullpath.py ${mboutputdir}/*con.tre > $alreadytrees
 #~ alreadytasklist=${nexusaln4chains}_ali_list_done
 #~ sed -e "s#${mboutputdir}/\(.\+\)\.mb\.con\.tre#${nexusaln4chains}/\1\.nex#g" $alreadytrees > $alreadytasklist
 #~ sort $tasklist > $tasklist.sort

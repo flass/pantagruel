@@ -30,10 +30,10 @@ cd ${ptgrepo} ; export ptgversion=$(git log | grep commit | cut -d' ' -f2) ; cd 
 ## and with no colpased gene tree clades (need to discard events below replacement clade subtree roots [as in parse_collapsedALE_scenarios.py]
 ## and to transpose orthologus group classification of collapsed clade to member genes)
 
-if [-z ${getOrpthologuesOptions} ] ; then
+if [ -z ${getOrpthologuesOptions} ] ; then
   getOrpthologuesOptions=" --ale.model='dated' --methods='mixed' --max.frac.extra.spe=0.5 --majrule.combine=0.5 --colour.combined.tree"
 fi
-if [-z ${orthoColId} ] ; then
+if [ -z ${orthoColId} ] ; then
   orthocolid=1
 fi
 # generate Ortholog Collection
@@ -43,7 +43,7 @@ ${ptgscripts}/get_orthologues_from_ALE_recs.py -i ${outrecdir} -o ${orthogenes}/
 
 # import ortholog classification into database
 sqlite3 ${sqldb} """INSERT INTO ortholog_collections (ortholog_col_id, ortholog_col_name, reconciliation_id, software, version, algorithm, ortholog_col_date, notes) VALUES 
-(${orthocolid}, '${orthocol}', ${parsedreccolid}, 'pantagruel/scripts/get_orthologues_from_ALE_recs.py', '${ptgversion:0:7}', 'getOrthologues(method=''mixed'')', '2018-07-20', 
+(${orthocolid}, '${orthocol}', ${parsedreccolid}, 'pantagruel/scripts/get_orthologues_from_ALE_recs.py', '${ptgversion:0:7}', 'getOrthologues(method=''mixed'')', '$(date +%Y-%m-%d)', 
 'source from https://github.com/flass/pantagruel/commits/${ptgversion}, call: ''scripts/get_orthologues_from_ALE_recs.py ${getOrpthologuesOptions}''')
 ;
 """

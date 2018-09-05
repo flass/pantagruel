@@ -29,19 +29,16 @@ if [[ -z ${pseudocoremingenomes} || "${pseudocoremingenomes}"=='REPLACEpseudocor
 fi
 
 ## generate core genome alignment path list
-export pseudocore=pseudo-core-${pseudocoremingenomes}-unicopy
+
 rm -f ${coregenome}/pseudo-coregenome_sets/${pseudocore}_prot_aln_list
 for fam in `cat ${coregenome}/pseudo-coregenome_sets/${pseudocore}_families.tab` ; do
  ls ${protalifastacodedir}/$fam.codes.aln >> ${coregenome}/pseudo-coregenome_sets/${pseudocore}_prot_aln_list
 done
-export pseudocorealn=${coregenome}/${pseudocore}_concat_prot.aln
 # concatenate pseudo-core prot alignments
 python ${ptgscripts}/concat.py ${coregenome}/pseudo-coregenome_sets/${pseudocore}_prot_aln_list ${pseudocorealn}
 rm ${protalifastacodedir}/*_all_sp_new
 
 ### compute species tree using RAxML
-export coretree=${coregenome}/raxml_tree
-export treename=${pseudocore}_concat_prot_${ngenomes}-genomes_${ptgdbname}
 mkdir -p ${ptglogs}/raxml ${coretree}
 # define RAxML binary and options; uses options -T (threads) -j (checkpoints) 
 if [ ! -z $(grep -o avx2 /proc/cpuinfo | head -n 1) ] ; then
@@ -57,36 +54,54 @@ raxmlbin="raxmlHPC-PTHREADS${raxmlflav} -T $(nproc)"
 raxmloptions="-n ${treename} -m PROTCATLGX -j -p 1753 -w ${coretree}"
 
 ## first check the alignment for duplicate sequences and write a reduced alignment with  will be excluded
-$raxmlbin -s ${pseudocorealn} ${raxmloptions} -f c &> ${ptglogs}/raxml/${treename}.check.log
-# 117/880 exactly identical excluded
+$raxmlbin -s ${pseudocorealn} ${raxmloptions} -f c &> ${ptglogs}/raxml/${treename}.check.
 grep 'exactly identical$' ${coretree}/RAxML_info.${treename} | sed -e 's/IMPORTANT WARNING: Sequences \(.\+\) and \(.\+\) are exactly identical/\1\t\2/g' > ${pseudocorealn}.identical_sequences
 rm ${coretree}/RAxML_info.${treename}
 ## first just single ML tree on reduced alignment
 $raxmlbin -s ${pseudocorealn}.reduced ${raxmloptions} &> ${ptglogs}/raxml/${treename}.ML_run.log
 mv ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_bestTree.${treename}
 
-## RAxML, with ptgid bootstptg
+## RAxML, with rapid bootstrap
 $raxmlbin -s ${pseudocorealn}.reduced ${raxmloptions} -x 198237 -N 1000 &> ${ptglogs}/raxml/${treename}_bs.log
-mv ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_bootstptg.${treename}
-$raxmlbin -s ${pseudocorealn}.reduced ${raxmloptions} -f b -z ${coretree}/RAxML_bootstptg.${treename} -t ${coretree}/RAxML_bestTree.${treename} 
+mv ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_bootstrap.${treename}
+$raxmlbin -s ${pseudocorealn}.reduced ${raxmloptions} -f b -z ${coretree}/RAxML_bootstrap.${treename} -t ${coretree}/RAxML_bestTree.${treename} 
 mv ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_bipartitions.${treename}
-#~ ## root ML tree
-#~ $raxmlbin -s ${pseudocorealn}.reduced ${raxmloptions} -f I -t RAxML_bipartitionsBranchLabels.${treename}  
-#~ mv RAxML_info.${treename} RAxML_info_rootedTree.${treename}
 
-## root tree with MAD (Tria et al. Nat Ecol Evol (2017) Phylogenetic rooting using minimal ancestor deviation. s41559-017-0193 doi:10.1038/s41559-017-0193)
-nrbesttree=${coretree}/RAxML_bestTree.${treename}
-rootingmethod='MAD'
-nrrootedtree=${nrbesttree}.${rootingmethod}rooted
-R BATCH --vanilla --slave << EOF
-source('${ptgscripts}/mad_R/MAD.R')
-mad.rooting = MAD(readLines('${nrbesttree}'), 'full')
-write(mad.rooting[[1]], file='${nrrootedtree}')
-save(mad.rooting, file='${nrbesttree}.${rootingmethod}rooting.RData}')
+## root ML tree
+# export nrbesttree=${coretree}/RAxML_bestTree.${treename}
+# export nrbiparts=${nrbesttree/bestTree/bipartitions}
+# export nrrootedtree=${nrbiparts}.${rootingmethod}rooted
+if [[ "${rootingmethod}" == 'treebalance' ]] ; then
+ # root ML tree with RAxML tree-balance algorithm
+ $raxmlbin -s ${pseudocorealn}.reduced ${raxmloptions} -f I -t ${coretree}/RAxML_bipartitionsBranchLabels.${treename}  
+ mv ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_rootedTree.${treename}
+ ln -s ${coretree}/RAxML_rootedTree.${treename} ${nrrootedtree}
+else
+if [[ "${rootingmethod}" == 'MAD' ]] ; then
+ # root tree with MAD (Tria et al. Nat Ecol Evol (2017) Phylogenetic rooting using minimal ancestor deviation. s41559-017-0193 doi:10.1038/s41559-017-0193)
+ R BATCH --vanilla --slave << EOF
+ source('${ptgscripts}/mad_R/MAD.R')
+ mad.rooting = MAD(readLines('${nrbesttree}'), 'full')
+ write(mad.rooting[[1]], file='${nrrootedtree}')
+ save(mad.rooting, file='${nrbesttree}.${rootingmethod}rooting.RData}')
 EOF
-
+else
+if [[ "${rootingmethod:0:8}" == 'outgroup' ]] ; then
+ # outgroup rooting; assume argument was of the shape 'outgroup:SPECIESCODE'
+ # verify the presence of outgroup species in tree
+ outgroup=$(echo ${rootingmethod} | cut -d':' -f2)
+ if [ -z $(grep ${outgroup} ${nrbesttree}) ] ; then
+   echo "Error, outgroup species '$outgroup' is absent from tree '${nrbesttree}'"
+   exit 1
+ fi
+ R BATCH --vanilla --slave << EOF
+ library('ape')
+ tree = read.tree('${nrbesttree}')
+ root(tree, outgroup='${outgroup}')
+EOF
+ 
+fi ; fi ; fi
 # reintroduce excluded species name into the tree + root as MAD-rooted species tree
-nrbiparts=${nrbesttree/bestTree/bipartitions}
 export speciestree=${nrrootedtree}.full
 python ${ptgscripts}/putidentseqbackintree.py --input.nr.tree=${nrbiparts} --ref.rooted.nr.tree=${nrrootedtree} \
  --list.identical.seq=${pseudocorealn}.identical_sequences --output.tree=${speciestree}

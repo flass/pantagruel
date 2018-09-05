@@ -32,7 +32,8 @@ export minevfreqmatch=0.5
 export minjoinevfreqmatch=1.0
 export maxreftreeheight=0.25
 export colmethod='replaceCCinGasinS-collapsePOPinSnotinG'
-export mainresulttag=rootedTree
+export mainresulttag='rootedTree'
+export rootingmethod='treebalance'
 
 ## secondary variables
 # lib/module path
@@ -62,6 +63,7 @@ export families=${seqdb}/protein_families
 export nrprotali=$protali/nr_protfam_clustalo_alignments
 export cdsalifastacodedir=${protali}/full_cdsfam_alignments_species_code
 export protalifastacodedir=${protali}/full_protfam_alignments_species_code
+export coretree=${coregenome}/raxml_tree
 export mlgenetrees=${genetrees}/raxml_trees
 # sub folders that depend on the gene tree clade collapsing option
 export colalinexuscodedir=${protali}/${chaintype}_cdsfam_alignments_species_code
@@ -79,18 +81,13 @@ export protfamseqs=${mmseqsclout}_clusters_fasta
 export protorfanclust="${famprefix}P000000"
 export cdsorfanclust="${famprefix}C000000"
 export pseudocore=pseudo-core-${pseudocoremingenomes}-unicopy
-export pseudocorealn=${coregenome}/${pseudocore}_concat_cds.aln
-export coretree=${coregenome}/raxml_tree
-export collapsecond=${criterion}_stem${cladesupp}_within${withinfun}${subcladesupp}
-
-export ngenomes=$((`wc -l ${genomeinfo}/assembly_metadata/metadata.tab | cut -d' ' -f1` - 1))
 export treename=${pseudocore}_concat_prot_${ngenomes}-genomes_${ptgdbname}
 export pseudocorealn=${coregenome}/${treename}.aln
-nrbesttree=${coretree}/RAxML_bestTree.${treename}
-rootingmethod='outgroup'
-nrrootedtree=${nrbesttree}.${rootingmethod}rooted
-nrbiparts=${nrbesttree/bestTree/bipartitions}
+export nrbesttree=${coretree}/RAxML_bestTree.${treename}
+export nrbiparts=${nrbesttree/bestTree/bipartitions}
+export nrrootedtree=${nrbiparts}.${rootingmethod}rooted
 export speciestree=${nrrootedtree}.full
+export collapsecond=${criterion}_stem${cladesupp}_within${withinfun}${subcladesupp}
 
 
 

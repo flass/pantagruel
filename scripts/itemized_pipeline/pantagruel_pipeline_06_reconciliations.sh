@@ -24,14 +24,14 @@ mkdir -p ${alerec}
 
 # parameters to be set: defaults:
 #~ export ALEversion='v0.4'
-#~ export ALEalgo='ALEml_undated'
+#~ export ALEalgo='ALEml_${rectype}ed'
 #~ export recsamplesize=1000
 #~ export ALEsourcenote='program compiled from source code from of https://github.com/ssolo/ALE/commits/63f0a3c964074a15f61fd45156ab9e10b5dd45ef'
 if [-z ${reccolid} ] ; then
  reccolid=1
 fi
 # derived parameters
-if [ ${ALEalgo} == 'ALEml_undated' ] ; then
+if [ ${ALEalgo} == 'ALEml_${rectype}ed' ] ; then
   export rectype='undat'
 else
   export rectype='dated'
@@ -64,8 +64,8 @@ export parsedreccol=${reccol}_parsed_${parsedreccolid}
 export parsedrecs=${alerec}/parsed_recs/${parsedreccol}
 
 mkdir -p ${parsedrecs}
-reclist=$outrecdir/ale_collapsed_undat_uml_rec_list
-${ptgscripts}/lsfullpath.py $outrecdir/ale_collapsed_undat uml_rec > $reclist
+reclist=$outrecdir/ale_collapsed_${rectype}_uml_rec_list
+${ptgscripts}/lsfullpath.py $outrecdir/ale_collapsed_${rectype}/*ml_rec > $reclist
  
 ## normalise the species tree branch labels across gene families
 ## and look for correlated transfer events across gene families
@@ -79,7 +79,7 @@ export parsedreccoldate=$(date +%Y-%m-%d)
 ## store reconciliation parameters and load parsed reconciliation data into database
 ${ptgscripts}/pantagruel_sqlitedb_phylogeny_populate_reconciliations.sh ${database} ${sqldb} ${parsedrecs} ${ALEversion} ${ALEalgo} ${ALEsourcenote} ${parsedreccol} ${parsedreccolid} ${parsedreccoldate}
 
-# ptgid survey of event density over the reference tree
+# rapid survey of event density over the reference tree
 for freqthresh in 0.1 0.25 0.5 ; do
 sqlite3 ${sqldb} """
 .mode tabs 

@@ -17,6 +17,11 @@ if (length(cargs)>5){
 }else{
 	nflasscode = NULL
 }
+if (length(cargs)>6){
+	preferredgenomes = strsplit(cargs[7], split=',')[[1]]
+}else{
+	preferredgenomes = c()
+}
 nfrestrictlist = sprintf("%s_genome_codes", filerad)
 nfcladedef = sprintf("%s_clade_defs", filerad)
 # output files
@@ -72,7 +77,6 @@ dbcon = dbConnect(SQLite(), sqldb)
 for (i in 1:length(cladedefs)){
 	cla = names(cladedefs)[i]
 	if (!is.null(cladedefcsv$name)){ claname = cladedefcsv$name[[i]] }else{ claname = "" }
-	print(sprintf("%s: %s", cla, claname))
 	a = as.logical(i-1)
 	write(paste(sprintf("# %s %s", cla, claname), paste(c("# gene families present in all genomes of clade:", "and absent in all genomes of sister clade:"), cladedefcsv[cla,c('clade', 'sisterclade')], sep=' ', collapse='; '), sep='\t\t\t\t\t\t'),
 	 file=nfoutspege, append=a)
@@ -80,6 +84,16 @@ for (i in 1:length(cladedefs)){
 	spefamogs = as.data.frame(t(sapply(strsplit(rownames(genocount)[specifigenes[[cla]]], split='-'), function(x){ if (length(x)==2) return(x) else return(c(x, NA)) })), stringsAsFactors=F)
 	spefamogs[,2] = as.numeric(spefamogs[,2]) ; colnames(spefamogs) = c("gene_family_id", "og_id")
 	dbWriteTable(dbcon, "specific_genes", spefamogs, temporary=T)
+	# choose adequate reference genome
+	refgenome = NULL
+	for (prefgenome in preferredgenomes){
+		if (prefgenome %in% cladedefs[[cla]]$clade){
+			refgenome = prefgenome
+			break
+		}
+	}
+	if (is.null(refgenome)){ refgenome = cladedefs[[cla]]$clade[1] }
+	print(sprintf("%s: %s; ref: %s", cla, claname, refgenome))
 	if ( ogcolid >= 0 ){
 	# use ortholog classification of homologous genes
 	spegeneinfo = dbGetQuery(dbcon, paste( c(
@@ -89,7 +103,7 @@ for (i in 1:length(cladedefs)){
 	 "INNER JOIN proteins USING (nr_protein_id)",
 	 "INNER JOIN specific_genes USING (gene_family_id, og_id)",
 	 "WHERE cds_code LIKE :c AND ( ortholog_col_id = :o OR ortholog_col_id IS NULL) ;"),
-	 collapse=" "), params=list(c=sprintf("%s%%", cladedefs[[cla]]$clade[1]), o=ogcolid))
+	 collapse=" "), params=list(c=sprintf("%s%%", refgenome), o=ogcolid))
 	}else{
 	# only use the homologous family mapping of genes (coarser homology mapping and stricter clade-specific gene finding)
 	spegeneinfo = dbGetQuery(dbcon, paste( c(
@@ -98,7 +112,7 @@ for (i in 1:length(cladedefs)){
 	 "INNER JOIN proteins USING (nr_protein_id)",
 	 "INNER JOIN specific_genes USING (gene_family_id)",
 	 "WHERE cds_code LIKE :c ESCAPE '@';"),
-	 collapse=" "), params=list(c=sprintf("%s@_%%", cladedefs[[cla]]$clade[1])))
+	 collapse=" "), params=list(c=sprintf("%s@_%%", refgenome)))
 	}
 	dbExecute(dbcon, "DROP TABLE specific_genes;")
 	dbCommit(dbcon)

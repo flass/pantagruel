@@ -42,7 +42,7 @@ for mol in prot cds ; do
   mkdir -p ${alifastacodedir}
   eval "export ${mol}alifastacodedir=${alifastacodedir}"
   # use multiprocessing python script
-  ${ptgscripts}/lsfullpath.py ${protali}/full_${mol}fam_alignments .aln > ${protali}/full_${mol}fam_alignment_list
+  ${ptgscripts}/lsfullpath.py ${protali}/full_${mol}fam_alignments/*.aln > ${protali}/full_${mol}fam_alignment_list
   ${ptgscripts}/genbank2code_fastaseqnames.py ${protali}/full_${mol}fam_alignment_list ${database}/cds_codes.tab ${alifastacodedir} > ${ptgdb}/logs/genbank2code_fastaseqnames.${mol}.log
 done
 
