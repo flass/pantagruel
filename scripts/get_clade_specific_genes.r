@@ -22,6 +22,12 @@ if (length(cargs)>6){
 }else{
 	preferredgenomes = c()
 }
+if (length(cargs)>7){
+	interstfams = strsplit(cargs[8], split=',')[[1]]
+}else{
+	interstfams = c()
+}
+
 nfrestrictlist = sprintf("%s_genome_codes", filerad)
 nfcladedef = sprintf("%s_clade_defs", filerad)
 # output files
@@ -47,7 +53,14 @@ nfoutspege = sprintf("%s_specific_genes.tab", foutrad)
 #~ 	 file=nfcladedef)
 #~ }
 cladedefcsv = read.table(nfcladedef, sep='\t', header=T, row.names=1, stringsAsFactors=F)
-cladedefs = apply(cladedefcsv, 1, strsplit, split=',')
+cladedefs = apply(cladedefcsv[,c('clade', 'sisterclade')], 1, strsplit, split=',')
+
+for (i in 1:length(cladedefs)){
+	cla = names(cladedefs)[i]
+	cladedefs[[cla]]$name = ifelse(!is.null(cladedefcsv$name), cladedefcsv$name[i], "")
+	cladedefs[[cla]]$maxabsin = ifelse(!is.null(cladedefcsv$maxabsin), cladedefcsv$maxabsin[i], 0)
+	cladedefs[[cla]]$maxpresout = ifelse(!is.null(cladedefcsv$maxpresout), cladedefcsv$maxpresout[i], 0)
+}
 
 # load gene presence / absence data
 if (file.exists(nfabspresmat)){
@@ -67,56 +80,77 @@ if (file.exists(nfabspresmat)){
 
 # compute gene sets
 specifigenes = lapply(cladedefs, function(cladedef){
-	allpres = apply(genocount[,cladedef$clade,drop=F], 1, function(x){ all(x>0) })
-	allabssis = apply(genocount[,cladedef$sisterclade,drop=F], 1, function(x){ all(x==0) })
+#~ 	allpres = apply(genocount[,cladedef$clade,drop=F], 1, function(x){ all(x>0) })
+#~ 	allabssis = apply(genocount[,cladedef$sisterclade,drop=F], 1, function(x){ all(x==0) })
+	allpres = apply(genocount[,cladedef$clade,drop=F], 1, function(x){ length(which(x==0))<=cladedef$maxabsin })
+	allabssis = apply(genocount[,cladedef$sisterclade,drop=F], 1, function(x){ length(which(x>0))<=cladedef$maxpresout })
 	return(which(allpres & allabssis))
 })
 
 dbcon = dbConnect(SQLite(), sqldb)
 
+cladedefwritesep = paste(rep('  ...  \t', 6), sep='', collapse='')
+
 for (i in 1:length(cladedefs)){
 	cla = names(cladedefs)[i]
-	if (!is.null(cladedefcsv$name)){ claname = cladedefcsv$name[[i]] }else{ claname = "" }
+	cladedef = cladedefs[[cla]]
 	a = as.logical(i-1)
-	write(paste(sprintf("# %s %s", cla, claname), paste(c("# gene families present in all genomes of clade:", "and absent in all genomes of sister clade:"), cladedefcsv[cla,c('clade', 'sisterclade')], sep=' ', collapse='; '), sep='\t\t\t\t\t\t'),
-	 file=nfoutspege, append=a)
-	dbBegin(dbcon)
-	spefamogs = as.data.frame(t(sapply(strsplit(rownames(genocount)[specifigenes[[cla]]], split='-'), function(x){ if (length(x)==2) return(x) else return(c(x, NA)) })), stringsAsFactors=F)
-	spefamogs[,2] = as.numeric(spefamogs[,2]) ; colnames(spefamogs) = c("gene_family_id", "og_id")
-	dbWriteTable(dbcon, "specific_genes", spefamogs, temporary=T)
-	# choose adequate reference genome
-	refgenome = NULL
-	for (prefgenome in preferredgenomes){
-		if (prefgenome %in% cladedefs[[cla]]$clade){
-			refgenome = prefgenome
-			break
-		}
-	}
-	if (is.null(refgenome)){ refgenome = cladedefs[[cla]]$clade[1] }
-	print(sprintf("%s: %s; ref: %s", cla, claname, refgenome))
-	if ( ogcolid >= 0 ){
-	# use ortholog classification of homologous genes
-	spegeneinfo = dbGetQuery(dbcon, paste( c(
-	 "SELECT gene_family_id, og_id, genomic_accession, locus_tag, cds_begin, cds_end, product",
-	 "FROM coding_sequences",
-	 "LEFT JOIN orthologous_groups USING (cds_code, gene_family_id)",
-	 "INNER JOIN proteins USING (nr_protein_id)",
-	 "INNER JOIN specific_genes USING (gene_family_id, og_id)",
-	 "WHERE cds_code LIKE :c AND ( ortholog_col_id = :o OR ortholog_col_id IS NULL) ;"),
-	 collapse=" "), params=list(c=sprintf("%s%%", refgenome), o=ogcolid))
+	write(sprintf("# %s %s", cla, cladedef$name), file=nfoutspege, append=a)
+	write( paste(sprintf("# gene families present in all genomes but %d of clade:", cladedef$maxabsin), cladedefcsv[cla,'clade'], sep=cladedefwritesep), file=nfoutspege, append=T)
+	write( paste(sprintf("# and absent in all but %d genomes of sister clade:", cladedef$maxpresout), cladedefcsv[cla,'sisterclade'], sep=cladedefwritesep), file=nfoutspege, append=T)
+	ncsg = length(specifigenes[[cla]])
+	if (ncsg==0){
+		write("# no specific gene found", file=nfoutspege, append=T)
+		print(sprintf("%s: %s; no specific gene found", cla, cladedef$name))
 	}else{
-	# only use the homologous family mapping of genes (coarser homology mapping and stricter clade-specific gene finding)
-	spegeneinfo = dbGetQuery(dbcon, paste( c(
-	 "SELECT gene_family_id, genomic_accession, locus_tag, cds_begin, cds_end, product",
-	 "FROM coding_sequences",
-	 "INNER JOIN proteins USING (nr_protein_id)",
-	 "INNER JOIN specific_genes USING (gene_family_id)",
-	 "WHERE cds_code LIKE :c ESCAPE '@';"),
-	 collapse=" "), params=list(c=sprintf("%s@_%%", refgenome)))
+		for (interstfam in interstfams){
+			if (interstfam %in% rownames(genocount)[specifigenes[[cla]]]){
+				print(sprintf("%s family:", interstfam), quote=F)
+				miss = which(genocount[interstfam,cladedef$clade,drop=F]==0)
+				print(sprintf("  missing in %d clade genomes: %s", length(miss), paste(cladedef$clade[miss], sep=' ', collapse=' ')), quote=F)
+				extra = which(genocount[interstfam,cladedef$sisterclade,drop=F]>0)
+				print(sprintf("  present in %d sister clade genomes: %s", length(extra), paste(cladedef$sisterclade[extra], sep=' ', collapse=' ')), quote=F)
+			}
+		}
+		spefamogs = as.data.frame(t(sapply(strsplit(rownames(genocount)[specifigenes[[cla]]], split='-'), function(x){ if (length(x)==2) return(x) else return(c(x, NA)) })), stringsAsFactors=F)
+		spefamogs[,2] = as.numeric(spefamogs[,2]) ; colnames(spefamogs) = c("gene_family_id", "og_id")
+		dbBegin(dbcon)
+		dbWriteTable(dbcon, "specific_genes", spefamogs, temporary=T)
+		# choose adequate reference genome
+		refgenome = NULL
+		for (prefgenome in preferredgenomes){
+			if (prefgenome %in% cladedefs[[cla]]$clade){
+				refgenome = prefgenome
+				break
+			}
+		}
+		if (is.null(refgenome)){ refgenome = cladedef$clade[1] }
+		print(sprintf("%s: %s; %d clade-specific genes; ref: %s", cla, cladedef$name, ncsg, refgenome), quote=F)
+		if ( ogcolid >= 0 ){
+		# use ortholog classification of homologous genes
+		spegeneinfo = dbGetQuery(dbcon, paste( c(
+		 "SELECT gene_family_id, og_id, genomic_accession, locus_tag, cds_begin, cds_end, product",
+		 "FROM coding_sequences",
+		 "LEFT JOIN orthologous_groups USING (cds_code, gene_family_id)",
+		 "INNER JOIN proteins USING (nr_protein_id)",
+		 "INNER JOIN specific_genes USING (gene_family_id, og_id)",
+		 "WHERE cds_code LIKE :c AND ( ortholog_col_id = :o OR ortholog_col_id IS NULL) ;"),
+		 collapse=" "), params=list(c=sprintf("%s%%", refgenome), o=ogcolid))
+		}else{
+		# only use the homologous family mapping of genes (coarser homology mapping and stricter clade-specific gene finding)
+		spegeneinfo = dbGetQuery(dbcon, paste( c(
+		 "SELECT gene_family_id, genomic_accession, locus_tag, cds_begin, cds_end, product",
+		 "FROM coding_sequences",
+		 "INNER JOIN proteins USING (nr_protein_id)",
+		 "INNER JOIN specific_genes USING (gene_family_id)",
+		 "WHERE cds_code LIKE :c ESCAPE '@';"),
+		 collapse=" "), params=list(c=sprintf("%s@_%%", refgenome)))
+		}
+		dbExecute(dbcon, "DROP TABLE specific_genes;")
+		dbCommit(dbcon)
+		write.table(spegeneinfo, file=nfoutspege, sep='\t', quote=F, row.names=F, col.names=T, append=T)
 	}
-	dbExecute(dbcon, "DROP TABLE specific_genes;")
-	dbCommit(dbcon)
-	write.table(spegeneinfo, file=nfoutspege, sep='\t', quote=F, row.names=F, col.names=T, append=T)
 }
-
-
+#~ print("Warnings:", quote=F)
+#~ print(warnings(), quote=F)
+print(sprintf("wrote ouput in file '%s'", nfoutspege), quote=F)
