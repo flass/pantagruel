@@ -144,7 +144,7 @@ def translateEventLineage(deventlineages, dcol2fullspenames, drefspeeventTup2Ids
 		# lighter version encoding events just by an integer referring to species tree events reference table
 		return {nodelab:[drefspeeventTup2Ids[evtup] for evtup in levtup] for nodelab, levtup in trline.iteritems()}
 
-def parseRec(nfrec, refspetree=None, drefspeeventTup2Ids=None, onlyLineages=[], recordEvTypes='T', minFreqReport=0, returnDict=True, lineageTableOutDir=None, noTranslateSpeTree=False, allEventByLineageByGenetree=False):
+def parseRec(nfrec, refspetree=None, drefspeeventTup2Ids=None, onlyLineages=[], recordEvTypes='T', ALEmodel='undated', minFreqReport=0, returnDict=True, lineageTableOutDir=None, noTranslateSpeTree=False, allEventByLineageByGenetree=False):
 	"""parse reconciled gene tree sample, returning sampled events by gene lineage
 	
 	if allEventByLineageByGenetree is True, return more detailed data, stored in a dict with the following elements: 
@@ -175,7 +175,7 @@ def parseRec(nfrec, refspetree=None, drefspeeventTup2Ids=None, onlyLineages=[], 
 	allrectevtlineages = {}
 	for i, recgt in enumerate(lrecgt):
 		# gather scenario-scpecific events (i.e. dependent on reconciled gene tree topology, which varies among the sample)
-		dlevt, dnodeallevt = pAr.parseRecGeneTree(recgt, colspetree, dexactevt, recgtsample, nsample, fillDTLSdict=False, recordEvTypes=recordEvTypes, excludeTaggedLeaves=collapsedcladetag, excludeTaggedSubtrees=replacementcladetag)
+		dlevt, dnodeallevt = pAr.parseRecGeneTree(recgt, colspetree, ALEmodel, dexactevt, recgtsample, nsample, fillDTLSdict=False, recordEvTypes=recordEvTypes, excludeTaggedLeaves=collapsedcladetag, excludeTaggedSubtrees=replacementcladetag)
 		# here events involving a replcement clade (RC) or leaf (CC) are excluded
 		# * 'dexactevt' is used as cache to store frequencies of event s as inferred from regex searches of the event pattern
 		# these frequencies are not specific to gene lineages, but aggregate the counts over the whole gene family
@@ -246,8 +246,8 @@ def parseRec(nfrec, refspetree=None, drefspeeventTup2Ids=None, onlyLineages=[], 
 # 
 def parseRecTupArgs(args):
 	"""wrapper function with arguments passed as a tuple"""
-	nfrec, refspetree, drefspeeventTup2Ids, onlyLineages, recordEvTypes, minFreqReport, returnDict, lineageTableOutDir = args
-	return parseRec(nfrec, refspetree, drefspeeventTup2Ids, onlyLineages, recordEvTypes, minFreqReport, returnDict, lineageTableOutDir)
+	nfrec, refspetree, ALEmodel, drefspeeventTup2Ids, onlyLineages, recordEvTypes, minFreqReport, returnDict, lineageTableOutDir = args
+	return parseRec(nfrec, refspetree, ALEmodel, drefspeeventTup2Ids, onlyLineages, recordEvTypes, minFreqReport, returnDict, lineageTableOutDir)
 
 def loadRecGeneTreeLabelAliasesAndListRecFiles(nflnfrec, nfgenefamlist=None, dircons=None, dirrepl=None, nbthreads=1, verbose=False):
 	"""parse data relating to the genes and gene families to process.
@@ -280,7 +280,7 @@ def loadRefPopTree(nfrefspetree, nfpop):
 	refspetree.write_newick(nfrefspetreeout, ignoreBS=True)
 	return (refspetree, dspe2pop)
 	
-def generateEventRefDB(refspetree, model='undated', refTreeTableOutDir=None):
+def generateEventRefDB(refspetree, ALEmodel='undated', refTreeTableOutDir=None):
 	"""generates a dict of event tuples (of the form (X, [don, ]rec)). 
 	
 	Optionally writes out the reference species tree branches and event info to table files
@@ -295,29 +295,30 @@ def generateEventRefDB(refspetree, model='undated', refTreeTableOutDir=None):
 		nid = node.nodeid()
 		nlab = node.label()
 		fnid = node.father_nodeid()
-		if model=='undated':
-			if refTreeTableOutDir: foutspetree.write('\t'.join((str(nid), str(fnid if fnid else ''), nlab, str(int(node.is_leaf()))))+'\n')
-			for et in pAr.eventTypes:
-				evtup = (et, nlab)
-				if et!='T':
-					drefspeeventTup2Ids[evtup] = eventid
-					drefspeeventId2Tups[eventid] = evtup
-					if refTreeTableOutDir: foutspeevents.write('\t'.join((str(eventid), et, '', str(nid)))+'\n')
-					eventid += 1
-				else:
-					for donnode in refspetree:
-						if not node is donnode:
-							evtupt = evtup + (donnode.label(),)
-							drefspeeventTup2Ids[evtupt] = eventid
-							drefspeeventId2Tups[eventid] = evtupt
-							if refTreeTableOutDir: foutspeevents.write('\t'.join([str(e) for e in (eventid, et, donnode.nodeid(), nid)])+'\n')
-							eventid += 1
+		#~ if ALEmodel=='undated':
+		# in  all case, do not consider dates of events
+		if refTreeTableOutDir: foutspetree.write('\t'.join((str(nid), str(fnid if fnid else ''), nlab, str(int(node.is_leaf()))))+'\n')
+		for et in pAr.eventTypes:
+			evtup = (et, nlab)
+			if et!='T':
+				drefspeeventTup2Ids[evtup] = eventid
+				drefspeeventId2Tups[eventid] = evtup
+				if refTreeTableOutDir: foutspeevents.write('\t'.join((str(eventid), et, '', str(nid)))+'\n')
+				eventid += 1
+			else:
+				for donnode in refspetree:
+					if not node is donnode:
+						evtupt = evtup + (donnode.label(),)
+						drefspeeventTup2Ids[evtupt] = eventid
+						drefspeeventId2Tups[eventid] = evtupt
+						if refTreeTableOutDir: foutspeevents.write('\t'.join([str(e) for e in (eventid, et, donnode.nodeid(), nid)])+'\n')
+						eventid += 1
 	if refTreeTableOutDir:
 		foutspetree.close()
 		foutspeevents.close()
 	return (drefspeeventTup2Ids, drefspeeventId2Tups)
 
-def parse_events(lnfrec, genefamlist=None, refspetree=None, \
+def parse_events(lnfrec, genefamlist=None, refspetree=None, ALEmodel='undated', \
                  drefspeeventTup2Ids={}, recordEvTypes='DTS', minFreqReport=0, \
                  nfpickleEventsOut=None, nfshelveEventsOut=None, dirTableOut=None, nbthreads=1):
 	"""from list of reconciliation files, families and genes to consider, return dictionary of reported events, by family and gene lineage"""
@@ -331,7 +332,7 @@ def parse_events(lnfrec, genefamlist=None, refspetree=None, \
 						#~ lineageTableOutDir=(os.path.join(dirTableOut, 'gene_tree_lineages') if dirTableOut else None))
 	diroutab = (os.path.join(dirTableOut, 'gene_tree_lineages') if dirTableOut else None)
 	returndict = bool(nfpickleEventsOut)
-	iterargs = ((nfrec, refspetree, drefspeeventTup2Ids, ingenes, recordEvTypes, minFreqReport, returndict, diroutab) for nfrec in lnfrec)
+	iterargs = ((nfrec, refspetree, ALEmodel, drefspeeventTup2Ids, ingenes, recordEvTypes, minFreqReport, returndict, diroutab) for nfrec in lnfrec)
 	
 	# prepare output
 	if nfshelveEventsOut:
@@ -388,6 +389,9 @@ def main():
 		raise ValueError, "an output option for parsed reconciliation must be chosen between '--dir_table_out', '--events_to_pickle' or '--events_to_shelve'"
 	
 	# other params
+	# ALE reconciliation format
+	ALEmodel = dopt.get('--ALE_algo', 'undated')
+	
 	# facultative input files
 	nfpop = dopt.get('--populations')
 	nfrefspetree = dopt.get('--reftree')
@@ -414,9 +418,9 @@ def main():
 	
 	
 	refspetree, dspe2pop = loadRefPopTree(nfrefspetree, nfpop)
-	drefspeeventTup2Ids, drefspeeventId2Tups = generateEventRefDB(refspetree, model='undated', refTreeTableOutDir=(os.path.join(dirTableOut, 'ref_species_tree') if dirTableOut else None))
+	drefspeeventTup2Ids, drefspeeventId2Tups = generateEventRefDB(refspetree, ALEmodel, refTreeTableOutDir=(os.path.join(dirTableOut, 'ref_species_tree') if dirTableOut else None))
 	
-	dfamevents = parse_events(lnfrec, genefamlist, refspetree, drefspeeventTup2Ids, recordEvTypes, minFreqReport, \
+	dfamevents = parse_events(lnfrec, genefamlist, refspetree, ALEmodel, drefspeeventTup2Ids, recordEvTypes, minFreqReport, \
 								  nfpickleEventsOut, nfshelveEventsOut, dirTableOut, nbthreads)
 
 

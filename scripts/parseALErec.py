@@ -61,29 +61,57 @@ def parseALERecFile(nfrec, reftreelen=None, restrictclade=None, skipEventFreq=Fa
 	else:
 		return [spetree, subspetree, lrecgt, recgtlines, restrictlabs, dnodeevt]
 
+def parseDatedRecGeneTree(recgt, spet, dexactevt={}, recgtsample=None, nsample=1, sgsep='_', restrictlabs=[], \
+                          fillDTLSdict=True, recordEvTypes='DTL', excludeTaggedLeaves=None, excludeTaggedSubtrees=None, joinTdonrec=True):
+	def parseRecGTNode(node, dlevt, dnodeallevt):
+		nodelab = node.label()
+		if not nodelab: raise ValueError, "unannotated node:\n%s"%str(node)
+		if node.is_leaf() and (excludeTaggedLeaves in nodelab):
+			# the species assignment of this leaf is not certain (inferred)
+			# and thus events leading directly to this leaf are not to be trusted and should be skipped
+			return
+		nodeid = node.nodeid()
+		# line of events to be read left-to-right backward in time
+		lineage, leaflab = splitEventChain(nodelab, isleaf=node.is_leaf(), ALEmodel='dated')
+		# list of events goes BACKWARD in time when read left-to-right
+		for i, event in enumerate(lineage):
+			evtype, evloc, evdate = event
+			# evtype[0] to capture Td, TdL, Tr events as T
+			if (evtype[0] not in recordEvTypes) or (restrictlabs and not (dup in restrictlabs)): continue
+			if fillDTLSdict: dlevt[evtype].append(evloc)
+			if evtype =='Tr' and joinTdonrec:
+				# piece back together Td and Tr events: look for preceding transfer eimssion
+				if i>0 and lineage[i-1][0]=='TdL':
+					# just before on the same branch
+					donloc = lineage[i-1][1]
+				else:
+					# in parent branch
+					parent = node.go_father().nodeid()
+					if not parent: 
+					# donor transfer should be the last event
+					petype, peloc = dnodeallevt[parent.nodeid()][-1]
+					if petype=='Td': donloc = peloc
+					else: raise IndexError, "could not find transfer emission event"
+				dnodeallevt.setdefault(nodeid, []).append((evtype, donloc, evloc))
+			else:
+				dnodeallevt.setdefault(nodeid, []).append((evtype, evloc))
+
+		if excludeTaggedSubtrees:
+			alllabext = [lab.split('_', 1)[1] for lab in node.iter_leaf_labels()]
+			if (len(set(alllabext)) == 1) and (excludeTaggedSubtrees in alllabext[0]):
+				# the subtree below this node is an artificial addition to the reconciled gene tree and should be skipped
+				return
+		for child in node.get_children():
+			# use recursion to be able to exclude subtrees
+			parseRecGTNode(child, dlevt, dnodeallevt)
+		return
+	
+	dnodeallevt = {}
+	dlevt = {e:[] for e in eventTypes}
+	parseRecGTNode(recgt, dlevt, dnodeallevt) # recursive function call
+	return dlevt, dnodeallevt
+	
 def parseUndatedRecGeneTree(recgt, spet, dexactevt={}, recgtsample=None, nsample=1, sgsep='_', restrictlabs=[], fillDTLSdict=True, recordEvTypes='DTL', excludeTaggedLeaves=None, excludeTaggedSubtrees=None):
-	"""extract list of events from one reconciled gene tree as found in output of ALEml_undated (Szolosi et al., 2013; https://github.com/ssolo/ALE)
-	
-	This function returns two objects:
-	
-	- a dict object 'dlevt', containing the (possibly redundant) list of unique events having occurred in the tree,
-	sorted by event type, which can be 'D', 'T', 'L' or 'S', for duplications, horizontal transfers, losses or speciations.
-	This record is a crude aggregate of what happened in the whole gene family, present for back-compatiility purposes.
-	The behaviour of filling up this record can be turned off to gain time and memory with fillDTLSdict=False.
-	
-	- a dict object 'dnodeallevt', containing the list all events in one reconciliation scenario
-	(a single scenario anomg the sample), sorted by gene tree node id. 
-	Event are represented as tuples of the following form: (X, [don, ] rec, freq),
-	where X is the event type
-	'rec' and optionally 'don' (for Ts only) are species tree node labels where the event where inferred,
-	and 'freq' the event frequency of this event in the whole sample.
-	
-	Frequency of events is searched in the WHOLE reconciled gene tree sample 
-	provided as the list of pseudo-newick strings, using exact string matching (only for DT).
-	In case of the same pattern of event occurring repeatedly in the same tree, e.g. same T@DON->REC in two paralogous lineages 
-	(can likely happen with tandem duplicates...), the count will reflect the sum of all such events. 
-	Records of event frequencies in both 'dlevt' and 'dnodeallevt' are thus NOT differentiated by lineage.
-	"""
 	def parseRecGTNode(node, dlevt, dnodeallevt):
 		nodelab = node.label()
 		if not nodelab: raise ValueError, "unannotated node:\n%s"%str(node)
@@ -161,6 +189,28 @@ def parseUndatedRecGeneTree(recgt, spet, dexactevt={}, recgtsample=None, nsample
 	return dlevt, dnodeallevt
 
 def parseRecGeneTree(recgt, spet, ALEmodel='undated', **kw):
+	"""extract list of events from one reconciled gene tree as found in output of ALEml_undated (Szolosi et al., 2013; https://github.com/ssolo/ALE)
+	
+	This function returns two objects:
+	
+	- a dict object 'dlevt', containing the (possibly redundant) list of unique events having occurred in the tree,
+	sorted by event type, which can be 'D', 'T', 'L' or 'S', for duplications, horizontal transfers, losses or speciations.
+	This record is a crude aggregate of what happened in the whole gene family, present for back-compatiility purposes.
+	The behaviour of filling up this record can be turned off to gain time and memory with fillDTLSdict=False.
+	
+	- a dict object 'dnodeallevt', containing the list all events in one reconciliation scenario
+	(a single scenario anomg the sample), sorted by gene tree node id. 
+	Event are represented as tuples of the following form: (X, [don, ] rec, freq),
+	where X is the event type
+	'rec' and optionally 'don' (for Ts only) are species tree node labels where the event where inferred,
+	and 'freq' the event frequency of this event in the whole sample.
+	
+	Frequency of events is searched in the WHOLE reconciled gene tree sample 
+	provided as the list of pseudo-newick strings, using exact string matching (only for DT).
+	In case of the same pattern of event occurring repeatedly in the same tree, e.g. same T@DON->REC in two paralogous lineages 
+	(can likely happen with tandem duplicates...), the count will reflect the sum of all such events. 
+	Records of event frequencies in both 'dlevt' and 'dnodeallevt' are thus NOT differentiated by lineage.
+	"""
 	if ALEmodel=='undated':
 		return parseUndatedRecGeneTree(recgt, spet, **kw)
 	elif ALEmodel=='dated':
@@ -210,7 +260,7 @@ def splitSingleDatedEvent(nodelab, isleaf=False, verbose=False, **kw):
 		# process possible event separators in order
 		if s.startswith('.T@'):
 			# immeadiate transfer-loss (should be only present on the beginning of the event chain)
-			# emission of transfer by donor followed by loss of resident copy; just changes species identity of the gene tree branch (from donor to recipent species)
+			# emission of transfer by donor followed by loss of resident copy; just changes species identity of the gene tree branch (from donor to recipient species)
 			# will be followed by transfer reception event
 			thisev = 3
 			evtype = 'TdL'
