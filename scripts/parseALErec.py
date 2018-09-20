@@ -72,7 +72,7 @@ def parseDatedRecGeneTree(recgt, spet, dexactevt={}, recgtsample=None, nsample=1
 			return
 		nodeid = node.nodeid()
 		# line of events to be read left-to-right backward in time
-		lineage, leaflab = splitEventChain(nodelab, isleaf=node.is_leaf(), ALEmodel='dated')
+		lineage, leaflab = splitEventChain(nodelab, isleaf=node.is_leaf(), ALEmodel='dated', sgsep='_')
 		# list of events goes BACKWARD in time when read left-to-right
 		for i, event in enumerate(lineage):
 			evtype, evloc, evdate = event
@@ -270,7 +270,7 @@ def extractLabelfromDatedEventLeaf(nodelab):
 	leaflab = nodelab[:nextev] # the whole string if nextev is None
 	return leaflab
 
-def splitSingleDatedEvent(nodelab, isleaf=False, verbose=False, **kw):
+def splitSingleDatedEvent(nodelab, isleaf=False, verbose=False, sgsep='_', **kw):
 	"""from a gene tree branch event chain, return iterator that yields the type and location of every event
 	
 	if isleaf=True, assumes the branch led to a leaf, and the leaf label is yielded as the last item.
@@ -341,7 +341,7 @@ def splitSingleDatedEvent(nodelab, isleaf=False, verbose=False, **kw):
 		# add the final speciation
 		evtype = 'S'
 		evdate = 0
-		evloc = leaflab
+		evloc = leaflab.split(sgsep)[0]
 		yield (evtype, evloc, evdate)
 		if verbose>1: print 'leaflab: %s;'%leaflab,
 		# last yield
