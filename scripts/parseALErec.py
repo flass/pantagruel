@@ -81,10 +81,14 @@ def parseDatedRecGeneTree(recgt, spet, dexactevt={}, recgtsample=None, nsample=1
 			if fillDTLSdict: dlevt[evtype].append(evloc)
 			if evtype =='Tr' and joinTdonrec:
 				# piece back together Td and Tr events: look for preceding transfer eimssion
-				if i>0 and lineage[i-1][0]=='TdL':
-					# just before on the same branch
-					donloc = lineage[i-1][1]
-					dnodeallevt.setdefault(nodeid, []).append((evtype, donloc, evloc))
+				if i>0:
+					prevent = lineage[i-1]
+					if prevent[0]=='TdL':
+						# just before on the same branch
+						donloc = prevent[1]
+						dnodeallevt.setdefault(nodeid, []).append((evtype, donloc, evloc))
+					else:
+						raise IndexError, "transfer event reception (Tr) is not the first event on gene tree branch,\nbut no transfer emission+loss (TdL) event can be detected before it;\npreceding event on same branch: %s"%repr(prevent)
 				else:
 					# in parent branch
 					parent = node.go_father()
@@ -95,10 +99,12 @@ def parseDatedRecGeneTree(recgt, spet, dexactevt={}, recgtsample=None, nsample=1
 						dnodeallevt.setdefault(nodeid, []).append((evtype, evloc))
 					else:
 						# donor transfer should be the last event
-						petype, peloc = dnodeallevt[parent.nodeid()][-1]
-						if petype=='Td': donloc = peloc
-						else: raise IndexError, "could not find transfer emission event"
-						dnodeallevt.setdefault(nodeid, []).append((evtype, donloc, evloc))
+						pevent = dnodeallevt[parent.nodeid()][-1]
+						if pevent[0]=='Td':
+							donloc = pevent[1]
+							dnodeallevt.setdefault(nodeid, []).append((evtype, donloc, evloc))
+						else:
+							raise IndexError, "transfer event reception (Tr) is the first event on gene tree branch,\nbut could not find transfer emission (Td) event before it;\nlast event on previous branch: %s"%repr(pevent)
 			else:
 				dnodeallevt.setdefault(nodeid, []).append((evtype, evloc))
 
