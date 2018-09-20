@@ -87,7 +87,7 @@ def parseDatedRecGeneTree(recgt, spet, dexactevt={}, recgtsample=None, nsample=1
 				else:
 					# in parent branch
 					parent = node.go_father().nodeid()
-					if not parent: 
+					if not parent: raise IndexError, "root gene tree node shoud not be a transfer recipient"
 					# donor transfer should be the last event
 					petype, peloc = dnodeallevt[parent.nodeid()][-1]
 					if petype=='Td': donloc = peloc
