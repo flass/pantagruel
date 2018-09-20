@@ -81,8 +81,8 @@ def parseDatedRecGeneTree(recgt, spet, dexactevt={}, recgtsample=None, nsample=1
 			if fillDTLSdict: dlevt[evtype].append(evloc)
 			if evtype =='Tr' and joinTdonrec:
 				# piece back together Td and Tr events: look for preceding transfer eimssion
-				if i>0:
-					prevent = lineage[i-1]
+				if i<(len(lineage)-1):
+					prevent = lineage[i+1] # (remember BACKWARD time event listing)
 					if prevent[0]=='TdL':
 						# just before on the same branch
 						donloc = prevent[1]
@@ -101,7 +101,7 @@ def parseDatedRecGeneTree(recgt, spet, dexactevt={}, recgtsample=None, nsample=1
 						dnodeallevt.setdefault(nodeid, []).append((evtype, evloc))
 					else:
 						# donor transfer should be the last event
-						pevent = dnodeallevt[parent.nodeid()][-1]
+						pevent = dnodeallevt[parent.nodeid()][0] # (remember BACKWARD time event listing)
 						if pevent[0]=='Td':
 							donloc = pevent[1]
 							dnodeallevt.setdefault(nodeid, []).append((evtype, donloc, evloc))
@@ -355,7 +355,7 @@ def splitEventChain(nodelab, isleaf=False, ALEmodel='dated', **kw):
 		lineage = [event for event in splitSingleUndatedEvent(nodelab, isleaf=isleaf, **kw)]
 	elif ALEmodel=='dated':
 		lineage = [event for event in splitSingleDatedEvent(nodelab, isleaf=isleaf, **kw)]
-		# line of events is read left-to-right FORWARD in time; reverse it for a BACKWARD result
+		# line of events is read left-to-right FORWARD in time; for compatibility matters, reverse it for a BACKWARD result
 		lineage.reverse()
 	if isleaf:
 		# remove the first-yielded element from event list that's the leaf label
