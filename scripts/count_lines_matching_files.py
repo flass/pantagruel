@@ -16,7 +16,7 @@ lnumlines = []
 
 for nf in lnf:
 	with open(nf, 'r') as f:
-		lnumlines.append((path.basename(nf), file_len(nf)))
+		lnumlines.append((path.basename(nf), str(file_len(nf))))
 
 with open(target.replace('*', '_')+'line_counts', 'w') as fout:
 	fout.write('\n'.join(['\t'.join(t) for t in lnumlines]))
