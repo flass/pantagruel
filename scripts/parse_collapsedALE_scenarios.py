@@ -286,7 +286,9 @@ def loadRefPopTree(nfrefspetree, nfpop):
 def generateEventRefDB(refspetree, ALEmodel='undated', refTreeTableOutDir=None, TfromOutside=True):
 	"""generates a dict of event tuples (of the form (X, [don, ]rec)). 
 	
-	Optionally writes out the reference species tree branches and event info to table files
+	Optionally writes out the reference species tree branches and event info to table files:
+	- species_tree table dump has fields:       (branch_id, parent_branch_id, branch_name, is_tip)
+	- species_tree_event table dump has fields: (event_id, event_type, don_branch_id, rec_branch_id)
 	"""
 	drefspeeventTup2Ids = {}
 	drefspeeventId2Tups = {}
@@ -316,19 +318,19 @@ def generateEventRefDB(refspetree, ALEmodel='undated', refTreeTableOutDir=None, 
 						evtupt = evtup + (donnode.label(),)
 						drefspeeventTup2Ids[evtupt] = eventid
 						drefspeeventId2Tups[eventid] = evtupt
-						if refTreeTableOutDir: foutspeevents.write('\t'.join([str(e) for e in (eventid, et, nid, donnode.nodeid())])+'\n')
+						if refTreeTableOutDir: foutspeevents.write('\t'.join([str(e) for e in (eventid, et, donnode.nodeid(), nid)])+'\n')
 						eventid += 1
 	if TfromOutside:
 		# make this loop last so not to change the value of ids whether done or not
 		outnid = maxnid + 1
-		if refTreeTableOutDir: foutspetree.write('\t'.join((str(outnid), outtaxlab, , '0'))+'\n')
+		if refTreeTableOutDir: foutspetree.write('\t'.join((str(outnid), '', outtaxlab, '0'))+'\n')
 		for node in refspetree:
 			nid = node.nodeid()
 			nlab = node.label()
 			evtup = ('T', nlab, outtaxlab)
 			drefspeeventTup2Ids[evtupt] = eventid
 			drefspeeventId2Tups[eventid] = evtupt
-			if refTreeTableOutDir: foutspeevents.write('\t'.join([str(e) for e in (eventid, 'T', nid, outnid)])+'\n')
+			if refTreeTableOutDir: foutspeevents.write('\t'.join([str(e) for e in (eventid, 'T', outnid, nid)])+'\n')
 			eventid += 1
 		
 	if refTreeTableOutDir:
