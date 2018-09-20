@@ -144,7 +144,7 @@ def translateEventLineage(deventlineages, dcol2fullspenames, drefspeeventTup2Ids
 		# lighter version encoding events just by an integer referring to species tree events reference table
 		return {nodelab:[drefspeeventTup2Ids[evtup] for evtup in levtup] for nodelab, levtup in trline.iteritems()}
 
-def parseRec(nfrec, refspetree=None, drefspeeventTup2Ids=None, onlyLineages=[], recordEvTypes='T', ALEmodel='undated', minFreqReport=0, returnDict=True, lineageTableOutDir=None, noTranslateSpeTree=False, allEventByLineageByGenetree=False):
+def parseRec(nfrec, refspetree=None, ALEmodel='undated', drefspeeventTup2Ids=None, onlyLineages=[], recordEvTypes='T', minFreqReport=0, returnDict=True, lineageTableOutDir=None, noTranslateSpeTree=False, allEventByLineageByGenetree=False):
 	"""parse reconciled gene tree sample, returning sampled events by gene lineage
 	
 	if allEventByLineageByGenetree is True, return more detailed data, stored in a dict with the following elements: 
