@@ -319,7 +319,7 @@ def generateEventRefDB(refspetree, ALEmodel='undated', refTreeTableOutDir=None):
 	return (drefspeeventTup2Ids, drefspeeventId2Tups)
 
 def parse_events(lnfrec, genefamlist=None, refspetree=None, ALEmodel='undated', \
-                 drefspeeventTup2Ids={}, recordEvTypes='DTS', minFreqReport=0, \
+                 drefspeeventTup2Ids={}, recordEvTypes='ODTS', minFreqReport=0, \
                  nfpickleEventsOut=None, nfshelveEventsOut=None, dirTableOut=None, nbthreads=1):
 	"""from list of reconciliation files, families and genes to consider, return dictionary of reported events, by family and gene lineage"""
 	lfams = [os.path.basename(nfrec).split('-')[0] for nfrec in lnfrec]

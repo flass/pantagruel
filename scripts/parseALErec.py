@@ -4,7 +4,7 @@ import sys, os, getopt
 import re
 import copy
 
-eventTypes = 'DTLS'
+eventTypes = 'DTLSO'
 
 def getOriSpeciesFromEventLab(eventlab, sgsep='_'):
 	# split at DT location separator '@', then possibly at T don/rec seprator '->', and finally shorten the species label if node is a leaf
@@ -62,8 +62,8 @@ def parseALERecFile(nfrec, reftreelen=None, restrictclade=None, skipEventFreq=Fa
 		return [spetree, subspetree, lrecgt, recgtlines, restrictlabs, dnodeevt]
 
 def parseDatedRecGeneTree(recgt, spet, dexactevt={}, recgtsample=None, nsample=1, sgsep='_', restrictlabs=[], \
-                          fillDTLSdict=True, recordEvTypes='DTL', excludeTaggedLeaves=None, excludeTaggedSubtrees=None, joinTdonrec=True):
-	def parseRecGTNode(node, dlevt, dnodeallevt):
+                          fillDTLSdict=True, recordEvTypes='ODTL', excludeTaggedLeaves=None, excludeTaggedSubtrees=None, joinTdonrec=True):
+	def parseDatedRecGTNode(node, dlevt, dnodeallevt):
 		nodelab = node.label()
 		if not nodelab: raise ValueError, "unannotated node:\n%s"%str(node)
 		if node.is_leaf() and (excludeTaggedLeaves in nodelab):
@@ -84,15 +84,21 @@ def parseDatedRecGeneTree(recgt, spet, dexactevt={}, recgtsample=None, nsample=1
 				if i>0 and lineage[i-1][0]=='TdL':
 					# just before on the same branch
 					donloc = lineage[i-1][1]
+					dnodeallevt.setdefault(nodeid, []).append((evtype, donloc, evloc))
 				else:
 					# in parent branch
 					parent = node.go_father().nodeid()
-					if not parent: raise IndexError, "root gene tree node shoud not be a transfer recipient"
-					# donor transfer should be the last event
-					petype, peloc = dnodeallevt[parent.nodeid()][-1]
-					if petype=='Td': donloc = peloc
-					else: raise IndexError, "could not find transfer emission event"
-				dnodeallevt.setdefault(nodeid, []).append((evtype, donloc, evloc))
+					if not parent:
+						# gain at the gene tree root: it is an origination
+						# (gene creation or transsfer from outside the dataset)
+						evtype = 'O'
+						dnodeallevt.setdefault(nodeid, []).append((evtype, evloc))
+					else:
+						# donor transfer should be the last event
+						petype, peloc = dnodeallevt[parent.nodeid()][-1]
+						if petype=='Td': donloc = peloc
+						else: raise IndexError, "could not find transfer emission event"
+						dnodeallevt.setdefault(nodeid, []).append((evtype, donloc, evloc))
 			else:
 				dnodeallevt.setdefault(nodeid, []).append((evtype, evloc))
 
@@ -103,16 +109,17 @@ def parseDatedRecGeneTree(recgt, spet, dexactevt={}, recgtsample=None, nsample=1
 				return
 		for child in node.get_children():
 			# use recursion to be able to exclude subtrees
-			parseRecGTNode(child, dlevt, dnodeallevt)
+			parseDatedRecGTNode(child, dlevt, dnodeallevt)
 		return
 	
 	dnodeallevt = {}
 	dlevt = {e:[] for e in eventTypes}
-	parseRecGTNode(recgt, dlevt, dnodeallevt) # recursive function call
+	parseDatedRecGTNode(recgt, dlevt, dnodeallevt) # recursive function call
 	return dlevt, dnodeallevt
 	
-def parseUndatedRecGeneTree(recgt, spet, dexactevt={}, recgtsample=None, nsample=1, sgsep='_', restrictlabs=[], fillDTLSdict=True, recordEvTypes='DTL', excludeTaggedLeaves=None, excludeTaggedSubtrees=None):
-	def parseRecGTNode(node, dlevt, dnodeallevt):
+def parseUndatedRecGeneTree(recgt, spet, dexactevt={}, recgtsample=None, nsample=1, sgsep='_', restrictlabs=[], \
+                            fillDTLSdict=True, recordEvTypes='DTL', excludeTaggedLeaves=None, excludeTaggedSubtrees=None):
+	def parseUndatedRecGTNode(node, dlevt, dnodeallevt):
 		nodelab = node.label()
 		if not nodelab: raise ValueError, "unannotated node:\n%s"%str(node)
 		if node.is_leaf() and (excludeTaggedLeaves in nodelab):
@@ -180,12 +187,12 @@ def parseUndatedRecGeneTree(recgt, spet, dexactevt={}, recgtsample=None, nsample
 				return
 		for child in node.get_children():
 			# use recursion to be able to exclude subtrees
-			parseRecGTNode(child, dlevt, dnodeallevt)
+			parseUndatedRecGTNode(child, dlevt, dnodeallevt)
 		return
 	
 	dnodeallevt = {}
 	dlevt = {e:[] for e in eventTypes}
-	parseRecGTNode(recgt, dlevt, dnodeallevt) # recursive function call
+	parseUndatedRecGTNode(recgt, dlevt, dnodeallevt) # recursive function call
 	return dlevt, dnodeallevt
 
 def parseRecGeneTree(recgt, spet, ALEmodel='undated', **kw):
@@ -215,6 +222,8 @@ def parseRecGeneTree(recgt, spet, ALEmodel='undated', **kw):
 		return parseUndatedRecGeneTree(recgt, spet, **kw)
 	elif ALEmodel=='dated':
 		return parseDatedRecGeneTree(recgt, spet, **kw)
+	else:
+		raise ValueError, "specified ALE model not valid: %s"%ALEmodel
 
 #### dated model gene tree syntax parsing
 def findNextDatedEventSlice(nodelab): #, receptionOK=False
