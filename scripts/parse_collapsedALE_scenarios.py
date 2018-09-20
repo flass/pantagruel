@@ -312,7 +312,8 @@ def generateEventRefDB(refspetree, ALEmodel='undated', refTreeTableOutDir=None, 
 		#~ if ALEmodel=='undated':
 		# for all models, do not record dates of events
 		if refTreeTableOutDir: foutspetree.write('\t'.join((str(nid), str(fnid if fnid else ''), nlab, str(int(node.is_leaf()))))+'\n')
-		for et in pAr.eventTypes:
+		#~ for et in pAr.eventTypes:
+		for et in 'DTLS':
 			evtup = (et, nlab)
 			if et!='T':
 				drefspeeventTup2Ids[evtup] = eventid
@@ -327,6 +328,20 @@ def generateEventRefDB(refspetree, ALEmodel='undated', refTreeTableOutDir=None, 
 						drefspeeventId2Tups[eventid] = evtupt
 						if refTreeTableOutDir: foutspeevents.write('\t'.join([str(e) for e in (eventid, et, donnode.nodeid(), nid)])+'\n')
 						eventid += 1
+	
+	for node in refspetree:
+		nid = node.nodeid()
+		if nid>maxnid: maxnid = nid
+		nlab = node.label()
+		fnid = node.father_nodeid()
+		et = 'O'
+		evtup = (et, nlab)
+		drefspeeventTup2Ids[evtup] = eventid
+		drefspeeventId2Tups[eventid] = evtup
+		if refTreeTableOutDir: foutspeevents.write('\t'.join((str(eventid), et, '', str(nid)))+'\n')
+		eventid += 1
+
+	
 	if TfromOutside:
 		# make this loop last so not to change the value of ids whether done or not
 		outnid = maxnid + 1
@@ -334,7 +349,7 @@ def generateEventRefDB(refspetree, ALEmodel='undated', refTreeTableOutDir=None, 
 		for node in refspetree:
 			nid = node.nodeid()
 			nlab = node.label()
-			evtup = ('T', nlab, outtaxlab)
+			evtup = ('T', outtaxlab, nlab)
 			drefspeeventTup2Ids[evtupt] = eventid
 			drefspeeventId2Tups[eventid] = evtupt
 			if refTreeTableOutDir: foutspeevents.write('\t'.join([str(e) for e in (eventid, 'T', outnid, nid)])+'\n')
