@@ -88,6 +88,8 @@ def parseDatedRecGeneTree(recgt, spet, dexactevt={}, recgtsample=None, nsample=1
 						donloc = prevent[1]
 						dnodeallevt.setdefault(nodeid, []).append((evtype, donloc, evloc))
 					else:
+						print nodelab
+						print recgt
 						raise IndexError, "transfer event reception (Tr) is not the first event on gene tree branch,\nbut no transfer emission+loss (TdL) event can be detected before it;\npreceding event on same branch: %s"%repr(prevent)
 				else:
 					# in parent branch
@@ -104,6 +106,8 @@ def parseDatedRecGeneTree(recgt, spet, dexactevt={}, recgtsample=None, nsample=1
 							donloc = pevent[1]
 							dnodeallevt.setdefault(nodeid, []).append((evtype, donloc, evloc))
 						else:
+							print nodelab
+							print recgt
 							raise IndexError, "transfer event reception (Tr) is the first event on gene tree branch,\nbut could not find transfer emission (Td) event before it;\nlast event on previous branch: %s"%repr(pevent)
 			else:
 				dnodeallevt.setdefault(nodeid, []).append((evtype, evloc))
