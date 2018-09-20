@@ -5,6 +5,7 @@ import re
 import copy
 
 eventTypes = 'DTLSO'
+outtaxlab = '#OUTSIDE#'
 
 def getOriSpeciesFromEventLab(eventlab, sgsep='_'):
 	# split at DT location separator '@', then possibly at T don/rec seprator '->', and finally shorten the species label if node is a leaf
@@ -321,6 +322,8 @@ def splitSingleDatedEvent(nodelab, isleaf=False, verbose=False, sgsep='_', **kw)
 			evdate = evlocdate
 		else:
 			evdate, evloc = evlocdate.split('|')
+		if evloc=='-1':
+			evloc = outtaxlab
 		return s, evtype, evloc, int(evdate)
 	
 	# initiate

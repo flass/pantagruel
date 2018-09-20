@@ -17,7 +17,7 @@ replacedtag='-leaflabels_Spe2Pop.txt'
 collapsedcladetag = '_CC-clade'
 replacementcladetag = '_RC-clade'
 replacementcladepat = re.compile('^.+_(.+_RC-clade[0-9]+)$')
-
+outtaxlab = pAr.outtaxlab
 
 # block reconstruction
 gapsize = 2
@@ -168,6 +168,9 @@ def parseRec(nfrec, refspetree=None, ALEmodel='undated', drefspeeventTup2Ids=Non
 		tcolspetree, dcol2fullspenames = colspetree, {}
 		if refspetree:
 			assert refspetree.hasSameTopology(tcolspetree, checkInternalLabels=True)
+	if ALEmodel=='dated':
+		# add reference for '#OUTSIDE#' taxon
+		dcol2fullspenames[outtaxlab] = outtaxlab
 	# parse reconciled gene trees
 	# and extract (exact) event-wise event frequency
 	dexactevt = {}
@@ -280,23 +283,25 @@ def loadRefPopTree(nfrefspetree, nfpop):
 	refspetree.write_newick(nfrefspetreeout, ignoreBS=True)
 	return (refspetree, dspe2pop)
 	
-def generateEventRefDB(refspetree, ALEmodel='undated', refTreeTableOutDir=None):
+def generateEventRefDB(refspetree, ALEmodel='undated', refTreeTableOutDir=None, TfromOutside=True):
 	"""generates a dict of event tuples (of the form (X, [don, ]rec)). 
 	
 	Optionally writes out the reference species tree branches and event info to table files
 	"""
 	drefspeeventTup2Ids = {}
 	drefspeeventId2Tups = {}
+	maxnid = 0
 	eventid = 0
 	if refTreeTableOutDir:
 		foutspetree = open(os.path.join(refTreeTableOutDir, "phylogeny_species_tree.tab"), 'w')
 		foutspeevents = open(os.path.join(refTreeTableOutDir, "phylogeny_species_tree_events.tab"), 'w')
 	for node in refspetree:
 		nid = node.nodeid()
+		if nid>maxnid: maxnid = nid
 		nlab = node.label()
 		fnid = node.father_nodeid()
 		#~ if ALEmodel=='undated':
-		# in  all case, do not consider dates of events
+		# for all models, do not record dates of events
 		if refTreeTableOutDir: foutspetree.write('\t'.join((str(nid), str(fnid if fnid else ''), nlab, str(int(node.is_leaf()))))+'\n')
 		for et in pAr.eventTypes:
 			evtup = (et, nlab)
@@ -311,8 +316,21 @@ def generateEventRefDB(refspetree, ALEmodel='undated', refTreeTableOutDir=None):
 						evtupt = evtup + (donnode.label(),)
 						drefspeeventTup2Ids[evtupt] = eventid
 						drefspeeventId2Tups[eventid] = evtupt
-						if refTreeTableOutDir: foutspeevents.write('\t'.join([str(e) for e in (eventid, et, donnode.nodeid(), nid)])+'\n')
+						if refTreeTableOutDir: foutspeevents.write('\t'.join([str(e) for e in (eventid, et, nid, donnode.nodeid())])+'\n')
 						eventid += 1
+	if TfromOutside:
+		# make this loop last so not to change the value of ids whether done or not
+		outnid = maxnid + 1
+		if refTreeTableOutDir: foutspetree.write('\t'.join((str(outnid), outtaxlab, , '0'))+'\n')
+		for node in refspetree:
+			nid = node.nodeid()
+			nlab = node.label()
+			evtup = ('T', nlab, outtaxlab)
+			drefspeeventTup2Ids[evtupt] = eventid
+			drefspeeventId2Tups[eventid] = evtupt
+			if refTreeTableOutDir: foutspeevents.write('\t'.join([str(e) for e in (eventid, 'T', nid, outnid)])+'\n')
+			eventid += 1
+		
 	if refTreeTableOutDir:
 		foutspetree.close()
 		foutspeevents.close()
