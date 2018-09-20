@@ -87,7 +87,7 @@ def parseDatedRecGeneTree(recgt, spet, dexactevt={}, recgtsample=None, nsample=1
 					if prevent[0]=='TdL':
 						# just before on the same branch
 						donloc = prevent[1]
-						dnodeallevt.setdefault(nodeid, []).append((evtype, donloc, evloc))
+						dnodeallevt.setdefault(nodeid, []).append(('T', donloc, evloc))
 					else:
 						print nodelab
 						print recgt
@@ -98,14 +98,13 @@ def parseDatedRecGeneTree(recgt, spet, dexactevt={}, recgtsample=None, nsample=1
 					if not parent:
 						# gain at the gene tree root: it is an origination
 						# (gene creation or transsfer from outside the dataset)
-						evtype = 'O'
-						dnodeallevt.setdefault(nodeid, []).append((evtype, evloc))
+						dnodeallevt.setdefault(nodeid, []).append(('O', evloc))
 					else:
 						# donor transfer should be the last event
 						pevent = dnodeallevt[parent.nodeid()][0] # (remember BACKWARD time event listing)
 						if pevent[0]=='Td':
 							donloc = pevent[1]
-							dnodeallevt.setdefault(nodeid, []).append((evtype, donloc, evloc))
+							dnodeallevt.setdefault(nodeid, []).append(('T', donloc, evloc))
 						else:
 							print nodelab
 							print recgt

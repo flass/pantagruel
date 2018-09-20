@@ -25,7 +25,7 @@ gefagr = ['cds_code','replaced_cds_code','gene_family_id']
 
 ############ Functions
 
-def eventLineages(recgt, dnodeallevt, onlyLeaves=[], deDupMatching=replacementcladepat):
+def eventLineages(recgt, dnodeallevt, ALEmodel='undated', recordEvTypes='DTS', onlyLeaves=[], deDupMatching=replacementcladepat):
 	"""oreder events by gene lineage in the reconciled gene tree
 	
 	from a reconciled gene tree and the dict containing all the events in this tree in the format {node_id:(X, [don, ]rec), ...}, 
@@ -34,14 +34,21 @@ def eventLineages(recgt, dnodeallevt, onlyLeaves=[], deDupMatching=replacementcl
 		if not node: return []
 		nodeid = node.nodeid()
 		if nodeid in allevtlineages: return allevtlineages[nodeid]
+		# filter events
+		eventpath = [evtup for evtup in dnodeallevt.get(nodeid, []) if (evtup[0] in recordEvTypes)]
 		# record lineage of events from this node to the root ; dynamic programming !
-		eventpath = dnodeallevt.get(nodeid, []) + get_eventlineage(node.father, dnodeallevt, allevtlineages)
-		allevtlineages[nodeid] = eventpath
+		allevtlineages[nodeid] = eventpath + get_eventlineage(node.father, dnodeallevt, allevtlineages)
 		return eventpath
 	
 	evtlineages = {}	# only lineages from the leaves to be returned
 	allevtlineages = {} # cache dict for events at nodes shared by several leaves
-	leavesandlabels = [(leaf, leaf.label().split('.')[0]) for leaf in recgt.get_leaves()]
+	if ALEmodel=='undated':
+		leavesandlabels = [(leaf, leaf.label().split('.')[0]) for leaf in recgt.get_leaves()]
+	elif ALEmodel=='dated':
+		#~ leavesandlabels = [(leaf, splitEventChain(leaf.label(), isleaf=True, ALEmodel='dated')[1]) for leaf in recgt.get_leaves()]
+		leavesandlabels = [(leaf, leaf.label().split('.')[0].split('@')[0]) for leaf in recgt.get_leaves()]
+	else:
+		raise ValueError, "wrong ALE model specified: '%s'"%ALEmodel
 	leavesandlabels.sort(key=lambda x: x[1]) # sort so that the representative first label to be captured by deDupMatching regex will be consistent across the recgt sample
 	if onlyLeaves: leavesandlab = [x for x in leavesandlabels if (x[1] in onlyLeaves)]
 	else: leavesandlab = leavesandlabels
@@ -75,14 +82,14 @@ def translateRecStree(colspetree, refspetree):
 			node.edit_label(coresplab)
 	return [tcolspetree, dcol2fullspenames]
 	
-def translateRecTs(nfrec, dcol2fullspenames, mode='undated'):
+def translateRecTs(nfrec, dcol2fullspenames, ALEmodel='undated'):
 	"""edit input transfer report file, replacing collapsed species tree labels with full (i.e. uncollapsed) species treee labels; return dictionary of translated events and write out translated file"""
 	devents = {}
 	nfevent = nfrec.replace('ml_rec', 'Ts')
 	fevent = open(nfevent, 'r')
 	fevout = open(nfevent+'.fullScoords', 'w')
 	for line in fevent:
-		if mode=='undated':
+		if ALEmodel=='undated':
 			if line.startswith('#'):
 				fevout.write(line)
 				continue
@@ -144,7 +151,7 @@ def translateEventLineage(deventlineages, dcol2fullspenames, drefspeeventTup2Ids
 		# lighter version encoding events just by an integer referring to species tree events reference table
 		return {nodelab:[drefspeeventTup2Ids[evtup] for evtup in levtup] for nodelab, levtup in trline.iteritems()}
 
-def parseRec(nfrec, refspetree=None, ALEmodel='undated', drefspeeventTup2Ids=None, onlyLineages=[], recordEvTypes='T', minFreqReport=0, returnDict=True, lineageTableOutDir=None, noTranslateSpeTree=False, allEventByLineageByGenetree=False):
+def parseRec(nfrec, refspetree=None, ALEmodel='undated', drefspeeventTup2Ids=None, onlyLineages=[], recordEvTypes='DTS', minFreqReport=0, returnDict=True, lineageTableOutDir=None, noTranslateSpeTree=False, allEventByLineageByGenetree=False):
 	"""parse reconciled gene tree sample, returning sampled events by gene lineage
 	
 	if allEventByLineageByGenetree is True, return more detailed data, stored in a dict with the following elements: 
@@ -185,7 +192,7 @@ def parseRec(nfrec, refspetree=None, ALEmodel='undated', drefspeeventTup2Ids=Non
 		# * 'dlevt' is of no use and here returned empty because of fillDTLSdict=False
 		# would it not be empty, it could be translated to the full reference tree with:
 		# tdlevt = {etype:translateEventList(ldtl, dcol2fullspenames, drefspeevents) for etype, ldtl in dlevt.iteritems()}
-		evtlineages = eventLineages(recgt, dnodeallevt, onlyLeaves=onlyLineages)
+		evtlineages = eventLineages(recgt, dnodeallevt, onlyLeaves=onlyLineages, recordEvTypes=recordEvTypes)
 		tevtlineages = translateEventLineage(evtlineages, dcol2fullspenames, drefspeeventTup2Ids)
 		
 		if allEventByLineageByGenetree:
