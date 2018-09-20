@@ -87,7 +87,7 @@ def parseDatedRecGeneTree(recgt, spet, dexactevt={}, recgtsample=None, nsample=1
 					dnodeallevt.setdefault(nodeid, []).append((evtype, donloc, evloc))
 				else:
 					# in parent branch
-					parent = node.go_father().nodeid()
+					parent = node.go_father()
 					if not parent:
 						# gain at the gene tree root: it is an origination
 						# (gene creation or transsfer from outside the dataset)
