@@ -329,6 +329,7 @@ def generateEventRefDB(refspetree, ALEmodel='undated', refTreeTableOutDir=None, 
 						if refTreeTableOutDir: foutspeevents.write('\t'.join([str(e) for e in (eventid, et, donnode.nodeid(), nid)])+'\n')
 						eventid += 1
 	
+	# for backwards compatibility wwhen O event we not considered
 	for node in refspetree:
 		nid = node.nodeid()
 		if nid>maxnid: maxnid = nid
@@ -340,7 +341,6 @@ def generateEventRefDB(refspetree, ALEmodel='undated', refTreeTableOutDir=None, 
 		drefspeeventId2Tups[eventid] = evtup
 		if refTreeTableOutDir: foutspeevents.write('\t'.join((str(eventid), et, '', str(nid)))+'\n')
 		eventid += 1
-
 	
 	if TfromOutside:
 		# make this loop last so not to change the value of ids whether done or not
@@ -349,7 +349,7 @@ def generateEventRefDB(refspetree, ALEmodel='undated', refTreeTableOutDir=None, 
 		for node in refspetree:
 			nid = node.nodeid()
 			nlab = node.label()
-			evtup = ('T', outtaxlab, nlab)
+			evtupt = ('T', outtaxlab, nlab)
 			drefspeeventTup2Ids[evtupt] = eventid
 			drefspeeventId2Tups[eventid] = evtupt
 			if refTreeTableOutDir: foutspeevents.write('\t'.join([str(e) for e in (eventid, 'T', outnid, nid)])+'\n')
