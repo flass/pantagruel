@@ -1,3 +1,4 @@
+#!/usr/bin/python
 import sys, glob
 from os import path
 
