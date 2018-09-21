@@ -192,7 +192,7 @@ def parseRec(nfrec, refspetree=None, ALEmodel='undated', drefspeeventTup2Ids=Non
 		# * 'dlevt' is of no use and here returned empty because of fillDTLSdict=False
 		# would it not be empty, it could be translated to the full reference tree with:
 		# tdlevt = {etype:translateEventList(ldtl, dcol2fullspenames, drefspeevents) for etype, ldtl in dlevt.iteritems()}
-		evtlineages = eventLineages(recgt, dnodeallevt, onlyLeaves=onlyLineages, recordEvTypes=recordEvTypes)
+		evtlineages = eventLineages(recgt, dnodeallevt, ALEmodel=ALEmodel, onlyLeaves=onlyLineages, recordEvTypes=recordEvTypes)
 		tevtlineages = translateEventLineage(evtlineages, dcol2fullspenames, drefspeeventTup2Ids)
 		
 		if allEventByLineageByGenetree:
