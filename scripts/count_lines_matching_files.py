@@ -11,12 +11,13 @@ def file_len(fname):
 	return i + 1
 
 lnf = glob.glob(target)
-nfout = '_'.join(target.rsplit('/', 1)).replace('*', '_').rstrip('_')+'_line_counts'
+nfout = '_'.join(path.dirname(target), path.basename(target)).replace('*', '_')+'_line_counts'.replace('__', '_')
+print nfout
 fout = open(nfout, 'w')
 
 for nf in lnf:
 	with open(nf, 'r') as f:
-		fout.write(['\t'.join((path.basename(nf), str(file_len(nf))))+'\n')
+		fout.write('\t'.join((path.basename(nf), str(file_len(nf))))+'\n')
 
 fout.close()
 
