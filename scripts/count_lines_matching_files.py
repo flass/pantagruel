@@ -11,7 +11,7 @@ def file_len(fname):
 	return i + 1
 
 lnf = glob.glob(target)
-nfout = '_'.join(path.dirname(target), path.basename(target)).replace('*', '_')+'_line_counts'.replace('__', '_')
+nfout = '_'.join([path.dirname(target), path.basename(target)]).replace('*', '_')+'_line_counts'.replace('__', '_')
 print nfout
 fout = open(nfout, 'w')
 
