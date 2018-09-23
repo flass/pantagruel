@@ -84,7 +84,8 @@ def parseDatedRecGeneTree(recgt, spet, dexactevt={}, recgtsample=None, nsample=1
 				# piece back together Td and Tr events: look for preceding transfer eimssion
 				if i<(len(lineage)-1):
 					prevent = lineage[i+1] # (remember BACKWARD time event listing)
-					if prevent[0]=='TdL':
+					#~ if prevent[0]=='TdL':
+					if prevent[0]=='Td':
 						# just before on the same branch
 						donloc = prevent[1]
 						dnodeallevt.setdefault(nodeid, []).append(('T', donloc, evloc))
@@ -111,7 +112,11 @@ def parseDatedRecGeneTree(recgt, spet, dexactevt={}, recgtsample=None, nsample=1
 							raise IndexError, "transfer event reception (Tr) is the first event on gene tree branch,\nbut could not find transfer emission (Td) event before it;\nlast event on previous branch: %s"%repr(pevent)
 			else:
 				dnodeallevt.setdefault(nodeid, []).append((evtype, evloc))
-
+				if evtype[-1]=='L':
+					dnodeallevt.setdefault(nodeid, []).append((evtype[:-1], evloc))
+					if ('L' in recordEvTypes):
+						sisspe = spet[evloc].go_brother()
+						dnodeallevt.setdefault(nodeid, []).append(('L', sisspe.label()))
 		if excludeTaggedSubtrees:
 			alllabext = [lab.split('_', 1)[1] for lab in node.iter_leaf_labels()]
 			if (len(set(alllabext)) == 1) and (excludeTaggedSubtrees in alllabext[0]):
