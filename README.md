@@ -6,7 +6,10 @@
 From a dataset of bacterial genomes, builds a database that describes the homology structure of all genes in the dataset -- the pangenome. With that, *Pantagruel* will first generate two key outputs:  
 - a **reference (species) tree**, depicting the main signal of evolutionary relationships between input *genomes*;  
 - **gene trees**, depicting the evolutionary relationships between gene sequences within a family of homologous genes.   
-From their comparison in a probabilistic gene tree/species tree reconciliation framework, a **scenarios of evolution** is inferred for each gene family in the dataset. This scenario describes the likely events of gene duplication, horizontal transfer and loss that marked the gene family history. It also provides an account of the history of gain and loss of this gene over the reference tree of species, follwing the evolution of gene lineages within and across genome lineages.  
+
+A **scenario of gene evolution** is inferred for each gene family in the dataset by reconciling the topology of gene trees with the reference species tree in a probabilistic framework.  
+Such scenario describes the likely events of gene **duplication, horizontal transfer and loss** (DTL model) that marked the gene family history. These events are annotated on the branch of the gene tree and the of the reference tree, and make their history consistent.
+From these annotations, one can derive the history of gain and loss of this gene over the reference tree of species, and follow the diversification of *gene lineages* within and across *genome lineages*.  
 Gene tree/species tree reconciliation methods rely on the best available information to infer such scenario as they account for the phylogeny of genes; a probablilistic methods is chosen to quantify the statistical support for inferences, in face of the large space of possible scenario and of the uncertainty in the input gene phylogeny.  
 
 These historical data are then gathered in the database, which provides a way to:  
