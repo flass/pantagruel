@@ -1,20 +1,38 @@
 ## Installing Pantagruel and its dependencies
 
-Under a Debian environment (e.g. Ubuntu), please follow the indications below.
-In the case of setting-up a virtual machine, the script [install_dependencies.sh](https://github.com/flass/pantagruel/blob/master/install_dependencies.sh) can do that work for you. It can be used this way:
+Under a Debian environment (e.g. Ubuntu), please follow the indications below.  
+In the case of setting-up a virtual machine, the script [install_dependencies.sh](https://github.com/flass/pantagruel/blob/master/install_dependencies.sh) can do that work for you.  
+
+Assuming you want to create a folder named `pantagruel_pipeline/` in the current working directory and install the whole software pipeline (the *pantagruel* package and its dependencies) in it, you should first do:
 ```sh
-mkdir $PWD/pantagruel_dependencies
-./install_dependencies.sh $PWD/pantagruel_dependencies
+mkdir ./pantagruel_pipeline/
 ```
+Then, you have to get the pantagruel scripts by dowloading the [archive of the last version on Github](https://github.com/flass/pantagruel/archive/master.zip) or use `git` to synchronize the repository (recomended for easier software update, especially during *Pantagruel* development phase!).
+```sh
+cd pantagruel_pipeline/
+git clone https://github.com/flass/pantagruel.git
+```
+Finally, you can run the installation script:
+```sh
+cd .. # retrun to parent folder
+sudo pantagruel/install_dependencies.sh ./pantagruel_pipeline
+```
+________
+
+Otherwise, you can manually install the software following the indications below:
 
 ### basic dependencies, libraries and standalone software
 ```sh
 sudo apt install git cmake gcc g++ linuxbrew-wrapper lftp clustalo raxml libhmsbeagle1v5 mrbayes
 ```
 ### R and packages
+```sh
 sudo apt install r-base-core r-recommended r-cran-ape r-cran-phytools r-cran-ade4 r-cran-vegan r-cran-dbi r-cran-rsqlite r-cran-igraph r-cran-getopt
+```
 ### Python and packages
+```sh
 sudo apt install python python-scipy python-numpy python-biopython python-igraph cython
+```
 
 ### if using MPI for MrBayes (recommended)
 ```sh
@@ -45,7 +63,8 @@ chmod +x ${SOFTWARE}/pal2nal.v14/pal2nal.pl
 ln -s ${SOFTWARE}/pal2nal.v14/pal2nal.pl ${BINS}/
 ```
 
-### fetch MAD program
+### Fetch MAD program
+```sh
 wget https://www.mikrobio.uni-kiel.de/de/ag-dagan/ressourcen/mad2-2.zip
 mkdir -p ${SOFTWARE}/MAD/
 tar -xzf ../mad2-2.zip -d ${SOFTWARE}/MAD/

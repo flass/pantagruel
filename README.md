@@ -21,7 +21,7 @@ Two version of the pipeline are distributed:
 
 - a pre-compiled Docker image that can be deployed on pretty much any platform, including swarms of virtual machines (VMs). The latter version was implemented using Philippe Veber's [Bistro](https://github.com/pveber/bistro) framework.
 
-See below for instruction on software installation and usage.
+See below for instruction on software [installation](https://github.com/flass/pantagruel#installing-pantagruel-and-its-dependencies) and [usage](https://github.com/flass/pantagruel#using-pantagruel).
 
 --------------------
 
@@ -84,6 +84,9 @@ Below is a summary of the software on which Pantagruel dependends:
 - [docker](https://www.docker.com/) (available as a Debian package *docker.io*)
 
 -------------
+
+## Using Pantagruel
+
 
 
 [repas]: https://github.com/flass/pantagruel/blob/master/Pantagruels_childhood.jpg
