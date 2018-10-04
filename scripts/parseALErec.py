@@ -75,8 +75,10 @@ def parseDatedRecGeneTree(recgt, spet, dexactevt={}, recgtsample=None, nsample=1
 		# line of events to be read left-to-right backward in time
 		lineage, leaflab = splitEventChain(nodelab, isleaf=node.is_leaf(), ALEmodel='dated', sgsep='_')
 		# list of events goes BACKWARD in time when read left-to-right
+		#~ print '#', nodeid, ':', nodelab
 		for i, event in enumerate(lineage):
 			evtype, evloc, evdate = event
+			#~ print evtype, evloc, evdate
 			# evtype[0] to capture Td, TdL, Tr events as T
 			if (evtype[0] not in recordEvTypes) or (restrictlabs and not (dup in restrictlabs)): continue
 			if fillDTLSdict: dlevt[evtype].append(evloc)
@@ -84,8 +86,7 @@ def parseDatedRecGeneTree(recgt, spet, dexactevt={}, recgtsample=None, nsample=1
 				# piece back together Td and Tr events: look for preceding transfer eimssion
 				if i<(len(lineage)-1):
 					prevent = lineage[i+1] # (remember BACKWARD time event listing)
-					#~ if prevent[0]=='TdL':
-					if prevent[0]=='Td':
+					if prevent[0][:2]=='Td':
 						# just before on the same branch
 						donloc = prevent[1]
 						dnodeallevt.setdefault(nodeid, []).append(('T', donloc, evloc))
@@ -98,12 +99,13 @@ def parseDatedRecGeneTree(recgt, spet, dexactevt={}, recgtsample=None, nsample=1
 					parent = node.go_father()
 					if not parent:
 						# gain at the gene tree root: it is an origination
-						# (gene creation or transsfer from outside the dataset)
-						dnodeallevt.setdefault(nodeid, []).append(('O', evloc))
+						# (gene creation or transfer from outside the dataset)
+						# will be recorded below
+						pass
 					else:
 						# donor transfer should be the last event
 						pevent = dnodeallevt[parent.nodeid()][0] # (remember BACKWARD time event listing)
-						if pevent[0]=='Td':
+						if pevent[0][:2]=='Td':
 							donloc = pevent[1]
 							dnodeallevt.setdefault(nodeid, []).append(('T', donloc, evloc))
 						else:
@@ -117,9 +119,15 @@ def parseDatedRecGeneTree(recgt, spet, dexactevt={}, recgtsample=None, nsample=1
 					if ('L' in recordEvTypes):
 						sisspe = spet[evloc].go_brother()
 						dnodeallevt.setdefault(nodeid, []).append(('L', sisspe.label()))
+		if ('O' in recordEvTypes) and not node.go_father():
+			# record origination = gene creation or transfer from outside the dataset
+			if lineage:
+				# use location of oldest event
+				evloc = lineage[-1][1]
+				dnodeallevt[nodeid].append(('O', evloc))
 		if excludeTaggedSubtrees:
 			alllabext = [lab.split('_', 1)[1] for lab in node.iter_leaf_labels()]
-			if (len(set(alllabext)) == 1) and (excludeTaggedSubtrees in alllabext[0]):
+			if (excludeTaggedSubtrees in alllabext[0]) and (len(set(alllabext)) == 1):
 				# the subtree below this node is an artificial addition to the reconciled gene tree and should be skipped
 				return
 		for child in node.get_children():
@@ -279,8 +287,9 @@ def splitSingleDatedEvent(nodelab, isleaf=False, verbose=False, sgsep='_', **kw)
 	"""from a gene tree branch event chain, return iterator that yields the type and location of every event
 	
 	if isleaf=True, assumes the branch led to a leaf, and the leaf label is yielded as the last item.
+	Note that events are written backward in time when read from left to right (i.e. first in chain is last in time).
 	"""
-	def process_event(s):
+	def process_event(s, happenslast=False):
 		# process possible event separators in order
 		if s.startswith('.T@'):
 			# immeadiate transfer-loss (should be only present on the beginning of the event chain)
@@ -292,6 +301,9 @@ def splitSingleDatedEvent(nodelab, isleaf=False, verbose=False, sgsep='_', **kw)
 			# simple speciation
 			evtype = 'S'
 			thisev = 1
+			# if event is not last it is followed by a loss: loss in one of the daughter lineage for speciation; loss of resident copy for transfer
+			# no reation of gene lineage, just changes species identity of the gene tree branch (from parent to daughter species)
+			if happenslast: evtype += 'L'
 		elif s.startswith('@'):
 			# reception of transfer by recipient = gain
 			thisev = 1
@@ -318,10 +330,7 @@ def splitSingleDatedEvent(nodelab, isleaf=False, verbose=False, sgsep='_', **kw)
 		else:
 			evlocdate = s[thisev:nextev+thisev]
 			s = s[nextev+thisev:]
-			# if event is not last it is followed by a loss: loss in one of the daughter lineage for speciation; loss of resident copy for transfer
-			# just changes species identity of the gene tree branch (from parent to daughter species)
-			if evtype=='S': evtype += 'L'
-		if evtype in ['S', 'SL']:
+		if evtype[0]=='S':
 			evloc = evlocdate
 			evdate = evlocdate
 		else:
@@ -340,16 +349,18 @@ def splitSingleDatedEvent(nodelab, isleaf=False, verbose=False, sgsep='_', **kw)
 		s = nodelab
 	# parse string describing the event chain
 	if verbose>1: print 'events:',
+	first=True
 	while s:
-		s, evtype, evloc, evdate = process_event(s)
+		s, evtype, evloc, evdate = process_event(s, happenslast=first)
 		yield (evtype, evloc, evdate)
 		if verbose>1: print (evtype, evloc, evdate),
+		first=False
 	if isleaf:
-		# add the final speciation
-		evtype = 'S'
-		evdate = 0
-		evloc = leaflab.split(sgsep)[0]
-		yield (evtype, evloc, evdate)
+		#~ # add the final speciation
+		#~ evtype = 'S'
+		#~ evdate = 0
+		#~ evloc = leaflab.split(sgsep)[0]
+		#~ yield (evtype, evloc, evdate)
 		if verbose>1: print 'leaflab: %s;'%leaflab,
 		# last yield
 		yield leaflab

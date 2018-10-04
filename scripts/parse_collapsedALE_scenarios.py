@@ -33,12 +33,24 @@ def eventLineages(recgt, dnodeallevt, ALEmodel='undated', recordEvTypes='DTS', o
 	def get_eventlineage(node, dnodeallevt, allevtlineages):
 		if not node: return []
 		nodeid = node.nodeid()
-		if nodeid in allevtlineages: return allevtlineages[nodeid]
-		# filter events
-		eventpath = [evtup for evtup in dnodeallevt.get(nodeid, []) if (evtup[0] in recordEvTypes)]
-		# record lineage of events from this node to the root ; dynamic programming !
-		allevtlineages[nodeid] = eventpath + get_eventlineage(node.father, dnodeallevt, allevtlineages)
-		return eventpath
+		eventpath = allevtlineages.get(nodeid)
+		if not (eventpath is None):
+			#~ print '#', nodeid
+			#~ print 'found previous record'
+			return eventpath
+		else:
+			# filter events
+			eventpath = [evtup for evtup in dnodeallevt.get(nodeid, []) if (evtup[0] in recordEvTypes)]
+			eventpath += get_eventlineage(node.father, dnodeallevt, allevtlineages)
+			#~ print '#', nodeid
+			#~ print 'allevtlineages:', allevtlineages
+			#~ print 'eventpath:', eventpath
+			if not node.is_leaf():
+				#~ print 'recording'
+				# record lineage of events from this node to the root ; dynamic programming !
+				allevtlineages[nodeid] = eventpath
+				#~ print 'allevtlineages:', allevtlineages
+			return eventpath
 	
 	evtlineages = {}	# only lineages from the leaves to be returned
 	allevtlineages = {} # cache dict for events at nodes shared by several leaves
@@ -121,7 +133,6 @@ def translateEventLineage(deventlineages, dcol2fullspenames, drefspeeventTup2Ids
 	if dcol2fullspenames:
 		trline = {}
 		for nodelab, levtloc in deventlineages.iteritems():
-			#~ trltups = []
 			trltups = set()
 			for evtloc in levtloc:
 				trloc = tuple(dcol2fullspenames[x] for x in evtloc[1:])
@@ -130,18 +141,7 @@ def translateEventLineage(deventlineages, dcol2fullspenames, drefspeeventTup2Ids
 					if verbose: print "ignore:", evtloc, ' ->', trloc
 					continue
 				trtup = evtloc[:1]+trloc
-				#~ trltups.append(trtup)
 				trltups.add(trtup)
-			# !!! BEWARE: the above translation of species tree referential will likely result 
-			# in several nodes of the (partially collapsed) reconciliation's species tree
-			# to map to a single node of the (fully collpased) reference species tree.
-			# Without accounting for this effect, the count of events observed
-			# at several nodes in the reconciliation's species tree would be pooled into one count,
-			# as though occurring at a single node of the reference species tree,
-			# which would artefactually increase the observed frequencies, and potentially lead to event proba > 1.
-			# This is wrong! Duplicate translated events must be removed by corecing event tuple list to a set,
-			# or not be added in the first place, using a set rather than list.
-			#~ trltups = list(set(trltups))
 			trline[nodelab] = trltups
 	else:
 		trline = deventlineages
@@ -185,7 +185,9 @@ def parseRec(nfrec, refspetree=None, ALEmodel='undated', drefspeeventTup2Ids=Non
 	allrectevtlineages = {}
 	for i, recgt in enumerate(lrecgt):
 		# gather scenario-scpecific events (i.e. dependent on reconciled gene tree topology, which varies among the sample)
-		dlevt, dnodeallevt = pAr.parseRecGeneTree(recgt, colspetree, ALEmodel=ALEmodel, dexactevt=dexactevt, recgtsample=recgtsample, nsample=nsample, fillDTLSdict=False, recordEvTypes=recordEvTypes, excludeTaggedLeaves=collapsedcladetag, excludeTaggedSubtrees=replacementcladetag)
+		dlevt, dnodeallevt = pAr.parseRecGeneTree(recgt, colspetree, ALEmodel=ALEmodel, dexactevt=dexactevt, recgtsample=recgtsample, \
+		                                          nsample=nsample, fillDTLSdict=False, recordEvTypes=recordEvTypes, \
+		                                          excludeTaggedLeaves=collapsedcladetag, excludeTaggedSubtrees=replacementcladetag)
 		# here events involving a replcement clade (RC) or leaf (CC) are excluded
 		# * 'dexactevt' is used as cache to store frequencies of event s as inferred from regex searches of the event pattern
 		# these frequencies are not specific to gene lineages, but aggregate the counts over the whole gene family
@@ -193,7 +195,9 @@ def parseRec(nfrec, refspetree=None, ALEmodel='undated', drefspeeventTup2Ids=Non
 		# would it not be empty, it could be translated to the full reference tree with:
 		# tdlevt = {etype:translateEventList(ldtl, dcol2fullspenames, drefspeevents) for etype, ldtl in dlevt.iteritems()}
 		evtlineages = eventLineages(recgt, dnodeallevt, ALEmodel=ALEmodel, onlyLeaves=onlyLineages, recordEvTypes=recordEvTypes)
+		print 'evtlineages:', evtlineages
 		tevtlineages = translateEventLineage(evtlineages, dcol2fullspenames, drefspeeventTup2Ids)
+		print 'tevtlineages:', tevtlineages
 		
 		if allEventByLineageByGenetree:
 			# one way to proceed is to build the object 'allrectevtlineages'
