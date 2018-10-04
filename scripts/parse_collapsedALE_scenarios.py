@@ -301,6 +301,12 @@ def generateEventRefDB(refspetree, ALEmodel='undated', refTreeTableOutDir=None, 
 	- species_tree table dump has fields:       (branch_id, parent_branch_id, branch_name, is_tip)
 	- species_tree_event table dump has fields: (event_id, event_type, don_branch_id, rec_branch_id)
 	"""
+	def recordGLEvent(eventid, evtup, outevtup, drefspeeventTup2Ids, drefspeeventId2Tups, foutspeevents=None):
+		drefspeeventTup2Ids[evtup] = eventid
+		drefspeeventId2Tups[eventid] = evtup
+		if foutspeevents: foutspeevents.write('\t'.join([str(e) for e in outevtup])+'\n')
+		return eventid+1
+	
 	drefspeeventTup2Ids = {}
 	drefspeeventId2Tups = {}
 	maxnid = 0
@@ -308,6 +314,8 @@ def generateEventRefDB(refspetree, ALEmodel='undated', refTreeTableOutDir=None, 
 	if refTreeTableOutDir:
 		foutspetree = open(os.path.join(refTreeTableOutDir, "phylogeny_species_tree.tab"), 'w')
 		foutspeevents = open(os.path.join(refTreeTableOutDir, "phylogeny_species_tree_events.tab"), 'w')
+	else:
+		foutspeevents = None
 	for node in refspetree:
 		nid = node.nodeid()
 		if nid>maxnid: maxnid = nid
@@ -320,44 +328,36 @@ def generateEventRefDB(refspetree, ALEmodel='undated', refTreeTableOutDir=None, 
 		for et in 'DTLS':
 			evtup = (et, nlab)
 			if et!='T':
-				drefspeeventTup2Ids[evtup] = eventid
-				drefspeeventId2Tups[eventid] = evtup
-				if refTreeTableOutDir: foutspeevents.write('\t'.join((str(eventid), et, '', str(nid)))+'\n')
-				eventid += 1
+				eventid = recordGLEvent(eventid, evtup, (eventid, et, '', nid), drefspeeventTup2Ids, drefspeeventId2Tups, foutspeevents)
 			else:
 				for donnode in refspetree:
 					if not node is donnode:
 						evtupt = evtup + (donnode.label(),)
-						drefspeeventTup2Ids[evtupt] = eventid
-						drefspeeventId2Tups[eventid] = evtupt
-						if refTreeTableOutDir: foutspeevents.write('\t'.join([str(e) for e in (eventid, et, donnode.nodeid(), nid)])+'\n')
-						eventid += 1
+						eventid = recordGLEvent(eventid, evtupt, (eventid, et, donnode.nodeid(), nid), drefspeeventTup2Ids, drefspeeventId2Tups, foutspeevents)
 	
 	# for backwards compatibility wwhen O event we not considered
+	et = 'O'
 	for node in refspetree:
 		nid = node.nodeid()
 		if nid>maxnid: maxnid = nid
 		nlab = node.label()
 		fnid = node.father_nodeid()
-		et = 'O'
 		evtup = (et, nlab)
-		drefspeeventTup2Ids[evtup] = eventid
-		drefspeeventId2Tups[eventid] = evtup
-		if refTreeTableOutDir: foutspeevents.write('\t'.join((str(eventid), et, '', str(nid)))+'\n')
-		eventid += 1
+		eventid = recordGLEvent(eventid, evtup, (eventid, et, '', nid), drefspeeventTup2Ids, drefspeeventId2Tups, foutspeevents)
+	# add origination outside the tree
+	outnid = maxnid + 1
+	if refTreeTableOutDir: foutspetree.write('\t'.join((str(outnid), '', outtaxlab, '0'))+'\n')
+	evtup = (et, outtaxlab)
+	eventid = recordGLEvent(eventid, evtup, (eventid, et, '', outnid), drefspeeventTup2Ids, drefspeeventId2Tups, foutspeevents)
 	
 	if TfromOutside:
-		# make this loop last so not to change the value of ids whether done or not
-		outnid = maxnid + 1
-		if refTreeTableOutDir: foutspetree.write('\t'.join((str(outnid), '', outtaxlab, '0'))+'\n')
+		et = 'T'
+		# make this loop occur last so not to change the value of ids whether done or not
 		for node in refspetree:
 			nid = node.nodeid()
 			nlab = node.label()
-			evtupt = ('T', outtaxlab, nlab)
-			drefspeeventTup2Ids[evtupt] = eventid
-			drefspeeventId2Tups[eventid] = evtupt
-			if refTreeTableOutDir: foutspeevents.write('\t'.join([str(e) for e in (eventid, 'T', outnid, nid)])+'\n')
-			eventid += 1
+			evtupt = (et, outtaxlab, nlab)
+			eventid = recordGLEvent(eventid, evtupt, (eventid, et, outnid, nid), drefspeeventTup2Ids, drefspeeventId2Tups, foutspeevents)
 		
 	if refTreeTableOutDir:
 		foutspetree.close()
