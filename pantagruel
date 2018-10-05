@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+#########################################################
+## PANTAGRUEL:                                         ##
+##             a pipeline for                          ##
+##             phylogenetic reconciliation             ##
+##             of a bacterial pangenome                ##
+#########################################################
+# Copyright: Florent Lassalle (f.lassalle@imperial.ac.uk), 01 October 2018.
+
+locexec=$(readlink -e $0)
+direxec=$(dirname $locexec)
+${direxec}/scripts/itemized_pipeline/pantagruel_pipeline_master.sh ${@}

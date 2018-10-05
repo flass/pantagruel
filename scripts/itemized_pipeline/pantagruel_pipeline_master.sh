@@ -9,13 +9,15 @@
 # Copyright: Florent Lassalle (f.lassalle@imperial.ac.uk), 01 October 2018.
 
 usage (){
-  echo "Usage: pantagruel_pipeline_master.sh -d db_name [-r root_dir] [other options] TASK1 [TASK2 [...]]"
-  echo "    -d|-dbname     database name"
-  echo "    -r|-rootdir    root directory where to create the database; defaults to current folder"
-  echo "    -p|-ptgrepo    location of pantagruel software head folder; default to directory where this script is located"
-  echo "    -i|-iam        database creator identity (e-mail address is preferred)"
-  echo "    -f|-famprefix  alphanumerical prefix (no number first) of the names for homologous protein/gene family clusters;"
+  echo "Usage: pantagruel -d db_name [-r root_dir] [other options] TASK1 [TASK2 [...]]"
+  echo "    -d|--dbname     database name"
+  echo "    -r|--rootdir    root directory where to create the database; defaults to current folder"
+  echo "    -p|--ptgrepo    location of pantagruel software head folder; default to directory where this script is located"
+  echo "    -i|--iam        database creator identity (e-mail address is preferred)"
+  echo "    -f|--famprefix  alphanumerical prefix (no number first) of the names for homologous protein/gene family clusters;"
   echo "                   the chosen prefix will be appended with a 'P' for protein families and a 'C' for CDS families."
+  echo "    -h|--help       print this help message and exit."
+  echo ""
   echo "TASKs are to be picked among the following (equivalent digit/number/keywords are separated by a '|'):"
   echo "  all"
   echo "       perform all pipeline tasks, from database initiation to co-evolution inference"
@@ -39,6 +41,8 @@ usage (){
   echo "       quantify gene co-evolution and build gene association network"
   echo "  8|08|specific|clade_specific_genes"
   echo "       classify genes into orthologous groups (OGs) and search clade-specific OGs"
+  echo "________________________________________________________________________"
+  echo ""
 }
 testmandatoryarg (){
   if [ -z "$2" ]; then echo "missing argument for option '$1'" usage ; exit 1 ; fi
@@ -54,7 +58,7 @@ export ptgrepo=$(dirname $0)
 export myemail="undisclosed"
 export famprefix="PANTAG"
 
-ARGS=`getopt --options "d:r:p:i:f:" --longoptions "dbname:,rootdir:,ptgrepo:,iam:,famprefix:" --name "pantagruel_pipelin_master.sh" -- "$@"`
+ARGS=`getopt --options "d:r:p:i:f:h" --longoptions "dbname:,rootdir:,ptgrepo:,iam:,famprefix:,help" --name "pantagruel_pipelin_master.sh" -- "$@"`
 
 #Bad arguments
 if [ $? -ne 0 ];
@@ -67,6 +71,10 @@ eval set -- "$ARGS"
 while true;
 do
   case "$1" in
+    -h|--help) 
+      usage
+      exit 0;;
+    
     -d|--dbname) 
       testmandatoryarg "$1" "$2"
       export ptgdbname="$2"
