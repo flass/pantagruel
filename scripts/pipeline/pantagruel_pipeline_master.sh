@@ -9,20 +9,21 @@
 # Copyright: Florent Lassalle (f.lassalle@imperial.ac.uk), 01 October 2018.
 
 usage (){
-  echo "Usage: pantagruel -d db_name [-r root_dir] [other options] TASK1 [TASK2 [...]]"
+  echo "Usage: pantagruel -d db_name [-r root_dir] [other options] TASK1 [task-specific options]"
   echo "    -d|--dbname     database name"
   echo "    -r|--rootdir    root directory where to create the database; defaults to current folder"
   echo "    -p|--ptgrepo    location of pantagruel software head folder; default to directory where this script is located"
   echo "    -i|--iam        database creator identity (e-mail address is preferred)"
-  echo "    -f|--famprefix  alphanumerical prefix (no number first) of the names for homologous protein/gene family clusters;"
+  echo "    -f|--famprefix  alphanumerical prefix (no number first) of the names for homologous protein/gene family clusters; default to 'PANTAG'"
   echo "                   the chosen prefix will be appended with a 'P' for protein families and a 'C' for CDS families."
   echo "    -h|--help       print this help message and exit."
   echo ""
   echo "TASKs are to be picked among the following (equivalent digit/number/keywords are separated by a '|'):"
-  echo "  all"
-  echo "       perform all pipeline tasks, from database initiation to co-evolution inference"
   echo "  init"
   echo "       database initiation: define shared environment variables"
+  echo "  all"
+  echo "       run all pipeline tasks (apart from database initiation), from fetching data to co-evolution inference."
+  echo "       All tasks will be performed using parameters defined at the __init__ step, and default parameters otherwise."
   echo "  0|00|fetch|fetch_data"  
   echo "       fetch public genome data from NCBI sequence databases and annotate private genomes"
   echo "  1|01|homologous|homologous_seq_families"
@@ -58,7 +59,7 @@ export ptgrepo=$(dirname $0)
 export myemail="undisclosed"
 export famprefix="PANTAG"
 
-ARGS=`getopt --options "d:r:p:i:f:h" --longoptions "dbname:,rootdir:,ptgrepo:,iam:,famprefix:,help" --name "pantagruel_pipelin_master.sh" -- "$@"`
+ARGS=`getopt --options "d:r:p:i:f:h" --longoptions "dbname:,rootdir:,ptgrepo:,iam:,famprefix:,help" --name "pantagruel" -- "$@"`
 
 #Bad arguments
 if [ $? -ne 0 ];
@@ -114,30 +115,47 @@ if [ -z "$ptgdbname" ] ; then
  exit 1
 fi
 
-echo "will create/use Pantagruel database '$ptgdbname' in local root folder: '$PWD'"
+echo "will create/use Pantagruel database '$ptgdbname', set in root folder: '$PWD'"
 
-
-## optional parameters
-export assembler=""
-export seqcentre=""
-
+## task-specific parameters
+initfile=""
 
 tasks=""
-for arg in $@ ; do
- case "$task" in
- "all")                                        tasks="init 0 1 2 3 4 5 6 7 8" ; break;;
- "init")                                       tasks="init ${tasks}" ;;
- "0|00|fetch|fetch_data"  )                    tasks="${tasks} 0" ;;
- "1|01|homologous|homologous_seq_families" )   tasks="${tasks} 1" ;;
- "2|02|align|align_homologous_seq"    )        tasks="${tasks} 2" ;;
- "3|03|sqldb|create_sqlite_db"    )            tasks="${tasks} 3" ;;
- "4|04|core|core_genome_ref_tree")             tasks="${tasks} 4" ;;
- "5|05|genetrees|gene_trees")                  tasks="${tasks} 5" ;;
- "6|06|reconciliations")                       tasks="${tasks} 6" ;;
- "7|07|coevolution")                           tasks="${tasks} 7" ;;
- "8|08|specific|clade_specific_genes")         tasks="${tasks} 8" ;;
+while [ ! -z "$@" ] ; do
+ case "$1" in
+ "init")
+          tasks="init"
+          if [ ! -z "$2" ] ; then
+             initfile="$2"
+          fi
+          break ;;
+ "all")                                     
+          tasks="0 1 2 3 4 5 6 7 8"
+          break;;
+ "0|00|fetch|fetch_data")
+          tasks="${tasks} 0" ;;
+ "1|01|homologous|homologous_seq_families" )
+          tasks="${tasks} 1" ;;
+ "2|02|align|align_homologous_seq"    )
+          tasks="${tasks} 2" ;;
+ "3|03|sqldb|create_sqlite_db"    )
+          tasks="${tasks} 3" ;;
+ "4|04|core|core_genome_ref_tree")
+          tasks="${tasks} 4" ;;
+ "5|05|genetrees|gene_trees")
+          tasks="${tasks} 5" ;;
+ "6|06|reconciliations")
+          tasks="${tasks} 6" ;;
+ "7|07|coevolution")
+          tasks="${tasks} 7" ;;
+ "8|08|specific|clade_specific_genes")
+          tasks="${tasks} 8" ;;
   esac
+  shift
 done
+
+# sort tasks
+tasks=$(echo "${tasks}" | tr ' ' '\n' | sort -u | xargs)
 
 if [[ ${tasks[0]} != "all" && ${tasks[0]} != "init" ]] ; then
   export ptgdb=${ptgroot}/${ptgdbname}
@@ -145,47 +163,49 @@ if [[ ${tasks[0]} != "all" && ${tasks[0]} != "init" ]] ; then
   source $envsourcescript
 fi
 
-for task in "$tasks" ; do
- case "$task" in
- "init")
+if [[ "$tasks"=='init' ]] ; then
     echo "Pantagrel pipeline step $task: initiate pangenome database."
-    ${ptgscripts}/itemized_pipeline/pantagruel_pipeline_init.sh
-    checkexec ;;
- "0")
+    ${ptgscripts}/pipeline/pantagruel_pipeline_init.sh ${ptgdbname} ${ptgroot} ${ptgrepo} ${myemail} ${famprefix} ${initfile}
+    checkexec
+else
+  for task in "$tasks" ; do
+   case "$task" in
+   "0")
     echo "Pantagrel pipeline step $task: fetch public genome data from NCBI sequence databases and annotate private genomes."
-    ${ptgscripts}/itemized_pipeline/pantagruel_pipeline_00_fetch_data.sh
+    ${ptgscripts}/pipeline/pantagruel_pipeline_00_fetch_data.sh ${ptgdbname} ${ptgroot}
     checkexec  ;;
- "1")
+   "1")
     echo "Pantagrel pipeline step $task: classify protein sequences into homologous families."
-    ${ptgscripts}/itemized_pipeline/pantagruel_pipeline_01_homologous_seq_families.sh
+    ${ptgscripts}/pipeline/pantagruel_pipeline_01_homologous_seq_families.sh ${ptgdbname} ${ptgroot}
     checkexec  ;;
- "2")
+   "2")
     echo "Pantagrel pipeline step $task: align homologous protein sequences and translate alignemnts into coding sequences."
-    ${ptgscripts}/itemized_pipeline/pantagruel_pipeline_02_align_homologous_seq.sh
+    ${ptgscripts}/pipeline/pantagruel_pipeline_02_align_homologous_seq.sh ${ptgdbname} ${ptgroot}
     checkexec  ;;
- "3")
+   "3")
     echo "Pantagrel pipeline step $task: initiate SQL database and load genomic object relationships."
-    ${ptgscripts}/itemized_pipeline/pantagruel_pipeline_03_create_sqlite_db.sh
+    ${ptgscripts}/pipeline/pantagruel_pipeline_03_create_sqlite_db.sh ${ptgdbname} ${ptgroot} ${ptgrepo}
     checkexec  ;;
- "4")
+   "4")
     echo "Pantagrel pipeline step $task: select core-genome markers and compute reference tree."
-    ${ptgscripts}/itemized_pipeline/pantagruel_pipeline_04_core_genome_ref_tree.sh
+    ${ptgscripts}/pipeline/pantagruel_pipeline_04_core_genome_ref_tree.sh ${ptgdbname} ${ptgroot}
     checkexec  ;;
- "5")
+   "5")
     echo "Pantagrel pipeline step $task: compute gene trees."
-    ${ptgscripts}/itemized_pipeline/pantagruel_pipeline_05_gene_trees.sh
+    ${ptgscripts}/pipeline/pantagruel_pipeline_05_gene_trees.sh ${ptgdbname} ${ptgroot}
     checkexec  ;;
- "6")
+   "6")
     echo "Pantagrel pipeline step $task: compute species tree/gene tree reconciliations."
-    ${ptgscripts}/itemized_pipeline/pantagruel_pipeline_06_reconciliations.sh
+    ${ptgscripts}/pipeline/pantagruel_pipeline_06_reconciliations.sh ${ptgdbname} ${ptgroot}
     checkexec  ;;
- "7")
+   "7")
     echo "Pantagrel pipeline step $task: evaluate gene co-evolution and build gene association network."
-    ${ptgscripts}/itemized_pipeline/pantagruel_pipeline_07_coevolution.sh
+    ${ptgscripts}/pipeline/pantagruel_pipeline_07_coevolution.sh ${ptgdbname} ${ptgroot}
     checkexec  ;;
- "8")
+   "8")
     echo "Pantagrel pipeline step $task: classify genes into orthologous groups (OGs) and search clade-specific OGs."
-    ${ptgscripts}/itemized_pipeline/pantagruel_pipeline_08_clade_specific_genes.sh
+    ${ptgscripts}/pipeline/pantagruel_pipeline_08_clade_specific_genes.sh ${ptgdbname} ${ptgroot}
     checkexec  ;;
-  esac
-done
+    esac
+  done
+fi

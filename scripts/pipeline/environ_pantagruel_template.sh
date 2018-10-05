@@ -10,15 +10,18 @@ datepad="                     "
 # at init stage
 export ptgroot='REPLACEptgroot'
 export ptgdbname='REPLACEptgdbname'
-export ptgscripts='REPLACEptgscripts'
+export ptgrepo='REPLACEptgrepo'
+export myemail='REPLACEmyemail'
 export famprefix='REPLACEfamprefix'
 # at 00.input_data stage
 export ngenomes='REPLACEngenomes'
 # at 04.core_genome stage
 export pseudocoremingenomes='REPLACEpseudocoremingenomes'
 
-
-# parameters to be set; default values:
+# OPTIONALLY, values of parameters below can be manually modified here;
+# once edited, MAKE SURE TO SAVE THE FILE IN ANOTHER LOCATION
+# and use it as init_file argument for command `pantagruel init init_file`
+# default values are:
 export chaintype='collapsed'
 export cladesupp=70
 export subcladesupp=35
@@ -34,14 +37,20 @@ export maxreftreeheight=0.25
 export colmethod='replaceCCinGasinS-collapsePOPinSnotinG'
 export mainresulttag='rootedTree'
 export rootingmethod='treebalance'
+# only relevant if user-defined genomes are provided
+export assembler="somemachine"
+export seqcentre="somewhere"
+
+### BEWARE!!! definition of variables below is unsafe to modify
 
 ## secondary variables
 # lib/module path
-export PYTHONPATH=$PYTHONPATH:${ptgscripts}
+export ptgscripts=${ptgrepo}/scripts
+export PYTHONPATH=$PYTHONPATH:${ptgrepo}/python_libs
 # head folders
+export ptgdb=${ptgroot}/${ptgdbname}
 export ncbiass=${ptgroot}/NCBI/Assembly
 export ncbitax=${ptgroot}/NCBI/Taxonomy
-export ptgdb=${ptgroot}/${ptgdbname}
 export customassemb=${ptgroot}/user_genomes
 export ptglogs=${ptgdb}/logs
 export ptgtmp=${ptgdb}/tmp

@@ -14,20 +14,22 @@ alias dateprompt="date +'[%Y-%m-%d %H:%M:%S]'"
 datepad="                     "
 
 #### Set mandatory environment variables / parameters
-export myemail="me.myself@respectable-institu.ti.on"
-export ptgroot="/path/to/base/folder/for/all/this/business"
-export ptgrepo="/path/to/pantagruel_repository"
-export famprefix="REPLACEfamprefix"
-export ptgdbname="aBoldDatabaseName" # mostly name of the top folder
-export famprefix="ABCDE"             # alphanumerical prefix (no number first) of the names for homologous protein/gene family clusters; will be appended with a 'P' for proteins and a 'C' for CDSs.
-
-## optional parameters
-export assembler=""
-export seqcentre=""
+export ptgdbname="$1"  # database anme (will notably be the name of the top folder)
+export ptgroot="$2"    # source folder where to create the database
+export ptgrepo="$3"    # path to the pantagruel git repository
+export myemail="$4"    # user identity
+export famprefix="$5"  # alphanumerical prefix (no number first) of the names for homologous protein/gene family clusters; will be appended with a 'P' for proteins and a 'C' for CDSs.          
 
 # derive other important environmnet variables
 export ptgscripts="${ptgrepo}/scripts"
-export PYTHONPATH=$PYTHONPATH:${ptgscripts}
+
+templateenv="$6"
+if [ -z ${templateenv} ] ; then 
+  templateenv=${ptgscripts}/pipeline/environ_pantagruel_template.sh
+fi
+
+
+#~ export PYTHONPATH=$PYTHONPATH:"${ptgrepo}/python_libs"
 cd ${ptgrepo} ; export ptgversion=$(git log | grep commit) ; cd -
 # create head folders
 export ptgdb=${ptgroot}/${ptgdbname}
@@ -40,8 +42,8 @@ export pseudocoremingenomes=''       # defaults to empty variable in which case 
 envsourcescript=${ptgdb}/environ_pantagruel_${ptgdbname}.sh
 
 rm -f ${ptgtmp}/sedenvvar.sh
-echo -n "cat ${ptgscripts}/environ_pantagruel_template.sh" > ${ptgtmp}/sedenvvar.sh
-for var in myemail ptgroot ptgscripts famprefix ptgdbname famprefix pseudocoremingenomes ; do
+echo -n "cat ${templateenv}" > ${ptgtmp}/sedenvvar.sh
+for var in ptgdbname ptgroot ptgrepo myemail famprefix ; do
 echo -n " | sed -e \"s#REPLACE${var}#${var}#\"" >> ${ptgtmp}/sedenvvar.sh
 done
 echo -n " > ${envsourcescript}" >> ${ptgtmp}/sedenvvar.sh

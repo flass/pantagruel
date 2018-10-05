@@ -10,4 +10,4 @@
 
 locexec=$(readlink -e $0)
 direxec=$(dirname $locexec)
-${direxec}/scripts/itemized_pipeline/pantagruel_pipeline_master.sh ${@}
+${direxec}/scripts/pipeline/pantagruel_pipeline_master.sh ${@}

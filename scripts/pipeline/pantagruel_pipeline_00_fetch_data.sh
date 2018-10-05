@@ -9,10 +9,9 @@
 
 # Copyright: Florent Lassalle (f.lassalle@imperial.ac.uk), 30 July 2018
 
-if [ -z "$2" ] ; echo "missing mandatory parameters ptgdbname and ptgdbname" ; echo "Usage: $0 ptgdbname and ptgdbname" ; exit 1 ; fi
-export ptgdbname=$1
-export ptgroot=$2
-export ptgdb=${ptgroot}/${ptgdbname}
+if [ -z "$2" ] ; echo "missing mandatory parameters." ; echo "Usage: $0 ptg_db_name ptg_root_folder" ; exit 1 ; fi
+export ptgdbname="$1"
+export ptgroot="$2"
 envsourcescript=${ptgdb}/environ_pantagruel_${ptgdbname}.sh
 source ${envsourcescript}
 
