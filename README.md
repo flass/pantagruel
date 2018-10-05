@@ -82,7 +82,7 @@ Finally, it is possible to run the whole pipeline at once, simply perform the `a
 ```sh
 pantagruel -d db_name -r root_dir all
 ```  
-Note that in the later two cases, no task-specific options can be specified trough the command line; instead, you should edit the database's environment file (produced during initiation step).
+Note that in the later two cases, no task-specific options can be specified trough the command line; instead, you should edit the database's environment file (produced during initiation step) that should be located at `${root_dir}/${db_name}/environ_pantagruel_${db_name}.sh`, with `${db_name}` and `${root_dir}` the arguments of `-d` and `-r` options on the `pantagruel init` call.
 
 
 -------------
