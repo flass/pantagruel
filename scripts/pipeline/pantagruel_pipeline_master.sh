@@ -126,7 +126,12 @@ while [ ! -z "$@" ] ; do
  "init")
           tasks="init"
           if [ ! -z "$2" ] ; then
-             initfile="$2"
+             if [[ "$2"=='help' ]] ; then
+               echo "Usage: pantagruel [general options] init [init_file]"
+               exit 0
+             else
+               initfile="$2"
+             fi
           fi
           break ;;
  "all")                                     
@@ -157,10 +162,7 @@ done
 # sort tasks
 tasks=$(echo "${tasks}" | tr ' ' '\n' | sort -u | xargs)
 
-if [[ ${tasks[0]} != "all" && ${tasks[0]} != "init" ]] ; then
-  export ptgdb=${ptgroot}/${ptgdbname}
-  envsourcescript=${ptgdb}/environ_pantagruel_${ptgdbname}.sh
-  source $envsourcescript
+if [[ ${tasks} != "init" ]] ; then
 fi
 
 if [[ "$tasks"=='init' ]] ; then
@@ -168,6 +170,9 @@ if [[ "$tasks"=='init' ]] ; then
     ${ptgscripts}/pipeline/pantagruel_pipeline_init.sh ${ptgdbname} ${ptgroot} ${ptgrepo} ${myemail} ${famprefix} ${initfile}
     checkexec
 else
+  export ptgdb=${ptgroot}/${ptgdbname}
+  envsourcescript=${ptgdb}/environ_pantagruel_${ptgdbname}.sh
+  source $envsourcescript
   for task in "$tasks" ; do
    case "$task" in
    "0")

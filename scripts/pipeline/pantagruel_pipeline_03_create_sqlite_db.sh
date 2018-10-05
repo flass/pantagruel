@@ -12,7 +12,8 @@
 if [ -z "$2" ] ; echo "missing mandatory parameters." ; echo "Usage: $0 ptg_db_name ptg_root_folder" ; exit 1 ; fi
 export ptgdbname="$1"  # database anme (will notably be the name of the top folder)
 export ptgroot="$2"    # source folder where to create the database
-envsourcescript=${ptgroot}/environ_pantagruel_${ptgdbname}.sh
+export ptgdb=${ptgroot}/${ptgdbname}
+envsourcescript=${ptgdb}/environ_pantagruel_${ptgdbname}.sh
 source $envsourcescript
 
 ##############################################
