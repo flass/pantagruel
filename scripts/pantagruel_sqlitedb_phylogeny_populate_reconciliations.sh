@@ -27,10 +27,20 @@ import sqlite3, os
 dbname = '${dbfile}'
 dbcon = sqlite3.connect(dbname=dbname)
 dbcur = dbcon.cursor()
+dbcur.execute('alter table gene_lineage_events alter reconciliation_id set default ${parsedreccolid};')
 dirgtevt = '${parsedrecs}/gene_tree_lineages'
 for nffamgtevt in os.listdir(dirgtevt):
   with open(os.path.join(dirgtevt, nffamgtevt)) as ffamgtevt:
-    dbcur.executemany('insert into gene_lineage_events (replacement_label_or_cds_code, event_id, freq) vaues (?,?,?);', (line.rstrip('\n').split('\t') for line in ffamgtevt))
+    dbcur.executemany('insert into gene_lineage_events (replacement_label_or_cds_code, event_id, freq, reconciliation_id) values (?,?,?);', (line.rstrip('\n').split('\t') for line in ffamgtevt))
+
+dbcur.execute('alter table gene_lineage_events alter reconciliation_id set default 0;')
+dbcon.commit()
+
+dirspet = '${parsedrecs}/ref_species_tree'
+with open(os.path.join(dirspet, 'phylogeny_species_tree.tab')) as fspet:
+    dbcur.executemany('insert into species_tree (branch_id, parent_branch_id, branch_name, is_tip) values (?,?,?,?);', (line.rstrip('\n').split('\t') for line in fspet))
+with open(os.path.join(dirspet, 'phylogeny_species_tree_events.tab')) as fspetevt:
+    dbcur.executemany('insert into species_tree (event_id, event_type, don_branch_id, rec_branch_id) values (?,?,?,?);', (line.rstrip('\n').split('\t') for line in fspetevt))
 
 dbcon.commit()
 EOF
@@ -42,8 +52,6 @@ sqlite3 ${dbfile} << EOF
 
 INSERT INTO reconciliation_collections (reconciliation_id, reconciliation_name, software, version, algorithm, reconciliation_date, notes)
  VALUES (${parsedreccolid}, '${parsedreccol}', 'ALE', '${ALEversion}', '${ALEalgo}', '${parsedreccoldate}', '${ALEsourcenote}') ;
-
-UPDATE gene_lineage_events SET reconciliation_id=1 WHERE reconciliation_id IS NULL;
 
 CREATE INDEX ON gene_lineage_events (reconciliation_id);
 CREATE INDEX ON gene_lineage_events (replacement_label_or_cds_code);

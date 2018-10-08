@@ -6,7 +6,7 @@ nflineevt = cargs[1]
 nfspetree = cargs[2]
 #~ nflineevt = '/home/flassall/PanteroDB_v0.3/07.compare_scenarios/bs_stem70_withinmedian35/replaceCCinGasinS-collapsePOPinSnotinG/ale_collapsed_undat/summary_gene_tree_events_minfreq0.25'
 #~ nfspetree = '/home/flassall/PanteroDB_v0.3/04.core_genome/raxml_tree/RAxML_bipartitions.pseudo-core-878-unicopy_concat_cds_880entero.166paramBS_MADrooted.full.lsd_internalPopulations.nwk'
-lineevt = read.table(nflineevt, h=T, sep='\t')
+lineevt = read.table(nflineevt, h=T, sep='\t', comment.char = "@")
 spetree = read.tree(file=nfspetree)
 
 event_text= c('Speciations', 'Transfers') ; names(event_text) = c('S', 'T')
@@ -59,9 +59,6 @@ for (e in levels(lineevt$event_type)){
 		}
 	}
 }
-
-# compute estimated time to process these event data
-time1lineagepair = as.double(900.0)/79360180 # emprical estimate (in seconds) from parsing all lineage pairs for evtid=1795683
 
 lineevt$esttimeperevt = sapply(lineevt$nb_lineages, function(x){ x*(x-1)*time1lineagepair })/3600
 plot_estim_computetime(lineevt, '(all events)')

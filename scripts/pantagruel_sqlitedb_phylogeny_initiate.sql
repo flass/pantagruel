@@ -22,7 +22,7 @@ CREATE TABLE gene_lineage_events ( --to be a large table
   event_id SERIAL,
   replacement_label_or_cds_code VARCHAR(60) NOT NULL,    -- refers to genome.coding_sequences (cds_code) and phylogeny.replaced_gene_tree_clades (replacement_label)
   freq INT NOT NULL,
-  reconciliation_id INT DEFAULT NULL    -- to distinguish reconciliation sets; can be NULL if not to be redundant
+  reconciliation_id INT NOT NULL DEFAULT 0    -- to distinguish reconciliation sets; can be left to default if not to be redundant
 );
 
 CREATE TABLE reconciliation_collections (
