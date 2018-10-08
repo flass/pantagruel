@@ -60,8 +60,8 @@ for (e in levels(lineevt$event_type)){
 	}
 }
 
-lineevt$esttimeperevt = sapply(lineevt$nb_lineages, function(x){ x*(x-1)*time1lineagepair })/3600
-plot_estim_computetime(lineevt, '(all events)')
-plot_estim_computetime(lineevt[lineevt$nb_lineages < 1e5,], '(only events occurring in < 1e+05 lineages)')
+#~ lineevt$esttimeperevt = sapply(lineevt$nb_lineages, function(x){ x*(x-1)*time1lineagepair })/3600
+#~ plot_estim_computetime(lineevt, '(all events)')
+#~ plot_estim_computetime(lineevt[lineevt$nb_lineages < 1e5,], '(only events occurring in < 1e+05 lineages)')
 
 dev.off()
