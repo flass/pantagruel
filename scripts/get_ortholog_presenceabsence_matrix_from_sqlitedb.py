@@ -19,20 +19,14 @@ if len(sys.argv) < 2:
 
 nfsqldb = sys.argv[1]
 nfoutrad = sys.argv[2].rstrip('/')
-if os.path.dirname(nfoutrad)==nfoutrad:
-	nfoutrad = os.path.join((nfoutrad, 'pantagruel_orthologs'))
-
-if len(sys.argv) > 3:
-	nffocusgenomecodes = sys.argv[3]
+ortcolid = int(sys.argv[3])
+if len(sys.argv) > 4:
+	nffocusgenomecodes = sys.argv[4]
 else:
 	nffocusgenomecodes = None
-	
 
-if len(sys.argv) > 4:
-	ortcolid = int(sys.argv[4])
-else:
-	ortcolid = None
-
+if os.path.dirname(nfoutrad)==nfoutrad:
+	nfoutrad = os.path.join((nfoutrad, 'pantagruel_orthologs'))
 verbose = False
 
 dbcon = sqlite3.connect(nfsqldb)
@@ -55,10 +49,11 @@ print "building matrix of gene presence / absence for %d genomes"%len(lgenomecod
 
 dbcur.execute("""
 CREATE TEMP TABLE cds_fam_code AS 
-SELECT cds_code, gene_family_id, code
+SELECT cds_code, replacement_label_or_cds_code, gene_family_id, code
 FROM coding_sequences 
 INNER JOIN replicons USING (genomic_accession) 
-INNER JOIN assemblies USING (assembly_id) %s 
+INNER JOIN assemblies USING (assembly_id) %s
+INNER JOIN gene_tree_label2cds_code USING (cds_code)
 WHERE gene_family_id IS NOT NULL AND gene_family_id!='RHIZOC000000'
 ORDER BY gene_family_id, code;"""%(IJfocus))
 
@@ -85,7 +80,7 @@ else:
 dbcur.execute("""
 SELECT gene_family_id, og_id, code, count(cds_code)
 FROM cds_fam_code
-LEFT JOIN orthologous_groups using (cds_code, gene_family_id) %s
+LEFT JOIN orthologous_groups using (replacement_label_or_cds_code, gene_family_id) %s
 GROUP BY gene_family_id, og_id, code
 ORDER BY gene_family_id, og_id;"""%colWC)
 

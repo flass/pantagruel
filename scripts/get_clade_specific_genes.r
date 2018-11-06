@@ -9,9 +9,9 @@ cargs = commandArgs(trailing=T)
 nffamgenomemat = cargs[1]
 sqldb = cargs[2]
 ogcolid = as.numeric(cargs[3])
+infilerad = cargs[4]
+outfilerad = cargs[5]
 # genome subset-specific input files
-filerad = cargs[4]
-foutrad = cargs[5]
 if (length(cargs)>5){
 	nflasscode = cargs[6]
 }else{
@@ -28,11 +28,11 @@ if (length(cargs)>7){
 	interstfams = c()
 }
 
-nfrestrictlist = sprintf("%s_genome_codes", filerad)
-nfcladedef = sprintf("%s_clade_defs", filerad)
+nfrestrictlist = sprintf("%s_genome_codes", infilerad)
+nfcladedef = sprintf("%s_clade_defs", infilerad)
 # output files
-nfabspresmat = sprintf("%s_gene_abspres.mat.RData", foutrad)
-nfoutspege = sprintf("%s_specific_genes.tab", foutrad)
+nfabspresmat = sprintf("%s_gene_abspres.mat.RData", outfilerad)
+nfoutspege = sprintf("%s_specific_genes.tab", outfilerad)
 
 #~ # clade definitions
 #~ if (!file.exists(nfcladedef)){

@@ -175,7 +175,7 @@ print(opt)
 if (!is.null(opt$verbose)){ verbose = TRUE }else{ verbose = FALSE }
 if (!is.null(opt$plot_network)){ plotnw = TRUE }else{ plotnw = FALSE }
 
-if ( is.null(opt$dir_match_events  ) ){ 
+if ( is.null(opt$dir_match_events) ){ 
 	stop("path to input file folder required! please specify it through '--dir_match_events' option")  
 }else{ 
 	dirmatchevents = gsub('/$', '', opt$dir_match_events) 
@@ -228,7 +228,7 @@ if (is.null(opt$threads)){
 }else{
 	ncores = opt$threads
 }
-verbose = opt$verbose
+
 if (is.null(opt$stop_after_step)){
 	endscript = 10
 }else{

@@ -9,7 +9,7 @@ nfspetree = cargs[2]
 lineevt = read.table(nflineevt, h=T, sep='\t', comment.char = "@")
 spetree = read.tree(file=nfspetree)
 
-event_text= c('Speciations', 'Transfers') ; names(event_text) = c('S', 'T')
+event_text= c('Speciations', 'Transfers', 'Duplications', 'Originations') ; names(event_text) = c('S', 'T', 'D', 'O')
 metrics = c('nb_lineages', 'cum_freq')
 metric_texts = c('- # gene lineages featuring event', '- cummulative event observation frequency') ; names(metric_texts) = metrics
 recordons = c('rec_branch_name', 'don_branch_name')

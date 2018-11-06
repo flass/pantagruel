@@ -50,14 +50,14 @@ sqlite3 ${sqldb} """INSERT INTO ortholog_collections (ortholog_col_id, ortholog_
 'source from https://github.com/flass/pantagruel/commits/${ptgversion}, call: ''scripts/get_orthologues_from_ALE_recs.py ${getOrpthologuesOptions}''')
 ;
 """
-python ${ptgscripts}/pantagruel_sqlitedb_load_orthologous_groups.py ${sqldb} ${orthogenes}/ortholog_collection_1 "mixed" "majrule_combined_0.500000" ${orthocolid}
+python ${ptgscripts}/pantagruel_sqlitedb_load_orthologous_groups.py ${sqldb} ${orthogenes}/${orthocol} "mixed" "majrule_combined_0.500000" ${orthocolid}
 
 
 # generate abs/pres matrix
 orthocol=ortholog_collection_${orthocolid}
 echo $orthocol
 orthomatrad=${orthogenes}/${orthocol}/mixed_majrule_combined_0.5.orthologs
-python ${ptgscripts}/get_ortholog_presenceabsence_matrix_from_sqlitedb.py ${sqldb} ${orthomatrad} ${coregenome}/${focus}/${focus}_genome_codes ${orthocolid}
+python ${ptgscripts}/get_ortholog_presenceabsence_matrix_from_sqlitedb.py ${sqldb} ${orthomatrad} ${orthocolid}
 ${ptgscripts}/get_clade_specific_genes.r ${orthomatrad}_genome_counts.no-singletons.mat ${sqldb} ${orthocolid} ${coregenome}/${focus}/${focus} ${orthomatrad}
 
 # list clade-specific orthologs

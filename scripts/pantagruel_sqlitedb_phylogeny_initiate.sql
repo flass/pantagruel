@@ -22,11 +22,11 @@ CREATE TABLE gene_lineage_events ( --to be a large table
   event_id SERIAL,
   replacement_label_or_cds_code VARCHAR(60) NOT NULL,    -- refers to genome.coding_sequences (cds_code) and phylogeny.replaced_gene_tree_clades (replacement_label)
   freq INT NOT NULL,
-  reconciliation_id INT NOT NULL DEFAULT 0    -- to distinguish reconciliation sets; can be left to default if not to be redundant
+  reconciliation_id SMALLINT NOT NULL DEFAULT 0    -- to distinguish reconciliation sets; can be left to default if not to be redundant
 );
 
 CREATE TABLE reconciliation_collections (
-  reconciliation_id INT NOT NULL,
+  reconciliation_id SMALLINT NOT NULL,
   reconciliation_name VARCHAR NOT NULL,
   software VARCHAR NOT NULL,
   version VARCHAR NOT NULL,
@@ -38,7 +38,7 @@ CREATE TABLE reconciliation_collections (
 -- gene trees
 
 CREATE TABLE criteria_collapse_gene_tree_clades (
-  criterion_id INT PRIMARY KEY,
+  criterion_id SMALLINT PRIMARY KEY,
   criterion_name VARCHAR(50) NOT NULL,
   criterion_definition TEXT,
   collapsed_clade_collection_creation DATE
@@ -48,11 +48,11 @@ CREATE TABLE collapsed_gene_tree_clades (
   gene_family_id VARCHAR(20) NOT NULL,
   col_clade VARCHAR(10) NOT NULL,
   cds_code VARCHAR(20) NOT NULL,
-  collapse_criterion_id INT DEFAULT NULL
+  collapse_criterion_id SMALLINT DEFAULT NULL
 );
 
 CREATE TABLE criteria_replace_gene_tree_clades (
-  criterion_id INT PRIMARY KEY,
+  criterion_id SMALLINT PRIMARY KEY,
   criterion_name VARCHAR(50) NOT NULL,
   criterion_definition TEXT,
   replaced_clade_collection_creation DATE
@@ -62,7 +62,7 @@ CREATE TABLE replaced_gene_tree_clades (
   gene_family_id VARCHAR(20) NOT NULL,
   col_clade_or_cds_code VARCHAR(20) NOT NULL,
   replacement_label VARCHAR(60) DEFAULT NULL,
-  replace_criterion_id INT DEFAULT NULL
+  replace_criterion_id SMALLINT DEFAULT NULL
 );
 
 CREATE VIEW replacement_label_or_cds_code2gene_families AS 
@@ -72,7 +72,7 @@ SELECT replacement_label as replacement_label_or_cds_code, gene_family_id FROM r
 
 
 CREATE TABLE ortholog_collections (
-  ortholog_col_id INT PRIMARY KEY,
+  ortholog_col_id SMALLINT PRIMARY KEY,
   ortholog_col_name VARCHAR(50) NOT NULL,
   reconciliation_id INT NOT NULL,
   software VARCHAR NOT NULL,
@@ -83,8 +83,15 @@ CREATE TABLE ortholog_collections (
 );
 
 CREATE TABLE orthologous_groups (
-  cds_code VARCHAR(20) NOT NULL,
+  replacement_label_or_cds_code VARCHAR(60) NOT NULL,
   gene_family_id VARCHAR(20) NOT NULL,
   og_id INT NOT NULL,
-  ortholog_col_id INT
+  ortholog_col_id SMALLINT
+);
+
+CREATE TABLE coevolution_scores (
+  rlocds_id_1 INT NOT NULL,
+  rlocds_id_2 INT NOT NULL,
+  coev_score REAL NOT NULL,
+  reconciliation_id SMALLINT
 );
