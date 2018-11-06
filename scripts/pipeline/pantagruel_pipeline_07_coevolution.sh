@@ -74,4 +74,8 @@ python $ptgscripts/compare_collapsedALE_scenarios.py --events_from_postgresql_db
  --event_type ${evtypeparse} --min_freq ${minevfreqmatch} --min_joint_freq ${minjointevfreqmatch} --threads 8 \
  --dir_table_out ${compoutdir} &> $entlogs/compare_collapsedALE_scenarios.${parsedreccol}.log &
 
-# should add constraint like reconciliation_id=${parsedreccolid} to ensure events are not matched across collections
+#### NOT IMPLEMENTED YET IN SQLite
+# load data in database, adding mention of reconciliation_id to ensure events are not matched across collections
+export assocoutdir=${compoutdir}/gene_lineage_assocations/between_fams_scores
+$ptgscripts/pantagruel_sqlitedb_load_coevolution_scores.py ${sqldb} ${assocoutdir} ${parsedreccolid}
+####
