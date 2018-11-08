@@ -302,3 +302,31 @@ def parseChain(lnfchains, dold2newname={}, nfchainout=None, inchainfmt='nexus', 
 	if treebuffer: treeappend(treebuffer, nfout, outchainfmt)
 	print '%s%s ...done (%d trees)'%(('\n' if verbose else ''), nfout, ntree)
 	return None
+
+#### Database connection functions
+
+# allow seemless transition between db engines
+def connectpostgresdb(dbname, **kw):
+	psycopg2 = __import__('psycopg2')
+	return psycopg2.connect(dbname=dbname, **kw)
+
+def connectsqlitedb(dbname):
+	sqlite3 = __import__('sqlite3')
+	return sqlite3.connect(dbname)
+
+def get_dbconnection(dbname, dbengine):
+	if (dbengine.lower() in ['postgres', 'postgresql', 'psql', 'pg']):
+		dbcon = connectpostgresdb(dbname)
+		dbtype = 'postgres'
+		valtoken='%s'
+		dbcur = dbcon.cursor()
+		dbcur.execute("set search_path = genome, phylogeny;")
+	elif (dbengine.lower() in ['sqlite', 'sqlite3']):
+		dbcon = connectsqlitedb(dbname)
+		dbcur = dbcon.cursor()
+		dbtype = 'sqlite'
+		valtoken='?'
+	else:
+		raise ValueError,  "wrong DB type provided: '%s'; select one of dbengine={'postgres[ql]'|'sqlite[3]'}"%dbengine
+	return (dbcon, dbcur, dbtype, valtoken)
+

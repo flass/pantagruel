@@ -81,7 +81,7 @@ export coltreechains=${alerec}/${chaintype}_tree_chains
 export recs=${alerec}/${chaintype}_recs
 
 # other secondary variables
-export straininfo=${customassemb}/strain_infos.txt
+export straininfo=${customassemb}/${ptgdbname}_strain_infos.txt
 export sqldbname=${ptgdbname,,}
 export sqldb=${database}/${sqldbname}
 export allfaarad=${seqdb}/all_proteomes

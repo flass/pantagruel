@@ -25,6 +25,10 @@ dbcur.execute("CREATE UNIQUE INDEX IF NOT EXISTS rlocds_id_pair_idx ON phylogeny
 dbcon.commit()
 print "COMMITED CREATE UNIQUE INDEX rlocds_id_pair_idx"
 
+dbcur.execute("CREATE INDEX IF NOT EXISTS coevscore_idx ON phylogeny.coevolution_scores (coev_score)")
+dbcon.commit()
+print "COMMITED CREATE INDEX coevscore_idx"
+
 dbcur.execute("UPDATE phylogeny.coevolution_scores SET reconciliation_id=%s WHERE reconciliation_id IS NULL;", (reccolid,))
 dbcur.execute("CREATE INDEX IF NOT EXISTS reccolid_idx ON phylogeny.coevolution_scores (reconciliation_id)")
 dbcon.commit()

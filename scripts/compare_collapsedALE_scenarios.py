@@ -14,30 +14,6 @@ pyximport.install()
 #~ pyximport.install(pyimport=True) # cythonize all the python modules avalaible
 from coevol_score import coevol_lineages
 
-def connectpostgresdb(dbname, **kw):
-	psycopg2 = __import__('psycopg2')
-	return psycopg2.connect(dbname=dbname, **kw)
-
-def connectsqlitedb(dbname):
-	sqlite3 = __import__('sqlite3')
-	return sqlite3.connect(dbname)
-
-def get_dbconnection(dbname, dbengine):
-	if (dbengine.lower() in ['postgres', 'postgresql', 'psql', 'pg']):
-		dbcon = connectpostgresdb(dbname)
-		dbtype = 'postgres'
-		valtoken='%s'
-		dbcur = dbcon.cursor()
-		dbcur.execute("set search_path = genome, phylogeny;")
-	elif (dbengine.lower() in ['sqlite', 'sqlite3']):
-		dbcon = connectsqlitedb(dbname)
-		dbcur = dbcon.cursor()
-		dbtype = 'sqlite'
-		valtoken='?'
-	else:
-		raise ValueError,  "wrong DB type provided: '%s'; select one of dbengine={'postgres[ql]'|'sqlite[3]'}"%dbengine
-	return (dbcon, dbcur, dbtype, valtoken)
-
 def _select_lineage_event_clause_factory(evtypes, lineagetable):
 	rlocdsIJ = "INNER JOIN %s USING (replacement_label_or_cds_code)"%lineagetable
 	if evtypes:
