@@ -68,7 +68,6 @@ def quantile(seq, P, ignoreNull=True):
 		rankq = (L - 1)*p
 		irankq = int(rankq)
 		drankq = rankq - irankq
-		print irankq
 		if drankq==0:
 			q = float(l[irankq])
 		else:
