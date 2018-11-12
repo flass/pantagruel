@@ -1,7 +1,7 @@
 #!/usr/bin/python2.7
 import sys, getopt
 import multiprocessing as mp
-from ptg_utils import get_dbconnection, mean, median
+from ptg_utils import get_dbconnection, mean, quantile
 
 def retrieveIG2OGscores(args):
 	qogogsc, ltfamog, i, dbname, dbengine, withinfam, verbose = args
