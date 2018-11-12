@@ -69,7 +69,8 @@ def retrieveIG2OGscores(args):
 		# collect statistics
 		llbh = [float(t[2]) for t in listlbh]
 		# could exploit the information of who is best linked with whom, but not for the moment
-		ltretval.append(tfamog1+tfamog2+(llt, len(llbh), min(llbh), max(llbh), mean(llbh), median(llbh)))
+		#~ ltretval.append(tfamog1+tfamog2+(llt, len(llbh), min(llbh), max(llbh), mean(llbh), median(llbh)))
+		ltretval.append(tfamog1+tfamog2+(llt, len(llbh), mean(llbh))+quantile(llbh, [0, 0.25, 0.5, 0.75, 1]))
 	dbco.close()
 	return ltretval
 
