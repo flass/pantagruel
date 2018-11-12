@@ -54,6 +54,28 @@ def median(seq, ignoreNull=True):
 	if L%2==1: return float(l[nmed])
 	else: return (float(l[nmed-1])+float(l[nmed]))/2
 
+def quantile(seq, P, ignoreNull=True):
+	"""given seq a vector of values and P a vector of break probabilities, return the values of quantiles of seq at breaks
+	
+	assumes a continuity of the distribution as following a function linear by segment to approximate quantiles
+	"""
+	Q = []
+	for p in P:
+		l = [k for k in seq if ((k is not None) or (not ignoreNull))]
+		l.sort()
+		L = float(len(l))
+		if not l: return None
+		rankq = (L - 1)*p
+		irankq = int(rankq)
+		drankq = rankq - irankq
+		print irankq
+		if drankq==0:
+			q = float(l[irankq])
+		else:
+			q = float(l[irankq])*(1-drankq) + float(l[irankq+1])*drankq
+		Q.append(q)
+	return tuple(Q)
+
 def var(seq, correct=1):
 	m = mean(seq)
 	if m is None: return None
