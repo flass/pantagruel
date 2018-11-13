@@ -25,6 +25,7 @@ def retrieveIG2OGscores(args):
 		if llt==0:
 			continue
 		## filter lineage-wise bidirectional best hits
+		
 		# implementation 1: for each OG separately, register all lineages' best hit links
 		# and then take instersection of links to ensure link is a best hit in both collection
 		#~ # get best hit set for each OG as query
@@ -47,15 +48,18 @@ def retrieveIG2OGscores(args):
 				#~ elif coev == lbh:
 					#~ # record ties for comparison with set with other OG as query
 					#~ ltlbh.append(tscore)
+			#~ stlbh |= set(ltlbh)
 			#~ if verbose: print "stlbh (%d):"%k, stlbh
 			#~ lstlbh.append(stlbh)
 		#~ # merge each best-hit set
 		#~ listlbh = list(lstlbh[0] & lstlbh[1])
+		#~ llbh = [float(t[2]) for t in listlbh]
 		#~ # this is biased by excess of many-to-many links with identical low scores
+		
 		# implementation 2: keep each lineage's best hit
 		# unbiased but do not ensure bidirectionality; however bidirectional hits are given double weight
 		dlbh = {}
-		dtlbh = {}
+		#~ dtlbh = {}
 		for tscore in ltscores:
 			coev = float(tscore[2])
 			for k in (0,1):
@@ -63,21 +67,24 @@ def retrieveIG2OGscores(args):
 				prevscore = dlbh.get(rlocdsid, 0.0)
 				if coev > prevscore:
 					dlbh[rlocdsid] = coev
-					dtlbh[rlocdsid] = tscore
-		listlbh = dtlbh.values()
-		if verbose: print "listlbh:", listlbh
+					#~ dtlbh[rlocdsid] = tscore
+		# could exploit the information of who is best linked with whom
+		#~ listlbh = dtlbh.values()
+		#~ if verbose: print "listlbh:", listlbh
+		#~ llbh = [float(t[2]) for t in listlbh]
+		# but for the moment only collect scores
+		llbh = dlbh.values()
+		if verbose: print "llbh:", llbh
 		# collect statistics
-		llbh = [float(t[2]) for t in listlbh]
-		# could exploit the information of who is best linked with whom, but not for the moment
-		#~ ltretval.append(tfamog1+tfamog2+(llt, len(llbh), min(llbh), max(llbh), mean(llbh), median(llbh)))
 		ltretval.append(tfamog1+tfamog2+(llt, len(llbh), mean(llbh))+quantile(llbh, [0, 0.25, 0.5, 0.75, 1]))
 	dbco.close()
 	return ltretval
 
-def main(orthocolid, reccolid, nfout, dbname, dbengine, withinfam, nbthreads, verbose):
-
+def main(orthocolid, reccolid, nfout, dbname, dbengine='postgres', withinfam=False, restrictfamogq='', nffamogqlist=None, nbthreads=1, verbose=False):
+	
+	# open DB connection
 	dbcon, dbcur, dbtype, valtoken = get_dbconnection(dbname, dbengine)
-
+	# create view
 	dbcur.execute("drop view if exists rlocsd2og;")
 	dbcur.execute("""
 	create view rlocsd2og as select rlocds_id, gene_family_id, og_id
@@ -85,24 +92,38 @@ def main(orthocolid, reccolid, nfout, dbname, dbengine, withinfam, nbthreads, ve
 	inner join replacement_label_or_cds_code2gene_families using (gene_family_id, replacement_label_or_cds_code)
 	where ortholog_col_id=1;
 	""")
+	# commit for visibility by other connections
 	dbcon.commit()
-	dbcur.execute("select distinct gene_family_id, og_id from orthologous_groups order by gene_family_id, og_id")
-	ltfamog = dbcur.fetchall()
+	
+	# fetch list of query (fam, og) tuples
+	if nffamogqlist:
+		with open(nffamogqlist, 'r') as ffamogqlist:
+			ltfamog = [line.rstrip('\n').split('\t') for line in ffamogqlist]
+	else:
+		qfamogtup = "select distinct gene_family_id, og_id from orthologous_groups "
+		qfamogtup += restrictfamogq
+		qfamogtup += "order by gene_family_id, og_id ;"
+		dbcur.execute(qfamogtup)
+		ltfamog = dbcur.fetchall()
+	# close connection
 	dbcon.close()
 
 	if reccolid==0:
+		# skip check multiplicity of reconciliation collection
 		wrc = ";"
 	else:
 		# check multiplicity of reconciliation collection
 		dbcur.execute("select distinct reconciliation_id from phylogeny.coevolution_scores;")
 		lreccol = dbcur.fetchall()
 		if len(lreccol)==1:
-			# will avoid further overhead of query constraint on reconciliation_id
+			# will not avoid further overhead of query constraint on reconciliation_id
 			wrc = ";"
 		else:
+			# will filter queries based on reconciliation collection
 			wrc = "and reconciliation_id=%d ;"%reccolid
 
-	qogogsc = """select least(rlocds_id_1, rlocds_id_2), greatest(rlocds_id_1, rlocds_id_2), coev_score 
+	qogogsc = """
+	select least(rlocds_id_1, rlocds_id_2), greatest(rlocds_id_1, rlocds_id_2), coev_score 
 	from coevolution_scores 
 	inner join rlocsd2og as og1 on rlocds_id_1=og1.rlocds_id 
 	inner join rlocsd2og as og2 on rlocds_id_2=og2.rlocds_id 
@@ -111,10 +132,8 @@ def main(orthocolid, reccolid, nfout, dbname, dbengine, withinfam, nbthreads, ve
 	"""+wrc
 
 	# run the queries in parallel
-	#~ pool = mp.Pool()
 	pool = mp.Pool(processes=nbthreads)
 	iterargs = ((qogogsc, ltfamog, i, dbname, dbengine, withinfam, verbose) for i in range(len(ltfamog)-1))
-	#~ iterargs = ((qogogsc, ltfamog, i) for i in range(5000. 5100))
 	iterlt = pool.imap_unordered(retrieveIG2OGscores, iterargs, chunksize=1)
 	# an iterator is returned by imap_unordered()
 	# one needs to actually iterate over it to have the pool of parrallel workers to compute
@@ -134,6 +153,7 @@ if __name__=='__main__':
 
 	opts, args = getopt.getopt(sys.argv[1:], 'hv', ['ortho_col_id=', 'reconciliation_id=', 'out=', \
 	                                                'postgresql_db=', 'sqlite_db=', 'whitinfam', \
+	                                                'restrict_famog_query=', 'input_famog_query_list=', \
 	                                                'threads=', 'help', 'verbose'])
 	dopt = dict(opts)
 	
@@ -154,7 +174,10 @@ if __name__=='__main__':
 	orthocolid = int(dopt.get('--ortho_col_id', 1))
 	reccolid = int(dopt.get('--reconciliation_id', 0))
 	withinfam = bool(int(dopt.get('--whitinfam', 0)))
+	restrictfamogq = dopt.get('--restrict_famog_query', '')
+	nffamogqlist = dopt.get('--input_famog_query_list')
 	nbthreads = int(dopt.get('--threads', 1))
 	verbose = (('-v' in dopt) or ('--verbose' in dopt))
+	if verbose: print "dopt:", dopt
 	
-	main(orthocolid, reccolid, nfout, dbname, dbengine, withinfam, nbthreads, verbose)
+	main(orthocolid, reccolid, nfout, dbname, dbengine, withinfam, restrictfamogq, nffamogqlist, nbthreads, verbose)
