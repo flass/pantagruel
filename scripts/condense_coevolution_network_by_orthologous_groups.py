@@ -104,7 +104,10 @@ def main(orthocolid, reccolid, nfout, dbname, dbengine='postgres', withinfam=Fal
 	if nffamogqlist:
 		# subset of query (fam, og) tuples
 		with open(nffamogqlist, 'r') as ffamogqlist:
-			ltfamogq = [tuple(line.rstrip('\n').split('\t')) for line in ffamogqlist]
+			ltfamogq = []
+			for line in ffamogqlist:
+				lsp = line.rstrip('\n').split('\t')
+				ltfamogq.append( (lsp[0], int(lsp[1])) )
 			ltfamogqi = [ltfamog.index(t) for t in ltfamogq]
 	else:
 		# query set same as subject set
