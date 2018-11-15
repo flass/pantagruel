@@ -140,7 +140,7 @@ def main(orthocolid, reccolid, nfout, dbname, dbengine='postgres', withinfam=Fal
 
 	# run the queries in parallel
 	pool = mp.Pool(processes=nbthreads)
-	iterargs = ((qogogsc, ltfamogq, ltfamogs, i, dbname, dbengine, withinfam, verbose) for i in ltfamogqi)
+	iterargs = ((qogogsc, ltfamog, i, dbname, dbengine, withinfam, verbose) for i in ltfamogqi)
 	iterlt = pool.imap_unordered(retrieveIG2OGscores, iterargs, chunksize=1)
 	# an iterator is returned by imap_unordered()
 	# one needs to actually iterate over it to have the pool of parrallel workers to compute
