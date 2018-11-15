@@ -95,16 +95,20 @@ def main(orthocolid, reccolid, nfout, dbname, dbengine='postgres', withinfam=Fal
 	# commit for visibility by other connections
 	dbcon.commit()
 	
-	# fetch list of query (fam, og) tuples
+	# fetch list of subject (fam, og) tuples
+	qfamogtup = "select distinct gene_family_id, og_id from orthologous_groups "
+	qfamogtup += restrictfamogq
+	qfamogtup += "order by gene_family_id, og_id ;"
+	dbcur.execute(qfamogtup)
+	ltfamog = dbcur.fetchall()
 	if nffamogqlist:
+		# subset of query (fam, og) tuples
 		with open(nffamogqlist, 'r') as ffamogqlist:
-			ltfamog = [tuple(line.rstrip('\n').split('\t')) for line in ffamogqlist]
+			ltfamogq = [tuple(line.rstrip('\n').split('\t')) for line in ffamogqlist]
+			ltfamogqi = [ltfamog.index(t) for t in ltfamogq]
 	else:
-		qfamogtup = "select distinct gene_family_id, og_id from orthologous_groups "
-		qfamogtup += restrictfamogq
-		qfamogtup += "order by gene_family_id, og_id ;"
-		dbcur.execute(qfamogtup)
-		ltfamog = dbcur.fetchall()
+		# query set same as subject set
+		ltfamogqi = range(len(ltfamog)-1)
 	# close connection
 	dbcon.close()
 
@@ -133,7 +137,7 @@ def main(orthocolid, reccolid, nfout, dbname, dbengine='postgres', withinfam=Fal
 
 	# run the queries in parallel
 	pool = mp.Pool(processes=nbthreads)
-	iterargs = ((qogogsc, ltfamog, i, dbname, dbengine, withinfam, verbose) for i in range(len(ltfamog)-1))
+	iterargs = ((qogogsc, ltfamogq, ltfamogs, i, dbname, dbengine, withinfam, verbose) for i in ltfamogqi)
 	iterlt = pool.imap_unordered(retrieveIG2OGscores, iterargs, chunksize=1)
 	# an iterator is returned by imap_unordered()
 	# one needs to actually iterate over it to have the pool of parrallel workers to compute
