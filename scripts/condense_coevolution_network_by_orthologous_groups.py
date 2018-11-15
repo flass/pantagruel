@@ -98,7 +98,7 @@ def main(orthocolid, reccolid, nfout, dbname, dbengine='postgres', withinfam=Fal
 	# fetch list of query (fam, og) tuples
 	if nffamogqlist:
 		with open(nffamogqlist, 'r') as ffamogqlist:
-			ltfamog = [line.rstrip('\n').split('\t') for line in ffamogqlist]
+			ltfamog = [tuple(line.rstrip('\n').split('\t')) for line in ffamogqlist]
 	else:
 		qfamogtup = "select distinct gene_family_id, og_id from orthologous_groups "
 		qfamogtup += restrictfamogq
