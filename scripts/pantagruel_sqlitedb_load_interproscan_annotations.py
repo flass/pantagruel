@@ -42,9 +42,9 @@ tipv = (interproscanversion,)
 srecprot = set([])
 srecip = set([])
 # first record what may already have been loaded in the database
-dbcur.execute("SLECT DISTINCT nr_protein_id FROM functional_annotations WHERE interproscan_version=%s ;", tipv)
+dbcur.execute("SELECT DISTINCT nr_protein_id FROM functional_annotations WHERE interproscan_version=? ;", tipv)
 srecprot |= set([t[0] for t in dbcur.fetchall()])
-dbcur.execute("SLECT DISTINCT interpro_id FROM interpro_terms ;")
+dbcur.execute("SELECT DISTINCT interpro_id FROM interpro_terms ;")
 srecip |= set([t[0] for t in dbcur.fetchall()])
 
 for nfinterproscan in lnfinterproscan:
@@ -79,27 +79,34 @@ for nfinterproscan in lnfinterproscan:
 					if ipid not in srecip:
 						srecip.add(ipid)
 						# distribute Interpro accession description and DB cross-references into different tables:
-						# 'interpro_terms'
-						ltipacc.append(tsp[11:13])
+						ipterms = tsp[11:13]
 						# 'interpro2GO'
 						ip2go = tsp[13]
-						if ip2go: ltip2go += [(ipid, goid) for goid in ip2go.split('|')]
+						if ip2go:
+							ipterms += (ip2go,)
+							ltip2go += [(ipid, goid) for goid in ip2go.split('|')]
+						else:
+							ipterms += (None,)
 						# 'interpro2pathway'
 						ip2pw = tsp[14]
-						if ip2pw: ltip2pw += [(ipid,)+tuple(pwdbid.split(': ')) for pwdbid in ip2pw.split('|')]
+						if ip2pw:
+							ipterms += (ip2pw,)
+							ltip2pw += [(ipid,)+tuple(pwdbid.split(': ')) for pwdbid in ip2pw.split('|')]
+						else:
+							ipterms += (None,)
+						# 'interpro_terms'
+						ltipacc.append(ipterms)
 		# completes the record with last protein
 		srecprot.add(currprotid)
 		# insert data into tables
 		dbcur.executemany("""INSERT INTO protein_infos 
 							 (nr_protein_id, sequence_md5_digest, sequence_length) VALUES (?,?,?);""", ltproti)
 		dbcur.executemany("""INSERT INTO functional_annotations 
-							 (nr_protein_id, 
-							 analysis_method, signature_accession, signature_description, 
-							 start_location, stop_location, score_or_evalue, 
-							 analysis_status, analysis_date, 
+							 (nr_protein_id, analysis_method, signature_accession, signature_description, 
+							 start_location, stop_location, score_or_evalue, analysis_status, analysis_date, 
 							 interpro_id, interproscan_version) VALUES (?,?,?,?,?,?,?,?,?,?,?);""", ltannot)
 		dbcur.executemany("""INSERT INTO interpro_terms
-							 (interpro_id, interpro_description) VALUES (?,?);""", ltipacc)
+							 (interpro_id, interpro_description, go_terms, pathways) VALUES (?,?,?,?);""", ltipacc)
 		dbcur.executemany("""INSERT INTO interpro2GO
 							 (interpro_id, go_id) VALUES (?,?);""", ltip2go)
 		dbcur.executemany("""INSERT INTO interpro2pathways

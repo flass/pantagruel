@@ -2,22 +2,22 @@ CREATE TABLE assemblies (
         assembly_id CHAR(16) PRIMARY KEY,
         assembly_name VARCHAR(50) NOT NULL,
         organism VARCHAR(300),
-		species VARCHAR(200),
-		subspecies VARCHAR(200),
-		serovar VARCHAR(200),
-		strain VARCHAR(50),
-		taxid INTEGER NOT NULL,
-		primary_pubmed_id INTEGER,
-		country VARCHAR(200),
-		isolation_source VARCHAR(200),
-		host VARCHAR(200),
-		clinical_source VARCHAR(200),
-		collection_year INTEGER,
-		collection_month INTEGER,
-		collection_day INTEGER,
-		sequencing_technology VARCHAR(200),
-		sequencing_coverage VARCHAR(50),
-		note TEXT
+        species VARCHAR(200),
+        subspecies VARCHAR(200),
+        serovar VARCHAR(200),
+        strain VARCHAR(50),
+        taxid INTEGER NOT NULL,
+        primary_pubmed_id INTEGER,
+        country VARCHAR(200),
+        isolation_source VARCHAR(200),
+        host VARCHAR(200),
+        clinical_source VARCHAR(200),
+        collection_year INTEGER,
+        collection_month INTEGER,
+        collection_day INTEGER,
+        sequencing_technology VARCHAR(200),
+        sequencing_coverage VARCHAR(50),
+        note TEXT
 );
 
 CREATE TABLE replicons (
@@ -52,8 +52,8 @@ CREATE TABLE proteins (
         nr_protein_id VARCHAR(20),
         product TEXT,
         protein_family_id VARCHAR(20),
-		sequence_md5_digest text,
-		sequence_length smallint
+        sequence_md5_digest text,
+        sequence_length smallint
 );
 
 CREATE TABLE nr_protein_families (
@@ -74,8 +74,8 @@ CREATE TABLE gene_family_sizes (
 );
 
 CREATE TABLE uniptrotcode2taxid (
-		code varchar(5) UNIQUE NOT NULL,
-		taxid integer NOT NULL
+        code varchar(5) UNIQUE NOT NULL,
+        taxid integer NOT NULL
 );
 
 CREATE INDEX uniprot_code_key ON uniptrotcode2taxid (code);
@@ -83,36 +83,38 @@ CREATE INDEX uniprot_taxid ON uniptrotcode2taxid (taxid);
 
 CREATE TABLE protein_infos (
     nr_protein_id VARCHAR(20) NOT NULL,
-	sequence_md5_digest TEXT NOT NULL,
-	sequence_length SMALLINT NOT NULL
+    sequence_md5_digest TEXT NOT NULL,
+    sequence_length SMALLINT NOT NULL
 );
         
 CREATE TABLE functional_annotations (
-	nr_protein_id VARCHAR(20) NOT NULL,
-	analysis_method TEXT NOT NULL,
-	signature_accession TEXT NOT NULL,
-	signature_description TEXT NOT NULL,
-	start_location SMALLINT NOT NULL,
-	stop_location SMALLINT NOT NULL,
-	score_or_evalue REAL NOT NULL,
-	analysis_status CHAR(1) NOT null,
-	analysis_date CHAR(10) NOT NULL,
-	interpro_id VARCHAR(10),
-	interproscan_version VARCHAR(10)
+    nr_protein_id VARCHAR(20) NOT NULL,
+    analysis_method TEXT NOT NULL,
+    signature_accession TEXT NOT NULL,
+    signature_description TEXT NOT NULL,
+    start_location SMALLINT NOT NULL,
+    stop_location SMALLINT NOT NULL,
+    score_or_evalue REAL NOT NULL,
+    analysis_status CHAR(1) NOT null,
+    analysis_date CHAR(10) NOT NULL,
+    interpro_id VARCHAR(10),
+    interproscan_version VARCHAR(10)
 );
 
 CREATE TABLE interpro_terms (
-	interpro_id CHAR(9) NOT NULL,
-	interpro_description TEXT NOT NULL
+    interpro_id CHAR(9) NOT NULL,
+    interpro_description TEXT NOT NULL,
+    go_terms TEXT,
+    pathways TEXT
 );
 
 CREATE TABLE interpro2GO (
-	interpro_id CHAR(9) NOT NULL,
-	go_id CHAR(10) NOT NULL
+    interpro_id CHAR(9) NOT NULL,
+    go_id CHAR(10) NOT NULL
 );
 
 CREATE TABLE interpro2pathways (
-	interpro_id CHAR(9) NOT NULL,
-	pathway_db VARCHAR(8) NOT NULL,
-	pathway_id VARCHAR(15) NOT NULL
+    interpro_id CHAR(9) NOT NULL,
+    pathway_db VARCHAR(8) NOT NULL,
+    pathway_id VARCHAR(15) NOT NULL
 );
