@@ -51,7 +51,9 @@ CREATE TABLE proteins (
         protein_serial_id SERIAL PRIMARY KEY,
         nr_protein_id VARCHAR(20),
         product TEXT,
-        protein_family_id VARCHAR(20)
+        protein_family_id VARCHAR(20),
+		sequence_md5_digest text,
+		sequence_length smallint
 );
 
 CREATE TABLE nr_protein_families (
@@ -79,5 +81,38 @@ CREATE TABLE uniptrotcode2taxid (
 CREATE INDEX uniprot_code_key ON uniptrotcode2taxid (code);
 CREATE INDEX uniprot_taxid ON uniptrotcode2taxid (taxid);
 
+CREATE TABLE protein_infos (
+    nr_protein_id VARCHAR(20) NOT NULL,
+	sequence_md5_digest TEXT NOT NULL,
+	sequence_length SMALLINT NOT NULL
+);
+        
+CREATE TABLE functional_annotations (
+	nr_protein_id VARCHAR(20) NOT NULL,
+	analysis_method TEXT NOT NULL,
+	signature_accession TEXT NOT NULL,
+	signature_description TEXT NOT NULL,
+	start_location SMALLINT NOT NULL,
+	stop_location SMALLINT NOT NULL,
+	score_or_evalue REAL NOT NULL,
+	analysis_status CHAR(1) NOT null,
+	analysis_date CHAR(10) NOT NULL,
+	interpro_id VARCHAR(10),
+	interproscan_version VARCHAR(10)
+);
 
+CREATE TABLE interpro_terms (
+	interpro_id CHAR(9) NOT NULL,
+	interpro_description TEXT NOT NULL
+);
 
+CREATE TABLE interpro2GO (
+	interpro_id CHAR(9) NOT NULL,
+	go_id CHAR(10) NOT NULL
+);
+
+CREATE TABLE interpro2pathways (
+	interpro_id CHAR(9) NOT NULL,
+	pathway_db VARCHAR(8) NOT NULL,
+	pathway_id VARCHAR(15) NOT NULL
+);
