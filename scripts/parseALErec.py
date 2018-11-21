@@ -650,7 +650,7 @@ def getOrthologues(recgt, method='mixed', **kw):
 	    the search is achieved by reccursive pruning of  gene groups at branches
 	    where occurred the last gain event (duplication or transfer) on the lineage.
 	    NB: if this apporach does not classify all leaves in OGs, a last OG
-	    is created that covers the remainder of the tree (this 'backbone' 
+	    is created that covers the remainder of the tree (this 'backbone' OG 
 	    is excluded as candidate in the 'mixed' approch).
 	'unicopy':
 	    top-down approach (root-to-tips) where orthologous groups are defined as 
@@ -660,9 +660,9 @@ def getOrthologues(recgt, method='mixed', **kw):
 	    copy number (when considering the sum of all events in the subtree), 
 	    i.e. gene conversion events
 	'mixed': heuristic approach mixing the two previous: 
-	    when exploring the tree with the top-own inclusve approach, presence of
+	    when exploring the tree with the top-down 'unicopy' approach, presence of
 	    excess leaves causing rejection of the OG clade status can be salvaged by 
-	    pruning of last-gain OG detected in the bottom-up approach may reveal 
+	    pruning of 'last-gain' OGs detected in the bottom-up approach. This may reveal 
 	    bona-fide unicopy OGs (even though not clades because of excluded 
 	    secondary gains, treated as other OGs).
 	
