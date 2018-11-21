@@ -24,5 +24,13 @@ dbcur.execute("CREATE INDEX IF NOT EXISTS og_fam_idx ON phylogeny.orthologous_gr
 dbcur.execute("CREATE INDEX IF NOT EXISTS og_fam_ogid_idx ON phylogeny.orthologous_groups (gene_family_id, og_id)")
 dbcur.execute("CREATE UNIQUE INDEX IF NOT EXISTS og_cds_ogcol_idx ON phylogeny.orthologous_groups (replacement_label_or_cds_code, ortholog_col_id)")
 
+dbcur.execute("""CREATE TABLE og_sizes AS 
+                  SELECT gene_family_id, og_id, ortholog_col_id, count(replacement_label_or_cds_code) as size 
+                   FROM phylogeny.orthologous_groups 
+                  GROUP BY gene_family_id, og_id, ortholog_col_id;""")
+
+dbcur.execute("CREATE INDEX IF NOT EXISTS og_size_size_idx ON og_sizes (size);")
+dbcur.execute("CREATE INDEX IF NOT EXISTS og_size_famog_idx ON og_sizes (gene_family_id, og_id);")
+
 dbcon.commit()
 dbcon.close()

@@ -13,7 +13,7 @@ repli.invar = c("assembly_id", "genomic_accession", "replicon_type", "replicon_s
 comm.algos =  c("louvain", "fast_greedy", "infomap", "label_prop")
 
 outannotcols = c('freq', sapply(1:2, function(i){ 
-	paste0( c("rlocdsid","replacement_label_or_cds_code","product","repr_cds_code","gene_family_id","tot_lineage_freq","chromorplas","species_pop","singmulti","coreoracc"), i)
+	paste0( c("gene_family_id","og_id","replacement_label_or_cds_code","product","repr_cds_code","tot_lineage_freq","chromorplas","species_pop","singmulti","coreoracc"), i)
 }))
 
 plotCoEvolQuantiles = function(qmatchog, detail.quant, sample.name=''){
@@ -324,8 +324,14 @@ if ((!is.null(opt$load_top_network) | loadup>=3) & file.exists(nftopassgraph)){
 	if (verbose) print(sprintf("loaded network of top associated gene lineages from file: '%s'", nftopassgraph))
 }else{
 	if (verbose) print("compute network of top associated gene lineages")
-	graph_topmatchog = graph_from_data_frame(topmatchog, directed=F)
-	save(graph_topmatchog, file=nftopassgraph)
+	topmatchfamog = as.data.frame(cbind(
+	 paste(topmatchog[,'gene_family_id_1'], topmatchog[,'og_id_1'], sep='_'),
+	 paste(topmatchog[,'gene_family_id_2'], topmatchog[,'og_id_2'], sep='_')
+	), stringsAsFactors=F)
+	topmatchfamog[[aggregate.metric]] = topmatchog[[aggregate.metric]]
+	colnames(topmatchfamog) = c('genefamog_1', 'genefamog_2', aggregate.metric)
+	graph_topmatchog = graph_from_data_frame(topmatchfamog, directed=F)
+	save(graph_topmatchog, topmatchfamog, file=nftopassgraph)
 }
 #~ pdf(file=paste(file.path(dirout, prefixout), 'top_association_network.pdf', sep='.'), height=30, width=30)
 #~ plot(graph_topmatchog)
@@ -343,27 +349,31 @@ if (!is.null(opt$db_name)){
 		
 		if (is.null(dbcon)) dbcon = connectionDB(opt)
 		
-		u1 = unique(topmatchog$rlocdsid1)
-		u2 = unique(topmatchog$rlocdsid2)
-		u = union(u1, u2)
+		u1 = unique(topmatchfamog$genefamog_1)
+		u2 = unique(topmatchfamog$genefamog_2)
+		u = as.data.frame(t(simplify2array(strsplit(union(u1, u2), split='_'))), stringsAsFactors=F)
+		colnames(u) = c('gene_family_id', 'og_id')
+		u$og_id = as.numeric(u$og_id)
 		
-		dbExecute(dbcon, "create temp table toplineages (rlocds_id int); ")
-		dbWriteTable(dbcon, "toplineages", value = data.frame(rlocds_id=u), append=T, row.names=F)
+		dbExecute(dbcon, "create temp table toplineages (gene_family_id varchar(20), og_id smallint); ")
+		dbWriteTable(dbcon, "toplineages", value=u, append=T, row.names=F)
 		
-		# query annotations - 1 row / lineage, with a representative CDS
+		# query annotations - 1 row / OG, with a representative lineage / CDS
 		annotreprquery = "
-		select distinct rlocds_id, replacement_label_or_cds_code, max(product) as product, max(cds_code) as repr_cds_code,
-		 count(cds_code) as tot_lineage_freq, count(distinct assembly_id) as lineage_pres_freq, gene_family_id, size as fam_size, genome_present as fam_occurence,
-		 sum(case when replicon_type='chromosome' then 1 else 0 end) as count_chromosome, sum(case when replicon_type='plasmid' then 1 else 0 end) as count_plasmid
-		  from toplineages
-		  inner join replacement_label_or_cds_code2gene_families using (rlocds_id)
-		  inner join gene_tree_label2cds_code using (replacement_label_or_cds_code)
-		  inner join coding_sequences using (cds_code, gene_family_id)
-		  inner join proteins using (genbank_nr_protein_id)
-		  inner join replicons using (genomic_accession)
-		  inner join gene_family_sizes using (gene_family_id)
-		group by rlocds_id, replacement_label_or_cds_code, gene_family_id, size, genome_present 
-		order by repr_cds_code ;
+		SELECT DISTINCT gene_family_id, og_id, replacement_label_or_cds_code, max(product) AS product, max(cds_code) AS repr_cds_code,
+		 count(cds_code) AS tot_lineage_freq, count(distinct assembly_id) AS lineage_pres_freq, gene_family_id, size AS og_size, 
+		 sum(CASE WHEN replicon_type='chromosome' THEN 1 ELSE 0 END) as count_chromosome, sum(CASE WHEN replicon_type='plasmid' THEN 1 ELSE 0 END) AS count_plasmid
+		  FROM toplineages
+		  INNER JOIN ( select gene_family_id, og_id, max(replacement_label_or_cds_code) AS replacement_label_or_cds_code
+		    FROM orthologous_groups USING (gene_family_id, og_id)
+		    GROUP BY gene_family_id, og_id ) AS og
+		  INNER JOIN gene_tree_label2cds_code USING (replacement_label_or_cds_code)
+		  INNER JOIN coding_sequences USING (gene_family_id, cds_code)
+		  INNER JOIN proteins USING (genbank_nr_protein_id)
+		  INNER JOIN replicons USING (genomic_accession)
+		  INNER JOIN og_sizes USING (gene_family_id, og_id)
+		GROUP BY gene_family_id, og_id, replacement_label_or_cds_code, gene_family_id, size, genome_present 
+		ORDER BY repr_cds_code ;
 		"
 		if (verbose) cat(annotreprquery)
 		toplinereprannot = dbGetQuery(dbcon, annotreprquery)
@@ -371,25 +381,24 @@ if (!is.null(opt$db_name)){
 		nb_genome = max(toplinereprannot$fam_occurence)
 		toplinereprannot$chromorplas = as.factor(ifelse(toplinereprannot$count_chromosome>0, ifelse(toplinereprannot$count_plasmid==0, 'chromosome', 'both'), ifelse(toplinereprannot$count_plasmid>0, 'plasmid', 'none')))
 		toplinereprannot$species_pop = as.factor(sapply(strsplit(as.character(toplinereprannot[,'replacement_label_or_cds_code']), split='_'), `[`, 1))
-		toplinereprannot$coreoracc = ifelse(toplinereprannot$fam_occurence >= nb_genome*0.98, "core", "accessory")
-		toplinereprannot$singmulti = ifelse((toplinereprannot$fam_size - toplinereprannot$fam_occurence)/toplinereprannot$fam_occurence <= 0.10, "single", "multi")
+		toplinereprannot$coreoracc = ifelse(toplinereprannot$og_size >= nb_genome*0.98, "core", "accessory")
 		write.table(toplinereprannot, file=paste(file.path(dirout, prefixout), 'top_lineage_annot.tab', sep='.'), sep='\t', row.names=F)
 
 		topmatchogdetail = merge(merge(topmatchog, toplinereprannot, by.x='rlocdsid1', by.y='rlocds_id'), toplinereprannot, by.x='rlocdsid2', by.y='rlocds_id', suffixes=1:2)
 		topmatchogdetail = topmatchogdetail[order(topmatchogdetail$repr_cds_code1, topmatchogdetail$repr_cds_code2), outannotcols]
 		write.table(topmatchogdetail, file=paste(file.path(dirout, prefixout), 'top_associations_repr_gene_annot.tab', sep='.'), sep='\t', row.names=F)
 		
-		# query annotations - for all CDS in the lineages
+		# query annotations - for all CDS in the lineages in th OGs
 		
 		multiannotquery = "
-		select distinct rlocds_id, replacement_label_or_cds_code, cds_code, product,
+		SELECT DISTINCT gene_family_id, og_id, replacement_label_or_cds_code, cds_code, product,
 		  assembly_id, genomic_accession, replicon_type, replicon_size, gene_family_id, cds_begin
-		  from toplineages
-		  inner join replacement_label_or_cds_code2gene_families using (rlocds_id)
-		  inner join gene_tree_label2cds_code using (replacement_label_or_cds_code)
-		  inner join coding_sequences using (gene_family_id, cds_code)
-		  inner join proteins using (genbank_nr_protein_id)
-		  inner join replicons using (genomic_accession);
+		  FROM toplineages
+		  INNER JOIN orthologous_groups USING (gene_family_id, og_id)
+		  INNER JOIN gene_tree_label2cds_code USING (replacement_label_or_cds_code)
+		  INNER JOIN coding_sequences USING (gene_family_id, cds_code)
+		  INNER JOIN proteins USING (genbank_nr_protein_id)
+		  INNER JOIN replicons USING (genomic_accession);
 		  "
 		if (verbose) cat(multiannotquery)
 		toplinemultiannot = dbGetQuery(dbcon, multiannotquery)
