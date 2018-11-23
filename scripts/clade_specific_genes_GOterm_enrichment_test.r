@@ -31,9 +31,13 @@ parseGeneAnnotFile = function(filename){
 }
 
 combineGeneAnnotLists = function(lgene2GO){
-	cgene2GO = do.call(c, lgene2GO) ; uncgene2GO = unique(names(cgene2GO))
-	gene2GO = lapply(uncgene2GO, function(x){ cgene2GO[[x]] }) ; names(gene2GO) = uncgene2GO
-	return(gene2GO)
+	if (length(lgene2GO)==1){
+		return(lgene2GO[[1]])
+	}else{
+		cgene2GO = do.call(c, lgene2GO) ; uncgene2GO = unique(names(cgene2GO))
+		gene2GO = lapply(uncgene2GO, function(x){ cgene2GO[[x]] }) ; names(gene2GO) = uncgene2GO
+		return(gene2GO)
+	}
 }
 
 makeGeneList = function(studyset, populationset){
@@ -54,7 +58,7 @@ spec = matrix(c(
 ), byrow=TRUE, ncol=5);
 opt = getopt(spec, opt=commandArgs(trailingOnly=T))
 
-print("This is 'clade_specific_genes_GOterm_enrichment_test..r', with options:")
+print("This is 'clade_specific_genes_GOterm_enrichment_test.r', with options:")
 print(opt)
 ## argument parsing
 # combine_study_files
@@ -112,10 +116,18 @@ if (!is.null(opt$stat)){ tgstat = opt$stat }else{ tgstat = "Fisher" }
 for (study.name in names(lstudy.gene2GO)){
 	study.gene2GO = lstudy.gene2GO[[study.name]]
 	geneList = makeGeneList(names(study.gene2GO), names(pop.gene2GO))
-	GOdata = new("topGOdata", ontology=ontology, allGenes=geneList, annot=annFUN.gene2GO, gene2GO=lpop.gene2GO)
+	print("head(geneList):")
+	print(head(geneList))
+	print("head(pop.gene2GO):")
+	print(head(pop.gene2GO))
+	print("create topGOdata object")
+	GOdata = new("topGOdata", ontology=ontology, allGenes=geneList, annot=annFUN.gene2GO, gene2GO=pop.gene2GO)
+	print(sprintf("run term enrichment test (algo: %s; statistic: %s)", tgalgo, tgstat))
 	enrich = runTest(GOdata, algorithm=tgalgo, statistic=tgstat)
+	print("generate annotation table for enriched terms")
 	enriched = GenTable(GOdata, weight = enrich, orderBy = "weight")
 	if (length(lstudy.gene2GO)>1){ nfout = file.path(outd, paste(study.name, "enriched", sep='_'))
 	}else{ nfout = outloc }
+	print(sprintf("write annotation table to '%s'", nfout))
 	write.table(enriched, file=nfout, sep='\t', col.names=T, row.names=F)
 }
