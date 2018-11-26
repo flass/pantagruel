@@ -52,13 +52,35 @@ sqlite3 ${sqldb} """INSERT INTO ortholog_collections (ortholog_col_id, ortholog_
 """
 python ${ptgscripts}/pantagruel_sqlitedb_load_orthologous_groups.py ${sqldb} ${orthogenes}/${orthocol} "mixed" "majrule_combined_0.500000" ${orthocolid}
 
+## extract sister clade pairs from the reference species tree for later clade-specific gene search
+python << EOF
+import tree2
+reftree = tree2.Node(file='${speciestree}')
+nfout = "${speciestree}_clade_defs"
+fout = open(nfout, 'w')
+fout.write('\t'.join(['', 'clade', 'sisterclade'])+'\n')
+k = 0
+for node in reftree:
+  if len(node.children) != 2: continue
+  for child in node.children:
+    if child.nb_leaves() <= 1: continue
+    focchildlab = child.label()
+    if not focchildlab:
+      focchildlab = "clade%d"%k
+      k += 1
+    focchildleaflabset = ','.join(sorted(child.get_leaf_labels()))
+    sischildleaflabset = ','.join(sorted(child.go_brother().get_leaf_labels()))
+    fout.write('\t'.join([focchildlab, focchildleaflabset, sischildleaflabset])+'\n')
+
+fout.close()
+EOF
 
 # generate abs/pres matrix
 orthocol=ortholog_collection_${orthocolid}
 echo $orthocol
 orthomatrad=${orthogenes}/${orthocol}/mixed_majrule_combined_0.5.orthologs
 python ${ptgscripts}/get_ortholog_presenceabsence_matrix_from_sqlitedb.py ${sqldb} ${orthomatrad} ${orthocolid}
-${ptgscripts}/get_clade_specific_genes.r ${orthomatrad}_genome_counts.no-singletons.mat ${sqldb} ${orthocolid} ${coregenome}/${focus}/${focus} ${orthomatrad}
+${ptgscripts}/get_clade_specific_genes.r ${orthomatrad}_genome_counts.no-singletons.mat ${sqldb} ${orthocolid} ${speciestree} ${orthomatrad}
 
 # list clade-specific orthologs
 export orthomatrad=${orthogenes}/${orthocol}/mixed_majrule_combined_0.5.orthologs
