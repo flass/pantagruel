@@ -99,7 +99,7 @@ specifigenes = lapply(cladedefs, function(cladedef){
 
 dbcon = dbConnect(SQLite(), sqldb)
 
-cladedefwritesep = paste(rep('  ...  \t', 6), sep='', collapse='')
+cladedefwritesep = paste(rep('  ...  \t', 7), sep='', collapse='')
 
 for (i in 1:length(cladedefs)){
 	cla = names(cladedefs)[i]
@@ -136,6 +136,7 @@ for (i in 1:length(cladedefs)){
 		}
 		if (is.null(refgenome)){ refgenome = min(cladedef$clade) }
 		print(sprintf("%s: '%s'; %d clade-specific genes; ref genome: %s", cla, cladedef$name, ncsg, refgenome), quote=F)
+		dbExecute(dbcon, "DROP TABLE IF EXISTS spegeneannots;")
 		creaspegeneannots = paste( c(
 		 "CREATE TABLE spegeneannots AS SELECT gene_family_id, og_id, genomic_accession, locus_tag, cds_code, cds_begin, cds_end, nr_protein_id, product",
 		 "FROM specific_genes",
@@ -150,28 +151,32 @@ for (i in 1:length(cladedefs)){
 #~ 		print(creaspegeneannots)
 		dbExecute(dbcon, creaspegeneannots, params=list(o=ogcolid))
 		dbExecute(dbcon, "DROP TABLE specific_genes;")
-		genesetclauses = list(sprintf("WHERE cds_code LIKE '%s@_%%' ESCAPE '@' ;", refgenome), ";") ; names(genesetclauses) = genesetscopes
+		genesetclauses = list(sprintf("WHERE cds_code LIKE '%s@_%%' ESCAPE '@' AND", refgenome), "WHERE") ; names(genesetclauses) = genesetscopes
 		for (genesetscope in genesetscopes){
-			gsc = genesetclauses[[genesetscope]]
+			gsc = genesetclauses[[genesetscope]] # = "WHERE [clause AND]"
 			spegeneinfo = dbGetQuery(dbcon, paste( c(
-			"SELECT gene_family_id, og_id, genomic_accession, locus_tag, cds_begin, cds_end, product", 
-			"FROM spegeneannots", gsc), collapse=" "))
+			"SELECT gene_family_id, og_id, cds_code, genomic_accession, locus_tag, cds_begin, cds_end, product", 
+			"FROM spegeneannots", 
+			gsc, "1 ;"), collapse=" "))
 			spegeneinfoplus = dbGetQuery(dbcon, paste( c(
-			 "SELECT distinct gene_family_id, og_id, genomic_accession, locus_tag, cds_begin, cds_end, product, interpro_id, interpro_description, go_terms, pathways",
+			 "SELECT distinct gene_family_id, og_id, cds_code, genomic_accession, locus_tag, cds_begin, cds_end, product, interpro_id, interpro_description, go_terms, pathways",
 			 "FROM spegeneannots",
 			 "LEFT JOIN functional_annotations USING (nr_protein_id)",
-			 "LEFT JOIN interpro_terms USING (interpro_id)", gsc), collapse=" "))
+			 "LEFT JOIN interpro_terms USING (interpro_id)", 
+			 gsc, "1 ;"), collapse=" "))
 			spegallgoterms = dbGetQuery(dbcon, paste( c(
-			 "SELECT distinct gene_family_id, og_id, genomic_accession, locus_tag, go_id",
+			 "SELECT distinct gene_family_id, og_id, cds_code, genomic_accession, locus_tag, go_id",
 			 "FROM spegeneannots",
 			 "LEFT JOIN functional_annotations USING (nr_protein_id)",
-			 "LEFT JOIN interpro2GO USING (interpro_id)", gsc), collapse=" "))
+			 "LEFT JOIN interpro2GO USING (interpro_id)",
+			 gsc, "go_id NOT NULL;"), collapse=" "))
 			spegallpathways = dbGetQuery(dbcon, paste( c(
-			 "SELECT distinct gene_family_id, og_id, genomic_accession, locus_tag, pathway_db, pathway_id",
+			 "SELECT distinct gene_family_id, og_id, cds_code, genomic_accession, locus_tag, pathway_db, pathway_id",
 			 "FROM spegeneannots",
 			 "LEFT JOIN functional_annotations USING (nr_protein_id)",
-			 "LEFT JOIN interpro2pathways USING (interpro_id)", gsc), collapse=" "))
-			write.table(spegeneinfo, file=nfoutspege, sep='\t', quote=F, row.names=F, col.names=T, append=T)
+			 "LEFT JOIN interpro2pathways USING (interpro_id)",
+			 gsc, "pathway_id NOT NULL;"), collapse=" "))
+			if (genesetscope=="reprseq"){ write.table(spegeneinfo, file=nfoutspege, sep='\t', quote=F, row.names=F, col.names=T, append=T) }
 			write.table(spegeneinfoplus, file=file.path(diroutspegedetail, paste(bnoutspege, cla, genesetscope, "details.tab", sep='_')), sep='\t', quote=F, row.names=F, col.names=T, append=F)
 			write.table(spegallgoterms, file=file.path(diroutspegedetail, paste(bnoutspege, cla, genesetscope, "goterms.tab", sep='_')), sep='\t', quote=F, row.names=F, col.names=T, append=F)
 			write.table(spegallpathways, file=file.path(diroutspegedetail, paste(bnoutspege, cla, genesetscope, "pathways.tab", sep='_')), sep='\t', quote=F, row.names=F, col.names=T, append=F)
