@@ -52,8 +52,6 @@ CREATE TABLE proteins (
         nr_protein_id VARCHAR(20),
         product TEXT,
         protein_family_id VARCHAR(20),
-        sequence_md5_digest text,
-        sequence_length smallint
 );
 
 CREATE TABLE nr_protein_families (
@@ -116,5 +114,5 @@ CREATE TABLE interpro2GO (
 CREATE TABLE interpro2pathways (
     interpro_id CHAR(9) NOT NULL,
     pathway_db VARCHAR(8) NOT NULL,
-    pathway_id VARCHAR(15) NOT NULL
+    pathway_id VARCHAR(60) NOT NULL
 );

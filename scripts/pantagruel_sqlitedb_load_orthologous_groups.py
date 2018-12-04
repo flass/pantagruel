@@ -24,13 +24,21 @@ dbcur.execute("CREATE INDEX IF NOT EXISTS og_fam_idx ON orthologous_groups (gene
 dbcur.execute("CREATE INDEX IF NOT EXISTS og_fam_ogid_idx ON orthologous_groups (gene_family_id, og_id);")
 dbcur.execute("CREATE UNIQUE INDEX IF NOT EXISTS og_cds_ogcol_idx ON orthologous_groups (replacement_label_or_cds_code, ortholog_col_id);")
 
-dbcur.execute("""CREATE TABLE og_sizes AS 
-                  SELECT gene_family_id, og_id, ortholog_col_id, count(replacement_label_or_cds_code) as size 
-                   FROM phylogeny.orthologous_groups 
-                  GROUP BY gene_family_id, og_id, ortholog_col_id;""")
+dbcur.execute("""CREATE TABLE gene_fam_og_sizes AS 
+                   SELECT gene_family_id, og_id, count(cds_code) AS size, count(cds_code) AS genome_present, ortholog_col_id 
+                    FROM orthologous_groups 
+                    INNER JOIN genome.gene_tree_label2cds_code USING (replacement_label_or_cds_code)
+                   WHERE ortholog_col_id=%d
+                   GROUP BY gene_family_id, og_id, ortholog_col_id
+                  UNION
+                    SELECT gene_family_id, NULL::int AS og_id, size, genome_present, %d AS ortholog_col_id 
+                     FROM gene_family_sizes
+                    WHERE gene_family_id NOT IN (SELECT DISTINCT gene_family_id FROM orthologous_groups)
+                  ;"""%(ortcolid, ortcolid))
 
-dbcur.execute("CREATE INDEX IF NOT EXISTS og_size_size_idx ON og_sizes (size);")
-dbcur.execute("CREATE INDEX IF NOT EXISTS og_size_famog_idx ON og_sizes (gene_family_id, og_id);")
+dbcur.execute("CREATE INDEX IF NOT EXISTS og_size_size_idx ON gene_fam_og_sizes (size);")
+dbcur.execute("CREATE INDEX IF NOT EXISTS og_size_present_idx ON gene_fam_og_sizes (genome_present);")
+dbcur.execute("CREATE INDEX IF NOT EXISTS og_size_famog_idx ON gene_fam_og_sizes (gene_family_id, og_id);")
 
 dbcon.commit()
 dbcon.close()
