@@ -91,3 +91,29 @@ PYTHONPATH=${PYTHONPATH}:${SOFTWARE}/tree2:${SOFTWARE}/pantagruel/python_libs
 echo 'PYTHONPATH=${PYTHONPATH}:${SOFTWARE}/tree2:${SOFTWARE}/pantagruel/python_libs' >> ${HOME}/.bashrc
 checkexec "Could not store PYTHONPATH in .bashrc"
 
+# install Interproscan
+ipversion="5.32-71.0"
+ipsourceftprep="ftp://ftp.ebi.ac.uk/pub/software/unix/iprscan/5/${ipversion}/"
+ipsourcefile="interproscan-${ipversion}-64-bit.tar.gz"
+wget ${ipsourceftprep}/${ipsourcefile}
+wget ${ipsourceftprep}/${ipsourcefile}.md5
+dlok=$(md5sum -c ${ipsourcefile}.md5 | grep -o 'OK')
+ip=3
+while [[ $dlok != 'OK' -a $ip > 0 ]] ; do 
+  ip=$(( $ip - 1 ))
+  echo "dowload of ${ipsourcefile} failed; will retry ($ip times left)"
+  wget ${ipsourceftprep}/${ipsourcefile}
+  wget ${ipsourceftprep}/${ipsourcefile}.md5
+  dlok=$(md5sum -c ${ipsourcefile}.md5 | grep -o 'OK')done
+done
+if [[ $dlok != 'OK' ]] ; then
+  echo "ERROR: Could not dowload ${ipsourcefile}"
+  exit 1
+fi
+tar -pxvzf ${ipsourcefile}
+checkexec "Could not uncompress Interproscan successfully"
+interproscan-${ipversion}/interproscan.sh -i test_proteins.fasta -f tsv
+
+# get the GO term db
+
+wget http://archive.geneontology.org/latest-termdb/go_daily-termdb-data.gz
