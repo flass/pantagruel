@@ -2,7 +2,7 @@
 import os, glob, sys, getopt
 import tree2
 import ptg_utils as ptg
-from parseALErec import parseALERecFile, getOrthologues
+from parseALErec import parseALERecFile, getOrthologues, getOriSpeciesFromEventLab
 import igraph
 from itertools import combinations
 import multiprocessing as mp
@@ -37,6 +37,71 @@ def writeGraphCombinedOrthologs(nfoutrad, graph, clustering, recgt, llabs, drevn
 		gcogs = [[graph.vs[v]['name'] for v in cluster] for cluster in clustering]
 		writeRecGeneTreesColouredByOrthologs([recgt], [gcogs], nfoutrad+".orthologs.%s.nex"%tag, drevnexustrans, **kw)
 
+def getVertexClustering(g, communitymethod, w='weight'):
+	"""generic call to igraph.Graph community finding functions to return homogeneous output format"""
+	commfunname = communitymethod if communitymethod.startswith("community_") else "community_"+communitymethod
+	graphcommfun = getattr(igraph.Graph, commfunname)
+	try:
+		comms = graphcommfun(g, weights=w)
+	except TypeError:
+		try:
+			comms = graphcommfun(g, edge_weights=w)
+		except TypeError:
+			comms = graphcommfun(g)
+	if isinstance(comms, igraph.clustering.VertexDendrogram):
+		comms = comms.as_clustering()
+	assert isinstance(comms, igraph.clustering.VertexClustering)
+	return comms
+
+def enforceUnicity(graph, clustering, dedgefreqs, commsfun, maxdrop=-1, w='weight', verbose=False, **kw):
+	"""resolve non-orthologous relationships between same-species genes 
+	
+	THese forbidden relationships may arise in connected graph components due to 'peer-to-peer' connectivity in the graph.
+	
+	this function explores the paths between vertices (genes) from the same species and 
+	iteratively drop the weakest edges until the confict is resolved.
+	if maxdrop > 0, only 'maxdrop' edges are removed before re-evaluating the clustering. 
+	if maxdrop <=0, all paths connecting the same-species genes are cut at their weakest 
+	                point (useful when community finding ignores the weights, eg. if based 
+	                on connected components).
+	"""
+	# first find conflicting (i.e. multi-copy) members in clusters
+	lspe = [getOriSpeciesFromEventLab(v['name']) for v in graph.vs]
+	lspememb = zip(lspe, clustering.membership)
+	dcountspememb = {spememb:lspememb.count(spememb) for spememb in set(lspememb)}
+	spemembhicount = [spememb for spememb, n in dcountspememb.iteritems() if n > 1]
+	if not spemembhicount:
+		return (graph, clustering)
+	elif verbose:
+		print "forbidden same-species genes in orthologous communities:", spemembhicount
+	forbidrels = []
+	for spememb in spemembhicount:
+		# store the indices of the vertices that should not be connected in a community (one set per species per community)
+		forbidrels.append([i for i, sm in enumerate(lspememb) if sm==spememb])
+	# identify the (weakest) edges to drop to separate vertices in forbidden relationships
+	todropes = set([])
+	for forbidrel in forbidrels:
+		# enumaerate vertex pairs in this group (usually only one pair)
+		for a in forbidrel[:-1]:
+			for b in forbidrel[1:]:
+				if a==b: continue
+				# identify all the edge paths to cut to separate vertices in forbidden relationships
+				lshpaes = [mjgOG.get_eids(path=shpavs) for shpavs in graph.get_all_shortest_paths(graph.vs[a], to=graph.vs[b])]
+				for shpaes in lshpaes:
+					# identify the weakest edges to drop to separate this vertex pair
+					wes = [graph.es[ei][w] for ei in shpaes]
+					weake = graph.es[shpaes[wes.index(min(wes))]]
+					todropes.add(weake)
+	todropes = sorted(todropes, key=lambda x: x[w])
+	if maxdrop > 0:
+		todropes = todropes[:maxdrop]
+	if verbose: print "will prune those weak edges:", todropes
+	graph.delete_edges([e.index for e in todropes])
+	# regenerate clustering given the pruned graph
+	clustering = commsfun(graph, **kw)
+	# re-evaluate the graph and clustering in this condition (should only be required when maxdrop > 0)
+	return enforceUnicity(graph, clustering, dedgefreqs, commsfun, maxdrop=maxdrop, w=w, **kw)
+
 def orthoFromSampleRecs(nfrec, outortdir, nsample=[], methods=['mixed'], \
                         foutdiffog=None, outputOGperSampledRecGT=True, colourTreePerSampledRecGT=False, \
                         graphCombine=None, majRuleCombine=None, **kw):
@@ -47,10 +112,11 @@ def orthoFromSampleRecs(nfrec, outortdir, nsample=[], methods=['mixed'], \
 	# collect the desired sample from the reconciliation file
 	dparserec = parseALERecFile(nfrec, skipLines=True, skipEventFreq=True, nsample=nsample, returnDict=True)
 	lrecgt = dparserec['lrecgt']
-	if userefspetree:
+	if kw.get('userefspetree'):
 		refspetree = dparserec['spetree']
 	else:
 		refspetree = None
+	colourCombinedTree = kw.get('colourCombinedTree')
 	
 	ddogs = {}
 	dnexustrans = {}
@@ -155,39 +221,29 @@ def orthoFromSampleRecs(nfrec, outortdir, nsample=[], methods=['mixed'], \
 			gOG = igraph.Graph()
 			gOG.add_vertices(len(llabs))
 			gOG.vs['name'] = llabs
+			# first make a full weighted graph
+			# add the edges to the graph
+			edges, freqs = zip(*dedgefreq.iteritems())
+			gOG.add_edges(edges)
+			gOG.es['weight'] = freqs
 			if majRuleCombine:
 				## make a majority rule unweighted graph
 				mjgOG = gOG.copy()
-				# drop edges with frequency below the threshold
-				mjedges = []
+				# select edges with frequency below the threshold
+				mjdropedges = []
 				minfreq = majRuleCombine*R
-				for e, f in dedgefreq.iteritems():
+				for e in mjgOG.es:
 					# use strict majority (assuming the parameter majRuleCombine=0.5, the default) to avoid obtaining family-wide single components
-					if f > minfreq: mjedges.append(e)
-				# add the edges to the graph
-				mjgOG.add_edges(mjedges)
+					if e['weight'] <= minfreq: mjdropedges.append(e)
+				# remove the low-freq edges to the graph
+				mjgOG.delete_edges(mjedges)
 				# find connected components (i.e. perform clustering)
 				compsOGs = mjgOG.components()
 				writeGraphCombinedOrthologs(nfoutrad, mjgOG, compsOGs, recgt0, llabs, drevnexustrans, colourCombinedTree, \
 					tag="majrule_combined_%f"%majRuleCombine, ltax=ltaxnexus, dtranslate=dnexustrans, ltreenames=["tree_0"], figtree=True)
 			if graphCombine:
-				## make a full weighted graph
-				# add the edges to the graph
-				edges, freqs = zip(*dedgefreq.iteritems())
-				gOG.add_edges(edges)
-				gOG.es['weight'] = freqs
-				# find communities (i.e. perform clustering)
-				graphcommfun = getattr(igraph.Graph, "community_"+graphCombine)
-				try:
-					commsOGs = graphcommfun(gOG, weights='weight')
-				except TypeError:
-					try:
-						commsOGs = graphcommfun(gOG, edge_weights='weight')
-					except TypeError:
-						commsOGs = graphcommfun(gOG)
-				if isinstance(commsOGs, igraph.clustering.VertexDendrogram):
-					commsOGs = commsOGs.as_clustering()
-				assert isinstance(commsOGs, igraph.clustering.VertexClustering)
+				# find communities (i.e. perform clustering) in full weighted graph
+				commsOGs = getVertexClustering(gOG, graphCombine, w='weight')
 				writeGraphCombinedOrthologs(nfoutrad, gOG, commsOGs, recgt0, llabs, drevnexustrans, colourCombinedTree, \
 					tag='graph_combined_%s'%graphCombine, ltax=ltaxnexus, dtranslate=dnexustrans, ltreenames=["tree_0"], figtree=True)
 

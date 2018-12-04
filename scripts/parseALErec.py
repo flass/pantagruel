@@ -524,6 +524,7 @@ def _prune_orthologs_top_down(node, **kw):
 	transfers were gene conversion events.
 	
 	if 'refspetree' is specified:
+	    -!- UNSTABLE -!-
 	    another constraint is added that those represented species must all belong to the species clade below the ancestor 
 	    to which a gene gain is mapped on the gene tree branch (last recipient of the gene if several gain events occurred).
 	if 'candidateOGs' is specified:
