@@ -452,7 +452,7 @@ def getExtraNumerarySpe(lspe, ancclade=[]):
 	else: baselist = list(sspe)
 	return reduce(lambda x,y: x+y, [[spe]*(lspe.count(spe) - baselist.count(spe)) for spe in sspe], [])
 
-def _prune_nested_candidate_orthologs(node, dsbal, leaflabs, lspe, extraspe, candidateOGs, refspetree=None, anclade=None, **kw):
+def _prune_nested_candidate_orthologs(node, dsbal, leaflabs, lspe, extraspe, candidateOGs, refspetree=None, ancclade=None, **kw):
 	""""""
 	cacheBranDep={}
 	def branching_depth(leaflabset):
@@ -626,7 +626,7 @@ def _prune_orthologs_top_down(node, **kw):
 				lex = float(len(set(extraspe)))
 				if lex/nspe <= trheshExtraSpe:
 					if verbose: print 'extraspe:', extraspe, "(%d nr species, %.0f%% of the represented set)"%(int(lex), 100*lex/nspe)
-					OGs, remainingcOGs = _prune_nested_candidate_orthologs(node, dsbal, leaflabs, lspe, extraspe, anclade=anclade, **kw)
+					OGs, remainingcOGs = _prune_nested_candidate_orthologs(node, dsbal, leaflabs, lspe, extraspe, ancclade=ancclade, **kw)
 					if OGs:
 						orthologGroups += OGs
 						candidateOGs = remainingcOGs
