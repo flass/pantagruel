@@ -35,7 +35,7 @@ def writeOrthologs(nfoutrad, tag, ogs, dlabs, colourTree=False, gt=None, **kw):
 	if colourTree:
 		gt, dnexustrans, drevnexustrans, ltaxnexus = indexCleanTreeLabels(gt, dlabs)
 		# write a tree with coloured tips for graphic fun
-		writeRecGeneTreesColouredByOrthologs([gt], [ogs], nfoutrad+".orthologs.%s.nex"%tag, drevnexustrans, ltax=ltaxnexus, **kw)
+		writeRecGeneTreesColouredByOrthologs([gt], [ogs], nfoutrad+".orthologs.%s.nex"%tag, drevnexustrans, ltax=ltaxnexus, dtranslate=dnexustrans, **kw)
 
 def writeGraphCombinedOrthologs(nfoutrad, tag, graph, clustering, llabs, colourCombinedTree=None, recgt=None, drevnexustrans=None, **kw):
 	# save the graph
