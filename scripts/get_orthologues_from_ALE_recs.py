@@ -312,7 +312,7 @@ if __name__=='__main__':
 														'colour.sampled.trees', 'report.ogs.per.sampled.tree', 'summary.per.sampled.tree', \
 														'majrule.combine=', 'graph.combine=', 'colour.combined.tree', \
 														'use.unreconciled.gene.trees=', 'unreconciled.format=', 'unreconciled.ext=', \
-														'threads=', 'verbose=', 'help'])
+														'skip.reconciled', 'threads=', 'verbose=', 'help'])
 	dopt = dict(opts)
 	if ('-h' in dopt) or ('--help' in dopt):
 		print usage()
@@ -339,6 +339,7 @@ if __name__=='__main__':
 	unreconciledGTdir = dopt.get('--use.unreconciled.gene.trees')
 	unreconciledGTfmt = dopt.get('--unreconciled.format', 'nexus')
 	unreconciledGText = dopt.get('--unreconciled.ext', '.con.tre')
+	skipReconciled = ('--skip.reconciled' in dopt)
 	if not methods or set(methods) > set(allmethods):
 		raise ValueError, "values for --methods must be any non-empty combination of %s (default to 'mixed').\n"%repr()
 	graphCombine = dopt.get('graph.combine', 'fastgreedy')
@@ -378,24 +379,25 @@ if __name__=='__main__':
 							foutdiffog=foutdiffog, outputOGperSampledRecGT=outputOGperSampledRecGT, colourTreePerSampledRecGT=colourTreePerSampledRecGT, \
 							verbose=verbose)
 	
-	if nbthreads==1:
-		# run sequentially
-		for nfrec in lnfrec:
-			print nfrec
-			orthoFromSampleRecsSetArgs(nfrec)
-			if verbose: print " # # # # # # # \n"
-		if foutdiffog: foutdiffog.close()
-	else:
-		# or run in parallel
-		pool = mp.Pool(processes=nbthreads)
-		res = pool.map(orthoFromSampleRecsSetArgs, lnfrec)
+	if not skipReconciled:
+		if nbthreads==1:
+			# run sequentially
+			for nfrec in lnfrec:
+				print nfrec
+				orthoFromSampleRecsSetArgs(nfrec)
+				if verbose: print " # # # # # # # \n"
+			if foutdiffog: foutdiffog.close()
+		else:
+			# or run in parallel
+			pool = mp.Pool(processes=nbthreads)
+			res = pool.map(orthoFromSampleRecsSetArgs, lnfrec)
 
 	if unreconciledGTdir:
 		# list the consensus/ML gene trees available
 		lnfgtcon = glob.glob('%s/*%s'%(unreconciledGTdir, unreconciledGText))
 		# identify those not yet treated via reconciliation scanrios
-		dfamcon = {os.path.basename(gtcon).split('.')[0].split('-')[0].split('_')[0]:gtcon for gtcon in lnfgtcon}
-		lfamrec = [os.path.basename(gtrec).split('.')[0].split('-')[0].split('_')[0] for gtcon in lnfrec]
+		dfamcon = {os.path.basename(gtcon).split('.')[0].split('-')[0].split('_')[0]:nfgtcon for nfgtcon in lnfgtcon}
+		lfamrec = [os.path.basename(gtrec).split('.')[0].split('-')[0].split('_')[0] for nfrec in lnfrec]
 		missrecfams = set(dfamcon.keys()) - set(lfamrec)
 		lnfgtconmis = [dfamcon[fam] for fam in missrecfams]
 	
