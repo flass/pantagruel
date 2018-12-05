@@ -35,7 +35,7 @@ def writeOrthologs(nfoutrad, tag, ogs, dlabs, colourTree=False, gt=None, **kw):
 	if colourTree:
 		gt, dnexustrans, drevnexustrans, ltaxnexus = indexCleanTreeLabels(gt, dlabs)
 		# write a tree with coloured tips for graphic fun
-		writeRecGeneTreesColouredByOrthologs([gt], [ogs], nfoutrad+".orthologs.%s.nex"%tag, drevnexustrans, **kw)
+		writeRecGeneTreesColouredByOrthologs([gt], [ogs], nfoutrad+".orthologs.%s.nex"%tag, drevnexustrans, ltax=ltaxnexus, **kw)
 
 def writeGraphCombinedOrthologs(nfoutrad, tag, graph, clustering, llabs, colourCombinedTree=None, recgt=None, drevnexustrans=None, **kw):
 	# save the graph
@@ -49,9 +49,9 @@ def writeGraphCombinedOrthologs(nfoutrad, tag, graph, clustering, llabs, colourC
 		gcogs = [[graph.vs[v]['name'] for v in cluster] for cluster in clustering]
 		writeRecGeneTreesColouredByOrthologs([recgt], [gcogs], nfoutrad+".orthologs.%s.nex"%tag, drevnexustrans, **kw)
 
-def indexCleanTreeLabels(recgenetree, dlabs, dnexustrans={}, drevnexustrans={}, ltaxnexus=[], update=True):
+def indexCleanTreeLabels(genetree, dlabs, dnexustrans={}, drevnexustrans={}, ltaxnexus=[], update=True):
 	dnexuslabev2num = {}
-	for l, leaf in enumerate(recgenetree.get_leaves()):
+	for l, leaf in enumerate(genetree.get_leaves()):
 		sl = str(l)
 		labev = leaf.label()
 		lab = dlabs[labev]
@@ -60,12 +60,12 @@ def indexCleanTreeLabels(recgenetree, dlabs, dnexustrans={}, drevnexustrans={}, 
 			dnexustrans[sl] = lab
 			drevnexustrans[lab] = sl
 			ltaxnexus = [dnexustrans[str(sl)] for sl in range(len(dnexustrans))]
-	for node in recgenetree:
+	for node in genetree:
 		if node.is_leaf():
 			node.edit_label(dnexuslabev2num[node.label()])
 		else:
 			node.edit_label('')
-	return (recgenetree, dnexustrans, drevnexustrans, ltaxnexus)
+	return (genetree, dnexustrans, drevnexustrans, ltaxnexus)
 
 def getVertexClustering(g, communitymethod, w='weight'):
 	"""generic call to igraph.Graph community finding functions to return homogeneous output format"""
@@ -257,16 +257,16 @@ def orthoFromSampleRecs(nfrec, outortdir, nsample=[], methods=['mixed'], \
 					# use strict majority (assuming the parameter majRuleCombine=0.5, the default) to avoid obtaining family-wide single components
 					if e['weight'] <= minfreq: mjdropedges.append(e)
 				# remove the low-freq edges to the graph
-				mjgOG.delete_edges(mjedges)
+				mjgOG.delete_edges(mjdropedges)
 				# find connected components (i.e. perform clustering)
 				compsOGs = mjgOG.components()
-				writeGraphCombinedOrthologs(nfoutrad, tag="majrule_combined_%f"%majRuleCombine, mjgOG, compsOGs, llabs, \
+				writeGraphCombinedOrthologs(nfoutrad, "majrule_combined_%f"%majRuleCombine, mjgOG, compsOGs, llabs, \
                                              colourCombinedTree=colourCombinedTree, recgt=recgt0, drevnexustrans=drevnexustrans, \
                                              ltax=ltaxnexus, dtranslate=dnexustrans, ltreenames=["tree_0"], figtree=True)
 			if graphCombine:
 				# find communities (i.e. perform clustering) in full weighted graph
 				commsOGs = getVertexClustering(gOG, graphCombine, w='weight')
-				writeGraphCombinedOrthologs(nfoutrad, tag='graph_combined_%s'%graphCombine, gOG, commsOGs, llabs, \
+				writeGraphCombinedOrthologs(nfoutrad, 'graph_combined_%s'%graphCombine, gOG, commsOGs, llabs, \
                                              colourCombinedTree=colourCombinedTree, recgt=recgt0, drevnexustrans=drevnexustrans, \
                                              ltax=ltaxnexus, dtranslate=dnexustrans, ltreenames=["tree_0"], figtree=True)
 
@@ -274,15 +274,16 @@ def orthoUnicopyFromUnreconciledGT(nfgt, nfgtmt, outortdir, method='unreconciled
 	verbose = kw.get('verbose')
 	fam = os.path.basename(nfgt).split('.', 1)[0].split('-', 1)[0].split('_', 1)[0]
 	if nfgtmt.lower()=='nexus':
-		gt = tree2.read_nexus(nfgt, treeclass="Node", returnDict=True, translateLabels=True, getTaxLabels=False, allLower=False)
+		dgt = tree2.read_nexus(nfgt, treeclass="AnnotatedNode", returnDict=True, translateLabels=True, getTaxLabels=False, allLower=False)
+		gt = dgt['tree']['con_all_compat']
 	else:
 		gt = tree2.Node(file=nfgt)
 	gt.reRoot_max_tree_balance
 	if verbose: print "\n# unicopy_ogs:\n"
-	unicopy_ogs, notrelevant, dlabs = getOrthologues(gt, method='unicopy', **kw)
+	unicopy_ogs, notrelevant, dlabs = getOrthologues(gt, method='unicopy', noNodeAnnot=True, **kw)
 	# ouput
 	nfoutrad = os.path.join(outortdir, method, "%s_%s"%(fam, method))
-	writeOrthologs(nfoutrad, tag='unicopy', unicopy_ogs, colourTree, gt, ltreenames=["tree_0"], figtree=True)
+	writeOrthologs(nfoutrad, 'unicopy', unicopy_ogs, dlabs, colourTree, gt, ltreenames=["tree_0"], figtree=True)
 
 def usage(mini=False):
 	basics = "Usage:\n python %s -i /path/to/input.reconciliation.dir -o /path/to/output.dir [OPTIONS]\n"%sys.argv[0]
@@ -398,6 +399,10 @@ if __name__=='__main__':
 		missrecfams = set(dfamcon.keys()) - set(lfamrec)
 		lnfgtconmis = [dfamcon[fam] for fam in missrecfams]
 	
+		pd = os.path.join(outortdir, 'unreconciled')
+		if not os.path.isdir(pd):
+			os.mkdir(pd)
+			
 		def orthoUnicopyFromUnrecSetArgs(nfgtconmis):
 			return orthoUnicopyFromUnreconciledGT(nfgtconmis, unreconciledGTfmt, outortdir, colourTree=colourCombinedTree, verbose=verbose)
 		

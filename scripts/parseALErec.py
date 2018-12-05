@@ -551,6 +551,7 @@ def _prune_orthologs_top_down(node, **kw):
 	refspetree = kw.get('refspetree')
 	candidateOGs = kw.get('candidateOGs')
 	trheshExtraSpe = float(kw.get('trheshExtraSpe', 0.1))
+	noNodeAnnot = kw.get('noNodeAnnot')
 	verbose = kw.get('verbose')
 	if verbose and candidateOGs: print 'using mixed criterion'
 	if not dlabs:	
@@ -581,7 +582,7 @@ def _prune_orthologs_top_down(node, **kw):
 	
 	# # # # test at current node
 	nodelab = node.label()
-	if not nodelab: raise ValueError, "unannotated node:\n%s"%str(node)
+	if not (nodelab or noNodeAnnot): raise ValueError, "unannotated node:\n%s"%str(node)
 	if verbose > 1: print repr(node), ('(leaf)' if node.is_leaf() else '(internal)')+';',
 	leaflabs = [dlabs[leaflabevchain] for leaflabevchain in node.iter_leaf_labels()]
 	lspe = [getSpe(leaflab, sp0, sp1) for leaflab in leaflabs]
