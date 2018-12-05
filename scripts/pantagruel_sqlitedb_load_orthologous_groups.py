@@ -7,10 +7,14 @@ dirortho = sys.argv[2]
 orthomethod = sys.argv[3]
 clustmethod = sys.argv[4]
 ortcolid = int(sys.argv[5])
+if len(sys.argv)>6:
+	keepPrevRecord = bool(int(sys.argv[6]))
+else:
+	keepPrevRecord = False
 
 dbcon = sqlite3.connect(nfsqldb)
 dbcur = dbcon.cursor()
-dbcur.execute("DELETE FROM orthologous_groups WHERE ortholog_col_id=?;", (ortcolid,))
+if not keepPrevRecord: dbcur.execute("DELETE FROM orthologous_groups WHERE ortholog_col_id=?;", (ortcolid,))
 filesuffix = "_%s.orthologs.%s"%(orthomethod, clustmethod)
 lnfortho = glob.glob(os.path.join(dirortho, orthomethod, '*'+filesuffix))
 for nfortho in lnfortho:
@@ -24,6 +28,7 @@ dbcur.execute("CREATE INDEX IF NOT EXISTS og_fam_idx ON orthologous_groups (gene
 dbcur.execute("CREATE INDEX IF NOT EXISTS og_fam_ogid_idx ON orthologous_groups (gene_family_id, og_id);")
 dbcur.execute("CREATE UNIQUE INDEX IF NOT EXISTS og_cds_ogcol_idx ON orthologous_groups (replacement_label_or_cds_code, ortholog_col_id);")
 
+dbcur.execute("DROP TABLE IF EXISTS gene_fam_og_sizes;")
 dbcur.execute("""CREATE TABLE gene_fam_og_sizes AS 
                    SELECT gene_family_id, og_id, count(cds_code) AS size, count(cds_code) AS genome_present, ortholog_col_id 
                     FROM orthologous_groups 
