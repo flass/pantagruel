@@ -352,25 +352,25 @@ if (endscript<=3){ quit(save='no') }
 
 ### step 4: collect detailed annotation data on top associated lineages
 if (!is.null(opt$db_name)){
+	if (verbose) print(sprintf("retrieve annotation of (genes in) top associated OGs from %s database: '%s'", dbtype, opt$db_name))
+	
+	if (is.null(dbcon)) dbcon = connectionDB(opt)
+	
+	u1 = unique(topmatchfamog$genefamog_1)
+	u2 = unique(topmatchfamog$genefamog_2)
+	u = as.data.frame(t(simplify2array(strsplit(union(u1, u2), split='_'))), stringsAsFactors=F)
+	colnames(u) = c('gene_family_id', 'og_id')
+	u$og_id = as.numeric(u$og_id)
+	if (verbose){ print("toporthogroups:"); print(head(u)) }
+	
+	dbExecute(dbcon, "CREATE TEMP TABLE toporthogroups (gene_family_id varchar(20), og_id smallint); ")
+	dbWriteTable(dbcon, "toporthogroups", value=u, append=T, row.names=F)
+	
 	nftopmatchogdetail = paste(file.path(dirout, prefixout), "top_associated_OG_repr_annot.RData", sep='.')
 	if ((!is.null(opt$load_top_annot) | loadup>=4) & file.exists(nftopmatchogdetail)){
 		load(nftopmatchogdetail)
 	if (verbose) print(sprintf("loaded annotation of (genes in) top associated OGs from file: '%s'", nftopmatchogdetail))
 	}else{
-		if (verbose) print(sprintf("retrieve annotation of (genes in) top associated OGs from %s database: '%s'", dbtype, opt$db_name))
-		
-		if (is.null(dbcon)) dbcon = connectionDB(opt)
-		
-		u1 = unique(topmatchfamog$genefamog_1)
-		u2 = unique(topmatchfamog$genefamog_2)
-		u = as.data.frame(t(simplify2array(strsplit(union(u1, u2), split='_'))), stringsAsFactors=F)
-		colnames(u) = c('gene_family_id', 'og_id')
-		u$og_id = as.numeric(u$og_id)
-		if (verbose){ print("toporthogroups:"); print(head(u)) }
-		
-		dbExecute(dbcon, "CREATE TEMP TABLE toporthogroups (gene_family_id varchar(20), og_id smallint); ")
-		dbWriteTable(dbcon, "toporthogroups", value=u, append=T, row.names=F)
-		
 		## query annotations - 1 row / OG, with a representative lineage / CDS
 		
 		# first generate table of enriched gene family_OG annotation
@@ -442,6 +442,15 @@ if (!is.null(opt$db_name)){
 			  INNER JOIN replicons USING (genomic_accession)
 			  LEFT JOIN prot2goterms_oneliner USING (genbank_nr_protein_id)
 			  LEFT JOIN prot2pathways_oneliner USING (genbank_nr_protein_id);"
+#~ 			multiannotquery = "
+#~ 			SELECT DISTINCT gene_family_id, og_id, replacement_label_or_cds_code, cds_code, product,
+#~ 			  assembly_id, genomic_accession, replicon_type, replicon_size, cds_begin
+#~ 			  FROM toporthogroups
+#~ 			  INNER JOIN orthologous_groups USING (gene_family_id, og_id)
+#~ 			  INNER JOIN gene_tree_label2cds_code USING (replacement_label_or_cds_code)
+#~ 			  INNER JOIN coding_sequences USING (gene_family_id, cds_code)
+#~ 			  INNER JOIN proteins USING (genbank_nr_protein_id)
+#~ 			  INNER JOIN replicons USING (genomic_accession);"
 			if (verbose) cat(gsub("^\t\t", "", multiannotquery))
 			toplinemultiannot = dbGetQuery(dbcon, multiannotquery)
 			dbExecute(dbcon, "drop table toporthogroups; ")
