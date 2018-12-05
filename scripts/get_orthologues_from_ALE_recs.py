@@ -396,8 +396,8 @@ if __name__=='__main__':
 		# list the consensus/ML gene trees available
 		lnfgtcon = glob.glob('%s/*%s'%(unreconciledGTdir, unreconciledGText))
 		# identify those not yet treated via reconciliation scanrios
-		dfamcon = {os.path.basename(gtcon).split('.')[0].split('-')[0].split('_')[0]:nfgtcon for nfgtcon in lnfgtcon}
-		lfamrec = [os.path.basename(gtrec).split('.')[0].split('-')[0].split('_')[0] for nfrec in lnfrec]
+		dfamcon = {os.path.basename(nfgtcon).split('.')[0].split('-')[0].split('_')[0]:nfgtcon for nfgtcon in lnfgtcon}
+		lfamrec = [os.path.basename(nfrec).split('.')[0].split('-')[0].split('_')[0] for nfrec in lnfrec]
 		missrecfams = set(dfamcon.keys()) - set(lfamrec)
 		lnfgtconmis = [dfamcon[fam] for fam in missrecfams]
 	
