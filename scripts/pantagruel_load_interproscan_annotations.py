@@ -142,8 +142,10 @@ def main(dbname, dbengine, interproscanresglobpat, interproscanversion, verbose=
 	if dbengine=='sqlite':
 		dbcur.executescript(indexscript)
 	elif dbengine=='postgres':
-	indexscript += """		
-					 CREATE OR REPLACE VIEW prot2GOterms_oneliner AS
+	indexscript += """
+	                 DROP TABLE IF EXISTS prot2goterms_oneliner;
+	                 
+					 CREATE TABLE prot2goterms_oneliner AS
 					 SELECT nr_protein_id, string_agg(go_id, '|') AS go_terms
 					 FROM (SELECT DISTINCT nr_protein_id, go_id
 					  FROM functional_annotations
@@ -151,7 +153,9 @@ def main(dbname, dbengine, interproscanresglobpat, interproscanversion, verbose=
 					 ) AS dog
 					 GROUP BY nr_protein_id;
 					 
-					 CREATE OR REPLACE VIEW prot2pathways_oneliner AS
+	                 DROP TABLE IF EXISTS prot2pathways_oneliner;
+	                 
+					 CREATE TABLE prot2pathways_oneliner AS
 					 SELECT nr_protein_id, string_agg(pathway_db_id, '|') AS pathways
 					 FROM (SELECT DISTINCT nr_protein_id, concat_ws(':', pathway_db, pathway_id) AS pathway_db_id
 					  FROM functional_annotations
