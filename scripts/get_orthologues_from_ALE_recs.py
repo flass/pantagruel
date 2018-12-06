@@ -351,8 +351,8 @@ if __name__=='__main__':
 	skipReconciled = ('--skip.reconciled' in dopt)
 	if not methods or set(methods) > set(allmethods):
 		raise ValueError, "values for --methods must be any non-empty combination of %s (default to 'mixed').\n"%repr()
-	graphCombine = dopt.get('graph.combine', 'fastgreedy')
-	if not hasattr(igraph.Graph, "community_"+graphCombine):
+	graphCombine = dopt.get('graph.combine')
+	if graphCombine and not hasattr(igraph.Graph, "community_"+graphCombine):
 		raise ValueError, "values for --graph.combine must be such that 'community_%val%' is a method of igraph.Graph objects, e.g. 'fastgreedy'; cf. http://igraph.org/python/doc/igraph.Graph-class.html"
 	majRuleCombine = float(dopt.get('majrule.combine', 0.5))
 	if not (majRuleCombine>0 and majRuleCombine<=1):
