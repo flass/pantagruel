@@ -67,9 +67,9 @@ def indexCleanTreeLabels(genetree, dlabs, dnexustrans={}, drevnexustrans={}, lta
 			node.edit_label('')
 	return (genetree, dnexustrans, drevnexustrans, ltaxnexus)
 
-def getVertexClustering(g, communitymethod, w='weight'):
+def getVertexClustering(g, communitymethod, w='weight', **kw):
 	"""generic call to igraph.Graph community finding functions to return homogeneous output format"""
-	commfunname = communitymethod if communitymethod.startswith("community_") else "community_"+communitymethod
+	commfunname = communitymethod if hasattr(igraph.Graph, communitymethod) else "community_"+communitymethod
 	graphcommfun = getattr(igraph.Graph, commfunname)
 	try:
 		comms = graphcommfun(g, weights=w)
@@ -81,9 +81,9 @@ def getVertexClustering(g, communitymethod, w='weight'):
 	if isinstance(comms, igraph.clustering.VertexDendrogram):
 		comms = comms.as_clustering()
 	assert isinstance(comms, igraph.clustering.VertexClustering)
-	return comms, graphcommfun
+	return comms
 
-def enforceUnicity(graph, clustering, graphcommfun, maxdrop=-1, w='weight', verbose=False, **kw):
+def enforceUnicity(graph, clustering, graphcommfun, maxdrop=-1, w='weight', nround=0, **kw):
 	"""resolve non-orthologous relationships between same-species genes 
 	
 	THese forbidden relationships may arise in connected graph components due to 'peer-to-peer' connectivity in the graph.
@@ -95,12 +95,14 @@ def enforceUnicity(graph, clustering, graphcommfun, maxdrop=-1, w='weight', verb
 	                point (useful when community finding ignores the weights, eg. if based 
 	                on connected components).
 	"""
+	verbose = kw.get('verbose')
 	# first find conflicting (i.e. multi-copy) members in clusters
 	lspe = [getOriSpeciesFromEventLab(v['name']) for v in graph.vs]
 	lspememb = zip(lspe, clustering.membership)
 	dcountspememb = {spememb:lspememb.count(spememb) for spememb in set(lspememb)}
 	spemembhicount = [spememb for spememb, n in dcountspememb.iteritems() if n > 1]
 	if not spemembhicount:
+		if verbose and nround>0: print "Conflict resolved at round %; network has now %d edges."%(nround, len(graph.es))
 		return (graph, clustering)
 	elif verbose:
 		print "forbidden same-species genes in orthologous communities:", spemembhicount
@@ -125,12 +127,12 @@ def enforceUnicity(graph, clustering, graphcommfun, maxdrop=-1, w='weight', verb
 	todropes = sorted(todropes, key=lambda x: x[w])
 	if maxdrop > 0:
 		todropes = todropes[:maxdrop]
-	if verbose: print "will prune those weak edges:", todropes
+	if verbose: print "will prune those %d weak edges:"%len(todropes), todropes
 	graph.delete_edges([e.index for e in todropes])
 	# regenerate clustering given the pruned graph
 	clustering = graphcommfun(graph, **kw)
 	# re-evaluate the graph and clustering in this condition (should only be required when maxdrop > 0)
-	return enforceUnicity(graph, clustering, graphcommfun, maxdrop=maxdrop, w=w, **kw)
+	return enforceUnicity(graph, clustering, graphcommfun, maxdrop=maxdrop, w=w, nround=nround+1, **kw)
 
 def orthoFromSampleRecs(nfrec, outortdir, nsample=[], methods=['mixed'], \
                         foutdiffog=None, outputOGperSampledRecGT=True, colourTreePerSampledRecGT=False, \
@@ -255,22 +257,23 @@ def orthoFromSampleRecs(nfrec, outortdir, nsample=[], methods=['mixed'], \
 				minfreq = majRuleCombine*R
 				for e in mjgOG.es:
 					# use strict majority (assuming the parameter majRuleCombine=0.5, the default) to avoid obtaining family-wide single components
-					if e['weight'] <= minfreq: mjdropedges.append(e)
+					if e['weight'] <= minfreq: mjdropedges.append(e.index)
 				# remove the low-freq edges to the graph
 				mjgOG.delete_edges(mjdropedges)
+				if verbose: print "Majority Rule Consensus network: droped %d edges with weight <= %d from the full network (%d edges)"%(len(mjdropedges), minfreq, len(gOG.es))
 				# find connected components (i.e. perform clustering)
 				compsOGs = mjgOG.components()
 				# resolve conflicts in orthology classification
-				mjgOG, compsOGs = enforceUnicity(mjgOG, compsOGs, igraph.Graph.components)
+				mjgOG, compsOGs = enforceUnicity(mjgOG, compsOGs, getVertexClustering, communitymethod='components', **kw)
 				# write results
 				writeGraphCombinedOrthologs(nfoutrad, "majrule_combined_%f"%majRuleCombine, mjgOG, compsOGs, llabs, \
                                              colourCombinedTree=colourCombinedTree, recgt=recgt0, drevnexustrans=drevnexustrans, \
                                              ltax=ltaxnexus, dtranslate=dnexustrans, ltreenames=["tree_0"], figtree=True)
 			if graphCombine:
 				# find communities (i.e. perform clustering) in full weighted graph
-				commsOGs, graphcommfun = getVertexClustering(gOG, graphCombine, w='weight')
+				commsOGs = getVertexClustering(gOG, graphCombine)
 				# resolve conflicts in orthology classification
-				gOG, commsOGs = enforceUnicity(gOG, commsOGs, graphcommfun, maxdrop=20)
+				gOG, commsOGs = enforceUnicity(gOG, commsOGs, getVertexClustering, maxdrop=20, communitymethod=graphCombine, **kw)
 				# write results
 				writeGraphCombinedOrthologs(nfoutrad, 'graph_combined_%s'%graphCombine, gOG, commsOGs, llabs, \
                                              colourCombinedTree=colourCombinedTree, recgt=recgt0, drevnexustrans=drevnexustrans, \
