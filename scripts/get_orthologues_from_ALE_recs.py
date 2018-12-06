@@ -81,9 +81,9 @@ def getVertexClustering(g, communitymethod, w='weight'):
 	if isinstance(comms, igraph.clustering.VertexDendrogram):
 		comms = comms.as_clustering()
 	assert isinstance(comms, igraph.clustering.VertexClustering)
-	return comms
+	return comms, graphcommfun
 
-def enforceUnicity(graph, clustering, dedgefreqs, commsfun, maxdrop=-1, w='weight', verbose=False, **kw):
+def enforceUnicity(graph, clustering, graphcommfun, maxdrop=-1, w='weight', verbose=False, **kw):
 	"""resolve non-orthologous relationships between same-species genes 
 	
 	THese forbidden relationships may arise in connected graph components due to 'peer-to-peer' connectivity in the graph.
@@ -128,9 +128,9 @@ def enforceUnicity(graph, clustering, dedgefreqs, commsfun, maxdrop=-1, w='weigh
 	if verbose: print "will prune those weak edges:", todropes
 	graph.delete_edges([e.index for e in todropes])
 	# regenerate clustering given the pruned graph
-	clustering = commsfun(graph, **kw)
+	clustering = graphcommfun(graph, **kw)
 	# re-evaluate the graph and clustering in this condition (should only be required when maxdrop > 0)
-	return enforceUnicity(graph, clustering, dedgefreqs, commsfun, maxdrop=maxdrop, w=w, **kw)
+	return enforceUnicity(graph, clustering, graphcommfun, maxdrop=maxdrop, w=w, **kw)
 
 def orthoFromSampleRecs(nfrec, outortdir, nsample=[], methods=['mixed'], \
                         foutdiffog=None, outputOGperSampledRecGT=True, colourTreePerSampledRecGT=False, \
@@ -260,12 +260,18 @@ def orthoFromSampleRecs(nfrec, outortdir, nsample=[], methods=['mixed'], \
 				mjgOG.delete_edges(mjdropedges)
 				# find connected components (i.e. perform clustering)
 				compsOGs = mjgOG.components()
+				# resolve conflicts in orthology classification
+				mjgOG, compsOGs = enforceUnicity(mjgOG, compsOGs, igraph.Graph.components)
+				# write results
 				writeGraphCombinedOrthologs(nfoutrad, "majrule_combined_%f"%majRuleCombine, mjgOG, compsOGs, llabs, \
                                              colourCombinedTree=colourCombinedTree, recgt=recgt0, drevnexustrans=drevnexustrans, \
                                              ltax=ltaxnexus, dtranslate=dnexustrans, ltreenames=["tree_0"], figtree=True)
 			if graphCombine:
 				# find communities (i.e. perform clustering) in full weighted graph
-				commsOGs = getVertexClustering(gOG, graphCombine, w='weight')
+				commsOGs, graphcommfun = getVertexClustering(gOG, graphCombine, w='weight')
+				# resolve conflicts in orthology classification
+				mjgOG, compsOGs = enforceUnicity(mjgOG, compsOGs, graphcommfun, maxdrop=20)
+				# write results
 				writeGraphCombinedOrthologs(nfoutrad, 'graph_combined_%s'%graphCombine, gOG, commsOGs, llabs, \
                                              colourCombinedTree=colourCombinedTree, recgt=recgt0, drevnexustrans=drevnexustrans, \
                                              ltax=ltaxnexus, dtranslate=dnexustrans, ltreenames=["tree_0"], figtree=True)
