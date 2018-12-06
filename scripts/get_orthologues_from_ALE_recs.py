@@ -116,7 +116,7 @@ def enforceUnicity(graph, clustering, graphcommfun, maxdrop=-1, w='weight', verb
 			for b in forbidrel[1:]:
 				if a==b: continue
 				# identify all the edge paths to cut to separate vertices in forbidden relationships
-				lshpaes = [mjgOG.get_eids(path=shpavs) for shpavs in graph.get_all_shortest_paths(graph.vs[a], to=graph.vs[b])]
+				lshpaes = [graph.get_eids(path=shpavs) for shpavs in graph.get_all_shortest_paths(graph.vs[a], to=graph.vs[b])]
 				for shpaes in lshpaes:
 					# identify the weakest edges to drop to separate this vertex pair
 					wes = [graph.es[ei][w] for ei in shpaes]
@@ -270,7 +270,7 @@ def orthoFromSampleRecs(nfrec, outortdir, nsample=[], methods=['mixed'], \
 				# find communities (i.e. perform clustering) in full weighted graph
 				commsOGs, graphcommfun = getVertexClustering(gOG, graphCombine, w='weight')
 				# resolve conflicts in orthology classification
-				mjgOG, compsOGs = enforceUnicity(mjgOG, compsOGs, graphcommfun, maxdrop=20)
+				gOG, commsOGs = enforceUnicity(gOG, commsOGs, graphcommfun, maxdrop=20)
 				# write results
 				writeGraphCombinedOrthologs(nfoutrad, 'graph_combined_%s'%graphCombine, gOG, commsOGs, llabs, \
                                              colourCombinedTree=colourCombinedTree, recgt=recgt0, drevnexustrans=drevnexustrans, \
