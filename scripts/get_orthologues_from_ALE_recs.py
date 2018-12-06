@@ -357,7 +357,8 @@ if __name__=='__main__':
 	majRuleCombine = float(dopt.get('majrule.combine', 0.5))
 	if not (majRuleCombine>0 and majRuleCombine<=1):
 		raise ValueError, "values for --graph.combine must be a real within the interval ]0; 1]"
-	nbthreads = int(dopt.get('--threads', dopt.get('-T', 1)))
+	nbthreads = int(dopt.get('--threads', dopt.get('-T', -1)))
+	if nbthreads < 1: nbthreads = mp.cpu_count()
 	
 	## main execution
 	lnfrec = glob.glob('%s/*ale.ml_rec'%(alerecdir))

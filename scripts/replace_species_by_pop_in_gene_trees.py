@@ -738,7 +738,7 @@ def usage():
 
 	
 if __name__=='__main__':	
-	opts, args = getopt.getopt(sys.argv[1:], 'G:c:S:o:hv', ['dir_out=', 'method=', \
+	opts, args = getopt.getopt(sys.argv[1:], 'G:c:S:o:T:hv', ['dir_out=', 'method=', \
 															'populations=', 'population_tree=', 'population_node_distance=', 'dir_full_gene_trees=', \
 															'pop_stem_conds=', 'within_pop_conds=', \
 															'threads=', 'reuse=', 'verbose=', 'max.recursion.limit=', 'logfile=', 'help'])
@@ -758,11 +758,12 @@ if __name__=='__main__':
 	dirfullgt = dopt.get('--dir_full_gene_trees')
 	psc = eval(dopt.get('--pop_stem_conds', 'None'))
 	wpc = eval(dopt.get('--within_pop_conds', 'None'))
-	nbthreads = int(dopt.get('--threads', 1))
 	reuseOutput = int(dopt.get('--reuse', 0))
 	verbose = int(dopt.get('--verbose', ('-v' in dopt)))
 	maxreclim = int(dopt.get('--max.recursion.limit', 4000))
 	nflog = dopt.get('--logfile')
+	nbthreads = int(dopt.get('--threads', dopt.get('-T', -1)))
+	if nbthreads < 1: nbthreads = mp.cpu_count()
 	
 	sys.setrecursionlimit(maxreclim)
 	

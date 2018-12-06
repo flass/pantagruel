@@ -221,7 +221,7 @@ def main():
 	#  - event dataset input
 	#  - matched events output
 	#  - program runtime
-	opts, args = getopt.getopt(sys.argv[1:], 'hv', ['ALE_algo=', 'nrec_per_sample=', \
+	opts, args = getopt.getopt(sys.argv[1:], 'hvT:', ['ALE_algo=', 'nrec_per_sample=', \
 	                                                'exclude_species_tree_branches=', 'event_type=', 'min_freq=', 'max_freq=', 'min_joint_freq=', 'match_scope=', \
 	                                                'genefams=', 'dir_constraints=', 'dir_replaced=', \
 	                                                'events_from_pickle=', 'events_from_shelve=', 'events_from_postgresql_db=', 'events_from_sqlite_db=', \
@@ -274,7 +274,8 @@ def main():
 	minJointFreqReport = float(dopt.get('--min_joint_freq', 0.0))
 	exclRecSpeBranches = str(dopt.get('--exclude_species_tree_branches', '')).split(',')
 	# runtime params
-	nbthreads = int(dopt.get('--threads', 1))
+	nbthreads = int(dopt.get('--threads', , dopt.get('-T', -1)))
+	if nbthreads < 1: nbthreads = mp.cpu_count()
 	verbose = int(dopt.get('--verbose', dopt.get('-v', 0)))
 	
 	if dirTableOut:

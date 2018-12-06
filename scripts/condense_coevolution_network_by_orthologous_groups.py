@@ -158,7 +158,7 @@ def usage():
 
 if __name__=='__main__':
 
-	opts, args = getopt.getopt(sys.argv[1:], 'hv', ['ortho_col_id=', 'reconciliation_id=', 'out=', \
+	opts, args = getopt.getopt(sys.argv[1:], 'T:hv', ['ortho_col_id=', 'reconciliation_id=', 'out=', \
 	                                                'postgresql_db=', 'sqlite_db=', 'whitinfam', \
 	                                                'restrict_famog_query=', 'input_famog_query_list=', \
 	                                                'threads=', 'help', 'verbose'])
@@ -183,7 +183,8 @@ if __name__=='__main__':
 	withinfam = bool(int(dopt.get('--whitinfam', 0)))
 	restrictfamogq = dopt.get('--restrict_famog_query', '')
 	nffamogqlist = dopt.get('--input_famog_query_list')
-	nbthreads = int(dopt.get('--threads', 1))
+	nbthreads = int(dopt.get('--threads', dopt.get('-T', -1)))
+	if nbthreads < 1: nbthreads = mp.cpu_count()
 	verbose = (('-v' in dopt) or ('--verbose' in dopt))
 	if verbose: print "dopt:", dopt
 	

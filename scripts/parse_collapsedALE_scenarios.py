@@ -412,7 +412,7 @@ def parse_events(lnfrec, genefamlist=None, refspetree=None, ALEmodel='undated', 
 
 def main():
 
-	opts, args = getopt.getopt(sys.argv[1:], 'hv', ['rec_sample_list=', 'ALE_algo=', \
+	opts, args = getopt.getopt(sys.argv[1:], 'hvT:', ['rec_sample_list=', 'ALE_algo=', \
 	                                                'genefams=', 'dir_constraints=', 'dir_replaced=', \
 	                                                'populations=', 'reftree=', \
 	                                                'evtype=', 'minfreq=', \
@@ -450,7 +450,8 @@ def main():
 	minFreqReport = float(dopt.get('--minfreq', 0))
 	
 	# runtime params
-	nbthreads = int(dopt.get('--threads', 1))
+	nbthreads = int(dopt.get('--threads', dopt.get('-T', -1)))
+	if nbthreads < 1: nbthreads = mp.cpu_count()
 	verbose = ('-v' in dopt) or ('--verbose' in dopt)
 	if verbose:
 		print "# call: %s"%(' '.join(sys.argv))
