@@ -158,9 +158,6 @@ for (i in 1:length(cladedefs)){
 		 collapse=" ")
 #~ 		print(creaspegeneannots)
 		dbExecute(dbcon, creaspegeneannots, params=list(o=ogcolid))
-		testtest = dbGetQuery(dbcon, "select * from spegeneannots where gene_family_id='RHIZOC019762';")
-		print('test RHIZOC019762')
-		print(testtest)
 		dbExecute(dbcon, "DROP TABLE specific_genes;")
 		genesetclauses = list(sprintf("WHERE cds_code LIKE '%s@_%%' ESCAPE '@' AND", refgenome), "WHERE") ; names(genesetclauses) = genesetscopes
 		for (genesetscope in genesetscopes){
