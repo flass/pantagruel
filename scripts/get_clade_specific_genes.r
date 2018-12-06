@@ -99,7 +99,7 @@ specifigenes = lapply(cladedefs, function(cladedef){
 
 dbcon = dbConnect(SQLite(), sqldb)
 
-cladedefwritesep = paste(rep('  ...  \t', 7), sep='', collapse='')
+cladedefwritesep = paste(c(rep('\t', 4), rep('  ...  \t', 3)), sep='', collapse='')
 
 for (i in 1:length(cladedefs)){
 	cla = names(cladedefs)[i]
@@ -126,6 +126,7 @@ for (i in 1:length(cladedefs)){
 		spefamogs[,2] = as.numeric(spefamogs[,2]) ; colnames(spefamogs) = c("gene_family_id", "og_id")
 		dbBegin(dbcon)
 		dbWriteTable(dbcon, "specific_genes", spefamogs, temporary=T)
+		write.table(spefamogs, file=file.path(diroutspegedetail, paste(bnoutspege, cla, "spegene_fams_ogids.tab", sep='_')), sep='\t', quote=F, row.names=F, col.names=T, append=F)
 		# choose adequate reference genome
 		refgenome = NULL
 		for (prefgenome in preferredgenomes){
@@ -138,10 +139,17 @@ for (i in 1:length(cladedefs)){
 		print(sprintf("%s: '%s'; %d clade-specific genes; ref genome: %s", cla, cladedef$name, ncsg, refgenome), quote=F)
 		dbExecute(dbcon, "DROP TABLE IF EXISTS spegeneannots;")
 		creaspegeneannots = paste( c(
-		 "CREATE TABLE spegeneannots AS SELECT gene_family_id, og_id, genomic_accession, locus_tag, cds_code, cds_begin, cds_end, nr_protein_id, product",
-		 "FROM specific_genes",
-		 "LEFT JOIN orthologous_groups USING (gene_family_id, og_id)",
-		 "INNER JOIN coding_sequences USING (cds_code, gene_family_id)",
+		 "CREATE TABLE spegeneannots AS ",
+		 "SELECT gene_family_id, og_id, genomic_accession, locus_tag, cds_code, cds_begin, cds_end, nr_protein_id, product",
+		 "FROM (",
+		 "  SELECT gene_family_id, og_id, ortholog_col_id, coding_sequences.* FROM specific_genes",
+		 "   INNER JOIN orthologous_groups USING (gene_family_id, og_id)",
+		 "   INNER JOIN coding_sequences USING (cds_code, gene_family_id)",
+		 " UNION",
+		 "  SELECT gene_family_id, og_id, ortholog_col_id, coding_sequences.* FROM specific_genes",
+		 "   LEFT JOIN orthologous_groups USING (gene_family_id, og_id)",
+		 "   INNER JOIN coding_sequences USING (gene_family_id)",
+		 "   WHERE og_id IS NULL ) as famog2cds",
 		 "INNER JOIN proteins USING (nr_protein_id)",
 		 "INNER JOIN replicons USING (genomic_accession)",
 		 "INNER JOIN assemblies USING (assembly_id)",
@@ -150,6 +158,9 @@ for (i in 1:length(cladedefs)){
 		 collapse=" ")
 #~ 		print(creaspegeneannots)
 		dbExecute(dbcon, creaspegeneannots, params=list(o=ogcolid))
+		testtest = dbGetQuery(dbcon, "select * from spegeneannots where gene_family_id='RHIZOC019762';")
+		print('test RHIZOC019762')
+		print(testtest)
 		dbExecute(dbcon, "DROP TABLE specific_genes;")
 		genesetclauses = list(sprintf("WHERE cds_code LIKE '%s@_%%' ESCAPE '@' AND", refgenome), "WHERE") ; names(genesetclauses) = genesetscopes
 		for (genesetscope in genesetscopes){
@@ -157,25 +168,25 @@ for (i in 1:length(cladedefs)){
 			spegeneinfo = dbGetQuery(dbcon, paste( c(
 			"SELECT gene_family_id, og_id, cds_code, genomic_accession, locus_tag, cds_begin, cds_end, product", 
 			"FROM spegeneannots", 
-			gsc, "1 ;"), collapse=" "))
+			gsc, "1 ORDER BY locus_tag ;"), collapse=" "))
 			spegeneinfoplus = dbGetQuery(dbcon, paste( c(
 			 "SELECT distinct gene_family_id, og_id, cds_code, genomic_accession, locus_tag, cds_begin, cds_end, product, interpro_id, interpro_description, go_terms, pathways",
 			 "FROM spegeneannots",
 			 "LEFT JOIN functional_annotations USING (nr_protein_id)",
 			 "LEFT JOIN interpro_terms USING (interpro_id)", 
-			 gsc, "1 ;"), collapse=" "))
+			 gsc, "1 ORDER BY locus_tag ;"), collapse=" "))
 			spegallgoterms = dbGetQuery(dbcon, paste( c(
 			 "SELECT distinct gene_family_id, og_id, cds_code, genomic_accession, locus_tag, go_id",
 			 "FROM spegeneannots",
 			 "LEFT JOIN functional_annotations USING (nr_protein_id)",
 			 "LEFT JOIN interpro2GO USING (interpro_id)",
-			 gsc, "go_id NOT NULL;"), collapse=" "))
+			 gsc, "go_id NOT NULL ORDER BY locus_tag ;"), collapse=" "))
 			spegallpathways = dbGetQuery(dbcon, paste( c(
 			 "SELECT distinct gene_family_id, og_id, cds_code, genomic_accession, locus_tag, pathway_db, pathway_id",
 			 "FROM spegeneannots",
 			 "LEFT JOIN functional_annotations USING (nr_protein_id)",
 			 "LEFT JOIN interpro2pathways USING (interpro_id)",
-			 gsc, "pathway_id NOT NULL;"), collapse=" "))
+			 gsc, "pathway_id NOT NULL ORDER BY locus_tag ;"), collapse=" "))
 			if (genesetscope=="reprseq"){ write.table(spegeneinfo, file=nfoutspege, sep='\t', quote=F, row.names=F, col.names=T, append=T) }
 			write.table(spegeneinfoplus, file=file.path(diroutspegedetail, paste(bnoutspege, cla, genesetscope, "details.tab", sep='_')), sep='\t', quote=F, row.names=F, col.names=T, append=F)
 			write.table(spegallgoterms, file=file.path(diroutspegedetail, paste(bnoutspege, cla, genesetscope, "goterms.tab", sep='_')), sep='\t', quote=F, row.names=F, col.names=T, append=F)
