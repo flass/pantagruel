@@ -101,11 +101,13 @@ dbcon = dbConnect(SQLite(), sqldb)
 
 cladedefwritesep = paste(c(rep('\t', 4), rep('  ...  \t', 3)), sep='', collapse='')
 
+today = Sys.Date()
+write( paste("#", c(format(today, format="%B %d %Y"), "Pantagruel version:", system("cd ${ptgscripts} ; git log | head -n 3", intern=T), "- - - - -")), file=nfoutspege, append=F)
+
 for (i in 1:length(cladedefs)){
 	cla = names(cladedefs)[i]
 	cladedef = cladedefs[[cla]]
-	a = as.logical(i-1)
-	write(sprintf("# %s %s", cla, cladedef$name), file=nfoutspege, append=a)
+	write(sprintf("# %s %s", cla, cladedef$name), file=nfoutspege, append=T)
 	write( paste(sprintf("# gene families present in all genomes but %d of clade:", cladedef$maxabsin), cladedefcsv[cla,'clade'], sep=cladedefwritesep), file=nfoutspege, append=T)
 	write( paste(sprintf("# and absent in all but %d genomes of sister clade:", cladedef$maxpresout), cladedefcsv[cla,'sisterclade'], sep=cladedefwritesep), file=nfoutspege, append=T)
 	ncsg = length(specifigenes[[cla]])
