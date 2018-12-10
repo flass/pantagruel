@@ -274,7 +274,7 @@ def main():
 	minJointFreqReport = float(dopt.get('--min_joint_freq', 0.0))
 	exclRecSpeBranches = str(dopt.get('--exclude_species_tree_branches', '')).split(',')
 	# runtime params
-	nbthreads = int(dopt.get('--threads', , dopt.get('-T', -1)))
+	nbthreads = int(dopt.get('--threads', dopt.get('-T', -1)))
 	if nbthreads < 1: nbthreads = mp.cpu_count()
 	verbose = int(dopt.get('--verbose', dopt.get('-v', 0)))
 	
@@ -311,7 +311,7 @@ def usage():
 	s += "\t\t\t\trows indicate the genes to be treated in the search, and to which gene family they belong\n"
 	s += "\t\t\t\t(and hence in which reconciliation file to find them).\n"
 	s += "\t\t--match_scope={'between_fams'|'within_fams'|'all'} define scope where co-evolution score is to be evaluated:\n"
-	s += "\t\t\t\t- within or between gene families only, or both. Between families is the default behavioue;\n"
+	s += "\t\t\t\t- within or between gene families only, or both. Between families is the default behaviour;\n"
 	s += "\t\t\t\t- within_families can be chosen to allow to cluster closely related lineages with significantly shared ancestry within families\n"
 	s += "\t\t\t\t  and to restrict accordingly the search for matches between families\n."
 	return s
