@@ -87,10 +87,9 @@ orthocol=ortholog_collection_${orthocolid}
 echo $orthocol
 orthomatrad=${orthogenes}/${orthocol}/mixed_majrule_combined_0.5.orthologs
 python ${ptgscripts}/get_ortholog_presenceabsence_matrix_from_sqlitedb.py ${sqldb} ${orthomatrad} ${orthocolid}
-${ptgscripts}/get_clade_specific_genes.r ${orthomatrad}_genome_counts.no-singletons.mat ${sqldb} ${orthocolid} ${speciestree} ${orthomatrad}
 
 # create clsutering based on the abs/pres matrix (using Jaccard Distance)
-${dbscripts}/pangenome_hclust.r ${orthomatrad} & 
+${dbscripts}/pangenome_hclust.r ${orthomatrad} 1000 & 
 
 # list clade-specific orthologs
-export orthomatrad=${orthogenes}/${orthocol}/mixed_majrule_combined_0.5.orthologs
+${ptgscripts}/get_clade_specific_genes.r ${orthomatrad}_genome_counts.no-singletons.mat ${sqldb} ${orthocolid} ${speciestree} ${orthomatrad}
