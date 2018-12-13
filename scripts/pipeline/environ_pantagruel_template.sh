@@ -58,11 +58,12 @@ export indata=${ptgdb}/00.input_data
 export seqdb=${ptgdb}/01.seqdb
 export protali=${ptgdb}/02.gene_alignments
 export database=${ptgdb}/03.database
-export coregenome=${ptgdb}/04.core_genome
-export genetrees=${ptgdb}/05.gene_trees
-export alerec=${ptgdb}/06.ALE_reconciliation
-export comparerecs=${entdb}/07.compare_scenarios
+export funcannot=${ptgdb}/04.functional
+export coregenome=${ptgdb}/05.core_genome
+export genetrees=${ptgdb}/06.gene_trees
+export alerec=${ptgdb}/07.ALE_reconciliation
 export orthogenes=${ptgdb}/08.orthologs
+export comparerecs=${entdb}/09.compare_scenarios
 
 # sub folders
 export annot=${customassemb}/prokka_annotation
@@ -79,6 +80,11 @@ export colalinexuscodedir=${protali}/${chaintype}_cdsfam_alignments_species_code
 export bayesgenetrees=${genetrees}/${chaintype}_mrbayes_trees
 export coltreechains=${alerec}/${chaintype}_tree_chains
 export recs=${alerec}/${chaintype}_recs
+export goterms=${funcannot}/GeneOntology
+export claderefgodir=${goterms}/clade_go_term_reference_sets
+export dirgotablescladespe=${orthomatrad}_specific_genes.tables_byclade_goterms_pathways
+export dirgoenrichcladespecore=${goterms}/clade_go_term_enriched_cladespecific_vs_coregenome
+export dirgoenrichcladespepan=${goterms}/clade_go_term_enriched_cladespecific_vs_pangenome
 
 # other secondary variables
 export straininfo=${customassemb}/${ptgdbname}_strain_infos.txt
@@ -97,6 +103,7 @@ export nrbiparts=${nrbesttree/bestTree/bipartitions}
 export nrrootedtree=${nrbiparts}.${rootingmethod}rooted
 export speciestree=${nrrootedtree}.full
 export collapsecond=${criterion}_stem${cladesupp}_within${withinfun}${subcladesupp}
-
+export IPversion=$(interproscan --version | head -n 1 | sed -e 's/InterProScan version //')
+export interpro=${funcannot}/InterProScan_${IPversion}
 
 

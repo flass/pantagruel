@@ -58,16 +58,18 @@ with `TASK` to be picked among the following (equivalent digit/number/keywords a
        align homologous protein sequences and translate alignemnts into coding sequences
   3|03|sqldb|create_sqlite_db
        initiate SQL database and load genomic object relationships
-  4|04|core|core_genome_ref_tree
+  4|04|functional|functional_annotations
+       use InterProScan to functionally annotate proteins in the database, including with Gene Ontology and metabolic pathway terms
+  5|05|core|core_genome_ref_tree
        select core-genome markers and compute reference tree
-  5|05|genetrees|gene_trees
+  6|06|genetrees|gene_trees
        compute gene tree
-  6|06|reconciliations
+  7|07|reconciliations
        compute species tree/gene tree reconciliations
-  7|07|coevolution
-       quantify gene co-evolution and build gene association network
   8|08|specific|clade_specific_genes
        classify genes into orthologous groups (OGs) and search clade-specific OGs
+  9|09|coevolution
+       quantify gene co-evolution and build gene association network
 
 ```  
 For detail of task-specific options, please run:  
@@ -83,11 +85,6 @@ Finally, it is possible to run the whole pipeline at once, simply perform the `a
 pantagruel -d db_name -r root_dir all
 ```  
 Note that in the later two cases, no task-specific options can be specified trough the command line; instead, you should edit the database's environment file (produced during initiation step) that should be located at `${root_dir}/${db_name}/environ_pantagruel_${db_name}.sh`, with `${db_name}` and `${root_dir}` the arguments of `-d` and `-r` options on the `pantagruel init` call.
-
-
--------------
-
-![repas]
 
 -------------
 
@@ -132,6 +129,9 @@ Below is a summary of the software on which Pantagruel dependends:
   - getopt
   - parallel
   - DBI, RSQLite
+  (optional:)
+  - topGO
+  - pvclust
   
 - **Python** (version 2.7, >=2.7.13 recommended) + packages:
   - [sqlite3](https://docs.python.org/2/library/sqlite3.html) (standard package in Python 2.7)
@@ -147,6 +147,10 @@ Below is a summary of the software on which Pantagruel dependends:
 - [(linux)brew](http://linuxbrew.sh/) (available as a Debian package *linuxbrew-wrapper*)
 - [docker](https://www.docker.com/) (available as a Debian package *docker.io*)
 
+
+-------------
+
+![repas]
 
 
 [repas]: https://github.com/flass/pantagruel/blob/master/pics/Pantagruels_childhood.jpg

@@ -17,10 +17,10 @@ envsourcescript=${ptgdb}/environ_pantagruel_${ptgdbname}.sh
 source $envsourcescript
 
 ###########################################
-## 07. compare gene evolution scenarios
+## 09. compare gene evolution scenarios
 ###########################################
 
-export comparerecs=${entdb}/07.compare_scenarios
+export comparerecs=${entdb}/09.compare_scenarios
 mkdir -p ${comparerecs}
 export compoutdir=${comparerecs}/${parsedreccol}
 mkdir -p ${compoutdir}/

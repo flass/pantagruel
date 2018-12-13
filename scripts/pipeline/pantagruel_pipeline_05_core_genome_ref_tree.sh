@@ -19,11 +19,11 @@ source $envsourcescript
 pseudocoremingenomes=$2
 
 ###########################################
-## 04. Core Genome Phylogeny (Species tree)
+## 05. Core Genome Phylogeny (Species tree)
 ###########################################
 
 ## select psedo-core genome marker gene set
-export coregenome=${ptgdb}/04.core_genome
+export coregenome=${ptgdb}/05.core_genome
 mkdir -p ${coregenome}/
 
 if [[ -z ${pseudocoremingenomes} || "${pseudocoremingenomes}"=='REPLACEpseudocoremingenomes' ]] ; then

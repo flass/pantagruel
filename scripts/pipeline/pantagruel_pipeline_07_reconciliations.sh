@@ -17,10 +17,10 @@ envsourcescript=${ptgdb}/environ_pantagruel_${ptgdbname}.sh
 source $envsourcescript
 
 #############################################
-## 06. gene tree/ Species tree reconciliations
+## 07. gene tree/ Species tree reconciliations
 #############################################
 
-export alerec=${ptgdb}/06.ALE_reconciliation
+export alerec=${ptgdb}/07.ALE_reconciliation
 mkdir -p ${alerec}
 
 ### perform reconciliations with ALE

@@ -19,10 +19,10 @@ source $envsourcescript
 collapseCladeOptions=$2
 
 #############################################################
-## 05. Gene trees (full [ML] and collapsed [bayesian sample])
+## 06. Gene trees (full [ML] and collapsed [bayesian sample])
 #############################################################
 
-export genetrees=${ptgdb}/05.gene_trees
+export genetrees=${ptgdb}/06.gene_trees
 export mlgenetrees=${genetrees}/raxml_trees
 mkdir -p ${mlgenetrees}
 mkdir -p $ptglogs/raxml/gene_trees

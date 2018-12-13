@@ -128,8 +128,8 @@ tail -n +2 ${cladedefs} | while read cla cladedef siscladedef ; do
 done
 
 export dirgotablescladespe=${orthomatrad}_specific_genes.tables_byclade_goterms_pathways
-export dirgoenrichcladespe=${goterms}/clade_go_term_enriched_cladespecific_vs_coregenome
-mkdir -p ${dirgoenrichcladespe}/
+export dirgoenrichcladespecore=${goterms}/clade_go_term_enriched_cladespecific_vs_coregenome
+mkdir -p ${dirgoenrichcladespecore}/
 # compare each clade-specific core genome (single repr sequence per OG) to its respective core genome (single repr sequence per OG)
 tail -n +2 ${cladedefs} | while read cla name cladedef siscladedef maxabs maxpres ; do
   echo $cla
@@ -138,14 +138,14 @@ tail -n +2 ${cladedefs} | while read cla name cladedef siscladedef maxabs maxpre
   ${dbscripts}/clade_specific_genes_GOterm_enrichment_test.r \
   --study_annots ${cladspego}_nonull  \
   --population_annots ${claderefgodir}/${cla}_coregenome_terms.tab_nonull \
-  --out ${dirgoenrichcladespe}/${cla}_go_term_enriched_cladespecific_vs_coregenome.tab \
+  --out ${dirgoenrichcladespecore}/${cla}_go_term_enriched_cladespecific_vs_coregenome.tab \
   --algo "weight01" --stat "Fisher" &> ${raplogs}/clade_specific_vs_coregenome_${cla}_GOterm_enrichment_test.log
-  ls -lh ${dirgoenrichcladespe}/*_${cla}_* ; echo ""
+  ls -lh ${dirgoenrichcladespecore}/*_${cla}_* ; echo ""
 done &> ${raplogs}/cladespecific_vs_coregenome_genes_GOterm_enrichment_test.log
 
 export dirgotablescladespe=${orthomatrad}_specific_genes.tables_byclade_goterms_pathways
-export dirgoenrichcladespe=${goterms}/clade_go_term_enriched_cladespecific_vs_pangenome
-mkdir -p ${dirgoenrichcladespe}/
+export dirgoenrichcladespepan=${goterms}/clade_go_term_enriched_cladespecific_vs_pangenome
+mkdir -p ${dirgoenrichcladespepan}/
 # compare each clade-specific core genome (all sequences) to its respective pangenome (all sequences)
 tail -n +2 ${cladedefs} | while read cla name cladedef siscladedef maxabs maxpres ; do
   echo $cla
@@ -154,9 +154,9 @@ tail -n +2 ${cladedefs} | while read cla name cladedef siscladedef maxabs maxpre
   ${dbscripts}/clade_specific_genes_GOterm_enrichment_test.r \
   --study_annots ${cladspego}_nonull  \
   --population_annots ${claderefgodir}/${cla}_pangenome_terms.tab_nonull \
-  --out ${dirgoenrichcladespe}/${cla}_go_term_enriched_cladespecific_vs_pangenome.tab \
+  --out ${dirgoenrichcladespepan}/${cla}_go_term_enriched_cladespecific_vs_pangenome.tab \
   --algo "weight01" --stat "Fisher" &> ${raplogs}/clade_specific_vs_coregenome_${cla}_GOterm_enrichment_test.log
-  ls -lh ${dirgoenrichcladespe}/*${cla}* ; echo ""
+  ls -lh ${dirgoenrichcladespepan}/*${cla}* ; echo ""
 done &> ${raplogs}/cladespecific_vs_pangenome_genes_GOterm_enrichment_test.log
 
 # concatenate summary reports
@@ -164,8 +164,8 @@ tail -n +2 ${cladedefs} | while read cla name cladedef siscladedef maxabs maxpre
   cla=clade${n}
   echo "# ${cla} ${name}"
   echo "# cladespe vs. core"
-  cat ${goterms}/41NeoPseudo_clade_go_term_enriched_cladespecific_vs_coregenome/41NeoPseudo_${cla}_go_term_enriched_cladespecific_vs_coregenome.tab
+  cat ${dirgoenrichcladespecore}/${cla}_go_term_enriched_cladespecific_vs_coregenome.tab
   echo "# cladespe vs. pan"
-  cat ${goterms}/41NeoPseudo_clade_go_term_enriched_cladespecific_vs_pangenome/41NeoPseudo_${cla}_go_term_enriched_cladespecific_vs_pangenome.tab
+  cat ${dirgoenrichcladespepan}/${cla}_go_term_enriched_cladespecific_vs_pangenome.tab
   echo "# - - - "
-done > ${goterms}/41NeoPseudo_clade_go_term_enriched_cladespecific_summary.tab
+done > ${goterms}/clade_go_term_enriched_cladespecific_summary.tab
