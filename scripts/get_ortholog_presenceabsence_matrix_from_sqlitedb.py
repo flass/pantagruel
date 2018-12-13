@@ -57,6 +57,15 @@ INNER JOIN gene_tree_label2cds_code USING (cds_code)
 WHERE gene_family_id IS NOT NULL AND gene_family_id!='RHIZOC000000'
 ORDER BY gene_family_id, code;"""%(IJfocus))
 
+#~ dbcur.execute("""
+#~ CREATE TEMP TABLE cds_fam_code AS 
+#~ SELECT cds_code, cds_code, gene_family_id, code
+#~ FROM coding_sequences 
+#~ INNER JOIN replicons USING (genomic_accession) 
+#~ INNER JOIN assemblies USING (assembly_id) %s
+#~ WHERE gene_family_id IS NOT NULL AND gene_family_id!='RHIZOC000000'
+#~ ORDER BY gene_family_id, code;"""%(IJfocus))
+
 dbcur.execute("SELECT count(*) FROM cds_fam_code;")
 print "examining a total of %d CDSs with non-ORFan family assignment"%(dbcur.fetchone()[0])
 
@@ -83,6 +92,13 @@ FROM cds_fam_code
 LEFT JOIN orthologous_groups using (replacement_label_or_cds_code, gene_family_id) %s
 GROUP BY gene_family_id, og_id, code
 ORDER BY gene_family_id, og_id;"""%colWC)
+
+#~ dbcur.execute("""
+#~ SELECT gene_family_id, og_id, code, count(cds_code)
+#~ FROM cds_fam_code
+#~ LEFT JOIN orthologous_groups using (cds_code, gene_family_id) %s
+#~ GROUP BY gene_family_id, og_id, code
+#~ ORDER BY gene_family_id, og_id;"""%colWC)
 
 lnoorthofams = []
 lorthofams = []

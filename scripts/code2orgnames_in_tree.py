@@ -29,7 +29,7 @@ with open(nfref, 'r') as fref:
 			if ' str. ' not in orga:
 				orga = orga.replace(stra, 'str. '+stra)
 		
-		orga = orga.replace('.', '').replace(':', '_').replace(' ', '_')
+		orga = orga.replace('(', '').replace(')', '').replace('.', '').replace(':', '_').replace(' ', '_')
 		orga += '__'+code
 		print code, orga
 		node = t[code]

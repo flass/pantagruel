@@ -82,13 +82,14 @@ parseMatchEventFile = function(nfmatchevents, quant.only=F, nmaxrlocsid=NULL, re
 	return( list(quantiles=qmatchev, unique.query.rlocdsid=urlocdsid1, nb.reported.comp=ncomp, tot.comp=totcomp, top.matches=topmatchev, ref.repli.proj.mat=matmatchev) )
 }
 
-plotHMevents = function(mat, matname, cap=99, excl.neighbour=5, fixed.max=30){
+plotHMevents = function(mat, matname, cap=99, excl.neighbour=5, fixed.max=25){
 	if (fixed.max){ brk = 0:fixed.max
-	}else{ brk = quantile(mat, (0:30)/30, na.rm=T) }
+	}else{ brk = quantile(mat, (0:25)/25, na.rm=T) }
 	print(brk)
+	print(summary(mat))
 	mat[is.na(mat)] = 0
-	heatmap.2(mat, Rowv=F, Colv=F, dendrogram='none', scale='none', trace='none', breaks=brk, col=rainbow(30), na.col='white', main=matname)
-	heatmap.2(mat, scale='none', trace='none', breaks=brk, col=rainbow(30), na.col='white', main=matname)
+	heatmap.2(mat, Rowv=F, Colv=F, dendrogram='none', scale='none', trace='none', breaks=brk, col=rainbow(25), na.col='white', main=matname)
+	heatmap.2(mat, scale='none', trace='none', breaks=brk, col=rainbow(25), na.col='white', main=matname)
 #~ 	for (i in 1:(ncol(mat)-1)){
 #~ 	 for (j in 2:ncol(mat)){
 #~ 	  mat[j,i] = mat[i,j]

@@ -21,7 +21,15 @@ write.tree(as.phylo(jacc.dist.ward.clust), file=sprintf('%s_gene_abspres.cluster
 
 jacc.dist.ward.pvclust = pvclust(genocount, method.dist='binary', method.hclust='ward.D2', parallel=T, nboot=nboot)
 save(jacc.dist.ward.pvclust, file=sprintf('%s_gene_abspres.pvclustering.RData', orthomatrad))
-pdf(file=sprintf('%s_gene_abspres.clustering.pdf', orthomatrad), width=16, height=9)
+pdf(file=sprintf('%s_gene_abspres.pvclustering.pdf', orthomatrad), width=16, height=9)
 plot(jacc.dist.ward.pvclust)
 dev.off()
-write.tree(as.phylo(jacc.dist.ward.pvclust), file=sprintf('%s_gene_abspres.pvclustering.nwk', orthomatrad))
+jacc.dist.ward.pvclust.tree = as.phylo(jacc.dist.ward.pvclust$hclust)
+for (support in c('bp', 'au')){
+	jacc.dist.ward.pvclust.tree$node.label = as.character(format(jacc.dist.ward.pvclust$edges[,support], digits=2))
+	write.tree(jacc.dist.ward.pvclust.tree, file=sprintf('%s_gene_abspres.pvclustering.%s.nwk', orthomatrad, support))
+}
+jacc.dist.ward.pvclust.tree$node.label = paste(format(jacc.dist.ward.pvclust$edges[,'au'], digits=2),
+                                               format(jacc.dist.ward.pvclust$edges[,'bp'], digits=2), sep='/')
+write.tree(jacc.dist.ward.pvclust.tree, file=sprintf('%s_gene_abspres.pvclustering.au-bp.nwk', orthomatrad, support))
+write.nexus(jacc.dist.ward.pvclust.tree, file=sprintf('%s_gene_abspres.pvclustering.au-bp.nex', orthomatrad, support))

@@ -442,15 +442,6 @@ if (!is.null(opt$db_name)){
 			  INNER JOIN replicons USING (genomic_accession)
 			  LEFT JOIN prot2goterms_oneliner USING (genbank_nr_protein_id)
 			  LEFT JOIN prot2pathways_oneliner USING (genbank_nr_protein_id);"
-#~ 			multiannotquery = "
-#~ 			SELECT DISTINCT gene_family_id, og_id, replacement_label_or_cds_code, cds_code, product,
-#~ 			  assembly_id, genomic_accession, replicon_type, replicon_size, cds_begin
-#~ 			  FROM toporthogroups
-#~ 			  INNER JOIN orthologous_groups USING (gene_family_id, og_id)
-#~ 			  INNER JOIN gene_tree_label2cds_code USING (replacement_label_or_cds_code)
-#~ 			  INNER JOIN coding_sequences USING (gene_family_id, cds_code)
-#~ 			  INNER JOIN proteins USING (genbank_nr_protein_id)
-#~ 			  INNER JOIN replicons USING (genomic_accession);"
 			if (verbose) cat(gsub("^\t\t", "", multiannotquery))
 			toplinemultiannot = dbGetQuery(dbcon, multiannotquery)
 			dbExecute(dbcon, "drop table toporthogroups; ")
@@ -470,14 +461,32 @@ if (!is.null(opt$db_name)){
 #~ 										  toplinemultiannot, by.x=c('gene_family_id_2','og_id_2', repli.invar), by.y=c('gene_family_id','og_id', repli.invar), suffixes=1:2)
 			# try to proceed with divide-and-conquer approach instead, proceeding by replicon
 			replicons = unique(toplinemultiannot[['genomic_accession']])
-			topmatchogmultidetail = do.call(cbind, mclapply(replicons, function(repli){
-				if (verbose) print(repli)
+			ltopmatchogmultidetail = mclapply(replicons, function(repli){
 				replitoplinemultiannot = toplinemultiannot[toplinemultiannot[['genomic_accession']]==repli,]
 				replitopmatchogmultidetail = merge(merge(topmatchog, replitoplinemultiannot, by.x=c('gene_family_id_1','og_id_1'), by.y=c('gene_family_id','og_id')),
 			                              toplinemultiannot, by.x=c('gene_family_id_2','og_id_2', repli.invar), by.y=c('gene_family_id','og_id', repli.invar), suffixes=1:2)
-			    return(replitopmatchogmultidetail[sample.int(nrow(replitopmatchogmultidetail), size=samereplimax),])
-			}, mc.cores=ncores))
-			topmatchogmultidetail = topmatchogmultidetail[order(topmatchogmultidetail$cds_code1, topmatchogmultidetail$cds_code2), c(repli.invar, sort(setdiff(colnames(topmatchogmultidetail), repli.invar)))]
+				if (verbose) print(repli)
+				if (verbose) print(head(replitopmatchogmultidetail, n=2))
+				if (nrow(replitopmatchogmultidetail) == 0){
+					return(NA)
+				}else{ if (nrow(replitopmatchogmultidetail) <= samereplimax){
+					return(replitopmatchogmultidetail)
+				}else{ 
+					return(replitopmatchogmultidetail[sample.int(nrow(replitopmatchogmultidetail), size=samereplimax),])
+				}}
+			}, mc.cores=ncores)
+			ltopmatchogmultidetail = ltopmatchogmultidetail[which(!is.na(ltopmatchogmultidetail))]
+			if (length(ltopmatchogmultidetail) > 1){
+				topmatchogmultidetail = do.call(rbind, ltopmatchogmultidetail)
+			}else{ topmatchogmultidetail = ltopmatchogmultidetail[[1]] }
+			rm(ltopmatchogmultidetail)
+			gc()
+			if (verbose){ 
+				print("topmatchogmultidetail (dim, head):")
+				print(dim(topmatchogmultidetail))
+				print(head(topmatchogmultidetail))
+			}
+			topmatchogmultidetail = topmatchogmultidetail[order(topmatchogmultidetail[['cds_code1']], topmatchogmultidetail[['cds_code2']]), c(repli.invar, sort(setdiff(colnames(topmatchogmultidetail), repli.invar)))]
 			topmatchogmultidetail$physical_dist = apply(topmatchogmultidetail[,c('cds_begin1', 'cds_begin2', 'replicon_size')], 1, function(x){
 				if (x[1] < x[2]){ a = x[1] ; b = x[2] }else{ b = x[1] ; a = x[2] }
 				return(min((b - a), (x[3] - b + a)))
