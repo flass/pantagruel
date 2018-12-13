@@ -77,14 +77,16 @@ if (file.exists(nfabspresmat)){
 	load(nfabspresmat)
 }else{
 	genocount = data.matrix(read.table(file=nffamgenomemat))
-	restrictgenomelist = readLines(nfrestrictlist)
-	if (!is.null(nflasscode)){
-		lasscode = read.table(nflasscode, row.names=1, stringsAsFactors=F)
-		colnames(genocount) = lasscode[colnames(genocount),1]
+	if (!is.null(nfrestrictlist)){
+		restrictgenomelist = readLines(nfrestrictlist)
+		if (!is.null(nflasscode)){
+			lasscode = read.table(nflasscode, row.names=1, stringsAsFactors=F)
+			colnames(genocount) = lasscode[colnames(genocount),1]
+		}
+	#~ 	print(setdiff(restrictgenomelist, colnames(genocount)))
+		genocount = genocount[,restrictgenomelist]
+		gc()
 	}
-#~ 	print(setdiff(restrictgenomelist, colnames(genocount)))
-	genocount = genocount[,restrictgenomelist]
-	gc()
 	save(genocount, file=nfabspresmat)
 }
 
