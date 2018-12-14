@@ -2,15 +2,17 @@
 library('RSQLite')
 library('getopt')
 
-#~ # clade definition file format example :
-#~ 	name	maxabsin	maxpresout	clade	sisterclade
-#~ cladeA	"P. endolithicum"	0	0	REJC140,REQ54	RFYW14,RHAB21,RKHAN,RHIZOB27,RNT25,RTCK,PSEPEL1,PSEPEL2,RHIMAR
-#~ cladeB	"P. banfieldii"	0	0	RHIZOB27,RNT25,RTCK	RFYW14,RHAB21,RKHAN,REJC140,REQ54,PSEPEL1,PSEPEL2,RHIMAR
-#~ cladeC	"P. halotolerans"	0	0	RFYW14,RHAB21,RKHAN	RHIZOB27,RNT25,RTCK,REJC140,REQ54,PSEPEL1,PSEPEL2,RHIMAR
-#~ cladeD	"P. pelagicum"	0	0	PSEPEL1,PSEPEL2,RHIMAR	RFYW14,RHAB21,RKHAN,RHIZOB27,RNT25,RTCK,REJC140,REQ54
-#~ cladeE	"Pban+Phalo"	0	0	RFYW14,RHAB21,RKHAN,RHIZOB27,RNT25,RTCK	REJC140,REQ54,PSEPEL1,PSEPEL2,RHIMAR
-#~ cladeF	"Pban+Phalo+Pendo"	0	0	RFYW14,RHAB21,RKHAN,RHIZOB27,RNT25,RTCK,REJC140,REQ54	PSEPEL1,PSEPEL2,RHIMAR
-#~ cladeG	"Psedorhizobium"	0	0	RFYW14,RHAB21,RKHAN,RHIZOB27,RNT25,RTCK,REJC140,REQ54,PSEPEL1,PSEPEL2,RHIMAR	
+# clade definition file format example :
+# (order of columns is irrelevant; only 'clade' and 'sisterclade' fields are mandatory; note there is no column name for the row id field (first actual column with 'cladeA' etc.))
+# such file is automatically produced durring Pantagruel pipeline task 08.clade_specific_genes
+#	name	maxabsin	maxpresout	clade	sisterclade
+#cladeA	"P. endolithicum"	0	0	REJC140,REQ54	RFYW14,RHAB21,RKHAN,RHIZOB27,RNT25,RTCK,PSEPEL1,PSEPEL2,RHIMAR
+#cladeB	"P. banfieldii"	0	0	RHIZOB27,RNT25,RTCK	RFYW14,RHAB21,RKHAN,REJC140,REQ54,PSEPEL1,PSEPEL2,RHIMAR
+#cladeC	"P. halotolerans"	0	0	RFYW14,RHAB21,RKHAN	RHIZOB27,RNT25,RTCK,REJC140,REQ54,PSEPEL1,PSEPEL2,RHIMAR
+#cladeD	"P. pelagicum"	0	0	PSEPEL1,PSEPEL2,RHIMAR	RFYW14,RHAB21,RKHAN,RHIZOB27,RNT25,RTCK,REJC140,REQ54
+#cladeE	"Pban+Phalo"	0	0	RFYW14,RHAB21,RKHAN,RHIZOB27,RNT25,RTCK	REJC140,REQ54,PSEPEL1,PSEPEL2,RHIMAR
+#cladeF	"Pban+Phalo+Pendo"	0	0	RFYW14,RHAB21,RKHAN,RHIZOB27,RNT25,RTCK,REJC140,REQ54	PSEPEL1,PSEPEL2,RHIMAR
+#cladeG	"Psedorhizobium"	0	0	RFYW14,RHAB21,RKHAN,RHIZOB27,RNT25,RTCK,REJC140,REQ54,PSEPEL1,PSEPEL2,RHIMAR	
 
 genesetscopes = c("reprseq", "allseq")
 
@@ -25,7 +27,7 @@ spec = matrix(c(
   'restrict_to_genomes',  'g', 2, "character", "(optional) path to file listing the genomes (UniProt-like codes) to which the analysis will be restricted",
   'og_col_id',            'c', 2, "integer",   "orthologous group collection id in SQL database; if not provided, will only use the homologous family mapping of genes (coarser homology mapping, meaning stricter clade-specific gene definition)",
   'ass_to_code',          'a', 2, "character", "(optional) path to file providing correspondency between assembly ids and UniProt-like genome codes; only if the input matrix has assembly ids in column names (deprecated)",
-  'preferred_genomes',    'p', 2, "character", "(optional) comma-separated list of codes of genomes which CDS info will be reported in reference tables",
+  'preferred_genomes',    'p', 2, "character", "(optional) comma-separated list of codes of preferred genomes which CDS info will be reported in reference tables (when part of the focal clade); genomes are selected in priority order as listed: 1st_preferred, 2nd_preferred, etc.",
   'interesting_families', 'f', 2, "character", "(optional) comma-separated list of gene families for which detail of presence/absence distribution will be printed out"
 ), byrow=TRUE, ncol=5);
 opt = getopt(spec, opt=commandArgs(trailingOnly=T))
