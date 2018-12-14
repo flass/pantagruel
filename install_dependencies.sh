@@ -8,6 +8,8 @@
 #########################################################
 # Copyright: Florent Lassalle (f.lassalle@imperial.ac.uk), 01 October 2018.
 
+CRANmirror="https://cran.ma.imperial.ac.uk/" # should be edited to match nearest CRAN mirror
+
 checkexec (){
   if [ $? != 0 ]; then echo "ERROR: $1" ; exit 1 ; fi
 }
@@ -47,6 +49,16 @@ if [ $? != 0 ] ; then
   apt list $deppackages
   exit 1
 fi
+
+# install R packages not supported by Debian
+R --vanilla <<EOF
+install.packages('topGO', repos=${CRANmirror})
+install.packages('pvclust', repos=${CRANmirror})
+EOF
+echo "library('topGO')" | R --vanilla
+checkexec "Could not install R package 'topGO'"
+echo "library('pvclust')" | R --vanilla
+checkexec "Could not install R package 'pvclust'"
 
 # set up Docker group (with root-equivalent permissions) and add main user to it
 # !!! makes the system less secure: OK within a dedicated virtual machine but to avoid on a server or desktop (or VM with other use)
@@ -99,6 +111,7 @@ wget ${ipsourceftprep}/${ipsourcefile}
 wget ${ipsourceftprep}/${ipsourcefile}.md5
 dlok=$(md5sum -c ${ipsourcefile}.md5 | grep -o 'OK')
 ip=3
+# allow 3 attempts to downlaod the package, given its large size
 while [[ $dlok != 'OK' -a $ip > 0 ]] ; do 
   ip=$(( $ip - 1 ))
   echo "dowload of ${ipsourcefile} failed; will retry ($ip times left)"
@@ -113,7 +126,7 @@ fi
 tar -pxvzf ${ipsourcefile}
 checkexec "Could not uncompress Interproscan successfully"
 interproscan-${ipversion}/interproscan.sh -i test_proteins.fasta -f tsv
+checkexec "Interproscan test was not successful"
 
-# get the GO term db
-
-wget http://archive.geneontology.org/latest-termdb/go_daily-termdb-data.gz
+# get the GO term db - not necessary so far
+# wget http://archive.geneontology.org/latest-termdb/go_daily-termdb-data.gz

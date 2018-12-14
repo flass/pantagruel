@@ -29,6 +29,13 @@ sudo apt install git cmake gcc g++ linuxbrew-wrapper lftp clustalo raxml libhmsb
 ```sh
 sudo apt install r-base-core r-recommended r-cran-ape r-cran-phytools r-cran-ade4 r-cran-vegan r-cran-dbi r-cran-rsqlite r-cran-igraph r-cran-getopt
 ```
+For optional packages `topGO` and `pvclust`, you can open the R interpreter using `R --vanilla` and typing:
+```R
+CRANmirror='https://cran.ma.imperial.ac.uk/'
+install.packages('topGO', repos=CRANmirror)
+install.packages('pvclust', repos=CRANmirror)
+```
+
 ### Python and packages
 ```sh
 sudo apt install python python-scipy python-numpy python-biopython python-igraph cython
