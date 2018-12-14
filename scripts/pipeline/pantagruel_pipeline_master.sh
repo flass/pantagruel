@@ -147,16 +147,18 @@ while [ ! -z "$@" ] ; do
           tasks="${tasks} 2" ;;
  "3|03|sqldb|create_sqlite_db"    )
           tasks="${tasks} 3" ;;
- "4|04|core|core_genome_ref_tree")
+ "4|04|functional|functional_annotations"    )
+          tasks="${tasks} 3" ;;
+ "5|05|core|core_genome_ref_tree")
           tasks="${tasks} 4" ;;
- "5|05|genetrees|gene_trees")
+ "6|06|genetrees|gene_trees")
           tasks="${tasks} 5" ;;
- "6|06|reconciliations")
+ "7|07|reconciliations")
           tasks="${tasks} 6" ;;
- "7|07|coevolution")
-          tasks="${tasks} 7" ;;
  "8|08|specific|clade_specific_genes")
           tasks="${tasks} 8" ;;
+ "9|09|coevolution")
+          tasks="${tasks} 7" ;;
   esac
   shift
 done
@@ -194,24 +196,28 @@ else
     ${ptgscripts}/pipeline/pantagruel_pipeline_03_create_sqlite_db.sh ${ptgdbname} ${ptgroot} ${ptgrepo}
     checkexec  ;;
    "4")
-    echo "Pantagrel pipeline step $task: select core-genome markers and compute reference tree."
-    ${ptgscripts}/pipeline/pantagruel_pipeline_04_core_genome_ref_tree.sh ${ptgdbname} ${ptgroot}
+    echo "Pantagrel pipeline step $task: use InterProScan to functionally annotate proteins in the database."
+    ${ptgscripts}/pantagruel_pipeline_04_functional_annotation.sh ${ptgdbname} ${ptgroot}
     checkexec  ;;
    "5")
-    echo "Pantagrel pipeline step $task: compute gene trees."
-    ${ptgscripts}/pipeline/pantagruel_pipeline_05_gene_trees.sh ${ptgdbname} ${ptgroot}
+    echo "Pantagrel pipeline step $task: select core-genome markers and compute reference tree."
+    ${ptgscripts}/pipeline/pantagruel_pipeline_05_core_genome_ref_tree.sh ${ptgdbname} ${ptgroot}
     checkexec  ;;
    "6")
-    echo "Pantagrel pipeline step $task: compute species tree/gene tree reconciliations."
-    ${ptgscripts}/pipeline/pantagruel_pipeline_06_reconciliations.sh ${ptgdbname} ${ptgroot}
+    echo "Pantagrel pipeline step $task: compute gene trees."
+    ${ptgscripts}/pipeline/pantagruel_pipeline_06_gene_trees.sh ${ptgdbname} ${ptgroot}
     checkexec  ;;
    "7")
-    echo "Pantagrel pipeline step $task: evaluate gene co-evolution and build gene association network."
-    ${ptgscripts}/pipeline/pantagruel_pipeline_07_coevolution.sh ${ptgdbname} ${ptgroot}
+    echo "Pantagrel pipeline step $task: compute species tree/gene tree reconciliations."
+    ${ptgscripts}/pipeline/pantagruel_pipeline_07_reconciliations.sh ${ptgdbname} ${ptgroot}
     checkexec  ;;
    "8")
     echo "Pantagrel pipeline step $task: classify genes into orthologous groups (OGs) and search clade-specific OGs."
     ${ptgscripts}/pipeline/pantagruel_pipeline_08_clade_specific_genes.sh ${ptgdbname} ${ptgroot}
+    checkexec  ;;
+   "9")
+    echo "Pantagrel pipeline step $task: evaluate gene co-evolution and build gene association network."
+    ${ptgscripts}/pipeline/pantagruel_pipeline_09_coevolution.sh ${ptgdbname} ${ptgroot}
     checkexec  ;;
     esac
   done
