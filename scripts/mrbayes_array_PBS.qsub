@@ -161,9 +161,9 @@ fi
 ## set parameters for MCMCMC run
 if [ ${mbversion%.*} == '3.2' ] ; then
 # following line WORKED with MrBayes v3.2.2, but DID NOT WORK with v3.1.2 as the checkpoint option is new to v3.2
-  echo "mcmcp $mbmcmcpopt file=$nfrad2.mb checkpoint=yes checkfreq=100000" >> $nfrad2.mbparam.txt
+  echo "mcmcp $mbmcmcpopt filename=$nfrad2.mb checkpoint=yes checkfreq=100000" >> $nfrad2.mbparam.txt
 else
-  echo "mcmcp $mbmcmcpopt file=$nfrad2.mb" >> $nfrad2.mbparam.txt
+  echo "mcmcp $mbmcmcpopt filename=$nfrad2.mb" >> $nfrad2.mbparam.txt
 fi
 ## run MCMCMC
 echo "mcmc $mcmcopt" >> $nfrad2.mbparam.txt
@@ -217,7 +217,7 @@ runmbandsync () {
   echo "did $nckp incremental sync of the results"
   echo ""
   if [[ $nckp -eq 0 && ! -e $nfrad2.mb.con.tre ]] ; then
-    # no sync has happened, it is likely that MrBayes run has gone wrong and no computation has been made (hence no time for sync)
+    # no sync has happened, it is likely that MrBayes run has gone wrong and no computation has been done (hence no time for sync)
     rsync -az $nfrad2.mb.log $outputdir/
   fi
 }
@@ -265,8 +265,7 @@ EOF
 ))
 
 # final sync
-#echo "rsync -avz ${excludesync[@]} ./*$nfrad2.mb* $outputdir/"
-rsync -az ${excludesync[@]} ./*$nfrad2.mb* $outputdir/
+rsync -avz ${excludesync[@]} ./*$nfrad2.mb* $outputdir/
 if [ $? != 0 ] ; then
   echo "!!! ERROR : unable to copy *$nfrad2.mb* output files from $HOSTNAME:$PWD ; exit now"
   exit 1
