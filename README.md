@@ -129,9 +129,8 @@ Below is a summary of the software on which Pantagruel dependends:
   - getopt
   - parallel
   - DBI, RSQLite
-  (optional:)
-  - topGO
-  - pvclust
+  - topGO (optional)
+  - pvclust (optional)
   
 - **Python** (version 2.7, >=2.7.13 recommended) + packages:
   - [sqlite3](https://docs.python.org/2/library/sqlite3.html) (standard package in Python 2.7)

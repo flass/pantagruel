@@ -1,42 +1,59 @@
 #!/usr/bin/Rscript --vanilla
 library('RSQLite')
+library('getopt')
+
+#~ # clade definition file format example :
+#~ 	name	maxabsin	maxpresout	clade	sisterclade
+#~ cladeA	"P. endolithicum"	0	0	REJC140,REQ54	RFYW14,RHAB21,RKHAN,RHIZOB27,RNT25,RTCK,PSEPEL1,PSEPEL2,RHIMAR
+#~ cladeB	"P. banfieldii"	0	0	RHIZOB27,RNT25,RTCK	RFYW14,RHAB21,RKHAN,REJC140,REQ54,PSEPEL1,PSEPEL2,RHIMAR
+#~ cladeC	"P. halotolerans"	0	0	RFYW14,RHAB21,RKHAN	RHIZOB27,RNT25,RTCK,REJC140,REQ54,PSEPEL1,PSEPEL2,RHIMAR
+#~ cladeD	"P. pelagicum"	0	0	PSEPEL1,PSEPEL2,RHIMAR	RFYW14,RHAB21,RKHAN,RHIZOB27,RNT25,RTCK,REJC140,REQ54
+#~ cladeE	"Pban+Phalo"	0	0	RFYW14,RHAB21,RKHAN,RHIZOB27,RNT25,RTCK	REJC140,REQ54,PSEPEL1,PSEPEL2,RHIMAR
+#~ cladeF	"Pban+Phalo+Pendo"	0	0	RFYW14,RHAB21,RKHAN,RHIZOB27,RNT25,RTCK,REJC140,REQ54	PSEPEL1,PSEPEL2,RHIMAR
+#~ cladeG	"Psedorhizobium"	0	0	RFYW14,RHAB21,RKHAN,RHIZOB27,RNT25,RTCK,REJC140,REQ54,PSEPEL1,PSEPEL2,RHIMAR	
 
 genesetscopes = c("reprseq", "allseq")
 
 cargs = commandArgs(trailing=T)
-# env variables relating to the full Pantagruel pangenome db, expected to be set
-#~ nflasscode =  file.path(Sys.getenv('database'), 'genome_codes.tab')
-#~ nffamgenomemat = file.path(Sys.getenv('protali'), 'full_families_genome_counts-noORFans.mat')
-#~ sqldb = Sys.getenv('sqldb')
-nffamgenomemat = cargs[1]
-sqldb = cargs[2]
-ogcolid = as.numeric(cargs[3])
-infilerad = cargs[4]
-outfilerad = cargs[5]
-# genome subset-specific input files
-if (length(cargs)>5){
-	nflasscode = cargs[6]
-}else{
-	nflasscode = NULL
-}
-if (length(cargs)>6){
-	preferredgenomes = strsplit(cargs[7], split=',')[[1]]
+
+##### main
+spec = matrix(c(
+  'gene_count_matrix',    'm', 1, "character", "path of metrix of counts of each gene family (or gene family_ortholog group id) (rows) in each genome (columns)",
+  'sqldb',                'd', 1, "character", "path to SQLite database file",
+  'clade_defs',           'C', 1, "character", "path to file describing clade composition; this must be a (tab-delimited) table file with named rows and a header with the following collumns: (mandatory:) clade, siterclade, (facultative:) name, maxabsin, maxpresout",
+  'outrad',               'o', 1, "character", "path to output dir+file prefix for output files",
+  'restrict_to_genomes',  'g', 2, "character", "(optional) path to file listing the genomes (UniProt-like codes) to which the analysis will be restricted",
+  'og_col_id',            'c', 2, "integer",   "orthologous group collection id in SQL database; if not provided, will only use the homologous family mapping of genes (coarser homology mapping, meaning stricter clade-specific gene definition)",
+  'ass_to_code',          'a', 2, "character", "(optional) path to file providing correspondency between assembly ids and UniProt-like genome codes; only if the input matrix has assembly ids in column names (deprecated)",
+  'preferred_genomes',    'p', 2, "character", "(optional) comma-separated list of codes of genomes which CDS info will be reported in reference tables",
+  'interesting_families', 'f', 2, "character", "(optional) comma-separated list of gene families for which detail of presence/absence distribution will be printed out"
+), byrow=TRUE, ncol=5);
+opt = getopt(spec, opt=commandArgs(trailingOnly=T))
+
+nffamgenomemat = opt$gene_count_matrix
+sqldb = opt$sqldb
+nfcladedef = opt$clade_defs
+outfilerad = opt$outrad
+ogcolid = opt$og_col_id
+nfrestrictlist = opt$restrict_to_genomes
+nflasscode = opt$ass_to_code
+if (!is.null(opt$preferred_genomes)){
+	preferredgenomes = strsplit(opt$preferred_genomes, split=',')[[1]]
 }else{
 	preferredgenomes = c()
 }
-if (length(cargs)>7){
-	interstfams = strsplit(cargs[8], split=',')[[1]]
+if (!is.null(opt$interesting_families)){
+	interstfams = strsplit(opt$interesting_families, split=',')[[1]]
 }else{
 	interstfams = c()
 }
-if ( ogcolid < 0 ){
-	print("will only use the homologous family mapping of genes (coarser homology mapping and stricter clade-specific gene finding", quote=F)
+if ( is.null(ogcolid) | ogcolid < 0 ){
+	print("will only use the homologous family mapping of genes (coarser homology mapping and stricter clade-specific gene finding)", quote=F)
 }else{
 	print("use ortholog classification of homologous genes", quote=F)
 }
 
-nfrestrictlist = sprintf("%s_genome_codes", infilerad)
-nfcladedef = sprintf("%s_clade_defs", infilerad)
+
 # output files
 nfabspresmat = sprintf("%s_gene_abspres.mat.RData", outfilerad)
 nfoutspege = sprintf("%s_specific_genes.tab", outfilerad)
@@ -44,24 +61,6 @@ bnoutspege = sub(".tab$", "", basename(nfoutspege))
 diroutspegedetail = sprintf("%s_specific_genes.tables_byclade_goterms_pathways", outfilerad)
 dir.create(diroutspegedetail, showWarnings=F)
 
-# # clade definition object structure example :
-# if (!file.exists(nfcladedef)){
-# 	clade0 = c('RHIZOB27', 'RNT25')
-# 	outgroup0 = 'RHISP2'
-# 	clade1 = c(clade0, outgroup0)
-# 	clade2 = c('RKHAN', 'RHAB21', 'RFYW14')
-# 	clade12 = c(clade1, clade2)
-# 	clade3 = c('REQ54', 'REJC140')
-# 	clade123 = c(clade12, clade3)
-# 	clade4 = c('PSEPEL1', 'PSEPEL2', 'RHIMAR')
-# 	clade1234 = c(clade123, clade4)
-# 	outgroup = 'RHIZOB54'
-# 	clades = list(clade0=clade0, outgroup0=outgroup0, clade1=clade1, clade2=clade2, clade12=clade12, clade3=clade3, clade123=clade123, clade4=clade4, clade1234=clade1234, outgroup=outgroup)
-# 	sisterclades = list(clade0=outgroup0, outgroup0=clade0, clade1=clade2, clade2=clade1, clade12=clade3, clade3=clade12, clade123=clade4, clade4=clade123, clade1234=outgroup, outgroup=clade1234)
-# 	write.table(t(sapply(names(clades), function(cla){ sapply(list(clades, sisterclades), function(x){ paste(x[[cla]], collapse=',') }) })),
-# 	 sep='\t', quote=F, row.names=names(clades), col.names=c('clade', 'sisterclade'),
-# 	 file=nfcladedef)
-# }
 cladedefcsv = read.table(nfcladedef, sep='\t', header=T, row.names=1, stringsAsFactors=F)
 cladedefs = apply(cladedefcsv[,c('clade', 'sisterclade')], 1, strsplit, split=',')
 
