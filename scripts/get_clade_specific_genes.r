@@ -106,9 +106,9 @@ specificPresGenes = lapply(cladedefs, function(cladedef){
 
 specificAbsGenes = lapply(cladedefs, function(cladedef){
 	# relaxed specific absence is allowed by 'maxpresin' and 'maxabsout' parameters
-	allpres = apply(genocount[,cladedef$clade,drop=F], 1, function(x){ length(which(x>0))<=cladedef$maxpresin })
-	allabssis = apply(genocount[,cladedef$sisterclade,drop=F], 1, function(x){ length(which(x==0))<=cladedef$maxabsout })
-	return(which(allpres & allabssis))
+	allabs = apply(genocount[,cladedef$clade,drop=F], 1, function(x){ length(which(x>0))<=cladedef$maxpresin })
+	allpressis = apply(genocount[,cladedef$sisterclade,drop=F], 1, function(x){ length(which(x==0))<=cladedef$maxabsout })
+	return(which(allabs & allpressis))
 })
 
 specifisets = list(specificPresGenes, specificAbsGenes) ; names(specifisets) = abspres
@@ -118,16 +118,18 @@ dbcon = dbConnect(SQLite(), sqldb)
 cladedefwritesep = paste(c(rep('\t', 4), rep('  ...  \t', 3)), sep='', collapse='')
 
 today = Sys.Date()
-write( paste("#", c(format(today, format="%B %d %Y"), "Pantagruel version:", system("cd ${ptgscripts} ; git log | head -n 3", intern=T), "- - - - -")), file=nfoutspege[[ab]], append=F)
+for (ab in abspres){
+	write( paste("#", c(format(today, format="%B %d %Y"), "Pantagruel version:", system("cd ${ptgscripts} ; git log | head -n 3", intern=T), "- - - - -")), file=nfoutspege[[ab]], append=F)
+}
 
 for (i in 1:length(cladedefs)){
 	cla = names(cladedefs)[i]
 	cladedef = cladedefs[[cla]]
 	
-	for (ab in names(specifisets)){
+	for (ab in abspres){
 		write(sprintf("# %s %s", cla, cladedef$name), file=nfoutspege[[ab]], append=T)
-		write( paste(sprintf("# gene families %sent in all genomes but %d of clade:", abspres[ab]], cladedef$maxabsin), cladedefcsv[cla,'clade'], sep=cladedefwritesep), file=nfoutspege[[ab]], append=T)
-		write( paste(sprintf("# and %sent in all but %d genomes of sister clade:", presabs[ab]], cladedef$maxpresout), cladedefcsv[cla,'sisterclade'], sep=cladedefwritesep), file=nfoutspege[[ab]], append=T)
+		write( paste(sprintf("# gene families %sent in all genomes but %d of clade:", abspres[ab], cladedef$maxabsin), cladedefcsv[cla,'clade'], sep=cladedefwritesep), file=nfoutspege[[ab]], append=T)
+		write( paste(sprintf("# and %sent in all but %d genomes of sister clade:", presabs[ab], cladedef$maxpresout), cladedefcsv[cla,'sisterclade'], sep=cladedefwritesep), file=nfoutspege[[ab]], append=T)
 	
 		specset = specifisets[[ab]][[cla]]
 		ncsg = length(specset)
