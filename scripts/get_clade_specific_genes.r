@@ -64,7 +64,7 @@ if ( is.null(ogcolid) | ogcolid < 0 ){
 # output files
 nfabspresmat = sprintf("%s_gene_abspres.mat.RData", outfilerad)
 nfoutspege = sapply(abspres, function(x){ sprintf("%s_specific_%s_genes.tab", outfilerad, x) })
-bnoutspege = sapply(abspres, function(x){ sprintf("%s_specific_%s_genes", outfilerad, x) })
+bnoutspege = sapply(abspres, function(x){ sprintf("%s_specific_%s_genes", basename(outfilerad), x) })
 diroutspegedetail = sprintf("%s_specific_genes.tables_byclade_goterms_pathways", outfilerad)
 dir.create(diroutspegedetail, showWarnings=F)
 
