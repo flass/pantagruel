@@ -196,25 +196,25 @@ for (i in 1:length(cladedefs)){
 				spegeneinfo = dbGetQuery(dbcon, paste( c(
 				"SELECT gene_family_id, og_id, cds_code, genomic_accession, locus_tag, cds_begin, cds_end, product", 
 				"FROM spegeneannots", 
-				gsc, "1 ORDER BY cds_code ;"), collapse=" "))
+				gsc, "1 ORDER BY locus_tag ;"), collapse=" "))
 				spegeneinfoplus = dbGetQuery(dbcon, paste( c(
 				 "SELECT distinct gene_family_id, og_id, cds_code, genomic_accession, locus_tag, cds_begin, cds_end, product, interpro_id, interpro_description, go_terms, pathways",
 				 "FROM spegeneannots",
 				 "LEFT JOIN functional_annotations USING (nr_protein_id)",
 				 "LEFT JOIN interpro_terms USING (interpro_id)", 
-				 gsc, "1 ORDER BY cds_code ;"), collapse=" "))
+				 gsc, "1 ORDER BY locus_tag ;"), collapse=" "))
 				spegallgoterms = dbGetQuery(dbcon, paste( c(
 				 "SELECT distinct gene_family_id, og_id, cds_code, genomic_accession, locus_tag, go_id",
 				 "FROM spegeneannots",
 				 "LEFT JOIN functional_annotations USING (nr_protein_id)",
 				 "LEFT JOIN interpro2GO USING (interpro_id)",
-				 gsc, "go_id NOT NULL ORDER BY cds_code ;"), collapse=" "))
+				 gsc, "go_id NOT NULL ORDER BY locus_tag ;"), collapse=" "))
 				spegallpathways = dbGetQuery(dbcon, paste( c(
 				 "SELECT distinct gene_family_id, og_id, cds_code, genomic_accession, locus_tag, pathway_db, pathway_id",
 				 "FROM spegeneannots",
 				 "LEFT JOIN functional_annotations USING (nr_protein_id)",
 				 "LEFT JOIN interpro2pathways USING (interpro_id)",
-				 gsc, "pathway_id NOT NULL ORDER BY cds_code ;"), collapse=" "))
+				 gsc, "pathway_id NOT NULL ORDER BY locus_tag ;"), collapse=" "))
 				if (genesetscope=="reprseq"){ write.table(spegeneinfo, file=nfoutspege[[ab]], sep='\t', quote=F, row.names=F, col.names=T, append=T) }
 				write.table(spegeneinfoplus, file=file.path(diroutspegedetail, paste(bnoutspege[[ab]], cla, genesetscope, "details.tab", sep='_')), sep='\t', quote=F, row.names=F, col.names=T, append=F)
 				write.table(spegallgoterms, file=file.path(diroutspegedetail, paste(bnoutspege[[ab]], cla, genesetscope, "goterms.tab", sep='_')), sep='\t', quote=F, row.names=F, col.names=T, append=F)
