@@ -135,7 +135,7 @@ for (i in 1:length(cladedefs)){
 		ncsg = length(specset)
 		if (ncsg==0){
 			write("# no specific gene found", file=nfoutspege[[ab]], append=T)
-			print(sprintf("%s: %s; no specific gene found", cla, cladedef$name))
+			print(sprintf("%s: %s; no specific gene found", cla, cladedef$name), quote=F)
 		}else{
 			for (interstfam in interstfams){
 				if (interstfam %in% rownames(genocount)[specset]){
@@ -154,19 +154,21 @@ for (i in 1:length(cladedefs)){
 			dbWriteTable(dbcon, "specific_genes", spefamogs, temporary=T)
 			write.table(spefamogs, file=file.path(diroutspegedetail, paste(bnoutspege[[ab]], cla, "spegene_fams_ogids.tab", sep='_')), sep='\t', quote=F, row.names=F, col.names=T, append=F)
 			# choose adequate reference genome
+			if (ab=='pres'){ occgenomes = cladedef$clade
+			}else{ occgenomes = cladedef$sisterclade }
 			refgenome = NULL
 			for (prefgenome in preferredgenomes){
-				if (prefgenome %in% cladedefs[[cla]]$clade){
+				if (prefgenome %in% occgenomes){
 					refgenome = prefgenome
 					break
 				}
 			}
-			if (is.null(refgenome)){ refgenome = min(cladedef$clade) }
-			print(sprintf("%s: '%s'; %d clade-specific genes; ref genome: %s", cla, cladedef$name, ncsg, refgenome), quote=F)
+			if (is.null(refgenome)){ refgenome = min(occgenomes) }
+			print(sprintf("%s: '%s'; %d clade-specific %sent genes; ref genome: %s", cla, cladedef$name, ncsg, presabs[ab], refgenome), quote=F)
 			dbExecute(dbcon, "DROP TABLE IF EXISTS spegeneannots;")
 			creaspegeneannots = paste( c(
 			 "CREATE TABLE spegeneannots AS ",
-			 "SELECT gene_family_id, og_id, genomic_accession, locus_tag, cds_code, cds_begin, cds_end, nr_protein_id, product",
+			 "SELECT gene_family_id, og_id, genomic_accession, code, locus_tag, cds_code, cds_begin, cds_end, nr_protein_id, product",
 			 "FROM (",
 			 "  SELECT gene_family_id, og_id, ortholog_col_id, coding_sequences.* FROM specific_genes",
 			 "   INNER JOIN orthologous_groups USING (gene_family_id, og_id)",
@@ -179,13 +181,13 @@ for (i in 1:length(cladedefs)){
 			 "INNER JOIN proteins USING (nr_protein_id)",
 			 "INNER JOIN replicons USING (genomic_accession)",
 			 "INNER JOIN assemblies USING (assembly_id)",
-			 sprintf("WHERE code IN ( '%s' )", paste(cladedef$clade, collapse="','", sep='')),
+			 sprintf("WHERE code IN ( '%s' )", paste(occgenomes, collapse="','", sep='')),
 			 "AND (ortholog_col_id = :o OR ortholog_col_id IS NULL) ;"),
 			 collapse=" ")
 	#~ 		print(creaspegeneannots)
 			dbExecute(dbcon, creaspegeneannots, params=list(o=ogcolid))
 			dbExecute(dbcon, "DROP TABLE specific_genes;")
-			genesetclauses = list(sprintf("WHERE cds_code LIKE '%s@_%%' ESCAPE '@' AND", refgenome), "WHERE") ; names(genesetclauses) = genesetscopes
+			genesetclauses = list(sprintf("WHERE code='%s' AND", refgenome), "WHERE") ; names(genesetclauses) = genesetscopes
 			for (genesetscope in genesetscopes){
 				gsc = genesetclauses[[genesetscope]] # = "WHERE [clause AND]"
 				spegeneinfo = dbGetQuery(dbcon, paste( c(
