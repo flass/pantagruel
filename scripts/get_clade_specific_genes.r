@@ -186,13 +186,13 @@ for (i in 1:length(cladedefs)){
 			 sprintf("WHERE code IN ( '%s' )", paste(occgenomes, collapse="','", sep='')),
 			 "AND (ortholog_col_id = :o OR ortholog_col_id IS NULL) ;"),
 			 collapse=" ")
-			print(creaspegeneannots)
+#~ 			print(creaspegeneannots)
 			dbExecute(dbcon, creaspegeneannots, params=list(o=ogcolid))
 			dbExecute(dbcon, "DROP TABLE specific_genes;")
 			genesetclauses = list(sprintf("WHERE code='%s' AND", refgenome), "WHERE") ; names(genesetclauses) = genesetscopes
 			for (genesetscope in genesetscopes){
 				gsc = genesetclauses[[genesetscope]] # = "WHERE [clause AND]"
-				print(gsc)
+#~ 				print(gsc)
 				spegeneinfo = dbGetQuery(dbcon, paste( c(
 				"SELECT gene_family_id, og_id, cds_code, genomic_accession, locus_tag, cds_begin, cds_end, product", 
 				"FROM spegeneannots", 
