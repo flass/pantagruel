@@ -76,6 +76,8 @@ for (i in 1:length(cladedefs)){
 	cladedefs[[cla]]$name = ifelse(!is.null(cladedefcsv$name), cladedefcsv$name[i], "")
 	cladedefs[[cla]]$maxabsin = ifelse(!is.null(cladedefcsv$maxabsin), cladedefcsv$maxabsin[i], 0)
 	cladedefs[[cla]]$maxpresout = ifelse(!is.null(cladedefcsv$maxpresout), cladedefcsv$maxpresout[i], 0)
+	cladedefs[[cla]]$maxpresin = ifelse(!is.null(cladedefcsv$maxpresin), cladedefcsv$maxpresin[i], 0)
+	cladedefs[[cla]]$maxabsout = ifelse(!is.null(cladedefcsv$maxabsout), cladedefcsv$maxabsout[i], 0)
 }
 
 # load gene presence / absence data
@@ -135,7 +137,7 @@ for (i in 1:length(cladedefs)){
 		ncsg = length(specset)
 		if (ncsg==0){
 			write("# no specific gene found", file=nfoutspege[[ab]], append=T)
-			print(sprintf("%s: %s; no specific gene found", cla, cladedef$name), quote=F)
+			print(sprintf("%s: '%s'; no specific %sent gene found", cla, cladedef$name, abspres[ab]), quote=F)
 		}else{
 			for (interstfam in interstfams){
 				if (interstfam %in% rownames(genocount)[specset]){
