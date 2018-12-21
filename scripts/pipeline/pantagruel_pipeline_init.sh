@@ -55,7 +55,11 @@ echo -n " > ${envsourcescript}" >> ${ptgtmp}/sedenvvar.sh
 bash < ${ptgtmp}/sedenvvar.sh
 ## load generic environment variables derived from the above
 source ${envsourcescript}
-
+if [ -z ${initfile} ] ; then 
+  echo "updated init file save at '${envsourcescript}'"
+else
+  echo "created init file at '${envsourcescript}'"
+fi
 
 # folders for optional custom genomes
 mkdir -p ${customassemb}/contigs/
