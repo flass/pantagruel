@@ -32,7 +32,7 @@ wc -l ${allfaarad}_list
 grep -c '>' ${allfaarad}.faa
 
 # dereplicate proteins in db based on their identifier
-python ${ptgscripts}/dereplicate_fasta.py ${allfaarad}.nrprotids.faa
+python ${ptgscripts}/dereplicate_fasta.py ${allfaarad}.faa ${allfaarad}.nrprotids.faa
 echo "$(dateprompt)-- $(grep -c '>' ${allfaarad}.nrprotids.faa) non-redundant proteins in dataset"
 
 ## clustering of identical protein sequences
