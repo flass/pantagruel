@@ -65,7 +65,7 @@ fi
 mkdir -p ${customassemb}/contigs/
 if [ ! -e ${straininfo} ] ; then
  echo "sequencing.project.id,genus,species,strain,taxid,locus_tag_prefix" | tr ',' '\t' > ${straininfo}
- echo "please copy/link raw sequence (in multi-fasta format) files of custom (user-generated) assemblies into ${customassemb}/contigs/"
+ echo "please copy/link raw sequence (in multi-fasta format) files of custom (user-generated) assemblies into '${customassemb}/contigs/'"
  echo "and fill up the information table ${straininfo} (tab-delimited fields) according to header:"
  cat ${straininfo}
 fi

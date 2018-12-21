@@ -14,7 +14,7 @@ export ptgdbname="$1"  # database anme (will notably be the name of the top fold
 export ptgroot="$2"    # source folder where to create the database
 export ptgdb=${ptgroot}/${ptgdbname}
 envsourcescript=${ptgdb}/environ_pantagruel_${ptgdbname}.sh
-source $envsourcescript
+source ${envsourcescript}
 
 #############################
 ## 01. Homologous Sequence db
