@@ -19,6 +19,10 @@ export ptgroot="$2"    # source folder where to create the database
 export ptgrepo="$3"    # path to the pantagruel git repository
 export myemail="$4"    # user identity
 export famprefix="$5"  # alphanumerical prefix (no number first) of the names for homologous protein/gene family clusters; will be appended with a 'P' for proteins and a 'C' for CDSs.          
+export ncbiass="$6"
+export ncbitax="$7"
+export customassemb="$8"
+
 
 # derive other important environmnet variables
 export ptgscripts="${ptgrepo}/scripts"
@@ -43,14 +47,13 @@ envsourcescript=${ptgdb}/environ_pantagruel_${ptgdbname}.sh
 
 rm -f ${ptgtmp}/sedenvvar.sh
 echo -n "cat ${templateenv}" > ${ptgtmp}/sedenvvar.sh
-for var in ptgdbname ptgroot ptgrepo myemail famprefix ; do
+for var in ptgdbname ptgroot ptgrepo myemail famprefix customassemb ncbiass ncbitax ; do
 echo -n " | sed -e \"s#REPLACE${var}#${var}#\"" >> ${ptgtmp}/sedenvvar.sh
 done
 echo -n " > ${envsourcescript}" >> ${ptgtmp}/sedenvvar.sh
 bash < ${ptgtmp}/sedenvvar.sh
 ## load generic environment variables derived from the above
 source ${envsourcescript}
-cat "source ${envsourcescript}" >> ~/.bashrc
 
 # folders for optional custom genomes
 export customassemb=${ptgroot}/user_genomes

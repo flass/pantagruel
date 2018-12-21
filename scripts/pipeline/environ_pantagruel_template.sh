@@ -13,6 +13,9 @@ export ptgdbname='REPLACEptgdbname'
 export ptgrepo='REPLACEptgrepo'
 export myemail='REPLACEmyemail'
 export famprefix='REPLACEfamprefix'
+export customassemb='REPLACEcustomassemb'
+export ncbiass='REPLACEncbiass'
+export ncbitax='REPLACEncbitax'
 # at 00.input_data stage
 export ngenomes='REPLACEngenomes'
 # at 04.core_genome stage
@@ -49,9 +52,6 @@ export ptgscripts=${ptgrepo}/scripts
 export PYTHONPATH=$PYTHONPATH:${ptgrepo}/python_libs
 # head folders
 export ptgdb=${ptgroot}/${ptgdbname}
-export ncbiass=${ptgroot}/NCBI/Assembly
-export ncbitax=${ptgroot}/NCBI/Taxonomy
-export customassemb=${ptgroot}/user_genomes
 export ptglogs=${ptgdb}/logs
 export ptgtmp=${ptgdb}/tmp
 export indata=${ptgdb}/00.input_data

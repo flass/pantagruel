@@ -20,19 +20,22 @@ source ${envsourcescript}
 ## 00. Data download and grooming
 #################################
 
-### Download data
-## using FTP
-# downloading relevant tables from NCBI Taxonomy database 
-user='anonymous'
-pswd=$myemail
-host='ftp.ncbi.nlm.nih.gov'
-openparam=" -u $user,$pswd $host"
-source="/pub/taxonomy"
-files="taxcat.tar.gz* taxcat_readme.txt taxdump.tar.gz* taxdump_readme.txt"
-mkdir -p $ncbitax
-lftp -c "open $openparam; cd $source ; mget -O $ncbitax/ $files ; quit"
-# reduce taxonomic id2name reference file complexity
-for tgz in `ls $ncbitax/*.tar.gz` ; do md5sum -c $tgz.md5 && tar -xzf $tgz ; done
+if [ ! -e ${ncbitax}/names.dmp ] ; then
+echo "did not find the relevant taxonomy flat files in '${ncbitax}/'; dowlod the from NCBI Taxonomy FTP"
+  ### Download data
+  ## using FTP
+  # downloading relevant tables from NCBI Taxonomy database 
+  user='anonymous'
+  pswd=$myemail
+  host='ftp.ncbi.nlm.nih.gov'
+  openparam=" -u $user,$pswd $host"
+  source="/pub/taxonomy"
+  files="taxcat.tar.gz* taxcat_readme.txt taxdump.tar.gz* taxdump_readme.txt"
+  mkdir -p $ncbitax
+  lftp -c "open $openparam; cd $source ; mget -O $ncbitax/ $files ; quit"
+  # reduce taxonomic id2name reference file complexity
+  for tgz in `ls $ncbitax/*.tar.gz` ; do md5sum -c $tgz.md5 && tar -xzf $tgz ; done
+fi
 
 ## using NCBI web interface:
 # Search Assembly database using a query defined as convenient:	
