@@ -185,7 +185,7 @@ export ptgscripts=${ptgrepo}/scripts
 initfile=""
 
 tasks=""
-while [ ! -z "$@" ] ; do
+while [[ ! -z "${@}" ]] ; do
  case "$1" in
  init)
           tasks="init"
@@ -227,17 +227,17 @@ done
 
 # sort tasks
 tasks=$(echo "${tasks}" | tr ' ' '\n' | sort -u | xargs)
+echo $tasks
 
-
-if [[ "$tasks"=='init' ]] ; then
+for task in "$tasks" ; do
+  if [[ "$task" -eq 'init' ]] ; then
     echo "Pantagrel pipeline step $task: initiate pangenome database."
     ${ptgscripts}/pipeline/pantagruel_pipeline_init.sh ${ptgdbname} ${ptgroot} ${ptgrepo} ${myemail} ${famprefix} ${ncbiass} ${ncbitax} ${customassemb} ${initfile}
     checkexec
-else
-  export ptgdb=${ptgroot}/${ptgdbname}
-  envsourcescript=${ptgdb}/environ_pantagruel_${ptgdbname}.sh
-  source $envsourcescript
-  for task in "$tasks" ; do
+  else
+   export ptgdb=${ptgroot}/${ptgdbname}
+   envsourcescript=${ptgdb}/environ_pantagruel_${ptgdbname}.sh
+   source $envsourcescript
    case "$task" in
    0)
     echo "Pantagrel pipeline step $task: fetch public genome data from NCBI sequence databases and annotate private genomes."
@@ -280,5 +280,5 @@ else
     ${ptgscripts}/pipeline/pantagruel_pipeline_09_coevolution.sh ${ptgdbname} ${ptgroot}
     checkexec  ;;
     esac
-  done
-fi
+  fi
+done
