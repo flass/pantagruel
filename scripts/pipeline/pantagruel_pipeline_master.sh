@@ -18,13 +18,18 @@ usage (){
   echo "                       the chosen prefix will be appended with a 'P' for protein families and a 'C' for CDS families."
   echo "    -T|--taxonomy      path to folder of taxonomy database flat files; defaults to \$rootdir/NCBI/Taxonomy"
   echo "                       if this is not containing the expected file, triggers downloading the daily dump from NCBI Taxonomy at task 00"
-  echo "    -A|--refseq_ass  path to folder of source genome assembly flat files (formated like NCBI Assembly RefSeq whole directories); defaults to \$rootdir/NCBI/Assembly"
-  echo "    -a|--custom_ass  path to folder of source genome assembly flat files (unnaotated contig fasta files); defaults to \$rootdir/user_genomes"
+  echo "    -A|--refseq_ass  path to folder of source genome assembly flat files (formated like NCBI Assembly RefSeq whole directories);"
+  echo "                       defaults to \$rootdir/NCBI/Assembly"
+  echo "    -a|--custom_ass  path to folder of user-provided genome containing:"
+  echo "                       - [mandatory]  a 'contigs/' folder where are stored all source genome assembly flat files"
+  echo "                       - [optionally] a 'strain_infos.txt' file"
+  echo "                       (unnanotated contig fasta files); defaults to \$rootdir/user_genomes"
   echo "    -h|--help          print this help message and exit."
   echo ""
   echo "TASKs are to be picked among the following (equivalent digit/number/keywords are separated by a '|'):"
   echo "  init"
-  echo "       database initiation: define shared environment variables"
+  echo "       database initiation: define shared environment variables."
+  echo "         If followed by a file path, all env variables are set as in the specified source shell file"
   echo "  all"
   echo "       run all pipeline tasks (apart from database initiation), from fetching data to co-evolution inference."
   echo "       All tasks will be performed using parameters defined at the __init__ step, and default parameters otherwise."
@@ -59,7 +64,7 @@ checkexec (){
 }
 
 
-ARGS=`getopt --options "d:r:p:i:f:T:A:h" --longoptions "dbname:,rootdir:,ptgrepo:,iam:,famprefix:,refseq_ass:,custom_ass:,taxonomy:,help" --name "pantagruel" -- "$@"`
+ARGS=`getopt --options "d:r:p:i:f:a:T:A:h" --longoptions "dbname:,rootdir:,ptgrepo:,iam:,famprefix:,refseq_ass:,custom_ass:,taxonomy:,init:,help" --name "pantagruel" -- "$@"`
 
 #Bad arguments
 if [ $? -ne 0 ];
@@ -157,6 +162,11 @@ if [ -z "$famprefix" ] ; then
 fi
 if [ -z "$customassemb" ] ; then
   export customassemb=${ptgroot}/user_genomes
+  if [ ! -d "$customassemb/contigs" ] ; then
+   echo "custom assembly folder must contain a subfolder 'contigs/'"
+   usage
+   exit 1
+  fi
   echo "Default: set custom (raw) genome assembly source folder to '$customassemb'"
 fi
 if [ -z "$ncbiass" ] ; then
@@ -221,7 +231,7 @@ tasks=$(echo "${tasks}" | tr ' ' '\n' | sort -u | xargs)
 
 if [[ "$tasks"=='init' ]] ; then
     echo "Pantagrel pipeline step $task: initiate pangenome database."
-    ${ptgscripts}/pipeline/pantagruel_pipeline_init.sh ${ptgdbname} ${ptgroot} ${ptgrepo} ${myemail} ${famprefix} ${initfile}
+    ${ptgscripts}/pipeline/pantagruel_pipeline_init.sh ${ptgdbname} ${ptgroot} ${ptgrepo} ${myemail} ${famprefix} ${ncbiass} ${ncbitax} ${customassemb} ${initfile}
     checkexec
 else
   export ptgdb=${ptgroot}/${ptgdbname}

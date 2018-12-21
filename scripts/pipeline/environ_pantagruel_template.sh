@@ -87,7 +87,7 @@ export dirgoenrichcladespecore=${goterms}/clade_go_term_enriched_cladespecific_v
 export dirgoenrichcladespepan=${goterms}/clade_go_term_enriched_cladespecific_vs_pangenome
 
 # other secondary variables
-export straininfo=${customassemb}/${ptgdbname}_strain_infos.txt
+export straininfo=${customassemb}/strain_infos.txt
 export sqldbname=${ptgdbname,,}
 export sqldb=${database}/${sqldbname}
 export allfaarad=${seqdb}/all_proteomes

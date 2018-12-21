@@ -22,7 +22,16 @@ export famprefix="$5"  # alphanumerical prefix (no number first) of the names fo
 export ncbiass="$6"
 export ncbitax="$7"
 export customassemb="$8"
+export initfile="$9"
 
+if [ ! -e ${initfile} ] ; then
+  echo "load environment from specified init source file: '${initfile}'"
+  source ${initfile}
+  echo "Pantagruel init: done manually"
+  exit 0
+else
+  echo "Pantagruel init: automatic mode"
+fi
 
 # derive other important environmnet variables
 export ptgscripts="${ptgrepo}/scripts"
@@ -48,18 +57,21 @@ envsourcescript=${ptgdb}/environ_pantagruel_${ptgdbname}.sh
 rm -f ${ptgtmp}/sedenvvar.sh
 echo -n "cat ${templateenv}" > ${ptgtmp}/sedenvvar.sh
 for var in ptgdbname ptgroot ptgrepo myemail famprefix customassemb ncbiass ncbitax ; do
-echo -n " | sed -e \"s#REPLACE${var}#${var}#\"" >> ${ptgtmp}/sedenvvar.sh
+echo -n " | sed -e \"s#REPLACE${var}#\${var}#\"" >> ${ptgtmp}/sedenvvar.sh
 done
 echo -n " > ${envsourcescript}" >> ${ptgtmp}/sedenvvar.sh
 bash < ${ptgtmp}/sedenvvar.sh
 ## load generic environment variables derived from the above
 source ${envsourcescript}
 
-# folders for optional custom genomes
-export customassemb=${ptgroot}/user_genomes
-mkdir -p ${customassemb}/contigs/
-echo "sequencing.project.id,genus,species,strain,taxid,locus_tag_prefix" | tr ',' '\t' > ${straininfo}
 
-echo "please copy/link raw sequence (in multi-fasta format) files of custom (user-generated) assemblies into ${customassemb}/contigs/"
-echo "and fill up the information table ${straininfo} (tab-delimited fields) according to header:"
-cat ${straininfo}
+# folders for optional custom genomes
+mkdir -p ${customassemb}/contigs/
+if [ ! -e ${straininfo} ] ; then
+ echo "sequencing.project.id,genus,species,strain,taxid,locus_tag_prefix" | tr ',' '\t' > ${straininfo}
+ echo "please copy/link raw sequence (in multi-fasta format) files of custom (user-generated) assemblies into ${customassemb}/contigs/"
+ echo "and fill up the information table ${straininfo} (tab-delimited fields) according to header:"
+ cat ${straininfo}
+fi
+
+echo "Pantagruel init: done automatically"
