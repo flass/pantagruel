@@ -49,16 +49,16 @@ envsourcescript=${ptgdb}/environ_pantagruel_${ptgdbname}.sh
 rm -f ${ptgtmp}/sedenvvar.sh
 echo -n "cat ${templateenv}" > ${ptgtmp}/sedenvvar.sh
 for var in ptgdbname ptgroot ptgrepo myemail famprefix customassemb ncbiass ncbitax ; do
-echo -n " | sed -e \"s#REPLACE${var}#\${var}#\"" >> ${ptgtmp}/sedenvvar.sh
+echo -n " | sed -e \"s#REPLACE${var}#\${${var}}#\"" >> ${ptgtmp}/sedenvvar.sh
 done
 echo -n " > ${envsourcescript}" >> ${ptgtmp}/sedenvvar.sh
 bash < ${ptgtmp}/sedenvvar.sh
 ## load generic environment variables derived from the above
 source ${envsourcescript}
 if [ -z ${initfile} ] ; then 
-  echo "updated init file save at '${envsourcescript}'"
-else
   echo "created init file at '${envsourcescript}'"
+else
+  echo "updated init file save at '${envsourcescript}'"
 fi
 
 # folders for optional custom genomes
