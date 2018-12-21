@@ -24,26 +24,18 @@ export ncbitax="$7"
 export customassemb="$8"
 export initfile="$9"
 
-if [ ! -e ${initfile} ] ; then
-  echo "load environment from specified init source file: '${initfile}'"
-  source ${initfile}
-  echo "Pantagruel init: done manually"
-  exit 0
-else
-  echo "Pantagruel init: automatic mode"
-fi
-
 # derive other important environmnet variables
 export ptgscripts="${ptgrepo}/scripts"
 
-templateenv="$6"
-if [ -z ${templateenv} ] ; then 
+if [ -z ${initfile} ] ; then 
   templateenv=${ptgscripts}/pipeline/environ_pantagruel_template.sh
+else
+  templateenv=${initfile}
 fi
 
 
 #~ export PYTHONPATH=$PYTHONPATH:"${ptgrepo}/python_libs"
-cd ${ptgrepo} ; export ptgversion=$(git log | grep commit) ; cd -
+cd ${ptgrepo} ; export ptgversion=$(git log | grep commit) ; cd - > /dev/null
 # create head folders
 export ptgdb=${ptgroot}/${ptgdbname}
 export ptglogs=${ptgdb}/logs
@@ -74,4 +66,3 @@ if [ ! -e ${straininfo} ] ; then
  cat ${straininfo}
 fi
 
-echo "Pantagruel init: done automatically"
