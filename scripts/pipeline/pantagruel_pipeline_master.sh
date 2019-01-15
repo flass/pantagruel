@@ -10,8 +10,12 @@
 
 usage (){
   echo "Usage: pantagruel -d db_name [-r root_dir] [other options] TASK1 [task-specific options]"
+  echo ""
+  echo "  _mandatory options_"
   echo "    -d|--dbname       database name"
   echo "    -r|--rootdir      root directory where to create the database; defaults to current folder"
+  echo ""
+  echo "  _facultative options_"
   echo "    -p|--ptgrepo      location of pantagruel software head folder; defaults to directory where this script is located"
   echo "    -i|--iam          database creator identity (e-mail address is preferred)"
   echo "    -f|--famprefix    alphanumerical prefix (no number first) of the names for homologous protein/gene family clusters; defaults to 'PANTAG'"
@@ -31,7 +35,24 @@ usage (){
   echo "                       - a 'strain_infos.txt' file"
   echo "                       (unnanotated contig fasta files); defaults to \$rootdir/user_genomes"
   echo "    -s|--pseudocore  integer number, the minimum number of genomes in which a gene family should be present"
-  echo "                       to be included in the pseudo-core genome gene set (otherwise has to be set interactively when running task 'core')"
+  echo "                       to be included in the pseudo-core genome gene set (otherwise has to be set interactively"
+  echo "                       when running task 'core')."
+  echo "    -H|--submit_hpc  full address (hostname:/folder/location) of a folder on a remote high-performance computating (HPC) cluster server"
+  echo "                       This indicate that computationally intensive tasks, including building the gene tree collection"
+  echo "                       ('genetrees') and reconciling gene tree with species tree ('reconciliations') will be run"
+  echo "                       on a HPC server (only Torque/PBS job submission system is supported so far)."
+  echo "                       [support for core genome tree building ('core') remains to be implemented]."
+  echo "                       Instead of running the computations, scripts for cluster job submission will be generated automatically."
+  echo "                       Data and scripts will be transfered to the specified address (the database folder structure"
+  echo "                       will be duplicated there, but only relevant files will be synced). Note that job submission"
+  echo "                       scripts will need to be executed manually on the cluster server."
+  echo "                       If set at init stage, this option will be maintained for all tasks. However, the remote address"
+  echo "                       can be updated when calling a specific task; string 'none' cancels the HPC behaviour."
+  echo "    -c|--collapse      enable collapsing the rake clades in the gene trees (strongly recomended in datasets of size > 50 genomes)."
+  echo "    -C|--collapse_par  [only for 'genetrees' task] specify parameters for collapsing the rake clades in the gene trees."
+  echo "                       A single-quoted, semicolon-delimited string containing variable definitions must be provided."
+  echo "                       Default is equivalent to providing the following string:"
+  echo "                          'cladesupp=70 ; subcladesupp=35 ; criterion=bs ; withinfun=median'"
   echo "    -h|--help          print this help message and exit."
   echo ""
   echo "TASKs are to be picked among the following (equivalent digit/number/keywords are separated by a '|'):"
@@ -72,7 +93,7 @@ checkexec (){
 }
 
 
-ARGS=`getopt --options "d:r:p:i:f:a:T:A:s:h" --longoptions "dbname:,rootdir:,ptgrepo:,iam:,famprefix:,refseq_ass:,custom_ass:,taxonomy:,pseudocore:,help" --name "pantagruel" -- "$@"`
+ARGS=`getopt --options "d:r:p:i:f:a:T:A:s:H:cC:h" --longoptions "dbname:,rootdir:,ptgrepo:,iam:,famprefix:,refseq_ass:,custom_ass:,taxonomy:,pseudocore:,submit_hpc:,collapse,collapse_par:,help" --name "pantagruel" -- "$@"`
 
 #Bad arguments
 if [ $? -ne 0 ];
@@ -141,6 +162,23 @@ do
       echo "set NCBI Taxonomy source folder to '$ncbitax'"
       shift 2;;
 
+    -H|--submit_hpc
+      testmandatoryarg "$1" "$2"
+      export hpcremoteptgroot="$2"
+      echo "set address of database root folder on remote HPC cluster server"
+      shift 2;;
+
+    -c|--collapse
+      export chaintype="collapsed"
+      echo "gene tree clade collapsing enabled"
+      shift ;;
+
+    -C|--collapse_par
+      testmandatoryarg "$1" "$2"
+      export collapseCladeParams="$2"
+      echo "set parameters for rake clade collapsing in gene trees"
+      shift 2;;
+
     --)
       shift
       break;;
@@ -190,6 +228,23 @@ fi
 if [ -z "$ncbitax" ] ; then
  export ncbitax=${ptgroot}/NCBI/Taxonomy
  echo "Default: set NCBI Taxonomy source folder to '$ncbitax'"
+fi
+
+if [ -z "$hpcremoteptgroot" ] ; then
+ export hpcremoteptgroot='none'
+ echo "Default: all computations will be run locally (instead of on a potential HPC service)"
+fi
+
+if [ -z "$chaintype" ] ; then
+ export chaintype="fullgenetree"
+ echo "Default: gene tree clade collapsing disabled"
+fi
+
+if [ -z "$collapseCladeParams" ] ; then
+  export collapseCladeParams='default'
+  if [ ! -z "$chaintype" ] ; then 
+    echo "Default: gene tree clade collapsing will use these parameters: 'cladesupp=70 ; subcladesupp=35 ; criterion=bs ; withinfun=median'"
+  fi
 fi
 
 echo "will create/use Pantagruel database '$ptgdbname', set in root folder: '$ptgroot'"
@@ -244,9 +299,9 @@ tasks=$(echo "${tasks}" | tr ' ' '\n' | sort -u | xargs)
 echo $tasks
 
 for task in "$tasks" ; do
-  if [[ "$task" -eq 'init' ]] ; then
+  if [[ "$task" == 'init' ]] ; then
     echo "Pantagrel pipeline step $task: initiate pangenome database."
-    ${ptgscripts}/pipeline/pantagruel_pipeline_init.sh ${ptgdbname} ${ptgroot} ${ptgrepo} ${myemail} ${famprefix} ${ncbiass} ${ncbitax} ${customassemb} ${initfile}
+    ${ptgscripts}/pipeline/pantagruel_pipeline_init.sh ${ptgdbname} ${ptgroot} ${ptgrepo} ${myemail} ${famprefix} ${ncbiass} ${ncbitax} ${customassemb} ${hpcremoteptgroot} ${initfile}
     checkexec
   else
    export ptgdb=${ptgroot}/${ptgdbname}
@@ -283,13 +338,13 @@ for task in "$tasks" ; do
     fi
     ${ptgscripts}/pipeline/pantagruel_pipeline_05_core_genome_ref_tree.sh ${ptgdbname} ${ptgroot} ${pseudocoremingenomes}
     checkexec  ;;
-   5)
+   6)
     echo "Pantagrel pipeline step $task: compute gene trees."
-    ${ptgscripts}/pipeline/pantagruel_pipeline_06_gene_trees.sh ${ptgdbname} ${ptgroot}
+    ${ptgscripts}/pipeline/pantagruel_pipeline_06_gene_trees.sh ${ptgdbname} ${ptgroot} ${collapseCladeParams} ${hpcremoteptgroot}
     checkexec  ;;
    7)
     echo "Pantagrel pipeline step $task: compute species tree/gene tree reconciliations."
-    ${ptgscripts}/pipeline/pantagruel_pipeline_07_reconciliations.sh ${ptgdbname} ${ptgroot}
+    ${ptgscripts}/pipeline/pantagruel_pipeline_07_reconciliations.sh ${ptgdbname} ${ptgroot} ${hpcremoteptgroot}
     checkexec  ;;
    8)
     echo "Pantagrel pipeline step $task: classify genes into orthologous groups (OGs) and search clade-specific OGs."

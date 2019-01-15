@@ -14,70 +14,97 @@ export ptgdbname="$1"  # database anme (will notably be the name of the top fold
 export ptgroot="$2"    # source folder where to create the database
 export ptgdb=${ptgroot}/${ptgdbname}
 envsourcescript=${ptgdb}/environ_pantagruel_${ptgdbname}.sh
-source $envsourcescript
+source ${envsourcescript}
 
-collapseCladeOptions=$2
+export collapseCladeParams=$3
+if [ ! -z $4 ]
+  export hpcremoteptgroot=$4
+fi
 
 #############################################################
 ## 06. Gene trees (full [ML] and collapsed [bayesian sample])
 #############################################################
 
-export genetrees=${ptgdb}/06.gene_trees
-export mlgenetrees=${genetrees}/raxml_trees
 mkdir -p ${mlgenetrees}
-mkdir -p $ptglogs/raxml/gene_trees
+mkdir -p ${ptglogs}/raxml/gene_trees
 
 basequery="select gene_family_id, size from gene_family_sizes where gene_family_id is not null and gene_family_id!='$cdsorfanclust'"
-python ${ptgscripts}/pantagruel_sqlitedb_query_gene_fam_sets.py --db=${sqldb} --outprefix='cdsfams' --dirout=${protali} \
- --base.query="${basequery}" --famsets.min.sizes="4,500,2000,10000" --famsets.max.sizes="499,1999,9999,"
+ 
+ 
+### prepare HPC version
+if [[ "$hpcremoteptgroot" != 'none' ]] ; then
 
-## compute first pass of gene trees with RAxML, using rapid bootstrap to estimate branch supports
-allcdsfam2phylo=($(ls ${protali}/cdsfams_*))
-allmems=(4 8 32 64)
-allwalltimes=(24 24 72 72)
-allncpus=(4 4 4 16)
-for i in ${!allcdsfam2phylo[@]} ; do
-cdsfam2phylo=${allcdsfam2phylo[$i]} ; mem=${allmems[$i]} ; wt=${allwalltimes[$i]} ; ncpus=${allncpus[$i]}
-echo "cdsfam2phylo=${cdsfam2phylo} ; mem_per_core=${mem}gb ; walltime=${wt}:00:00 ; ncpus=${ncpus}"
-tasklist=${cdsfam2phylo}_aln_list
-rm -f $tasklist ; for fam in `cut -f1 $cdsfam2phylo` ; do ls ${cdsalifastacodedir}/${fam}.codes.aln >> $tasklist ; done
-if [ "$(wc -l $cdsfam2phylo | cut -f1 -d' ')" -lt "$(wc -l $tasklist | cut -f1 -d' ')" ] ; then 
-  >&2 echo "ERROR $(dateprompt): missing gene family alignments; please fix the list '$tasklist' or the content of folder '$alifastacodedir/' before continuing."
-  exit 1
+  export hpcremotehost=$(echo "$hpcremoteptgroot" | cut -d':' -f1)
+  export hpcremotefolder=$(echo "$hpcremoteptgroot" | cut -d':' -f2)
+
+  python ${ptgscripts}/pantagruel_sqlitedb_query_gene_fam_sets.py --db=${sqldb} --outprefix='cdsfams' --dirout=${protali} --base.query="${basequery}" \
+   --famsets.min.sizes="4,500,2000,10000" --famsets.max.sizes="499,1999,9999,"
+
+  # sync input and ouput folders with remote HPC host
+  ${ptgscripts}/sync_ptgdb_with_remote_host.sh ${ptgdbname} ${ptgroot} \
+   ${hpcremoteptgroot} ${cdsalifastacodedir} ${colalinexuscodedir}/${collapsecond} ${mlgenetrees} ${bayesgenetrees} ${protali}/cdsfams_* ${sqldb}
+
+  echo "please connect to remote host $hpcremotehost and execute the following scripts in order "
+  echo "(waiting for completion of all array jobs submitted by one script before executing the next):"
+  echo "- pantagruel_pipeline_06.1_HPC_full_ML_gene_trees.sh"
+  echo "- pantagruel_pipeline_06.2_HPC_collapse_gene_trees.sh"
+  echo "- pantagruel_pipeline_06.3_HPC_bayesian_gene_trees.sh"
+  echo "- pantagruel_pipeline_06.4_HPC_replace_spe_by_pops.sh"
+  echo "then copy back ouput files and updated database file by syncing the root folder from remote host to this host"
+
+
+  exit 0
+  
 fi
-qsubvars="tasklist=$tasklist,outputdir=$mlgenetrees,reducedaln=true,nbthreads=${ncpus}"
-Njob=`wc -l ${tasklist} | cut -f1 -d' '`
-# accomodate with possible upper limit on number of tasks in an array job; assume chunks of 3000 tasks are fine
-chunksize=3000
-jobranges=($(${ptgscripts}/get_jobranges.py $chunksize $Njob))
-for jobrange in ${jobranges[@]} ; do
-echo "jobrange=$jobrange"
-qsub -J $jobrange -l walltime=${wt}:00:00 -l select=1:ncpus=${ncpus}:mem=${mem}gb -N raxml_gene_trees_$(basename $cdsfam2phylo) -o $ptglogs/raxml/gene_trees -j oe -v "$qsubvars" ${ptgscripts}/raxml_array_PBS.qsub
-done
-done
 
+### local version
+    
+python ${ptgscripts}/pantagruel_sqlitedb_query_gene_fam_sets.py --db=${sqldb} --outprefix='cdsfams' --dirout=${protali} --base.query="${basequery}" \
+--famsets.min.sizes="4"
 
-#### OPTION: edit collapsed gene trees to attribute an (ancestral) species identity to the leafs representing collapsed clades = pre-reconciliation of recent gene history
-if [ -z collapseCladeOptions ] ; then
-  chaintype='fullgenetree'
-  export colalinexuscodedir=${protali}/${chaintype}_cdsfam_alignments_species_code
-  # not implemented yet
-  # only have to only convert the alignments from fasta to nexus
+if [[ "${chaintype}" == 'fullgenetree' ]] ; then
+  #### OPTION A1: no collapsing, just convert the alignments from fasta to nexus to directly compute bayesian trees
+  export colalinexuscodedir=${protali}/${chaintype}_cdsfam_alignments_species_code  #
   for aln in `ls ${alifastacodedir}` ; do
-    convalign  -i fasta -e nex -t dna nexus ${alifastacodedir}/$alnfa 
+    convalign -i fasta -e nex -t dna nexus ${alifastacodedir}/$alnfa 
   done
   mv ${alifastacodedir}/*nex ${colalinexuscodedir}/
   export nexusaln4chains=${colalinexuscodedir}
   export mboutputdir=${bayesgenetrees}
   
+  #### end OPTION A1
 else
-  chaintype='collapsed'
-  if [-z ${collapsecolid} ] ; then
+  #### OPTION B1: compute ML gene trees and collapse rake clades
+
+  if [[ "${chaintype}" != 'collapsed' ]] ; then
+   echo "Error: incorrect value for variable chaintype: '${chaintype}'"
+   exit 1
+  fi
+  ##########################
+  ## 06.1 Full ML gene trees
+  ##########################
+  
+  ## compute first pass of gene trees with RAxML, using rapid bootstrap to estimate branch supports
+  allcdsfam2phylo=${protali}/cdsfams_minsize4
+  tasklist=${cdsfam2phylo}_aln_list
+  rm -f $tasklist
+  for fam in `cut -f1 $cdsfam2phylo` ; do
+   ls ${cdsalifastacodedir}/${fam}.codes.aln >> $tasklist
+  done
+  ${ptgscripts}/raxml_sequential.sh ${tasklist} ${mlgenetrees} 'GTRCAT' 'bipartitions rootedTree identical_sequences' 'x' $(nproc) 'true'
+  
+  ############################
+  ## 06.2 Gene tree collapsing
+  ############################
+
+  if [ -z ${collapsecolid} ] ; then
     collapsecolid=1
   fi
-  eval "$collapseCladeOptions"
-  # e.g.:  eval "cladesupp=70 ; subcladesupp=35 ; criterion='bs' ; withinfun='median'"
-
+  if [[ "$collapseCladeParams" != 'default' ]] ; then
+    eval "$collapseCladeParams"
+    # e.g.:  eval 'cladesupp=70 ; subcladesupp=35 ; criterion=bs ; withinfun=median'
+  fi
+  
   ## detect clades to be collapsed in gene trees
   export colalinexuscodedir=${protali}/${chaintype}_cdsfam_alignments_species_code
   export collapsecond=${criterion}_stem${cladesupp}_within${withinfun}${subcladesupp}
@@ -86,28 +113,20 @@ else
   mlgenetreelist=${mlgenetrees%*s}_list
   ${ptgscripts}/lsfullpath.py ${mlgenetrees}/${mainresulttag} | sort > ${mlgenetreelist}
   
-  # accomodate with possible upper limit on number of tasks in an array job; assume chunks of 3000 tasks are fine
-  Njob=`wc -l ${mlgenetreelist} | cut -f1 -d' '`
-  chunksize=3000
-  jobranges=($(${ptgscripts}/get_jobranges.py $chunksize $Njob))
-  ncpus=4
-
-  for jobrange in ${jobranges[@]} ; do
-  beg=`echo $jobrange | cut -d'-' -f1`
-  tail -n +${beg} ${mlgenetreelist} | head -n ${chunksize} > ${mlgenetreelist}_${jobrange}
-  qsub -N mark_unresolved_clades -l select=1:ncpus=${ncpus}:mem=16gb,walltime=4:00:00 -o ${ptglogs}/mark_unresolved_clades.${collapsecond}_${jobrange}.log -j oe -V -S /usr/bin/bash << EOF
-  module load python
-  python ${ptgscripts}/mark_unresolved_clades.py --in_gene_tree_list=${mlgenetreelist}_${jobrange} --diraln=${alifastacodedir} --fmt_aln_in='fasta' \
+  python ${ptgscripts}/mark_unresolved_clades.py --in_gene_tree_list=${mlgenetreelist} --diraln=${cdsalifastacodedir} --fmt_aln_in='fasta' \
    --threads=${ncpus} --dirout=${colalinexuscodedir}/${collapsecond} --no_constrained_clade_subalns_output --dir_identseq=${mlgenetrees}/identical_sequences \
    ${collapsecriteriondef}
-EOF
-  done
+
   export collapsecoldate=$(date +%Y-%m-%d)
   export nexusaln4chains=${colalinexuscodedir}/${collapsecond}/collapsed_alns
   export mboutputdir=${bayesgenetrees}/${collapsecond}
   
 fi
-#### end OPTION
+#### end OPTION B1
+
+############################
+## 06.3 Bayesian gene trees
+############################
 
 ## run mrbayes on collapsed alignments
 export bayesgenetrees=${genetrees}/${chaintype}_mrbayes_trees
@@ -119,40 +138,27 @@ tasklist=${nexusaln4chains}_ali_list
 rm -f $tasklist
 ${ptgscripts}/lsfullpath.py ${nexusaln4chains} > $tasklist
 
-#~ # following lines are for resuming after a stop in batch computing, or to collect those jobs that crashed (and may need to be re-ran with more mem/time allowance)
-#~ alreadytrees=${mboutputdir}_list
-#~ ${ptgscripts}/lsfullpath.py ${mboutputdir}/*con.tre > $alreadytrees
-#~ alreadytasklist=${nexusaln4chains}_ali_list_done
-#~ sed -e "s#${mboutputdir}/\(.\+\)\.mb\.con\.tre#${nexusaln4chains}/\1\.nex#g" $alreadytrees > $alreadytasklist
-#~ sort $tasklist > $tasklist.sort
-#~ sort $alreadytasklist > $alreadytasklist.sort
-#~ dtag=$(date +"%Y-%m-%d-%H-%M-%S")
-#~ comm -2 -3  $tasklist.sort $alreadytasklist.sort > ${tasklist}_todo_${dtag}
-#~ Njob=`wc -l ${tasklist}_todo_${dtag} | cut -f1 -d' '`
-#~ qsubvar="mbversion=3.2.6, tasklist=${tasklist}_todo_${dtag}, outputdir=${mboutputdir}, mbmcmcpopt='Nruns=${nruns} Ngen=2000000 Nchains=${nchains}'"
-# otherwise could just use $tasklist
-Njob=`wc -l ${tasklist} | cut -f1 -d' '`
-chunksize=1000
-jobranges=($(${ptgscripts}/get_jobranges.py $chunksize $Njob))
-qsubvar="mbversion=3.2.6, tasklist=${tasklist}, outputdir=${mboutputdir}, mbmcmcpopt='Nruns=${nruns} Ngen=2000000 Nchains=${nchains}'"
-for jobrange in ${jobranges[@]} ; do
- echo $jobrange $qsubvar
- qsub -J $jobrange -N mb_panterodb -l select=1:ncpus=${ncpus}:mem=16gb -o ${ptglogs}/mrbayes/collapsed_mrbayes_trees_${dtag}_${jobrange} -v "$qsubvar" ${ptgscripts}/mrbayes_array_PBS.qsub
-done
+${ptgscripts}/mrbayes_sequential.sh ${tasklist} ${mboutputdir} 'Nruns=${nruns} Ngen=2000000 Nchains=${nchains}'
 
-#### OPTION: were the rake lades in gene trees collapsed? if yes, these need to be replaced by mock population leaves
-if [ -z collapseCladeOptions ] ; then
-  export chaintype='fullgenetree'
+################################################################################
+## 06.4 Convert format of Bayesian gene trees and replace species by populations
+################################################################################
+
+if [[ "${chaintype}" == 'fullgenetree' ]] ; then
+  #### OPTION A2: 
   export coltreechains=${genetrees}/${chaintype}_tree_chains
-  # not implemented yet
-  # must generalize the script to only convert the tree chains, not replacing anything in them
+  echo "Error: not implemented yet:"
+  echo "must generalize the script replace_species_by_pop_in_gene_trees.py so to only convert the format of gene tree chains, not replacing anything in them"
   #~ python ${ptgscripts}/replace_species_by_pop_in_gene_trees.py -G ${tasklist} -o ${coltreechains} --threads=${ncpus} --reuse=0 --verbose=0 --logfile=${repllogs}_${replrun}.log &
-
-  else
-    if [-z ${replacecolid} ] ; then
-     replacecolid=1
-    fi
-  export chaintype='collapsed'
+  exit 1
+  
+  #### end OPTION A2: 
+else
+  #### OPTION B2: collapsed rake clades in gene trees need to be replaced by mock population leaves
+  #### will edit collapsed gene trees to attribute an (ancestral) species identity to the leafs representing collapsed clades = pre-reconciliation of recent gene history
+  if [-z ${replacecolid} ] ; then
+   replacecolid=1
+  fi
   export coltreechains=${genetrees}/${chaintype}_tree_chains
   export colmethod='replaceCCinGasinS-collapsePOPinSnotinG'
   mkdir -p ${coltreechains}/${collapsecond}
@@ -168,22 +174,12 @@ if [ -z collapseCladeOptions ] ; then
   # local parallel run
   python ${ptgscripts}/replace_species_by_pop_in_gene_trees.py -G ${tasklist} -c ${colalinexuscodedir}/${collapsecond} -S ${speciestree}.lsd.newick -o ${coltreechains}/${collapsecond} \
    --populations=${speciestree%.*}_populations --population_tree=${speciestree%.*}_collapsedPopulations.nwk --population_node_distance=${speciestree%.*}_interNodeDistPopulations \
-   --dir_full_gene_trees=${mlgenetrees}/rootedTree --method=${colmethod} --threads=${ncpus} --reuse=0 --verbose=0 --max.recursion.limit=12000 --logfile=${repllogs}_${replrun}.log &
-
-  ## OR
-
-  #~ # PBS-submitted parallel job
-  #~ qsub -N replSpePopinGs -l select=1:ncpus=${ncpus}:mem=64gb,walltime=24:00:00 -o $repllogd -j oe -V << EOF
-  #~ module load python
-  #~ python ${ptgscripts}/replace_species_by_pop_in_gene_trees.py -G ${tasklist} -c ${colalinexuscodedir}/${collapsecond} -S ${speciestree}.lsd.newick -o ${coltreechains}/${collapsecond} \
-   #~ --populations=${speciestree%.*}_populations --population_tree=${speciestree%.*}_collapsedPopulations.nwk --population_node_distance=${speciestree%.*}_interNodeDistPopulations \
-   #~ --dir_full_gene_trees=${mlgenetrees}/rootedTree --method=${colmethod} --threads=${ncpus} --reuse=0 --max.recursion.limit=12000 --logfile=${repllogs}_${replrun}.log
-  #~ EOF
+   --dir_full_gene_trees=${mlgenetrees}/rootedTree --method=${colmethod} --threads=${ncpus} --reuse=0 --verbose=0 --max.recursion.limit=12000 --logfile=${repllogs}_${replrun}.log
 
   export replacecoldate=$(date +%Y-%m-%d)
 
   ## load these information into the database
-  ${ptgscripts}/pantagruel_sqlitedb_phylogeny_populate_collapsed_clades.sh ${database} ${dbfile} ${colalinexuscodedir} ${coltreechains} ${collapsecond} ${colmethod} ${collapsecriteriondef} ${collapsecolid} ${replacecolid} ${collapsecoldate} ${replacecoldate}
+  ${ptgscripts}/pantagruel_sqlitedb_phylogeny_populate_collapsed_clades.sh ${database} ${sqldb} ${colalinexuscodedir} ${coltreechains} ${collapsecond} ${colmethod} ${collapsecriteriondef} ${collapsecolid} ${replacecolid} ${collapsecoldate} ${replacecoldate}
 
 fi
-#### end OPTION
+#### end OPTION B2

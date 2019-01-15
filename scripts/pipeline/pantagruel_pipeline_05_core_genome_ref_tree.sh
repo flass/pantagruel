@@ -19,6 +19,7 @@ source ${envsourcescript}
 if [ -z $3 ]
   pseudocoremingenomes=$3
 fi
+
 ###########################################
 ## 05. Core Genome Phylogeny (Species tree)
 ###########################################

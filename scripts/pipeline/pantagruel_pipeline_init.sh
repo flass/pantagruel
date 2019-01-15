@@ -22,7 +22,8 @@ export famprefix="$5"  # alphanumerical prefix (no number first) of the names fo
 export ncbiass="$6"
 export ncbitax="$7"
 export customassemb="$8"
-export initfile="$9"
+export hpcremoteptgroot="$9"
+export initfile="$10"
 
 # derive other important environmnet variables
 export ptgscripts="${ptgrepo}/scripts"
@@ -48,7 +49,7 @@ envsourcescript=${ptgdb}/environ_pantagruel_${ptgdbname}.sh
 
 rm -f ${ptgtmp}/sedenvvar.sh
 echo -n "cat ${templateenv}" > ${ptgtmp}/sedenvvar.sh
-for var in ptgdbname ptgroot ptgrepo myemail famprefix customassemb ncbiass ncbitax ; do
+for var in ptgdbname ptgroot ptgrepo myemail famprefix customassemb ncbiass ncbitax hpcremoteptgroot ; do
 echo -n " | sed -e \"s#REPLACE${var}#\${${var}}#\"" >> ${ptgtmp}/sedenvvar.sh
 done
 echo -n " > ${envsourcescript}" >> ${ptgtmp}/sedenvvar.sh

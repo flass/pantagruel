@@ -9,7 +9,9 @@ datepad="                     "
 # OPTIONALLY, values of primary variables below can be manually modified here;
 # once edited, MAKE SURE TO SAVE THE FILE IN ANOTHER LOCATION
 # and use it as init_file argument for command `pantagruel init init_file`
-# NOTE THIS WILL override the value passed through options of `pantagruel [options] init` call.
+# NOTE this will prevent storing the value passed through options of `pantagruel [options] init` call.
+# stored values can however be overridden by specifying the option when calling a specific task
+# (only valid for task-relevant options, e.g. the use of -H option when calling 'genetrees' task will update the $hpcremoteptgrootvariable)
 
 # variables to be automaticly set during the pantagruel run
 # the first lot are derived from arguments passed as options in call `pantagruel [options] init`,
@@ -23,6 +25,8 @@ export famprefix='REPLACEfamprefix'
 export customassemb='REPLACEcustomassemb'
 export ncbiass='REPLACEncbiass'
 export ncbitax='REPLACEncbitax'
+export hpcremoteptgroot='REPLACEhpcremoteptgroot'
+export chaintype='REPLACEchaintype'
 # the following variables should be set automatically as a result of running the pipeline
 # at 00.input_data stage
 export ngenomes='REPLACEngenomes'    # the count of genomes in the dataset
@@ -30,7 +34,6 @@ export ngenomes='REPLACEngenomes'    # the count of genomes in the dataset
 export pseudocoremingenomes='REPLACEpseudocoremingenomes'    # the minimum number of genomes in which a gene family should be present to be included in the pseudo-core genome gene set
 # the rest have fixed values
 # default values are:
-export chaintype='collapsed'
 export cladesupp=70
 export subcladesupp=35
 export criterion='bs'
