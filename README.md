@@ -105,7 +105,22 @@ Options are detailed here:
                        - a 'strain_infos.txt' file
                        (unnanotated contig fasta files); defaults to $rootdir/user_genomes
     -s|--pseudocore  integer number, the minimum number of genomes in which a gene family should be present
-                       to be included in the pseudo-core genome gene set (otherwise has to be set interactively before running task 'core')
+                       to be included in the pseudo-core genome gene set (otherwise has to be set interactively before running task 'core')    -H|--submit_hpc  full address (hostname:/folder/location) of a folder on a remote high-performance computating (HPC) cluster server
+                       This indicate that computationally intensive tasks, including building the gene tree collection
+                       ('genetrees') and reconciling gene tree with species tree ('reconciliations') will be run
+                       on a HPC server (only Torque/PBS job submission system is supported so far).
+                       [support for core genome tree building ('core') remains to be implemented].
+                       Instead of running the computations, scripts for cluster job submission will be generated automatically.
+                       Data and scripts will be transfered to the specified address (the database folder structure
+                       will be duplicated there, but only relevant files will be synced). Note that job submission
+                       scripts will need to be executed manually on the cluster server.
+                       If set at init stage, this option will be maintained for all tasks. However, the remote address
+                       can be updated when calling a specific task; string 'none' cancels the HPC behaviour.
+    -c|--collapse      enable collapsing the rake clades in the gene trees (strongly recomended in datasets of size > 50 genomes).
+    -C|--collapse_par  [only for 'genetrees' task] specify parameters for collapsing the rake clades in the gene trees.
+                       A single-quoted, semicolon-delimited string containing variable definitions must be provided.
+                       Default is equivalent to providing the following string:
+                          'cladesupp=70 ; subcladesupp=35 ; criterion=bs ; withinfun=median'
     -h|--help          print this help message and exit.
 ```  
 Here are some examples of using options:  

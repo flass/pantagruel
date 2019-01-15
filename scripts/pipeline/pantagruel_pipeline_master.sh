@@ -162,18 +162,18 @@ do
       echo "set NCBI Taxonomy source folder to '$ncbitax'"
       shift 2;;
 
-    -H|--submit_hpc
+    -H|--submit_hpc)
       testmandatoryarg "$1" "$2"
       export hpcremoteptgroot="$2"
       echo "set address of database root folder on remote HPC cluster server"
       shift 2;;
 
-    -c|--collapse
+    -c|--collapse)
       export chaintype="collapsed"
       echo "gene tree clade collapsing enabled"
       shift ;;
 
-    -C|--collapse_par
+    -C|--collapse_par)
       testmandatoryarg "$1" "$2"
       export collapseCladeParams="$2"
       echo "set parameters for rake clade collapsing in gene trees"
