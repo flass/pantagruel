@@ -73,6 +73,15 @@ with `TASK` to be picked among the following (equivalent digit/number/keywords a
 
 ```  
 
+Alternatively, several tasks ca be run at once by providing a space-separated string of tasks identifiers:  
+```sh
+pantagruel -d db_name -r root_dir TASK1 TASK2 ...
+```
+Finally, it is possible to run the whole pipeline at once, simply perform the `all` task:
+```sh
+pantagruel -d db_name -r root_dir all
+```  
+
 Options are detailed here:  
 ```
     -d|--dbname       database name
@@ -87,11 +96,11 @@ Options are detailed here:
                        these can be obtained by searching https://www.ncbi.nlm.nih.gov/assembly and downloadingresults with options:
                          Source Database = 'RefSeq' and File type = 'All file types (including assembly-structure directory)'.
                        defaults to $rootdir/NCBI/Assembly
-    -a|--custom_ass  path to folder of user-provided genome containing:
+    -a|--custom_ass  path to folder of user-provided genomes, containing:
                       _mandatory_ 
                        - a 'contigs/' folder where are stored all source genome assembly FASTA files
                            OR
-                       - a 'prokka_annotation//' folder where are stored all files resulting from Prokka annotation
+                       - a 'prokka_annotation/' folder where are stored all files resulting from Prokka annotation
                       _optionally_ 
                        - a 'strain_infos.txt' file
                        (unnanotated contig fasta files); defaults to $rootdir/user_genomes
@@ -104,15 +113,6 @@ Here are some examples of using options:
 pantagruel -d databasename -r /root/folder/for/database -f PANTAGFAM -i f.lassalle@imperial.ac.uk -A /folder/of/public/genome/in/RefSeq/format init
 
 pantagruel -d databasename -r /root/folder/for/database 01
-```  
-
-Alternatively, several tasks ca be run at once yb providing a strin of tasks identifiers:  
-```sh
-pantagruel -d db_name -r root_dir TASK1 TASK2 ...
-```
-Finally, it is possible to run the whole pipeline at once, simply perform the `all` task:
-```sh
-pantagruel -d db_name -r root_dir all
 ```  
 Note that in the later two cases, no task-specific options can be specified trough the command line; instead, you should edit the database's environment file (produced during initiation step) that should be located at `${root_dir}/${db_name}/environ_pantagruel_${db_name}.sh`, with `${db_name}` and `${root_dir}` the arguments of `-d` and `-r` options on the `pantagruel init` call.
 
