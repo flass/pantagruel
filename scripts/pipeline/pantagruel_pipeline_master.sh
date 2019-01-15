@@ -31,7 +31,7 @@ usage (){
   echo "                       - a 'strain_infos.txt' file"
   echo "                       (unnanotated contig fasta files); defaults to \$rootdir/user_genomes"
   echo "    -s|--pseudocore  integer number, the minimum number of genomes in which a gene family should be present"
-  echo "                       to be included in the pseudo-core genome gene set (otherwise has to be set interactively before running task 'core')"
+  echo "                       to be included in the pseudo-core genome gene set (otherwise has to be set interactively when running task 'core')"
   echo "    -h|--help          print this help message and exit."
   echo ""
   echo "TASKs are to be picked among the following (equivalent digit/number/keywords are separated by a '|'):"

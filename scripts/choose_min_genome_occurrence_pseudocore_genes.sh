@@ -19,6 +19,6 @@ mkdir -p ${coregenome}/pseudo-coregenome_sets/
 let "t = ($ngenomes * 3 / 4)" ; let "u = $t - ($t%20)" ; seq $u 20 $ngenomes | cat > ${ptgtmp}/mingenom ; echo "0" >> ${ptgtmp}/mingenom
 Rscript --vanilla --silent ${ptgscripts}/select_pseudocore_genefams.r ${protali}/full_families_genome_counts-noORFans.mat ${database}/genome_codes.tab ${coregenome}/pseudo-coregenome_sets < ${ptgtmp}/mingenom
 
-mv ${ptgdb}/environ_pantagruel_${ptgdbname}.sh ${ptgdb}/environ_pantagruel_${ptgdbname}.sh0 && \
- sed -e "s#'REPLACEpseudocoremingenomes'#$pseudocoremingenomes#" ${ptgdb}/environ_pantagruel_${ptgdbname}.sh0 > ${ptgdb}/environ_pantagruel_${ptgdbname}.sh && \
- rm ${ptgdb}/environ_pantagruel_${ptgdbname}.sh0
+mv ${envsourcescript} ${envsourcescript}0 && \
+ sed -e "s#'REPLACEpseudocoremingenomes'#$pseudocoremingenomes#" ${envsourcescript}0 > ${envsourcescript} && \
+ rm ${envsourcescript}0

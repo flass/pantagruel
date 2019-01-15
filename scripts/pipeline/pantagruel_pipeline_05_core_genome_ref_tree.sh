@@ -30,11 +30,6 @@ mkdir -p ${coregenome}/
 if [[ -z ${pseudocoremingenomes} || "${pseudocoremingenomes}"=='REPLACEpseudocoremingenomes' ]] ; then
   echo "Error: 'pseudocoremingenomes' variable is not set; please run $ptgscripts/choose_min_genome_occurrence_pseudocore_genes.sh (interactive) to choose a sensible value."
   exit 1
-else
-  mv ${envsourcescript} ${envsourcescript}0 && \
-   sed -e "s#'REPLACEpseudocoremingenomes'#$pseudocoremingenomes#" ${envsourcescript}0 > ${envsourcescript} && \
-   rm ${envsourcescript}0
-  echo "pseudocoremingenomes=$pseudocoremingenomes is recorded in init file '${envsourcescript}'"
 fi 
 ## generate core genome alignment path list
 
