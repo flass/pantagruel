@@ -46,7 +46,7 @@ export colmethod='replaceCCinGasinS-collapsePOPinSnotinG'
 export mainresulttag='rootedTree'
 export rootingmethod='treebalance'
 # only relevant if user-defined genomes are provided
-export assembler="somemachine"
+export assembler="somesoftware"
 export seqcentre="somewhere"
 
 ### BEWARE!!! value of variables below is unsafe to modify

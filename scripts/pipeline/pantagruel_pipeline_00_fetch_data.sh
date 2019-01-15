@@ -127,10 +127,15 @@ echo "done."
 date
 done &> ${ptgtmp}/${ptgdbname}_customassembly_annot_prokka.log &
 
+fi
+
+## if the folder of custom/user-provided set of prokka-annotated genomes is not empty
+if [[ "$(ls -A "${annot}/" 2>/dev/null)" ]] ; then
+
 # create assembly directory and link/create relevant files
 export gblikeass=${customassemb}/genbank-format_assemblies
 mkdir -p $gblikeass/
-for gproject in `ls $annot` ; do
+for gproject in `ls ${annot}` ; do
 gff=$(ls ${annot}/${gproject}/ | grep 'ptg.gff')
 assemb=${gproject}.1_${gff[0]%*.ptg.gff}
 assembpathdir=${gblikeass}/${assemb}
