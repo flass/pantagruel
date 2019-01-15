@@ -79,9 +79,9 @@ def castMultiPal2Nal(argtup):
 	
 	given a tuple containg the gene family name, folders of protein alignements and aligned gene sequence, respectively;
 	returns pal2nal.pl verbose log (text string)"""
-        try:
+		try:
             # with multiprocessing
-            if len(argtup)==6:
+			if len(argtup)==6:
 				cdsfam, dirfullprotout, dirfullcdsseqout, dirfullcdsaliout, fpal2nallog, queue = argtup
 			elif len(argtup)==5:
 				cdsfam, dirfullprotout, dirfullcdsseqout, dirfullcdsaliout, fpal2nallog = argtup
@@ -97,20 +97,13 @@ def castMultiPal2Nal(argtup):
 			p2npipe = subprocess.Popen(p2ncmd, stdout=foutalnc, stderr=subprocess.PIPE)
 			foutalnc.close()
 			if queue: queue.put(cdsfam)
-	        return p2npipe.stderr.read()
-        except Exception, e:
-                print "caught exception:"
-                traceback.print_exc()
-                sys.stdout.flush()
-                raise e
+			return p2npipe.stderr.read()
+		except Exception, e:
+				print "caught exception:"
+				traceback.print_exc()
+				sys.stdout.flush()
+				raise e
 	#~ fpal2nallog.write(p2npipe.stderr.read())
-	
-#~ def castMultiBMGE(argtup):
-	#~ """multi-threaded call to BMGE alignment trimming/filtering program
-	
-	#~ Requires Java >1.6.
-	#~ """
-	#~ pass
 
 def main(dirnrprotaln, nfsingletonfasta, nfprotinfotab, nfreplinfotab, dirassemb, dirout, fam_prefix, dirlogs, nfidentseq=None, nbcores=1):
 

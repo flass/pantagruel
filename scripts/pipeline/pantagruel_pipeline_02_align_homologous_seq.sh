@@ -39,7 +39,7 @@ run_clustalo_sequential () {
   date +"%d/%m/%Y %H:%M:%S" &> ${ptglogs}/clustalo/${bn}.clustalo.log
 }
 export -f run_clustalo_sequential
-parrallel --joblog ${ptglogs}/run_clustalo_sequential.log run_clustalo_sequential :::: ${tasklist}
+parallel --joblog ${ptglogs}/run_clustalo_sequential.log run_clustalo_sequential :::: ${tasklist}
 
 ## reconstruct full (redundant) protein alignments
 # make list of CDS sets
