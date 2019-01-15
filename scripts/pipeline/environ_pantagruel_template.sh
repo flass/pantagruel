@@ -6,8 +6,15 @@ datepad="                     "
 
 ## primary variables
 
-# variables to be automaticly replaced by user-defined environment variables
-# at init stage
+# OPTIONALLY, values of primary variables below can be manually modified here;
+# once edited, MAKE SURE TO SAVE THE FILE IN ANOTHER LOCATION
+# and use it as init_file argument for command `pantagruel init init_file`
+# NOTE THIS WILL override the value passed through options of `pantagruel [options] init` call.
+
+# variables to be automaticly set during the pantagruel run
+# the first lot are derived from arguments passed as options in call `pantagruel [options] init`,
+# for instance, options `-d TheDatabaseName` and `-r /where/it/is/built`
+# will lead to setting variables ptgdbname='TheDatabaseName' and ptgroot='/where/it/is/built', respectively.
 export ptgroot='REPLACEptgroot'
 export ptgdbname='REPLACEptgdbname'
 export ptgrepo='REPLACEptgrepo'
@@ -16,14 +23,12 @@ export famprefix='REPLACEfamprefix'
 export customassemb='REPLACEcustomassemb'
 export ncbiass='REPLACEncbiass'
 export ncbitax='REPLACEncbitax'
+# the following variables should be set automatically as a result of running the pipeline
 # at 00.input_data stage
-export ngenomes='REPLACEngenomes'
-# at 04.core_genome stage
-export pseudocoremingenomes='REPLACEpseudocoremingenomes'
-
-# OPTIONALLY, values of parameters below can be manually modified here;
-# once edited, MAKE SURE TO SAVE THE FILE IN ANOTHER LOCATION
-# and use it as init_file argument for command `pantagruel init init_file`
+export ngenomes='REPLACEngenomes'    # the count of genomes in the dataset
+# at 05.core_genome stage
+export pseudocoremingenomes='REPLACEpseudocoremingenomes'    # the minimum number of genomes in which a gene family should be present to be included in the pseudo-core genome gene set
+# the rest have fixed values
 # default values are:
 export chaintype='collapsed'
 export cladesupp=70
@@ -44,7 +49,7 @@ export rootingmethod='treebalance'
 export assembler="somemachine"
 export seqcentre="somewhere"
 
-### BEWARE!!! definition of variables below is unsafe to modify
+### BEWARE!!! value of variables below is unsafe to modify
 
 ## secondary variables
 # lib/module path

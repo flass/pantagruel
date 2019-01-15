@@ -14,10 +14,11 @@ export ptgdbname="$1"  # database anme (will notably be the name of the top fold
 export ptgroot="$2"    # source folder where to create the database
 export ptgdb=${ptgroot}/${ptgdbname}
 envsourcescript=${ptgdb}/environ_pantagruel_${ptgdbname}.sh
-source $envsourcescript
+source ${envsourcescript}
 
-pseudocoremingenomes=$2
-
+if [ -z $3 ]
+  pseudocoremingenomes=$3
+fi
 ###########################################
 ## 05. Core Genome Phylogeny (Species tree)
 ###########################################
@@ -29,8 +30,12 @@ mkdir -p ${coregenome}/
 if [[ -z ${pseudocoremingenomes} || "${pseudocoremingenomes}"=='REPLACEpseudocoremingenomes' ]] ; then
   echo "Error: 'pseudocoremingenomes' variable is not set; please run $ptgscripts/choose_min_genome_occurrence_pseudocore_genes.sh (interactive) to choose a sensible value."
   exit 1
-fi
-
+else
+  mv ${envsourcescript} ${envsourcescript}0 && \
+   sed -e "s#'REPLACEpseudocoremingenomes'#$pseudocoremingenomes#" ${envsourcescript}0 > ${envsourcescript} && \
+   rm ${envsourcescript}0
+  echo "pseudocoremingenomes=$pseudocoremingenomes is recorded in init file '${envsourcescript}'"
+fi 
 ## generate core genome alignment path list
 
 rm -f ${coregenome}/pseudo-coregenome_sets/${pseudocore}_prot_aln_list

@@ -171,11 +171,12 @@ python ${ptgscripts}/extract_metadata_from_gbff.py --assembly_folder_list=${geno
 
 export ngenomes=$((`wc -l ${genomeinfo}/assembly_metadata/metadata.tab | cut -d' ' -f1` - 1))
 
-mv ${ptgdb}/environ_pantagruel_${ptgdbname}.sh ${ptgdb}/environ_pantagruel_${ptgdbname}.sh0 && \
- sed -e "s#'REPLACEngenomes'#$ngenomes#" ${ptgdb}/environ_pantagruel_${ptgdbname}.sh0 > ${ptgdb}/environ_pantagruel_${ptgdbname}.sh && \
- rm ${ptgdb}/environ_pantagruel_${ptgdbname}.sh0
+mv ${envsourcescript} ${envsourcescript}0 && \
+ sed -e "s#'REPLACEngenomes'#$ngenomes#" ${envsourcescript}0 > ${envsourcescript} && \
+ rm ${envsourcescript}0
+echo "ngenomes=$ngenomes is recorded in init file '${envsourcescript}'"
 
-echo "work with a database of $ngenomes genomes (excluding lab strains)"
+echo "Will work with a database of $ngenomes genomes"
 
 ## collect data from assemblies, including matching of (nr) protein to CDS sequence ids
 mkdir -p ${genomeinfo}/

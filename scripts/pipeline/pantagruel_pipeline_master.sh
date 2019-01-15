@@ -24,6 +24,8 @@ usage (){
   echo "                       - [mandatory]  a 'contigs/' folder where are stored all source genome assembly flat files"
   echo "                       - [optionally] a 'strain_infos.txt' file"
   echo "                       (unnanotated contig fasta files); defaults to \$rootdir/user_genomes"
+  echo "    -s|--pseudocore  integer number, the minimum number of genomes in which a gene family should be present"
+  echo "                       to be included in the pseudo-core genome gene set (otherwise has to be set interactively before running task 'core')"
   echo "    -h|--help          print this help message and exit."
   echo ""
   echo "TASKs are to be picked among the following (equivalent digit/number/keywords are separated by a '|'):"
@@ -64,7 +66,7 @@ checkexec (){
 }
 
 
-ARGS=`getopt --options "d:r:p:i:f:a:T:A:h" --longoptions "dbname:,rootdir:,ptgrepo:,iam:,famprefix:,refseq_ass:,custom_ass:,taxonomy:,init:,help" --name "pantagruel" -- "$@"`
+ARGS=`getopt --options "d:r:p:i:f:a:T:A:s:h" --longoptions "dbname:,rootdir:,ptgrepo:,iam:,famprefix:,refseq_ass:,custom_ass:,taxonomy:,pseudocore:,help" --name "pantagruel" -- "$@"`
 
 #Bad arguments
 if [ $? -ne 0 ];
@@ -122,6 +124,12 @@ do
       shift 2;;
 
     -T|--taxonomy)
+      testmandatoryarg "$1" "$2"
+      export pseudocoremingenomes="$2"
+      echo "set min number of genomes for inclusion in pseudo-core gene set"
+      shift 2;;
+
+    -s|--pseudocore)
       testmandatoryarg "$1" "$2"
       export ncbitax="$2"
       echo "set NCBI Taxonomy source folder to '$ncbitax'"
@@ -253,7 +261,7 @@ for task in "$tasks" ; do
     checkexec  ;;
    3)
     echo "Pantagrel pipeline step $task: initiate SQL database and load genomic object relationships."
-    ${ptgscripts}/pipeline/pantagruel_pipeline_03_create_sqlite_db.sh ${ptgdbname} ${ptgroot} ${ptgrepo}
+    ${ptgscripts}/pipeline/pantagruel_pipeline_03_create_sqlite_db.sh ${ptgdbname} ${ptgroot}
     checkexec  ;;
    4)
     echo "Pantagrel pipeline step $task: use InterProScan to functionally annotate proteins in the database."
@@ -261,7 +269,13 @@ for task in "$tasks" ; do
     checkexec  ;;
    5)
     echo "Pantagrel pipeline step $task: select core-genome markers and compute reference tree."
-    ${ptgscripts}/pipeline/pantagruel_pipeline_05_core_genome_ref_tree.sh ${ptgdbname} ${ptgroot}
+    if [[ -z ${pseudocoremingenomes} || "${pseudocoremingenomes}"=='REPLACEpseudocoremingenomes' ]] ; then
+      echo "'pseudocoremingenomes' variable is not set; will run INTERACTIVELY $ptgscripts/choose_min_genome_occurrence_pseudocore_genes.sh to choose a sensible value."
+      echo ""
+      ${ptgscripts}/choose_min_genome_occurrence_pseudocore_genes.sh
+      echo ""
+    fi
+    ${ptgscripts}/pipeline/pantagruel_pipeline_05_core_genome_ref_tree.sh ${ptgdbname} ${ptgroot} ${pseudocoremingenomes}
     checkexec  ;;
    5)
     echo "Pantagrel pipeline step $task: compute gene trees."
