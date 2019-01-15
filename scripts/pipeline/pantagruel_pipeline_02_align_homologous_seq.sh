@@ -41,6 +41,21 @@ run_clustalo_sequential () {
 export -f run_clustalo_sequential
 parallel --joblog ${ptglogs}/run_clustalo_sequential.log run_clustalo_sequential :::: ${tasklist}
 
+# check that alignments are not empty
+${ptgscripts}/lsfullpath "${nrprotali}/*" > ${nrprotali}_list
+rm -f ${nrprotali}_list_empty
+for ali in `cat ${nrprotali}_list` ; do
+  if [ ! -s $ali ] ; then
+    echo "'$ali' file is empty"
+    ls $ali >> ${nrprotali}_list_empty
+  fi
+done
+if [ -e ${nrprotali}_list_empty ] ; then
+  echo "Error: some alignment failed:"
+  cat ${nrprotali}_list_empty
+  exit 1
+fi
+
 ## reconstruct full (redundant) protein alignments
 # make list of CDS sets
 for cg in `cat ${genomeinfo}/assemblies_list` ; do ls $cg/*_cds_from_genomic.fna.gz >> ${genomeinfo}/all_cds_fasta_list ; done

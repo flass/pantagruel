@@ -273,7 +273,7 @@ def main(dirnrprotaln, nfsingletonfasta, nfprotinfotab, nfreplinfotab, dirassemb
 				for prottask in sorttasksbysource(dprotfiletasks):
 					foutfullprot.writelines(dprotfiletasks[prottask])				
 		nnrprot += 1
-		if nnrprot%1000==0: print "%d / %d"%(nnrprot, nbprotaln))			
+		if nnrprot%1000==0: print "%d / %d"%(nnrprot, nbprotaln)	
 
 	lassemb = []
 	print "# write gene family lists and genome gene content matrices"
