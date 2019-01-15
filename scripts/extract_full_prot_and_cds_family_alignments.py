@@ -79,30 +79,30 @@ def castMultiPal2Nal(argtup):
 	
 	given a tuple containg the gene family name, folders of protein alignements and aligned gene sequence, respectively;
 	returns pal2nal.pl verbose log (text string)"""
-		try:
-            # with multiprocessing
-			if len(argtup)==6:
-				cdsfam, dirfullprotout, dirfullcdsseqout, dirfullcdsaliout, fpal2nallog, queue = argtup
-			elif len(argtup)==5:
-				cdsfam, dirfullprotout, dirfullcdsseqout, dirfullcdsaliout, fpal2nallog = argtup
-				queue = None
-			else:
-				raise ValueError,  "incorrect number of arguments: the argument tuple should contain (cdsfam, dirfullprotout, dirfullcdsseqout, dirfullcdsaliout, fpal2nallog [, queue])"
-			nfprotali = "%s/%s.aln"%(dirfullprotout, cdsfam)
-			nfcdsseq = "%s/%s.fasta"%(dirfullcdsseqout, cdsfam)
-			p2ncmd = ["pal2nal.pl", "-output", "fasta", "-codontable", "11", nfprotali, nfcdsseq]
-			#~ print ' '.join(p2ncmd)
-			nfoutalnc = "%s/%s.aln"%(dirfullcdsaliout, cdsfam)
-			foutalnc = open(nfoutalnc, 'w')
-			p2npipe = subprocess.Popen(p2ncmd, stdout=foutalnc, stderr=subprocess.PIPE)
-			foutalnc.close()
-			if queue: queue.put(cdsfam)
-			return p2npipe.stderr.read()
-		except Exception, e:
-				print "caught exception:"
-				traceback.print_exc()
-				sys.stdout.flush()
-				raise e
+	try:
+		# with multiprocessing
+		if len(argtup)==6:
+			cdsfam, dirfullprotout, dirfullcdsseqout, dirfullcdsaliout, fpal2nallog, queue = argtup
+		elif len(argtup)==5:
+			cdsfam, dirfullprotout, dirfullcdsseqout, dirfullcdsaliout, fpal2nallog = argtup
+			queue = None
+		else:
+			raise ValueError,  "incorrect number of arguments: the argument tuple should contain (cdsfam, dirfullprotout, dirfullcdsseqout, dirfullcdsaliout, fpal2nallog [, queue])"
+		nfprotali = "%s/%s.aln"%(dirfullprotout, cdsfam)
+		nfcdsseq = "%s/%s.fasta"%(dirfullcdsseqout, cdsfam)
+		p2ncmd = ["pal2nal.pl", "-output", "fasta", "-codontable", "11", nfprotali, nfcdsseq]
+		#~ print ' '.join(p2ncmd)
+		nfoutalnc = "%s/%s.aln"%(dirfullcdsaliout, cdsfam)
+		foutalnc = open(nfoutalnc, 'w')
+		p2npipe = subprocess.Popen(p2ncmd, stdout=foutalnc, stderr=subprocess.PIPE)
+		foutalnc.close()
+		if queue: queue.put(cdsfam)
+		return p2npipe.stderr.read()
+	except Exception, e:
+			print "caught exception:"
+			traceback.print_exc()
+			sys.stdout.flush()
+			raise e
 	#~ fpal2nallog.write(p2npipe.stderr.read())
 
 def main(dirnrprotaln, nfsingletonfasta, nfprotinfotab, nfreplinfotab, dirassemb, dirout, fam_prefix, dirlogs, nfidentseq=None, nbcores=1):
