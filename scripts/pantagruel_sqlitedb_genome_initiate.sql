@@ -51,7 +51,7 @@ CREATE TABLE proteins (
         protein_serial_id SERIAL PRIMARY KEY,
         nr_protein_id VARCHAR(20),
         product TEXT,
-        protein_family_id VARCHAR(20),
+        protein_family_id VARCHAR(20)
 );
 
 CREATE TABLE nr_protein_families (
