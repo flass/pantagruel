@@ -95,7 +95,6 @@ selectMinGenomes = function(countmatrix, dirout, pseudocoremingenomes=-1, ngenom
 #~ nffamgenomemat = file.path(protali, 'full_families_genome_counts-noORFans.mat')
 
 cargs = commandArgs(trailingOnly=TRUE)
-print(cargs)
 
 nffamgenomemat = cargs[1]
 nflasscode = cargs[2]
@@ -150,4 +149,4 @@ cat(sprintf("Saved data in file: '%s'.\n", nfdataout))
 pseudocoremingenomes = names(pseudocore)[length(pseudocore)]
 cat(sprintf("Final choice of %d pseudo-core unicopy gene families (present in at least %d genomes).\n", length(pseudocore[[pseudocoremingenomes]]), as.numeric(pseudocoremingenomes)))
 
-quit(status=pseudocoremingenomes, save='no')
+quit(status=as.numeric(pseudocoremingenomes), save='no')
