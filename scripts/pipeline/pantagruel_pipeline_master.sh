@@ -279,17 +279,17 @@ while [[ ! -z "${@}" ]] ; do
  3|03|sqldb|create_sqlite_db    )
           tasks="${tasks} 3" ;;
  4|04|functional|functional_annotations    )
-          tasks="${tasks} 3" ;;
- 5|05|core|core_genome_ref_tree)
           tasks="${tasks} 4" ;;
- 6|06|genetrees|gene_trees)
+ 5|05|core|core_genome_ref_tree)
           tasks="${tasks} 5" ;;
- 7|07|reconciliations)
+ 6|06|genetrees|gene_trees)
           tasks="${tasks} 6" ;;
+ 7|07|reconciliations)
+          tasks="${tasks} 7" ;;
  8|08|specific|clade_specific_genes)
           tasks="${tasks} 8" ;;
  9|09|coevolution)
-          tasks="${tasks} 7" ;;
+          tasks="${tasks} 9" ;;
   esac
   shift
 done
@@ -326,7 +326,7 @@ for task in "$tasks" ; do
     checkexec  ;;
    4)
     echo "Pantagrel pipeline step $task: use InterProScan to functionally annotate proteins in the database."
-    ${ptgscripts}/pantagruel_pipeline_04_functional_annotation.sh ${ptgdbname} ${ptgroot}
+    ${ptgscripts}/pipeline/pantagruel_pipeline_04_functional_annotation.sh ${ptgdbname} ${ptgroot}
     checkexec  ;;
    5)
     echo "Pantagrel pipeline step $task: select core-genome markers and compute reference tree."
