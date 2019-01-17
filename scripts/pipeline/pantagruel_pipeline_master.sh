@@ -153,7 +153,7 @@ do
     -s|--pseudocore)
       testmandatoryarg "$1" "$2"
       export pseudocoremingenomes="$2"
-      echo "set min number of genomes for inclusion in pseudo-core gene set"
+      echo "set min number of genomes for inclusion in pseudo-core gene set as $pseudocoremingenomes"
       shift 2;;
 
     -T|--taxonomy)
@@ -304,9 +304,9 @@ for task in "$tasks" ; do
     ${ptgscripts}/pipeline/pantagruel_pipeline_init.sh ${ptgdbname} ${ptgroot} ${ptgrepo} ${myemail} ${famprefix} ${ncbiass} ${ncbitax} ${customassemb} ${hpcremoteptgroot} ${initfile}
     checkexec
   else
-   export ptgdb=${ptgroot}/${ptgdbname}
-   envsourcescript=${ptgdb}/environ_pantagruel_${ptgdbname}.sh
-   source $envsourcescript
+   #~ export ptgdb=${ptgroot}/${ptgdbname}
+   #~ envsourcescript=${ptgdb}/environ_pantagruel_${ptgdbname}.sh
+   #~ source $envsourcescript
    case "$task" in
    0)
     echo "Pantagrel pipeline step $task: fetch public genome data from NCBI sequence databases and annotate private genomes."
