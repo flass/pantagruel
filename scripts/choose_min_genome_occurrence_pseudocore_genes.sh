@@ -15,20 +15,27 @@ export ptgroot="$2"    # source folder where to create the database
 envsourcescript=${ptgdb}/environ_pantagruel_${ptgdbname}.sh
 source ${envsourcescript}
 
-unset pseudocoremingenomes
+if [ ! -z "$3" ] ; then
+  pseudocoremingenomes=$3
+fi
 mkdir -p ${coregenome}/pseudo-coregenome_sets/
 # have glimpse of (almost-)universal unicopy gene family distribution and select those intended for core-genome tree given pseudocoremingenomes threshold
-let "t = ($ngenomes * 9 / 10)" ; let "u = $t - ($t%20)" ; seq $u 10 $ngenomes | sort -r > ${ptgtmp}/mingenom ; echo "0" >> ${ptgtmp}/mingenom
-#~ # override interactivity
-#~ Rscript --vanilla --silent ${ptgscripts}/select_pseudocore_genefams.r \
- #~ ${protali}/full_families_genome_counts-noORFans.mat ${database}/genome_codes.tab ${coregenome}/pseudo-coregenome_sets < ${ptgtmp}/mingenom
-# interactive call
-Rscript --vanilla --silent ${ptgscripts}/select_pseudocore_genefams.r \
- ${protali}/full_families_genome_counts-noORFans.mat ${database}/genome_codes.tab ${coregenome}/pseudo-coregenome_sets 2> $ptgtmp/set_pseudocoremingenomes
+#~ let "t = ($ngenomes * 9 / 10)" ; let "u = $t - ($t%20)" ; seq $u 10 $ngenomes | sort -r > ${ptgtmp}/mingenom ; echo "0" >> ${ptgtmp}/mingenom
 
-eval "$(cat $ptgtmp/set_pseudocoremingenomes)"
+if [ ! -z "$pseudocoremingenomes" ] ; then
+  echo $pseudocoremingenomes > ${ptgtmp}/mingenom
+  echo $pseudocoremingenomes >> ${ptgtmp}/mingenom
+  # override interactivity
+  Rscript --vanilla --silent ${ptgscripts}/select_pseudocore_genefams.r \
+   ${protali}/full_families_genome_counts-noORFans.mat ${database}/genome_codes.tab ${coregenome}/pseudo-coregenome_sets < ${ptgtmp}/mingenom
+else
+  # interactive call
+  Rscript --vanilla --silent ${ptgscripts}/select_pseudocore_genefams.r \
+   ${protali}/full_families_genome_counts-noORFans.mat ${database}/genome_codes.tab ${coregenome}/pseudo-coregenome_sets 2> ${ptgtmp}/set_pseudocoremingenomes
+  eval "$(cat $ptgtmp/set_pseudocoremingenomes)"
+fi
 echo "set min number of genomes for inclusion in pseudo-core gene set as $pseudocoremingenomes"
 mv ${envsourcescript} ${envsourcescript}0 && \
  sed -e "s#'REPLACEpseudocoremingenomes'#$pseudocoremingenomes#" ${envsourcescript}0 > ${envsourcescript} && \
  rm ${envsourcescript}0
-echo "pseudocoremingenomes=$pseudocoremingenomes recorded in ${envsourcescript}"
+echo "'export pseudocoremingenomes=$pseudocoremingenomes' recorded in ${envsourcescript}"
