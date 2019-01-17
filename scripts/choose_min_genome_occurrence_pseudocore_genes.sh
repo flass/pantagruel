@@ -24,8 +24,9 @@ let "t = ($ngenomes * 9 / 10)" ; let "u = $t - ($t%20)" ; seq $u 10 $ngenomes | 
  #~ ${protali}/full_families_genome_counts-noORFans.mat ${database}/genome_codes.tab ${coregenome}/pseudo-coregenome_sets < ${ptgtmp}/mingenom
 # interactive call
 Rscript --vanilla --silent ${ptgscripts}/select_pseudocore_genefams.r \
- ${protali}/full_families_genome_counts-noORFans.mat ${database}/genome_codes.tab ${coregenome}/pseudo-coregenome_sets
-pseudocoremingenomes=$?
+ ${protali}/full_families_genome_counts-noORFans.mat ${database}/genome_codes.tab ${coregenome}/pseudo-coregenome_sets 2> $ptgtmp/set_pseudocoremingenomes
+
+$(tail -n 1 $ptgtmp/set_pseudocoremingenomes)
 echo "set min number of genomes for inclusion in pseudo-core gene set as $pseudocoremingenomes"
 mv ${envsourcescript} ${envsourcescript}0 && \
  sed -e "s#'REPLACEpseudocoremingenomes'#$pseudocoremingenomes#" ${envsourcescript}0 > ${envsourcescript} && \
