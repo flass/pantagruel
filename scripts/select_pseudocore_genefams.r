@@ -119,7 +119,11 @@ if (length(cargs) > 5){
 if (length(cargs) > 6){
 	restricttag = cargs[7]
 }else{
-	restricttag = strsplit(basename(nfrestrictlist), split='_genome_codes')[[1]][1]
+	if (!is.null(nfrestrictlist)){
+		restricttag = strsplit(basename(nfrestrictlist), split='_genome_codes')[[1]][1]
+	}else{
+		restricttag = NULL
+	}
 }
 cat("Loading matrix of gene families counts in genomes...\n")
 genocount = data.matrix(read.table(file=nffamgenomemat))
