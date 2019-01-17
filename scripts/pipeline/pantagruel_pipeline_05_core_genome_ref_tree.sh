@@ -16,7 +16,7 @@ export ptgdb=${ptgroot}/${ptgdbname}
 envsourcescript=${ptgdb}/environ_pantagruel_${ptgdbname}.sh
 source ${envsourcescript}
 
-if [ -z $3 ]
+if [ -z $3 ] ; then
   pseudocoremingenomes=$3
 fi
 

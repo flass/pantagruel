@@ -95,6 +95,7 @@ selectMinGenomes = function(countmatrix, dirout, pseudocoremingenomes=-1, ngenom
 #~ nffamgenomemat = file.path(protali, 'full_families_genome_counts-noORFans.mat')
 
 cargs = commandArgs(trailingOnly=TRUE)
+print(cargs)
 
 nffamgenomemat = cargs[1]
 nflasscode = cargs[2]
