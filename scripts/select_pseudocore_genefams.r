@@ -150,4 +150,4 @@ pseudocoremingenomes = names(pseudocore)[length(pseudocore)]
 cat(sprintf("Final choice of %d pseudo-core unicopy gene families (present in at least %d genomes).\n", length(pseudocore[[pseudocoremingenomes]]), as.numeric(pseudocoremingenomes)))
 
 #~ quit(status=as.numeric(pseudocoremingenomes), save='no')
-write(sprintf("pseudocoremingenomes=%d\n", as.numeric(pseudocoremingenomes)), stderr())
+write(sprintf("pseudocoremingenomes=%d", as.numeric(pseudocoremingenomes)), stderr())
