@@ -150,13 +150,13 @@ do
       echo "set NCBI RefSeq(-like) genome assembly source folder to '$ncbiass'"
       shift 2;;
 
-    -T|--taxonomy)
+    -s|--pseudocore)
       testmandatoryarg "$1" "$2"
       export pseudocoremingenomes="$2"
       echo "set min number of genomes for inclusion in pseudo-core gene set"
       shift 2;;
 
-    -s|--pseudocore)
+    -T|--taxonomy)
       testmandatoryarg "$1" "$2"
       export ncbitax="$2"
       echo "set NCBI Taxonomy source folder to '$ncbitax'"

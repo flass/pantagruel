@@ -16,7 +16,7 @@ source ${envsourcescript}
 unset pseudocoremingenomes
 mkdir -p ${coregenome}/pseudo-coregenome_sets/
 # have glimpse of (almost-)universal unicopy gene family distribution and select those intended for core-genome tree given pseudocoremingenomes threshold
-let "t = ($ngenomes * 3 / 4)" ; let "u = $t - ($t%20)" ; seq $u 20 $ngenomes | cat > ${ptgtmp}/mingenom ; echo "0" >> ${ptgtmp}/mingenom
+let "t = ($ngenomes * 9 / 10)" ; let "u = $t - ($t%20)" ; seq $u 10 $ngenomes | sort -r > ${ptgtmp}/mingenom ; echo "0" >> ${ptgtmp}/mingenom
 Rscript --vanilla --silent ${ptgscripts}/select_pseudocore_genefams.r \
  ${protali}/full_families_genome_counts-noORFans.mat ${database}/genome_codes.tab ${coregenome}/pseudo-coregenome_sets < ${ptgtmp}/mingenom
 
