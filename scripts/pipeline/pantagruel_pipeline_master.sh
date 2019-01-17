@@ -330,8 +330,7 @@ for task in "$tasks" ; do
     checkexec  ;;
    5)
     echo "Pantagrel pipeline step $task: select core-genome markers and compute reference tree."
-    echo ${pseudocoremingenomes}
-    if [[ -z ${pseudocoremingenomes} || "${pseudocoremingenomes}"=='REPLACEpseudocoremingenomes' ]] ; then
+    if [[ -z ${pseudocoremingenomes} || "${pseudocoremingenomes}" == 'REPLACEpseudocoremingenomes' ]] ; then
       echo "'pseudocoremingenomes' variable is not set; will run INTERACTIVELY $ptgscripts/choose_min_genome_occurrence_pseudocore_genes.sh to choose a sensible value."
       echo ""
       ${ptgscripts}/choose_min_genome_occurrence_pseudocore_genes.sh
