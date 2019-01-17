@@ -230,6 +230,11 @@ if [ -z "$ncbitax" ] ; then
  echo "Default: set NCBI Taxonomy source folder to '$ncbitax'"
 fi
 
+if [ -z "$pseudocoremingenomes" ] ; then
+ export pseudocoremingenomes=''
+ echo "Default: min number of genomes for inclusion in pseudo-core gene is not set"
+fi
+
 if [ -z "$hpcremoteptgroot" ] ; then
  export hpcremoteptgroot='none'
  echo "Default: all computations will be run locally (instead of on a potential HPC service)"
