@@ -338,7 +338,7 @@ for task in "$tasks" ; do
     if [[ -z ${pseudocoremingenomes} || "${pseudocoremingenomes}" == 'REPLACEpseudocoremingenomes' ]] ; then
       echo "'pseudocoremingenomes' variable is not set; will run INTERACTIVELY $ptgscripts/choose_min_genome_occurrence_pseudocore_genes.sh to choose a sensible value."
       echo ""
-      ${ptgscripts}/choose_min_genome_occurrence_pseudocore_genes.sh
+      ${ptgscripts}/choose_min_genome_occurrence_pseudocore_genes.sh ${ptgdbname} ${ptgroot}
       echo ""
     fi
     ${ptgscripts}/pipeline/pantagruel_pipeline_05_core_genome_ref_tree.sh ${ptgdbname} ${ptgroot} ${pseudocoremingenomes}
