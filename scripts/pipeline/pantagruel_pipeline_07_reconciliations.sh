@@ -66,7 +66,7 @@ export parsedrecs=${alerec}/parsed_recs/${parsedreccol}
 
 mkdir -p ${parsedrecs}
 reclist=$outrecdir/ale_collapsed_${rectype}_uml_rec_list
-${ptgscripts}/lsfullpath.py $outrecdir/ale_collapsed_${rectype}/*ml_rec > $reclist
+${ptgscripts}/lsfullpath.py "${outrecdir}/ale_collapsed_${rectype}/*ml_rec" > $reclist
  
 ## normalise the species tree branch labels across gene families
 ## and look for correlated transfer events across gene families
