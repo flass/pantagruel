@@ -43,7 +43,7 @@ for repo in tree2 pantagruel ; do
   fi
 done
 # basic dependencies, libs and standalone software, R and packages, Python and packages
-deppackages="git cmake gcc g++ linuxbrew-wrapper lftp clustalo raxml libhmsbeagle1v5 mrbayes r-base-core r-recommended r-cran-ape r-cran-phytools r-cran-ade4 r-cran-vegan r-cran-dbi r-cran-rsqlite r-cran-igraph r-cran-getopt python python-scipy python-numpy python-biopython python-igraph cython mpi-default-bin mpi-default-dev mrbayes-mpi docker.io"
+deppackages="git build-essential cmake gcc g++ linuxbrew-wrapper lftp clustalo raxml libhmsbeagle1v5 mrbayes r-base-core r-recommended r-cran-ape r-cran-phytools r-cran-ade4 r-cran-vegan r-cran-dbi r-cran-rsqlite r-cran-igraph r-cran-getopt python python-scipy python-numpy python-biopython python-igraph cython mpi-default-bin mpi-default-dev mrbayes-mpi docker.io"
 sudo apt install $deppackages
 if [ $? != 0 ] ; then
   echo "ERROR: could not install all required Debian packages:"
@@ -63,6 +63,21 @@ echo "library('pvclust')" | R --vanilla &> /dev/null
 checkexec "Could not install R package 'pvclust'"
 
 # install MMSeqs using brew
+# Add Linuxbrew to your ~/.bash_profile
+touch ${USER}/.bash_profile
+if [ -z $(grep PATH ${USER}/.bash_profile | grep linuxbrew) ] ; then
+  echo 'export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"' >> ${USER}/.bash_profile
+fi
+if [ -z $(grep MANPATH ${USER}/.bash_profile | grep linuxbrew) ] ; then
+  echo 'export MANPATH="/home/linuxbrew/.linuxbrew/share/man:$MANPATH"' >> ${USER}/.bash_profile
+fi
+if [ -z $(grep INFOPATH ${USER}/.bash_profile | grep linuxbrew) ] ; then
+  echo 'export INFOPATH="/home/linuxbrew/.linuxbrew/share/info:$INFOPATH"' >> ${USER}/.bash_profile
+fi
+if [ -z $(grep INFOPATH ${USER}/.bash_profile | grep linuxbrew) ] ; then
+# Add Linuxbrew to your PATH
+export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"
+
 brew install https://raw.githubusercontent.com/soedinglab/mmseqs2/master/Formula/mmseqs2.rb --HEAD
 checkexec "Could not install MMSeqs using Brew"
 

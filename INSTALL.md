@@ -17,7 +17,7 @@ Finally, you can run the installation script:
 cd .. # retrun to parent folder
 pantagruel_pipeline/pantagruel/install_dependencies.sh pantagruel_pipeline/
 ```  
-Note that for the step above, you (i.e. your linux user) need to have the sudo rights (be part of the sudo group, check with `grep sudo /etc/group`)  
+Note that for the step above, you (i.e. your linux user) need to have the sudo rights (be part of the sudo group, check with `grep sudo /etc/group`); However, DO NOT execute the installtion script with `sudo` (which would make all software owned by the root user).  
 ________
 
 Otherwise, you can manually install the software following the indications below:
