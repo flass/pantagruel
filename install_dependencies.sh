@@ -85,7 +85,7 @@ if [[ -z "$(export | grep PATH | grep linuxbrew)" ]] ; then
 export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"
 fi
 
-brew install https://raw.githubusercontent.com/soedinglab/mmseqs2/master/Formula/mmseqs2.rb --HEAD
+brew install mmseqs2
 checkexec "Could not install MMSeqs using Brew"
 
 # fetch Pal2Nal script
