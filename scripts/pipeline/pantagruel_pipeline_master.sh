@@ -8,6 +8,9 @@
 #########################################################
 # Copyright: Florent Lassalle (f.lassalle@imperial.ac.uk), 01 October 2018.
 
+locexec=$(readlink -e $0)
+defptgrepo=${locexec%%/scripts/pipeline/*}
+
 usage (){
   echo "Usage: pantagruel -d db_name [-r root_dir] [other options] TASK1 [task-specific options]"
   echo ""
@@ -17,7 +20,7 @@ usage (){
   echo "    -r|--rootdir      root directory where to create the database; defaults to current folder"
   echo ""
   echo "  _facultative options_"
-  echo "    -p|--ptgrepo      location of pantagruel software head folder; defaults to directory where this script is located"
+  echo "    -p|--ptgrepo      location of pantagruel software head folder; defaults to ${defptgrepo}"
   echo ""
   echo "    -i|--iam          database creator identity (e-mail address is preferred)"
   echo ""
@@ -218,7 +221,7 @@ fi
 
 # Default values:
 if [ -z "$ptgrepo" ] ; then
-  export ptgrepo=$(dirname $0)
+  export ptgrepo=$defptgrepo
   echo "Default: set Pantagruel software repository to '$ptgrepo'"
 fi
 if [ -z "$myemail" ] ; then

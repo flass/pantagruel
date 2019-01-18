@@ -90,15 +90,18 @@ Options are detailed here:
     -r|--rootdir      root directory where to create the database; defaults to current folder
 
   _facultative options_
-    -p|--ptgrepo      location of pantagruel software head folder; defaults to directory where this script is located
+    -p|--ptgrepo      location of pantagruel software head folder; defaults to directory where the
+                       'pantagruel' executable is located.
 
     -i|--iam          database creator identity (e-mail address is preferred)
 
-    -f|--famprefix    alphanumerical prefix (no number first) of the names for homologous protein/gene family clusters; defaults to 'PANTAG'
-                       the chosen prefix will be appended with a 'P' for protein families and a 'C' for CDS families.
+    -f|--famprefix    alphanumerical prefix (no number first) of the names for homologous protein/gene family
+                       clusters; defaults to 'PANTAG'. The chosen prefix will be appended with a 'P' for protein
+                       families and a 'C' for CDS families.
 
-    -T|--taxonomy      path to folder of taxonomy database flat files; defaults to $rootdir/NCBI/Taxonomy
-                       if this is not containing the expected file, triggers downloading the daily dump from NCBI Taxonomy at task 00
+    -T|--taxonomy      path to folder of taxonomy database flat files; defaults to $rootdir/NCBI/Taxonomy.
+                       If this is not containing the expected file, triggers downloading the daily dump from 
+                       NCBI Taxonomy at task 00.
 
     -A|--refseq_ass  path to folder of source genome assembly flat files formated like NCBI Assembly RefSeq whole directories;
                        these can be obtained by searching https://www.ncbi.nlm.nih.gov/assembly and downloadingresults with options:
