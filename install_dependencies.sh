@@ -44,7 +44,7 @@ for repo in tree2 pantagruel ; do
 done
 # basic dependencies, libs and standalone software, R and packages, Python and packages
 deppackages="git cmake gcc g++ linuxbrew-wrapper lftp clustalo raxml libhmsbeagle1v5 mrbayes r-base-core r-recommended r-cran-ape r-cran-phytools r-cran-ade4 r-cran-vegan r-cran-dbi r-cran-rsqlite r-cran-igraph r-cran-getopt python python-scipy python-numpy python-biopython python-igraph cython mpi-default-bin mpi-default-dev mrbayes-mpi docker.io"
-apt install $deppackages
+sudo apt install $deppackages
 if [ $? != 0 ] ; then
   echo "ERROR: could not install all required Debian packages:"
   apt list $deppackages
@@ -52,26 +52,15 @@ if [ $? != 0 ] ; then
 fi
 
 # install R packages not supported by Debian
-R --vanilla <<EOF
+sudo R --vanilla <<EOF
 install.packages('pvclust', repos='${CRANmirror}')
 source("https://bioconductor.org/biocLite.R")
 biocLite("topGO")
 EOF
-echo "library('topGO')" | R --vanilla
+echo "library('topGO')" | R --vanilla &> /dev/null
 checkexec "Could not install R package 'topGO'"
-echo "library('pvclust')" | R --vanilla
+echo "library('pvclust')" | R --vanilla &> /dev/null
 checkexec "Could not install R package 'pvclust'"
-
-# set up Docker group (with root-equivalent permissions) and add main user to it
-# !!! makes the system less secure: OK within a dedicated virtual machine but to avoid on a server or desktop (or VM with other use)
-if [ -z $(grep docker /etc/group) ] ; then
- groupadd docker
-fi
-if [ -z $(grep docker /etc/group | grep $USER) ] ; then
- usermod -aG docker $USER
-fi
-newgrp docker
-checkexec "Could not set group 'docker' or let user '$USER' join it"
 
 # install MMSeqs using brew
 brew install https://raw.githubusercontent.com/soedinglab/mmseqs2/master/Formula/mmseqs2.rb --HEAD
@@ -92,6 +81,18 @@ chmod +x ${SOFTWARE}/MAD/mad
 ln -s ${SOFTWARE}/MAD/mad
 checkexec "Could not install MAD"
 
+# set up Docker group (with root-equivalent permissions) and add main user to it
+# !!! makes the system less secure: OK within a dedicated virtual machine but to avoid on a server or desktop (or VM with other use)
+if [ -z $(grep docker /etc/group) ] ; then
+ sudo groupadd docker
+fi
+if [ -z $(grep docker /etc/group | grep $USER) ] ; then
+ sudo usermod -aG docker $USER
+fi
+newgrp docker
+checkexec "Could not set group 'docker' or let user '$USER' join it"
+
+
 # install ALE using Docker --- OK within a virtual machine
 docker pull boussau/alesuite
 checkexec "Could not install ALE using Docker"
@@ -101,7 +102,7 @@ alias ALEml_undated="docker run -v $PWD:$PWD -w $PWD boussau/alesuite ALEml_unda
 echo 'alias ALEobserve="docker run -v $PWD:$PWD -w $PWD boussau/alesuite ALEobserve"' >> ${HOME}/.bashrc
 echo 'alias ALEml="docker run -v $PWD:$PWD -w $PWD boussau/alesuite ALEml"' >> ${HOME}/.bashrc
 echo 'alias ALEml_undated="docker run -v $PWD:$PWD -w $PWD boussau/alesuite ALEml_undated"' >> ${HOME}/.bashrc
-checkexec "Could not store command aliases in .bashrc"
+checkexec "Could not store command aliases in ~/.bashrc"
 
 # add Python modules to PYTHONPATH
 PYTHONPATH=${PYTHONPATH}:${SOFTWARE}/tree2:${SOFTWARE}/pantagruel/python_libs
@@ -132,6 +133,3 @@ tar -pxvzf ${ipsourcefile}
 checkexec "Could not uncompress Interproscan successfully"
 interproscan-${ipversion}/interproscan.sh -i test_proteins.fasta -f tsv
 checkexec "Interproscan test was not successful"
-
-# get the GO term db - not necessary so far
-# wget http://archive.geneontology.org/latest-termdb/go_daily-termdb-data.gz
