@@ -64,9 +64,12 @@ checkexec "Could not install R package 'pvclust'"
 
 # set up Docker group (with root-equivalent permissions) and add main user to it
 # !!! makes the system less secure: OK within a dedicated virtual machine but to avoid on a server or desktop (or VM with other use)
-
-groupadd docker
-usermod -aG docker $USER
+if [ -z $(grep docker /etc/group) ] ; then
+ groupadd docker
+fi
+if [ -z $(grep docker /etc/group | grep $USER) ] ; then
+ usermod -aG docker $USER
+fi
 newgrp docker
 checkexec "Could not set group 'docker' or let user '$USER' join it"
 
