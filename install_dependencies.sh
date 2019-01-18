@@ -83,24 +83,29 @@ fi
 if [[ -z "$(export | grep PATH | grep linuxbrew)" ]] ; then
 # Add Linuxbrew to your PATH
 export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"
+fi
 
 brew install https://raw.githubusercontent.com/soedinglab/mmseqs2/master/Formula/mmseqs2.rb --HEAD
 checkexec "Could not install MMSeqs using Brew"
 
 # fetch Pal2Nal script
-wget http://www.bork.embl.de/pal2nal/distribution/pal2nal.v14.tar.gz
-tar -xzf pal2nal.v14.tar.gz
-chmod +x ${SOFTWARE}/pal2nal.v14/pal2nal.pl
-ln -s ${SOFTWARE}/pal2nal.v14/pal2nal.pl ${BINS}/
-checkexec "Could not install pal2nal.pl"
+if [ ! -x ${SOFTWARE}/pal2nal.v14/pal2nal.pl ] ; then
+  wget http://www.bork.embl.de/pal2nal/distribution/pal2nal.v14.tar.gz
+  tar -xzf ${SOFTWARE}/pal2nal.v14.tar.gz
+  chmod +x ${SOFTWARE}/pal2nal.v14/pal2nal.pl
+  ln -s ${SOFTWARE}/pal2nal.v14/pal2nal.pl ${BINS}/
+  checkexec "Could not install pal2nal.pl"
+fi
 
 # fetch MAD program
-wget https://www.mikrobio.uni-kiel.de/de/ag-dagan/ressourcen/mad2-2.zip
-mkdir -p ${SOFTWARE}/MAD/
-tar -xzf ../mad2-2.zip -d ${SOFTWARE}/MAD/
-chmod +x ${SOFTWARE}/MAD/mad
-ln -s ${SOFTWARE}/MAD/mad
-checkexec "Could not install MAD"
+if [ ! -x ${SOFTWARE}/MAD/mad ] ; then
+  wget https://www.mikrobio.uni-kiel.de/de/ag-dagan/ressourcen/mad2-2.zip
+  mkdir -p ${SOFTWARE}/MAD/
+  tar -xzf ../mad2-2.zip -d ${SOFTWARE}/MAD/
+  chmod +x ${SOFTWARE}/MAD/mad
+  ln -s ${SOFTWARE}/MAD/mad
+  checkexec "Could not install MAD"
+fi
 
 # set up Docker group (with root-equivalent permissions) and add main user to it
 # !!! makes the system less secure: OK within a dedicated virtual machine but to avoid on a server or desktop (or VM with other use)
@@ -120,10 +125,12 @@ checkexec "Could not install ALE using Docker"
 alias ALEobserve="docker run -v $PWD:$PWD -w $PWD boussau/alesuite ALEobserve"
 alias ALEml="docker run -v $PWD:$PWD -w $PWD boussau/alesuite ALEml"
 alias ALEml_undated="docker run -v $PWD:$PWD -w $PWD boussau/alesuite ALEml_undated"
-echo 'alias ALEobserve="docker run -v $PWD:$PWD -w $PWD boussau/alesuite ALEobserve"' >> ${HOME}/.bashrc
-echo 'alias ALEml="docker run -v $PWD:$PWD -w $PWD boussau/alesuite ALEml"' >> ${HOME}/.bashrc
-echo 'alias ALEml_undated="docker run -v $PWD:$PWD -w $PWD boussau/alesuite ALEml_undated"' >> ${HOME}/.bashrc
-checkexec "Could not store command aliases in ~/.bashrc"
+if [[ -z "$(grep 'alias ALEml' ${HOME}/.bashrc)" ]] ; then
+  echo 'alias ALEobserve="docker run -v $PWD:$PWD -w $PWD boussau/alesuite ALEobserve"' >> ${HOME}/.bashrc
+  echo 'alias ALEml="docker run -v $PWD:$PWD -w $PWD boussau/alesuite ALEml"' >> ${HOME}/.bashrc
+  echo 'alias ALEml_undated="docker run -v $PWD:$PWD -w $PWD boussau/alesuite ALEml_undated"' >> ${HOME}/.bashrc
+  checkexec "Could not store command aliases in ~/.bashrc"
+fi
 
 # add Python modules to PYTHONPATH
 PYTHONPATH=${PYTHONPATH}:${SOFTWARE}/tree2:${SOFTWARE}/pantagruel/python_libs
@@ -132,25 +139,31 @@ checkexec "Could not store PYTHONPATH in .bashrc"
 
 # install Interproscan
 ipversion="5.32-71.0"
-ipsourceftprep="ftp://ftp.ebi.ac.uk/pub/software/unix/iprscan/5/${ipversion}/"
-ipsourcefile="interproscan-${ipversion}-64-bit.tar.gz"
-wget ${ipsourceftprep}/${ipsourcefile}
-wget ${ipsourceftprep}/${ipsourcefile}.md5
-dlok=$(md5sum -c ${ipsourcefile}.md5 | grep -o 'OK')
-ip=3
-# allow 3 attempts to downlaod the package, given its large size
-while [[ "$dlok" != 'OK' && $ip -gt 0 ]] ; do 
-  ip=$(( $ip - 1 ))
-  echo "dowload of ${ipsourcefile} failed; will retry ($ip times left)"
-  wget ${ipsourceftprep}/${ipsourcefile}
-  wget ${ipsourceftprep}/${ipsourcefile}.md5
-  dlok=$(md5sum -c ${ipsourcefile}.md5 | grep -o 'OK')done
-done
-if [[ "$dlok" != 'OK' ]] ; then
-  echo "ERROR: Could not dowload ${ipsourcefile}"
-  exit 1
+if [[ ! -x interproscan-${ipversion}/interproscan.sh ]] ; then
+  ipsourceftprep="ftp://ftp.ebi.ac.uk/pub/software/unix/iprscan/5/${ipversion}/"
+  ipsourcefile="interproscan-${ipversion}-64-bit.tar.gz"
+  if [[ ! -e ${SOFTWARE}/${ipsourcefile} ]] ; then
+    wget ${ipsourceftprep}/${ipsourcefile}
+  fi
+  if [[ ! -e ${SOFTWARE}/${ipsourcefile}.md5 ]] ; then
+    wget ${ipsourceftprep}/${ipsourcefile}.md5
+  fi
+  dlok=$(md5sum -c ${ipsourcefile}.md5 | grep -o 'OK')
+  ip=3
+  # allow 3 attempts to downlaod the package, given its large size
+  while [[ "$dlok" != 'OK' && $ip -gt 0 ]] ; do 
+    ip=$(( $ip - 1 ))
+    echo "dowload of ${ipsourcefile} failed; will retry ($ip times left)"
+    wget ${ipsourceftprep}/${ipsourcefile}
+    wget ${ipsourceftprep}/${ipsourcefile}.md5
+    dlok=$(md5sum -c ${ipsourcefile}.md5 | grep -o 'OK')done
+  done
+  if [[ "$dlok" != 'OK' ]] ; then
+    echo "ERROR: Could not dowload ${ipsourcefile}"
+    exit 1
+  fi
+  tar -pxvzf ${SOFTWARE}/${ipsourcefile}
+  checkexec "Could not uncompress Interproscan successfully"
+  ${SOFTWARE}/interproscan-${ipversion}/interproscan.sh -i test_proteins.fasta -f tsv
+  checkexec "Interproscan test was not successful"
 fi
-tar -pxvzf ${ipsourcefile}
-checkexec "Could not uncompress Interproscan successfully"
-interproscan-${ipversion}/interproscan.sh -i test_proteins.fasta -f tsv
-checkexec "Interproscan test was not successful"
