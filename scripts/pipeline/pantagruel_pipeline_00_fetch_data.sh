@@ -95,10 +95,9 @@ if [[ "$(ls -A "${contigs}/" 2>/dev/null)" ]] ; then
   ls ${indata}/assemblies/*/*gbff.gz > ${indata}/assemblies_gbffgz_list
   parallel -a ${indata}/assemblies_gbffgz_list 'gunzip -k'
   # extract protein sequences
-  prokka-genbank_to_fasta_db ${indata}/assemblies/*/*gbff > ${ptgtmp}/${refgenus}.faa >& ${ptgtmp}/prokka-genbank_to_fasta_db.log
+  prokka-genbank_to_fasta_db ${indata}/assemblies/*/*gbff > ${ptgtmp}/${refgenus}.faa >& ${ptglogs}/prokka-genbank_to_fasta_db.log
   # cluster similar sequences
-  cdhit -i ${ptgtmp}/${refgenus}.faa -o ${ptgtmp}/${refgenus}_representative.faa -T 0 -M 0 -G 1 -s 0.8 -c 0.9 &> cdhit.log
-  # 805428 representative proteins
+  cdhit -i ${ptgtmp}/${refgenus}.faa -o ${ptgtmp}/${refgenus}_representative.faa -T 0 -M 0 -G 1 -s 0.8 -c 0.9 &> ${ptglogs}/cdhit.log
   rm -fv ${ptgtmp}/${refgenus}.faa ${ptgtmp}/${refgenus}_representative.faa.clstr
   # replace database name for genus detection by Prokka 
   prokkablastdb=$(dirname $(dirname $(ls -l `which prokka` | awk '{ print $NF }')))/db/genus/
@@ -118,26 +117,33 @@ if [[ "$(ls -A "${contigs}/" 2>/dev/null)" ]] ; then
       echo "# $(dateprompt)"
       echo "### assembly: $gproject; contig files from: ${contigs}/${allcontigs}"
       echo "running Prokka..."
-      $ptgscripts/run_prokka.sh ${gproject} ${customassemb}/contigs/${allcontigs} ${straininfo} ${annot}/${gproject} ${seqcentre} &> ${ptglog}/${ptgdbname}_customassembly_annot_prokka.${gproject}.log
+      ${ptgscripts}/run_prokka.sh ${gproject} ${contigs}/${allcontigs} ${straininfo} ${annot}/${gproject} ${seqcentre} &> ${ptglogs}/${ptgdbname}_customassembly_annot_prokka.${gproject}.log
       echo "done."
       echo "# $(dateprompt)"
     fi
     if [[ $(grep ${gproject} ${straininfo} | cut -f2- | grep -P '[^\t]' | wc -l) -gt 0 ]] ; then
       echo "fix annotation to integrate region information into GFF files"
-      annotoutgff=($(ls ${annot}/${gproject}/*.gff))
-      if [ -z ${annotoutgff[0]} ] ; then
+      annotgff=($(ls ${annot}/${gproject}/*.gff))
+      if [ -z ${annotgff[0]} ] ; then
         echo "Error: missing mandatory GFF file in ${annot}/${gproject}/ folder"
         exit 1
       fi
-      python $ptgscripts/add_region_feature2prokkaGFF.py ${annotoutgff[0]} ${annotoutgff[0]%*.gff}.ptg.gff ${straininfo} ${contigs}/${allcontigs} ${assembler}
+      python ${ptgscripts}/add_region_feature2prokkaGFF.py ${annotgff[0]} ${annotgff[0]%*.gff}.ptg.gff ${straininfo} ${contigs}/${allcontigs} ${assembler}
       echo "fix annotation to integrate taxid information into GBK files"
-      annotoutgbk=($(ls ${annot}/${gproject}/*.gbk))
-      if [ -z ${annotoutgbk[0]} ] ; then
-        echo "Error: missing mandatory GenBank flat file in ${annot}/${gproject}/ folder"
-        echo "see EMBOSS program seqret for conversion from GFF: http://emboss.open-bio.org/rel/rel6/apps/seqret.html"
-        exit 1
+      annotgbk=($(ls ${annot}/${gproject}/*.gbk))
+      annotfaa=($(ls ${annot}/${gproject}/*.faa))
+      annotffn=($(ls ${annot}/${gproject}/*.ffn))
+      if [[ -z "${annotgbk[0]}" || -z "${annotffn[0]}" || -z "${annotfaa[0]}" ]] ; then
+        echo "At least one of these files is missing in ${annot}/${gproject}/ folder: GenBank flat file (gbk), CDS Fasta (ffn) or protein Fasta (faa)."
+        echo "Will (re)generate them from the GFF anotation and genomic Fasta sequence; files already present are kept with an added prefix '.original'"
+        for annotf in ${annotgbk[0]} ${annotffn[0]} ${annotfaa[0]}; do
+          if [[ ! -z "${annotf}" ]] ; then
+            mv ${annotf} ${annotf}.original
+          fi
+        done
+        python ${ptgscripts}/GFFGenomeFasta2GenBankCDSProtFasta.py ${annotgff[0]} ${contigs}/${allcontigs}
       fi
-      python $ptgscripts/add_taxid_feature2prokkaGBK.py ${annotoutgbk[0]} ${annotoutgbk[0]%*.gbk}.ptg.gbk ${straininfo}
+      python ${ptgscripts}/add_taxid_feature2prokkaGBK.py ${annotgbk[0]} ${annotgbk[0]%*.gbk}.ptg.gbk ${straininfo}
       echo "done."
       echo "# $(dateprompt)"
     else
@@ -146,32 +152,33 @@ if [[ "$(ls -A "${contigs}/" 2>/dev/null)" ]] ; then
       exit 1
     fi
   done
-fi
 
-# create assembly directory and link/create relevant files
-export gblikeass=${customassemb}/genbank-format_assemblies
-mkdir -p $gblikeass/
-for gproject in `ls ${annot}` ; do
-gff=$(ls ${annot}/${gproject}/ | grep 'ptg.gff')
-assemb=${gproject}.1_${gff[0]%*.ptg.gff}
-assembpathdir=${gblikeass}/${assemb}
-assembpathrad=${assembpathdir}/${assemb}
-mkdir -p ${assembpathdir}/
-ls ${assembpathdir}/ -d
-gffgz=${assembpathrad}_genomic.gff.gz
-gzip -c ${annot}/${gproject}/$gff > $gffgz
-ls $gffgz
-gbk=$(ls ${annot}/${gproject}/ | grep 'ptg.gbk') ; gbkgz=${assembpathrad}_genomic.gbff.gz
-gzip -c ${annot}/${gproject}/$gbk > $gbkgz
-ls $gbkgz
-faa=$(ls ${annot}/${gproject}/ | grep '.faa') ; faagz=${assembpathrad}_protein.faa.gz
-gzip -c ${annot}/${gproject}/$faa > $faagz
-ffn=$(ls ${annot}/${gproject}/ | grep '.ffn') ; fnagz=${assembpathrad}_cds_from_genomic.fna.gz
-python ${ptgscripts}/format_prokkaCDS.py ${annot}/${gproject}/$ffn $fnagz
-ls $fnagz
+  # create assembly directory and link/create relevant files
+  export gblikeass=${customassemb}/genbank-format_assemblies
+  mkdir -p $gblikeass/
+  for gproject in `ls ${annot}` ; do
+  gff=$(ls ${annot}/${gproject}/ | grep 'ptg.gff')
+  assemb=${gproject}.1_${gff[0]%*.ptg.gff}
+  assembpathdir=${gblikeass}/${assemb}
+  assembpathrad=${assembpathdir}/${assemb}
+  mkdir -p ${assembpathdir}/
+  ls ${assembpathdir}/ -d
+  gffgz=${assembpathrad}_genomic.gff.gz
+  gzip -c ${annot}/${gproject}/$gff > $gffgz
+  ls $gffgz
+  gbk=$(ls ${annot}/${gproject}/ | grep 'ptg.gbk') ; gbkgz=${assembpathrad}_genomic.gbff.gz
+  gzip -c ${annot}/${gproject}/$gbk > $gbkgz
+  ls $gbkgz
+  faa=$(ls ${annot}/${gproject}/ | grep '.faa') ; faagz=${assembpathrad}_protein.faa.gz
+  gzip -c ${annot}/${gproject}/$faa > $faagz
+  ffn=$(ls ${annot}/${gproject}/ | grep '.ffn') ; fnagz=${assembpathrad}_cds_from_genomic.fna.gz
+  python ${ptgscripts}/format_prokkaCDS.py ${annot}/${gproject}/$ffn $fnagz
+  ls $fnagz
 done
 
 ln -s ${gblikeass}/* ${indata}/assemblies/
+fi
+
 fi
 #### end of the block treating custom genome set
 
