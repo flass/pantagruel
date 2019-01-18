@@ -68,8 +68,7 @@ checkexec "Could not install R package 'topGO'"
 echo "library('pvclust')" | R --vanilla &> /dev/null
 checkexec "Could not install R package 'pvclust'"
 
-# install MMSeqs using brew
-# Add Linuxbrew to your ~/.bash_profile
+# Configure Linuxbrew
 touch ${HOME}/.bash_profile
 if [[ -z "$(grep PATH ${HOME}/.bash_profile | grep linuxbrew)" ]] ; then
   echo 'export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"' >> ${HOME}/.bash_profile
@@ -81,14 +80,17 @@ if [[ -z "$(grep INFOPATH ${HOME}/.bash_profile | grep linuxbrew)" ]] ; then
   echo 'export INFOPATH="/home/linuxbrew/.linuxbrew/share/info:$INFOPATH"' >> ${HOME}/.bash_profile
 fi
 if [[ -z "$(export | grep PATH | grep linuxbrew)" ]] ; then
-# Add Linuxbrew to your PATH
-export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"
+  export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"
 fi
 
+# install MMSeqs using brew
 if [[ -z "$(brew search mmseqs2 | grep mmseqs2)" ]] ; then
   brew doctor
   brew install mmseqs2
   checkexec "Could not install MMSeqs using Brew"
+else
+  echo "found mmseqs2 already installed with Brew:"
+  brew search mmseqs2
 fi
 
 # fetch Pal2Nal script
@@ -101,33 +103,39 @@ if [ ! -x ${SOFTWARE}/pal2nal.v14/pal2nal.pl ] ; then
 fi
 
 # fetch MAD program
-if [ ! -x ${SOFTWARE}/MAD/mad ] ; then
+if [ ! -x ${SOFTWARE}/mad/mad ] ; then
   wget https://www.mikrobio.uni-kiel.de/de/ag-dagan/ressourcen/mad2-2.zip
-  mkdir -p ${SOFTWARE}/MAD/
-  tar -xzf ../mad2-2.zip -d ${SOFTWARE}/MAD/
-  chmod +x ${SOFTWARE}/MAD/mad
-  ln -s ${SOFTWARE}/MAD/mad
+  unzip ${SOFTWARE}/mad2-2.zip
+  chmod +x ${SOFTWARE}/mad/mad
+  ln -s ${SOFTWARE}/mad/mad ${BINS}/
   checkexec "Could not install MAD"
 fi
 
 # set up Docker group (with root-equivalent permissions) and add main user to it
 # !!! makes the system less secure: OK within a dedicated virtual machine but to avoid on a server or desktop (or VM with other use)
-if [ -z $(grep docker /etc/group) ] ; then
- sudo groupadd docker
+if [[ -z "$(grep docker /etc/group)" ]] ; then
+  sudo groupadd docker
 fi
-if [ -z $(grep docker /etc/group | grep $USER) ] ; then
- sudo usermod -aG docker $USER
+if [[ -z "$(grep docker /etc/group | grep ${USER})" ]] ; then
+  sudo usermod -aG docker $USER
+  newgrp docker
 fi
-newgrp docker
 checkexec "Could not set group 'docker' or let user '$USER' join it"
 
 
 # install ALE using Docker --- OK within a virtual machine
-docker pull boussau/alesuite
-checkexec "Could not install ALE using Docker"
-alias ALEobserve="docker run -v $PWD:$PWD -w $PWD boussau/alesuite ALEobserve"
-alias ALEml="docker run -v $PWD:$PWD -w $PWD boussau/alesuite ALEml"
-alias ALEml_undated="docker run -v $PWD:$PWD -w $PWD boussau/alesuite ALEml_undated"
+if [[ -z "$(sudo docker images | grep boussau/alesuite)" ]] ; then
+  sudo docker pull boussau/alesuite
+  checkexec "Could not install ALE suite using Docker"
+else
+  echo "found ALE suite already installed with Docker:"
+  sudo docker images | grep boussau/alesuite
+fi
+if [[ -z "$(which ALEml)" ]] ; then
+  alias ALEobserve="docker run -v $PWD:$PWD -w $PWD boussau/alesuite ALEobserve"
+  alias ALEml="docker run -v $PWD:$PWD -w $PWD boussau/alesuite ALEml"
+  alias ALEml_undated="docker run -v $PWD:$PWD -w $PWD boussau/alesuite ALEml_undated"
+fi
 if [[ -z "$(grep 'alias ALEml' ${HOME}/.bashrc)" ]] ; then
   echo 'alias ALEobserve="docker run -v $PWD:$PWD -w $PWD boussau/alesuite ALEobserve"' >> ${HOME}/.bashrc
   echo 'alias ALEml="docker run -v $PWD:$PWD -w $PWD boussau/alesuite ALEml"' >> ${HOME}/.bashrc
@@ -136,9 +144,13 @@ if [[ -z "$(grep 'alias ALEml' ${HOME}/.bashrc)" ]] ; then
 fi
 
 # add Python modules to PYTHONPATH
-PYTHONPATH=${PYTHONPATH}:${SOFTWARE}/tree2:${SOFTWARE}/pantagruel/python_libs
-echo 'PYTHONPATH=${PYTHONPATH}:${SOFTWARE}/tree2:${SOFTWARE}/pantagruel/python_libs' >> ${HOME}/.bashrc
-checkexec "Could not store PYTHONPATH in .bashrc"
+if [[ -z "$(grep PYTHONPATH ${HOME}/.bashrc | grep tree2 )" || -z "$(grep PYTHONPATH ${HOME}/.bashrc | grep pantagruel/python_libs )" ]] ; then
+  echo 'export PYTHONPATH=${PYTHONPATH}:${SOFTWARE}/tree2:${SOFTWARE}/pantagruel/python_libs' >> ${HOME}/.bashrc
+  checkexec "Could not store PYTHONPATH in .bashrc"
+fi
+if [[ -z "$(export | grep PYTHONPATH | grep tree2 )" || -z "$(export | grep PYTHONPATH | grep pantagruel/python_libs )" ]] ; then
+  export PYTHONPATH=${PYTHONPATH}:${SOFTWARE}/tree2:${SOFTWARE}/pantagruel/python_libs
+fi
 
 # install Interproscan
 ipversion="5.32-71.0"
