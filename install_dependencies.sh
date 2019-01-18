@@ -112,14 +112,14 @@ wget ${ipsourceftprep}/${ipsourcefile}.md5
 dlok=$(md5sum -c ${ipsourcefile}.md5 | grep -o 'OK')
 ip=3
 # allow 3 attempts to downlaod the package, given its large size
-while [[ $dlok != 'OK' -a $ip -gt 0 ]] ; do 
+while [[ "$dlok" != 'OK' && $ip -gt 0 ]] ; do 
   ip=$(( $ip - 1 ))
   echo "dowload of ${ipsourcefile} failed; will retry ($ip times left)"
   wget ${ipsourceftprep}/${ipsourcefile}
   wget ${ipsourceftprep}/${ipsourcefile}.md5
   dlok=$(md5sum -c ${ipsourcefile}.md5 | grep -o 'OK')done
 done
-if [[ $dlok != 'OK' ]] ; then
+if [[ "$dlok" != 'OK' ]] ; then
   echo "ERROR: Could not dowload ${ipsourcefile}"
   exit 1
 fi
