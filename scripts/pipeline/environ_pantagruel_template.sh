@@ -74,7 +74,8 @@ export orthogenes=${ptgdb}/08.orthologs
 export comparerecs=${entdb}/09.compare_scenarios
 
 # sub folders
-export annot=${customassemb}/prokka_annotation
+export contigs=${customassemb}/contigs
+export annot=${customassemb}/annotation
 export genomeinfo=${indata}/genome_infos
 export assemblies=${indata}/assemblies
 export families=${seqdb}/protein_families

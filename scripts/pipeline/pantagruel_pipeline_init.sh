@@ -63,11 +63,22 @@ else
 fi
 
 # folders for optional custom genomes
-mkdir -p ${customassemb}/contigs/
 if [ ! -e ${straininfo} ] ; then
- echo "sequencing.project.id,genus,species,strain,taxid,locus_tag_prefix" | tr ',' '\t' > ${straininfo}
+ echo "assembly_id,genus,species,strain,taxid,locus_tag_prefix" | tr ',' '\t' > ${straininfo}
  echo "please copy/link raw sequence (in multi-fasta format) files of custom (user-generated) assemblies into '${customassemb}/contigs/'"
  echo "and fill up the information table ${straininfo} (tab-delimited fields) according to header:"
  cat ${straininfo}
+ if [[ "$(ls -A "${customassemb}/contigs/" 2>/dev/null)" ]] ; then
+  for allcontigs in `ls ${customassemb}/contigs/` ; do
+    gproject=${allcontigs%%.fa*}
+    echo "${gproject}\t\t\t\t\t" >> ${straininfo}
+  done
+  echo "prepared tab-delimited rows in file '${straininfo}' from files found in '${customassemb}/contigs/'"
+ if [[ "$(ls -A "${customassemb}/annotation/" 2>/dev/null)" ]] ; then
+  for allcontigs in `ls ${customassemb}/annotation/` ; do
+    gproject=${allcontigs%%.fa*}
+    echo "${gproject}\t\t\t\t\t" >> ${straininfo}
+  done
+  echo "prepared tab-delimited rows in file '${straininfo}' from files found in '${customassemb}/contigs/'"
 fi
 

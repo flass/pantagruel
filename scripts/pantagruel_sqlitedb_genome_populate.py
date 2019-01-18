@@ -209,7 +209,7 @@ def main(dbname, protorfanclust, cdsorfanclust, nfspeclist, nfusergenomeinfo):
 				code, taxid = (duginfo['locus_tag_prefix'], duginfo['taxid'])
 				fout.write("%s\t%s\n"%(code, taxid))
 				codetaxids.append((code, taxid))
-				dcustomasscode[duginfo['sequencing_project_id']] = duginfo['locus_tag_prefix']
+				dcustomasscode[duginfo['assembly_id']] = duginfo['locus_tag_prefix']
 
 	fout.close()
 	cur.executemany("INSERT INTO uniptrotcode2taxid VALUES (?, ?);", codetaxids)

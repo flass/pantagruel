@@ -13,9 +13,10 @@ assemblervers = sys.argv[5]
 dstraininfo = {}
 with open(nfstraininfo, 'r') as fstraininfo:
 	header = fstraininfo.readline().rstrip('\n').split('\t')
+	loctagprefixfield = header.index('locus_tag_prefix')
 	for line in fstraininfo:
 		lsp = line.rstrip('\n').split('\t')
-		loctagprefix = lsp[5]
+		loctagprefix = lsp[loctagprefixfield]
 		dstraininfo[loctagprefix] = dict(zip(header, lsp))
 
 lcontignames = []
@@ -59,7 +60,10 @@ for line in fgffin:
 		if not fastatime and (seqreg != currseqreg):
 			# get strain info
 			loctagprefix = seqreg.split('|')[-1].split('_')[0]
-			straininfo = dstraininfo[loctagprefix]
+			try:
+				straininfo = dstraininfo[loctagprefix]
+			except IndexError, e:
+				raise IndexError, "missing information on genome with locus_tag prefix '%s'; please complete info in file '%s'"%(loctagprefix, nfstraininfo)
 			# add organism info line
 			if nreg==0:
 				fgffout.write('##species https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id=%s\n'%straininfo['taxid'])

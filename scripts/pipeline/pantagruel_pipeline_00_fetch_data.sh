@@ -88,49 +88,65 @@ for ass in `cat $ncbiass/genome_assemblies_*_list` ; do ln -s $ncbiass/${ass}* $
   #~ done
 
 ## if the folder of custom/user-provided set of genomes is not empty
-if [[ "$(ls -A "${customassemb}/contigs/" 2>/dev/null)" ]] ; then
+if [[ "$(ls -A "${contigs}/" 2>/dev/null)" ]] ; then
 
-### uniformly annotate the raw sequence data with Prokka
-# first add all the (representative) proteins in the dataset to the custom reference prot database for Prokka to search for similarities
-ls ${indata}/assemblies/*/*gbff.gz > ${indata}/assemblies_gbffgz_list
-parallel -a ${indata}/assemblies_gbffgz_list 'gunzip -k'
-# extract protein sequences
-prokka-genbank_to_fasta_db ${indata}/assemblies/*/*gbff > ${ptgtmp}/${refgenus}.faa >& ${ptgtmp}/prokka-genbank_to_fasta_db.log
-# cluster similar sequences
-cdhit -i ${ptgtmp}/${refgenus}.faa -o ${ptgtmp}/${refgenus}_representative.faa -T 0 -M 0 -G 1 -s 0.8 -c 0.9 &> cdhit.log
-# 805428 representative proteins
-rm -fv ${ptgtmp}/${refgenus}.faa ${ptgtmp}/${refgenus}_representative.faa.clstr
-# replace database name for genus detection by Prokka 
-prokkablastdb=$(dirname $(dirname $(ls -l `which prokka` | awk '{ print $NF }')))/db/genus/
-cp -p ${ptgtmp}/${refgenus}_representative.faa ${prokkablastdb}/${refgenus}
-cd ${prokkablastdb}/
-makeblastdb -dbtype prot -in ${refgenus}
-cd -
+  ### uniformly annotate the raw sequence data with Prokka
+  # first add all the (representative) proteins in the dataset to the custom reference prot database for Prokka to search for similarities
+  ls ${indata}/assemblies/*/*gbff.gz > ${indata}/assemblies_gbffgz_list
+  parallel -a ${indata}/assemblies_gbffgz_list 'gunzip -k'
+  # extract protein sequences
+  prokka-genbank_to_fasta_db ${indata}/assemblies/*/*gbff > ${ptgtmp}/${refgenus}.faa >& ${ptgtmp}/prokka-genbank_to_fasta_db.log
+  # cluster similar sequences
+  cdhit -i ${ptgtmp}/${refgenus}.faa -o ${ptgtmp}/${refgenus}_representative.faa -T 0 -M 0 -G 1 -s 0.8 -c 0.9 &> cdhit.log
+  # 805428 representative proteins
+  rm -fv ${ptgtmp}/${refgenus}.faa ${ptgtmp}/${refgenus}_representative.faa.clstr
+  # replace database name for genus detection by Prokka 
+  prokkablastdb=$(dirname $(dirname $(ls -l `which prokka` | awk '{ print $NF }')))/db/genus/
+  cp -p ${ptgtmp}/${refgenus}_representative.faa ${prokkablastdb}/${refgenus}
+  cd ${prokkablastdb}/
+  makeblastdb -dbtype prot -in ${refgenus}
+  cd -
 
-# run Prokka 
-export annot=${customassemb}/prokka_annotation
-export straininfo=${customassemb}/strain_infos.txt
-mkdir -p $annot
-for allcontigs in `ls ${customassemb}/contigs/` ; do
-gproject=${allcontigs%%_*}
-date
-echo "### assembly: $gproject; contig files from: ${customassemb}/contigs/${allcontigs}"
-echo "running Prokka..."
-$ptgscripts/run_prokka.sh ${gproject} ${customassemb}/contigs/${allcontigs} ${straininfo} ${annot}/${gproject} ${seqcentre}
-echo "fix prokka output to integrate region information into GFF files"
-annotoutgff=($(ls ${annot}/${gproject}/*.gff))
-python $ptgscripts/add_region_feature2prokkaGFF.py ${annotoutgff[0]} ${annotoutgff[0]%*.gff}.ptg.gff ${straininfo} ${customassemb}/contigs/${allcontigs} ${assembler}
-echo "fix prokka output to integrate taxid information into GBK files"
-annotoutgbk=($(ls ${annot}/${gproject}/*.gbk))
-python $ptgscripts/add_taxid_feature2prokkaGBK.py ${annotoutgbk[0]} ${annotoutgbk[0]%*.gbk}.ptg.gbk ${straininfo}
-echo "done."
-date
-done &> ${ptgtmp}/${ptgdbname}_customassembly_annot_prokka.log &
-
+  # run Prokka 
+  mkdir -p ${annot}
+  for allcontigs in `ls ${contigs}/` ; do
+    gproject=${allcontigs%%.fa*}
+    if [ -d ${annot}/${gproject} ] ; then
+      echo "found annotation folder '${annot}/${gproject}' ; skip annotation of contigs in '${contigs}/${allcontigs}'"
+    else
+      echo "will annotate contigs in '${contigs}/${allcontigs}'"
+      echo "# $(dateprompt)"
+      echo "### assembly: $gproject; contig files from: ${contigs}/${allcontigs}"
+      echo "running Prokka..."
+      $ptgscripts/run_prokka.sh ${gproject} ${customassemb}/contigs/${allcontigs} ${straininfo} ${annot}/${gproject} ${seqcentre} &> ${ptglog}/${ptgdbname}_customassembly_annot_prokka.${gproject}.log
+      echo "done."
+      echo "# $(dateprompt)"
+    fi
+    if [[ $(grep ${gproject} ${straininfo} | cut -f2- | grep -P '[^\t]' | wc -l) -gt 0 ]] ; then
+      echo "fix annotation to integrate region information into GFF files"
+      annotoutgff=($(ls ${annot}/${gproject}/*.gff))
+      if [ -z ${annotoutgff[0]} ] ; then
+        echo "Error: missing mandatory GFF file in ${annot}/${gproject}/ folder"
+        exit 1
+      fi
+      python $ptgscripts/add_region_feature2prokkaGFF.py ${annotoutgff[0]} ${annotoutgff[0]%*.gff}.ptg.gff ${straininfo} ${contigs}/${allcontigs} ${assembler}
+      echo "fix annotation to integrate taxid information into GBK files"
+      annotoutgbk=($(ls ${annot}/${gproject}/*.gbk))
+      if [ -z ${annotoutgbk[0]} ] ; then
+        echo "Error: missing mandatory GenBank flat file in ${annot}/${gproject}/ folder"
+        echo "see EMBOSS program seqret for conversion from GFF: http://emboss.open-bio.org/rel/rel6/apps/seqret.html"
+        exit 1
+      fi
+      python $ptgscripts/add_taxid_feature2prokkaGBK.py ${annotoutgbk[0]} ${annotoutgbk[0]%*.gbk}.ptg.gbk ${straininfo}
+      echo "done."
+      echo "# $(dateprompt)"
+    else
+      echo "Error: missing mandatory information about custom genomes"
+      echo "Please fill information in '${straininfo}' file before running this step again."
+      exit 1
+    fi
+  done
 fi
-
-## if the folder of custom/user-provided set of prokka-annotated genomes is not empty
-if [[ "$(ls -A "${annot}/" 2>/dev/null)" ]] ; then
 
 # create assembly directory and link/create relevant files
 export gblikeass=${customassemb}/genbank-format_assemblies
