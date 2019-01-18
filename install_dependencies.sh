@@ -85,8 +85,11 @@ if [[ -z "$(export | grep PATH | grep linuxbrew)" ]] ; then
 export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"
 fi
 
-brew install mmseqs2
-checkexec "Could not install MMSeqs using Brew"
+if [[ -z "$(brew search mmseqs2 | grep mmseqs2)" ]] ; then
+  brew doctor
+  brew install mmseqs2
+  checkexec "Could not install MMSeqs using Brew"
+fi
 
 # fetch Pal2Nal script
 if [ ! -x ${SOFTWARE}/pal2nal.v14/pal2nal.pl ] ; then
