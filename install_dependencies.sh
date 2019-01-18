@@ -32,15 +32,16 @@ cd ${SOFTWARE}
 
 # Install Pantagruel pipeline and specific phylogenetic modules 
 for repo in tree2 pantagruel ; do
-if [ -d ${SOFTWARE}/${repo} ] ; then
-  cd ${repo} && git pull && cd -
-else
-  git clone https://github.com/flass/${repo}
-fi
-if [ $? != 0 ] ; then
-  echo "ERROR: Unable to create/update git repository ${SOFTWARE}/${repo}"
-  exit 1
-fi
+  if [ -d ${SOFTWARE}/${repo} ] ; then
+    cd ${repo} && git pull && cd -
+  else
+    git clone https://github.com/flass/${repo}
+  fi
+  if [ $? != 0 ] ; then
+    echo "ERROR: Unable to create/update git repository ${SOFTWARE}/${repo}"
+    exit 1
+  fi
+done
 # basic dependencies, libs and standalone software, R and packages, Python and packages
 deppackages="git cmake gcc g++ linuxbrew-wrapper lftp clustalo raxml libhmsbeagle1v5 mrbayes r-base-core r-recommended r-cran-ape r-cran-phytools r-cran-ade4 r-cran-vegan r-cran-dbi r-cran-rsqlite r-cran-igraph r-cran-getopt python python-scipy python-numpy python-biopython python-igraph cython mpi-default-bin mpi-default-dev mrbayes-mpi docker.io"
 apt install $deppackages
