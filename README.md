@@ -110,18 +110,25 @@ Options are detailed here:
 
     -a|--custom_ass  path to folder of user-provided genomes (defaults to $rootdir/user_genomes), containing:
                       _mandatory_ 
-                       - a 'contigs/' folder, where are stored multi-FASTA files of genome assembly (one file per genome),
-                         which name (truncated by removing the '.fa' string and everything occuring after) will be further
-                         kept as the assembly_id (beware of names redundant with RefSeq assemblies).
+                       - a 'contigs/' folder, where are stored multi-FASTA files of genome assemblies (one file per genome,
+                          with extension '.fa', '.fasta' or '.fas' ...). Fasta file names will be truncated by removing
+                          the '.fa' string and everything occuring after) and will be retained as the assembly_id (beware 
+                          of names redundant with RefSeq assemblies).
                        - a 'strain_infos.txt' file describing the organism, with columns headed:
                            'assembly_id'; 'genus'; 'species'; 'strain'; 'taxid'; 'locus_tag_prefix'
                          'assembly_id' must match the name of a contig file (e.g. 'assembId.fasta')
                          'locus_tag_prefix' must match the prefix of ids given to CDS, proteins and genome regions (contigs)
                          in potentially provided annotation files (see below).
                       _optional_ 
-                       - an 'annotation/' folder, where are stored .gff and .gbk files (GFF 3 and GenBank flat file formats),
-                         ideally resulting from annotation with Prokka. Each genome annotation file set must be stored in
-                         a separate folder, which name must match a contig file (e.g. 'assembId/' for 'assembId.fasta').
+                       - an 'annotation/' folder, where are stored annotation files: 
+                         - one mandatory in GFF 3.0 file format (with a '.gff' extension);
+                          and optionally, the following files (with consistent ids!!):
+                         - one in GenBank flat file format (with a '.gbk' extension);
+                         - one in Fasta format containing CDS sequences (with a '.ffn' extension).
+                         - one in Fasta format containing matching protein sequences (with a '.faa' extension).
+                         These four files are produced when using Prokka for annotation; if at least one of the .gbk, .ffn or .faa
+                         are missing, all three will be derived from the .gff source. Each genome annotation file set must be stored
+                         in a separate folder, which name must match a contig file (e.g. 'assembId/' for 'assembId.fasta').
 
     -s|--pseudocore  integer number, the minimum number of genomes in which a gene family should be present
                        to be included in the pseudo-core genome gene set (otherwise has to be set interactively
@@ -207,6 +214,7 @@ Below is a summary of the software on which Pantagruel dependends:
   - [scipy/numpy](https://www.scipy.org/scipylib/download.html)
   - [tree2](https://github.com/flass/tree2)
   - [BioPython](http://biopython.org/wiki/Download)
+  - [BCBio.GFF](https://pypi.org/project/bcbio-gff)
   - [Cython](https://pypi.org/project/Cython/)
   - [igraph](http://igraph.org/python/) (available as a Debian package)
 
@@ -215,6 +223,7 @@ Below is a summary of the software on which Pantagruel dependends:
 - [LFTP](https://lftp.yar.ru/get.html) (available as a Debian package *lftp*)
 - [(linux)brew](http://linuxbrew.sh/) (available as a Debian package *linuxbrew-wrapper*)
 - [docker](https://www.docker.com/) (available as a Debian package *docker.io*)
+- [JAVA Runtime (JDK 8.0)](https://openjdk.java.net) (available as a Debian packages *openjdk-8-jdk* and *openjdk-8-jre*)
 
 
 -------------
