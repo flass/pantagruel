@@ -15,7 +15,7 @@ git clone https://github.com/flass/pantagruel.git
 Finally, you can run the installation script:
 ```sh
 cd .. # retrun to parent folder
-sudo pantagruel/install_dependencies.sh ./pantagruel_pipeline
+sudo pantagruel_pipeline/pantagruel/install_dependencies.sh pantagruel_pipeline/
 ```
 ________
 
