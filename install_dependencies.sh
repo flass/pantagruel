@@ -51,7 +51,7 @@ echo ""
 
 # basic dependencies, libs and standalone software, R and packages, Python and packages
 echo "get/update required Debian packages"
-deppackages="git build-essential cmake gcc g++ linuxbrew-wrapper lftp clustalo raxml libhmsbeagle1v5 mrbayes r-base-core r-recommended r-cran-ape r-cran-phytools r-cran-ade4 r-cran-vegan r-cran-dbi r-cran-rsqlite r-cran-igraph r-cran-getopt python python-scipy python-numpy python-biopython python-igraph cython mpi-default-bin mpi-default-dev mrbayes-mpi docker.io"
+deppackages="git build-essential cmake gcc g++ linuxbrew-wrapper lftp clustalo raxml libhmsbeagle1v5 mrbayes r-base-core r-recommended r-cran-ape r-cran-phytools r-cran-ade4 r-cran-vegan r-cran-dbi r-cran-rsqlite r-cran-igraph r-cran-getopt python python-scipy python-numpy python-biopython python-igraph cython mpi-default-bin mpi-default-dev mrbayes-mpi docker.io python-pip openjdk-8-jdk openjdk-8-jre"
 sudo apt install $deppackages
 if [ $? != 0 ] ; then
   echo "ERROR: could not install all required Debian packages:"
@@ -59,6 +59,9 @@ if [ $? != 0 ] ; then
   exit 1
 fi
 echo ""
+
+# install Python package BCBio.GFF
+sudo pip install bcbio-gff
 
 # install R packages not supported by Debian
 if [[ -z "$(Rscript -e 'print(installed.packages()[,1:2])' | grep topGO | cut -d' ' -f1)" ]] ; then
