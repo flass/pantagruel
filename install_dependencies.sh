@@ -53,8 +53,9 @@ fi
 
 # install R packages not supported by Debian
 R --vanilla <<EOF
-install.packages('topGO', repos='${CRANmirror}')
 install.packages('pvclust', repos='${CRANmirror}')
+source("https://bioconductor.org/biocLite.R")
+biocLite("topGO")
 EOF
 echo "library('topGO')" | R --vanilla
 checkexec "Could not install R package 'topGO'"
