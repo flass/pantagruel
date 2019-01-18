@@ -71,16 +71,16 @@ checkexec "Could not install R package 'pvclust'"
 # install MMSeqs using brew
 # Add Linuxbrew to your ~/.bash_profile
 touch ${HOME}/.bash_profile
-if [ -z $(grep PATH ${HOME}/.bash_profile | grep linuxbrew) ] ; then
+if [[ -z "$(grep PATH ${HOME}/.bash_profile | grep linuxbrew)" ]] ; then
   echo 'export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"' >> ${HOME}/.bash_profile
 fi
-if [ -z $(grep MANPATH ${HOME}/.bash_profile | grep linuxbrew) ] ; then
+if [[ -z "$(grep MANPATH ${HOME}/.bash_profile | grep linuxbrew)" ]] ; then
   echo 'export MANPATH="/home/linuxbrew/.linuxbrew/share/man:$MANPATH"' >> ${HOME}/.bash_profile
 fi
-if [ -z $(grep INFOPATH ${HOME}/.bash_profile | grep linuxbrew) ] ; then
+if [[ -z "$(grep INFOPATH ${HOME}/.bash_profile | grep linuxbrew)" ]] ; then
   echo 'export INFOPATH="/home/linuxbrew/.linuxbrew/share/info:$INFOPATH"' >> ${HOME}/.bash_profile
 fi
-if [ -z $(export | grep PATH | grep linuxbrew) ] ; then
+if [[ -z "$(export | grep PATH | grep linuxbrew)" ]] ; then
 # Add Linuxbrew to your PATH
 export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"
 
