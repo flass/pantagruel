@@ -84,28 +84,47 @@ pantagruel -d db_name -r root_dir all
 
 Options are detailed here:  
 ```
+  _mandatory options_
     -d|--dbname       database name
+
     -r|--rootdir      root directory where to create the database; defaults to current folder
+
+  _facultative options_
     -p|--ptgrepo      location of pantagruel software head folder; defaults to directory where this script is located
+
     -i|--iam          database creator identity (e-mail address is preferred)
+
     -f|--famprefix    alphanumerical prefix (no number first) of the names for homologous protein/gene family clusters; defaults to 'PANTAG'
                        the chosen prefix will be appended with a 'P' for protein families and a 'C' for CDS families.
+
     -T|--taxonomy      path to folder of taxonomy database flat files; defaults to $rootdir/NCBI/Taxonomy
                        if this is not containing the expected file, triggers downloading the daily dump from NCBI Taxonomy at task 00
+
     -A|--refseq_ass  path to folder of source genome assembly flat files formated like NCBI Assembly RefSeq whole directories;
                        these can be obtained by searching https://www.ncbi.nlm.nih.gov/assembly and downloadingresults with options:
                          Source Database = 'RefSeq' and File type = 'All file types (including assembly-structure directory)'.
                        defaults to $rootdir/NCBI/Assembly
-    -a|--custom_ass  path to folder of user-provided genomes, containing:
+
+    -a|--custom_ass  path to folder of user-provided genomes (defaults to $rootdir/user_genomes), containing:
                       _mandatory_ 
-                       - a 'contigs/' folder where are stored all source genome assembly FASTA files
-                           OR
-                       - a 'prokka_annotation/' folder where are stored all files resulting from Prokka annotation
-                      _optionally_ 
-                       - a 'strain_infos.txt' file
-                       (unnanotated contig fasta files); defaults to $rootdir/user_genomes
+                       - a 'contigs/' folder, where are stored multi-FASTA files of genome assembly (one file per genome),
+                         which name (truncated by removing the '.fa' string and everything occuring after) will be further
+                         kept as the assembly_id (beware of names redundant with RefSeq assemblies).
+                       - a 'strain_infos.txt' file describing the organism, with columns headed:
+                           'assembly_id'; 'genus'; 'species'; 'strain'; 'taxid'; 'locus_tag_prefix'
+                         'assembly_id' must match the name of a contig file (e.g. 'assembId.fasta')
+                         'locus_tag_prefix' must match the prefix of ids given to CDS, proteins and genome regions (contigs)
+                         in potentially provided annotation files (see below).
+                      _optional_ 
+                       - an 'annotation/' folder, where are stored .gff and .gbk files (GFF 3 and GenBank flat file formats),
+                         ideally resulting from annotation with Prokka. Each genome annotation file set must be stored in
+                         a separate folder, which name must match a contig file (e.g. 'assembId/' for 'assembId.fasta').
+
     -s|--pseudocore  integer number, the minimum number of genomes in which a gene family should be present
-                       to be included in the pseudo-core genome gene set (otherwise has to be set interactively before running task 'core')    -H|--submit_hpc  full address (hostname:/folder/location) of a folder on a remote high-performance computating (HPC) cluster server
+                       to be included in the pseudo-core genome gene set (otherwise has to be set interactively
+                       when running task 'core').
+
+    -H|--submit_hpc  full address (hostname:/folder/location) of a folder on a remote high-performance computating (HPC) cluster server
                        This indicate that computationally intensive tasks, including building the gene tree collection
                        ('genetrees') and reconciling gene tree with species tree ('reconciliations') will be run
                        on a HPC server (only Torque/PBS job submission system is supported so far).
@@ -116,11 +135,14 @@ Options are detailed here:
                        scripts will need to be executed manually on the cluster server.
                        If set at init stage, this option will be maintained for all tasks. However, the remote address
                        can be updated when calling a specific task; string 'none' cancels the HPC behaviour.
+
     -c|--collapse      enable collapsing the rake clades in the gene trees (strongly recomended in datasets of size > 50 genomes).
+
     -C|--collapse_par  [only for 'genetrees' task] specify parameters for collapsing the rake clades in the gene trees.
                        A single-quoted, semicolon-delimited string containing variable definitions must be provided.
                        Default is equivalent to providing the following string:
                           'cladesupp=70 ; subcladesupp=35 ; criterion=bs ; withinfun=median'
+
     -h|--help          print this help message and exit.
 ```  
 Here are some examples of using options:  
