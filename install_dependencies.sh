@@ -52,13 +52,13 @@ if [ $? != 0 ] ; then
 fi
 
 # install R packages not supported by Debian
-if [ -z "$(Rscript -e 'print(installed.packages()[,1:2])' | grep topGO)" ] ; then
+if [ -z $(Rscript -e 'print(installed.packages()[,1:2])' | grep topGO | cut -d' ' -f1) ] ; then
 sudo R --vanilla <<EOF
 source("https://bioconductor.org/biocLite.R")
 biocLite("topGO")
 EOF
 fi
-if [ -z "$(Rscript -e 'print(installed.packages()[,1:2])' | grep pvclust)" ] ; then
+if [ -z $(Rscript -e 'print(installed.packages()[,1:2])' | grep pvclust | cut -d' ' -f1) ] ; then
 sudo R --vanilla <<EOF
 install.packages('pvclust', repos='${CRANmirror}')
 EOF
