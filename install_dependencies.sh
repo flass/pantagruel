@@ -85,15 +85,15 @@ echo ""
 touch ${HOME}/.bash_profile
 if [[ -z "$(grep PATH ${HOME}/.bash_profile | grep linuxbrew)" ]] ; then
   echo 'export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"' >> ${HOME}/.bash_profile
+  editedprofile=true
 fi
 if [[ -z "$(grep MANPATH ${HOME}/.bash_profile | grep linuxbrew)" ]] ; then
   echo 'export MANPATH="/home/linuxbrew/.linuxbrew/share/man:$MANPATH"' >> ${HOME}/.bash_profile
+  editedprofile=true
 fi
 if [[ -z "$(grep INFOPATH ${HOME}/.bash_profile | grep linuxbrew)" ]] ; then
   echo 'export INFOPATH="/home/linuxbrew/.linuxbrew/share/info:$INFOPATH"' >> ${HOME}/.bash_profile
-fi
-if [[ -z "$(export | grep PATH | grep linuxbrew)" ]] ; then
-  export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"
+  editedprofile=true
 fi
 
 # install MMSeqs using brew
@@ -149,33 +149,29 @@ else
   echo "found ALE suite already installed with Docker:"
   sudo docker images | grep boussau/alesuite
 fi
-if [[ -z "$(which ALEml)" ]] ; then
-  alias ALEobserve="docker run -v $PWD:$PWD -w $PWD boussau/alesuite ALEobserve"
-  alias ALEml="docker run -v $PWD:$PWD -w $PWD boussau/alesuite ALEml"
-  alias ALEml_undated="docker run -v $PWD:$PWD -w $PWD boussau/alesuite ALEml_undated"
-fi
 if [[ -z "$(grep 'alias ALEml' ${HOME}/.bashrc)" ]] ; then
   echo 'alias ALEobserve="docker run -v $PWD:$PWD -w $PWD boussau/alesuite ALEobserve"' >> ${HOME}/.bashrc
   echo 'alias ALEml="docker run -v $PWD:$PWD -w $PWD boussau/alesuite ALEml"' >> ${HOME}/.bashrc
   echo 'alias ALEml_undated="docker run -v $PWD:$PWD -w $PWD boussau/alesuite ALEml_undated"' >> ${HOME}/.bashrc
   checkexec "Could not store command aliases in ~/.bashrc"
+  editedrc=true
 fi
 
 # add Python modules to PYTHONPATH
 if [[ -z "$(grep PYTHONPATH ${HOME}/.bashrc | grep tree2 )" || -z "$(grep PYTHONPATH ${HOME}/.bashrc | grep pantagruel/python_libs )" ]] ; then
   echo 'export PYTHONPATH=${PYTHONPATH}:${SOFTWARE}/tree2:${SOFTWARE}/pantagruel/python_libs' >> ${HOME}/.bashrc
   checkexec "Could not store PYTHONPATH in .bashrc"
-fi
-if [[ -z "$(export | grep PYTHONPATH | grep tree2 )" || -z "$(export | grep PYTHONPATH | grep pantagruel/python_libs )" ]] ; then
-  export PYTHONPATH=${PYTHONPATH}:${SOFTWARE}/tree2:${SOFTWARE}/pantagruel/python_libs
+  editedrc=true
 fi
 echo ""
 
 # install Interproscan
-echo "get Interproscan"
-ipversion="5.32-71.0"
+iphost="ftp://ftp.ebi.ac.uk"
+iploc="pub/software/unix/iprscan/5/"
+ipversion=$(lftp -c "open ${iphost} ; ls ${iploc} ; quit" | tail -n 2)
+echo "get Interproscan ${ipversion}"
 if [[ ! -x ${SOFTWARE}/interproscan-${ipversion}/interproscan.sh ]] ; then
-  ipsourceftprep="ftp://ftp.ebi.ac.uk/pub/software/unix/iprscan/5/${ipversion}/"
+  ipsourceftprep="${iphost}/${iploc}/${ipversion}/"
   ipsourcefile="interproscan-${ipversion}-64-bit.tar.gz"
   if [[ ! -e ${SOFTWARE}/${ipsourcefile} ]] ; then
     wget ${ipsourceftprep}/${ipsourcefile}
@@ -209,13 +205,32 @@ checkexec "Interproscan test was not successful"
 
 if [[ -z "$(grep 'PATH=$PATH:$HOME/bin' ${HOME}/.bashrc)" ]] ; then
   echo 'export PATH=$PATH:$HOME/bin' >> ${HOME}/.bashrc
+  editedrc=true
 fi
-if [[ -z "$(export | grep ' PATH=' | grep $HOME/bin)" ]] ; then
-  export PATH=$PATH:$HOME/bin
-fi
-
 mkdir -p ${HOME}/bin/
 rm -f ${HOME}/bin/pantagruel
 ln -s ${SOFTWARE}/pantagruel/pantagruel ${HOME}/bin/
 
 echo "Installation of Pantagruel and dependencies: complete"
+
+#~ if [[ -z "$(export | grep PATH | grep linuxbrew)" ]] ; then
+  #~ export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"
+#~ fi
+#~ if [[ -z "$(which ALEml)" ]] ; then
+  #~ alias ALEobserve="docker run -v $PWD:$PWD -w $PWD boussau/alesuite ALEobserve"
+  #~ alias ALEml="docker run -v $PWD:$PWD -w $PWD boussau/alesuite ALEml"
+  #~ alias ALEml_undated="docker run -v $PWD:$PWD -w $PWD boussau/alesuite ALEml_undated"
+#~ fi
+#~ if [[ -z "$(export | grep PYTHONPATH | grep tree2 )" || -z "$(export | grep PYTHONPATH | grep pantagruel/python_libs )" ]] ; then
+  #~ export PYTHONPATH=${PYTHONPATH}:${SOFTWARE}/tree2:${SOFTWARE}/pantagruel/python_libs
+#~ fi
+#~ if [[ -z "$(export | grep ' PATH=' | grep $HOME/bin)" ]] ; then
+  #~ export PATH=$PATH:$HOME/bin
+#~ fi
+
+if [ ${editedprofile} == true ] ; then
+  echo "the file '~/.bash_profile' was edited to set environment variables; please reload it with `source ~/.bash_profile` or reset your session for changes to take effect" 
+fi
+if [ ${editedrc} == true ] ; then
+  echo "the file '~/.bashrc' was edited to set environment variables; please reload it with `source ~/.bashrc` or reset your session for changes to take effect" 
+fi
