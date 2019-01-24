@@ -46,6 +46,7 @@ export minevfreqmatch=0.5
 export minjoinevfreqmatch=1.0
 export maxreftreeheight=0.25
 export colmethod='replaceCCinGasinS-collapsePOPinSnotinG'
+export ncorebootstrap=200
 export mainresulttag='rootedTree'
 export rootingmethod='treebalance'
 # only relevant if user-defined genomes are provided

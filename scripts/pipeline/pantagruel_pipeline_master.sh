@@ -61,6 +61,8 @@ usage (){
   echo "                       to be included in the pseudo-core genome gene set (otherwise has to be set interactively"
   echo "                       when running task 'core')."
   echo ""
+  echo "    -R|--resume      try and resume the task from previous run that was interupted (for the moment only available for taske 'core')"
+  echo ""
   echo "    -H|--submit_hpc  full address (hostname:/folder/location) of a folder on a remote high-performance computating (HPC) cluster server"
   echo "                       This indicate that computationally intensive tasks, including building the gene tree collection"
   echo "                       ('genetrees') and reconciling gene tree with species tree ('reconciliations') will be run"
@@ -120,7 +122,7 @@ checkexec (){
 }
 
 
-ARGS=`getopt --options "d:r:p:i:f:a:T:A:s:H:cC:h" --longoptions "dbname:,rootdir:,ptgrepo:,iam:,famprefix:,refseq_ass:,custom_ass:,taxonomy:,pseudocore:,submit_hpc:,collapse,collapse_par:,help" --name "pantagruel" -- "$@"`
+ARGS=`getopt --options "d:r:p:i:f:a:T:A:s:RH:cC:h" --longoptions "dbname:,rootdir:,ptgrepo:,iam:,famprefix:,refseq_ass:,custom_ass:,taxonomy:,pseudocore:,resume,submit_hpc:,collapse,collapse_par:,help" --name "pantagruel" -- "$@"`
 
 #Bad arguments
 if [ $? -ne 0 ];
@@ -182,6 +184,11 @@ do
       export pseudocoremingenomes="$2"
       echo "set min number of genomes for inclusion in pseudo-core gene set as $pseudocoremingenomes"
       shift 2;;
+
+    -R|--resume)
+      export resumetask=true
+      echo "will try and resume computation of task where it was last stopped"
+      shift ;;
 
     -T|--taxonomy)
       testmandatoryarg "$1" "$2"
@@ -279,6 +286,10 @@ if [ -z "$collapseCladeParams" ] ; then
   fi
 fi
 
+if [ -z "$resumetask" ] ; then
+  export resumetask=false
+fi
+
 echo "will create/use Pantagruel database '$ptgdbname', set in root folder: '$ptgroot'"
 export ptgscripts=${ptgrepo}/scripts
 
@@ -366,7 +377,7 @@ for task in "$tasks" ; do
       echo "'pseudocoremingenomes' variable is not set"
       echo "will run INTERACTIVELY $ptgscripts/choose_min_genome_occurrence_pseudocore_genes.sh to choose a sensible value."
       echo ""
-      ${ptgscripts}/choose_min_genome_occurrence_pseudocore_genes.sh ${ptgdbname} ${ptgroot}
+      ${ptgscripts}/choose_min_genome_occurrence_pseudocore_genes.sh ${ptgdbname} ${ptgroot} ${resumetask}
       echo ""
     else
       echo "'pseudocoremingenomes' variable not set to $pseudocoremingenomes"
@@ -374,7 +385,7 @@ for task in "$tasks" ; do
       echo ""
       ${ptgscripts}/choose_min_genome_occurrence_pseudocore_genes.sh ${ptgdbname} ${ptgroot} ${pseudocoremingenomes}
     fi
-    ${ptgscripts}/pipeline/pantagruel_pipeline_05_core_genome_ref_tree.sh ${ptgdbname} ${ptgroot} ${pseudocoremingenomes}
+    ${ptgscripts}/pipeline/pantagruel_pipeline_05_core_genome_ref_tree.sh ${ptgdbname} ${ptgroot} ${resumetask} ${pseudocoremingenomes}
     checkexec  ;;
    6)
     echo "Pantagrel pipeline step $task: compute gene trees."
