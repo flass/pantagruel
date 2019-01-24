@@ -200,11 +200,20 @@ if [[ ! -x ${SOFTWARE}/interproscan-${ipversion}/interproscan.sh ]] ; then
   fi
   tar -pxvzf ${SOFTWARE}/${ipsourcefile}
   checkexec "Could not uncompress Interproscan successfully"
-  ${SOFTWARE}/interproscan-${ipversion}/interproscan.sh -i test_proteins.fasta -f tsv
+  ${SOFTWARE}/interproscan-${ipversion}/interproscan.sh -i ${SOFTWARE}/interproscan-${ipversion}/test_proteins.fasta -f tsv
   checkexec "Interproscan test was not successful"
 else
   echo "found InterProScan executable:"
   ls ${SOFTWARE}/interproscan-${ipversion}/interproscan.sh
 fi
+
+
+if [[ -z "$(grep 'PATH=$PATH:$HOME/bin' ${HOME}/.bashrc)" ]] ; then
+  echo 'export PATH=$PATH:$HOME/bin' >> ${HOME}/.bashrc
+fi
+
+mkdir -p ${HOME}/bin/
+rm -f ${HOME}/bin/pantagruel
+ln -s ${SOFTWARE}/pantagruel/pantagruel ${HOME}/bin/
 
 echo "Installation of Pantagruel and dependencies: complete"
