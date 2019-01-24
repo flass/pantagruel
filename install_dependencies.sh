@@ -211,6 +211,9 @@ fi
 if [[ -z "$(grep 'PATH=$PATH:$HOME/bin' ${HOME}/.bashrc)" ]] ; then
   echo 'export PATH=$PATH:$HOME/bin' >> ${HOME}/.bashrc
 fi
+if [[ -z "$(export | grep ' PATH=' | grep $HOME/bin)" ]] ; then
+  export PATH=$PATH:$HOME/bin
+fi
 
 mkdir -p ${HOME}/bin/
 rm -f ${HOME}/bin/pantagruel
