@@ -199,12 +199,12 @@ if [[ ! -x ${SOFTWARE}/interproscan-${ipversion}/interproscan.sh ]] ; then
   fi
   tar -pxvzf ${SOFTWARE}/${ipsourcefile}
   checkexec "Could not uncompress Interproscan successfully"
-  ${SOFTWARE}/interproscan-${ipversion}/interproscan.sh -i ${SOFTWARE}/interproscan-${ipversion}/test_proteins.fasta -f tsv
-  checkexec "Interproscan test was not successful"
 else
   echo "found InterProScan executable:"
   ls ${SOFTWARE}/interproscan-${ipversion}/interproscan.sh
 fi
+${SOFTWARE}/interproscan-${ipversion}/interproscan.sh -i ${SOFTWARE}/interproscan-${ipversion}/test_proteins.fasta -f tsv
+checkexec "Interproscan test was not successful"
 
 
 if [[ -z "$(grep 'PATH=$PATH:$HOME/bin' ${HOME}/.bashrc)" ]] ; then
