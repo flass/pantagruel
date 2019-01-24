@@ -61,7 +61,7 @@ fi
 echo ""
 
 # install Python package BCBio.GFF
-sudo pip install bcbio-gff
+sudo -H pip install bcbio-gff
 
 # install R packages not supported by Debian
 if [[ -z "$(Rscript -e 'print(installed.packages()[,1:2])' | grep topGO | cut -d' ' -f1)" ]] ; then
