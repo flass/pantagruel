@@ -136,8 +136,7 @@ if [[ -z "$(grep docker /etc/group)" ]] ; then
 fi
 if [[ -z "$(grep docker /etc/group | grep ${USER})" ]] ; then
   sudo usermod -aG docker $USER
-  newgrp docker
-  echo ""
+  newgrp docker < echo ""
 fi
 checkexec "Could not set group 'docker' or let user '$USER' join it"
 
