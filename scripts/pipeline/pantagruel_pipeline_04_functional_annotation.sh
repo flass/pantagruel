@@ -32,9 +32,10 @@ iphost="ftp://ftp.ebi.ac.uk"
 iploc="pub/software/unix/iprscan/5/"
 currIPversion=$(lftp -c "open ${iphost} ; ls -tr ${iploc} ; quit" | tail -n 1 | awk '{print $NF}')
 if [ "${IPversion}" != "${currIPversion}" ] ; then
-  echo "Error: the installed verison of InterProScan (found at $(ls -l `which interproscan` | awk '{print $NF}')) is ${IPversion}, different from current operated version ${currIPversion}."
-  echo "this would cause the look-up service not to work and cause significant loss of efficiency ; please install the most recent version by running again the script '${ptgrepo}/install_dependencies.sh'"
-  echo "exiting now."
+  echo "Error: the installed verison of InterProScan (found at $(ls -l `which interproscan` | awk '{print $NF}')) is ${IPversion}, different from the version currently operated by the EBI: ${currIPversion}."
+  echo "Using this outdated version would cause the look-up service not to work and thus a significant loss of efficiency."
+  echo "Please install the most recent version by running again the script '${ptgrepo}/install_dependencies.sh'."
+  echo "Exiting now."
   exit(1)
 fi
 

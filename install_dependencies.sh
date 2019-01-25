@@ -14,15 +14,28 @@ checkexec (){
   if [ $? != 0 ]; then echo "ERROR: $1" ; exit 1 ; fi
 }
 
-if [ -z $1 ] ; then
-  SOFTWARE=$PWD
+usage (){
+	echo "Usage: $0 [software_dir [bin_dir]]"
+	echo "  software_dir: target installation folder for pantagruel and other software"
+	echo "  bin_dir: folder where to link relevant executable files, including the main `pantagruel` excutable (defaults to ~/bin/); the path to this folder will be permatnently added to your path (via editing your ~/.bashrc)"
+}
+
+if [ -z "$1" ] ; then
+  echo "Error: you must at least specify the target installation dir for pantagruel and other software:"
+  usage
+  exit 1
 else
-  SOFTWARE=$(readlink -f $1)
+  if [ "$1" == '-h' || "$1" == '--help' ] ; then
+    usage
+    exit 0
+  else
+    SOFTWARE=$(readlink -f "$1")
+  fi
 fi
-if [ -z $2 ] ; then
+if [ -z "$2" ] ; then
   BINS=${HOME}/bin
 else
-  BINS=$(readlink -f $2)
+  BINS=$(readlink -f "$2")
   PATH=${PATH}:${BINS}
 fi
 
@@ -30,9 +43,9 @@ fi
 echo "Installation of Pantagruel and dependencies: ..."
 echo ""
 
-mkdir -p ${SOFTWARE} ${BINS}
+mkdir -p ${SOFTWARE}/ ${BINS}/
 
-cd ${SOFTWARE}
+cd ${SOFTWARE}/
 
 # Install Pantagruel pipeline and specific phylogenetic modules 
 echo "get/update git repositories for Pantagruel pipeline and specific phylogenetic modules"
@@ -207,9 +220,9 @@ if [[ -z "$(grep 'PATH=$PATH:$HOME/bin' ${HOME}/.bashrc)" ]] ; then
   echo 'export PATH=$PATH:$HOME/bin' >> ${HOME}/.bashrc
   editedrc=true
 fi
-mkdir -p ${HOME}/bin/
-rm -f ${HOME}/bin/pantagruel
-ln -s ${SOFTWARE}/pantagruel/pantagruel ${HOME}/bin/
+
+rm -f ${BINS}/pantagruel
+ln -s ${SOFTWARE}/pantagruel/pantagruel ${BINS}/
 
 echo "Installation of Pantagruel and dependencies: complete"
 
@@ -224,8 +237,8 @@ echo "Installation of Pantagruel and dependencies: complete"
 #~ if [[ -z "$(export | grep PYTHONPATH | grep tree2 )" || -z "$(export | grep PYTHONPATH | grep pantagruel/python_libs )" ]] ; then
   #~ export PYTHONPATH=${PYTHONPATH}:${SOFTWARE}/tree2:${SOFTWARE}/pantagruel/python_libs
 #~ fi
-#~ if [[ -z "$(export | grep ' PATH=' | grep $HOME/bin)" ]] ; then
-  #~ export PATH=$PATH:$HOME/bin
+#~ if [[ -z "$(export | grep ' PATH=' | grep ${BINS})" ]] ; then
+  #~ export PATH=$PATH:${BINS}
 #~ fi
 
 if [ ${editedprofile} == true ] ; then
