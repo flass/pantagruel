@@ -23,16 +23,16 @@ cd ${ptgrepo} ; export ptgversion=$(git log | grep commit | cut -d' ' -f2) ; cd 
 ############################
 
 mkdir -p ${funcannot}/
-export IPversion=$(interproscan --version | head -n 1 | sed -e 's/InterProScan version //')
-if [ -z "$IPversion" ] ; then
+export currIPversion=$(interproscan --version | head -n 1 | sed -e 's/InterProScan version //')
+if [ -z "$currIPversion" ] ; then
   echo "Error: unable to dertermine version of Interproscan; please verify the program is correctly installed ; exiting now."
   exit(1)
 fi
 iphost="ftp://ftp.ebi.ac.uk"
 iploc="pub/software/unix/iprscan/5/"
-currIPversion=$(lftp -c "open ${iphost} ; ls -tr ${iploc} ; quit" | tail -n 1 | awk '{print $NF}')
-if [ "${IPversion}" != "${currIPversion}" ] ; then
-  echo "Error: the installed verison of InterProScan (found at $(ls -l `which interproscan` | awk '{print $NF}')) is ${IPversion}, different from the version currently operated by the EBI: ${currIPversion}."
+lastIPversion=$(lftp -c "open ${iphost} ; ls -tr ${iploc} ; quit" | tail -n 1 | awk '{print $NF}')
+if [ "${currIPversion}" != "${lastIPversion}" ] ; then
+  echo "Error: the installed verison of InterProScan (found at $(ls -l `which interproscan` | awk '{print $NF}')) is ${currIPversion}, different from the version currently operated by the EBI: ${lastIPversion}."
   echo "Using this outdated version would cause the look-up service not to work and thus a significant loss of efficiency."
   echo "Please install the most recent version by running again the script '${ptgrepo}/install_dependencies.sh'."
   echo "Exiting now."

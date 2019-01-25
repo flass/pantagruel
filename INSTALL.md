@@ -18,6 +18,11 @@ Finally, you can run the installation script:
 cd .. # retrun to parent folder
 pantagruel_pipeline/pantagruel/install_dependencies.sh pantagruel_pipeline/
 ```  
+
+Optionally, you can also specify the folder where relevant executable files, including the main `pantagruel` excutable, will be linked (it defaults to `~/bin/`, i.e. is user-specific). The path to this folder will be permatnently added to your path (via editing your ~/.bashrc).  
+```sh
+pantagruel_pipeline/pantagruel/install_dependencies.sh pantagruel_pipeline/ pantagruel_pipeline/bin/
+```
 ________
 
 Otherwise, you can manually install the software following the indications below:

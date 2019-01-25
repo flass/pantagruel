@@ -181,40 +181,48 @@ echo ""
 # install Interproscan
 iphost="ftp://ftp.ebi.ac.uk"
 iploc="pub/software/unix/iprscan/5/"
-ipversion=$(lftp -c "open ${iphost} ; ls -tr ${iploc} ; quit" | tail -n 1 | awk '{print $NF}')
-echo "get Interproscan ${ipversion}"
-if [[ ! -x ${SOFTWARE}/interproscan-${ipversion}/interproscan.sh ]] ; then
-  ipsourceftprep="${iphost}/${iploc}/${ipversion}/"
-  ipsourcefile="interproscan-${ipversion}-64-bit.tar.gz"
-  if [[ ! -e ${SOFTWARE}/${ipsourcefile} ]] ; then
-    wget ${ipsourceftprep}/${ipsourcefile}
-  fi
-  if [[ ! -e ${SOFTWARE}/${ipsourcefile}.md5 ]] ; then
-    wget ${ipsourceftprep}/${ipsourcefile}.md5
-  fi
-  dlok=$(md5sum -c ${ipsourcefile}.md5 | grep -o 'OK')
-  ip=3
-  # allow 3 attempts to downlaod the package, given its large size
-  while [[ "$dlok" != 'OK' && $ip -gt 0 ]] ; do 
-    ip=$(( $ip - 1 ))
-    echo "dowload of ${ipsourcefile} failed; will retry ($ip times left)"
-    wget ${ipsourceftprep}/${ipsourcefile}
-    wget ${ipsourceftprep}/${ipsourcefile}.md5
-    dlok=$(md5sum -c ${ipsourcefile}.md5 | grep -o 'OK')done
-  done
-  if [[ "$dlok" != 'OK' ]] ; then
-    echo "ERROR: Could not dowload ${ipsourcefile}"
-    exit 1
-  fi
-  tar -pxvzf ${SOFTWARE}/${ipsourcefile}
-  checkexec "Could not uncompress Interproscan successfully"
-else
-  echo "found InterProScan executable:"
-  ls ${SOFTWARE}/interproscan-${ipversion}/interproscan.sh
-fi
-${SOFTWARE}/interproscan-${ipversion}/interproscan.sh -i ${SOFTWARE}/interproscan-${ipversion}/test_proteins.fasta -f tsv
-checkexec "Interproscan test was not successful"
 
+currIPversion=$(interproscan --version | head -n 1 | sed -e 's/InterProScan version //')
+lastIPversion=$(lftp -c "open ${iphost} ; ls -tr ${iploc} ; quit" | tail -n 1 | awk '{print $NF}')
+if [[ -z "${currIPversion}" || "${currIPversion}" != "${lastIPversion}" ]] ; then
+ echo "get Interproscan ${ipversion}"
+ if [[ ! -x ${SOFTWARE}/interproscan-${ipversion}/interproscan.sh ]] ; then
+   ipsourceftprep="${iphost}/${iploc}/${ipversion}/"
+   ipsourcefile="interproscan-${ipversion}-64-bit.tar.gz"
+   if [[ ! -e ${SOFTWARE}/${ipsourcefile} ]] ; then
+     wget ${ipsourceftprep}/${ipsourcefile}
+   fi
+   if [[ ! -e ${SOFTWARE}/${ipsourcefile}.md5 ]] ; then
+     wget ${ipsourceftprep}/${ipsourcefile}.md5
+   fi
+   dlok=$(md5sum -c ${ipsourcefile}.md5 | grep -o 'OK')
+   ip=3
+   # allow 3 attempts to downlaod the package, given its large size
+   while [[ "$dlok" != 'OK' && $ip -gt 0 ]] ; do 
+     ip=$(( $ip - 1 ))
+     echo "dowload of ${ipsourcefile} failed; will retry ($ip times left)"
+     wget ${ipsourceftprep}/${ipsourcefile}
+     wget ${ipsourceftprep}/${ipsourcefile}.md5
+     dlok=$(md5sum -c ${ipsourcefile}.md5 | grep -o 'OK')done
+   done
+   if [[ "$dlok" != 'OK' ]] ; then
+     echo "ERROR: Could not dowload ${ipsourcefile}"
+     exit 1
+   fi
+   tar -pxvzf ${SOFTWARE}/${ipsourcefile}
+   checkexec "Could not uncompress Interproscan successfully"
+ else
+   echo "found InterProScan executable:"
+   ls ${SOFTWARE}/interproscan-${ipversion}/interproscan.sh
+ fi
+ ${SOFTWARE}/interproscan-${ipversion}/interproscan.sh -i ${SOFTWARE}/interproscan-${ipversion}/test_proteins.fasta -f tsv
+ checkexec "Interproscan test was not successful"
+ # link the exec file
+ rm -f ${BINS}/interproscan
+ ln -s ${SOFTWARE}/interproscan-${ipversion}/interproscan.sh ${BINS}/interproscan
+else
+ echo "found up-to-date version of Interproscan at $(ls -l `which interproscan` | awk '{print $NF}')"
+fi
 
 if [[ -z "$(grep 'PATH=$PATH:$HOME/bin' ${HOME}/.bashrc)" ]] ; then
   echo 'export PATH=$PATH:$HOME/bin' >> ${HOME}/.bashrc
@@ -241,9 +249,9 @@ echo "Installation of Pantagruel and dependencies: complete"
   #~ export PATH=$PATH:${BINS}
 #~ fi
 
-if [ ${editedprofile} == true ] ; then
-  echo "the file '~/.bash_profile' was edited to set environment variables; please reload it with `source ~/.bash_profile` or reset your session for changes to take effect" 
+if [ "${editedprofile}" == 'true' ] ; then
+  echo "the file '~/.bash_profile' was edited to set environment variables; please reload it with \`source ~/.bash_profile\` or reset your session for changes to take effect" 
 fi
-if [ ${editedrc} == true ] ; then
-  echo "the file '~/.bashrc' was edited to set environment variables; please reload it with `source ~/.bashrc` or reset your session for changes to take effect" 
+if [ "${editedrc}" == 'true' ] ; then
+  echo "the file '~/.bashrc' was edited to set environment variables; please reload it with \`source ~/.bashrc\` or reset your session for changes to take effect" 
 fi
