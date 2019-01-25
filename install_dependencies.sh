@@ -168,7 +168,7 @@ echo ""
 # install Interproscan
 iphost="ftp://ftp.ebi.ac.uk"
 iploc="pub/software/unix/iprscan/5/"
-ipversion=$(lftp -c "open ${iphost} ; ls ${iploc} ; quit" | tail -n 2)
+ipversion=$(lftp -c "open ${iphost} ; ls -tr ${iploc} ; quit" | tail -n 1 | awk '{print $NF}')
 echo "get Interproscan ${ipversion}"
 if [[ ! -x ${SOFTWARE}/interproscan-${ipversion}/interproscan.sh ]] ; then
   ipsourceftprep="${iphost}/${iploc}/${ipversion}/"
