@@ -14,16 +14,16 @@ alias dateprompt="date +'[%Y-%m-%d %H:%M:%S]'"
 datepad="                     "
 
 #### Set mandatory environment variables / parameters
-export ptgdbname="$1"  # database anme (will notably be the name of the top folder)
-export ptgroot="$2"    # source folder where to create the database
-export ptgrepo="$3"    # path to the pantagruel git repository
-export myemail="$4"    # user identity
-export famprefix="$5"  # alphanumerical prefix (no number first) of the names for homologous protein/gene family clusters; will be appended with a 'P' for proteins and a 'C' for CDSs.          
-export ncbiass="$6"
-export ncbitax="$7"
-export customassemb="$8"
-export hpcremoteptgroot="$9"
-export initfile="$10"
+export ptgdbname="${1}"  # database anme (will notably be the name of the top folder)
+export ptgroot="${2}"    # source folder where to create the database
+export ptgrepo="${3}"    # path to the pantagruel git repository
+export myemail="${4}"    # user identity
+export famprefix="${5}"  # alphanumerical prefix (no number first) of the names for homologous protein/gene family clusters; will be appended with a 'P' for proteins and a 'C' for CDSs.          
+export ncbiass="${6}"
+export ncbitax="${7}"
+export customassemb="${8}"
+export hpcremoteptgroot="${9}"
+export initfile="${10}"
 
 # derive other important environmnet variables
 export ptgscripts="${ptgrepo}/scripts"
@@ -74,11 +74,6 @@ if [ ! -e ${straininfo} ] ; then
     echo "${gproject}\t\t\t\t\t" >> ${straininfo}
   done
   echo "prepared tab-delimited rows in file '${straininfo}' from files found in '${customassemb}/contigs/'"
- if [[ "$(ls -A "${customassemb}/annotation/" 2>/dev/null)" ]] ; then
-  for allcontigs in `ls ${customassemb}/annotation/` ; do
-    gproject=${allcontigs%%.fa*}
-    echo "${gproject}\t\t\t\t\t" >> ${straininfo}
-  done
-  echo "prepared tab-delimited rows in file '${straininfo}' from files found in '${customassemb}/contigs/'"
+ fi
 fi
 
