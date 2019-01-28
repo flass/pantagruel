@@ -11,7 +11,14 @@
 CRANmirror="https://cran.ma.imperial.ac.uk/" # should be edited to match nearest CRAN mirror
 
 checkexec (){
-  if [ $? != 0 ]; then echo "ERROR: $1" ; exit 1 ; fi
+  if [ $? != 0 ]; then
+    echo "ERROR: $1"
+    exit 1
+  else
+    if [ ! -z "$2" ] ; then
+      echo "$2"
+    fi
+  fi
 }
 
 usage (){
@@ -127,7 +134,7 @@ if [ ! -x ${SOFTWARE}/pal2nal.v14/pal2nal.pl ] ; then
   tar -xzf ${SOFTWARE}/pal2nal.v14.tar.gz
   chmod +x ${SOFTWARE}/pal2nal.v14/pal2nal.pl
   ln -s ${SOFTWARE}/pal2nal.v14/pal2nal.pl ${BINS}/
-  checkexec "Could not install pal2nal.pl"
+  checkexec "Could not install pal2nal.pl" "Succesfully linked pal2nal.pl executable to ${BINS}/"
 fi
 echo ""
 
@@ -138,7 +145,7 @@ if [ ! -x ${SOFTWARE}/mad/mad ] ; then
   unzip ${SOFTWARE}/mad2-2.zip
   chmod +x ${SOFTWARE}/mad/mad
   ln -s ${SOFTWARE}/mad/mad ${BINS}/
-  checkexec "Could not install MAD"
+  checkexec "Could not install MAD" "Succesfully linked MAD executable to ${BINS}/"
 fi
 echo ""
 
@@ -220,6 +227,7 @@ if [[ -z "${currIPversion}" || "${currIPversion}" != "${lastIPversion}" ]] ; the
  # link the exec file
  rm -f ${BINS}/interproscan
  ln -s ${SOFTWARE}/interproscan-${ipversion}/interproscan.sh ${BINS}/interproscan
+ checkexec "Failed to link Interproscan executable to ${BINS}/" "Succesfully linked Interproscan executable to ${BINS}/"
 else
  echo "found up-to-date version of Interproscan at $(ls -l `which interproscan` | awk '{print $NF}')"
 fi
@@ -231,6 +239,7 @@ fi
 
 rm -f ${BINS}/pantagruel
 ln -s ${SOFTWARE}/pantagruel/pantagruel ${BINS}/
+checkexec "Failed to link pantagruel executable to ${BINS}/" "Succesfully linked pantagruel executable to ${BINS}/"
 
 echo "Installation of Pantagruel and dependencies: complete"
 
