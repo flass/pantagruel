@@ -57,9 +57,13 @@ usage (){
   echo "                         are missing, all three will be derived from the .gff source. Each genome annotation file set must be stored"
   echo "                         in a separate folder, which name must match a contig file (e.g. 'assembId/' for 'assembId.fasta')."
   echo ""
-  echo "    -s|--pseudocore  integer number, the minimum number of genomes in which a gene family should be present"
+  echo "    -s|--pseudocore  integer or string, the minimum number of genomes in which a gene family should be present"
   echo "                       to be included in the pseudo-core genome gene set (otherwise has to be set interactively"
-  echo "                       when running task 'core')."
+  echo "                       when running task 'core'). A non-integer value will trigger interactive promt for search of an optimal value."
+  echo "                       Defaults to the total number of genomes (work with a strict core genome set)."
+  echo ""
+  echo "    -t|--reftree     specify reference tree for reconciliation and clade-specific gene analyses;"
+  echo "                       over-rides the computation of tree from the concatenate of (pseudo-)core genome gene"
   echo ""
   echo "    -R|--resume      try and resume the task from previous run that was interupted (for the moment only available for taske 'core')"
   echo ""
@@ -115,14 +119,26 @@ usage (){
   echo ""
 }
 testmandatoryarg (){
-  if [ -z "$2" ]; then echo "missing argument for option '$1'" usage ; exit 1 ; fi
+  if [ -z "$2" ]; then
+   echo "ERROR: missing argument for option '$1'" 1>&2
+   echo "see pantagruel --help for more details" 1>&2
+   exit 1
+  fi
 }
+
 checkexec (){
-  if [ $? != 0 ]; then echo "ERROR: last pipeline step failed" ; exit 1 ; fi
+  if [ $? != 0 ]; then
+    echo "ERROR: $1" 1>&2
+    exit 1
+  else
+    if [ ! -z "$2" ] ; then
+      echo "$2"
+    fi
+  fi
 }
 
 
-ARGS=`getopt --options "d:r:p:i:f:a:T:A:s:RH:cC:h" --longoptions "dbname:,rootdir:,ptgrepo:,iam:,famprefix:,refseq_ass:,custom_ass:,taxonomy:,pseudocore:,resume,submit_hpc:,collapse,collapse_par:,help" --name "pantagruel" -- "$@"`
+ARGS=`getopt --options "d:r:p:i:f:a:T:A:s:t:RH:cC:h" --longoptions "dbname:,rootdir:,ptgrepo:,iam:,famprefix:,refseq_ass:,custom_ass:,taxonomy:,pseudocore:,reftree:,resume,submit_hpc:,collapse,collapse_par:,help" --name "pantagruel" -- "$@"`
 
 #Bad arguments
 if [ $? -ne 0 ];
@@ -185,6 +201,12 @@ do
       echo "set min number of genomes for inclusion in pseudo-core gene set as $pseudocoremingenomes"
       shift 2;;
 
+    -t|--reftree)
+      testmandatoryarg "$1" "$2"
+      export pseudocoremingenomes="$2"
+      echo "set reference tree as $reftree"
+      shift 2;;
+
     -R|--resume)
       export resumetask=true
       echo "will try and resume computation of task where it was last stopped"
@@ -222,68 +244,74 @@ do
 done
 
 if [ -z "$ptgdbname" ] ; then
- echo "Must specify database name"
+ echo -e "Error: Must specify database name\n"
  usage
  exit 1
 fi
 if [ -z "$ptgroot" ] ; then
- echo "Must specify root directory location"
+ echo -e "Error: Must specify root directory location\n"
  usage
  exit 1
 fi
 
+setdefaults (){
+    # Default values:
+    if [ -z "$ptgrepo" ] ; then
+    export ptgrepo=$defptgrepo
+    echo "Default: set Pantagruel software repository to '$ptgrepo'"
+    fi
+    if [ -z "$myemail" ] ; then
+    export myemail="undisclosed"
+    echo "Default: set identity to '$myemail'"
+    fi
+    if [ -z "$famprefix" ] ; then
+    export famprefix="PANTAG"
+    echo "Default: set gene family prefix to '$famprefix'"
+    fi
+    if [ -z "$customassemb" ] ; then
+    export customassemb=${ptgroot}/user_genomes
+    echo "Default: set custom (raw) genome assembly source folder to '$customassemb'"
+    fi
+    if [ -z "$ncbiass" ] ; then
+    export ncbiass=${ptgroot}/NCBI/Assembly
+    echo "Default: set NCBI RefSeq(-like) genome assembly source folder to '$ncbiass'"
+    fi
+    if [ -z "$ncbitax" ] ; then
+     export ncbitax=${ptgroot}/NCBI/Taxonomy
+     echo "Default: set NCBI Taxonomy source folder to '$ncbitax'"
+    fi
+}
 
-# Default values:
-if [ -z "$ptgrepo" ] ; then
-  export ptgrepo=$defptgrepo
-  echo "Default: set Pantagruel software repository to '$ptgrepo'"
-fi
-if [ -z "$myemail" ] ; then
-  export myemail="undisclosed"
-  echo "Default: set identity to '$myemail'"
-fi
-if [ -z "$famprefix" ] ; then
-  export famprefix="PANTAG"
-  echo "Default: set gene family prefix to '$famprefix'"
-fi
-if [ -z "$customassemb" ] ; then
-  export customassemb=${ptgroot}/user_genomes
-  echo "Default: set custom (raw) genome assembly source folder to '$customassemb'"
-fi
-if [ -z "$ncbiass" ] ; then
-  export ncbiass=${ptgroot}/NCBI/Assembly
-  echo "Default: set NCBI RefSeq(-like) genome assembly source folder to '$ncbiass'"
-fi
-if [ -z "$ncbitax" ] ; then
- export ncbitax=${ptgroot}/NCBI/Taxonomy
- echo "Default: set NCBI Taxonomy source folder to '$ncbitax'"
-fi
-
-if [ -z "$pseudocoremingenomes" ] ; then
- export pseudocoremingenomes=''
- echo "Default: min number of genomes for inclusion in pseudo-core gene is not set"
-fi
-
-if [ -z "$hpcremoteptgroot" ] ; then
- export hpcremoteptgroot='none'
- echo "Default: all computations will be run locally (instead of on a potential HPC service)"
-fi
-
-if [ -z "$chaintype" ] ; then
- export chaintype="fullgenetree"
- echo "Default: gene tree clade collapsing disabled"
-fi
-
-if [ -z "$collapseCladeParams" ] ; then
-  export collapseCladeParams='default'
-  if [ ! -z "$chaintype" ] ; then 
-    echo "Default: gene tree clade collapsing will use these parameters: 'cladesupp=70 ; subcladesupp=35 ; criterion=bs ; withinfun=median'"
-  fi
-fi
-
-if [ -z "$resumetask" ] ; then
-  export resumetask=false
-fi
+setnondefaults (){
+	nondefvardecl=${ptgtmp}/nondefvardecl.sh
+	rm -f ${ptgtmp}/nondefvardecl.sh
+    if [ ! -z "$hpcremoteptgroot" ] ; then
+     echo "Overide default: all computations will be run on a distant server  (potentially a HPC service) instead of locally"
+     echo "export hpcremoteptgroot=${hpcremoteptgroot}" >> ${ptgtmp}/nondefvardecl.sh
+    fi
+    if [ ! -z "$chaintype" ] ; then
+     echo "Overide default: gene tree clade collapsing is enabled"
+     echo "export chaintype=${chaintype}" >> ${ptgtmp}/nondefvardecl.sh
+    fi
+    if [ ! -z "$collapseCladeParams" ] ; then
+     if [ ! -z "$chaintype" ] ; then 
+      echo "Overide default: gene tree clade collapsing will use these parameters: '$collapseCladeParams'"
+     echo "export collapseCladeParams=${collapseCladeParams}" >> ${ptgtmp}/nondefvardecl.sh
+     fi
+    fi
+    if [ ! -z "$pseudocoremingenomes" ] ; then
+     echo "Overide default: will establish pseudo-core gene set (gene present in a minimum of $pseudocoremingenomes genome) instead of a strict core-genome"
+     echo "export pseudocoremingenomes=${pseudocoremingenomes}" >> ${ptgtmp}/nondefvardecl.sh
+    fi
+    if [ ! -z "$reftree" ] ; then
+     echo "Overide default: a reference tree was provided; will not compute core-genome tree"
+     echo "export reftree=${reftree}" >> ${ptgtmp}/nondefvardecl.sh
+    fi
+    if [ ! -z "$resumetask" ] ; then
+     echo "will try and resume computation of task where it was last stopped"
+     echo "export resumetask=${resumetask}" >> ${ptgtmp}/nondefvardecl.sh
+    fi
+}
 
 echo "will create/use Pantagruel database '$ptgdbname', set in root folder: '$ptgroot'"
 export ptgscripts=${ptgrepo}/scripts
@@ -339,12 +367,11 @@ echo $tasks
 for task in "$tasks" ; do
   if [[ "$task" == 'init' ]] ; then
     echo "Pantagrel pipeline step $task: initiate pangenome database."
+    setdefaults
+    
     ${ptgscripts}/pipeline/pantagruel_pipeline_init.sh ${ptgdbname} ${ptgroot} ${ptgrepo} ${myemail} ${famprefix} ${ncbiass} ${ncbitax} ${customassemb} ${hpcremoteptgroot} ${chaintype} ${initfile}
     checkexec
   else
-   #~ export ptgdb=${ptgroot}/${ptgdbname}
-   #~ envsourcescript=${ptgdb}/environ_pantagruel_${ptgdbname}.sh
-   #~ source $envsourcescript
    case "$task" in
    0)
     echo "Pantagrel pipeline step $task: fetch public genome data from NCBI sequence databases and annotate private genomes."
@@ -368,27 +395,34 @@ for task in "$tasks" ; do
     checkexec  ;;
    5)
     echo "Pantagrel pipeline step $task: select core-genome markers and compute reference tree."
-    if [[ -z ${pseudocoremingenomes} || "${pseudocoremingenomes}" == 'REPLACEpseudocoremingenomes' ]] ; then
-      echo "'pseudocoremingenomes' variable is not set"
-      echo "will run INTERACTIVELY $ptgscripts/choose_min_genome_occurrence_pseudocore_genes.sh to choose a sensible value."
-      echo ""
-      ${ptgscripts}/choose_min_genome_occurrence_pseudocore_genes.sh ${ptgdbname} ${ptgroot} ${resumetask}
-      echo ""
-    else
-      echo "'pseudocoremingenomes' variable not set to $pseudocoremingenomes"
-      echo "will run non-interactively $ptgscripts/choose_min_genome_occurrence_pseudocore_genes.sh to record the gene family set."
-      echo ""
-      ${ptgscripts}/choose_min_genome_occurrence_pseudocore_genes.sh ${ptgdbname} ${ptgroot} ${pseudocoremingenomes}
+    if [[ ! -z "${pseudocoremingenomes}" ]] ; then
+	  case "${pseudocoremingenomes}" in
+        ''|*[!0-9]*)
+          echo "'pseudocoremingenomes' variable is not set"
+          unset pseudocoremingenomes
+          echo "will run INTERACTIVELY $ptgscripts/choose_min_genome_occurrence_pseudocore_genes.sh to choose a sensible value."
+          echo ""
+          ${ptgscripts}/choose_min_genome_occurrence_pseudocore_genes.sh ${ptgdbname} ${ptgroot}
+          echo "" ;;
+        *)
+          echo "'pseudocoremingenomes' variable is set to $pseudocoremingenomes"
+          echo "will run non-interactively $ptgscripts/choose_min_genome_occurrence_pseudocore_genes.sh to record the gene family set."
+          echo ""
+          ${ptgscripts}/choose_min_genome_occurrence_pseudocore_genes.sh ${ptgdbname} ${ptgroot} ${pseudocoremingenomes}
+      esac
     fi
-    ${ptgscripts}/pipeline/pantagruel_pipeline_05_core_genome_ref_tree.sh ${ptgdbname} ${ptgroot} ${resumetask} ${pseudocoremingenomes}
+    setnondefaults
+    ${ptgscripts}/pipeline/pantagruel_pipeline_05_core_genome_ref_tree.sh ${ptgdbname} ${ptgroot}
     checkexec  ;;
    6)
     echo "Pantagrel pipeline step $task: compute gene trees."
-    ${ptgscripts}/pipeline/pantagruel_pipeline_06_gene_trees.sh ${ptgdbname} ${ptgroot} ${collapseCladeParams} ${hpcremoteptgroot}
+    setnondefaults
+    ${ptgscripts}/pipeline/pantagruel_pipeline_06_gene_trees.sh ${ptgdbname} ${ptgroot}
     checkexec  ;;
    7)
     echo "Pantagrel pipeline step $task: compute species tree/gene tree reconciliations."
-    ${ptgscripts}/pipeline/pantagruel_pipeline_07_reconciliations.sh ${ptgdbname} ${ptgroot} ${hpcremoteptgroot}
+    setnondefaults
+    ${ptgscripts}/pipeline/pantagruel_pipeline_07_reconciliations.sh ${ptgdbname} ${ptgroot}
     checkexec  ;;
    8)
     echo "Pantagrel pipeline step $task: classify genes into orthologous groups (OGs) and search clade-specific OGs."
@@ -400,4 +434,5 @@ for task in "$tasks" ; do
     checkexec  ;;
     esac
   fi
+  rm -f ${ptgtmp}/nondefvardecl.sh
 done

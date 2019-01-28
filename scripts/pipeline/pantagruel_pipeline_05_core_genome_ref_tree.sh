@@ -18,11 +18,13 @@ source ${envsourcescript}
 
 export resumetask="$3"
 
-if [ ! -z "${resumetask}" ] ; then
+if [ "${resumetask}" == "true" ] ; then
       echo "will try and resume computation where it was last stopped; may skip/resume computing: core genome concatenated alignment, core ML tree search, core tree bootstrapping, core tree rooting with ${rootingmethod}"
+fi
 
-if [ -z "$4" ] ; then
-  pseudocoremingenomes="$4"
+# to set misc variables ; not safe though
+if [ -e ${ptgtmp}/nondefvardecl.sh ] ; then
+  source ${ptgtmp}/nondefvardecl.sh
 fi
 
 ###########################################
@@ -33,117 +35,123 @@ fi
 export coregenome=${ptgdb}/05.core_genome
 mkdir -p ${coregenome}/
 
-if [[ -z ${pseudocoremingenomes} || "${pseudocoremingenomes}" == 'REPLACEpseudocoremingenomes' ]] ; then
-  echo "Error: 'pseudocoremingenomes' variable is not set; please run $ptgscripts/choose_min_genome_occurrence_pseudocore_genes.sh (interactive) to choose a sensible value."
-  exit 1
-fi 
-## generate core genome alignment path list
-if [[ "${resumetask}" == "true" && -s ${pseudocorealn} ]] ; then
- echo "skip concatenating core genome alignment"
-else
- rm -f ${coregenome}/pseudo-coregenome_sets/${pseudocore}_prot_aln_list
- for fam in `cat ${coregenome}/pseudo-coregenome_sets/${pseudocore}_families.tab` ; do
-  ls ${protalifastacodedir}/$fam.codes.aln >> ${coregenome}/pseudo-coregenome_sets/${pseudocore}_prot_aln_list
- done
- # concatenate pseudo-core prot alignments
- python ${ptgscripts}/concat.py ${coregenome}/pseudo-coregenome_sets/${pseudocore}_prot_aln_list ${pseudocorealn}
- rm ${protalifastacodedir}/*_all_sp_new
-fi
+if [[ ! -z "${reftree}" ]] ; then
+  # use user-provided tree as reference tree
 
-### compute species tree using RAxML
-mkdir -p ${ptglogs}/raxml ${coretree}
-# define RAxML binary and options; uses options -T (threads) -j (checkpoints) 
-if [ ! -z $(grep -o avx2 /proc/cpuinfo | head -n 1) ] ; then
-  raxmlflav='-AVX2 -U'
-elif [ ! -z $(grep -o avx /proc/cpuinfo | head -n 1) ] ; then
-  raxmlflav='-AVX -U'
-elif [ ! -z $(grep -o sse3 /proc/cpuinfo | head -n 1) ] ; then
-  raxmlflav='-SSE3 -U'
 else
-  raxmlflav=''
-fi
-raxmlbin="raxmlHPC-PTHREADS${raxmlflav} -T $(nproc)"
-raxmloptions="-n ${treename} -m PROTCATLGX -j -p 1753 -w ${coretree}"
+  # compute reference tree from core genome
 
-## first check the alignment for duplicate sequences and write a reduced alignment with  will be excluded
-if [[ "${resumetask}" == "true" && -e ${pseudocorealn}.identical_sequences ]] ; then
- echo "skip identical sequence removal in core alignment"
-else
- $raxmlbin -s ${pseudocorealn} ${raxmloptions} -f c &> ${ptglogs}/raxml/${treename}.check.
- grep 'exactly identical$' ${coretree}/RAxML_info.${treename} | sed -e 's/IMPORTANT WARNING: Sequences \(.\+\) and \(.\+\) are exactly identical/\1\t\2/g' > ${pseudocorealn}.identical_sequences
- rm ${coretree}/RAxML_info.${treename}
-fi
-
-## RAxML, with rapid bootstrap
-## first just single ML tree on reduced alignment
-if [[ "${resumetask}" == "true" && -s ${coretree}/RAxML_bestTree.${treename} ]] ; then
- echo "skip ML tree search"
-else
- ckps=($(ls -t ${coretree}/RAxML_checkpoint.${treename}.*))
- if [[ "${resumetask}" == "true" && -z "${ckps}" ]] ; then
-  # first search
-  $raxmlbin -s ${pseudocorealn}.reduced ${raxmloptions} &> ${ptglogs}/raxml/${treename}.ML_run.log
- else
-  echo "resume from checkpoint {ckps[0]##*.}"
-  mv ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_bestTree.${treename}.up_to_ckp${ckps[0]##*.}
-  mv ${ptglogs}/raxml/${treename}.ML_run.log ${ptglogs}/raxml/${treename}.ML_run.log.up_to_ckp${ckps[0]##*.}
-  $raxmlbin -s ${pseudocorealn}.reduced ${raxmloptions} -t ${ckps[0]} &> ${ptglogs}/raxml/${treename}.ML_run.log
- fi
- mv ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_bestTree.${treename}
-fi
-
-ncorebootstrap=200
-## compute 200 rapid bootstrap
-if [[ "${resumetask}" == "true" && -s ${coretree}/RAxML_bipartitionsBranchLabels.${treename} ]] ; then
- # skip bootstraping and mapping to ML tree
-else
- if [[ "${resumetask}" == "true" && -s ${coretree}/RAxML_bootstrap.${treename} ]] ; then
-  nbs=$(wc -l ${coretree}/RAxML_bootstrap.${treename} | cut -d' ' -f1)
-  if [ ${nbs} -ge ${ncorebootstrap} ] ; then
-   echo "skip bootstrapping"
+  if [[ -z ${pseudocoremingenomes} || "${pseudocoremingenomes}" == 'REPLACEpseudocoremingenomes' ]] ; then
+    echo "Error: 'pseudocoremingenomes' variable is not set; please run $ptgscripts/choose_min_genome_occurrence_pseudocore_genes.sh (interactive) to choose a sensible value."
+    exit 1
+  fi 
+  ## generate core genome alignment path list
+  if [[ "${resumetask}" == "true" && -s ${pseudocorealn} ]] ; then
+   echo "skip concatenating core genome alignment"
   else
-   export ncorebootstrap=$(( ${ncorebootstrap} - ${nbs} ))
-   echo "resume bootstraping after ${nbs} trees (${ncorebootstrap} left to compute)"
-   mv ${coretree}/RAxML_bootstrap.${treename} ${coretree}/RAxML_bootstrap.${treename}.firstbs${nbs}
-   mv ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_bootstrap.${treename}.up_to_bs${nbs}
-   mv ${ptglogs}/raxml/${treename}_bs.log ${ptglogs}/raxml/${treename}_bs.log.up_to_bs${nbs}
-   $raxmlbin -s ${pseudocorealn}.reduced ${raxmloptions} -x 198237 -N ${ncorebootstrap} &> ${ptglogs}/raxml/${treename}_bs.log
+   rm -f ${coregenome}/pseudo-coregenome_sets/${pseudocore}_prot_aln_list
+   for fam in `cat ${coregenome}/pseudo-coregenome_sets/${pseudocore}_families.tab` ; do
+    ls ${protalifastacodedir}/$fam.codes.aln >> ${coregenome}/pseudo-coregenome_sets/${pseudocore}_prot_aln_list
+   done
+   # concatenate pseudo-core prot alignments
+   python ${ptgscripts}/concat.py ${coregenome}/pseudo-coregenome_sets/${pseudocore}_prot_aln_list ${pseudocorealn}
+   rm ${protalifastacodedir}/*_all_sp_new
   fi
- else
-  # bootstrapping from scratch
-  $raxmlbin -s ${pseudocorealn}.reduced ${raxmloptions} -x 198237 -N ${ncorebootstrap} &> ${ptglogs}/raxml/${treename}_bs.log
- fi
- # mapping bootstraps to ML tree
- mv ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_bootstrap.${treename}
- $raxmlbin -s ${pseudocorealn}.reduced ${raxmloptions} -f b -z ${coretree}/RAxML_bootstrap.${treename} -t ${coretree}/RAxML_bestTree.${treename} 
- mv ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_bipartitions.${treename}
-fi
 
-
-
-## root ML tree
-if [[ "${resumetask}" == "true" && -s ${nrrootedtree} ]] ; then
- echo "skip tree rooting with ${rootingmethod}"
-else
-# export nrbesttree=${coretree}/RAxML_bestTree.${treename}
-# export nrbiparts=${nrbesttree/bestTree/bipartitions}
-# export nrrootedtree=${nrbiparts}.${rootingmethod}rooted
- if [[ "${rootingmethod}" == 'treebalance' ]] ; then
-  # root ML tree with RAxML tree-balance algorithm
-  $raxmlbin -s ${pseudocorealn}.reduced ${raxmloptions} -f I -t ${coretree}/RAxML_bipartitionsBranchLabels.${treename}  
-  mv ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_rootedTree.${treename}
-  ln -s ${coretree}/RAxML_rootedTree.${treename} ${nrrootedtree}
- else
-  if [[ "${rootingmethod}" == 'MAD' ]] ; then
-   # root tree with MAD (Tria et al. Nat Ecol Evol (2017) Phylogenetic rooting using minimal ancestor deviation. s41559-017-0193 doi:10.1038/s41559-017-0193)
-   R BATCH --vanilla --slave << EOF
-   source('${ptgscripts}/mad_R/MAD.R')
-   mad.rooting = MAD(readLines('${nrbesttree}'), 'full')
-   write(mad.rooting[[1]], file='${nrrootedtree}')
-   save(mad.rooting, file='${nrbesttree}.${rootingmethod}rooting.RData}')
-EOF
+  ### compute species tree using RAxML
+  mkdir -p ${ptglogs}/raxml ${coretree}
+  # define RAxML binary and options; uses options -T (threads) -j (checkpoints) 
+  if [ ! -z $(grep -o avx2 /proc/cpuinfo | head -n 1) ] ; then
+    raxmlflav='-AVX2 -U'
+  elif [ ! -z $(grep -o avx /proc/cpuinfo | head -n 1) ] ; then
+    raxmlflav='-AVX -U'
+  elif [ ! -z $(grep -o sse3 /proc/cpuinfo | head -n 1) ] ; then
+    raxmlflav='-SSE3 -U'
   else
-   if [[ "${rootingmethod:0:8}" == 'outgroup' ]] ; then
+    raxmlflav=''
+  fi
+  raxmlbin="raxmlHPC-PTHREADS${raxmlflav} -T $(nproc)"
+  raxmloptions="-n ${treename} -m PROTCATLGX -j -p 1753 -w ${coretree}"
+
+  ## first check the alignment for duplicate sequences and write a reduced alignment with  will be excluded
+  if [[ "${resumetask}" == "true" && -e ${pseudocorealn}.identical_sequences ]] ; then
+   echo "skip identical sequence removal in core alignment"
+  else
+   $raxmlbin -s ${pseudocorealn} ${raxmloptions} -f c &> ${ptglogs}/raxml/${treename}.check.
+   grep 'exactly identical$' ${coretree}/RAxML_info.${treename} | sed -e 's/IMPORTANT WARNING: Sequences \(.\+\) and \(.\+\) are exactly identical/\1\t\2/g' > ${pseudocorealn}.identical_sequences
+   rm ${coretree}/RAxML_info.${treename}
+  fi
+
+  ## RAxML, with rapid bootstrap
+  ## first just single ML tree on reduced alignment
+  if [[ "${resumetask}" == "true" && -s ${coretree}/RAxML_bestTree.${treename} ]] ; then
+   echo "skip ML tree search"
+  else
+   ckps=($(ls -t ${coretree}/RAxML_checkpoint.${treename}.*))
+   if [[ "${resumetask}" == "true" && -z "${ckps}" ]] ; then
+    # first search
+    $raxmlbin -s ${pseudocorealn}.reduced ${raxmloptions} &> ${ptglogs}/raxml/${treename}.ML_run.log
+   else
+    echo "resume from checkpoint {ckps[0]##*.}"
+    mv ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_bestTree.${treename}.up_to_ckp${ckps[0]##*.}
+    mv ${ptglogs}/raxml/${treename}.ML_run.log ${ptglogs}/raxml/${treename}.ML_run.log.up_to_ckp${ckps[0]##*.}
+    $raxmlbin -s ${pseudocorealn}.reduced ${raxmloptions} -t ${ckps[0]} &> ${ptglogs}/raxml/${treename}.ML_run.log
+   fi
+   mv ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_bestTree.${treename}
+  fi
+
+  ncorebootstrap=200
+  ## compute 200 rapid bootstrap
+  if [[ "${resumetask}" == "true" && -s ${coretree}/RAxML_bipartitionsBranchLabels.${treename} ]] ; then
+   # skip bootstraping and mapping to ML tree
+  else
+   if [[ "${resumetask}" == "true" && -s ${coretree}/RAxML_bootstrap.${treename} ]] ; then
+    nbs=$(wc -l ${coretree}/RAxML_bootstrap.${treename} | cut -d' ' -f1)
+    if [ ${nbs} -ge ${ncorebootstrap} ] ; then
+     echo "skip bootstrapping"
+    else
+     export ncorebootstrap=$(( ${ncorebootstrap} - ${nbs} ))
+     echo "resume bootstraping after ${nbs} trees (${ncorebootstrap} left to compute)"
+     mv ${coretree}/RAxML_bootstrap.${treename} ${coretree}/RAxML_bootstrap.${treename}.firstbs${nbs}
+     mv ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_bootstrap.${treename}.up_to_bs${nbs}
+     mv ${ptglogs}/raxml/${treename}_bs.log ${ptglogs}/raxml/${treename}_bs.log.up_to_bs${nbs}
+     $raxmlbin -s ${pseudocorealn}.reduced ${raxmloptions} -x 198237 -N ${ncorebootstrap} &> ${ptglogs}/raxml/${treename}_bs.log
+    fi
+   else
+    # bootstrapping from scratch
+    $raxmlbin -s ${pseudocorealn}.reduced ${raxmloptions} -x 198237 -N ${ncorebootstrap} &> ${ptglogs}/raxml/${treename}_bs.log
+   fi
+   # mapping bootstraps to ML tree
+   mv ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_bootstrap.${treename}
+   $raxmlbin -s ${pseudocorealn}.reduced ${raxmloptions} -f b -z ${coretree}/RAxML_bootstrap.${treename} -t ${coretree}/RAxML_bestTree.${treename} 
+   mv ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_bipartitions.${treename}
+  fi
+
+
+
+  ## root ML tree
+  if [[ "${resumetask}" == "true" && -s ${nrrootedtree} ]] ; then
+   echo "skip tree rooting with ${rootingmethod}"
+  else
+  # export nrbesttree=${coretree}/RAxML_bestTree.${treename}
+  # export nrbiparts=${nrbesttree/bestTree/bipartitions}
+  # export nrrootedtree=${nrbiparts}.${rootingmethod}rooted
+   if [[ "${rootingmethod}" == 'treebalance' ]] ; then
+    # root ML tree with RAxML tree-balance algorithm
+    $raxmlbin -s ${pseudocorealn}.reduced ${raxmloptions} -f I -t ${coretree}/RAxML_bipartitionsBranchLabels.${treename}  
+    mv ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_rootedTree.${treename}
+    ln -s ${coretree}/RAxML_rootedTree.${treename} ${nrrootedtree}
+   else
+    if [[ "${rootingmethod}" == 'MAD' ]] ; then
+     # root tree with MAD (Tria et al. Nat Ecol Evol (2017) Phylogenetic rooting using minimal ancestor deviation. s41559-017-0193 doi:10.1038/s41559-017-0193)
+     R BATCH --vanilla --slave << EOF
+     source('${ptgscripts}/mad_R/MAD.R')
+     mad.rooting = MAD(readLines('${nrbesttree}'), 'full')
+     write(mad.rooting[[1]], file='${nrrootedtree}')
+     save(mad.rooting, file='${nrbesttree}.${rootingmethod}rooting.RData}')
+EOF
+    else
+     if [[ "${rootingmethod:0:8}" == 'outgroup' ]] ; then
     # outgroup rooting; assume argument was of the shape 'outgroup:SPECIESCODE'
     # verify the presence of outgroup species in tree
     outgroup=$(echo ${rootingmethod} | cut -d':' -f2)
@@ -157,16 +165,19 @@ EOF
     rtree = root(tree, outgroup='${outgroup}', resolve.root=T)
     write.tree(rtree, file='${nrrootedtree}')
 EOF
+     fi
+    fi
    fi
   fi
- fi
-fi
 
-# from here no skipping in resume mode
+  # from here no skipping in resume mode
 
-# reintroduce excluded species name into the tree
-python ${ptgscripts}/putidentseqbackintree.py --input.nr.tree=${nrbiparts} --ref.rooted.nr.tree=${nrrootedtree} \
- --list.identical.seq=${pseudocorealn}.identical_sequences --output.tree=${speciestree}
+  # reintroduce excluded species name into the tree
+  python ${ptgscripts}/putidentseqbackintree.py --input.nr.tree=${nrbiparts} --ref.rooted.nr.tree=${nrrootedtree} \
+   --list.identical.seq=${pseudocorealn}.identical_sequences --output.tree=${speciestree}
+
+
+
 # make version of full tree with complete organism names
 python ${ptgscripts}/code2orgnames_in_tree.py ${speciestree} $database/organism_codes.tab ${speciestree}.names
 

@@ -12,7 +12,7 @@ CRANmirror="https://cran.ma.imperial.ac.uk/" # should be edited to match nearest
 
 checkexec (){
   if [ $? != 0 ]; then
-    echo "ERROR: $1"
+    echo "ERROR: $1" 1>&2
     exit 1
   else
     if [ ! -z "$2" ] ; then

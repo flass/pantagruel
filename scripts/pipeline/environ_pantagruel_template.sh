@@ -25,8 +25,8 @@ export famprefix='REPLACEfamprefix'
 export customassemb='REPLACEcustomassemb'
 export ncbiass='REPLACEncbiass'
 export ncbitax='REPLACEncbitax'
-export hpcremoteptgroot='REPLACEhpcremoteptgroot'
-export chaintype='REPLACEchaintype'
+export hpcremoteptgroot='none'
+export chaintype='fullgenetree'
 # the following variables should be set automatically as a result of running the pipeline
 # at 00.input_data stage
 export ngenomes='REPLACEngenomes'    # the count of genomes in the dataset
@@ -34,6 +34,7 @@ export ngenomes='REPLACEngenomes'    # the count of genomes in the dataset
 export pseudocoremingenomes='REPLACEpseudocoremingenomes'    # the minimum number of genomes in which a gene family should be present to be included in the pseudo-core genome gene set
 # the rest have fixed values
 # default values are:
+export collapseCladeParams='default'
 export cladesupp=70
 export subcladesupp=35
 export criterion='bs'

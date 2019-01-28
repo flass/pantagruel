@@ -16,9 +16,9 @@ export ptgdb=${ptgroot}/${ptgdbname}
 envsourcescript=${ptgdb}/environ_pantagruel_${ptgdbname}.sh
 source ${envsourcescript}
 
-export collapseCladeParams=$3
-if [ ! -z $4 ]
-  export hpcremoteptgroot=$4
+# to set misc variables ; not safe though
+if [ -e ${ptgtmp}/nondefvardecl.sh ] ; then
+  source ${ptgtmp}/nondefvardecl.sh
 fi
 
 #############################################################
