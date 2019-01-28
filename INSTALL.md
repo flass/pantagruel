@@ -70,7 +70,7 @@ brew install brewsci/bio/prokka
 
 ### Install MMSeqs using brew
 ```sh
-brew install https://raw.githubusercontent.com/soedinglab/mmseqs2/master/Formula/mmseqs2.rb --HEAD
+brew install mmseqs2
 ```
 
 ### Fetch Pal2Nal script

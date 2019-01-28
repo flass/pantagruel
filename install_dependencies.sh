@@ -116,6 +116,17 @@ if [[ -z "$(grep INFOPATH ${HOME}/.bash_profile | grep linuxbrew)" ]] ; then
   editedprofile=true
 fi
 
+# install Prokka using brew
+if [[ -z "$(brew search prokka | grep prokka)" ]] ; then
+  brew doctor
+  brew install brewsci/bio/prokka
+  checkexec "Could not install Prokka using Brew"
+else
+  echo "found Prokka already installed with Brew:"
+  brew search prokka
+fi
+echo ""
+
 # install MMSeqs using brew
 if [[ -z "$(brew search mmseqs2 | grep mmseqs2)" ]] ; then
   brew doctor
