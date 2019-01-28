@@ -23,7 +23,8 @@ export ncbiass="${6}"
 export ncbitax="${7}"
 export customassemb="${8}"
 export hpcremoteptgroot="${9}"
-export initfile="${10}"
+export chaintype="${10}"
+export initfile="${11}"
 
 # derive other important environmnet variables
 export ptgscripts="${ptgrepo}/scripts"
@@ -49,7 +50,7 @@ envsourcescript=${ptgdb}/environ_pantagruel_${ptgdbname}.sh
 
 rm -f ${ptgtmp}/sedenvvar.sh
 echo -n "cat ${templateenv}" > ${ptgtmp}/sedenvvar.sh
-for var in ptgdbname ptgroot ptgrepo myemail famprefix customassemb ncbiass ncbitax hpcremoteptgroot ; do
+for var in ptgdbname ptgroot ptgrepo myemail famprefix customassemb ncbiass ncbitax hpcremoteptgroot chaintype ; do
 echo -n " | sed -e \"s#REPLACE${var}#\${${var}}#\"" >> ${ptgtmp}/sedenvvar.sh
 done
 echo -n " > ${envsourcescript}" >> ${ptgtmp}/sedenvvar.sh
