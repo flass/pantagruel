@@ -151,11 +151,11 @@ EOF
       echo "Error, outgroup species '$outgroup' is absent from tree '${nrbesttree}'"
       exit 1
     fi
-    R BATCH --vanilla --slave << EOF
+    R --vanilla --slave << EOF
     library('ape')
     tree = read.tree('${nrbesttree}')
-    root(tree, outgroup='${outgroup}')
-    write(tree, file='${nrrootedtree}')
+    rtree = root(tree, outgroup='${outgroup}', resolve.root=T)
+    write.tree(rtree, file='${nrrootedtree}')
 EOF
    fi
   fi
@@ -164,11 +164,10 @@ fi
 
 # from here no skipping in resume mode
 
-# reintroduce excluded species name into the tree + root as MAD-rooted species tree
-export speciestree=${nrrootedtree}.full
+# reintroduce excluded species name into the tree
 python ${ptgscripts}/putidentseqbackintree.py --input.nr.tree=${nrbiparts} --ref.rooted.nr.tree=${nrrootedtree} \
  --list.identical.seq=${pseudocorealn}.identical_sequences --output.tree=${speciestree}
-
+# make version of full tree with complete organism names
 python ${ptgscripts}/code2orgnames_in_tree.py ${speciestree} $database/organism_codes.tab ${speciestree}.names
 
 ### generate ultrametric 'dated' species tree for more meaningfulgptghical representation of reconciliation AND to use the dated (original) version of ALE
