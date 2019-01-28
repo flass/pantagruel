@@ -37,12 +37,27 @@ mkdir -p ${coregenome}/
 
 if [[ ! -z "${reftree}" ]] ; then
   # use user-provided tree as reference tree
-  
-  mv ${envsourcescript} ${envsourcescript}0 && \
-   sed -e "s#'REPLACEreftree'#$reftree#" ${envsourcescript}0 > ${envsourcescript} && \
-   rm ${envsourcescript}0
-  echo "reftree=$reftree is recorded in init file '${envsourcescript}'"
-
+  if [[ -e "${reftree}" ]] ; then
+    # test if it is a valid tree file
+    R --vanilla --slave << EOF
+    library('ape')
+    tree = read.tree('${nrbesttree}')
+    if (is.null(tree)) quit(status=1)
+    else  quit(status=0)
+EOF
+    ###### also need test on tip labels
+    if [ $? != 0 ]; then
+      echo "ERROR: ${reftree} is not a valid tree file; exit now" 1>&2
+      exit 1 
+    fi
+    mv ${envsourcescript} ${envsourcescript}0 && \
+     sed -e "s#'REPLACEreftree'#$reftree#" ${envsourcescript}0 > ${envsourcescript} && \
+     rm ${envsourcescript}0
+    echo "reftree=$reftree is recorded in init file '${envsourcescript}'"
+  else
+    echo "Error: cannot open user-provided tree '$reftree' ; exit now."
+    exit 1
+  fi
 else
   # compute reference tree from core genome
 
