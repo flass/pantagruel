@@ -63,6 +63,11 @@ This commands need to be added to your .bashrc file for it to last beyond the cu
 PYTHONPATH=${PYTHONPATH}:${SOFTWARE}/tree2:${SOFTWARE}/pantagruel/python_libs
 ```
 
+### Install Prokka using brew
+```sh
+brew install brewsci/bio/prokka
+```
+
 ### Install MMSeqs using brew
 ```sh
 brew install https://raw.githubusercontent.com/soedinglab/mmseqs2/master/Formula/mmseqs2.rb --HEAD

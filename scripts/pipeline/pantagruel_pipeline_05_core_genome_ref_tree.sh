@@ -126,7 +126,7 @@ else
   ncorebootstrap=200
   ## compute 200 rapid bootstrap
   if [[ "${resumetask}" == "true" && -s ${coretree}/RAxML_bipartitionsBranchLabels.${treename} ]] ; then
-   # skip bootstraping and mapping to ML tree
+   echo "skip bootstraping and mapping to ML tree"
   else
    if [[ "${resumetask}" == "true" && -s ${coretree}/RAxML_bootstrap.${treename} ]] ; then
     nbs=$(wc -l ${coretree}/RAxML_bootstrap.${treename} | cut -d' ' -f1)
