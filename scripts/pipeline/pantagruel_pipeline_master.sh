@@ -248,11 +248,6 @@ if [ -z "$famprefix" ] ; then
 fi
 if [ -z "$customassemb" ] ; then
   export customassemb=${ptgroot}/user_genomes
-  if [ ! -d "$customassemb/contigs" ] ; then
-   echo "custom assembly folder must contain a subfolder 'contigs/'"
-   usage
-   exit 1
-  fi
   echo "Default: set custom (raw) genome assembly source folder to '$customassemb'"
 fi
 if [ -z "$ncbiass" ] ; then
