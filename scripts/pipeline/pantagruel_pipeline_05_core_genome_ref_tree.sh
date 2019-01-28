@@ -37,13 +37,21 @@ mkdir -p ${coregenome}/
 
 if [[ ! -z "${reftree}" ]] ; then
   # use user-provided tree as reference tree
+  
+  mv ${envsourcescript} ${envsourcescript}0 && \
+   sed -e "s#'REPLACEreftree'#$reftree#" ${envsourcescript}0 > ${envsourcescript} && \
+   rm ${envsourcescript}0
+  echo "reftree=$reftree is recorded in init file '${envsourcescript}'"
 
 else
   # compute reference tree from core genome
 
   if [[ -z ${pseudocoremingenomes} || "${pseudocoremingenomes}" == 'REPLACEpseudocoremingenomes' ]] ; then
-    echo "Error: 'pseudocoremingenomes' variable is not set; please run $ptgscripts/choose_min_genome_occurrence_pseudocore_genes.sh (interactive) to choose a sensible value."
-    exit 1
+    #~ echo "Error: 'pseudocoremingenomes' variable is not set; please run $ptgscripts/choose_min_genome_occurrence_pseudocore_genes.sh (interactive) to choose a sensible value."
+    #~ exit 1
+    echo "Will rely on strict core genome definition to compute reference tree. This is often not advisable as the strict core genome can be very small."
+    echo "please run $ptgscripts/choose_min_genome_occurrence_pseudocore_genes.sh (interactive) to choose a sensible 'pseudocore genomes' gene set."
+    export pseudocoremingenomes=${ngenomes}
   fi 
   ## generate core genome alignment path list
   if [[ "${resumetask}" == "true" && -s ${pseudocorealn} ]] ; then
@@ -176,7 +184,7 @@ EOF
   python ${ptgscripts}/putidentseqbackintree.py --input.nr.tree=${nrbiparts} --ref.rooted.nr.tree=${nrrootedtree} \
    --list.identical.seq=${pseudocorealn}.identical_sequences --output.tree=${speciestree}
 
-
+fi
 
 # make version of full tree with complete organism names
 python ${ptgscripts}/code2orgnames_in_tree.py ${speciestree} $database/organism_codes.tab ${speciestree}.names

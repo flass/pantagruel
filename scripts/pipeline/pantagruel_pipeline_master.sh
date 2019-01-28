@@ -368,8 +368,7 @@ for task in "$tasks" ; do
   if [[ "$task" == 'init' ]] ; then
     echo "Pantagrel pipeline step $task: initiate pangenome database."
     setdefaults
-    
-    ${ptgscripts}/pipeline/pantagruel_pipeline_init.sh ${ptgdbname} ${ptgroot} ${ptgrepo} ${myemail} ${famprefix} ${ncbiass} ${ncbitax} ${customassemb} ${hpcremoteptgroot} ${chaintype} ${initfile}
+    ${ptgscripts}/pipeline/pantagruel_pipeline_init.sh ${ptgdbname} ${ptgroot} ${ptgrepo} ${myemail} ${famprefix} ${ncbiass} ${ncbitax} ${customassemb} ${initfile}
     checkexec
   else
    case "$task" in

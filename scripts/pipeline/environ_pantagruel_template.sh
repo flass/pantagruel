@@ -32,6 +32,7 @@ export chaintype='fullgenetree'
 export ngenomes='REPLACEngenomes'    # the count of genomes in the dataset
 # at 05.core_genome stage
 export pseudocoremingenomes='REPLACEpseudocoremingenomes'    # the minimum number of genomes in which a gene family should be present to be included in the pseudo-core genome gene set
+export reftree='REPLACEreftree'                              # possible user-provided reference tree
 # the rest have fixed values
 # default values are:
 export collapseCladeParams='default'
@@ -106,13 +107,21 @@ export mmseqsclout=${families}/$(basename ${allfaarad}.nr).mmseqs_clusterdb_defa
 export protfamseqs=${mmseqsclout}_clusters_fasta
 export protorfanclust="${famprefix}P000000"
 export cdsorfanclust="${famprefix}C000000"
-export pseudocore=pseudo-core-${pseudocoremingenomes}-unicopy
+if [ "$pseudocoremingenomes" != 'REPLACEpseudocoremingenomes' ] ; then
+  export pseudocore=pseudo-core-${pseudocoremingenomes}-unicopy
+else
+  export pseudocore='strict-core-unicopy'
+fi
 export treename=${pseudocore}_concat_prot_${ngenomes}-genomes_${ptgdbname}
 export pseudocorealn=${coregenome}/${treename}.aln
 export nrbesttree=${coretree}/RAxML_bestTree.${treename}
 export nrbiparts=${nrbesttree/bestTree/bipartitions}
 export nrrootedtree=${nrbiparts}.${rootingmethod/:/-}rooted
-export speciestree=${nrrootedtree}.full
+if [ "$reftree" == 'REPLACEreftree' ] ; then
+  export speciestree=${nrrootedtree}.full
+else
+  export speciestree=${reftree}
+fi
 export collapsecond=${criterion}_stem${cladesupp}_within${withinfun}${subcladesupp}
 export IPversion=$(interproscan --version | head -n 1 | sed -e 's/InterProScan version //')
 export interpro=${funcannot}/InterProScan_${IPversion}
