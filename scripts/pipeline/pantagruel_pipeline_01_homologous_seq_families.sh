@@ -50,6 +50,10 @@ grep -v NRPROT000000 ${allfaarad}.clusthashdb_minseqid100_families.tab > ${allfa
 python ${ptgscripts}/genefam_table_as_list.py ${allfaarad}.identicals.tab ${allfaarad}.identicals.list 0
 python ${ptgscripts}/remove_identical_seqs.py ${allfaarad}.nrprotids.faa ${allfaarad}.identicals.list ${allfaarad}.nr.faa
 
+## collect data from assemblies, including matching of (nr) protein to CDS sequence ids
+python ${ptgscripts}/allgenome_gff2db.py --assemb_list ${genomeinfo}/assemblies_list --dirout ${genomeinfo}/assembly_info \
+ --ncbi_taxonomy ${ncbitax} --identical_prots ${allfaarad}.identicals.list
+
 ## check consistency of non-redundant protein sets
 mkdir -p $ptgtmp
 protidfield=$(head -n 1 ${genomeinfo}/assembly_info/allproteins_info.tab |  tr '\t' '\n' | grep -n 'nr_protein_id' | cut -d':' -f1)

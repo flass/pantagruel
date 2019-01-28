@@ -205,8 +205,3 @@ mv ${envsourcescript} ${envsourcescript}0 && \
 echo "ngenomes=$ngenomes is recorded in init file '${envsourcescript}'"
 
 echo "Will work with a database of $ngenomes genomes"
-
-## collect data from assemblies, including matching of (nr) protein to CDS sequence ids
-mkdir -p ${genomeinfo}/
-python ${ptgscripts}/allgenome_gff2db.py --assemb_list ${genomeinfo}/assemblies_list --dirout ${genomeinfo}/assembly_info \
- --ncbi_taxonomy ${ncbitax} --identical_prots ${allfaarad}.identicals.list
