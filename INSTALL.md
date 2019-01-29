@@ -48,7 +48,7 @@ install.packages('phytools', repos=CRANmirror)
 
 ### Python and packages
 ```sh
-sudo apt install python python-scipy python-numpy python-biopython python-igraph cython python-pip
+sudo apt install python python-scipy python-numpy python-biopython python-biopython-sql python-igraph cython python-pip
 ```
 
 ### if using MPI for MrBayes (recommended)
