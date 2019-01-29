@@ -47,7 +47,7 @@ fi
 mkdir -p  ${assemblies}/
 cd ${ncbiass}/
 # look for assembly folders
-ls ${ncbiass}/ | grep -v 'genome_assemblies' > ${ncbiass}/genome_assemblies_list
+ls -A ${ncbiass}/ | grep -v 'genome_assemblies' > ${ncbiass}/genome_assemblies_list
 # look for archives containing many assembly folders (datasets downloaded from NCBI Assembly website)
 assarch=$(ls genome_assemblies*.tar 2> /dev/null)
 if [ "$assarch" ] ; then
@@ -83,15 +83,16 @@ if [[ "$(ls -A "${contigs}/" 2>/dev/null)" ]] ; then
 
   ### uniformly annotate the raw sequence data with Prokka
   # first add all the (representative) proteins in the dataset to the custom reference prot database for Prokka to search for similarities
-  ls ${indata}/assemblies/*/*gbff.gz > ${indata}/assemblies_gbffgz_list
-  parallel -a ${indata}/assemblies_gbffgz_list 'gunzip -k'
+  ls ${indata}/assemblies/*/*_genomic.gbff.gz > ${indata}/assemblies_genomic_gbffgz_list
+  parallel -a ${indata}/assemblies_genomic_gbffgz_list 'gunzip -k'
   # extract protein sequences
-  prokka-genbank_to_fasta_db ${indata}/assemblies/*/*gbff > ${ptgtmp}/${refgenus}.faa >& ${ptglogs}/prokka-genbank_to_fasta_db.log
+  prokka-genbank_to_fasta_db ${indata}/assemblies/*/*_genomic.gbff > ${ptgtmp}/${refgenus}.faa 2> ${ptglogs}/prokka-genbank_to_fasta_db.log
   # cluster similar sequences
   cdhit -i ${ptgtmp}/${refgenus}.faa -o ${ptgtmp}/${refgenus}_representative.faa -T 0 -M 0 -G 1 -s 0.8 -c 0.9 &> ${ptglogs}/cdhit.log
   rm -fv ${ptgtmp}/${refgenus}.faa ${ptgtmp}/${refgenus}_representative.faa.clstr
   # replace database name for genus detection by Prokka 
-  prokkablastdb=$(dirname $(dirname $(ls -l `which prokka` | awk '{ print $NF }')))/db/genus/
+  prokkabin=$(which prokka)
+  prokkablastdb=$(dirname $(dirname $(readlink -f $prokkabin)))/db/genus
   cp -p ${ptgtmp}/${refgenus}_representative.faa ${prokkablastdb}/${refgenus}
   cd ${prokkablastdb}/
   makeblastdb -dbtype prot -in ${refgenus}
