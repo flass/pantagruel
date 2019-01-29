@@ -24,6 +24,7 @@ def main(gff_file, fasta_file):
 	cdsout_file = open("%s.ffn" % os.path.splitext(gff_file)[0], 'w')
 	protout_file = open("%s.faa" % os.path.splitext(gff_file)[0], 'w')
 	for genomerecord in gff_iter:
+		#~ genomerecord.id = genomerecord.id.split()[0]
 		for feature in genomerecord.features:
 			if feature.type=='CDS':
 				product = feature.qualifiers.get('product', '')
