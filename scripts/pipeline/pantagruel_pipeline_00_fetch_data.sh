@@ -166,8 +166,9 @@ if [[ "$(ls -A "${contigs}/" 2>/dev/null)" ]] ; then
           fcontig.close()
           outgff.close()
 EOF
-        # add the rest of the file
-        tail -n +2 ${annotgff[0]}.original >> ${annotgff[0]}
+          # add the rest of the file
+          tail -n +2 ${annotgff[0]}.original >> ${annotgff[0]}
+        fi
         cp ${contigs}/${allcontigs} ${annotgff[0]/gff/fna}
         python ${ptgscripts}/GFFGenomeFasta2GenBankCDSProtFasta.py ${annotgff[0]} ${contigs}/${allcontigs}
       fi
