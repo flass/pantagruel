@@ -127,7 +127,7 @@ if [[ "$(ls -A "${contigs}/" 2>/dev/null)" ]] ; then
         exit 1
       fi
       if [ -z $(grep '##sequence-region' ${annotgff[0]}) ] ; then
-		  mv ${annotgff[0]} ${annotgff[0]}.original
+		  mv -f ${annotgff[0]} ${annotgff[0]}.original
           # make GFF source file look more like the output of Prokka
           head -n1 ${annotgff[0]}.original > ${annotgff[0]}
           # add region annotation features
