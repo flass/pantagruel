@@ -170,7 +170,7 @@ EOF
           fi
         done
         cp ${contigs}/${allcontigs} ${annotgff[0]/gff/fna}
-        python ${ptgscripts}/GFFGenomeFasta2GenBankCDSProtFasta.py ${annotgff[0]} ${contigs}/${allcontigs}
+        python ${ptgscripts}/GFFGenomeFasta2GenBankCDSProtFasta.py ${annotgff[0]/.gff/.ptg.gff} ${annotgff[0]/gff/fna}
       fi
       annotfna=($(ls ${annot}/${gproject}/*.fna))
       annotgbk=($(ls ${annot}/${gproject}/*.gbk))

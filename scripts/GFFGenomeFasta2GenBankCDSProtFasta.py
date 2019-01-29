@@ -16,20 +16,18 @@ from BCBio import GFF
 
 def main(gff_file, fasta_file):
 	fasta_input = SeqIO.to_dict(SeqIO.parse(fasta_file, "fasta", alphabet=generic_dna))
-	gff_iter = GFF.parse(gff_file, base_dict=fasta_input)
+	genome = list(GFF.parse(gff_file, fasta_input))
 	# output Genbank
 	with open("%s.gbk" % os.path.splitext(gff_file)[0], 'w') as gbout_file:
-		SeqIO.write(gff_iter, gbout_file, "genbank")
+		SeqIO.write(genome, gbout_file, "genbank")
 	# output CDS and Proteins
 	cdsout_file = open("%s.ffn" % os.path.splitext(gff_file)[0], 'w')
 	protout_file = open("%s.faa" % os.path.splitext(gff_file)[0], 'w')
-	for genomerecord in gff_iter:
-		#~ genomerecord.id = genomerecord.id.split()[0]
-		genomerecord.seq.alphabet = generic_dna
+	for genomerecord in genome:
 		for feature in genomerecord.features:
 			if feature.type=='CDS':
 				product = feature.qualifiers.get('product', '')
-				seqcds = feature.location.extract(rec).seq
+				seqcds = feature.location.extract(genomerecord).seq
 				cdsout_file.write(">% %s\n%s\n" % (feature.id, product, str(seqcds)))
 				seqprot = seqcds.translate(table=11)
 				protout_file.write(">% %s\n%s\n" % (feature.id, product, str(seqprot)))
