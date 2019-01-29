@@ -35,11 +35,15 @@ sudo apt install git cmake gcc g++ libmagick++-dev linuxbrew-wrapper lftp clusta
 ```sh
 sudo apt install r-base-core r-recommended r-cran-ape r-cran-phytools r-cran-ade4 r-cran-vegan r-cran-dbi r-cran-rsqlite r-cran-igraph r-cran-getopt
 ```
+NB: debian package `r-cran-phytools` is only avalable from Ubunti 18.04; if running an earlier version, please
 For optional packages `topGO` and `pvclust`, you can open the R interpreter using `R --vanilla` and typing:
 ```R
 CRANmirror='https://cran.ma.imperial.ac.uk/'
-install.packages('topGO', repos=CRANmirror)
+source("https://bioconductor.org/biocLite.R")
+biocLite("topGO")
 install.packages('pvclust', repos=CRANmirror)
+# and in case of not being able to install phytools via apt:
+install.packages('phytools', repos=CRANmirror)
 ```
 
 ### Python and packages
