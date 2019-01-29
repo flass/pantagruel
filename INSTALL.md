@@ -29,7 +29,7 @@ Otherwise, you can manually install the software following the indications below
 
 ### basic dependencies, libraries and standalone software
 ```sh
-sudo apt install git cmake gcc g++ linuxbrew-wrapper lftp clustalo raxml libhmsbeagle1v5 mrbayes
+sudo apt install git cmake gcc g++ linuxbrew-wrapper lftp clustalo raxml libhmsbeagle1v5 mrbayes openjdk-8-jdk openjdk-8-jre cd-hit
 ```
 ### R and packages
 ```sh
@@ -44,7 +44,7 @@ install.packages('pvclust', repos=CRANmirror)
 
 ### Python and packages
 ```sh
-sudo apt install python python-scipy python-numpy python-biopython python-igraph cython
+sudo apt install python python-scipy python-numpy python-biopython python-igraph cython python-pip
 ```
 
 ### if using MPI for MrBayes (recommended)

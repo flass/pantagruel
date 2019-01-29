@@ -54,6 +54,7 @@ export rootingmethod='treebalance'
 # only relevant if user-defined genomes are provided
 export assembler="somesoftware"
 export seqcentre="somewhere"
+export refgenus="Reference"
 
 ### BEWARE!!! value of variables below is unsafe to modify
 

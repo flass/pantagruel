@@ -226,8 +226,8 @@ Below is a summary of the software on which Pantagruel dependends:
 - [LFTP](https://lftp.yar.ru/get.html) (available as a Debian package *lftp*)
 - [(linux)brew](http://linuxbrew.sh/) (available as a Debian package *linuxbrew-wrapper*)
 - [docker](https://www.docker.com/) (available as a Debian package *docker.io*)
-- [JAVA Runtime (JDK 8.0)](https://openjdk.java.net) (available as a Debian packages *openjdk-8-jdk* and *openjdk-8-jre*)
-
+- [JAVA Runtime (JDK 8.0)](https://openjdk.java.net) (available as Debian packages *openjdk-8-jdk* and *openjdk-8-jre*)
+- [CD-HIT](cd-hit.org) (available as a Debian package *cd-hit*)
 
 -------------
 
