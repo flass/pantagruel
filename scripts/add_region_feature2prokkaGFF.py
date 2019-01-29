@@ -36,7 +36,10 @@ with open(nfrawassembseq, 'r') as frawassembseq:
 					cname = 'contig'+str(int(lsp[0]))
 				except ValueError:
 					cname = lsp[0]
-				dcontigs[cname] = dict(lsp[i].split('=') for i  in range(1, len(lsp)))
+				try:
+					dcontigs[cname] = dict(lsp[i].split('=') for i  in range(1, len(lsp)))
+				except ValueError:
+					dcontigs[cname] = {}
 			lcontignames.append(cname)
 
 fgffin = open(nfgffin, 'r')

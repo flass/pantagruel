@@ -135,6 +135,9 @@ if [[ "$(ls -A "${contigs}/" 2>/dev/null)" ]] ; then
         done
         python ${ptgscripts}/GFFGenomeFasta2GenBankCDSProtFasta.py ${annotgff[0]} ${contigs}/${allcontigs}
       fi
+      annotgbk=($(ls ${annot}/${gproject}/*.gbk))
+      annotfaa=($(ls ${annot}/${gproject}/*.faa))
+      annotffn=($(ls ${annot}/${gproject}/*.ffn))
       python ${ptgscripts}/add_taxid_feature2prokkaGBK.py ${annotgbk[0]} ${annotgbk[0]%*.gbk}.ptg.gbk ${straininfo}
       echo "done."
       echo "# $(dateprompt)"
