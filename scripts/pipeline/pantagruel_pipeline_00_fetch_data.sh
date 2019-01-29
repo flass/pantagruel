@@ -16,6 +16,10 @@ export ptgdb=${ptgroot}/${ptgdbname}
 envsourcescript=${ptgdb}/environ_pantagruel_${ptgdbname}.sh
 source ${envsourcescript}
 
+# logging variables and functions
+alias dateprompt="date +'[%Y-%m-%d %H:%M:%S]'"
+datepad="                     "
+
 #################################
 ## 00. Data download and grooming
 #################################
@@ -122,19 +126,22 @@ if [[ "$(ls -A "${contigs}/" 2>/dev/null)" ]] ; then
       fi
       python ${ptgscripts}/add_region_feature2prokkaGFF.py ${annotgff[0]} ${annotgff[0]%*.gff}.ptg.gff ${straininfo} ${contigs}/${allcontigs} ${assembler}
       echo "fix annotation to integrate taxid information into GBK files"
+      annotfna=($(ls ${annot}/${gproject}/*.fna))
       annotgbk=($(ls ${annot}/${gproject}/*.gbk))
       annotfaa=($(ls ${annot}/${gproject}/*.faa))
       annotffn=($(ls ${annot}/${gproject}/*.ffn))
-      if [[ -z "${annotgbk[0]}" || -z "${annotffn[0]}" || -z "${annotfaa[0]}" ]] ; then
-        echo "At least one of these files is missing in ${annot}/${gproject}/ folder: GenBank flat file (gbk), CDS Fasta (ffn) or protein Fasta (faa)."
+      if [[ -z "${annotfna[0]}" || -z "${annotgbk[0]}" || -z "${annotffn[0]}" || -z "${annotfaa[0]}" ]] ; then
+        echo "At least one of these files is missing in ${annot}/${gproject}/ folder: contig fasta file (.fna), GenBank flat file (gbk), CDS Fasta (ffn) or protein Fasta (faa)."
         echo "Will (re)generate them from the GFF anotation and genomic Fasta sequence; files already present are kept with an added prefix '.original'"
-        for annotf in ${annotgbk[0]} ${annotffn[0]} ${annotfaa[0]}; do
+        for annotf in ${annotfna[@]} ${annotgbk[@]} ${annotffn[@]} ${annotfaa[@]}; do
           if [[ ! -z "${annotf}" ]] ; then
             mv ${annotf} ${annotf}.original
           fi
         done
+        cp ${contigs}/${allcontigs} ${annotgff[0]/gff/fna}
         python ${ptgscripts}/GFFGenomeFasta2GenBankCDSProtFasta.py ${annotgff[0]} ${contigs}/${allcontigs}
       fi
+      annotfna=($(ls ${annot}/${gproject}/*.fna))
       annotgbk=($(ls ${annot}/${gproject}/*.gbk))
       annotfaa=($(ls ${annot}/${gproject}/*.faa))
       annotffn=($(ls ${annot}/${gproject}/*.ffn))
