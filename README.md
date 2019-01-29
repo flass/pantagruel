@@ -172,6 +172,9 @@ Under a Debian environment (e.g. Ubuntu), please follow the indications in the [
 Below is a summary of the software on which Pantagruel dependends:
 
 ### Required bioinformatic software
+- **Prokka** for genome annotation
+  (Install from  [source code](https://github.com/tseemann/prokka); )
+
 - **MMseqs2/Linclust** for homologous sequence clustering  
   (Install from [source code](https://github.com/soedinglab/MMseqs2); last tested version https://github.com/soedinglab/MMseqs2/commit/c92411b91175a2362554849b8889a5770a1ae537)
 

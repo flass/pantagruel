@@ -112,13 +112,13 @@ else
   else
    ckps=($(ls -t ${coretree}/RAxML_checkpoint.${treename}.*))
    if [[ "${resumetask}" == "true" && -z "${ckps}" ]] ; then
-    # first search
-    $raxmlbin -s ${pseudocorealn}.reduced ${raxmloptions} &> ${ptglogs}/raxml/${treename}.ML_run.log
-   else
-    echo "resume from checkpoint {ckps[0]##*.}"
+    echo "resume from checkpoint ${ckps[0]##*.}"
     mv ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_bestTree.${treename}.up_to_ckp${ckps[0]##*.}
     mv ${ptglogs}/raxml/${treename}.ML_run.log ${ptglogs}/raxml/${treename}.ML_run.log.up_to_ckp${ckps[0]##*.}
     $raxmlbin -s ${pseudocorealn}.reduced ${raxmloptions} -t ${ckps[0]} &> ${ptglogs}/raxml/${treename}.ML_run.log
+   else
+    # first search
+    $raxmlbin -s ${pseudocorealn}.reduced ${raxmloptions} &> ${ptglogs}/raxml/${treename}.ML_run.log
    fi
    mv ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_bestTree.${treename}
   fi

@@ -33,59 +33,50 @@ echo "did not find the relevant taxonomy flat files in '${ncbitax}/'; download t
   files='taxcat.tar.gz* taxcat_readme.txt taxdump.tar.gz* taxdump_readme.txt'
   mkdir -p ${ncbitax}
   lftp -c "cd ${source} ; mget -O ${ncbitax}/ ${files}" ${openparam}
-  # reduce taxonomic id2name reference file complexity
-  for tgz in `ls ${ncbitax}/*.tar.gz` ; do md5sum -c ${tgz}.md5 && tar -xzf ${tgz} ; done
+  cd ${ncbitax}/
+  for tgz in `ls *.tar.gz` ; do md5sum -c ${tgz}.md5 && tar -xzf ${tgz} ; done
+  cd -
 fi
 
 ## using NCBI web interface:
-# Search Assembly database using a query defined as convenient:	
+# Search Assembly database using a query defined as convenient:  
 # e.g.: 'txid543[Organism:exp] AND ("latest refseq"[filter] AND all[filter] NOT anomalous[filter]) AND ("complete genome"[filter])'
-# save assemblies (Download Assemblies > Source Database: RefSeq; File type: All file type (including assembly-structure directory)) as $indata/genome_assemblies_DATASETTAG.tar
+# save assemblies (Download Assemblies > Source Database: RefSeq; File type: All file type (including assembly-structure directory))
+# as ${ncbiass}/genome_assemblies.tar or as ${ncbiass}/genome_assemblies_DATASETTAG.tar if several datasets have to be merged
 # extract assembly data
-mkdir -p  $indata/assemblies/
-cd $ncbiass/
-for tarf in `ls genome_assemblies_*.tar` ; do 
-  tartag=${tarf#genome_assemblies_*}
-  datasettag=${tartag%.*}
-  tar -tf genome_assemblies_${datasettag}.tar | cut -d'/' -f2 | sort -u | grep -v "README\|report" > $ncbiass/genome_assemblies_${datasettag}_list
-  tar -xf genome_assemblies_${datasettag}.tar 
-  mv report.txt report_${datasettag}.txt
-  assd=(`ls ncbi-genomes-* -d`)
-  for dass in `ls ${assd[0]}/ | grep -v README` ; do
-   if [ ! -z $dass ] ; then
-    rm -rf $ncbiass/$dass
-    mv ${assd[0]}/$dass $ncbiass/
-   fi
+mkdir -p  ${assemblies}/
+cd ${ncbiass}/
+# look for assembly folders
+ls ${ncbiass}/ | grep -v 'genome_assemblies' > ${ncbiass}/genome_assemblies_list
+# look for archives containing many assembly folders (datasets downloaded from NCBI Assembly website)
+assarch=$(ls genome_assemblies*.tar 2> /dev/null)
+if [ "$assarch" ] ; then
+  echo "detected archive(s) of genome assemblies (presumably downloaded from NCBI Assembly website):"
+  echo "$assarch"
+  # extract assembly folders from the archives
+  for tarf in `ls genome_assemblies*.tar` ; do 
+    tartag=${tarf#genome_assemblies*}
+    datasettag=${tartag%.*}
+    tar -tf genome_assemblies${datasettag}.tar | cut -d'/' -f2 | sort -u | grep -v "README\|report" > ${ncbiass}/genome_assemblies${datasettag}_list
+    tar -xf genome_assemblies${datasettag}.tar 
+    mv report.txt report${datasettag}.txt
+    assd=(`ls ncbi-genomes-* -d`)
+    for dass in `ls ${assd[0]}/ | grep -v README` ; do
+     if [ ! -z $dass ] ; then
+    rm -rf ${ncbiass}/$dass
+    mv ${assd[0]}/$dass ${ncbiass}/
+     fi
+    done
+    rm -r ${assd[0]}/ 
   done
-  rm -r ${assd[0]}/ 
-done
-grep "# Organism name" $ncbiass/*/*_assembly_stats.txt > $ncbiass/all_assemblies_organism_names
+fi
+
+grep "# Organism name" ${ncbiass}/*/*_assembly_stats.txt > ${ncbiass}/all_assemblies_organism_names
 
 # store in centralised folder for NCBI assemblies and just record links
-mkdir -p $indata/assemblies/
-for ass in `cat $ncbiass/genome_assemblies_*_list` ; do ln -s $ncbiass/${ass}* $indata/assemblies/  ; done
+mkdir -p ${assemblies}/
+for ass in `cat ${ncbiass}/genome_assemblies*_list` ; do ln -s ${ncbiass}/${ass}* ${assemblies}/  ; done
 
-
-### can be automated using NCBI Entrez tools
-#~ example from https://www.ncbi.nlm.nih.gov/books/NBK179288/ :
- #~ for org in \
-    #~ "Agrobacterium tumefaciens" \
-    #~ "Bacillus anthracis" \
-    #~ "Escherichia coli" \
-    #~ "Neisseria gonorrhoeae" \
-    #~ "Pseudomonas aeruginosa" \
-    #~ "Shigella flexneri" \
-    #~ "Streptococcus pneumoniae"
-  #~ do
-    #~ esearch -db assembly -query "$org [ORGN]" |
-    #~ efilter -query "representative [PROP]" |
-    #~ elink -target nuccore -name assembly_nuccore_refseq |
-    #~ efetch -format docsum |
-    #~ xtract -pattern DocumentSummary -element AccessionVersion Slen Title |
-    #~ sed 's/,.*//' |
-    #~ grep -v -i -e scaffold -e contig -e plasmid -e sequence -e patch |
-    #~ sort -t $'\t' -k 2,2nr
-  #~ done
 
 ## if the folder of custom/user-provided set of genomes is not empty
 if [[ "$(ls -A "${contigs}/" 2>/dev/null)" ]] ; then
