@@ -30,7 +30,7 @@ def main(gff_file, fasta_file):
 				seqcds = feature.location.extract(genomerecord).seq
 				cdsout_file.write(">% %s\n%s\n" % (feature.id, product, str(seqcds)))
 				seqprot = seqcds.translate(table=11)
-				protout_file.write(">% %s\n%s\n" % (feature.id, product, str(seqprot)))
+				protout_file.write(">%s %s\n%s\n" % (feature.id, product, str(seqprot)))
 	cdsout_file.close()
 	protout_file.close()
 
