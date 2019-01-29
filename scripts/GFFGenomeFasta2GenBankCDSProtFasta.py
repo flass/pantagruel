@@ -15,8 +15,8 @@ from Bio.Alphabet import generic_dna
 from BCBio import GFF
 
 def main(gff_file, fasta_file):
-	fasta_input = SeqIO.to_dict(SeqIO.parse(fasta_file, "fasta", generic_dna))
-	gff_iter = GFF.parse(gff_file, fasta_input)
+	fasta_input = SeqIO.to_dict(SeqIO.parse(fasta_file, "fasta", alphabet=generic_dna))
+	gff_iter = GFF.parse(gff_file, base_dict=fasta_input)
 	# output Genbank
 	with open("%s.gbk" % os.path.splitext(gff_file)[0], 'w') as gbout_file:
 		SeqIO.write(gff_iter, gbout_file, "genbank")
@@ -25,6 +25,7 @@ def main(gff_file, fasta_file):
 	protout_file = open("%s.faa" % os.path.splitext(gff_file)[0], 'w')
 	for genomerecord in gff_iter:
 		#~ genomerecord.id = genomerecord.id.split()[0]
+		genomerecord.seq.alphabet = generic_dna
 		for feature in genomerecord.features:
 			if feature.type=='CDS':
 				product = feature.qualifiers.get('product', '')

@@ -51,7 +51,7 @@ fi
 mkdir -p  ${assemblies}/
 cd ${ncbiass}/
 # look for assembly folders
-ls -A ${ncbiass}/ | grep -v 'genome_assemblies' > ${ncbiass}/genome_assemblies_list
+ls -A ${ncbiass}/ | grep -v 'assemblies' > ${ncbiass}/genome_assemblies_list
 # look for archives containing many assembly folders (datasets downloaded from NCBI Assembly website)
 assarch=$(ls genome_assemblies*.tar 2> /dev/null)
 if [ "$assarch" ] ; then
@@ -79,7 +79,9 @@ grep "# Organism name" ${ncbiass}/*/*_assembly_stats.txt > ${ncbiass}/all_assemb
 
 # store in centralised folder for NCBI assemblies and just record links
 mkdir -p ${assemblies}/
-for ass in `cat ${ncbiass}/genome_assemblies*_list` ; do ln -s ${ncbiass}/${ass}* ${assemblies}/  ; done
+for ass in `cat ${ncbiass}/genome_assemblies*_list` ; do
+  ln -s ${ncbiass}/${ass} ${assemblies}/
+done
 
 
 ## if the folder of custom/user-provided set of genomes is not empty
@@ -87,10 +89,10 @@ if [[ "$(ls -A "${contigs}/" 2>/dev/null)" ]] ; then
 
   ### uniformly annotate the raw sequence data with Prokka
   # first add all the (representative) proteins in the dataset to the custom reference prot database for Prokka to search for similarities
-  ls ${indata}/assemblies/*/*_genomic.gbff.gz > ${indata}/assemblies_genomic_gbffgz_list
+  ls ${assemblies}/*/*_genomic.gbff.gz > ${indata}/assemblies_genomic_gbffgz_list
   parallel -a ${indata}/assemblies_genomic_gbffgz_list 'gunzip -k'
   # extract protein sequences
-  prokka-genbank_to_fasta_db ${indata}/assemblies/*/*_genomic.gbff > ${ptgtmp}/${refgenus}.faa 2> ${ptglogs}/prokka-genbank_to_fasta_db.log
+  prokka-genbank_to_fasta_db ${assemblies}/*/*_genomic.gbff > ${ptgtmp}/${refgenus}.faa 2> ${ptglogs}/prokka-genbank_to_fasta_db.log
   # cluster similar sequences
   cdhit -i ${ptgtmp}/${refgenus}.faa -o ${ptgtmp}/${refgenus}_representative.faa -T 0 -M 0 -G 1 -s 0.8 -c 0.9 &> ${ptglogs}/cdhit.log
   rm -fv ${ptgtmp}/${refgenus}.faa ${ptgtmp}/${refgenus}_representative.faa.clstr
@@ -138,6 +140,34 @@ if [[ "$(ls -A "${contigs}/" 2>/dev/null)" ]] ; then
             mv ${annotf} ${annotf}.original
           fi
         done
+        if [ -z $(grep '##sequence-region' ${annotgff[0]}) ] ; then
+		  mv ${annotgff[0]} ${annotgff[0]}.original
+          # make GFF source file look more like the output of Prokka
+          head -n1 ${annotgff[0]}.original > ${annotgff[0]}
+          # add region annotation features
+          python << EOF
+          fcontig = open('${contigs}/${allcontigs}', 'r')
+          outgff = open('${annotgff[0]}', 'a')
+          inseq = False
+          seqlen = 0
+          seqid = None
+          for line in fcontig:
+            if line.startswith('>'):
+              if inseq:
+                # write out previous
+                outgff.write("##sequence-region %s 1 %d\n"%(seqid, seqlen))
+              seqid = line.strip('>\n')
+              seqlen = 0
+            else:
+              inseq = True
+              seqlen += len(line.strip(' \n'))
+          
+          outgff.write("##sequence-region %s 1 %d\n"%(seqid, seqlen))
+          fcontig.close()
+          outgff.close()
+EOF
+        # add the rest of the file
+        tail -n +2 ${annotgff[0]}.original >> ${annotgff[0]}
         cp ${contigs}/${allcontigs} ${annotgff[0]/gff/fna}
         python ${ptgscripts}/GFFGenomeFasta2GenBankCDSProtFasta.py ${annotgff[0]} ${contigs}/${allcontigs}
       fi
