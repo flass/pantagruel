@@ -152,10 +152,10 @@ outgff.write("##sequence-region %s 1 %d\n"%(seqid, seqlen))
 fcontig.close()
 outgff.close()
 EOF
-        # add the rest of the file
-        tail -n +2 ${annotgff[0]}.original >> ${annotgff[0]}
+        # add the rest of the file, in order of contig names!
+        tail -n +2 ${annotgff[0]}.original | sort >> ${annotgff[0]}
       fi
-      python ${ptgscripts}/add_region_feature2prokkaGFF.py ${annotgff[0]} ${annotgff[0]%*.gff}.ptg.gff ${straininfo} ${contigs}/${allcontigs} ${assembler}
+      python ${ptgscripts}/add_region_feature2prokkaGFF.py ${annotgff[0]} ${annotgff[0]/.gff/.ptg.gff} ${straininfo} ${contigs}/${allcontigs} ${assembler}
       echo "fix annotation to integrate taxid information into GBK files"
       annotfna=($(ls ${annot}/${gproject}/*.fna))
       annotgbk=($(ls ${annot}/${gproject}/*.gbk))

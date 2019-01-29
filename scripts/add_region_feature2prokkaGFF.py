@@ -45,7 +45,8 @@ with open(nfrawassembseq, 'r') as frawassembseq:
 fgffin = open(nfgffin, 'r')
 fgffout = open(nfgffout, 'w')
 lregions = []
-lregionlens = []
+#~ lregionlens = []
+dregionlens = {}
 currseqreg = None
 nreg = 0
 fastatime = False
@@ -55,7 +56,11 @@ for line in fgffin:
 		if line.startswith('##sequence-region'):
 				lsp = line.rstrip('\n').split()
 				lregions.append(lsp[1])
-				lregionlens.append(lsp[2:4])
+				#~ lregionlens.append(lsp[2:4])
+				dregionlens[lsp[1]] = lsp[2:4]
+		if len(lregions) == len(lcontignames):
+			dgffcontigname2rawcontigname = dict(zip(lregions, lcontignames))
+			
 		if line.startswith('##FASTA'):
 			fastatime = True
 	else:
@@ -73,10 +78,13 @@ for line in fgffin:
 			currseqreg = seqreg
 			#~ print nreg, seqreg
 			# add region info line
-			iscircular = dcontigs[lcontignames[nreg]].get('circular', 'false')
-			replitype = 'chromosome' if (nreg==0 and int(lregionlens[nreg][1])>minchrlen) else ('plasmid' if iscircular=='true' else 'contig')
+			#~ iscircular = dcontigs[lcontignames[nreg]].get('circular', 'false')
+			iscircular = dcontigs[dgffcontigname2rawcontigname[seqreg]].get('circular', 'false')
+			#~ replitype = 'chromosome' if (nreg==0 and int(lregionlens[nreg][1])>minchrlen) else ('plasmid' if iscircular=='true' else 'contig')
+			replitype = 'chromosome' if (nreg==0 and int(dregionlens[seqreg][1])>minchrlen) else ('plasmid' if iscircular=='true' else 'contig')
 			extfeat = ['ID=id%d'%nreg, 'Dbxref=taxon:%s'%straininfo['taxid'], 'Is_circular=%s'%iscircular, 'gbkey=Src', 'genome=%s'%replitype, 'mol_type=genomic DNA', 'strain=%s'%straininfo['strain']]
-			cols = [seqreg, assemblervers, 'region', lregionlens[nreg][0], lregionlens[nreg][1], '.', '+', '.', ';'.join(extfeat)]
+			#~ cols = [seqreg, assemblervers, 'region', lregionlens[nreg][0], lregionlens[nreg][1], '.', '+', '.', ';'.join(extfeat)]
+			cols = [seqreg, assemblervers, 'region', dregionlens[seqreg][0], dregionlens[seqreg][1], '.', '+', '.', ';'.join(extfeat)]
 			regline = '\t'.join(cols)+'\n'
 			fgffout.write(regline)
 			print regline.rstrip('\n')
