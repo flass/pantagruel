@@ -19,6 +19,8 @@ with open(nfstraininfo, 'r') as fstraininfo:
 		loctagprefix = lsp[loctagprefixfield]
 		dstraininfo[loctagprefix] = dict(zip(header, lsp))
 
+print dstraininfo
+
 lcontignames = []
 dcontigs = {}		
 with open(nfrawassembseq, 'r') as frawassembseq:
@@ -60,6 +62,7 @@ for line in fgffin:
 				dregionlens[lsp[1]] = lsp[2:4]
 		if len(lregions) == len(lcontignames):
 			dgffcontigname2rawcontigname = dict(zip(lregions, lcontignames))
+			print dgffcontigname2rawcontigname
 			
 		if line.startswith('##FASTA'):
 			fastatime = True
