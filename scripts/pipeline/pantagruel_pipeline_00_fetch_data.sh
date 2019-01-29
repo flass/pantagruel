@@ -126,6 +126,35 @@ if [[ "$(ls -A "${contigs}/" 2>/dev/null)" ]] ; then
         echo "Error: missing mandatory GFF file in ${annot}/${gproject}/ folder"
         exit 1
       fi
+      if [ -z $(grep '##sequence-region' ${annotgff[0]}) ] ; then
+		  mv ${annotgff[0]} ${annotgff[0]}.original
+          # make GFF source file look more like the output of Prokka
+          head -n1 ${annotgff[0]}.original > ${annotgff[0]}
+          # add region annotation features
+          python << EOF
+fcontig = open('${contigs}/${allcontigs}', 'r')
+outgff = open('${annotgff[0]}', 'a')
+inseq = False
+seqlen = 0
+seqid = None
+for line in fcontig:
+ if line.startswith('>'):
+   if inseq:
+	 # write out previous
+	 outgff.write("##sequence-region %s 1 %d\n"%(seqid, seqlen))
+   seqid = line.strip('>\n')
+   seqlen = 0
+ else:
+   inseq = True
+   seqlen += len(line.strip(' \n'))
+
+outgff.write("##sequence-region %s 1 %d\n"%(seqid, seqlen))
+fcontig.close()
+outgff.close()
+EOF
+        # add the rest of the file
+        tail -n +2 ${annotgff[0]}.original >> ${annotgff[0]}
+      fi
       python ${ptgscripts}/add_region_feature2prokkaGFF.py ${annotgff[0]} ${annotgff[0]%*.gff}.ptg.gff ${straininfo} ${contigs}/${allcontigs} ${assembler}
       echo "fix annotation to integrate taxid information into GBK files"
       annotfna=($(ls ${annot}/${gproject}/*.fna))
@@ -140,35 +169,6 @@ if [[ "$(ls -A "${contigs}/" 2>/dev/null)" ]] ; then
             mv ${annotf} ${annotf}.original
           fi
         done
-        if [ -z $(grep '##sequence-region' ${annotgff[0]}) ] ; then
-		  mv ${annotgff[0]} ${annotgff[0]}.original
-          # make GFF source file look more like the output of Prokka
-          head -n1 ${annotgff[0]}.original > ${annotgff[0]}
-          # add region annotation features
-          python << EOF
-          fcontig = open('${contigs}/${allcontigs}', 'r')
-          outgff = open('${annotgff[0]}', 'a')
-          inseq = False
-          seqlen = 0
-          seqid = None
-          for line in fcontig:
-            if line.startswith('>'):
-              if inseq:
-                # write out previous
-                outgff.write("##sequence-region %s 1 %d\n"%(seqid, seqlen))
-              seqid = line.strip('>\n')
-              seqlen = 0
-            else:
-              inseq = True
-              seqlen += len(line.strip(' \n'))
-          
-          outgff.write("##sequence-region %s 1 %d\n"%(seqid, seqlen))
-          fcontig.close()
-          outgff.close()
-EOF
-          # add the rest of the file
-          tail -n +2 ${annotgff[0]}.original >> ${annotgff[0]}
-        fi
         cp ${contigs}/${allcontigs} ${annotgff[0]/gff/fna}
         python ${ptgscripts}/GFFGenomeFasta2GenBankCDSProtFasta.py ${annotgff[0]} ${contigs}/${allcontigs}
       fi
