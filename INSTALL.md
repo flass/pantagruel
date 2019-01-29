@@ -29,7 +29,7 @@ Otherwise, you can manually install the software following the indications below
 
 ### basic dependencies, libraries and standalone software
 ```sh
-sudo apt install git cmake gcc g++ libmagick++-dev linuxbrew-wrapper lftp clustalo raxml libhmsbeagle1v5 mrbayes openjdk-8-jdk openjdk-8-jre cd-hit
+sudo apt install git cmake gcc g++ libmagick++-dev linuxbrew-wrapper bioperl lftp clustalo raxml libhmsbeagle1v5 mrbayes openjdk-8-jdk openjdk-8-jre cd-hit
 ```
 ### R and packages
 ```sh
