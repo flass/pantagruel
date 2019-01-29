@@ -62,7 +62,7 @@ for line in fgffin:
 		seqreg = line.split('\t')[0]
 		if not fastatime and (seqreg != currseqreg):
 			# get strain info
-			loctagprefix = seqreg.split('|')[-1].rsplit('_', 1)[1]
+			loctagprefix = seqreg.split('|')[-1].rsplit('_', 1)[0]
 			try:
 				straininfo = dstraininfo[loctagprefix]
 			except IndexError, e:
