@@ -107,7 +107,11 @@ checkexec "Could not install R package 'pvclust'"
 echo ""
 
 # Configure Linuxbrew
-touch ${HOME}/.bash_profile
+if [ ! -e ${HOME}/.bash_profile ] ; then
+  # because when .bash_profile exists, it superseeds .profile, which won't be loaded automatically
+  # thus if creating .bash_profile, restaure the loading of .profile
+  echo '. "$HOME/.profile"' > ${HOME}/.bash_profile
+fi
 if [[ -z "$(grep PATH ${HOME}/.bash_profile | grep linuxbrew)" ]] ; then
   echo 'export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"' >> ${HOME}/.bash_profile
   editedprofile=true
