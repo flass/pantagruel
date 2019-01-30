@@ -16,6 +16,10 @@ export ptgdb=${ptgroot}/${ptgdbname}
 envsourcescript=${ptgdb}/environ_pantagruel_${ptgdbname}.sh
 source ${envsourcescript}
 
+# logging variables and functions
+alias dateprompt="date +'[%Y-%m-%d %H:%M:%S]'"
+datepad="                     "
+
 #############################
 ## 01. Homologous Sequence db
 #############################
