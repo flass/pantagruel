@@ -187,29 +187,33 @@ EOF
   done
 
   # create assembly directory and link/create relevant files
+  echo "will create GenBank-like assembly folders for user-provided genomes"
   export gblikeass=${customassemb}/genbank-format_assemblies
   mkdir -p $gblikeass/
   for gproject in `ls ${annot}` ; do
-  gff=$(ls ${annot}/${gproject}/ | grep 'ptg.gff')
-  assemb=${gproject}.1_${gff[0]%*.ptg.gff}
-  assembpathdir=${gblikeass}/${assemb}
-  assembpathrad=${assembpathdir}/${assemb}
-  mkdir -p ${assembpathdir}/
-  ls ${assembpathdir}/ -d
-  gffgz=${assembpathrad}_genomic.gff.gz
-  gzip -c ${annot}/${gproject}/$gff > $gffgz
-  ls $gffgz
-  gbk=$(ls ${annot}/${gproject}/ | grep 'ptg.gbk') ; gbkgz=${assembpathrad}_genomic.gbff.gz
-  gzip -c ${annot}/${gproject}/$gbk > $gbkgz
-  ls $gbkgz
-  faa=$(ls ${annot}/${gproject}/ | grep '.faa') ; faagz=${assembpathrad}_protein.faa.gz
-  gzip -c ${annot}/${gproject}/$faa > $faagz
-  ffn=$(ls ${annot}/${gproject}/ | grep '.ffn') ; fnagz=${assembpathrad}_cds_from_genomic.fna.gz
-  python ${ptgscripts}/format_prokkaCDS.py ${annot}/${gproject}/$ffn $fnagz
-  ls $fnagz
-done
-
-ln -s ${gblikeass}/* ${indata}/assemblies/
+    gff=$(ls ${annot}/${gproject}/ | grep 'ptg.gff')
+    assemb=${gproject}.1_${gff[0]%*.ptg.gff}
+    assembpathdir=${gblikeass}/${assemb}
+    assembpathrad=${assembpathdir}/${assemb}
+    mkdir -p ${assembpathdir}/
+    ls ${assembpathdir}/ -d
+    gffgz=${assembpathrad}_genomic.gff.gz
+    gzip -c ${annot}/${gproject}/${gff} > ${gffgz}
+    ls ${gffgz}
+    gbk=($(ls ${annot}/${gproject}/ | grep 'ptg.gbk' | grep -v '.original'))
+    gbkgz=${assembpathrad}_genomic.gbff.gz
+    gzip -c ${annot}/${gproject}/${gbk[0]} > ${gbkgz}
+    ls ${gbkgz}
+    faa=($(ls ${annot}/${gproject}/ | grep '.faa' | grep -v '.original'))
+    faagz=${assembpathrad}_protein.faa.gz
+    gzip -c ${annot}/${gproject}/${faa[0]} > ${faagz}
+    ffn=($(ls ${annot}/${gproject}/ | grep '.ffn' | grep -v '.original'))
+    fnagz=${assembpathrad}_cds_from_genomic.fna.gz
+    python ${ptgscripts}/format_prokkaCDS.py ${annot}/${gproject}/${ffn[0]} ${fnagz}
+    ls ${fnagz}
+  done > ${ptglogs}/genbank-format_assemblies.log
+  
+  ln -s ${gblikeass}/* ${indata}/assemblies/
 fi
 
 fi

@@ -42,7 +42,7 @@ export -f run_clustalo_sequential
 parallel --joblog ${ptglogs}/run_clustalo_sequential.log run_clustalo_sequential :::: ${tasklist}
 
 # check that alignments are not empty
-${ptgscripts}/lsfullpath "${nrprotali}/*" > ${nrprotali}_list
+${ptgscripts}/lsfullpath.py "${nrprotali}/*" > ${nrprotali}_list
 rm -f ${nrprotali}_list_empty
 for ali in `cat ${nrprotali}_list` ; do
   if [ ! -s $ali ] ; then

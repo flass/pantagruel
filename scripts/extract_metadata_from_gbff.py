@@ -106,7 +106,7 @@ for i, assembname in enumerate(lassembname):
 				if line.startswith(headerftstart): 
 					gbheader = False
 					if lpmid: dmetadata.setdefault("pubmed_id", {})[assemb] = ','.join(lpmid)
-					if ldbxref: dmetadata.setdefault("dbxref", {})[assemb] = ';'.join(ldbxref)
+					if ldbxref: dmetadata.setdefault("db_xref", {})[assemb] = ';'.join(ldbxref)
 				if line.startswith(headerdbstart):
 					dbxrefblock = True
 				if line.startswith(headerpmstart):
@@ -129,6 +129,7 @@ for i, assembname in enumerate(lassembname):
 						if len(qualval)>1:
 							# ignore qualifiers without value (e.g. '/focus' in accessions with multiple source blocks)
 							qualif, val = qualval
+							qualif = qualif.lower()
 							if not qualif in lqualif: lqualif.append(qualif) # Calife a la place du Calife!
 							dmetadata.setdefault(qualif, {})[assemb] = val
 					else:
@@ -177,8 +178,8 @@ with open(nfout, 'w') as fout:
 nfoutdbxref = os.path.join(output, 'dbxrefs.tab')
 with open(nfoutdbxref, 'w') as foutdbxref:
 	for assemb in lassemb:
-		if assemb in dmetadata["dbxref"]:
-			dbxrefs = [dbxref.split(': ') for dbxref in dmetadata["dbxref"][assemb].split(';')]
+		if assemb in dmetadata["db_xref"]:
+			dbxrefs = [dbxref.split(': ') for dbxref in dmetadata["db_xref"][assemb].split(';')]
 			for db, xrefs in dbxrefs:
 				if db!='Assembly': foutdbxref.write('\n'.join(['\t'.join([assemb, db, xref.strip()]) for xref in xrefs.split(',')])+'\n')
 		if assemb in dmetadata["pubmed_id"]:
