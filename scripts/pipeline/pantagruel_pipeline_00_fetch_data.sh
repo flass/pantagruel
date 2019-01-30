@@ -20,6 +20,36 @@ source ${envsourcescript}
 alias dateprompt="date +'[%Y-%m-%d %H:%M:%S]'"
 datepad="                     "
 
+makeprokkarefgenusdb (){
+  # add all the (representative) proteins in the dataset to the custom reference prot database for Prokka to search for similarities
+  ls ${assemblies}/*/*_genomic.gbff.gz > ${indata}/assemblies_genomic_gbffgz_list
+  if [ ! -s ${indata}/assemblies_genomic_gbffgz_list ] ; then
+    parallel -a ${indata}/assemblies_genomic_gbffgz_list 'gunzip -k'
+    # extract protein sequences
+    prokka-genbank_to_fasta_db ${assemblies}/*/*_genomic.gbff > ${ptgtmp}/${refgenus}.faa 2> ${ptglogs}/prokka-genbank_to_fasta_db.log
+    # cluster similar sequences
+    cdhit -i ${ptgtmp}/${refgenus}.faa -o ${ptgtmp}/${refgenus}_representative.faa -T 0 -M 0 -G 1 -s 0.8 -c 0.9 &> ${ptglogs}/cdhit.log
+    rm -fv ${ptgtmp}/${refgenus}.faa ${ptgtmp}/${refgenus}_representative.faa.clstr
+    # replace database name for genus detection by Prokka 
+    cp -p ${ptgtmp}/${refgenus}_representative.faa ${prokkablastdb}/${refgenus}
+    cd ${prokkablastdb}/
+    makeblastdb -dbtype prot -in ${refgenus}
+    cd -
+  fi
+}
+
+checkexec (){
+  if [ $? != 0 ]; then
+    echo "ERROR: $1" 1>&2
+    exit 1
+  else
+    if [ ! -z "$2" ] ; then
+      echo "$2"
+    fi
+  fi
+}
+
+
 #################################
 ## 00. Data download and grooming
 #################################
@@ -87,22 +117,12 @@ done
 ## if the folder of custom/user-provided set of genomes is not empty
 if [[ "$(ls -A "${contigs}/" 2>/dev/null)" ]] ; then
 
-  ### uniformly annotate the raw sequence data with Prokka
-  # first add all the (representative) proteins in the dataset to the custom reference prot database for Prokka to search for similarities
-  ls ${assemblies}/*/*_genomic.gbff.gz > ${indata}/assemblies_genomic_gbffgz_list
-  parallel -a ${indata}/assemblies_genomic_gbffgz_list 'gunzip -k'
-  # extract protein sequences
-  prokka-genbank_to_fasta_db ${assemblies}/*/*_genomic.gbff > ${ptgtmp}/${refgenus}.faa 2> ${ptglogs}/prokka-genbank_to_fasta_db.log
-  # cluster similar sequences
-  cdhit -i ${ptgtmp}/${refgenus}.faa -o ${ptgtmp}/${refgenus}_representative.faa -T 0 -M 0 -G 1 -s 0.8 -c 0.9 &> ${ptglogs}/cdhit.log
-  rm -fv ${ptgtmp}/${refgenus}.faa ${ptgtmp}/${refgenus}_representative.faa.clstr
-  # replace database name for genus detection by Prokka 
   prokkabin=$(which prokka)
   prokkablastdb=$(dirname $(dirname $(readlink -f $prokkabin)))/db/genus
-  cp -p ${ptgtmp}/${refgenus}_representative.faa ${prokkablastdb}/${refgenus}
-  cd ${prokkablastdb}/
-  makeblastdb -dbtype prot -in ${refgenus}
-  cd -
+  if [ ! -s ${prokkablastdb}/${refgenus} ] ; then
+    # first add all the (representative) proteins in the dataset to the custom reference prot database for Prokka to search for similarities
+    makeprokkarefgenusdb
+  fi
 
   # run Prokka 
   mkdir -p ${annot}
@@ -116,6 +136,7 @@ if [[ "$(ls -A "${contigs}/" 2>/dev/null)" ]] ; then
       echo "### assembly: $gproject; contig files from: ${contigs}/${allcontigs}"
       echo "running Prokka..."
       ${ptgscripts}/run_prokka.sh ${gproject} ${contigs}/${allcontigs} ${straininfo} ${annot}/${gproject} ${seqcentre} &> ${ptglogs}/${ptgdbname}_customassembly_annot_prokka.${gproject}.log
+      checkexec "something went wrong when annotating genome ${gproject}; check log at '${ptglogs}/${ptgdbname}_customassembly_annot_prokka.${gproject}.log'"
       echo "done."
       echo "# $(dateprompt)"
     fi
@@ -127,7 +148,7 @@ if [[ "$(ls -A "${contigs}/" 2>/dev/null)" ]] ; then
         exit 1
       fi
       if [ -z $(grep '##sequence-region' ${annotgff[0]}) ] ; then
-		  mv -f ${annotgff[0]} ${annotgff[0]}.original
+      mv -f ${annotgff[0]} ${annotgff[0]}.original
           # make GFF source file look more like the output of Prokka
           head -n1 ${annotgff[0]}.original > ${annotgff[0]}
           # add region annotation features
@@ -140,8 +161,8 @@ seqid = None
 for line in fcontig:
  if line.startswith('>'):
    if inseq:
-	 # write out previous
-	 outgff.write("##sequence-region %s 1 %d\n"%(seqid, seqlen))
+   # write out previous
+   outgff.write("##sequence-region %s 1 %d\n"%(seqid, seqlen))
    seqid = line.strip('>\n')
    seqlen = 0
  else:
@@ -171,14 +192,15 @@ EOF
         done
         cp ${contigs}/${allcontigs} ${annotgff[0]/gff/fna}
         python ${ptgscripts}/GFFGenomeFasta2GenBankCDSProtFasta.py ${annotgff[0]/.gff/.ptg.gff} ${annotgff[0]/gff/fna}
+      checkexec "something went wrong when generating the GenBank flat file from GFF file ${annotgff[0]/.gff/.ptg.gff}"
       fi
       annotfna=($(ls ${annot}/${gproject}/*.fna))
       annotgbk=($(ls ${annot}/${gproject}/*.gbk))
       annotfaa=($(ls ${annot}/${gproject}/*.faa))
       annotffn=($(ls ${annot}/${gproject}/*.ffn))
       python ${ptgscripts}/add_taxid_feature2prokkaGBK.py ${annotgbk[0]} ${annotgbk[0]%*.gbk}.ptg.gbk ${straininfo}
+      checkexec "something went wrong when modifying the GenBank flat file ${annotgbk[0]}"
       echo "done."
-      echo "# $(dateprompt)"
     else
       echo "Error: missing mandatory information about custom genomes"
       echo "Please fill information in '${straininfo}' file before running this step again."
