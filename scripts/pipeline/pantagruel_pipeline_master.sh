@@ -57,6 +57,8 @@ usage (){
   echo "                         These four files are produced when using Prokka for annotation; if at least one of the .gbk, .ffn or .faa"
   echo "                         are missing, all three will be derived from the .gff source. Each genome annotation file set must be stored"
   echo "                         in a separate folder, which name must match a contig file (e.g. 'assembId/' for 'assembId.fasta')."
+  echo "                      NOTE: to ensure proper parsing, it is strongly advised that any provided annotation was generated with Prokka"
+  echo "                      NOTE: to ensure uniform annotation of the dataset, it is advised to let Pantagruel annotate the contigs (calling Prokka)"
   echo ""
   echo "    -s|--pseudocore  integer or string, the minimum number of genomes in which a gene family should be present"
   echo "                       to be included in the pseudo-core genome gene set (otherwise has to be set interactively"
