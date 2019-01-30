@@ -87,11 +87,14 @@ headerdbstart = "DBLINK      "
 headerftstart = "FEATURES    "
 headerpmstart = "   PUBMED   "
 ftsourcestart = "     source "
+ftregionstart = "     region "
 smlemptystart = "            "
 lrgemptystart = "                     "
 
+print "parsing genome annotation from genBank flat files..."
 for i, assembname in enumerate(lassembname):
 	assemb = parse_assembly_name(assembname, reass=reass)
+	print assemb,
 	qualif = None
 	val = None
 	with gzip.open("%s/%s_genomic.gbff.gz"%(ldirassemb[i], assembname), 'rb') as gbff:
@@ -106,7 +109,7 @@ for i, assembname in enumerate(lassembname):
 				if line.startswith(headerftstart): 
 					gbheader = False
 					if lpmid: dmetadata.setdefault("pubmed_id", {})[assemb] = ','.join(lpmid)
-					if ldbxref: dmetadata.setdefault("db_xref", {})[assemb] = ';'.join(ldbxref)
+					if ldbxref: dmetadata.setdefault("dbxref", {})[assemb] = ';'.join(ldbxref)
 				if line.startswith(headerdbstart):
 					dbxrefblock = True
 				if line.startswith(headerpmstart):
@@ -130,6 +133,7 @@ for i, assembname in enumerate(lassembname):
 							# ignore qualifiers without value (e.g. '/focus' in accessions with multiple source blocks)
 							qualif, val = qualval
 							qualif = qualif.lower()
+							if qualif=="dbxref": qualif = "db_xref"
 							if not qualif in lqualif: lqualif.append(qualif) # Calife a la place du Calife!
 							dmetadata.setdefault(qualif, {})[assemb] = val
 					else:
@@ -137,10 +141,11 @@ for i, assembname in enumerate(lassembname):
 						dmetadata[qualif][assemb] += ' '+li.strip('\n')
 				else:
 					break # for line loop
-			if line.startswith(ftsourcestart):
+			if line.startswith(ftsourcestart) or line.startswith(ftregionstart):
 				sourceblock += 1
 	#~ print assemb, dmetadata['organism'][assemb]
 
+print ' ...done'
 # read additional data extracted by hand, if provided:
 if nfdhandmetaraw:
 	with open(nfdhandmetaraw, 'r') as fdhandmetaraw:
@@ -178,8 +183,8 @@ with open(nfout, 'w') as fout:
 nfoutdbxref = os.path.join(output, 'dbxrefs.tab')
 with open(nfoutdbxref, 'w') as foutdbxref:
 	for assemb in lassemb:
-		if assemb in dmetadata["db_xref"]:
-			dbxrefs = [dbxref.split(': ') for dbxref in dmetadata["db_xref"][assemb].split(';')]
+		if assemb in dmetadata["dbxref"]:
+			dbxrefs = [dbxref.split(': ') for dbxref in dmetadata["dbxref"][assemb].split(';')]
 			for db, xrefs in dbxrefs:
 				if db!='Assembly': foutdbxref.write('\n'.join(['\t'.join([assemb, db, xref.strip()]) for xref in xrefs.split(',')])+'\n')
 		if assemb in dmetadata["pubmed_id"]:
@@ -213,7 +218,7 @@ for assemb in lassemb:
 	isolate = dmetadata.get('isolate',{}).get(assemb, na)
 	sero = dmetadata.get('serovar',{}).get(assemb, na)
 	note = dmetadata.get('note',{}).get(assemb, na)
-	print dmetadata['db_xref'].get(assemb,na)
+	#~ print dmetadata['db_xref'].get(assemb,na)
 	taxid = dict(dbxref.split(':') for dbxref in dmetadata.get('db_xref',{}).get(assemb,na).strip(' "').split(';'))['taxon']
 	subspe = na
 	ecol = na
@@ -331,7 +336,7 @@ for assemb in lassemb:
 	## sequencing info + note
 	#~ for infotype in ['contig_N50', 'contig_count', 'sequencing_technology', 'note']:
 	for infotype in ['sequencing_technology', 'note']:
-		dcurated[infotype][assemb] = dmetadata[infotype].get(assemb, na)
+		dcurated[infotype][assemb] = dmetadata.get(infotype, {}).get(assemb, na)
 	
 	print '; '.join([assemb, species, strain, ppmid, ecol, note])
 			
