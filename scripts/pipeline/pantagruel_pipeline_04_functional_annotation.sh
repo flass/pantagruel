@@ -49,12 +49,12 @@ export interpro=${funcannot}/InterProScan_${IPversion}
 mkdir -p ${interpro}/ ${ptgtmp}/interpro/ ${ptglogs}/interpro/
 
 
-# segment the entire proteome in batches of reasonable size (as all results are kept in memory before bing written)
-mkdir -p ${interpro}/all_complete_proteomes
-ln -s ${nrfaacomplete} ${interpro}/
+# segment the entire proteome in batches of reasonable size (as all results are kept in memory before being written)
+mkdir -p ${interpro}/all_complete_proteomes/
+ln -s ${allfaarad}.nr.faa ${interpro}/
 python << EOF
 import os
-nfinfaa = "${nrfaacomplete}"
+nfinfaa = "${allfaarad}.nr.faa"
 outd = "${interpro}/all_complete_proteomes"
 nfoutrad = os.path.basename(nfinfaa)
 maxnprot = 10000
