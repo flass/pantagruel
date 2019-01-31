@@ -129,10 +129,17 @@ Options are detailed here:
                          These four files are produced when using Prokka for annotation; if at least one of the .gbk, .ffn or .faa
                          are missing, all three will be derived from the .gff source. Each genome annotation file set must be stored
                          in a separate folder, which name must match a contig file (e.g. 'assembId/' for 'assembId.fasta').
+                      NOTE: to ensure proper parsing, it is strongly advised that any provided annotation was generated with Prokka
+                      NOTE: to ensure uniform annotation of the dataset, it is advised to let Pantagruel annotate the contigs (calling Prokka)
 
     -s|--pseudocore  integer number, the minimum number of genomes in which a gene family should be present
                        to be included in the pseudo-core genome gene set (otherwise has to be set interactively
                        when running task 'core').
+    
+    -t|--reftree     specify reference tree for reconciliation and clade-specific gene analyses;
+                       over-rides the computation of tree from the concatenate of (pseudo-)core genome gene during taske 'core'.
+
+    -R|--resume      try and resume the task from previous run that was interupted (for the moment only available for taske 'core')
 
     -H|--submit_hpc  full address (hostname:/folder/location) of a folder on a remote high-performance computating (HPC) cluster server
                        This indicate that computationally intensive tasks, including building the gene tree collection

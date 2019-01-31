@@ -66,7 +66,7 @@ usage (){
   echo "                       Defaults to the total number of genomes (work with a strict core genome set)."
   echo ""
   echo "    -t|--reftree     specify reference tree for reconciliation and clade-specific gene analyses;"
-  echo "                       over-rides the computation of tree from the concatenate of (pseudo-)core genome gene"
+  echo "                       over-rides the computation of tree from the concatenate of (pseudo-)core genome gene during taske 'core'."
   echo ""
   echo "    -R|--resume      try and resume the task from previous run that was interupted (for the moment only available for taske 'core')"
   echo ""
