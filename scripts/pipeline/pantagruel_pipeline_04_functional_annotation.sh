@@ -46,7 +46,7 @@ if [ "${currIPversion}" != "${lastIPversion}" ] ; then
 fi
 
 export interpro=${funcannot}/InterProScan_${IPversion}
-mkdir -p ${interpro}/ ${enttmp}/interpro/ ${entlogs}/interpro/
+mkdir -p ${interpro}/ ${ptgtmp}/interpro/ ${ptglogs}/interpro/
 
 
 # segment the entire proteome in batches of reasonable size (as all results are kept in memory before bing written)
@@ -76,7 +76,7 @@ fout.close()
 EOF
 
 for nrfaa in `ls ${interpro}/all_complete_proteomes/*.faa*` ; do
- interproscan -T ${enttmp}/interpro -i ${nrfaa} -b ${nrfaa} --formats TSV --iprlookup --goterms --pathways &> ${entlogs}/interpro/$(basename ${nrfaa})_interpro.log
+ interproscan -T ${ptgtmp}/interpro -i ${nrfaa} -b ${nrfaa} --formats TSV --iprlookup --goterms --pathways &> ${ptglogs}/interpro/$(basename ${nrfaa})_interpro.log
 done &
 
 

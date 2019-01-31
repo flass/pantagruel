@@ -142,7 +142,7 @@ def main(dbname, dbengine, interproscanresglobpat, interproscanversion, verbose=
 	if dbengine=='sqlite':
 		dbcur.executescript(indexscript)
 	elif dbengine=='postgres':
-	indexscript += """
+		indexscript += """
 	                 DROP TABLE IF EXISTS prot2goterms_oneliner;
 	                 
 					 CREATE TABLE prot2goterms_oneliner AS
