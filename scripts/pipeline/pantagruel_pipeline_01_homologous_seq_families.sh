@@ -16,10 +16,6 @@ export ptgdb=${ptgroot}/${ptgdbname}
 envsourcescript=${ptgdb}/environ_pantagruel_${ptgdbname}.sh
 source ${envsourcescript}
 
-# logging variables and functions
-alias dateprompt="date +'[%Y-%m-%d %H:%M:%S]'"
-datepad="                     "
-
 #############################
 ## 01. Homologous Sequence db
 #############################
@@ -37,7 +33,7 @@ grep -c '>' ${allfaarad}.faa
 
 # dereplicate proteins in db based on their identifier
 python ${ptgscripts}/dereplicate_fasta.py ${allfaarad}.faa ${allfaarad}.nrprotids.faa
-echo "$(dateprompt)-- $(grep -c '>' ${allfaarad}.nrprotids.faa) non-redundant proteins in dataset"
+dateprompt "-- $(grep -c '>' ${allfaarad}.nrprotids.faa) non-redundant proteins in dataset"
 
 ## clustering of identical protein sequences
 # notably those from the custom assemblies to those from the public database (and those redudant between RefSeq and Genbank sets)
@@ -69,7 +65,8 @@ grep '>' ${allfaarad}.nr.faa | cut -d' ' -f1 | cut -d'>' -f2 | sort -u > ${allfa
 # compare original dataset of nr protein (as described in the input GFF files) to the aligned nr proteome
 diff ${genomeinfo}/assembly_info/allproteins_in_gff ${allfaarad}.nr_protlist > $ptgtmp/diff_prot_info_fasta
 if [ -s $ptgtmp/diff_prot_info_fasta ] ; then 
-  >&2 echo "ERROR $(dateprompt): inconsistent propagation of the protein dataset:"
+  >&2 dateprompt
+  >&2 echo "ERROR: inconsistent propagation of the protein dataset:"
   >&2 echo "present in aligned fasta proteome / absent in info table generated from input GFF:"
   >&2 grep '>' $ptgtmp/diff_prot_info_fasta | cut -d' ' -f2
   >&2 echo "present in info table generated from input GFF / absent in aligned fasta proteome:"

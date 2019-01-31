@@ -9,10 +9,6 @@
 
 # Copyright: Florent Lassalle (f.lassalle@imperial.ac.uk), 30 July 2018
 
-# logging variables and functions
-alias dateprompt="date +'[%Y-%m-%d %H:%M:%S]'"
-datepad="                     "
-
 #### Set mandatory environment variables / parameters
 export ptgdbname="${1}"  # database anme (will notably be the name of the top folder)
 export ptgroot="${2}"    # source folder where to create the database

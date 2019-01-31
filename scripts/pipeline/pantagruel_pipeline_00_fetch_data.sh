@@ -16,10 +16,6 @@ export ptgdb=${ptgroot}/${ptgdbname}
 envsourcescript=${ptgdb}/environ_pantagruel_${ptgdbname}.sh
 source ${envsourcescript}
 
-# logging variables and functions
-alias dateprompt="date +'[%Y-%m-%d %H:%M:%S]'"
-datepad="                     "
-
 makeprokkarefgenusdb (){
   # add all the (representative) proteins in the dataset to the custom reference prot database for Prokka to search for similarities
   ls ${assemblies}/*/*_genomic.gbff.gz > ${indata}/assemblies_genomic_gbffgz_list
@@ -132,13 +128,13 @@ if [[ "$(ls -A "${contigs}/" 2>/dev/null)" ]] ; then
       echo "found annotation folder '${annot}/${gproject}' ; skip annotation of contigs in '${contigs}/${allcontigs}'"
     else
       echo "will annotate contigs in '${contigs}/${allcontigs}'"
-      echo "# $(dateprompt)"
+      dateprompt
       echo "### assembly: $gproject; contig files from: ${contigs}/${allcontigs}"
       echo "running Prokka..."
       ${ptgscripts}/run_prokka.sh ${gproject} ${contigs}/${allcontigs} ${straininfo} ${annot}/${gproject} ${seqcentre} &> ${ptglogs}/${ptgdbname}_customassembly_annot_prokka.${gproject}.log
       checkexec "something went wrong when annotating genome ${gproject}; check log at '${ptglogs}/${ptgdbname}_customassembly_annot_prokka.${gproject}.log'"
       echo "done."
-      echo "# $(dateprompt)"
+      dateprompt
     fi
     if [[ $(grep ${gproject} ${straininfo} | cut -f2- | grep -P '[^\t]' | wc -l) -gt 0 ]] ; then
       echo "fix annotation to integrate region information into GFF files"
@@ -149,10 +145,10 @@ if [[ "$(ls -A "${contigs}/" 2>/dev/null)" ]] ; then
       fi
       if [ -z $(grep '##sequence-region' ${annotgff[0]}) ] ; then
       mv -f ${annotgff[0]} ${annotgff[0]}.original
-          # make GFF source file look more like the output of Prokka
-          head -n1 ${annotgff[0]}.original > ${annotgff[0]}
-          # add region annotation features
-          python << EOF
+        # make GFF source file look more like the output of Prokka
+        head -n1 ${annotgff[0]}.original > ${annotgff[0]}
+        # add region annotation features
+        python << EOF
 fcontig = open('${contigs}/${allcontigs}', 'r')
 outgff = open('${annotgff[0]}', 'a')
 inseq = False
@@ -238,7 +234,6 @@ EOF
   ln -s ${gblikeass}/* ${indata}/assemblies/
 fi
 
-fi
 #### end of the block treating custom genome set
 
 ### Groom data
