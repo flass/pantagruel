@@ -77,7 +77,7 @@ EOF
 
 for nrfaa in `ls ${interpro}/all_complete_proteomes/*.faa*` ; do
  interproscan -T ${ptgtmp}/interpro -i ${nrfaa} -b ${nrfaa} --formats TSV --iprlookup --goterms --pathways &> ${ptglogs}/interpro/$(basename ${nrfaa})_interpro.log
-done &
+done
 
 
 ## load the annotation data into the database
