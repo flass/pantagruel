@@ -28,12 +28,12 @@ for ass in `ls ${assemblies}` ; do
  faa=$(ls ${assemblies}/${ass}/* | grep "protein.faa")
  zcat ${faa} >> ${allfaarad}.faa && echo $faa >> ${allfaarad}_list
 done
-wc -l ${allfaarad}_list
-grep -c '>' ${allfaarad}.faa
+dateprompt "-- $(wc -l ${allfaarad}_list | cut -d' ' -f1) proteomes in dataset"
+dateprompt "-- $(grep -c '>' ${allfaarad}.faa) proteins in dataset"
 
 # dereplicate proteins in db based on their identifier
 python ${ptgscripts}/dereplicate_fasta.py ${allfaarad}.faa ${allfaarad}.nrprotids.faa
-dateprompt "-- $(grep -c '>' ${allfaarad}.nrprotids.faa) non-redundant proteins in dataset"
+dateprompt "-- $(grep -c '>' ${allfaarad}.nrprotids.faa) non-redundant protein ids in dataset"
 
 ## clustering of identical protein sequences
 # notably those from the custom assemblies to those from the public database (and those redudant between RefSeq and Genbank sets)
@@ -94,7 +94,7 @@ mmseqs cluster ${allfaarad}.nr.mmseqsdb $mmseqsclout $mmseqstmp &> $mmseqslogs/$
 mmseqs createseqfiledb ${allfaarad}.nr.mmseqsdb $mmseqsclout ${mmseqsclout}_clusters
 # generate separate fasta files with family identifiers distinc from representative sequence name
 python ${ptgscripts}/split_mmseqs_clustdb_fasta.py ${mmseqsclout}_clusters "${famprefix}P" ${mmseqsclout}_clusters_fasta 6 1 0
-echo "$(dateprompt)-- $(wc -l ${mmseqsclout}_clusters_fasta.tab | cut -d' ' -f1) non-redundant proteins"
-echo "$(dateprompt)-- classified into $(ls ${mmseqsclout}_clusters_fasta/ | wc -l) clusters"
+dateprompt "-- $(wc -l ${mmseqsclout}_clusters_fasta.tab | cut -d' ' -f1) non-redundant proteins"
+dateprompt "-- classified into $(ls ${mmseqsclout}_clusters_fasta/ | wc -l) clusters"
 echo "${datepad}-- including artificial cluster ${famprefix}P000000 gathering $(grep -c '>' ${mmseqsclout}_clusters_fasta/${famprefix}P000000.fasta) ORFan nr proteins"
 echo "${datepad}-- (NB: some are not true ORFans as can be be present as identical sequences in several genomes)"

@@ -2,7 +2,7 @@
 
 # logging variables and functions
 alias dateprompt="echo $(date +'[%Y-%m-%d %H:%M:%S]')"
-datepad="                     "
+datepad="                      "
 
 ## primary variables
 
