@@ -242,6 +242,32 @@ if [[ -z "${currIPversion}" || "${currIPversion}" != "${lastIPversion}" ]] ; the
    echo "found InterProScan executable:"
    ls ${SOFTWARE}/interproscan-${ipversion}/interproscan.sh
  fi
+ # make sure InterProscan uses the correct version of Java (1.8)
+ wrongjava=$(${SOFTWARE}/interproscan-${ipversion}/interproscan.sh | grep -o 'Java version .* is required to run InterProScan.')
+ if [ ! -z ${wrongjava} ] ; then
+   needjava=$(echo ${wrongjava} | sed -e 's/Java version \(.*\) is required to run InterProScan./\1/')
+   currjava=$(readlink -f `which java`)
+   goodjava=$(echo ${currjava} | sed -e "s/java-[0-9]\+-/java-${needjava}-/")
+   if [ ! -e ${goodjava} ] ; then
+     goodjava=$(echo ${currjava} | sed -e "s/java-[0-9]\+-/java-${needjava}.0-/")
+   fi
+   if [ ! -e ${goodjava} ] ; then
+     goodjava=$(ls -d $(dirname $(dirname $(dirname ${currjava})))/*${needjava}*/bin/java)
+   fi
+   if [ -z ${goodjava} ] ; then
+     echo "ERROR: Could not find the required version of java for InterProScan:"
+     ${SOFTWARE}/interproscan-${ipversion}/interproscan.sh
+     exit 1
+   fi
+    export PATH=$(dirname ${goodjava}):$PATH
+    ${SOFTWARE}/interproscan-${ipversion}/interproscan.sh
+   checkexec "Interproscan test was not successful"
+   if [[ -z "$(grep PYTHONPATH ${HOME}/.bashrc | grep tree2 )" || -z "$(grep PYTHONPATH ${HOME}/.bashrc | grep pantagruel/python_libs )" ]] ; then
+     echo "export JAVA4INTERPROSCAN=${goodjava}" >> ${HOME}/.bashrc
+     checkexec "Could not store JAVA4INTERPROSCAN in .bashrc"
+     editedrc=true
+   fi
+ fi
  ${SOFTWARE}/interproscan-${ipversion}/interproscan.sh -i ${SOFTWARE}/interproscan-${ipversion}/test_proteins.fasta -f tsv
  checkexec "Interproscan test was not successful"
  # link the exec file

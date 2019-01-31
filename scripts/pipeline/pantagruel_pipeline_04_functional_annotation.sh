@@ -18,6 +18,12 @@ source $envsourcescript
 
 cd ${ptgrepo} ; export ptgversion=$(git log | grep commit | cut -d' ' -f2) ; cd -
 
+# make sure to use the correct Java version (incompatibility should have been detected during install of Pantagruel)
+if [ ! -z ${JAVA4INTERPROSCAN} ] ; then
+  # if default version of java is not the one expected by InterProScan, a line should have been added to ~/.bashrc to define the JAVA4INTERPROSCAN environment variable
+  export PATH=$(dirname ${JAVA4INTERPROSCAN}):$PATH
+fi
+
 ############################
 ## 04. Functional annotation
 ############################
