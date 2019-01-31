@@ -33,7 +33,7 @@ def parseCDSFasta(nfcds):
 def parseGFFline(line):
 	#~ print line
 	lsp = line.rstrip('\n').split('\t')
-	seqreg = lsp[0]
+	seqreg = lsp[0].split('|')[-1]	# to account for Prokka-style annotation that prepends 'gnl|Sequencing_Centre' to the region_id
 	annottype = lsp[2]
 	beg = lsp[3]
 	end = lsp[4]
@@ -53,7 +53,7 @@ def indexRegionsAndGenes(fgff, dfout, assacc, assname, dtaxid2sciname={}, dmerge
 		if annottype=='region':
 			if seqreg!=currseqreg and beg=='1':
 				# new replicon
-				currseqreg = seqreg.split('|')[-1]	# to account for Prokka-style annotation that prepends 'gnl|Sequencing_Centre' to the region_id
+				currseqreg = seqreg
 				dbxref = dict(d.split(':') for d in desc['Dbxref'].split(','))
 				taxid = dbxref['taxon']
 				strain = desc.get('strain', '')
