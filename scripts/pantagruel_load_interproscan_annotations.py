@@ -192,7 +192,6 @@ if __name__=='__main__':
 		dbengine = 'postgres'
 	elif '--sqlite_db' in dopt:
 		dbengine = 'sqlite'
-		raise NotImplementedError, "condensation of coevolution network from gene-lineage to orthologous groups not implement with SQLite database - and unlikely to be so given the huge size of tables to be loaded in memory"
 	else:
 		raise ValueError, "must provide database name (postgreSQL) / file location (SQLite) through '--sqlite_db' or '--postgresql_db' options"		
 
