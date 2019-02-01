@@ -209,7 +209,7 @@ do
 
     -t|--reftree)
       testmandatoryarg "$1" "$2"
-      export pseudocoremingenomes="$2"
+      export reftree="$2"
       echo "set reference tree as $reftree"
       shift 2;;
 
