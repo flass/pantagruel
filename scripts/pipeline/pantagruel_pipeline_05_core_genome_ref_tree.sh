@@ -57,14 +57,14 @@ if [[ ! -z "${reftree}" ]] ; then
       extratips = setdiff(tree[['tip.label']], genome.codes)
       missdtips = setdiff(genome.codes, tree[['tip.label']])
       if (length(extratips)>0){
-          goodtipset = FALSE
-          print(c("tips not in genome code set:", extratips), quote=F)
-        }
+        goodtipset = FALSE
+        print("tips not in genome code set:", quote=F)
+        print(extratips, quote=F)
       }
       if (length(missdtips)>0){
-          goodtipset = FALSE
-          print(c("tips missing with respect to genome code set:", missdtips), quote=F)
-        }
+        goodtipset = FALSE
+        print("tips missing with respect to genome code set:", quote=F)
+        print(missdtips, quote=F)
       }
       if (!goodtipset){
         print(sprintf("incorrect tree tip set (according to '%s')", nfgencode)
