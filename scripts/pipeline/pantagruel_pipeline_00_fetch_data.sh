@@ -18,11 +18,11 @@ source ${envsourcescript}
 
 makeprokkarefgenusdb (){
   # add all the (representative) proteins in the dataset to the custom reference prot database for Prokka to search for similarities
-  ls ${assemblies}/*/*_genomic.gbff.gz > ${indata}/assemblies_genomic_gbffgz_list
-  if [ ! -s ${indata}/assemblies_genomic_gbffgz_list ] ; then
-    parallel -a ${indata}/assemblies_genomic_gbffgz_list 'gunzip -k'
+  ls ${refass}/*/*_genomic.gbff.gz > ${indata}/assemblies_genomic_gbffgz_list
+  if [ ! -s ${refass}/assemblies_genomic_gbffgz_list ] ; then
+    parallel -a ${refass}/assemblies_genomic_gbffgz_list 'gunzip -k'
     # extract protein sequences
-    prokka-genbank_to_fasta_db ${assemblies}/*/*_genomic.gbff > ${ptgtmp}/${refgenus}.faa 2> ${ptglogs}/prokka-genbank_to_fasta_db.log
+    prokka-genbank_to_fasta_db ${refass}/*/*_genomic.gbff > ${ptgtmp}/${refgenus}.faa 2> ${ptglogs}/prokka-genbank_to_fasta_db.log
     # cluster similar sequences
     cdhit -i ${ptgtmp}/${refgenus}.faa -o ${ptgtmp}/${refgenus}_representative.faa -T 0 -M 0 -G 1 -s 0.8 -c 0.9 &> ${ptglogs}/cdhit.log
     rm -fv ${ptgtmp}/${refgenus}.faa ${ptgtmp}/${refgenus}_representative.faa.clstr

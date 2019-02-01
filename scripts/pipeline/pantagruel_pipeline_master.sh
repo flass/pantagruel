@@ -27,14 +27,17 @@ usage (){
   echo "    -f|--famprefix    alphanumerical prefix (no number first) of the names for homologous protein/gene family clusters; defaults to 'PANTAG'"
   echo "                       the chosen prefix will be appended with a 'P' for protein families and a 'C' for CDS families."
   echo ""
-  echo "    -T|--taxonomy      path to folder of taxonomy database flat files; defaults to \$rootdir/NCBI/Taxonomy"
+  echo "    -T|--taxonomy      path to folder of taxonomy database flat files; defaults to \$rootdir/NCBI/Taxonomy_YYYY-MM-DD (suffix is today's date)"
   echo "                        if this is not containing the expected file, triggers downloading the daily dump from NCBI Taxonomy at task 00"
   echo ""
   echo "    -A|--refseq_ass  path to folder of source genome assembly flat files formated like NCBI Assembly RefSeq whole directories;"
   echo "                       these can be obtained by searching https://www.ncbi.nlm.nih.gov/assembly and downloadingresults with options:"
   echo "                         Source Database = 'RefSeq' and File type = 'All file types (including assembly-structure directory)'."
-  echo "                       defaults to \$rootdir/NCBI/Assembly. A simple archive 'genome_assemblies.tar' (as obtained from the NCBI website)"
-  echo "                       can be placed in that folder."
+  echo "                       defaults to \$rootdir/NCBI/Assembly_YYYY-MM-DD (suffix is today's date). "
+  echo "                       A simple archive 'genome_assemblies.tar' (as obtained from the NCBI website)can be placed in that folder."
+  echo "                       If user genomes are also provided, these RefSeq assemblies will be used as reference for their annotation."
+  echo ""
+  echo "    --refseq_ass4annot idem, but WILL NOT be used in the study, only as a reference to annotate user genomes (defaults to vaule of -A option)"
   echo ""
   echo "    -a|--custom_ass  path to folder of user-provided genomes (defaults to \$rootdir/user_genomes), containing:"
   echo "                      _mandatory_ "
@@ -144,7 +147,7 @@ alias dateprompt="echo $(date +'[%Y-%m-%d %H:%M:%S]')"
 datepad="                      "
 
 
-ARGS=`getopt --options "d:r:p:i:f:a:T:A:s:t:RH:cC:h" --longoptions "dbname:,rootdir:,ptgrepo:,iam:,famprefix:,refseq_ass:,custom_ass:,taxonomy:,pseudocore:,reftree:,resume,submit_hpc:,collapse,collapse_par:,help" --name "pantagruel" -- "$@"`
+ARGS=`getopt --options "d:r:p:i:f:a:T:A:s:t:RH:cC:h" --longoptions "dbname:,rootdir:,ptgrepo:,iam:,famprefix:,refseq_ass:,refseq_ass4annot:,custom_ass:,taxonomy:,pseudocore:,reftree:,resume,submit_hpc:,collapse,collapse_par:,help" --name "pantagruel" -- "$@"`
 
 #Bad arguments
 if [ $? -ne 0 ];
@@ -199,6 +202,12 @@ do
       testmandatoryarg "$1" "$2"
       export ncbiass="$2"
       echo "set NCBI RefSeq(-like) genome assembly source folder to '$ncbiass'"
+      shift 2;;
+
+    --refseq_ass4annot)
+      testmandatoryarg "$1" "$2"
+      export refass="$2"
+      echo "set NCBI RefSeq(-like) genome assembly source folder for reference in user genome annotation to '$refass'"
       shift 2;;
 
     -s|--pseudocore)
@@ -279,11 +288,15 @@ setdefaults (){
     echo "Default: set custom (raw) genome assembly source folder to '$customassemb'"
     fi
     if [ -z "$ncbiass" ] ; then
-    export ncbiass=${ptgroot}/NCBI/Assembly
+    export ncbiass=${ptgroot}/NCBI/Assembly_$(date +'%Y-%m-%d')
     echo "Default: set NCBI RefSeq(-like) genome assembly source folder to '$ncbiass'"
     fi
+    if [ -z "$refass" ] ; then
+    export refass=${ncbiass}
+    echo "Default: set NCBI RefSeq(-like) genome assembly source folder for reference in user genome annotation to '$refass'"
+    fi
     if [ -z "$ncbitax" ] ; then
-     export ncbitax=${ptgroot}/NCBI/Taxonomy
+     export ncbitax=${ptgroot}/NCBI/Taxonomy_$(date +'%Y-%m-%d')
      echo "Default: set NCBI Taxonomy source folder to '$ncbitax'"
     fi
 }
@@ -374,7 +387,7 @@ for task in "$tasks" ; do
   if [[ "$task" == 'init' ]] ; then
     dateprompt "Pantagrel pipeline step $task: initiate pangenome database."
     setdefaults
-    ${ptgscripts}/pipeline/pantagruel_pipeline_init.sh ${ptgdbname} ${ptgroot} ${ptgrepo} ${myemail} ${famprefix} ${ncbiass} ${ncbitax} ${customassemb} ${initfile}
+    ${ptgscripts}/pipeline/pantagruel_pipeline_init.sh ${ptgdbname} ${ptgroot} ${ptgrepo} ${myemail} ${famprefix} ${ncbiass} ${ncbitax} ${customassemb} ${refass} ${initfile}
     checkexec
   else
    case "$task" in
