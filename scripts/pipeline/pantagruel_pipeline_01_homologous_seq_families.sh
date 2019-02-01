@@ -28,12 +28,12 @@ for ass in `ls ${assemblies}` ; do
  faa=$(ls ${assemblies}/${ass}/* | grep "protein.faa")
  zcat ${faa} >> ${allfaarad}.faa && echo $faa >> ${allfaarad}_list
 done
-dateprompt "-- $(wc -l ${allfaarad}_list | cut -d' ' -f1) proteomes in dataset"
-dateprompt "-- $(grep -c '>' ${allfaarad}.faa) proteins in dataset"
+promptdate "-- $(wc -l ${allfaarad}_list | cut -d' ' -f1) proteomes in dataset"
+promptdate "-- $(grep -c '>' ${allfaarad}.faa) proteins in dataset"
 
 # dereplicate proteins in db based on their identifier
 python ${ptgscripts}/dereplicate_fasta.py ${allfaarad}.faa ${allfaarad}.nrprotids.faa
-dateprompt "-- $(grep -c '>' ${allfaarad}.nrprotids.faa) non-redundant protein ids in dataset"
+promptdate "-- $(grep -c '>' ${allfaarad}.nrprotids.faa) non-redundant protein ids in dataset"
 
 ## clustering of identical protein sequences
 # notably those from the custom assemblies to those from the public database (and those redudant between RefSeq and Genbank sets)
@@ -65,7 +65,7 @@ grep '>' ${allfaarad}.nr.faa | cut -d' ' -f1 | cut -d'>' -f2 | sort -u > ${allfa
 # compare original dataset of nr protein (as described in the input GFF files) to the aligned nr proteome
 diff ${genomeinfo}/assembly_info/allproteins_in_gff ${allfaarad}.nr_protlist > $ptgtmp/diff_prot_info_fasta
 if [ -s $ptgtmp/diff_prot_info_fasta ] ; then 
-  >&2 dateprompt
+  >&2 promptdate
   >&2 echo "ERROR: inconsistent propagation of the protein dataset:"
   >&2 echo "present in aligned fasta proteome / absent in info table generated from input GFF:"
   >&2 grep '>' $ptgtmp/diff_prot_info_fasta | cut -d' ' -f2
@@ -94,7 +94,7 @@ mmseqs cluster ${allfaarad}.nr.mmseqsdb $mmseqsclout $mmseqstmp &> $mmseqslogs/$
 mmseqs createseqfiledb ${allfaarad}.nr.mmseqsdb $mmseqsclout ${mmseqsclout}_clusters
 # generate separate fasta files with family identifiers distinc from representative sequence name
 python ${ptgscripts}/split_mmseqs_clustdb_fasta.py ${mmseqsclout}_clusters "${famprefix}P" ${mmseqsclout}_clusters_fasta 6 1 0
-dateprompt "-- $(wc -l ${mmseqsclout}_clusters_fasta.tab | cut -d' ' -f1) non-redundant proteins"
-dateprompt "-- classified into $(ls ${mmseqsclout}_clusters_fasta/ | wc -l) clusters"
+promptdate "-- $(wc -l ${mmseqsclout}_clusters_fasta.tab | cut -d' ' -f1) non-redundant proteins"
+promptdate "-- classified into $(ls ${mmseqsclout}_clusters_fasta/ | wc -l) clusters"
 echo "${datepad}-- including artificial cluster ${famprefix}P000000 gathering $(grep -c '>' ${mmseqsclout}_clusters_fasta/${famprefix}P000000.fasta) ORFan nr proteins"
 echo "${datepad}-- (NB: some are not true ORFans as can be be present as identical sequences in several genomes)"

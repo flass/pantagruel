@@ -79,7 +79,8 @@ if [[ "$nseqin1" != "$nseqout" || "$nseqin2" != "$nseqout" ]] ; then
 fi
 done > $ptgtmp/pal2nal_missed_fams
 if [ $ok -lt 1 ] ; then
-  >&2 echo "WARNING $(dateprompt): failure of pal2nal.pl reverse translation step for families: $(cat $ptgtmp/pal2nal_missed_fams | xargs)"
+  >&2 promptdate 
+  >&2 echo "WARNING: failure of pal2nal.pl reverse translation step for families: $(cat $ptgtmp/pal2nal_missed_fams | xargs)"
   >&2 echo "will use tranposeAlignmentProt2CDS.py instead, a less safe, but more permissive method for generating CDS alignment"
   # some protein alignments do not match the CDS sequences
   # transpose the CDS into the positions of the aligned protein; assumes no indels, only mismatches and possibly shortenned sequences

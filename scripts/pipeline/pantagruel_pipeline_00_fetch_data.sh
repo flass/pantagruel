@@ -128,13 +128,13 @@ if [[ "$(ls -A "${contigs}/" 2>/dev/null)" ]] ; then
       echo "found annotation folder '${annot}/${gproject}' ; skip annotation of contigs in '${contigs}/${allcontigs}'"
     else
       echo "will annotate contigs in '${contigs}/${allcontigs}'"
-      dateprompt
+      promptdate
       echo "### assembly: $gproject; contig files from: ${contigs}/${allcontigs}"
       echo "running Prokka..."
       ${ptgscripts}/run_prokka.sh ${gproject} ${contigs}/${allcontigs} ${straininfo} ${annot}/${gproject} ${seqcentre} &> ${ptglogs}/${ptgdbname}_customassembly_annot_prokka.${gproject}.log
       checkexec "something went wrong when annotating genome ${gproject}; check log at '${ptglogs}/${ptgdbname}_customassembly_annot_prokka.${gproject}.log'"
       echo "done."
-      dateprompt
+      promptdate
     fi
     if [[ $(grep ${gproject} ${straininfo} | cut -f2- | grep -P '[^\t]' | wc -l) -gt 0 ]] ; then
       echo "fix annotation to integrate region information into GFF files"

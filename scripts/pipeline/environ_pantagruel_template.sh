@@ -1,10 +1,11 @@
 #!/bin/bash
 
 # logging variables and functions
-dateprompt (){
+promptdate () {
   echo $(date +'[%Y-%m-%d %H:%M:%S]') $1
 }
-datepad="                      "
+export -f dateprompt
+datepad="                       "
 
 ## primary variables
 

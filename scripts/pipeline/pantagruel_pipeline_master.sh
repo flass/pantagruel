@@ -142,9 +142,10 @@ checkexec (){
     fi
   fi
 }
-# logging variables and functions
-alias dateprompt="echo $(date +'[%Y-%m-%d %H:%M:%S]')"
-datepad="                      "
+
+promptdate () {
+  echo $(date +'[%Y-%m-%d %H:%M:%S]') $1
+}
 
 
 ARGS=`getopt --options "d:r:p:i:f:a:T:A:s:t:RH:cC:h" --longoptions "dbname:,rootdir:,ptgrepo:,iam:,famprefix:,refseq_ass:,refseq_ass4annot:,custom_ass:,taxonomy:,pseudocore:,reftree:,resume,submit_hpc:,collapse,collapse_par:,help" --name "pantagruel" -- "$@"`
