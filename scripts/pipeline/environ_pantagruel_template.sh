@@ -109,7 +109,7 @@ export mmseqsclout=${families}/$(basename ${allfaarad}.nr).mmseqs_clusterdb_defa
 export protfamseqs=${mmseqsclout}_clusters_fasta
 export protorfanclust="${famprefix}P000000"
 export cdsorfanclust="${famprefix}C000000"
-if [ "$pseudocoremingenomes" != 'REPLACEpseudocoremingenomes' ] ; then
+if [ "$pseudocoremingenomes" != "REPLACEpseudocoremingenomes" ] ; then
   export pseudocore=pseudo-core-${pseudocoremingenomes}-unicopy
 else
   export pseudocore='strict-core-unicopy'
