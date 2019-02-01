@@ -54,6 +54,10 @@ if [[ ! -z "${reftree}" ]] ; then
       # test that tip labels are all correct
       nfgencode = '${database}/genome_codes.tab'
       genome.codes = as.character(read.table(nfgencode, sep='\t', header=F)[,2])
+      if (length(genome.codes)!=length(tree[['tip.label']])){
+        goodtipset = FALSE
+        print("wrong number of tips compared to genome code set", quote=F)
+      }
       extratips = setdiff(tree[['tip.label']], genome.codes)
       missdtips = setdiff(genome.codes, tree[['tip.label']])
       if (length(extratips)>0){
