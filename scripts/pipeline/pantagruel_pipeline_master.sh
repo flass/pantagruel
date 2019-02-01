@@ -60,9 +60,9 @@ usage (){
   echo "                      NOTE: to ensure proper parsing, it is strongly advised that any provided annotation was generated with Prokka"
   echo "                      NOTE: to ensure uniform annotation of the dataset, it is advised to let Pantagruel annotate the contigs (calling Prokka)"
   echo ""
-  echo "    -s|--pseudocore  integer or string, the minimum number of genomes in which a gene family should be present"
-  echo "                       to be included in the pseudo-core genome gene set (otherwise has to be set interactively"
-  echo "                       when running task 'core'). A non-integer value will trigger interactive promt for search of an optimal value."
+  echo "    -s|--pseudocore  integer or string, the minimum number of genomes in which a gene family should be present to be included in"
+  echo "                       the pseudo-core genome, i.e. the gene set which alignments will be concatenated for reference tree search."
+  echo "                       Only relevant when running task 'core'; a non-integer value will trigger an INTERACTIVE prompt for search of an optimal value."
   echo "                       Defaults to the total number of genomes (work with a strict core genome set)."
   echo ""
   echo "    -t|--reftree     specify reference tree for reconciliation and clade-specific gene analyses;"
@@ -404,19 +404,22 @@ for task in "$tasks" ; do
 	  case "${pseudocoremingenomes}" in
         ''|*[!0-9]*)
           echo "'pseudocoremingenomes' variable is not set to a correct integer value: '${pseudocoremingenomes}' ; unset this variable" ;;
+          unset pseudocoremingenomes
+          echo "will run INTERACTIVELY '$ptgscripts/choose_min_genome_occurrence_pseudocore_genes.sh' to choose a sensible value."
+          echo ""
+          ${ptgscripts}/choose_min_genome_occurrence_pseudocore_genes.sh ${ptgdbname} ${ptgroot}
         *)
           echo "'pseudocoremingenomes' variable is set to ${pseudocoremingenomes}"
           echo "will run non-interactively '$ptgscripts/choose_min_genome_occurrence_pseudocore_genes.sh' to record the gene family set."
           echo ""
           ${ptgscripts}/choose_min_genome_occurrence_pseudocore_genes.sh ${ptgdbname} ${ptgroot} ${pseudocoremingenomes}
       esac
-    fi
-    if [[ -z "${pseudocoremingenomes}" ]] ; then
+    else
        echo "'pseudocoremingenomes' variable is not set"
-       unset pseudocoremingenomes
-       echo "will run INTERACTIVELY $ptgscripts/choose_min_genome_occurrence_pseudocore_genes.sh to choose a sensible value."
+       echo "will rely on strict core genome definition"
+       echo "will run non-interactively $ptgscripts/choose_min_genome_occurrence_pseudocore_genes.sh to record the gene family set."
        echo ""
-       ${ptgscripts}/choose_min_genome_occurrence_pseudocore_genes.sh ${ptgdbname} ${ptgroot}
+       ${ptgscripts}/choose_min_genome_occurrence_pseudocore_genes.sh ${ptgdbname} ${ptgroot} 'REPLACEpseudocoremingenomes'
     fi
     setnondefaults
     ${ptgscripts}/pipeline/pantagruel_pipeline_05_core_genome_ref_tree.sh ${ptgdbname} ${ptgroot}
