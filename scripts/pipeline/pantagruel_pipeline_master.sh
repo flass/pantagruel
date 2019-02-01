@@ -403,16 +403,16 @@ for task in "$tasks" ; do
     if [[ ! -z "${pseudocoremingenomes}" ]] ; then
 	  case "${pseudocoremingenomes}" in
         ''|*[!0-9]*)
-          echo "'pseudocoremingenomes' variable is not set to a correct integer value: '${pseudocoremingenomes}' ; unset this variable" ;;
+          echo "'pseudocoremingenomes' variable is not set to a correct integer value: '${pseudocoremingenomes}' ; unset this variable"
           unset pseudocoremingenomes
           echo "will run INTERACTIVELY '$ptgscripts/choose_min_genome_occurrence_pseudocore_genes.sh' to choose a sensible value."
           echo ""
-          ${ptgscripts}/choose_min_genome_occurrence_pseudocore_genes.sh ${ptgdbname} ${ptgroot}
+          ${ptgscripts}/choose_min_genome_occurrence_pseudocore_genes.sh ${ptgdbname} ${ptgroot} ;;
         *)
           echo "'pseudocoremingenomes' variable is set to ${pseudocoremingenomes}"
           echo "will run non-interactively '$ptgscripts/choose_min_genome_occurrence_pseudocore_genes.sh' to record the gene family set."
           echo ""
-          ${ptgscripts}/choose_min_genome_occurrence_pseudocore_genes.sh ${ptgdbname} ${ptgroot} ${pseudocoremingenomes}
+          ${ptgscripts}/choose_min_genome_occurrence_pseudocore_genes.sh ${ptgdbname} ${ptgroot} ${pseudocoremingenomes} ;;
       esac
     else
        echo "'pseudocoremingenomes' variable is not set"
