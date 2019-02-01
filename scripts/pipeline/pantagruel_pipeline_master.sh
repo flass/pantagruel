@@ -147,7 +147,6 @@ promptdate () {
   echo $(date +'[%Y-%m-%d %H:%M:%S]') $1
 }
 
-
 ARGS=`getopt --options "d:r:p:i:f:a:T:A:s:t:RH:cC:h" --longoptions "dbname:,rootdir:,ptgrepo:,iam:,famprefix:,refseq_ass:,refseq_ass4annot:,custom_ass:,taxonomy:,pseudocore:,reftree:,resume,submit_hpc:,collapse,collapse_par:,help" --name "pantagruel" -- "$@"`
 
 #Bad arguments
@@ -386,34 +385,34 @@ echo $tasks
 
 for task in "$tasks" ; do
   if [[ "$task" == 'init' ]] ; then
-    dateprompt "Pantagrel pipeline step $task: initiate pangenome database."
+    promptdate "Pantagrel pipeline step $task: initiate pangenome database."
     setdefaults
     ${ptgscripts}/pipeline/pantagruel_pipeline_init.sh ${ptgdbname} ${ptgroot} ${ptgrepo} ${myemail} ${famprefix} ${ncbiass} ${ncbitax} ${customassemb} ${refass} ${initfile}
     checkexec
   else
    case "$task" in
    0)
-    dateprompt "Pantagrel pipeline step $task: fetch public genome data from NCBI sequence databases and annotate private genomes."
+    promptdate "Pantagrel pipeline step $task: fetch public genome data from NCBI sequence databases and annotate private genomes."
     ${ptgscripts}/pipeline/pantagruel_pipeline_00_fetch_data.sh ${ptgdbname} ${ptgroot}
     checkexec  ;;
    1)
-    dateprompt "Pantagrel pipeline step $task: classify protein sequences into homologous families."
+    promptdate "Pantagrel pipeline step $task: classify protein sequences into homologous families."
     ${ptgscripts}/pipeline/pantagruel_pipeline_01_homologous_seq_families.sh ${ptgdbname} ${ptgroot}
     checkexec  ;;
    2)
-    dateprompt "Pantagrel pipeline step $task: align homologous protein sequences and translate alignemnts into coding sequences."
+    promptdate "Pantagrel pipeline step $task: align homologous protein sequences and translate alignemnts into coding sequences."
     ${ptgscripts}/pipeline/pantagruel_pipeline_02_align_homologous_seq.sh ${ptgdbname} ${ptgroot}
     checkexec  ;;
    3)
-    dateprompt "Pantagrel pipeline step $task: initiate SQL database and load genomic object relationships."
+    promptdate "Pantagrel pipeline step $task: initiate SQL database and load genomic object relationships."
     ${ptgscripts}/pipeline/pantagruel_pipeline_03_create_sqlite_db.sh ${ptgdbname} ${ptgroot}
     checkexec  ;;
    4)
-    dateprompt "Pantagrel pipeline step $task: use InterProScan to functionally annotate proteins in the database."
+    promptdate "Pantagrel pipeline step $task: use InterProScan to functionally annotate proteins in the database."
     ${ptgscripts}/pipeline/pantagruel_pipeline_04_functional_annotation.sh ${ptgdbname} ${ptgroot}
     checkexec  ;;
    5)
-    dateprompt "Pantagrel pipeline step $task: select core-genome markers and compute reference tree."
+    promptdate "Pantagrel pipeline step $task: select core-genome markers and compute reference tree."
     if [[ ! -z "${pseudocoremingenomes}" ]] ; then
 	  case "${pseudocoremingenomes}" in
         ''|*[!0-9]*)
@@ -439,21 +438,21 @@ for task in "$tasks" ; do
     ${ptgscripts}/pipeline/pantagruel_pipeline_05_core_genome_ref_tree.sh ${ptgdbname} ${ptgroot}
     checkexec  ;;
    6)
-    dateprompt "Pantagrel pipeline step $task: compute gene trees."
+    promptdate "Pantagrel pipeline step $task: compute gene trees."
     setnondefaults
     ${ptgscripts}/pipeline/pantagruel_pipeline_06_gene_trees.sh ${ptgdbname} ${ptgroot}
     checkexec  ;;
    7)
-    dateprompt "Pantagrel pipeline step $task: compute species tree/gene tree reconciliations."
+    promptdate "Pantagrel pipeline step $task: compute species tree/gene tree reconciliations."
     setnondefaults
     ${ptgscripts}/pipeline/pantagruel_pipeline_07_reconciliations.sh ${ptgdbname} ${ptgroot}
     checkexec  ;;
    8)
-    dateprompt "Pantagrel pipeline step $task: classify genes into orthologous groups (OGs) and search clade-specific OGs."
+    promptdate "Pantagrel pipeline step $task: classify genes into orthologous groups (OGs) and search clade-specific OGs."
     ${ptgscripts}/pipeline/pantagruel_pipeline_08_clade_specific_genes.sh ${ptgdbname} ${ptgroot}
     checkexec  ;;
    9)
-    dateprompt "Pantagrel pipeline step $task: evaluate gene co-evolution and build gene association network."
+    promptdate "Pantagrel pipeline step $task: evaluate gene co-evolution and build gene association network."
     ${ptgscripts}/pipeline/pantagruel_pipeline_09_coevolution.sh ${ptgdbname} ${ptgroot}
     checkexec  ;;
     esac
