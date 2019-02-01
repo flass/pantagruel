@@ -37,15 +37,18 @@ mkdir -p ${coregenome}/
 
 if [[ ! -z "${reftree}" ]] ; then
   # use user-provided tree as reference tree
-  if [[ -e "${reftree}" ]] ; then
-    # test if it is a valid tree file
+  if [[ ! -e "${reftree}" ]] ; then
+    echo "Error: cannot open user-provided tree '$reftree' ; exit now."
+    exit 1
+  else
+    # test if it is a valid Newick tree file
     R --vanilla --slave << EOF
     library('ape')
     nftree = '${reftree}'
     tree = read.tree(nftree)
     if (is.null(tree)){
       cat(sprintf("cannot read '%s' as a Newick tree file\n", nftree))
-      quit(status=1)
+      quit(status=3)
     }else{
       goodtipset = TRUE
       # test that tip labels are all correct
@@ -65,46 +68,49 @@ if [[ ! -z "${reftree}" ]] ; then
       }
       if (!goodtipset){
         print(sprintf("incorrect tree tip set (according to '%s')", nfgencode)
-        quit(status=1)
+        quit(status=3)
       }
       if (!is.null(tree[['node.label']])){
-        if (!is.rooted(tree)){
-          quit(status=3) 
+        if (is.rooted(tree)){
+          quit(status=6) 
         }else{
-          quit(status=2) 
+          quit(status=5) 
       }}else{
-        quit(status=0)
+        quit(status=4)
       }
     }
 EOF
-    
-    if [ $? -eq 1 ]; then
-      echo "ERROR: ${reftree} is not a valid tree file; exit now" 1>&2
-      exit 1 
-    elif [ $? -eq 3 ]; then
+    treecheck=$?
+    # evaluate output from tree check
+    case ${treecheck} in
+     3)
+       echo "ERROR: ${reftree} is not a valid tree file; exit now" 1>&2
+       exit 1 ;;
+     4)
+       echo "'$reftree' is a correct tree file but has no branch support"
+       echo "will use its topology for reference tree; skip RAxML ML tree computation but will compute rapid bootstraps from (pseudo-)core-genome concatenate alignment"
+       echo "emulate resuming RAxML computation pipeline after ML tree search (not that tree will be re-rooted according to set criterion: 'rootingmethod')"
+       ln -s ${reftree} ${coretree}/RAxML_bestTree.${treename}
+       resumetask='true' ;;
+     5)
        echo "'$reftree' is a correct tree file, with branch supports but not rooted"
        echo "will use its topology and branch supports for reference tree; skip RAxML ML tree and bootsrap computations but will perform rooting according to set criterion: 'rootingmethod'"
        echo "emulate resuming RAxML computation pipeline after rapid bootstrap tree search"
        ln -s ${reftree} ${coretree}/RAxML_bestTree.${treename}
        ln -s ${reftree} ${coretree}/RAxML_bipartitionsBranchLabels.${treename}
-       resumetask='true'
-    elif [ $? -eq 2 ]; then
-       echo "'$reftree' is a correct tree file but has no branch support"
-       echo "will use its topology for reference tree; skip RAxML ML tree computation but will compute rapid bootstraps from (pseudo-)core-genome concatenate alignment"
-       echo "emulate resuming RAxML computation pipeline after ML tree search (not that tree will be re-rooted according to set criterion: 'rootingmethod')"
-       ln -s ${reftree} ${coretree}/RAxML_bestTree.${treename}
-       resumetask='true'
-    else
+       resumetask='true' ;;
+     6)
       echo "'$reftree' is a correct rooted tree file with branch supports"
       echo "will use it as a reference tree; skip all RAxML computations from (pseudo-)core-genome concatenate alignment" 
       mv ${envsourcescript} ${envsourcescript}0 && \
        sed -e "s#'REPLACEreftree'#$reftree#" ${envsourcescript}0 > ${envsourcescript} && \
        rm ${envsourcescript}0
       echo "reftree=$reftree is recorded in init file '${envsourcescript}'"
-      export speciestree=${reftree}
-  else
-    echo "Error: cannot open user-provided tree '$reftree' ; exit now."
-    exit 1
+      export speciestree=${reftree} ;;
+     *)
+      echo "something went wrong when evaluatiing input tree (tree check output value: ${treecheck}); exit now"
+      exit 1 ;;
+    esac
   fi
 fi
 
