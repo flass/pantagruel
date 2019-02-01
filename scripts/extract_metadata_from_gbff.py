@@ -183,9 +183,10 @@ with open(nfout, 'w') as fout:
 nfoutdbxref = os.path.join(output, 'dbxrefs.tab')
 with open(nfoutdbxref, 'w') as foutdbxref:
 	for assemb in lassemb:
-		if assemb in dmetadata["dbxref"]:
-			dbxrefs = [dbxref.split(': ') for dbxref in dmetadata["dbxref"][assemb].split(';')]
-			for db, xrefs in dbxrefs:
+		dbxrefs = dmetadata.get("dbxref", {}).get(assemb)
+		if dbxrefs:
+			dbxrefsp = [dbxref.split(': ') for dbxref in dbxrefs.split(';')]
+			for db, xrefs in dbxrefsp:
 				if db!='Assembly': foutdbxref.write('\n'.join(['\t'.join([assemb, db, xref.strip()]) for xref in xrefs.split(',')])+'\n')
 		if assemb in dmetadata["pubmed_id"]:
 			pmids = dmetadata["pubmed_id"][assemb]
