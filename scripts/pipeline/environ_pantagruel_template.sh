@@ -1,7 +1,9 @@
 #!/bin/bash
 
 # logging variables and functions
-alias dateprompt="echo $(date +'[%Y-%m-%d %H:%M:%S]')"
+dateprompt (){
+  echo $(date +'[%Y-%m-%d %H:%M:%S]') $1
+}
 datepad="                      "
 
 ## primary variables
