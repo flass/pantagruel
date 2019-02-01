@@ -139,6 +139,9 @@ checkexec (){
     fi
   fi
 }
+# logging variables and functions
+alias dateprompt="echo $(date +'[%Y-%m-%d %H:%M:%S]')"
+datepad="                      "
 
 
 ARGS=`getopt --options "d:r:p:i:f:a:T:A:s:t:RH:cC:h" --longoptions "dbname:,rootdir:,ptgrepo:,iam:,famprefix:,refseq_ass:,custom_ass:,taxonomy:,pseudocore:,reftree:,resume,submit_hpc:,collapse,collapse_par:,help" --name "pantagruel" -- "$@"`
@@ -289,7 +292,7 @@ setnondefaults (){
 	nondefvardecl=${ptgtmp}/nondefvardecl.sh
 	rm -f ${ptgtmp}/nondefvardecl.sh
     if [ ! -z "$hpcremoteptgroot" ] ; then
-     echo "Overide default: all computations will be run on a distant server  (potentially a HPC service) instead of locally"
+     echo "Overide default: all computations will be run on a distant server (potentially a HPC service) instead of locally"
      echo "export hpcremoteptgroot=${hpcremoteptgroot}" >> ${ptgtmp}/nondefvardecl.sh
     fi
     if [ ! -z "$chaintype" ] ; then
@@ -302,21 +305,21 @@ setnondefaults (){
      echo "export collapseCladeParams=${collapseCladeParams}" >> ${ptgtmp}/nondefvardecl.sh
      fi
     fi
-    if [ ! -z "$pseudocoremingenomes" ] ; then
-     echo "Overide default: will establish pseudo-core gene set (gene present in a minimum of $pseudocoremingenomes genome) instead of a strict core-genome"
-     echo "export pseudocoremingenomes=${pseudocoremingenomes}" >> ${ptgtmp}/nondefvardecl.sh
-    fi
+    #~ if [ ! -z "$pseudocoremingenomes" ] ; then
+     #~ echo "Overide default: will establish pseudo-core gene set (gene present in a minimum of $pseudocoremingenomes genome) instead of a strict core-genome"
+     #~ echo "export pseudocoremingenomes=${pseudocoremingenomes}" >> ${ptgtmp}/nondefvardecl.sh
+    #~ fi
     if [ ! -z "$reftree" ] ; then
-     echo "Overide default: a reference tree was provided; will not compute core-genome tree"
+     echo "Overide default (only relevant to 'core' task): a reference tree was provided; will not compute core-genome tree"
      echo "export reftree=${reftree}" >> ${ptgtmp}/nondefvardecl.sh
     fi
     if [ ! -z "$resumetask" ] ; then
-     echo "will try and resume computation of task where it was last stopped"
+     echo "Overide default (only relevant to 'core' task): will try and resume computation of task where it was last stopped"
      echo "export resumetask=${resumetask}" >> ${ptgtmp}/nondefvardecl.sh
     fi
 }
 
-echo "will create/use Pantagruel database '$ptgdbname', set in root folder: '$ptgroot'"
+echo -e "# will create/use Pantagruel database '$ptgdbname', set in root folder: '$ptgroot'\n#"
 export ptgscripts=${ptgrepo}/scripts
 
 ## task-specific parameters
@@ -369,69 +372,71 @@ echo $tasks
 
 for task in "$tasks" ; do
   if [[ "$task" == 'init' ]] ; then
-    echo "Pantagrel pipeline step $task: initiate pangenome database."
+    dateprompt "Pantagrel pipeline step $task: initiate pangenome database."
     setdefaults
     ${ptgscripts}/pipeline/pantagruel_pipeline_init.sh ${ptgdbname} ${ptgroot} ${ptgrepo} ${myemail} ${famprefix} ${ncbiass} ${ncbitax} ${customassemb} ${initfile}
     checkexec
   else
    case "$task" in
    0)
-    echo "Pantagrel pipeline step $task: fetch public genome data from NCBI sequence databases and annotate private genomes."
+    dateprompt "Pantagrel pipeline step $task: fetch public genome data from NCBI sequence databases and annotate private genomes."
     ${ptgscripts}/pipeline/pantagruel_pipeline_00_fetch_data.sh ${ptgdbname} ${ptgroot}
     checkexec  ;;
    1)
-    echo "Pantagrel pipeline step $task: classify protein sequences into homologous families."
+    dateprompt "Pantagrel pipeline step $task: classify protein sequences into homologous families."
     ${ptgscripts}/pipeline/pantagruel_pipeline_01_homologous_seq_families.sh ${ptgdbname} ${ptgroot}
     checkexec  ;;
    2)
-    echo "Pantagrel pipeline step $task: align homologous protein sequences and translate alignemnts into coding sequences."
+    dateprompt "Pantagrel pipeline step $task: align homologous protein sequences and translate alignemnts into coding sequences."
     ${ptgscripts}/pipeline/pantagruel_pipeline_02_align_homologous_seq.sh ${ptgdbname} ${ptgroot}
     checkexec  ;;
    3)
-    echo "Pantagrel pipeline step $task: initiate SQL database and load genomic object relationships."
+    dateprompt "Pantagrel pipeline step $task: initiate SQL database and load genomic object relationships."
     ${ptgscripts}/pipeline/pantagruel_pipeline_03_create_sqlite_db.sh ${ptgdbname} ${ptgroot}
     checkexec  ;;
    4)
-    echo "Pantagrel pipeline step $task: use InterProScan to functionally annotate proteins in the database."
+    dateprompt "Pantagrel pipeline step $task: use InterProScan to functionally annotate proteins in the database."
     ${ptgscripts}/pipeline/pantagruel_pipeline_04_functional_annotation.sh ${ptgdbname} ${ptgroot}
     checkexec  ;;
    5)
-    echo "Pantagrel pipeline step $task: select core-genome markers and compute reference tree."
+    dateprompt "Pantagrel pipeline step $task: select core-genome markers and compute reference tree."
     if [[ ! -z "${pseudocoremingenomes}" ]] ; then
 	  case "${pseudocoremingenomes}" in
         ''|*[!0-9]*)
-          echo "'pseudocoremingenomes' variable is not set"
-          unset pseudocoremingenomes
-          echo "will run INTERACTIVELY $ptgscripts/choose_min_genome_occurrence_pseudocore_genes.sh to choose a sensible value."
-          echo ""
-          ${ptgscripts}/choose_min_genome_occurrence_pseudocore_genes.sh ${ptgdbname} ${ptgroot}
-          echo "" ;;
+          echo "'pseudocoremingenomes' variable is not set to a correct integer value: '${pseudocoremingenomes}' ; unset this variable" ;;
         *)
-          echo "'pseudocoremingenomes' variable is set to $pseudocoremingenomes"
-          echo "will run non-interactively $ptgscripts/choose_min_genome_occurrence_pseudocore_genes.sh to record the gene family set."
+          echo "'pseudocoremingenomes' variable is set to ${pseudocoremingenomes}"
+          echo "will run non-interactively '$ptgscripts/choose_min_genome_occurrence_pseudocore_genes.sh' to record the gene family set."
           echo ""
           ${ptgscripts}/choose_min_genome_occurrence_pseudocore_genes.sh ${ptgdbname} ${ptgroot} ${pseudocoremingenomes}
       esac
+    fi
+    if [[ -z "${pseudocoremingenomes}" ]] ; then
+       echo "'pseudocoremingenomes' variable is not set"
+       unset pseudocoremingenomes
+       echo "will run INTERACTIVELY $ptgscripts/choose_min_genome_occurrence_pseudocore_genes.sh to choose a sensible value."
+       echo ""
+       ${ptgscripts}/choose_min_genome_occurrence_pseudocore_genes.sh ${ptgdbname} ${ptgroot}
     fi
     setnondefaults
     ${ptgscripts}/pipeline/pantagruel_pipeline_05_core_genome_ref_tree.sh ${ptgdbname} ${ptgroot}
     checkexec  ;;
    6)
-    echo "Pantagrel pipeline step $task: compute gene trees."
+    dateprompt "Pantagrel pipeline step $task: compute gene trees."
     setnondefaults
     ${ptgscripts}/pipeline/pantagruel_pipeline_06_gene_trees.sh ${ptgdbname} ${ptgroot}
     checkexec  ;;
    7)
-    echo "Pantagrel pipeline step $task: compute species tree/gene tree reconciliations."
+    dateprompt "Pantagrel pipeline step $task: compute species tree/gene tree reconciliations."
     setnondefaults
     ${ptgscripts}/pipeline/pantagruel_pipeline_07_reconciliations.sh ${ptgdbname} ${ptgroot}
     checkexec  ;;
    8)
-    echo "Pantagrel pipeline step $task: classify genes into orthologous groups (OGs) and search clade-specific OGs."
+    dateprompt "Pantagrel pipeline step $task: classify genes into orthologous groups (OGs) and search clade-specific OGs."
     ${ptgscripts}/pipeline/pantagruel_pipeline_08_clade_specific_genes.sh ${ptgdbname} ${ptgroot}
     checkexec  ;;
    9)
-    echo "Pantagrel pipeline step $task: evaluate gene co-evolution and build gene association network."
+    dateprompt "Pantagrel pipeline step $task: evaluate gene co-evolution and build gene association network."
     ${ptgscripts}/pipeline/pantagruel_pipeline_09_coevolution.sh ${ptgdbname} ${ptgroot}
     checkexec  ;;
     esac

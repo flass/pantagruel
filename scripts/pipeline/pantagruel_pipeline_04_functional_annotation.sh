@@ -64,7 +64,7 @@ finfaa = open(nfinfaa, 'r')
 fout = open(os.path.join(outd, nfoutrad)+'.%d'%k, 'w')
 for line in finfaa:
   if line.startswith('>'):
-      if n > maxnprot:
+      if n >= maxnprot:
         fout.close()
         k += 1
         fout = open(os.path.join(outd, nfoutrad)+'.%d'%k, 'w')
