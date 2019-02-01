@@ -188,7 +188,7 @@ with open(nfoutdbxref, 'w') as foutdbxref:
 			dbxrefsp = [dbxref.split(': ') for dbxref in dbxrefs.split(';')]
 			for db, xrefs in dbxrefsp:
 				if db!='Assembly': foutdbxref.write('\n'.join(['\t'.join([assemb, db, xref.strip()]) for xref in xrefs.split(',')])+'\n')
-		pmids = dmetadata.get("pubmed_id", {})..get(assemb)
+		pmids = dmetadata.get("pubmed_id", {}).get(assemb)
 		if pmids:
 			foutdbxref.write('\n'.join(['\t'.join([assemb, "PubMed", pmid]) for pmid in pmids.split(',')])+'\n')
 	## read file with manually added entries and copy-paste records
