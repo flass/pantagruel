@@ -121,17 +121,27 @@ fi
 if  [[ ! -s ${speciestree} ]] ; then
   ### compute reference tree from (pseudo-)core genome
 
+  case "${coreseqtype}" in
+    prot)
+      alifastacodedir=${protalifastacodedir} ;;
+    cds)
+      alifastacodedir=${cdsalifastacodedir} ;;
+    *)
+      echo "ERROR: incorrect core sequence type was specified: ${coreseqtype} (must be 'prot' or 'cds'); exit now"
+      exit 1 ;;
+  esac
+  
   ## generate core genome alignment path list
   if [[ "${resumetask}" == "true" && -s ${pseudocorealn} ]] ; then
    echo "skip concatenating core genome alignment"
   else
-   rm -f ${coregenome}/pseudo-coregenome_sets/${pseudocore}_prot_aln_list
+   rm -f ${coregenome}/pseudo-coregenome_sets/${pseudocore}_${coreseqtype}_aln_list
    for fam in `cat ${coregenome}/pseudo-coregenome_sets/${pseudocore}_families.tab` ; do
-    ls ${protalifastacodedir}/$fam.codes.aln >> ${coregenome}/pseudo-coregenome_sets/${pseudocore}_prot_aln_list
+    ls ${alifastacodedir}/$fam.codes.aln >> ${coregenome}/pseudo-coregenome_sets/${pseudocore}_${coreseqtype}_aln_list
    done
-   # concatenate pseudo-core prot alignments
-   python ${ptgscripts}/concat.py ${coregenome}/pseudo-coregenome_sets/${pseudocore}_prot_aln_list ${pseudocorealn}
-   rm ${protalifastacodedir}/*_all_sp_new
+   # concatenate pseudo-core prot/CDS alignments
+   python ${ptgscripts}/concat.py ${coregenome}/pseudo-coregenome_sets/${pseudocore}_${coreseqtype}_aln_list ${pseudocorealn}
+   rm ${alifastacodedir}/*_all_sp_new
   fi
 
   ## compute species tree using RAxML
@@ -147,7 +157,15 @@ if  [[ ! -s ${speciestree} ]] ; then
     raxmlflav=''
   fi
   raxmlbin="raxmlHPC-PTHREADS${raxmlflav} -T $(nproc)"
-  raxmloptions="-n ${treename} -m PROTCATLGX -j -p 1753 -w ${coretree}"
+  case "${coreseqtype}" in
+    prot)
+      raxmloptions="-n ${treename} -m PROTCATLGX -j -p 1753 -w ${coretree}" ;;
+    cds)
+      raxmloptions="-n ${treename} -m GTRCATX -j -p 1753 -w ${coretree}" ;;
+    *)
+      echo "ERROR: incorrect core sequence type was specified: ${coreseqtype} (must be 'prot' or 'cds'); exit now"
+      exit 1 ;;
+  esac
 
   # first check the alignment for duplicate sequences and write a reduced alignment with  will be excluded
   if [[ "${resumetask}" == "true" && -e ${pseudocorealn}.identical_sequences ]] ; then

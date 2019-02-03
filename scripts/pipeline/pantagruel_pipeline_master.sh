@@ -71,6 +71,8 @@ usage (){
   echo "    -t|--reftree     specify reference tree for reconciliation and clade-specific gene analyses;"
   echo "                       over-rides the computation of tree from the concatenate of (pseudo-)core genome gene during taske 'core'."
   echo ""
+  echo "    --core_seqtype   {cds|prot} define the type of sequence that will be used to compute the (pseudo-)core genome tree (default to CDS"
+  echo ""
   echo "    -R|--resume      try and resume the task from previous run that was interupted (for the moment only available for taske 'core')"
   echo ""
   echo "    -H|--submit_hpc  full address (hostname:/folder/location) of a folder on a remote high-performance computating (HPC) cluster server"
@@ -147,7 +149,7 @@ promptdate () {
   echo $(date +'[%Y-%m-%d %H:%M:%S]') $1
 }
 
-ARGS=`getopt --options "d:r:p:i:f:a:T:A:s:t:RH:cC:h" --longoptions "dbname:,rootdir:,ptgrepo:,iam:,famprefix:,refseq_ass:,refseq_ass4annot:,custom_ass:,taxonomy:,pseudocore:,reftree:,resume,submit_hpc:,collapse,collapse_par:,help" --name "pantagruel" -- "$@"`
+ARGS=`getopt --options "d:r:p:i:f:a:T:A:s:t:RH:cC:h" --longoptions "dbname:,rootdir:,ptgrepo:,iam:,famprefix:,refseq_ass:,refseq_ass4annot:,custom_ass:,taxonomy:,pseudocore:,core_seqtype:,reftree:,resume,submit_hpc:,collapse,collapse_par:,help" --name "pantagruel" -- "$@"`
 
 #Bad arguments
 if [ $? -ne 0 ];
@@ -220,6 +222,19 @@ do
       testmandatoryarg "$1" "$2"
       export reftree="$2"
       echo "set reference tree as $reftree"
+      shift 2;;
+
+    --core_seqtype)
+      testmandatoryarg "$1" "$2"
+      export coreseqtype="$2"
+      echo "set core genome seuquence type to $coreseqtype"
+      case "${coreseqtype}" in
+        prot|cds)
+         echo "set core genome sequence type to $coreseqtype" ;;
+        *)
+          echo "ERROR: incorrect core sequence type was specified: ${coreseqtype} (must be 'prot' or 'cds'); exit now"
+          exit 1 ;;
+      esac
       shift 2;;
 
     -R|--resume)
@@ -325,6 +340,10 @@ setnondefaults (){
     if [ ! -z "$reftree" ] ; then
      echo "Overide default (only relevant to 'core' task): a reference tree was provided; will not compute core-genome tree"
      echo "export reftree=${reftree}" >> ${ptgtmp}/nondefvardecl.sh
+    fi
+    if [ ! -z "$coreseqtype" ] ; then
+     echo "Overide default (only relevant to 'core' task): core sequence type is set to '$coreseqtype'"
+     echo "export coreseqtype=${coreseqtype}" >> ${ptgtmp}/nondefvardecl.sh
     fi
     if [ ! -z "$resumetask" ] ; then
      echo "Overide default (only relevant to 'core' task): will try and resume computation of task where it was last stopped"

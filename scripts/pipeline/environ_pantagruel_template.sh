@@ -29,15 +29,13 @@ export ncbiass='REPLACEncbiass'
 export ncbitax='REPLACEncbitax'
 export customassemb='REPLACEcustomassemb'
 export refass='REPLACErefass'
-export hpcremoteptgroot='none'
-export chaintype='fullgenetree'
 # the following variables should be set automatically as a result of running the pipeline
 # at 00.input_data stage
 export ngenomes='REPLACEngenomes'    # the count of genomes in the dataset
 # at 05.core_genome stage
 export pseudocoremingenomes='REPLACEpseudocoremingenomes'    # the minimum number of genomes in which a gene family should be present to be included in the pseudo-core genome gene set
 export reftree='REPLACEreftree'                              # possible user-provided reference tree
-# the rest have fixed values
+# the rest have fixed values that can be modified here or overriden with certain task-specific options
 # default values are:
 export collapseCladeParams='default'
 export cladesupp=70
@@ -55,6 +53,9 @@ export colmethod='replaceCCinGasinS-collapsePOPinSnotinG'
 export ncorebootstrap=200
 export mainresulttag='rootedTree'
 export rootingmethod='treebalance'
+export coreseqtype='cds'
+export hpcremoteptgroot='none'
+export chaintype='fullgenetree'
 # only relevant if user-defined genomes are provided
 export assembler="somesoftware"
 export seqcentre="somewhere"
