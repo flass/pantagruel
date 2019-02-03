@@ -86,22 +86,22 @@ if [[ ! -z "${reftree}" ]] ; then
       genome.codes = as.character(read.table(nfgencode, sep='\t', header=F)[,2])
       if (length(genome.codes)!=length(tree[['tip.label']])){
         goodtipset = FALSE
-        print("wrong number of tips compared to genome code set", quote=F)
+        cat("wrong number of tips compared to genome code set\n")
       }
       extratips = setdiff(tree[['tip.label']], genome.codes)
       missdtips = setdiff(genome.codes, tree[['tip.label']])
       if (length(extratips)>0){
         goodtipset = FALSE
-        print("tips not in genome code set:", quote=F)
+        cat("tips not in genome code set:\n")
         print(extratips, quote=F)
       }
       if (length(missdtips)>0){
         goodtipset = FALSE
-        print("tips missing with respect to genome code set:", quote=F)
+        cat("tips missing with respect to genome code set:\n")
         print(missdtips, quote=F)
       }
       if (!goodtipset){
-        print(sprintf("incorrect tree tip set (according to '%s')", nfgencode)
+        cat(sprintf("incorrect tree tip set (according to '%s')\n", nfgencode))
         quit(status=3)
       }
       if (!is.null(tree[['node.label']])){
