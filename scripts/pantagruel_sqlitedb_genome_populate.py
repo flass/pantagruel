@@ -212,8 +212,6 @@ def main(dbname, protorfanclust, cdsorfanclust, nfspeclist, nfusergenomeinfo):
 				dcustomasscode[duginfo['assembly_id']] = duginfo['locus_tag_prefix']
 
 	fout.close()
-	cur.executemany("INSERT INTO uniptrotcode2taxid VALUES (?, ?);", codetaxids)
-	conn.commit()
 
 	# generate unique code for each genome assembly from the Uniprot code + enough digits
 	cur.execute("SELECT assembly_id, uniptrotcode2taxid.code, species FROM assemblies LEFT JOIN uniptrotcode2taxid USING (taxid) ORDER BY uniptrotcode2taxid.code DESC;")
@@ -240,7 +238,7 @@ def main(dbname, protorfanclust, cdsorfanclust, nfspeclist, nfusergenomeinfo):
 				# fairly common case of organism name being '[Candidatus] Genus sp.'
 				c = s[:6].upper()
 			else:
-				# regular case  of organism name being '[Candidatus] Genus species'
+				# standard case  of organism name being '[Candidatus] Genus species'
 				c = (s[:3]+p[:3]).upper()
 		dcodesn[c] = dcodesn.setdefault(c, 0) + 1
 		if dcodesn[c] == 1:
