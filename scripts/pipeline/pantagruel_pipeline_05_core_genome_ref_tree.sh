@@ -123,9 +123,17 @@ if  [[ ! -s ${speciestree} ]] ; then
 
   case "${coreseqtype}" in
     prot)
-      alifastacodedir=${protalifastacodedir} ;;
+      alifastacodedir=${protalifastacodedir}
+      raxmloptions="-n ${treename} -m PROTCATLGX -j -p 1753 -w ${coretree}"
+      popstemconds="[('lg', '>=', 0.0001), ('bs', '>=', 80)]"
+      withinpopconds="[('max', 'lg', '<=', 0.0001, -1)]"
+      ;;
     cds)
-      alifastacodedir=${cdsalifastacodedir} ;;
+      alifastacodedir=${cdsalifastacodedir}
+      raxmloptions="-n ${treename} -m GTRCATX -j -p 1753 -w ${coretree}"
+      popstemconds="[('lg', '>=', 0.0005), ('bs', '>=', 80)]"
+      withinpopconds="[('max', 'lg', '<=', 0.0005, -1)]"
+      ;;
     *)
       echo "ERROR: incorrect core sequence type was specified: ${coreseqtype} (must be 'prot' or 'cds'); exit now"
       exit 1 ;;
@@ -157,15 +165,6 @@ if  [[ ! -s ${speciestree} ]] ; then
     raxmlflav=''
   fi
   raxmlbin="raxmlHPC-PTHREADS${raxmlflav} -T $(nproc)"
-  case "${coreseqtype}" in
-    prot)
-      raxmloptions="-n ${treename} -m PROTCATLGX -j -p 1753 -w ${coretree}" ;;
-    cds)
-      raxmloptions="-n ${treename} -m GTRCATX -j -p 1753 -w ${coretree}" ;;
-    *)
-      echo "ERROR: incorrect core sequence type was specified: ${coreseqtype} (must be 'prot' or 'cds'); exit now"
-      exit 1 ;;
-  esac
 
   # first check the alignment for duplicate sequences and write a reduced alignment with  will be excluded
   if [[ "${resumetask}" == "true" && -e ${pseudocorealn}.identical_sequences ]] ; then
@@ -286,7 +285,7 @@ lsd -i ${speciestree} -c -v 1 -s $alnlen -o ${speciestree}.lsd
 
 ### delineate populations of near-identical strains (based on tree with branch lengths in subs/site) and generate the population tree, i.e. the species tree withs population collapsed
 python ${ptgscripts}/replace_species_by_pop_in_gene_trees.py -S ${speciestree} --threads=8 \
---pop_stem_conds="[('lg', '>=', 0.0005), ('bs', '>=', 80)]" --within_pop_conds="[('max', 'lg', '<=', 0.0005, -1)]"
+--pop_stem_conds="${popstemconds}" --within_pop_conds="${withinpopconds}"
 nspepop=$(tail -n+3 ${speciestree%.*}_populations | wc -l)
 echo "Found $nspepop disctinct populations in the species tree"
 
