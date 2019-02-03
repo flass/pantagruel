@@ -307,6 +307,7 @@ EOF
   else
     rm -f ${speciestree}
     ln -s ${nrrootedtree} ${speciestree}
+  fi
 fi
 
 ### make version of full reference tree with actual organism names
