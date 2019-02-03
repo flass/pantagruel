@@ -27,6 +27,36 @@ if [ -e ${ptgtmp}/nondefvardecl.sh ] ; then
   source ${ptgtmp}/nondefvardecl.sh
 fi
 
+case "${coreseqtype}" in
+  prot)
+      alifastacodedir=${protalifastacodedir}
+      raxmloptions="-n ${treename} -m PROTCATLGX -j -p 1753 -w ${coretree}"
+      if [ "${poplgthresh}" == 'default' ] ; then
+        poplgthresh=0.0001
+      fi
+      if [ "${popbsthresh}" == 'default' ] ; then
+        popbsthresh=80
+      fi
+      popstemconds="[('lg', '>=', ${poplgthresh}), ('bs', '>=', ${popbsthresh})]"
+      withinpopconds="[('max', 'lg', '<=', ${poplgthresh}, -1)]"
+      ;;
+  cds)
+      alifastacodedir=${cdsalifastacodedir}
+      raxmloptions="-n ${treename} -m GTRCATX -j -p 1753 -w ${coretree}"
+      if [ "${poplgthresh}" == 'default' ] ; then
+        poplgthresh=0.0001
+      fi
+      if [ "${popbsthresh}" == 'default' ] ; then
+        popbsthresh=80
+      fi
+      popstemconds="[('lg', '>=', ${poplgthresh}), ('bs', '>=', ${popbsthresh})]"
+      withinpopconds="[('max', 'lg', '<=', ${poplgthresh}, -1)]"
+      ;;
+  *)
+      echo "ERROR: incorrect core sequence type was specified: ${coreseqtype} (must be 'prot' or 'cds'); exit now"
+      exit 1 ;;
+esac
+
 ###########################################
 ## 05. Core Genome Phylogeny (Species tree)
 ###########################################
@@ -120,24 +150,6 @@ fi
 
 if  [[ ! -s ${speciestree} ]] ; then
   ### compute reference tree from (pseudo-)core genome
-
-  case "${coreseqtype}" in
-    prot)
-      alifastacodedir=${protalifastacodedir}
-      raxmloptions="-n ${treename} -m PROTCATLGX -j -p 1753 -w ${coretree}"
-      popstemconds="[('lg', '>=', 0.0001), ('bs', '>=', 80)]"
-      withinpopconds="[('max', 'lg', '<=', 0.0001, -1)]"
-      ;;
-    cds)
-      alifastacodedir=${cdsalifastacodedir}
-      raxmloptions="-n ${treename} -m GTRCATX -j -p 1753 -w ${coretree}"
-      popstemconds="[('lg', '>=', 0.0005), ('bs', '>=', 80)]"
-      withinpopconds="[('max', 'lg', '<=', 0.0005, -1)]"
-      ;;
-    *)
-      echo "ERROR: incorrect core sequence type was specified: ${coreseqtype} (must be 'prot' or 'cds'); exit now"
-      exit 1 ;;
-  esac
   
   ## generate core genome alignment path list
   if [[ "${resumetask}" == "true" && -s ${pseudocorealn} ]] ; then

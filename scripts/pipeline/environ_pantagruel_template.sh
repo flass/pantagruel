@@ -54,6 +54,8 @@ export ncorebootstrap=200
 export mainresulttag='rootedTree'
 export rootingmethod='treebalance'
 export coreseqtype='cds'
+export poplgthresh='default'
+export popbsthresh='default'
 export hpcremoteptgroot='none'
 export chaintype='fullgenetree'
 # only relevant if user-defined genomes are provided

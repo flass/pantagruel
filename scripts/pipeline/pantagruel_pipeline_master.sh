@@ -71,7 +71,12 @@ usage (){
   echo "    -t|--reftree     specify reference tree for reconciliation and clade-specific gene analyses;"
   echo "                       over-rides the computation of tree from the concatenate of (pseudo-)core genome gene during taske 'core'."
   echo ""
-  echo "    --core_seqtype   {cds|prot} define the type of sequence that will be used to compute the (pseudo-)core genome tree (default to CDS"
+  echo "    --core_seqtype   {cds|prot} define the type of sequence that will be used to compute the (pseudo-)core genome tree (default to 'cds')"
+  echo ""
+  echo "    --pop_lg_thresh  definee the threshold of branch length for delinating populations in the reference tree "
+  echo "                       (default: 0.0005 for nucleotide alignemnt-based tree; 0.0001 for protein-based)"
+  echo ""
+  echo "    --pop_bs_thresh  definee the threshold of branch support for delinating populations in the reference tree (default: 80)"
   echo ""
   echo "    -R|--resume      try and resume the task from previous run that was interupted (for the moment only available for taske 'core')"
   echo ""
@@ -149,7 +154,7 @@ promptdate () {
   echo $(date +'[%Y-%m-%d %H:%M:%S]') $1
 }
 
-ARGS=`getopt --options "d:r:p:i:f:a:T:A:s:t:RH:cC:h" --longoptions "dbname:,rootdir:,ptgrepo:,iam:,famprefix:,refseq_ass:,refseq_ass4annot:,custom_ass:,taxonomy:,pseudocore:,core_seqtype:,reftree:,resume,submit_hpc:,collapse,collapse_par:,help" --name "pantagruel" -- "$@"`
+ARGS=`getopt --options "d:r:p:i:f:a:T:A:s:t:RH:cC:h" --longoptions "dbname:,rootdir:,ptgrepo:,iam:,famprefix:,refseq_ass:,refseq_ass4annot:,custom_ass:,taxonomy:,pseudocore:,core_seqtype:,pop_lg_thresh:,pop_bs_thresh:,reftree:,resume,submit_hpc:,collapse,collapse_par:,help" --name "pantagruel" -- "$@"`
 
 #Bad arguments
 if [ $? -ne 0 ];
@@ -235,6 +240,18 @@ do
           echo "ERROR: incorrect core sequence type was specified: ${coreseqtype} (must be 'prot' or 'cds'); exit now"
           exit 1 ;;
       esac
+      shift 2;;
+    
+    --pop_lg_thresh)
+      testmandatoryarg "$1" "$2"
+      export poplgthresh="$2"
+      echo "set population delination branch length threshold to $poplgthresh"
+      shift 2;;
+    
+    --pop_bs_thresh)
+      testmandatoryarg "$1" "$2"
+      export popbsthresh="$2"
+      echo "set population delination branch support threshold to $popbsthresh"
       shift 2;;
 
     -R|--resume)
@@ -344,6 +361,14 @@ setnondefaults (){
     if [ ! -z "$coreseqtype" ] ; then
      echo "Overide default (only relevant to 'core' task): core sequence type is set to '$coreseqtype'"
      echo "export coreseqtype=${coreseqtype}" >> ${ptgtmp}/nondefvardecl.sh
+    fi
+    if [ ! -z "$poplgthresh" ] ; then
+     echo "Overide default (only relevant to 'core' task): set population delination branch support threshold to $poplgthresh"
+     echo "export poplgthresh=${poplgthresh}" >> ${ptgtmp}/nondefvardecl.sh
+    fi
+    if [ ! -z "$popbsthresh" ] ; then
+     echo "Overide default (only relevant to 'core' task): set population delination branch support threshold to $popbsthresh"
+     echo "export popbsthresh=${popbsthresh}" >> ${ptgtmp}/nondefvardecl.sh
     fi
     if [ ! -z "$resumetask" ] ; then
      echo "Overide default (only relevant to 'core' task): will try and resume computation of task where it was last stopped"
