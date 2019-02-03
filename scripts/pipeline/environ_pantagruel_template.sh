@@ -122,8 +122,8 @@ else
 fi
 export nrbesttree=${coretreerad}.topology
 export nrbiparts=${coretreerad}.supports
-export speciestree=${coretreerad}.rooted
-export nrrootedtree=${coretreerad}.full
+export nrrootedtree=${coretreerad}.rooted
+export speciestree=${coretreerad}.full
 if [ "$pseudocoremingenomes" != "REPLACEpseudocoremingenomes" ] ; then
   export pseudocore=pseudo-core-${pseudocoremingenomes}-unicopy
 else
