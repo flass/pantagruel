@@ -65,16 +65,16 @@ esac
 export coregenome=${ptgdb}/05.core_genome
 mkdir -p ${coregenome}/
 
-if [[ ! -z "${reftree}" ]] ; then
+if [[ ! -z "${userreftree}" ]] ; then
   # use user-provided tree as reference tree
-  if [[ ! -e "${reftree}" ]] ; then
-    echo "Error: cannot open user-provided tree '$reftree' ; exit now."
+  if [[ ! -e "${userreftree}" ]] ; then
+    echo "Error: cannot open user-provided tree '$userreftree' ; exit now."
     exit 1
   else
     # test if it is a valid Newick tree file
     R --vanilla --slave << EOF
     library('ape')
-    nftree = '${reftree}'
+    nftree = '${userreftree}'
     tree = read.tree(nftree)
     if (is.null(tree)){
       cat(sprintf("cannot read '%s' as a Newick tree file\n", nftree))
@@ -118,29 +118,29 @@ EOF
     # evaluate output from tree check
     case ${treecheck} in
      3)
-       echo "ERROR: ${reftree} is not a valid tree file; exit now" 1>&2
+       echo "ERROR: ${userreftree} is not a valid tree file; exit now" 1>&2
        exit 1 ;;
      4)
-       echo "'$reftree' is a correct tree file but has no branch support"
+       echo "'$userreftree' is a correct tree file but has no branch support"
        echo "will use its topology for reference tree; skip RAxML ML tree computation but will compute rapid bootstraps from (pseudo-)core-genome concatenate alignment"
        echo "emulate resuming RAxML computation pipeline after ML tree search (not that tree will be re-rooted according to set criterion: 'rootingmethod')"
-       ln -s ${reftree} ${coretree}/RAxML_bestTree.${treename}
+       ln -s ${userreftree} ${nrbesttree}
        resumetask='true' ;;
      5)
-       echo "'$reftree' is a correct tree file, with branch supports but not rooted"
+       echo "'$userreftree' is a correct tree file, with branch supports but not rooted"
        echo "will use its topology and branch supports for reference tree; skip RAxML ML tree and bootsrap computations but will perform rooting according to set criterion: 'rootingmethod'"
        echo "emulate resuming RAxML computation pipeline after rapid bootstrap tree search"
-       ln -s ${reftree} ${coretree}/RAxML_bestTree.${treename}
-       ln -s ${reftree} ${coretree}/RAxML_bipartitionsBranchLabels.${treename}
+       ln -s ${userreftree} ${nrbesttree}
+       ln -s ${userreftree} ${nrbiparts}
        resumetask='true' ;;
      6)
-      echo "'$reftree' is a correct rooted tree file with branch supports"
+      echo "'$userreftree' is a correct rooted tree file with branch supports"
       echo "will use it as a reference tree; skip all RAxML computations from (pseudo-)core-genome concatenate alignment" 
       mv ${envsourcescript} ${envsourcescript}0 && \
-       sed -e "s#'REPLACEreftree'#$reftree#" ${envsourcescript}0 > ${envsourcescript} && \
+       sed -e "s#'REPLACEuserreftree'#$userreftree#" ${envsourcescript}0 > ${envsourcescript} && \
        rm ${envsourcescript}0
-      echo "reftree=$reftree is recorded in init file '${envsourcescript}'"
-      export speciestree=${reftree} ;;
+      echo "userreftree=$userreftree is recorded in init file '${envsourcescript}'"
+       ln -s ${userreftree} ${speciestree} ;;
      *)
       echo "something went wrong when evaluatiing input tree (tree check output value: ${treecheck}); exit now"
       exit 1 ;;
@@ -165,7 +165,7 @@ if  [[ ! -s ${speciestree} ]] ; then
   fi
 
   ## compute species tree using RAxML
-  mkdir -p ${ptglogs}/raxml ${coretree}
+  mkdir -p ${ptglogs}/raxml ${coretree}/
   # define RAxML binary and options; uses options -T (threads) -j (checkpoints) 
   if [ ! -z $(grep -o avx2 /proc/cpuinfo | head -n 1) ] ; then
     raxmlflav='-AVX2 -U'
@@ -184,11 +184,17 @@ if  [[ ! -s ${speciestree} ]] ; then
   else
    $raxmlbin -s ${pseudocorealn} ${raxmloptions} -f c &> ${ptglogs}/raxml/${treename}.check.
    grep 'exactly identical$' ${coretree}/RAxML_info.${treename} | sed -e 's/IMPORTANT WARNING: Sequences \(.\+\) and \(.\+\) are exactly identical/\1\t\2/g' > ${pseudocorealn}.identical_sequences
-   rm ${coretree}/RAxML_info.${treename}
+   mv ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_identical_sequences.${treename}
+   if [[ ! -z "${userreftree}" ]] ; then 
+     # work on the full alignment as the user-provided tree is expected to bear all leaves
+     coretreealn=${pseudocorealn}
+   else
+     coretreealn=${pseudocorealn}.reduced
+   fi
   fi
 
   # compute bestTree (ML tree) on reduced alignment
-  if [[ "${resumetask}" == "true" && -s ${coretree}/RAxML_bestTree.${treename} ]] ; then
+  if [[ "${resumetask}" == "true" && -s ${nrbesttree} ]] ; then
    # ML tree search already done
    echo "skip ML tree search"
   else
@@ -198,16 +204,18 @@ if  [[ ! -s ${speciestree} ]] ; then
     echo "resume from checkpoint ${ckps[0]##*.}"
     mv ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_bestTree.${treename}.up_to_ckp${ckps[0]##*.}
     mv ${ptglogs}/raxml/${treename}.ML_run.log ${ptglogs}/raxml/${treename}.ML_run.log.up_to_ckp${ckps[0]##*.}
-    $raxmlbin -s ${pseudocorealn}.reduced ${raxmloptions} -t ${ckps[0]} &> ${ptglogs}/raxml/${treename}.ML_run.log
+    $raxmlbin -s ${coretreealn} ${raxmloptions} -t ${ckps[0]} &> ${ptglogs}/raxml/${treename}.ML_run.log
    else
     # initial search
-    $raxmlbin -s ${pseudocorealn}.reduced ${raxmloptions} &> ${ptglogs}/raxml/${treename}.ML_run.log
+    $raxmlbin -s ${coretreealn} ${raxmloptions} &> ${ptglogs}/raxml/${treename}.ML_run.log
    fi
    mv ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_bestTree.${treename}
+   rm -f ${nrbesttree}
+   ln -s ${coretree}/RAxML_bestTree.${treename} ${nrbesttree}
   fi
 
   # compute ${ncorebootstrap} rapid bootstraps (you can set variable by editing ${envsourcescript})
-  if [[ "${resumetask}" == "true" && -s ${coretree}/RAxML_bipartitionsBranchLabels.${treename} ]] ; then
+  if [[ "${resumetask}" == "true" && -s ${nrbiparts} ]] ; then
    # tree with branch supports already provided bootstrap tree search already done
    echo "skip bootstraping and mapping to ML tree"
   else
@@ -223,19 +231,20 @@ if  [[ ! -s ${speciestree} ]] ; then
      mv ${coretree}/RAxML_bootstrap.${treename} ${coretree}/RAxML_bootstrap.${treename}.firstbs${nbs}
      mv ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_bootstrap.${treename}.up_to_bs${nbs}
      mv ${ptglogs}/raxml/${treename}_bs.log ${ptglogs}/raxml/${treename}_bs.log.up_to_bs${nbs}
-     $raxmlbin -s ${pseudocorealn}.reduced ${raxmloptions} -x 198237 -N ${ncorebootstrap} &> ${ptglogs}/raxml/${treename}_bs.log
+     $raxmlbin -s ${coretreealn} ${raxmloptions} -x 198237 -N ${ncorebootstrap} &> ${ptglogs}/raxml/${treename}_bs.log
     fi
    else
     # bootstrapping tree search from scratch
-    $raxmlbin -s ${pseudocorealn}.reduced ${raxmloptions} -x 198237 -N ${ncorebootstrap} &> ${ptglogs}/raxml/${treename}_bs.log
+    $raxmlbin -s ${coretreealn} ${raxmloptions} -x 198237 -N ${ncorebootstrap} &> ${ptglogs}/raxml/${treename}_bs.log
    fi
    # mapping bootstraps to ML tree
    mv ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_bootstrap.${treename}
-   $raxmlbin -s ${pseudocorealn}.reduced ${raxmloptions} -f b -z ${coretree}/RAxML_bootstrap.${treename} -t ${coretree}/RAxML_bestTree.${treename} 
+   $raxmlbin -s ${coretreealn} ${raxmloptions} -f b -z ${coretree}/RAxML_bootstrap.${treename} -t ${nrbesttree} 
    mv ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_bipartitions.${treename}
+   rm -f ${nrbiparts}
+   #~ ln -s ${coretree}/RAxML_bipartitionsBranchLabels.${treename} ${nrbiparts}
+   ln -s ${coretree}/RAxML_bipartitions.${treename} ${nrbiparts}
   fi
-
-
 
   # root ML tree
   if [[ "${resumetask}" == "true" && -s ${nrrootedtree} ]] ; then
@@ -247,18 +256,26 @@ if  [[ ! -s ${speciestree} ]] ; then
    #~ export nrrootedtree=${nrbiparts}.${rootingmethod/:/-}rooted
    if [[ "${rootingmethod}" == 'treebalance' ]] ; then
     # root ML tree with RAxML tree-balance algorithm
-    $raxmlbin -s ${pseudocorealn}.reduced ${raxmloptions} -f I -t ${coretree}/RAxML_bipartitionsBranchLabels.${treename}  
+    nrbipartbranchlab=$(readlink -f $nrbiparts | sed -e 's/bipartitions/bipartitionsBranchLabels/')
+    if [ ! -s ${nrbipartbranchlab} ] ; then
+      echo "Error: could not detect tree file with brach support annotated on the branches ; exit now"
+      exit 1
+    fi
+    $raxmlbin -s ${coretreealn} ${raxmloptions} -f I -t ${nrbipartbranchlab}  
     mv ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_rootedTree.${treename}
+    rm -f ${nrrootedtree}
     ln -s ${coretree}/RAxML_rootedTree.${treename} ${nrrootedtree}
    else
     if [[ "${rootingmethod}" == 'MAD' ]] ; then
      # root tree with MAD (Tria et al. Nat Ecol Evol (2017) Phylogenetic rooting using minimal ancestor deviation. s41559-017-0193 doi:10.1038/s41559-017-0193)
      R BATCH --vanilla --slave << EOF
      source('${ptgscripts}/mad_R/MAD.R')
-     mad.rooting = MAD(readLines('${nrbesttree}'), 'full')
-     write(mad.rooting[[1]], file='${nrrootedtree}')
-     save(mad.rooting, file='${nrbesttree}.${rootingmethod}rooting.RData}')
+     mad.rooting = MAD(readLines('${nrbiparts}'), 'full')
+     write(mad.rooting[[1]], file='${nrbiparts}.${rootingmethod}rooted')
+     save(mad.rooting, file='${nrbiparts}.${rootingmethod}rooting.RData}')
 EOF
+    rm -f ${nrrootedtree}
+    ln -s ${nrbiparts}.${rootingmethod}rooting ${nrrootedtree}
     else
      if [[ "${rootingmethod:0:8}" == 'outgroup' ]] ; then
     # outgroup rooting; assume argument was of the shape 'outgroup:SPECIESCODE'
@@ -268,23 +285,28 @@ EOF
       echo "Error, outgroup species '$outgroup' is absent from tree '${nrbesttree}'"
       exit 1
     fi
+    roottag=${rootingmethod/:/-}rooted
     R --vanilla --slave << EOF
     library('ape')
-    tree = read.tree('${nrbesttree}')
+    tree = read.tree('${nrbiparts}')
     rtree = root(tree, outgroup='${outgroup}', resolve.root=T)
-    write.tree(rtree, file='${nrrootedtree}')
+    write.tree(rtree, file='${nrbiparts}.${roottag}')
 EOF
+    rm -f ${nrrootedtree}
+    ln -s ${nrbiparts}.${roottag} ${nrrootedtree}
      fi
     fi
    fi
   fi
 
   # from here no skipping in resume mode
-
-  # reintroduce excluded species name into the tree
-  python ${ptgscripts}/putidentseqbackintree.py --input.nr.tree=${nrbiparts} --ref.rooted.nr.tree=${nrrootedtree} \
-   --list.identical.seq=${pseudocorealn}.identical_sequences --output.tree=${speciestree}
-
+  if [ "${coretreealn}" == "${pseudocorealn}.reduced" ] ; then
+    # reintroduce excluded species name into the tree
+    python ${ptgscripts}/putidentseqbackintree.py --input.nr.tree=${nrbiparts} --ref.rooted.nr.tree=${nrrootedtree} \
+     --list.identical.seq=${pseudocorealn}.identical_sequences --output.tree=${speciestree}
+  else
+    rm -f ${speciestree}
+    ln -s ${nrrootedtree} ${speciestree}
 fi
 
 ### make version of full reference tree with actual organism names
@@ -292,7 +314,7 @@ python ${ptgscripts}/code2orgnames_in_tree.py ${speciestree} $database/organism_
 
 ### generate ultrametric 'dated' species tree for more meaningfulgptghical representation of reconciliation AND to use the dated (original) version of ALE
 ## use LSD (v 0.3 beta; To et al. Syst. Biol. 2015) to generate an ultrametric tree from the rooted ML tree (only assumin different, uncorrelated clocks for each branch)
-alnlen=$( head -n1 ${pseudocorealn}.reduced | cut -d' ' -f2 )
+alnlen=$( head -n1 ${coretreealn} | cut -d' ' -f2 )
 lsd -i ${speciestree} -c -v 1 -s $alnlen -o ${speciestree}.lsd
 
 ### delineate populations of near-identical strains (based on tree with branch lengths in subs/site) and generate the population tree, i.e. the species tree withs population collapsed

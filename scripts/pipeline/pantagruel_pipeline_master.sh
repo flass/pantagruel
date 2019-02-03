@@ -68,7 +68,7 @@ usage (){
   echo "                       Only relevant when running task 'core'; a non-integer value will trigger an INTERACTIVE prompt for search of an optimal value."
   echo "                       Defaults to the total number of genomes (work with a strict core genome set)."
   echo ""
-  echo "    -t|--reftree     specify reference tree for reconciliation and clade-specific gene analyses;"
+  echo "    -t|--reftree     specify a reference tree for reconciliation and clade-specific gene analyses;"
   echo "                       over-rides the computation of tree from the concatenate of (pseudo-)core genome gene during taske 'core'."
   echo ""
   echo "    --core_seqtype   {cds|prot} define the type of sequence that will be used to compute the (pseudo-)core genome tree (default to 'cds')"
@@ -225,8 +225,8 @@ do
 
     -t|--reftree)
       testmandatoryarg "$1" "$2"
-      export reftree="$2"
-      echo "set reference tree as $reftree"
+      export userreftree="$2"
+      echo "set reference tree as $userreftree"
       shift 2;;
 
     --core_seqtype)
@@ -354,9 +354,9 @@ setnondefaults (){
      #~ echo "Overide default: will establish pseudo-core gene set (gene present in a minimum of $pseudocoremingenomes genome) instead of a strict core-genome"
      #~ echo "export pseudocoremingenomes=${pseudocoremingenomes}" >> ${ptgtmp}/nondefvardecl.sh
     #~ fi
-    if [ ! -z "$reftree" ] ; then
+    if [ ! -z "$userreftree" ] ; then
      echo "Overide default (only relevant to 'core' task): a reference tree was provided; will not compute core-genome tree"
-     echo "export reftree=${reftree}" >> ${ptgtmp}/nondefvardecl.sh
+     echo "export userreftree=${userreftree}" >> ${ptgtmp}/nondefvardecl.sh
     fi
     if [ ! -z "$coreseqtype" ] ; then
      echo "Overide default (only relevant to 'core' task): core sequence type is set to '$coreseqtype'"
