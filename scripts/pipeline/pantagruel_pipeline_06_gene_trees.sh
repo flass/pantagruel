@@ -22,7 +22,7 @@ if [ -e ${ptgtmp}/nondefvardecl.sh ] ; then
 fi
 
 # if was not specified,set gene tree type to default
-if [ ! -z "$chaintype" ] ; then
+if [ -z "$chaintype" ] ; then
   chaintype='fullgenetree'
 fi
 
