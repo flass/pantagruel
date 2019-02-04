@@ -102,7 +102,7 @@ else
   for fam in `cut -f1 $cdsfam2phylo` ; do
    ls ${cdsalifastacodedir}/${fam}.codes.aln >> $tasklist
   done
-  ${ptgscripts}/raxml_sequential.sh ${tasklist} ${mlgenetrees} 'GTRCAT' 'bipartitions rootedTree identical_sequences' 'x' $(nproc) 'true'
+  ${ptgscripts}/raxml_sequential.sh ${tasklist} ${mlgenetrees} 'GTRCATX' 'bipartitions rootedTree identical_sequences' 'x' $(nproc) 'true'
   
   ############################
   ## 06.2 Gene tree collapsing
@@ -140,7 +140,7 @@ fi
 ############################
 
 ## run mrbayes on collapsed alignments
-export bayesgenetrees=${genetrees}/${chaintype}_mrbayes_trees
+#~ export bayesgenetrees=${genetrees}/${chaintype}_mrbayes_trees
 mkdir -p ${mboutputdir}
 nchains=4
 nruns=2
