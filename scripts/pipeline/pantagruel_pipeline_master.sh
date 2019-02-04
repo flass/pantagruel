@@ -425,7 +425,7 @@ done
 
 # sort tasks
 tasks=$(echo "${tasks}" | tr ' ' '\n' | sort -u | xargs)
-echo $tasks
+echo "# will run tasks: $tasks"
 
 for task in "$tasks" ; do
   if [[ "$task" == 'init' ]] ; then
