@@ -21,14 +21,25 @@ if [ -e ${ptgtmp}/nondefvardecl.sh ] ; then
   source ${ptgtmp}/nondefvardecl.sh
 fi
 
+# if was not specified,set gene tree type to default
+if [ ! -z "$chaintype" ] ; then
+  chaintype='fullgenetree'
+fi
+
+# record the type of gene tree that will be used
+mv ${envsourcescript} ${envsourcescript}0 && \
+  sed -e "s#'REPLACEchaintype'#${chaintype}#" ${envsourcescript}0 > ${envsourcescript} && \
+  rm ${envsourcescript}0
+echo "chaintype=${chaintype} is recorded in init file '${envsourcescript}'"
+
 #############################################################
 ## 06. Gene trees (full [ML] and collapsed [bayesian sample])
 #############################################################
 
-mkdir -p ${mlgenetrees}
+mkdir -p ${colalinexuscodedir}/${collapsecond}/ ${mlgenetrees}/ ${bayesgenetrees}/
 mkdir -p ${ptglogs}/raxml/gene_trees
 
-basequery="select gene_family_id, size from gene_family_sizes where gene_family_id is not null and gene_family_id!='$cdsorfanclust'"
+basequery="select gene_family_id, size from gene_family_sizes where gene_family_id is not null and gene_family_id!='${cdsorfanclust}'"
  
  
 ### prepare HPC version

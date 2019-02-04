@@ -21,10 +21,9 @@ rsync -avz ${envsourcescript} ${remotehost}:${remoteenvsourcescript}.remote_orig
 ssh ${remotehost} "sed -e 's#${ptgroot}#${remotefolder}#g' ${remoteenvsourcescript}.remote_origin ${remoteenvsourcescript}"
 
 for sourcef in ${@} ; do
-  
   targetf=$(echo ${sourcef%*/} | sed -e 's#${ptgroot}#${remotefolder}#')
   targetpar=$(dirname $targetf)
-  ssh ${remotehost} "mkdir -p ${targetf}"
-  rsync -avz ${sourcef%*/} ${remotehost}:${targetpar}
+  ssh ${remotehost} "mkdir -p ${targetpar}"
+  rsync -avz ${sourcef%*/} ${remotehost}:${targetf}
 
 done

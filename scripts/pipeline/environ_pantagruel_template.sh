@@ -35,6 +35,8 @@ export ngenomes='REPLACEngenomes'    # the count of genomes in the dataset
 # at 05.core_genome stage
 export pseudocoremingenomes='REPLACEpseudocoremingenomes'    # the minimum number of genomes in which a gene family should be present to be included in the pseudo-core genome gene set
 export userreftree='REPLACEuserreftree'                              # possible user-provided reference tree
+# at 06.genetrees stage
+export chaintype='REPLACEchaintype'
 # the rest have fixed values that can be modified here or overriden with certain task-specific options
 # default values are:
 export collapseCladeParams='default'
@@ -57,7 +59,6 @@ export coreseqtype='cds'
 export poplgthresh='default'
 export popbsthresh='default'
 export hpcremoteptgroot='none'
-export chaintype='fullgenetree'
 # only relevant if user-defined genomes are provided
 export assembler="somesoftware"
 export seqcentre="somewhere"
@@ -115,7 +116,7 @@ export mmseqsclout=${families}/$(basename ${allfaarad}.nr).mmseqs_clusterdb_defa
 export protfamseqs=${mmseqsclout}_clusters_fasta
 export protorfanclust="${famprefix}P000000"
 export cdsorfanclust="${famprefix}C000000"
-if [ "$userreftree" != 'REPLACEuserreftree' ] ; then
+if [ "$userreftree" != "REPLACEuserreftree" ] ; then
   export coretreerad=${coregenome}/user-defined_reference_tree_${ptgdbname}
 else
   export coretreerad=${coregenome}/core-genome-based_reference_tree_${ptgdbname}
@@ -124,10 +125,10 @@ export nrbesttree=${coretreerad}.topology
 export nrbiparts=${coretreerad}.supports
 export nrrootedtree=${coretreerad}.rooted
 export speciestree=${coretreerad}.full
-if [ "$pseudocoremingenomes" != "REPLACEpseudocoremingenomes" ] ; then
-  export pseudocore=pseudo-core-${pseudocoremingenomes}-unicopy
-else
+if [[ "${pseudocoremingenomes}" == "REPLACEpseudocoremingenomes" || "${pseudocoremingenomes}" == "${ngenomes}" ]] ; then
   export pseudocore='strict-core-unicopy'
+else
+  export pseudocore=pseudo-core-${pseudocoremingenomes}-unicopy
 fi
 export treename=${pseudocore}_concat_${coreseqtype}_${ngenomes}-genomes_${ptgdbname}
 export pseudocorealn=${coregenome}/${treename}.aln

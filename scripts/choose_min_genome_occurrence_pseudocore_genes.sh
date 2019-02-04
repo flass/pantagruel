@@ -23,7 +23,7 @@ mkdir -p ${coregenome}/pseudo-coregenome_sets/
 #~ let "t = ($ngenomes * 9 / 10)" ; let "u = $t - ($t%20)" ; seq $u 10 $ngenomes | sort -r > ${ptgtmp}/mingenom ; echo "0" >> ${ptgtmp}/mingenom
 
 if [ ! -z "$pseudocoremingenomes" ] ; then
-  if [[ "${pseudocoremingenomes}" == 'REPLACEpseudocoremingenomes' ]] ; then
+  if [[ "${pseudocoremingenomes}" == 'REPLACEpseudocoremingenomes' || "${pseudocoremingenomes}" == "${ngenomes}" ]] ; then
     echo "WARNING: Will rely on strict core genome definition to compute reference tree. This is often not advisable as the strict core genome can be very small." 1>&2
     echo "To choose a sensible 'pseudocore genomes' gene set, please run interactively '$ptgscripts/choose_min_genome_occurrence_pseudocore_genes.sh'." 1>&2
     export pseudocoremingenomes=${ngenomes}
