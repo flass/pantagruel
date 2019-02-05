@@ -13,7 +13,6 @@ import shutil
 import utilitaires
 
 spsplitchar = utilitaires.spsplitchar
-genesplit = '.'
 
 
 """
@@ -440,9 +439,9 @@ class AlnFasta(Alignment):
 					i+=1
 					#taxa=utilitaires.mvWhiteSpaces(line)[1:11]
 					# Sans limitation de taille du champ "taxon"
-					f=line.strip(">\n").rsplit(genesplit, 1) # supprime deja le '\n' et le '>' et separe espece et nom de gene !!! string 'genesplit' est a changer en fonction de la nature des donnees : CDSs -> "." ; proteines -> "_"
-					#print string.join(f)
-					taxa=f[0].split(spsplitchar)[0]        # remove trailing replicon identifier
+					taxa=line.strip(">\n").rsplit(spsplitchar, 1)[0] # supprime deja le '\n' et le '>' et separe espece et nom de gene !!! string 'spsplitchar' est a changer en fonction de la nature des donnees : CDSs -> "." ; proteines -> "_"
+					#~ #print string.join(f)
+					#~ taxa=f[0].rsplit(spsplitchar, 1)[0]        # remove trailing replicon identifier
 					self._list_sp.append(taxa)
 					self._dico_sp_seq[taxa]=""
 				else:

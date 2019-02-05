@@ -374,19 +374,8 @@ def fastaToPhylipOLD(fasta_file, colwidth=50):
 		record=iterator.next()	
 		if record is None:
 			break
-		sp=record.title	
 		
-		# Normalisation du nom des sequences : nom d'espece en 5 lettres max
-		fields_sp=sp.split()
-		#print len(fields_sp)
-		if len(fields_sp) > 1:
-			sp=fields_sp[0]
-			#print sp
-		fields_sp=sp.split(spsplitchar)		
-		if len(fields_sp) > 1:
-			#sp=fields_sp[1] # Pour HOGENOM 3
-			sp=fields_sp[0] # Pour HOGENOM 4+
-			#print sp
+		sp=record.title.split()[0].rsplit(spsplitchar, 1)[0]
 		
 		while len(sp) < 10:
 			sp+=" "
@@ -453,7 +442,9 @@ def fasta_concat2files(file1, file2, concat_file, colwidth):
 		record=iterator.next()
 		if record is None:
 			break
-		sp=record.title.split()[0]
+		
+		sp=record.title.split()[0].rsplit(spsplitchar, 1)[0]
+		#~ sp=record.title.split()[0]
 		#~ if len(sp.split(spsplitchar)) > 1:
 			#~ sp=sp.split(spsplitchar)[1]
 		dico1[sp]=mvWhiteSpaces(record.sequence) # Supprime les espaces ajoutes par Gblocks
@@ -466,7 +457,8 @@ def fasta_concat2files(file1, file2, concat_file, colwidth):
 		record=iterator.next()
 		if record is None:
 			break
-		sp=record.title.split()[0]
+		#~ sp=record.title.split()[0]
+		sp=record.title.split()[0].rsplit(spsplitchar, 1)[0]
 		#~ if len(sp.split(spsplitchar)) > 1:
 			#~ sp=sp.split(spsplitchar)[1]
 		dico2[sp]=mvWhiteSpaces(record.sequence) # Supprime les espaces ajoutes par Gblocks
@@ -748,7 +740,8 @@ def deleteCopies_SeqToSp(list_seq):#, dico_strains):
 	list_nr=[]
 		
 	for seq in list_seq:
-		sp=seq.split(spsplitchar)[1]
+		#~ sp=seq.split(spsplitchar)[1]
+		sp=seq.split()[0].rsplit(spsplitchar, 1)[0]
 		list_sp.append(sp)
 	
 	list_nr.append(list_sp[0])	
@@ -922,10 +915,8 @@ def extractSpeciesFromFasta(fasta_file):
 		record=iterator.next()
 		if record is None:
 			break
-		sp=record.title.split()[0]
-		if len(sp.split(spsplitchar)) > 1:
-			sp=sp.split(spsplitchar)[1]
-			list_sp.append(sp)
+		sp=record.title.split()[0].rsplit(spsplitchar,1)[0]
+		list_sp.append(sp)
 			
 	fasta_file.close()
 	#print list_sp
@@ -1076,7 +1067,7 @@ def loadDataHyp(fasta_filename, fam_sp_list):
 			break
 		
 		seq_name=record.title.split()[0]
-		sp=seq_name.split(spsplitchar)[1]
+		sp=seq_name.rsplit(spsplitchar,1)[0]
 		dico_rec[seq_name]=mvWhiteSpaces(record.sequence)
 		dico_data[sp]['seq'].append(seq_name)
 
