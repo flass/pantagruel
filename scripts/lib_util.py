@@ -77,8 +77,11 @@ def concatAln(aln_file_list, filename, format="interleaved"):
 	for aln_file in aln_file_list:
 		#print aln_file
 		aln=AlnGenerator(aln_file)
-		#print aln
+		print "before norm_name"
+		print aln.get_species()
 		aln.norm_name()
+		print "after norm_name"
+		print aln.get_species()
 		dico_aln=aln.get_dico_sp_seq()
 		#print dico_aln
 		sp_list=aln.get_species()
