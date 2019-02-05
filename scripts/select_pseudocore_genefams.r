@@ -47,8 +47,10 @@ selectMinGenomes = function(countmatrix, dirout, pseudocoremingenomes=-1, ngenom
 	pcmg = -1
 	if (interactive.X){ X11(width=16, height=10) }
 	while (p!=pcmg | nloop==length(pseudocoremingenomes)){
-		nftabout = file.path(dirout, sprintf("pseudo-core-%d-unicopy_families.tab", p))
-		nfpdfout = file.path(dirout, sprintf("pseudo-core-%d-unicopy_families.pdf", p))
+		if (p<N){ pseudocorerad = sprintf("pseudo-core-%d-unicopy", p)
+		}else{  pseudocorerad = "strict-core-unicopy" }
+		nftabout = file.path(dirout, sprintf("%s_families.tab", pseudocorerad))
+		nfpdfout = file.path(dirout, sprintf("%s_families.pdf", pseudocorerad))
 		if (!interactive.X){ pdf(nfpdfout, width=40, height=40) }
 		pcmg = p
 		pseudocorefams = getpseudocorefams(p, countsbyfam)
