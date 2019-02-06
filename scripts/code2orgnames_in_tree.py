@@ -3,6 +3,8 @@
 import tree2
 import sys
 
+sys.setrecursionlimit(20000)
+
 nftreein = sys.argv[1]
 nfref = sys.argv[2]
 nfout = sys.argv[3]

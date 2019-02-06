@@ -315,7 +315,7 @@ python ${ptgscripts}/code2orgnames_in_tree.py ${speciestree} $database/organism_
 
 ### generate ultrametric 'dated' species tree for more meaningfulgptghical representation of reconciliation AND to use the dated (original) version of ALE
 ## use LSD (v 0.3 beta; To et al. Syst. Biol. 2015) to generate an ultrametric tree from the rooted ML tree (only assumin different, uncorrelated clocks for each branch)
-alnlen=$( head -n1 ${coretreealn} | cut -d' ' -f2 )
+alnlen=$(head -n1 ${pseudocorealn}.reduced | cut -d' ' -f2 )
 lsd -i ${speciestree} -c -v 1 -s $alnlen -o ${speciestree}.lsd
 
 ### delineate populations of near-identical strains (based on tree with branch lengths in subs/site) and generate the population tree, i.e. the species tree withs population collapsed
@@ -327,7 +327,8 @@ echo "Found $nspepop disctinct populations in the species tree"
 
 ### extract sister clade pairs from the reference species tree for later clade-specific gene search
 python << EOF
-import tree2
+import tree2, sys
+sys.setrecursionlimit(20000)
 reftree = tree2.Node(file='${speciestree}')
 nfout = "${speciestree}_clade_defs"
 fout = open(nfout, 'w')
