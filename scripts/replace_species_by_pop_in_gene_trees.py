@@ -18,7 +18,7 @@ maxreclimupfactor = 1 # range for tentative increase of the recursion limit that
 default_psc = [('lg', '>=', 0.0005), ('bs', '>=', 80)]
 default_wpc = [('max', 'lg', '<=', 0.0005, -1)]
 
-def speciesTreePopulations(spetree, pop_stem_conds, within_pop_conds, nested=False, inclusive=False, taglen=3, poptag=None **kw):
+def speciesTreePopulations(spetree, pop_stem_conds, within_pop_conds, nested=False, inclusive=False, taglen=3, poptag=None, **kw):
 	"""find supported clades in the species tree
 	
 	when inclusive is False, populations can be defined so as to emerges from another, with the more ancestral not be inclusive on of another, i.e. a population
