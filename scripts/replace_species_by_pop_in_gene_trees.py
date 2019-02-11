@@ -30,7 +30,7 @@ def speciesTreePopulations(spetree, pop_stem_conds, within_pop_conds, nested=Fal
 	for pop in lpops: allspeinpops |= set(pop)
 	for spe in spetree.get_leaf_labels():
 		if not (spe in allspeinpops):
-			print "add lone species %s as a poopulation"%spe
+			print "add lone species %s as a population"%spe
 			lpops.append([spe])
 	# generate pop names based on the major 3 first letter of species in it
 	lnamepops = []
@@ -38,10 +38,12 @@ def speciesTreePopulations(spetree, pop_stem_conds, within_pop_conds, nested=Fal
 	for pop in lpops:
 		assert (pop[0] is not None)
 		if len(pop)>1:
-			if monotag: taglet = monotag
-			else: taglet = [spe[:taglen] for spe in pop]
-			tagcount = [(tag, taglet.count(tag)) for tag in set(taglet)]
-			maxtag = sorted(tagcount, key=lambda x: x[1])[-1][0]
+			if monotag:
+				maxtag = monotag
+			else:
+				taglet = [spe[:taglen] for spe in pop]
+				tagcount = [(tag, taglet.count(tag)) for tag in set(taglet)]
+				maxtag = sorted(tagcount, key=lambda x: x[1])[-1][0]
 			dnamecount.setdefault(maxtag, 0)
 			dnamecount[maxtag] += 1
 			ntag = dnamecount[maxtag]
