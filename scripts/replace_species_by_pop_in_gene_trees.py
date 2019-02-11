@@ -50,7 +50,6 @@ def speciesTreePopulations(spetree, pop_stem_conds, within_pop_conds, nested=Fal
 			lnamepops.append(("%s-POP%d"%(maxtag, ntag), pop))
 		else:
 			lnamepops.append((pop[0], pop))
-	print lnamepops
 	return lnamepops
 
 def collapsePopulationInSpeciesTree(spetree, lnamepops, fast=True, speciestoprune=[], nested=True, keepUltrametric=True, collapseAllPops=True, verbose=0):
@@ -173,7 +172,8 @@ def collapsePopulationInSpeciesTree(spetree, lnamepops, fast=True, speciestoprun
 			# assume populations are monophyletic and the clade can be removed at once
 			assert set(popanc.get_leaf_labels())==set(lpopspe)
 			popanc.as_leaf(newlabel=popname, silent=1-(verbose-1))
-
+	
+	print poptree
 	if collapseAllPops and (not set(lpopname) == set(poptree.get_leaf_labels())):
 		print "set(lpopname) - set(poptree.get_leaf_labels()):\n", set(lpopname) - set(poptree.get_leaf_labels())
 		print "set(poptree.get_leaf_labels()) - set(lpopname):\n", set(poptree.get_leaf_labels()) - set(lpopname)
