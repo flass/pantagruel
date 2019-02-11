@@ -193,7 +193,7 @@ def select_clades_on_conditions(tree, clade_stem_conds, within_clade_conds, dept
 		if verbose:
 			print '# round %d ... complete'%nround
 			print 'leaves in selected clades:', nspeinsc
-			print 'remaining tree (%d leaves):\n'%nl, tr.newick(ignoreBS=True)
+			print 'remaining tree (%d leaves):\n'%nl, tr.newick(ignoreBS=True, comment='boot')
 	else:
 		nl = tr.nb_leaves()
 	if (nspeinsc+nl)!=nl0:
