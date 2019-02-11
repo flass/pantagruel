@@ -101,7 +101,9 @@ def collapsePopulationInSpeciesTree(spetree, lnamepops, fast=True, speciestoprun
 	for a, (popname, popanc) in enumerate(lnamepopancs):
 		lpopspe = dnamepop[popname]
 		p = popanc.nodeid()
-		if verbose: print '#%d. %s (id: %d):'%(a, popname, p), lpopspe
+		if verbose:
+			print '#%d. %s (id: %d):'%(a, popname, p), lpopspe
+			print ' in subtree:', str(popanc)
 		if len(lpopspe)==1: 
 			# leaf/single-species population; skip
 			continue
@@ -173,7 +175,7 @@ def collapsePopulationInSpeciesTree(spetree, lnamepops, fast=True, speciestoprun
 			assert set(popanc.get_leaf_labels())==set(lpopspe)
 			popanc.as_leaf(newlabel=popname, silent=1-(verbose-1))
 	
-	print poptree
+	#~ print poptree
 	if collapseAllPops and (not set(lpopname) == set(poptree.get_leaf_labels())):
 		print "set(lpopname) - set(poptree.get_leaf_labels()):\n", set(lpopname) - set(poptree.get_leaf_labels())
 		print "set(poptree.get_leaf_labels()) - set(lpopname):\n", set(poptree.get_leaf_labels()) - set(lpopname)
