@@ -30,7 +30,6 @@ def speciesTreePopulations(spetree, pop_stem_conds, within_pop_conds, nested=Fal
 	lnamepops = []
 	dnamecount = {}
 	for pop in lpops:
-		print pop
 		assert (pop[0] is not None)
 		if len(pop)>1:
 			if monotag: taglet = monotag

@@ -9,7 +9,6 @@ nftreein = sys.argv[1]
 nfref = sys.argv[2]
 nfout = sys.argv[3]
 
-#~ t = tree2.Node(file=nftreein, unrooted=True)
 t = tree2.read_check_newick(nftreein, maxNoBS=-1)
 
 with open(nfref, 'r') as fref:
