@@ -4,20 +4,6 @@ import sys, tree2, getopt
 
 sys.setrecursionlimit(20000)
 
-def checkBS(tree, maxNone=2):
-	"""count how many node ave no branch support documented; raise an error when above threshold
-	
-	by default allow a maximum of 2 without support to account for branches created when rooting
-	"""
-	nnodenobs = 0
-	for node in tree:
-		if node.is_leaf(): continue
-		if node.bs() is None: nnodenobs += 1
-	
-	if nnodenobs > maxNone:
-		raise ValueError, "too many (%d) nodes without branch support documented"%nnodenobs
-
-
 opts, args = getopt.getopt(sys.argv[1:], 'h', ['input.nr.tree=', 'output.tree=', 'list.identical.seq=', 'ref.rooted.nr.tree=', 'help'])
 
 dopt = dict(opts)
@@ -31,17 +17,7 @@ nfidentseqs = dopt.get('--list.identical.seq')
 nfrefroottree = dopt.get('--ref.rooted.nr.tree')
 nfouttree = dopt.get('--output.tree', nfintree+'.full')
 
-
-intree = tree2.Node(file=nfintree)
-try:
-	checkBS(intree)
-except ValueError:
-	print "could not find branch supports, look in comments field"
-	intree = tree2.Node(file=nfintree, keep_comments=True)
-	for n in intree:
-		if str(n.comment()).isdigit():
-			n.set_bs(float(n.comment()))
-	checkBS(intree)
+intree = tree2.read_check_newick(nfintree)
 
 dseq = {}
 if nfidentseqs:

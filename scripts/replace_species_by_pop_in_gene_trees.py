@@ -363,7 +363,7 @@ def inferPopfromSpeTree(nfspetree, \
 	# get file pre/sufix
 	bnst, extst = nfspetree.rsplit('.', 1)
 	## load species tree S
-	spetree = tree2.AnnotatedNode(file=nfspetree)
+	spetree = tree2.read_check_newick(nfspetree, treeclass="AnnotatedNode")
 	spetree.complete_internal_labels(order=0, ffel=True) # pre-order traversal labeling
 	poptree = None
 	## load pre-computed or compute populations in S
@@ -380,7 +380,7 @@ def inferPopfromSpeTree(nfspetree, \
 					lnamepops.append((lsp[0], tuple(lsp[1].split())))
 		if nfpopulationtree:
 			if verbose: print 'load population tree from \'%s\''% nfpopulationtree
-			poptree = tree2.AnnotatedNode(file=nfpopulationtree)
+			poptree = tree2.read_check_newick(nfpopulationtree, treeclass="AnnotatedNode")
 			assert poptree.nb_leaves() == len(lnamepops)
 	else:
 		# define conditions to select species population within the species tree
