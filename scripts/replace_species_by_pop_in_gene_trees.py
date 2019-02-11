@@ -397,7 +397,7 @@ def inferPopfromSpeTree(nfspetree, \
 		if within_pop_conds: wpc = within_pop_conds
 		else: wpc = default_wpc
 		# define species population that can be sued to summarize a collapsed clade
-		lnamepops = speciesTreePopulations(spetree, pop_stem_conds=psc, within_pop_conds=wpc, testLeaves=True, nested=True, inclusive=False, taglen=3)
+		lnamepops = speciesTreePopulations(spetree, pop_stem_conds=psc, within_pop_conds=wpc, testLeaves=True, nested=True, inclusive=False, taglen=3, **kw)
 		# export in file ; name it after the species tree
 		with open("%s_populations"%bnst, 'w') as foutspepop:
 			foutspepop.write("# psc = %s\n"%repr(psc))
