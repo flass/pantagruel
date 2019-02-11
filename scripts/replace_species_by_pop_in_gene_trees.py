@@ -51,6 +51,7 @@ def speciesTreePopulations(spetree, pop_stem_conds, within_pop_conds, nested=Fal
 			lnamepops.append(("%s-POP%d"%(maxtag, ntag), pop))
 		else:
 			lnamepops.append((pop[0], pop))
+	print lnamepops
 	return lnamepops
 
 def collapsePopulationInSpeciesTree(spetree, lnamepops, fast=True, speciestoprune=[], nested=True, keepUltrametric=True, collapseAllPops=True, verbose=0):
