@@ -32,7 +32,7 @@ case "${coreseqtype}" in
       alifastacodedir=${protalifastacodedir}
       raxmloptions="-n ${treename} -m PROTCATLGX -j -p 1753 -w ${coretree}"
       if [ "${poplgthresh}" == 'default' ] ; then
-        poplgthresh=0.0001
+        poplgthresh=0.0002
       fi
       if [ "${popbsthresh}" == 'default' ] ; then
         popbsthresh=80
@@ -44,7 +44,7 @@ case "${coreseqtype}" in
       alifastacodedir=${cdsalifastacodedir}
       raxmloptions="-n ${treename} -m GTRCATX -j -p 1753 -w ${coretree}"
       if [ "${poplgthresh}" == 'default' ] ; then
-        poplgthresh=0.0001
+        poplgthresh=0.0005
       fi
       if [ "${popbsthresh}" == 'default' ] ; then
         popbsthresh=80

@@ -74,7 +74,7 @@ usage (){
   echo "    --core_seqtype   {cds|prot} define the type of sequence that will be used to compute the (pseudo-)core genome tree (default to 'cds')"
   echo ""
   echo "    --pop_lg_thresh  definee the threshold of branch length for delinating populations in the reference tree "
-  echo "                       (default: 0.0005 for nucleotide alignemnt-based tree; 0.0001 for protein-based)"
+  echo "                       (default: 0.0005 for nucleotide alignemnt-based tree; 0.0002 for protein-based)"
   echo ""
   echo "    --pop_bs_thresh  definee the threshold of branch support for delinating populations in the reference tree (default: 80)"
   echo ""
