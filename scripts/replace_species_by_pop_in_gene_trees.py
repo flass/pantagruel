@@ -357,7 +357,7 @@ def allPWpopDist(poptree, lnamepops, nfmatpopdist, nbthreads=1, verbose=False):
 def inferPopfromSpeTree(nfspetree, \
          populations=None, nfpopulationtree=None, nfdpopnodedist=None, \
          pop_stem_conds=None, within_pop_conds=None, \
-         nbthreads=1, verbose=False):
+         nbthreads=1, verbose=False, ,**kw):
 	
 	if verbose: print 'inferPopfromSpeTree()'
 	# get file pre/sufix
