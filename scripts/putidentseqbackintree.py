@@ -9,6 +9,7 @@ def checkBS(tree, maxNone=2):
 	"""
 	nnodenobs = 0
 	for node in tree:
+		if node.is_leaf(): continue
 		if node.bs() is None: nnodenobs += 1
 	
 	if nnodenobs > maxNone:
