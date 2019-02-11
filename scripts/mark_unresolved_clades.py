@@ -194,7 +194,8 @@ def select_clades_on_conditions(tree, clade_stem_conds, within_clade_conds, dept
 			print '# round %d ... complete'%nround
 			print 'leaves in selected clades:', nspeinsc
 			print 'remaining tree (%d leaves):\n'%nl, tr.newick(ignoreBS=True)
-	assert nspeinsc==nl0
+	if nspeinsc!=nl0:
+		raise ValueError, "different counts of species in clades recorded: 'nspeinsc': %d; 'nl0': %d"%(nspeinsc, nl0)
 	return selectedclades
 	
 def mark_unresolved_clades(tree, cladesupport=None, subcladesupport=None, crit='bs', clade_stem_conds=None, within_clade_conds=None, nested=True, inclusive=False, pruneSelected=False, depth=1, verbose=2, **kw):
