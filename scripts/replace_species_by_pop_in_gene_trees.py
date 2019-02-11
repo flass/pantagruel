@@ -23,6 +23,7 @@ def speciesTreePopulations(spetree, pop_stem_conds, within_pop_conds, nested=Fal
 	
 	when inclusive is False, populations can be defined so as to emerges from another, with the more ancestral not be inclusive on of another, i.e. a population
 	"""
+	if kw.get('poptag'): monotag = kw['poptag']
 	#~ lpops = mark_unresolved_clades(spetree , clade_stem_conds=pop_stem_conds, within_clade_conds=within_pop_conds, threshold_method='fixed', nested=nested, inclusive=inclusive, **kw)
 	lpops = select_clades_on_conditions(spetree , clade_stem_conds=pop_stem_conds, within_clade_conds=within_pop_conds, testRoot=True, nested=nested, inclusive=inclusive, **kw)
 	# generate pop names based on the major 3 first letter of species in it
@@ -30,7 +31,8 @@ def speciesTreePopulations(spetree, pop_stem_conds, within_pop_conds, nested=Fal
 	dnamecount = {}
 	for pop in lpops:
 		if len(pop)>1:
-			taglet = [spe[:taglen] for spe in pop]
+			if monotag: taglet = monotag
+			else: taglet = [spe[:taglen] for spe in pop]
 			tagcount = [(tag, taglet.count(tag)) for tag in set(taglet)]
 			maxtag = sorted(tagcount, key=lambda x: x[1])[-1][0]
 			dnamecount.setdefault(maxtag, 0)
@@ -722,8 +724,10 @@ def usage():
 	s += '  --population_tree\t\t\tpath to Newick-formatted tree file of an already computed mapping of populations ancestors onto the species tree.\n'
 	s += '  --population_node_distance\t\tpath to pre-computed matrix of inter-node distances between populations in the species tree.\n'
 	s += '  --dir_full_gene_trees\t\tpath to folder of original (before clade collapsing) gene trees (can be used to scale subtree grafts)\n\t\t\t\t(overridden by the presence of a adequate file in the collapsed.clade.info.files subfolder \'max_subtree_lengths\').\n'
+	s += '  Parameters:\n'
 	s += '  --pop_stem_conds\t\tconditions on clade stem to select populations in the species tree (see mark_unresolved_clades.py)\n'
 	s += '  --within_pop_conds\t\tconditions on clade subtree to select populations in the species tree (see mark_unresolved_clades.py)\n'
+	s += '  --pop_lab_prefix\t\t(preferably short) string that will be systematically used as prefix for population names\n'
 	s += '  --'+mapPop2GeneTree.__doc__+'\n'
 	s += '  --threads\t\t\tnumber of parralel processes to run.\n'
 	s += '  --reuse\t\t[0,1,2]\tif 0: normal behaviour;\n'
@@ -763,6 +767,7 @@ if __name__=='__main__':
 	maxreclim = int(dopt.get('--max.recursion.limit', 4000))
 	nflog = dopt.get('--logfile')
 	nbthreads = int(dopt.get('--threads', dopt.get('-T', -1)))
+	poptag = dopt.get('--pop_lab_prefix')
 	if nbthreads < 1: nbthreads = mp.cpu_count()
 	
 	sys.setrecursionlimit(maxreclim)
@@ -772,7 +777,7 @@ if __name__=='__main__':
 		sys.stdout = sys.stderr = flog
 	
 	### define species populations
-	spetree, poptree, dspe2pop, lnamepops, dpopnd = inferPopfromSpeTree(nfspetree, populations=nfpops, \
+	spetree, poptree, dspe2pop, lnamepops, dpopnd = inferPopfromSpeTree(nfspetree, populations=nfpops, poptag=poptag, \
                                                                nfpopulationtree=nfpoptree, nfdpopnodedist=nfdpopnd, \
                                                                pop_stem_conds=psc, within_pop_conds=wpc, \
                                                                nbthreads=nbthreads, verbose=verbose)
