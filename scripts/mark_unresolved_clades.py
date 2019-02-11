@@ -43,7 +43,7 @@ doutdext = {'mbc':('mbconstraints', 'mbconstraints'), \
 def select_clades_on_conditions(tree, clade_stem_conds, within_clade_conds, depth=1, testLeaves=True, testRoot=False, pruneSelected=True, nested=False, inclusive=True, order=2, verbose=2):
 	"""select tree nodes based on generic conditions and return corresponding leaf sets.
 	
-	The conditions for selecting a clade are separated in two types relating to the the stem and within the clade, respetively.
+	The conditions for selecting a clade are separated in two types relating to the the stem and within the clade, respectively.
 	For each, a list of condition tuple(s) must be given, having the following structure: 
 	
 	clade_stem_conds=[(crit, operator, threshold_val), ...]
@@ -82,6 +82,8 @@ def select_clades_on_conditions(tree, clade_stem_conds, within_clade_conds, dept
 	are applied; the default order=2 means post-order traversal, thus leaves explored before their ancestors. 
 	Other settings are not expected to yield anything desirable.
 	"""
+	if order!=2: print "Warning [mark_unresolved_clades.select_clades_on_conditions]: other tree traversal setting than default (2: post-order traversal) is not expected to yield anything desirable."
+	
 	def stem_testfun(node):
 		"""generic test function for selection condition at the clade stem"""
 		for crit, ope, thresh in clade_stem_conds:
