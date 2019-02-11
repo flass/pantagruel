@@ -23,7 +23,7 @@ def speciesTreePopulations(spetree, pop_stem_conds, within_pop_conds, nested=Fal
 	
 	when inclusive is False, populations can be defined so as to emerges from another, with the more ancestral not be inclusive on of another, i.e. a population
 	"""
-	if kw.get('poptag'): monotag = kw['poptag']
+	monotag = kw.get('poptag')
 	#~ lpops = mark_unresolved_clades(spetree , clade_stem_conds=pop_stem_conds, within_clade_conds=within_pop_conds, threshold_method='fixed', nested=nested, inclusive=inclusive, **kw)
 	lpops = select_clades_on_conditions(spetree , clade_stem_conds=pop_stem_conds, within_clade_conds=within_pop_conds, testRoot=True, nested=nested, inclusive=inclusive, **kw)
 	# generate pop names based on the major 3 first letter of species in it
