@@ -18,12 +18,11 @@ maxreclimupfactor = 1 # range for tentative increase of the recursion limit that
 default_psc = [('lg', '>=', 0.0005), ('bs', '>=', 80)]
 default_wpc = [('max', 'lg', '<=', 0.0005, -1)]
 
-def speciesTreePopulations(spetree, pop_stem_conds, within_pop_conds, nested=False, inclusive=False, taglen=3, **kw):
+def speciesTreePopulations(spetree, pop_stem_conds, within_pop_conds, nested=False, inclusive=False, taglen=3, poptag=None **kw):
 	"""find supported clades in the species tree
 	
 	when inclusive is False, populations can be defined so as to emerges from another, with the more ancestral not be inclusive on of another, i.e. a population
 	"""
-	monotag = kw.get('poptag')
 	lpops = select_clades_on_conditions(spetree , clade_stem_conds=pop_stem_conds, within_clade_conds=within_pop_conds, testRoot=True, nested=nested, inclusive=inclusive, **kw)
 	# collect lone species not included in a population
 	allspeinpops = set([])
@@ -38,8 +37,8 @@ def speciesTreePopulations(spetree, pop_stem_conds, within_pop_conds, nested=Fal
 	for pop in lpops:
 		assert (pop[0] is not None)
 		if len(pop)>1:
-			if monotag:
-				maxtag = monotag
+			if poptag:
+				maxtag = poptag
 			else:
 				taglet = [spe[:taglen] for spe in pop]
 				tagcount = [(tag, taglet.count(tag)) for tag in set(taglet)]
