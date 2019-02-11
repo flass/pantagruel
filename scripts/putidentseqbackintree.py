@@ -27,7 +27,7 @@ if nfidentseqs:
 			dseq.setdefault(lsp[0], []).append(lsp[1])
 
 if nfrefroottree:
-	refroottree = tree2.Node(file=nfrefroottree)
+	refroottree = tree2.read_check_newick(nfrefroottree, maxNoBS=len(intree)+2)
 	subrootchildren = refroottree.get_children()
 	# map sub-root clades in reference tree to the input tree
 	mappedclades = [intree.map_to_node(src.get_leaf_labels()) for src in subrootchildren]
