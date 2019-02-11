@@ -103,7 +103,7 @@ def collapsePopulationInSpeciesTree(spetree, lnamepops, fast=True, speciestoprun
 		p = popanc.nodeid()
 		if verbose:
 			print '#%d. %s (id: %d):'%(a, popname, p), lpopspe
-			print ' in subtree:', str(popanc)
+			print ' in subtree:', popanc.newick(ignoreBS=True)
 		if len(lpopspe)==1: 
 			# leaf/single-species population; skip
 			continue
@@ -130,12 +130,12 @@ def collapsePopulationInSpeciesTree(spetree, lnamepops, fast=True, speciestoprun
 				# remove population clade (or paraphyletic group) leaf by leaf
 				# until only other population ancestor and one arbitrary leaf are left
 				nkept = 0
-				for spe in lpopspe:
+				for j, spe in enumerate(lpopspe):
 					if spe in popanc.children_labels():
 						# leaf is just below the population ancestor 
 						# must not pop() that leaf to avoid destroying the population ancestor node
 						if nkept==0:
-							# meeting the population ancestor must happen at least once, for which the leaf is kept
+							# finding a leaf just under the population ancestor must happen at least once, for which the leaf is kept
 							nkept += 1
 							# mark the population name on that leaf; allow for extra branch length to be kept relative to the true population ancestor 
 							# when non-nested populations have not, but that should be a small bias given condition defining populations should be based on 
@@ -149,12 +149,18 @@ def collapsePopulationInSpeciesTree(spetree, lnamepops, fast=True, speciestoprun
 							popanc.unlink_child(popanc[spe], silent=1-(verbose-1))
 						
 					else:
-						# prune the leaf (using tree2.Node.pop()):
-						# lead to deconnecting its father node from the rest of tree 
-						# and connecting the brother node to the grand-father node
-						if verbose: print 'pop', spe #,
-						pspe = popanc.pop(spe)
-						#~ print pspe
+						if j==(len(lpopspe)-1) and nkept==0:
+							# finding a leaf just under the population ancestor has not yet happen,
+							# but at least one leaf must be kept: mark the population name on that leaf.
+							popanc[spe].edit_label(popname)
+							if verbose: print 'kept', spe, 'as', popname
+						else:
+							# prune the leaf (using tree2.Node.pop()):
+							# lead to deconnecting its father node from the rest of tree 
+							# and connecting the brother node to the grand-father node
+							if verbose: print 'pop', spe #,
+							pspe = popanc.pop(spe)
+							#~ print pspe
 	
 			else:
 				# no other population ancestor below
