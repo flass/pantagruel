@@ -305,8 +305,9 @@ EOF
     python ${ptgscripts}/putidentseqbackintree.py --input.nr.tree=${nrbiparts} --ref.rooted.nr.tree=${nrrootedtree} \
      --list.identical.seq=${pseudocorealn}.identical_sequences --output.tree=${speciestree}
   else
-    rm -f ${speciestree}
-    ln -s ${nrrootedtree} ${speciestree}
+    # only process tree format 
+    python ${ptgscripts}/putidentseqbackintree.py --input.nr.tree=${nrbiparts} --ref.rooted.nr.tree=${nrrootedtree} \
+     --output.tree=${speciestree}
   fi
 fi
 

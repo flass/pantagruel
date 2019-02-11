@@ -352,6 +352,9 @@ def main(nfgenetree, diraln, dirout, outtag, mkdircons=True, **kw):
 	if bnspl[0].startswith('RAxML_rootedTree'):
 		# tree is already rooted, but the branch supports are storred in the comments
 		genetree = tree2.AnnotatedNode(file=nfgenetree, keep_comments=True)
+		for n in genetree:
+			if str(n.comment()).isdigit():
+				n.set_bs(float(n.comment()))
 	else:
 		 # trees is unrooted
 		genetree = tree2.AnnotatedNode(file=nfgenetree)
