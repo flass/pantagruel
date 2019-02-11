@@ -11,7 +11,7 @@ from Bio import AlignIO, Align, Alphabet
 from random import randint
 from ptg_utils import *
 
-sys.setrecursionlimit(10000)
+sys.setrecursionlimit(20000)
 
 # a map of depth of current big recursive objects (trees) worked upon by each process
 currentmaxreccursdepths = {} 

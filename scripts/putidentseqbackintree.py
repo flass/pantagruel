@@ -2,6 +2,8 @@
 #~ import os
 import sys, tree2, getopt
 
+sys.setrecursionlimit(20000)
+
 def checkBS(tree, maxNone=2):
 	"""count how many node ave no branch support documented; raise an error when above threshold
 	
