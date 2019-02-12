@@ -137,9 +137,9 @@ EOF
       echo "'$userreftree' is a correct rooted tree file with branch supports"
       echo "will use it as a reference tree; skip all RAxML computations from (pseudo-)core-genome concatenate alignment" 
       mv ${envsourcescript} ${envsourcescript}0 && \
-       sed -e "s#'REPLACEuserreftree'#${userreftree}#" ${envsourcescript}0 > ${envsourcescript} && \
+       sed -e "s#'REPLACEuserreftree'#'${userreftree}'#" ${envsourcescript}0 > ${envsourcescript} && \
        rm ${envsourcescript}0
-      echo "userreftree=${userreftree} is recorded in init file '${envsourcescript}'"
+      echo "userreftree='${userreftree}' is recorded in init file '${envsourcescript}'"
        ln -s ${userreftree} ${speciestree} ;;
      *)
       echo "something went wrong when evaluatiing input tree (tree check output value: ${treecheck}); exit now"

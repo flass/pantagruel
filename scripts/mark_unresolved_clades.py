@@ -198,7 +198,7 @@ def select_clades_on_conditions(tree, clade_stem_conds, within_clade_conds, dept
 			print 'remaining tree (%d leaves):\n'%nl, tr.newick(ignoreBS=True, comment='boot')
 	else:
 		nl = tr.nb_leaves()
-		if nl==1 and tr.get_leaf_labels()[0]=='':
+		if nl==1 and not tr.get_leaf_labels()[0]:
 			# empty tree
 			nl = 0
 	if (nspeinsc+nl)!=nl0:
