@@ -4,7 +4,7 @@ import os, sys
 import sqlite3
 
 CODepat = re.compile("([A-Z0-9]{3,5}) +[ABEVO] +([0-9]{1,7}): ")
-assidpat = re.compile("([^\.]+\.[1-9])_.+?$")
+seqprojpat = re.compile("([^\.]+)\.[1-9]_.+?$")
 
 def getTableInfos(table, cursor, ommitserial=False):
 	cursor.execute("PRAGMA table_info(%s);"%table)
@@ -210,7 +210,7 @@ def main(dbname, protorfanclust, cdsorfanclust, nfspeclist, nfusergenomeinfo, us
 				if usergenomefinalassdir and ('sequencing_project_id' in uginfheader):
 					print "fetching assembly ids from matching values of 'sequencing_project_id' field to folder names in GenBank-like assembly folder: '%s'" %usergenomefinalassdir
 					for seqproj in os.listdir(usergenomefinalassdir):
-						assid = assidpat.search(seqproj).groups()[0]
+						assid = seqprojpat.search(seqproj).groups()[0]
 						dseqproj2assid[seqproj] = assid
 				else:
 					raise ValueError, "the 'assembly_id' field is missing in file '%s';\n"%nfusergenomeinfo+ \
