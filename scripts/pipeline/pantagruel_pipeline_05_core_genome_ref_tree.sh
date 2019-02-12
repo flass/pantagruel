@@ -330,7 +330,7 @@ echo "Found $nspepop disctinct populations in the species tree"
 python << EOF
 import tree2, sys
 sys.setrecursionlimit(20000)
-reftree = tree2.Node(file='${speciestree}')
+reftree = tree2.read_check_newick('${speciestree}')
 nfout = "${speciestree}_clade_defs"
 fout = open(nfout, 'w')
 fout.write('\t'.join(['', 'clade', 'sisterclade'])+'\n')

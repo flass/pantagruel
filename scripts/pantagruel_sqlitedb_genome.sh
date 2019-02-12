@@ -1,14 +1,15 @@
 #!/bin/bash
-thisscript=$0
-database=$1
-dbname=$2
-metadata=$3
-assemblyinfo=$4
-protali=$5
-protfamseqtab=$6
-protorfanclust=$7
-cdsorfanclust=$8
-usergenomeinfo=$9
+thisscript=${0}
+database=${1}
+dbname=${2}
+metadata=${3}
+assemblyinfo=${4}
+protali=${5}
+protfamseqtab=${6}
+protorfanclust=${7}
+cdsorfanclust=${8}
+usergenomeinfo=${9}
+usergenomefinalassdir=${10}
 
 if [ -z $cdsorfanclust ] ; then
  echo "Error: incomplete argument list. Usage:"
@@ -80,6 +81,6 @@ head -n 1  ${assemblyinfo}/allproteins_info.tab | cut -f ${protfieldnums} | sed 
 tail -n +2 ${assemblyinfo}/allproteins_info.tab | cut -f ${protfieldnums} | grep -vP "^\t" | sort -u | sed -e "s/%2C/,/g" | sed -e "s/%3B/;/g" >> genome_protein_products.tab
 
 ## populate database
-python $populatescript $dbname ${protorfanclust} ${cdsorfanclust} ${database}/speclist ${usergenomeinfo}
+python $populatescript $dbname ${protorfanclust} ${cdsorfanclust} ${database}/speclist ${usergenomeinfo} ${usergenomefinalassdir}
 
 cd -

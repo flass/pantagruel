@@ -88,6 +88,7 @@ export comparerecs=${entdb}/09.compare_scenarios
 # sub folders
 export contigs=${customassemb}/contigs
 export annot=${customassemb}/annotation
+export gblikeass=${customassemb}/genbank-format_assemblies
 export genomeinfo=${indata}/genome_infos
 export assemblies=${indata}/assemblies
 export families=${seqdb}/protein_families

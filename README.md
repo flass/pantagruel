@@ -115,8 +115,8 @@ Options are detailed here:
                           the '.fa' string and everything occuring after) and will be retained as the assembly_id (beware 
                           of names redundant with RefSeq assemblies).
                        - a 'strain_infos.txt' file describing the organism, with columns headed:
-                           'assembly_id'; 'genus'; 'species'; 'strain'; 'taxid'; 'locus_tag_prefix'
-                         'assembly_id' must match the name of a contig file (e.g. 'assembId.fasta')
+                           'sequencing_project_id'; 'genus'; 'species'; 'strain'; 'taxid'; 'locus_tag_prefix'
+                         'sequencing_project_id' must match the name of a contig file (e.g. 'seqProjID.fasta')
                          'locus_tag_prefix' must match the prefix of ids given to CDS, proteins and genome regions (contigs)
                          in potentially provided annotation files (see below).
                       _optional_ 
@@ -128,7 +128,7 @@ Options are detailed here:
                          - one in Fasta format containing matching protein sequences (with a '.faa' extension).
                          These four files are produced when using Prokka for annotation; if at least one of the .gbk, .ffn or .faa
                          are missing, all three will be derived from the .gff source. Each genome annotation file set must be stored
-                         in a separate folder, which name must match a contig file (e.g. 'assembId/' for 'assembId.fasta').
+                         in a separate folder, which name must match a contig file (e.g. 'seqProjID/' for 'seqProjID.fasta').
                       NOTE: to ensure proper parsing, it is strongly advised that any provided annotation was generated with Prokka
                       NOTE: to ensure uniform annotation of the dataset, it is advised to let Pantagruel annotate the contigs (calling Prokka)
 

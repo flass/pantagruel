@@ -23,13 +23,14 @@ def speciesTreePopulations(spetree, pop_stem_conds, within_pop_conds, nested=Fal
 	
 	when inclusive is False, populations can be defined so as to emerges from another, with the more ancestral not be inclusive on of another, i.e. a population
 	"""
+	verbose = kw.get('verbose')
 	lpops = select_clades_on_conditions(spetree , clade_stem_conds=pop_stem_conds, within_clade_conds=within_pop_conds, testRoot=True, nested=nested, inclusive=inclusive, **kw)
 	# collect lone species not included in a population
 	allspeinpops = set([])
 	for pop in lpops: allspeinpops |= set(pop)
 	for spe in spetree.get_leaf_labels():
 		if not (spe in allspeinpops):
-			print "add lone species %s as a population"%spe
+			if verbose: print "add lone species %s as a population"%spe
 			lpops.append([spe])
 	# generate pop names based on the major 3 first letter of species in it
 	lnamepops = []

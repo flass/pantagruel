@@ -206,7 +206,7 @@ EOF
 
   # create assembly directory and link/create relevant files
   echo "will create GenBank-like assembly folders for user-provided genomes"
-  export gblikeass=${customassemb}/genbank-format_assemblies
+  #~ export gblikeass=${customassemb}/genbank-format_assemblies
   mkdir -p $gblikeass/
   for gproject in `ls ${annot}` ; do
     gff=$(ls ${annot}/${gproject}/ | grep 'ptg.gff')

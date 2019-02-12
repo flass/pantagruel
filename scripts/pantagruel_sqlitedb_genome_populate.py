@@ -3,6 +3,9 @@ import re
 import os, sys
 import sqlite3
 
+CODepat = re.compile("([A-Z0-9]{3,5}) +[ABEVO] +([0-9]{1,7}): ")
+assidpat = re.compile("([^\.]+\.[1-9])_.+?$")
+
 def getTableInfos(table, cursor, ommitserial=False):
 	cursor.execute("PRAGMA table_info(%s);"%table)
 	colinfos = cursor.fetchall()
@@ -67,7 +70,7 @@ cdsnumpat = re.compile('.+_([0-9]+)$')
 def make_cds_code(code, genbank_cds_id):
 	return "%s_%s"%(code, cdsnumpat.search(genbank_cds_id).group(1))
 
-def main(dbname, protorfanclust, cdsorfanclust, nfspeclist, nfusergenomeinfo):
+def main(dbname, protorfanclust, cdsorfanclust, nfspeclist, nfusergenomeinfo, usergenomefinalassdir):
 
 	conn = sqlite3.connect(database=dbname)
 	conn.create_function("make_cds_code", 2, make_cds_code)
@@ -189,7 +192,6 @@ def main(dbname, protorfanclust, cdsorfanclust, nfspeclist, nfusergenomeinfo):
 	# load UniProt taxon codes for CDS name shortening
 	fout = open("uniprotcode_taxid.tab", 'w')
 	codetaxids = []
-	CODepat = re.compile("([A-Z0-9]{3,5}) +[ABEVO] +([0-9]{1,7}): ")
 	with open(nfspeclist, 'r') as fspeclist:
 		for line in fspeclist:
 			if line[0] in [' ', '<']: continue # skip comments and HTML content
@@ -200,16 +202,27 @@ def main(dbname, protorfanclust, cdsorfanclust, nfspeclist, nfusergenomeinfo):
 				codetaxids.append((code, taxid))
 	
 	dcustomasscode = {}
+	dseqproj2assid = {}
 	if nfusergenomeinfo:
 		with open(nfusergenomeinfo, 'r') as fusergenomeinfo:
 			uginfheader = fusergenomeinfo.readline().rstrip('\n').split('\t')
+			if not ('assembly_id' in uginfheader):
+				if usergenomefinalassdir and ('sequencing_project_id' in uginfheader):
+					print "fetching assembly ids from matching values of 'sequencing_project_id' field to folder names in GenBank-like assembly folder: '%s'" %usergenomefinalassdir
+					for seqproj in os.listdir(usergenomefinalassdir):
+						assid = assidpat.search(seqproj).groups()[0]
+						dseqproj2assid[seqproj] = assid
+				else:
+					raise ValueError, "the 'assembly_id' field is missing in file '%s';\n"%nfusergenomeinfo+ \
+					                  "instead you can provide in last argument the path to a GenBank-like assembly folder "+ \
+					                  "where assembly names will be matched to folder names from the 'sequencing_project_id' field"
 			for line in fusergenomeinfo:
 				lsp = line.rstrip('\n').split('\t')
 				duginfo = {field:lsp[f] for f, field in enumerate(uginfheader)}
 				code, taxid = (duginfo['locus_tag_prefix'], duginfo['taxid'])
 				fout.write("%s\t%s\n"%(code, taxid))
 				codetaxids.append((code, taxid))
-				dcustomasscode[duginfo['assembly_id']] = duginfo['locus_tag_prefix']
+				dcustomasscode[duginfo.get('assembly_id', dseqproj2assid[duginfo['sequencing_project_id']])] = duginfo['locus_tag_prefix']
 
 	fout.close()
 
@@ -299,9 +312,13 @@ if __name__=='__main__':
 		nfusergenomeinfo = sys.argv[5]
 	else:
 		nfusergenomeinfo = None
+	if len(sys.argv) > 6:
+		usergenomefinalassdir = sys.argv[6]
+	else:
+		usergenomefinalassdir = None
 		
 	for nf in [dbname, nfspeclist, nfusergenomeinfo]:
 		if (nf is not None) and not (os.path.exists(nf)):
 			raise ValueError, "specified input file '%s' cannot be found"%nf
 	
-	main(dbname, protorfanclust, cdsorfanclust, nfspeclist, nfusergenomeinfo)
+	main(dbname, protorfanclust, cdsorfanclust, nfspeclist, nfusergenomeinfo, usergenomefinalassdir)
