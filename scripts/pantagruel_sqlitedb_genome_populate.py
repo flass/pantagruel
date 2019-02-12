@@ -209,8 +209,8 @@ def main(dbname, protorfanclust, cdsorfanclust, nfspeclist, nfusergenomeinfo, us
 			if not ('assembly_id' in uginfheader):
 				if usergenomefinalassdir and ('sequencing_project_id' in uginfheader):
 					print "fetching assembly ids from matching values of 'sequencing_project_id' field to folder names in GenBank-like assembly folder: '%s'" %usergenomefinalassdir
-					for seqproj in os.listdir(usergenomefinalassdir):
-						assid = seqprojpat.search(seqproj).groups()[0]
+					for assid in os.listdir(usergenomefinalassdir):
+						seqproj = seqprojpat.search(assid).groups()[0]
 						dseqproj2assid[seqproj] = assid
 				else:
 					raise ValueError, "the 'assembly_id' field is missing in file '%s';\n"%nfusergenomeinfo+ \
