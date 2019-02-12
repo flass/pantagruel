@@ -198,6 +198,9 @@ def select_clades_on_conditions(tree, clade_stem_conds, within_clade_conds, dept
 			print 'remaining tree (%d leaves):\n'%nl, tr.newick(ignoreBS=True, comment='boot')
 	else:
 		nl = tr.nb_leaves()
+		if nl==1 and tr.get_leaf_labels()[0]=='':
+			# empty tree
+			nl = 0
 	if (nspeinsc+nl)!=nl0:
 		raise ValueError, "different counts of species in clades recorded: 'nspeinsc'+'nl': %d+%d; 'nl0': %d"%(nspeinsc, nl, nl0)
 	return selectedclades
