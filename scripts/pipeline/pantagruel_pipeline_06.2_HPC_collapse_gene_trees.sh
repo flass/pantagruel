@@ -74,8 +74,6 @@ EOF
   export nexusaln4chains=${colalinexuscodedir}/${collapsecond}/collapsed_alns
   export mboutputdir=${bayesgenetrees}/${collapsecond}
   
-  fi
-  
  else
   echo "Error: incorrect value for variable chaintype: '${chaintype}'"
   exit 1
