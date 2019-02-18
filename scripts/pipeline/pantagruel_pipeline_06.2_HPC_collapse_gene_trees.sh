@@ -47,12 +47,12 @@ else
   fi
   
   ## detect clades to be collapsed in gene trees
-  export colalinexuscodedir=${protali}/${chaintype}_cdsfam_alignments_species_code
-  export collapsecond=${criterion}_stem${cladesupp}_within${withinfun}${subcladesupp}
+  #~ export colalinexuscodedir=${protali}/${chaintype}_cdsfam_alignments_species_code
+  #~ export collapsecond=${criterion}_stem${cladesupp}_within${withinfun}${subcladesupp}
   export collapsecriteriondef="--clade_stem_conds=\"[('$criterion', '>=', $cladesupp)]\" --within_clade_conds=\"[('$withinfun', '$criterion', '<=', $subcladesupp, -1), ('max', '$criterion', '<', $cladesupp, -1)]\""
   mkdir -p ${colalinexuscodedir}/${collapsecond}
   mlgenetreelist=${mlgenetrees%*s}_list
-  ${ptgscripts}/lsfullpath.py ${mlgenetrees}/${mainresulttag} | sort > ${mlgenetreelist}
+  ${ptgscripts}/lsfullpath.py "${mlgenetrees}/${mainresulttag}/*" > ${mlgenetreelist}
   
   # accomodate with possible upper limit on number of tasks in an array job; assume chunks of 3000 tasks are fine
   Njob=`wc -l ${mlgenetreelist} | cut -f1 -d' '`
@@ -65,7 +65,7 @@ else
   tail -n +${beg} ${mlgenetreelist} | head -n ${chunksize} > ${mlgenetreelist}_${jobrange}
   qsub -N mark_unresolved_clades -l select=1:ncpus=${ncpus}:mem=16gb,walltime=4:00:00 -o ${ptglogs}/mark_unresolved_clades.${collapsecond}_${jobrange}.log -j oe -V -S /usr/bin/bash << EOF
   module load python
-  python ${ptgscripts}/mark_unresolved_clades.py --in_gene_tree_list=${mlgenetreelist}_${jobrange} --diraln=${alifastacodedir} --fmt_aln_in='fasta' \
+  python ${ptgscripts}/mark_unresolved_clades.py --in_gene_tree_list=${mlgenetreelist}_${jobrange} --diraln=${cdsalifastacodedir} --fmt_aln_in='fasta' \
    --threads=${ncpus} --dirout=${colalinexuscodedir}/${collapsecond} --no_constrained_clade_subalns_output --dir_identseq=${mlgenetrees}/identical_sequences \
    ${collapsecriteriondef}
 EOF
