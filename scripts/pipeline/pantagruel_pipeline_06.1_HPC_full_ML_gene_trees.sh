@@ -23,6 +23,8 @@ source ${envsourcescript}
 ## 06.1 Full ML gene trees on HPC
 #############################################################
 
+mkdir -p ${ptglogs}/raxml/gene_trees/ ${$mlgenetrees}/
+
 ## compute first pass of gene trees with RAxML, using rapid bootstrap to estimate branch supports
 rm -f ${protali}/cdsfams_*_aln_list
 sortminsizes=($(for famset in `ls ${protali}/cdsfams_*` ; do echo $famset | sed -e 's/.*cdsfams_minsize\([0-9]\+.*\)/\1/' ; done | sort -n))
@@ -46,7 +48,7 @@ chunksize=3000
 jobranges=($(${ptgscripts}/get_jobranges.py $chunksize $Njob))
 for jobrange in ${jobranges[@]} ; do
 echo "jobrange=$jobrange"
-qsub -J $jobrange -l walltime=${wt}:00:00 -l select=1:ncpus=${ncpus}:mem=${mem}gb -N raxml_gene_trees_$(basename $cdsfam2phylo) -o $ptglogs/raxml/gene_trees -j oe -v "$qsubvars" ${ptgscripts}/raxml_array_PBS.qsub
+qsub -J $jobrange -l walltime=${wt}:00:00 -l select=1:ncpus=${ncpus}:mem=${mem}gb -N raxml_gene_trees_$(basename $cdsfam2phylo) -o ${ptglogs}/raxml/gene_trees -j oe -v "$qsubvars" ${ptgscripts}/raxml_array_PBS.qsub
 done
 done
 

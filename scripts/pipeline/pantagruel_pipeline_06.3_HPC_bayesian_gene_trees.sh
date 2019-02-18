@@ -21,7 +21,6 @@ source ${envsourcescript}
 ## 06.3 Bayesian gene trees
 ############################
 
-
 ## run mrbayes on collapsed alignments
 export nexusaln4chains=${colalinexuscodedir}/${collapsecond}/collapsed_alns
 export mboutputdir=${bayesgenetrees}/${collapsecond}
@@ -52,5 +51,7 @@ jobranges=($(${ptgscripts}/get_jobranges.py $chunksize $Njob))
 qsubvar="mbversion=3.2.6, tasklist=${tasklist}, outputdir=${mboutputdir}, mbmcmcpopt='Nruns=${nruns} Ngen=2000000 Nchains=${nchains}'"
 for jobrange in ${jobranges[@]} ; do
  echo $jobrange $qsubvar
- qsub -J $jobrange -N mb_panterodb -l select=1:ncpus=${ncpus}:mem=16gb -o ${ptglogs}/mrbayes/collapsed_mrbayes_trees_${dtag}_${jobrange} -v "$qsubvar" ${ptgscripts}/mrbayes_array_PBS.qsub
+ dlogs=${ptglogs}/mrbayes/${chaintype}_mrbayes_trees_${collapsecond}_${dtag}_${jobrange}
+ mkdir -p ${dlogs}/
+ qsub -J $jobrange -N mb_panterodb -l select=1:ncpus=${ncpus}:mem=16gb -o ${dlogs} -v "$qsubvar" ${ptgscripts}/mrbayes_array_PBS.qsub
 done
