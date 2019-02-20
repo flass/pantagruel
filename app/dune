@@ -1,0 +1,5 @@
+(executable
+ (name pantagruel_app)
+ (public_name pantagruel)
+ (libraries pantagruel)
+ (preprocess (pps ppx_let)))

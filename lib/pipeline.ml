@@ -1,9 +1,10 @@
 open Core
-open Bistro.Std
-open Bistro_bioinfo.Std
-open Bistro.EDSL
+open Bistro
+open Bistro.Shell_dsl
+open Bistro_bioinfo
 open Bistro_utils
 
+let _ = Workfl
 (* configuration à fonctoriser FIXME *)
 let email = "philippe.veber@univ-lyon1.fr"
 let fam_prefix = "ABCDE"
@@ -11,27 +12,27 @@ let fam_prefix = "ABCDE"
 let dir_contents dir =
   Sys.readdir dir |> Array.to_list
 
-let tools_env = docker_image ~account:"pveber" ~name:"pantagruel-tools" ~tag:"latest" ()
+let tools_img = [ docker_image ~account:"pveber" ~name:"pantagruel-tools" ~tag:"latest" () ]
 
 let fetch_ncbi_taxonomy () =
-  workflow ~descr:"fetch_ncbi_taxonomy" [
-    cmd "bash" ~env:tools_env [
+  Workflow.shell ~descr:"fetch_ncbi_taxonomy" [
+    cmd "bash" ~img:tools_img [
       file_dump (string Scripts.fetch_ncbi_taxonomy) ;
       string email ;
       dest ;
     ] ;
   ]
 
-let assembly_list_of_folder (folder : _ directory workflow) =
-  workflow ~descr:"assembly_list_of_folder" [
+let assembly_list_of_folder (folder : _ dworkflow) =
+  Workflow.shell ~descr:"assembly_list_of_folder" [
     cmd "ls" ~stdout:dest [
       string "-d" ;
       dep folder // "GC[AF]_*" ;
     ] ;
   ]
 
-let collect_all_proteins (assembly_list : #text_file workflow)  =
-  workflow ~descr:"collect_all_proteins" [
+let collect_all_proteins (assembly_list : #text_file pworkflow)  =
+  Workflow.shell ~descr:"collect_all_proteins" [
     cmd "bash" [
       file_dump (string Scripts.collect_all_proteins) ;
       dep assembly_list ;
@@ -40,8 +41,8 @@ let collect_all_proteins (assembly_list : #text_file workflow)  =
   ]
 
 let generate_assembly_stats assembly_folder =
-  workflow ~descr:"generate_assembly_stats" [
-    cmd "bash" ~env:tools_env [
+  Workflow.shell ~descr:"generate_assembly_stats" [
+    cmd "bash" ~img:tools_img [
       file_dump (string Scripts.generate_assembly_stats) ;
       dep assembly_folder ;
       dest ;
@@ -49,7 +50,7 @@ let generate_assembly_stats assembly_folder =
   ]
 
 let extract_metadata_from_gbff ~assembly_list ~assembly_stats =
-  workflow ~descr:"extract_metadata_from_gbff" [
+  Workflow.shell ~descr:"extract_metadata_from_gbff" [
     cmd "python" [
       file_dump (string Scripts.extract_metadata_from_gbff) ;
       opt "--assembly_folder_list" dep assembly_list ;
@@ -59,9 +60,9 @@ let extract_metadata_from_gbff ~assembly_list ~assembly_stats =
     ]
   ]
 
-let dereplicate_fasta (fa : fasta workflow) : fasta workflow =
-  workflow ~descr:"dereplicate_fasta" [
-    cmd "python" ~env:tools_env [
+let dereplicate_fasta (fa : fasta pworkflow) : fasta pworkflow =
+  Workflow.shell ~descr:"dereplicate_fasta" [
+    cmd "python" ~img:tools_img [
       file_dump (string Scripts.dereplicate_fasta) ;
       dep fa ;
       dest ;
@@ -69,7 +70,7 @@ let dereplicate_fasta (fa : fasta workflow) : fasta workflow =
   ]
 
 let assembly_info ~assembly_list =
-  workflow ~descr:"allgenome_gff2db" [
+  Workflow.shell ~descr:"allgenome_gff2db" [
     cmd "python" [
       file_dump (string Scripts.allgenome_gff2db) ;
       dep assembly_list ;
@@ -79,8 +80,8 @@ let assembly_info ~assembly_list =
   ]
 
 let split_mmseqs_clustdb_fasta fa =
-  workflow ~descr:"split_mmseqs_clustdb_fasta" [
-    cmd "python" ~env:tools_env [
+  Workflow.shell ~descr:"split_mmseqs_clustdb_fasta" [
+    cmd "python" ~img:tools_img [
       file_dump (string Scripts.split_mmseqs_clustdb_fasta) ;
       dep fa ;
       string (fam_prefix ^ "P") ;
@@ -89,13 +90,13 @@ let split_mmseqs_clustdb_fasta fa =
   ]
 
 let map_reduce_to_dir root files ~f =
-  workflow ~descr:"map_reduce_to_dir" @@
+  Workflow.shell ~descr:"map_reduce_to_dir" @@
   (
     mkdir_p dest ::
     List.map files ~f:(fun fn ->
         cmd "cp" [
           string "-p" ;
-          dep (f (input (Filename.concat root fn))) ;
+          dep (f (Workflow.input (Filename.concat root fn))) ;
           dest // fn ;
         ]
       )
@@ -106,21 +107,21 @@ let extract_full_prot_and_cds_family_alignments
     ~orfan_proteins
     ~assembly_folder
     ~assembly_info =
-  workflow ~descr:"extract_full_prot_and_cds_family_alignments" [
-    cmd "python" ~env:tools_env [
+  Workflow.shell ~descr:"extract_full_prot_and_cds_family_alignments" [
+    cmd "python" ~img:tools_img [
       file_dump (string Scripts.extract_full_prot_and_cds_family_alignments) ;
       dep protein_alignment_folder ;
       dep orfan_proteins ;
       dep assembly_info // "allproteins_info.tab" ;
       dep assembly_info // "allreplicons_info.tab" ;
-      dep (input assembly_folder) ;
+      dep (Workflow.input assembly_folder) ;
       dest ;
       string fam_prefix ;
     ]
   ]
 
 let stage1 assembly_folder_path =
-  let assembly_folder : _ directory workflow = input assembly_folder_path in
+  let assembly_folder : _ dworkflow = Workflow.input assembly_folder_path in
   let assembly_list = assembly_list_of_folder assembly_folder in
   let assembly_stats = generate_assembly_stats assembly_folder in
   let assembly_info = assembly_info ~assembly_list in
@@ -164,7 +165,7 @@ let stage2 s1 ~assembly_folder family_folder =
       ~protein_alignment_folder
       ~assembly_info:s1#assembly_info
       ~assembly_folder
-      ~orfan_proteins:(input (Filename.concat family_folder orfan_fasta))
+      ~orfan_proteins:(Workflow.input (Filename.concat family_folder orfan_fasta))
   in
   object
     method cds_alignment_folder = cds_alignment_folder
