@@ -1,7 +1,8 @@
 (library
  (name pantagruel)
  (public_name pantagruel)
- (libraries bistro.bioinfo bistro.utils))
+ (libraries bistro.bioinfo bistro.utils)
+ (preprocess (pps ppx_let)))
 
 (rule
   (targets scripts.ml)

@@ -44,4 +44,9 @@ let command =
       run ~outdir ~assembly_folder
     ]
 
-let () = Command.run ~version:"dev" command
+let () =
+  Command.group ~summary:"Pantagruel" [
+    "pipeline", command ;
+    "cgpipeline", Coarse_grained_pipeline.command ;
+  ]
+  |> Command.run ~version:"dev"

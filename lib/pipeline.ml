@@ -40,7 +40,7 @@ let stage2_pipeline fa =
 let stage2 s1 ~assembly_folder family_folder =
   let orfan_fasta, family_fastas =
     match dir_contents family_folder with
-    | h :: t -> h, List.take t 3 (* FIXME temp for test *)
+    | h :: t -> h, t
     | [] -> assert false
   in
   let protein_alignment_folder =
