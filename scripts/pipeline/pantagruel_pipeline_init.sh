@@ -49,8 +49,9 @@ export ptgtmp=${ptgdb}/tmp
 mkdir -p ${ptgdb}/ ${ptglogs}/ ${ptgtmp}/
 
 #### Set facultative environment variables / parameters
-export pseudocoremingenomes=''       # defaults to empty variable in which case will be set INTERACTIVELY at stage 04.core_genome of the pipeline
 envsourcescript=${ptgdb}/environ_pantagruel_${ptgdbname}.sh
+echo "## Pantagruel database '${ptgdbname}'" > ${envsourcescript}
+echo "## built with Pantagruel version '${ptgversion}'; source code available at 'https://github.com/flass/pantagruel'" >> ${envsourcescript}
 
 rm -f ${ptgtmp}/sedenvvar.sh
 echo -n "cat ${templateenv}" > ${ptgtmp}/sedenvvar.sh
@@ -60,7 +61,7 @@ for var in ptgdbname ptgroot ptgrepo myemail famprefix \
      poplgthresh popbsthresh ; do
 echo -n " | sed -e \"s#REPLACE${var}#\${${var}}#\"" >> ${ptgtmp}/sedenvvar.sh
 done
-echo -n " > ${envsourcescript}" >> ${ptgtmp}/sedenvvar.sh
+echo -n " >> ${envsourcescript}" >> ${ptgtmp}/sedenvvar.sh
 bash < ${ptgtmp}/sedenvvar.sh
 ## load generic environment variables derived from the above
 source ${envsourcescript}
