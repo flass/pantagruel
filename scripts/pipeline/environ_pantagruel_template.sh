@@ -105,6 +105,7 @@ export dirgoenrichcladespecore=${goterms}/clade_go_term_enriched_cladespecific_v
 export dirgoenrichcladespepan=${goterms}/clade_go_term_enriched_cladespecific_vs_pangenome
 
 # other secondary variables
+export ngenomes=$(ls -A "${indata}/assemblies/" 2> /dev/null | wc -l)
 export straininfo=${customassemb}/strain_infos.txt
 export sqldbname=${ptgdbname,,}
 export sqldb=${database}/${sqldbname}

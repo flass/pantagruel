@@ -233,6 +233,15 @@ fi
 
 #### end of the block treating custom genome set
 
+## test that there are at least 4 genomes to process
+export ngenomes=$(ls -A "${indata}/assemblies/" 2>/dev/null | wc -l)
+if [ ${ngenomes} -lt 4 ] ; then
+  echo "Error: there are not enough genomes (< 4) in input for pantegruel to produce anything meaningful."
+  echo "please add more genome assemblies in either ${ncbiass}/ or ${contigs}/ (see manual with \`pantagruel -- help\`)"
+  echo "exit now."
+  exit 1
+fi
+
 ### Groom data
 ## generate assembly statistics to verify genome finishing status
 ${ptgscripts}/groom_refseq_data.sh ${indata}/assemblies ${indata}/assembly_stats
@@ -247,12 +256,3 @@ mkdir -p ${genomeinfo}/assembly_metadata
 python ${ptgscripts}/extract_metadata_from_gbff.py --assembly_folder_list=${genomeinfo}/assemblies_list --add_raw_metadata=${manuin}/manual_metadata_dictionary.tab \
 --add_curated_metadata=${manuin}/manual_curated_metadata_dictionary.tab --add_dbxref=${manuin}/manual_dbxrefs.tab --add_assembly_info_dir=${indata}/assembly_stats \
 --default_species_name="unclassified organism" --output=${genomeinfo}/assembly_metadata
-
-export ngenomes=$((`wc -l ${genomeinfo}/assembly_metadata/metadata.tab | cut -d' ' -f1` - 1))
-
-mv ${envsourcescript} ${envsourcescript}0 && \
- sed -e "s#'REPLACEngenomes'#$ngenomes#" ${envsourcescript}0 > ${envsourcescript} && \
- rm ${envsourcescript}0
-echo "ngenomes=$ngenomes is recorded in init file '${envsourcescript}'"
-
-echo "Will work with a database of $ngenomes genomes"
