@@ -10,12 +10,8 @@
 # Copyright: Florent Lassalle (f.lassalle@imperial.ac.uk), 15 Jan 2019
 
 
-if [ -z "$2" ] ; then echo "missing mandatory parameters." ; echo "Usage: $0 ptg_db_name ptg_root_folder" ; exit 1 ; fi
-export ptgroot="$1"    # source folder where to create the database
-export ptgdbname="$2"  # database anme (will notably be the name of the top folder)
-export ptgdb=${ptgroot}/${ptgdbname}
-
-envsourcescript=${ptgdb}/environ_pantagruel_${ptgdbname}.sh
+if [ -z "$1" ] ; then echo "missing mandatory parameter: pantagruel config file" ; echo "Usage: $0 ptg_env_file" ; exit 1 ; fi
+envsourcescript="$1"
 source ${envsourcescript}
 
 

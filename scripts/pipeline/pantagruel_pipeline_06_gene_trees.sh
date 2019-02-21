@@ -9,28 +9,9 @@
 
 # Copyright: Florent Lassalle (f.lassalle@imperial.ac.uk), 30 July 2018
 
-if [ -z "$2" ] ; then echo "missing mandatory parameters." ; echo "Usage: $0 ptg_db_name ptg_root_folder" ; exit 1 ; fi
-export ptgdbname="$1"  # database anme (will notably be the name of the top folder)
-export ptgroot="$2"    # source folder where to create the database
-export ptgdb=${ptgroot}/${ptgdbname}
-envsourcescript=${ptgdb}/environ_pantagruel_${ptgdbname}.sh
+if [ -z "$1" ] ; then echo "missing mandatory parameter: pantagruel config file" ; echo "Usage: $0 ptg_env_file" ; exit 1 ; fi
+envsourcescript="$1"
 source ${envsourcescript}
-
-# to set misc variables ; not safe though
-if [ -e ${ptgtmp}/nondefvardecl.sh ] ; then
-  source ${ptgtmp}/nondefvardecl.sh
-fi
-
-# if was not specified,set gene tree type to default
-if [ -z "$chaintype" ] ; then
-  chaintype='fullgenetree'
-fi
-
-# record the type of gene tree that will be used
-mv ${envsourcescript} ${envsourcescript}0 && \
-  sed -e "s#'REPLACEchaintype'#${chaintype}#" ${envsourcescript}0 > ${envsourcescript} && \
-  rm ${envsourcescript}0
-echo "chaintype=${chaintype} is recorded in init file '${envsourcescript}'"
 
 #############################################################
 ## 06. Gene trees (full [ML] and collapsed [bayesian sample])
@@ -122,7 +103,7 @@ else
   export collapsecriteriondef="--clade_stem_conds=\"[('$criterion', '>=', $cladesupp)]\" --within_clade_conds=\"[('$withinfun', '$criterion', '<=', $subcladesupp, -1), ('max', '$criterion', '<', $cladesupp, -1)]\""
   mkdir -p ${colalinexuscodedir}/${collapsecond}
   mlgenetreelist=${mlgenetrees%*s}_list
-  ${ptgscripts}/lsfullpath.py ${mlgenetrees}/${mainresulttag} | sort > ${mlgenetreelist}
+  ${ptgscripts}/lsfullpath.py "${mlgenetrees}/${mainresulttag}/*" | sort > ${mlgenetreelist}
   
   python ${ptgscripts}/mark_unresolved_clades.py --in_gene_tree_list=${mlgenetreelist} --diraln=${cdsalifastacodedir} --fmt_aln_in='fasta' \
    --threads=${ncpus} --dirout=${colalinexuscodedir}/${collapsecond} --no_constrained_clade_subalns_output --dir_identseq=${mlgenetrees}/identical_sequences \

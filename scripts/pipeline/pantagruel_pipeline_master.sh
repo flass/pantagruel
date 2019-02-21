@@ -12,17 +12,24 @@ locexec=$(readlink -e $0)
 defptgrepo=${locexec%%/scripts/pipeline/*}
 
 usage (){
-  echo "Usage: pantagruel -d db_name [-r root_dir] [other options] TASK1 [task-specific options]"
+  echo "Usage: pantagruel -d db_name -r root_dir [other init options] init"
+  echo " or"
+  echo "Usage: pantagruel -i init_file TASK1 [TASK2, [...]]"
   echo ""
   echo "  _mandatory options_"
   echo "    -d|--dbname       database name"
   echo ""
   echo "    -r|--rootdir      root directory where to create the database; defaults to current folder"
   echo ""
+  echo "    -i|--initfile     Pantagruel configuration file"
+  echo "                        For 0 to 9 tasks, this file is generated at init stage, from the specified options."
+  echo "                        For init task, a file can be derived (i.e. manualy curated) from 'environment_pantagruel_template.sh' template."
+  echo "                        Parameters values specified in this file will override other options"
+  echo ""
   echo "  _facultative options_"
   echo "    -p|--ptgrepo      location of pantagruel software head folder; defaults to ${defptgrepo}"
   echo ""
-  echo "    -i|--iam          database creator identity (e-mail address is preferred)"
+  echo "    -I|--iam          database creator identity (e-mail address is preferred)"
   echo ""
   echo "    -f|--famprefix    alphanumerical prefix (no number first) of the names for homologous protein/gene family clusters; defaults to 'PANTAG'"
   echo "                       the chosen prefix will be appended with a 'P' for protein families and a 'C' for CDS families."
@@ -154,7 +161,7 @@ promptdate () {
   echo $(date +'[%Y-%m-%d %H:%M:%S]') $1
 }
 
-ARGS=`getopt --options "d:r:p:i:f:a:T:A:s:t:RH:cC:h" --longoptions "dbname:,rootdir:,ptgrepo:,iam:,famprefix:,refseq_ass:,refseq_ass4annot:,custom_ass:,taxonomy:,pseudocore:,core_seqtype:,pop_lg_thresh:,pop_bs_thresh:,reftree:,resume,submit_hpc:,collapse,collapse_par:,help" --name "pantagruel" -- "$@"`
+ARGS=`getopt --options "d:r:i:p:I:f:a:T:A:s:t:RH:cC:h" --longoptions "dbname:,rootdir:,initfile:,ptgrepo:,iam:,famprefix:,refseq_ass:,refseq_ass4annot:,custom_ass:,taxonomy:,pseudocore:,core_seqtype:,pop_lg_thresh:,pop_bs_thresh:,reftree:,resume,submit_hpc:,collapse,collapse_par:,help" --name "pantagruel" -- "$@"`
 
 #Bad arguments
 if [ $? -ne 0 ];
@@ -181,13 +188,18 @@ do
       export ptgroot="$2"
       shift 2;;
     
+    -i|--initfile)
+      testmandatoryarg "$1" "$2"
+      export initfile="$2"
+      shift 2;;
+    
     -p|--ptgrepo)
       testmandatoryarg "$1" "$2"
       export ptgrepo="$2"
       echo "set Pantagruel software repository to '$ptgrepo'"
       shift 2;;
     
-    -i|--iam)
+    -I|--iam)
       testmandatoryarg "$1" "$2"
       export myemail="$2"
       echo "set identity to '$myemail'"
@@ -331,50 +343,73 @@ setdefaults (){
      export ncbitax=${ptgroot}/NCBI/Taxonomy_$(date +'%Y-%m-%d')
      echo "Default: set NCBI Taxonomy source folder to '$ncbitax'"
     fi
+    if [ -z "$chaintype" ] ; then
+      export chaintype='fullgenetree'
+      echo "Default: set gene tree type to '$chaintype'"
+    fi
+    if [ -z "$pseudocoremingenomes" ] ; then
+     echo "Default: will a strict core-genome establish pseudo-core gene set, i.e. genes present in a single copy in all the studied genomes."
+     echo ""
+     echo "!!! WARNING: strict core-genome definition can be very resctrictive, especially when including draft genome in the study."
+     echo "You might prefer to use a pseudo-core genome definition instead, i.e. selecting gene present in a minimum fraction of genomes, for instance 98%."
+     echo "A sensible threshold should avoid that selected genes have an approximately homogeneous distribution,"
+     echo" notably that the absent fraction is not restricted to a few genomes. This threshold will thus depend on the dataset."
+     echo "To choose a sensible value, AFTER TASK 03, you can run the INTERACTIVE script:"
+     echo" '$ptgscripts/choose_min_genome_occurrence_pseudocore_genes.sh'"
+     echo "and then manualy edit the value of variable 'pseudocoremingenomes' in the pantagruel configuration file."
+    fi
+    if [ -z "$coreseqtype" ] ; then
+     export coreseqtype='cds'
+     echo "Default (only relevant to 'core' task): core sequence type is set to '$coreseqtype'"
+    fi
+    if [ -z "$poplgthresh" ] ; then
+     export poplgthresh='default'
+     echo "Default (only relevant to 'core' task): set population delination branch support threshold to $poplgthresh"
+    fi
+    if [ -z "$popbsthresh" ] ; then
+     export popbsthresh='default'
+     echo "Default (only relevant to 'core' task): set population delination branch support threshold to $popbsthresh"
+    fi
+    if [ -z "$hpcremoteptgroot" ] ; then
+     echo "Default: all computations will be run locally"
+     export hpcremoteptgroot='none'
+    fi
 }
 
-setnondefaults (){
-	nondefvardecl=${ptgtmp}/nondefvardecl.sh
-	rm -f ${ptgtmp}/nondefvardecl.sh
-    if [ ! -z "$hpcremoteptgroot" ] ; then
-     echo "Overide default: all computations will be run on a distant server (potentially a HPC service) instead of locally"
-     echo "export hpcremoteptgroot=${hpcremoteptgroot}" >> ${ptgtmp}/nondefvardecl.sh
-    fi
-    if [ ! -z "$chaintype" ] ; then
-     echo "Overide default: gene tree clade collapsing is enabled"
-     echo "export chaintype=${chaintype}" >> ${ptgtmp}/nondefvardecl.sh
-    fi
-    if [ ! -z "$collapseCladeParams" ] ; then
-     if [ ! -z "$chaintype" ] ; then 
-      echo "Overide default: gene tree clade collapsing will use these parameters: '$collapseCladeParams'"
-     echo "export collapseCladeParams=${collapseCladeParams}" >> ${ptgtmp}/nondefvardecl.sh
-     fi
-    fi
-    #~ if [ ! -z "$pseudocoremingenomes" ] ; then
-     #~ echo "Overide default: will establish pseudo-core gene set (gene present in a minimum of $pseudocoremingenomes genome) instead of a strict core-genome"
-     #~ echo "export pseudocoremingenomes=${pseudocoremingenomes}" >> ${ptgtmp}/nondefvardecl.sh
+#~ setnondefaults (){
+	#~ nondefvardecl=${ptgtmp}/nondefvardecl.sh
+	#~ rm -f ${ptgtmp}/nondefvardecl.sh
+    #~ if [ ! -z "$hpcremoteptgroot" ] ; then
+     #~ echo "Overide default: all computations will be run on a distant server (potentially a HPC service) instead of locally"
+     #~ echo "export hpcremoteptgroot=${hpcremoteptgroot}" >> ${ptgtmp}/nondefvardecl.sh
     #~ fi
-    if [ ! -z "$userreftree" ] ; then
-     echo "Overide default (only relevant to 'core' task): a reference tree was provided; will not compute core-genome tree"
-     echo "export userreftree=${userreftree}" >> ${ptgtmp}/nondefvardecl.sh
-    fi
-    if [ ! -z "$coreseqtype" ] ; then
-     echo "Overide default (only relevant to 'core' task): core sequence type is set to '$coreseqtype'"
-     echo "export coreseqtype=${coreseqtype}" >> ${ptgtmp}/nondefvardecl.sh
-    fi
-    if [ ! -z "$poplgthresh" ] ; then
-     echo "Overide default (only relevant to 'core' task): set population delination branch support threshold to $poplgthresh"
-     echo "export poplgthresh=${poplgthresh}" >> ${ptgtmp}/nondefvardecl.sh
-    fi
-    if [ ! -z "$popbsthresh" ] ; then
-     echo "Overide default (only relevant to 'core' task): set population delination branch support threshold to $popbsthresh"
-     echo "export popbsthresh=${popbsthresh}" >> ${ptgtmp}/nondefvardecl.sh
-    fi
-    if [ ! -z "$resumetask" ] ; then
-     echo "Overide default (only relevant to 'core' task): will try and resume computation of task where it was last stopped"
-     echo "export resumetask=${resumetask}" >> ${ptgtmp}/nondefvardecl.sh
-    fi
-}
+    #~ if [ ! -z "$collapseCladeParams" ] ; then
+     #~ if [ ! -z "$chaintype" ] ; then 
+      #~ echo "Overide default: gene tree clade collapsing will use these parameters: '$collapseCladeParams'"
+     #~ echo "export collapseCladeParams=${collapseCladeParams}" >> ${ptgtmp}/nondefvardecl.sh
+     #~ fi
+    #~ fi
+    #~ if [ ! -z "$userreftree" ] ; then
+     #~ echo "Overide default (only relevant to 'core' task): a reference tree was provided; will not compute core-genome tree"
+     #~ echo "export userreftree=${userreftree}" >> ${ptgtmp}/nondefvardecl.sh
+    #~ fi
+    #~ if [ ! -z "$coreseqtype" ] ; then
+     #~ echo "Overide default (only relevant to 'core' task): core sequence type is set to '$coreseqtype'"
+     #~ echo "export coreseqtype=${coreseqtype}" >> ${ptgtmp}/nondefvardecl.sh
+    #~ fi
+    #~ if [ ! -z "$poplgthresh" ] ; then
+     #~ echo "Overide default (only relevant to 'core' task): set population delination branch support threshold to $poplgthresh"
+     #~ echo "export poplgthresh=${poplgthresh}" >> ${ptgtmp}/nondefvardecl.sh
+    #~ fi
+    #~ if [ ! -z "$popbsthresh" ] ; then
+     #~ echo "Overide default (only relevant to 'core' task): set population delination branch support threshold to $popbsthresh"
+     #~ echo "export popbsthresh=${popbsthresh}" >> ${ptgtmp}/nondefvardecl.sh
+    #~ fi
+    #~ if [ ! -z "$resumetask" ] ; then
+     #~ echo "Overide default (only relevant to 'core' task): will try and resume computation of task where it was last stopped"
+     #~ echo "export resumetask=${resumetask}" >> ${ptgtmp}/nondefvardecl.sh
+    #~ fi
+#~ }
 
 echo -e "# will create/use Pantagruel database '$ptgdbname', set in root folder: '$ptgroot'\n#"
 export ptgscripts=${ptgrepo}/scripts
@@ -387,17 +422,9 @@ while [[ ! -z "${@}" ]] ; do
  case "$1" in
  init)
           tasks="init"
-          if [ ! -z "$2" ] ; then
-             if [[ "$2"=='help' ]] ; then
-               echo "Usage: pantagruel [general options] init [init_file]"
-               exit 0
-             else
-               initfile="$2"
-             fi
-          fi
           break ;;
  all)                                     
-          tasks="0 1 2 3 4 5 6 7 8"
+          tasks="0 1 2 3 4 5 6 7 8 9"
           break;;
  0|00|fetch|fetch_data)
           tasks="${tasks} 0" ;;
@@ -431,75 +458,80 @@ for task in "$tasks" ; do
   if [[ "$task" == 'init' ]] ; then
     promptdate "Pantagrel pipeline step $task: initiate pangenome database."
     setdefaults
-    ${ptgscripts}/pipeline/pantagruel_pipeline_init.sh ${ptgdbname} ${ptgroot} ${ptgrepo} ${myemail} ${famprefix} ${ncbiass} ${ncbitax} ${customassemb} ${refass} ${initfile}
+    ${ptgscripts}/pipeline/pantagruel_pipeline_init.sh #\
+     ${ptgdbname} ${ptgroot} ${ptgrepo} ${myemail} ${famprefix} \
+     ${ncbiass} ${ncbitax} ${customassemb} ${refass} ${chaintype} \
+     ${pseudocoremingenomes} ${hpcremoteptgroot} ${collapseCladeParams} ${userreftree} ${coreseqtype} \
+     ${poplgthresh} ${popbsthresh} ${initfile}
+     # all these variables are exported above and thus should be transfered to the child process
     checkexec
   else
    case "$task" in
    0)
     promptdate "Pantagrel pipeline step $task: fetch public genome data from NCBI sequence databases and annotate private genomes."
-    ${ptgscripts}/pipeline/pantagruel_pipeline_00_fetch_data.sh ${ptgdbname} ${ptgroot}
+    ${ptgscripts}/pipeline/pantagruel_pipeline_00_fetch_data.sh ${initfile}
     checkexec  ;;
    1)
     promptdate "Pantagrel pipeline step $task: classify protein sequences into homologous families."
-    ${ptgscripts}/pipeline/pantagruel_pipeline_01_homologous_seq_families.sh ${ptgdbname} ${ptgroot}
+    ${ptgscripts}/pipeline/pantagruel_pipeline_01_homologous_seq_families.sh ${initfile}
     checkexec  ;;
    2)
     promptdate "Pantagrel pipeline step $task: align homologous protein sequences and translate alignemnts into coding sequences."
-    ${ptgscripts}/pipeline/pantagruel_pipeline_02_align_homologous_seq.sh ${ptgdbname} ${ptgroot}
+    ${ptgscripts}/pipeline/pantagruel_pipeline_02_align_homologous_seq.sh ${initfile}
     checkexec  ;;
    3)
     promptdate "Pantagrel pipeline step $task: initiate SQL database and load genomic object relationships."
-    ${ptgscripts}/pipeline/pantagruel_pipeline_03_create_sqlite_db.sh ${ptgdbname} ${ptgroot}
+    ${ptgscripts}/pipeline/pantagruel_pipeline_03_create_sqlite_db.sh ${initfile}
     checkexec  ;;
    4)
     promptdate "Pantagrel pipeline step $task: use InterProScan to functionally annotate proteins in the database."
-    ${ptgscripts}/pipeline/pantagruel_pipeline_04_functional_annotation.sh ${ptgdbname} ${ptgroot}
+    ${ptgscripts}/pipeline/pantagruel_pipeline_04_functional_annotation.sh ${initfile}
     checkexec  ;;
    5)
     promptdate "Pantagrel pipeline step $task: select core-genome markers and compute reference tree."
-    if [[ ! -z "${pseudocoremingenomes}" ]] ; then
-	  case "${pseudocoremingenomes}" in
-        ''|*[!0-9]*)
-          echo "'pseudocoremingenomes' variable is not set to a correct integer value: '${pseudocoremingenomes}' ; unset this variable"
-          unset pseudocoremingenomes
-          echo "will run INTERACTIVELY '$ptgscripts/choose_min_genome_occurrence_pseudocore_genes.sh' to choose a sensible value."
-          echo ""
-          ${ptgscripts}/choose_min_genome_occurrence_pseudocore_genes.sh ${ptgdbname} ${ptgroot} ;;
-        *)
-          echo "'pseudocoremingenomes' variable is set to ${pseudocoremingenomes}"
-          echo "will run non-interactively '$ptgscripts/choose_min_genome_occurrence_pseudocore_genes.sh' to record the gene family set."
-          echo ""
-          ${ptgscripts}/choose_min_genome_occurrence_pseudocore_genes.sh ${ptgdbname} ${ptgroot} ${pseudocoremingenomes} ;;
-      esac
-    else
-       echo "'pseudocoremingenomes' variable is not set"
-       echo "will rely on strict core genome definition"
-       echo "will run non-interactively $ptgscripts/choose_min_genome_occurrence_pseudocore_genes.sh to record the gene family set."
-       echo ""
-       ${ptgscripts}/choose_min_genome_occurrence_pseudocore_genes.sh ${ptgdbname} ${ptgroot} 'REPLACEpseudocoremingenomes'
-    fi
-    setnondefaults
-    ${ptgscripts}/pipeline/pantagruel_pipeline_05_core_genome_ref_tree.sh ${ptgdbname} ${ptgroot}
+    #~ if [[ ! -z "${pseudocoremingenomes}" ]] ; then
+	  #~ case "${pseudocoremingenomes}" in
+        #~ ''|*[!0-9]*)
+          #~ echo "'pseudocoremingenomes' variable is not set to a correct integer value: '${pseudocoremingenomes}' ; unset this variable"
+          #~ unset pseudocoremingenomes
+          #~ echo "will run INTERACTIVELY '$ptgscripts/choose_min_genome_occurrence_pseudocore_genes.sh' to choose a sensible value."
+          #~ echo ""
+          #~ ${ptgscripts}/choose_min_genome_occurrence_pseudocore_genes.sh ${initfile} ;;
+        #~ *)
+          #~ echo "'pseudocoremingenomes' variable is set to ${pseudocoremingenomes}"
+          #~ echo "will run non-interactively '$ptgscripts/choose_min_genome_occurrence_pseudocore_genes.sh' to record the gene family set."
+          #~ echo ""
+          #~ ${ptgscripts}/choose_min_genome_occurrence_pseudocore_genes.sh ${initfile} ${pseudocoremingenomes} ;;
+      #~ esac
+    #~ else
+       #~ echo "'pseudocoremingenomes' variable is not set"
+       #~ echo "will rely on strict core genome definition"
+       #~ echo "will run non-interactively $ptgscripts/choose_min_genome_occurrence_pseudocore_genes.sh to record the gene family set."
+       #~ echo ""
+       #~ ${ptgscripts}/choose_min_genome_occurrence_pseudocore_genes.sh ${initfile} 'REPLACEpseudocoremingenomes'
+    #~ fi
+    #~ setnondefaults
+    ${ptgscripts}/pipeline/pantagruel_pipeline_05_core_genome_ref_tree.sh ${initfile}
     checkexec  ;;
    6)
     promptdate "Pantagrel pipeline step $task: compute gene trees."
-    setnondefaults
-    ${ptgscripts}/pipeline/pantagruel_pipeline_06_gene_trees.sh ${ptgdbname} ${ptgroot}
+    #~ setnondefaults
+    ${ptgscripts}/pipeline/pantagruel_pipeline_06_gene_trees.sh ${initfile}
     checkexec  ;;
    7)
     promptdate "Pantagrel pipeline step $task: compute species tree/gene tree reconciliations."
-    setnondefaults
-    ${ptgscripts}/pipeline/pantagruel_pipeline_07_reconciliations.sh ${ptgdbname} ${ptgroot}
+    #~ setnondefaults
+    ${ptgscripts}/pipeline/pantagruel_pipeline_07_reconciliations.sh ${initfile}
     checkexec  ;;
    8)
     promptdate "Pantagrel pipeline step $task: classify genes into orthologous groups (OGs) and search clade-specific OGs."
-    ${ptgscripts}/pipeline/pantagruel_pipeline_08_clade_specific_genes.sh ${ptgdbname} ${ptgroot}
+    ${ptgscripts}/pipeline/pantagruel_pipeline_08_clade_specific_genes.sh ${initfile}
     checkexec  ;;
    9)
     promptdate "Pantagrel pipeline step $task: evaluate gene co-evolution and build gene association network."
-    ${ptgscripts}/pipeline/pantagruel_pipeline_09_coevolution.sh ${ptgdbname} ${ptgroot}
+    ${ptgscripts}/pipeline/pantagruel_pipeline_09_coevolution.sh ${initfile}
     checkexec  ;;
     esac
   fi
-  rm -f ${ptgtmp}/nondefvardecl.sh
+  #~ rm -f ${ptgtmp}/nondefvardecl.sh
 done
