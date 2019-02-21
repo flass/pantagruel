@@ -427,9 +427,6 @@ fi
 echo -e "# will create/use Pantagruel database '$ptgdbname', set in root folder: '$ptgroot'\n#"
 export ptgscripts=${ptgrepo}/scripts
 
-## task-specific parameters
-initfile=""
-
 tasks=""
 while [[ ! -z "${@}" ]] ; do
  case "$1" in
@@ -472,10 +469,10 @@ for task in "$tasks" ; do
     promptdate "Pantagrel pipeline step $task: initiate pangenome database."
     setdefaults
     ${ptgscripts}/pipeline/pantagruel_pipeline_init.sh #\
-     ${ptgdbname} ${ptgroot} ${ptgrepo} ${myemail} ${famprefix} \
-     ${ncbiass} ${ncbitax} ${customassemb} ${refass} ${chaintype} \
-     ${pseudocoremingenomes} ${hpcremoteptgroot} ${collapseCladeParams} ${userreftree} ${coreseqtype} \
-     ${poplgthresh} ${popbsthresh} ${initfile}
+     # ${ptgdbname} ${ptgroot} ${ptgrepo} ${myemail} ${famprefix} \
+     # ${ncbiass} ${ncbitax} ${customassemb} ${refass} ${chaintype} \
+     # ${pseudocoremingenomes} ${hpcremoteptgroot} ${collapseCladeParams} ${userreftree} ${coreseqtype} \
+     # ${poplgthresh} ${popbsthresh} ${initfile}
      # all these variables are exported above and thus should be transfered to the child process
     checkexec
   else
