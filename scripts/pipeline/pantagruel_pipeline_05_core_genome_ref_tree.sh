@@ -119,23 +119,19 @@ EOF
        echo "'$userreftree' is a correct tree file but has no branch support"
        echo "will use its topology for reference tree; skip RAxML ML tree computation but will compute rapid bootstraps from (pseudo-)core-genome concatenate alignment"
        echo "emulate resuming RAxML computation pipeline after ML tree search (not that tree will be re-rooted according to set criterion: '$rootingmethod')"
-       ln -s ${userreftree} ${nrbesttree}
+       cp ${userreftree} ${nrbesttree}
        resumetask='true' ;;
      5)
        echo "'$userreftree' is a correct tree file, with branch supports but not rooted"
        echo "will use its topology and branch supports for reference tree; skip RAxML ML tree and bootsrap computations but will perform rooting according to set criterion: '$rootingmethod'"
        echo "emulate resuming RAxML computation pipeline after rapid bootstrap tree search"
-       ln -s ${userreftree} ${nrbesttree}
+       cp ${userreftree} ${nrbesttree}
        ln -s ${userreftree} ${nrbiparts}
        resumetask='true' ;;
      6)
       echo "'$userreftree' is a correct rooted tree file with branch supports"
-      echo "will use it as a reference tree; skip all RAxML computations from (pseudo-)core-genome concatenate alignment" 
-      mv ${envsourcescript} ${envsourcescript}0 && \
-       sed -e "s#'REPLACEuserreftree'#'${userreftree}'#" ${envsourcescript}0 > ${envsourcescript} && \
-       rm ${envsourcescript}0
-      echo "userreftree='${userreftree}' is recorded in init file '${envsourcescript}'"
-       ln -s ${userreftree} ${speciestree} ;;
+      echo "will use it as a reference tree; skip all RAxML computations from (pseudo-)core-genome concatenate alignment"
+       cp ${userreftree} ${speciestree} ;;
      *)
       echo "something went wrong when evaluatiing input tree (tree check output value: ${treecheck}); exit now"
       exit 1 ;;
