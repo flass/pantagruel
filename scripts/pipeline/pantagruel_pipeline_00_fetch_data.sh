@@ -102,8 +102,9 @@ grep "# Organism name" ${ncbiass}/*/*_assembly_stats.txt > ${ncbiass}/all_assemb
 
 # store in centralised folder for NCBI assemblies and just record links
 mkdir -p ${assemblies}/
+relpathass2ncbiass=$(realpath --relative-to=${assemblies} ${ncbiass})
 for ass in `cat ${ncbiass}/genome_assemblies*_list` ; do
-  ln -s ${ncbiass}/${ass} ${assemblies}/
+  ln -s ${relpathass2ncbiass}/${ass} ${assemblies}/
 done
 
 
@@ -228,7 +229,10 @@ EOF
     ls ${fnagz}
   done > ${ptglogs}/genbank-format_assemblies.log
   
-  ln -s ${gblikeass}/* ${indata}/assemblies/
+  relpathass2gblass=$(realpath --relative-to=${assemblies} ${gblikeass})
+  for gblass in $(ls -A ${gblikeass}/) ; do
+    ln -s ${relpathass2gblass}/${gblass} ${assemblies}/
+  done
 fi
 
 #### end of the block treating custom genome set

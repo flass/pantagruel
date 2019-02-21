@@ -126,7 +126,7 @@ EOF
        echo "will use its topology and branch supports for reference tree; skip RAxML ML tree and bootsrap computations but will perform rooting according to set criterion: '$rootingmethod'"
        echo "emulate resuming RAxML computation pipeline after rapid bootstrap tree search"
        cp ${userreftree} ${nrbesttree}
-       ln -s ${userreftree} ${nrbiparts}
+       ln -s $(realpath --relative-to=$(dirname ${nrbiparts}) ${nrbesttree}) ${nrbiparts}
        resumetask='true' ;;
      6)
       echo "'$userreftree' is a correct rooted tree file with branch supports"
@@ -202,7 +202,7 @@ if  [[ ! -s ${speciestree} ]] ; then
    fi
    mv ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_bestTree.${treename}
    rm -f ${nrbesttree}
-   ln -s ${coretree}/RAxML_bestTree.${treename} ${nrbesttree}
+   ln -s $(realpath --relative-to=$(dirname ${nrbesttree}) ${coretree}/RAxML_bestTree.${treename}) ${nrbesttree}
   fi
 
   # compute ${ncorebootstrap} rapid bootstraps (you can set variable by editing ${envsourcescript})
@@ -233,8 +233,7 @@ if  [[ ! -s ${speciestree} ]] ; then
    $raxmlbin -s ${coretreealn} ${raxmloptions} -f b -z ${coretree}/RAxML_bootstrap.${treename} -t ${nrbesttree} 
    mv ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_bipartitions.${treename}
    rm -f ${nrbiparts}
-   #~ ln -s ${coretree}/RAxML_bipartitionsBranchLabels.${treename} ${nrbiparts}
-   ln -s ${coretree}/RAxML_bipartitions.${treename} ${nrbiparts}
+   ln -s $(realpath --relative-to=$(dirname ${nrbiparts}) ${coretree}/RAxML_bipartitions.${treename}) ${nrbiparts}
   fi
 
   # root ML tree
@@ -255,7 +254,7 @@ if  [[ ! -s ${speciestree} ]] ; then
     $raxmlbin -s ${coretreealn} ${raxmloptions} -f I -t ${nrbipartbranchlab}  
     mv ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_rootedTree.${treename}
     rm -f ${nrrootedtree}
-    ln -s ${coretree}/RAxML_rootedTree.${treename} ${nrrootedtree}
+    ln -s $(realpath --relative-to=$(dirname ${nrrootedtree}) ${coretree}/RAxML_rootedTree.${treename}) ${nrrootedtree}
    else
     if [[ "${rootingmethod}" == 'MAD' ]] ; then
      # root tree with MAD (Tria et al. Nat Ecol Evol (2017) Phylogenetic rooting using minimal ancestor deviation. s41559-017-0193 doi:10.1038/s41559-017-0193)
@@ -266,7 +265,7 @@ if  [[ ! -s ${speciestree} ]] ; then
      save(mad.rooting, file='${nrbiparts}.${rootingmethod}rooting.RData}')
 EOF
     rm -f ${nrrootedtree}
-    ln -s ${nrbiparts}.${rootingmethod}rooting ${nrrootedtree}
+    ln -s $(realpath --relative-to=$(dirname ${nrrootedtree}) ${nrbiparts}.${rootingmethod}rooting) ${nrrootedtree}
     else
      if [[ "${rootingmethod:0:8}" == 'outgroup' ]] ; then
     # outgroup rooting; assume argument was of the shape 'outgroup:SPECIESCODE'
@@ -284,7 +283,7 @@ EOF
     write.tree(rtree, file='${nrbiparts}.${roottag}')
 EOF
     rm -f ${nrrootedtree}
-    ln -s ${nrbiparts}.${roottag} ${nrrootedtree}
+    ln -s $(realpath --relative-to=$(dirname ${nrrootedtree}) ${nrbiparts}.${roottag}) ${nrrootedtree}
      fi
     fi
    fi

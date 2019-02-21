@@ -48,7 +48,7 @@ mkdir -p ${interpro}/ ${ptgtmp}/interpro/ ${ptglogs}/interpro/
 
 # segment the entire proteome in batches of reasonable size (as all results are kept in memory before being written)
 mkdir -p ${interpro}/all_complete_proteomes/
-ln -s ${allfaarad}.nr.faa ${interpro}/
+ln -s $(realpath --relative-to=${interpro} ${allfaarad}.nr.faa) ${interpro}/
 python << EOF
 import os
 nfinfaa = "${allfaarad}.nr.faa"
