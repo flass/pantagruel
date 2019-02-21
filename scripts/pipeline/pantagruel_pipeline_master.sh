@@ -15,18 +15,29 @@ usage (){
   echo "Usage: pantagruel -d db_name -r root_dir [other init options] init"
   echo " or"
   echo "Usage: pantagruel -i init_file TASK1 [TASK2, [...]]"
+}
+
+usagelong (){
+  usage
+  echo "Pantagruel task 0-9: only one _mandatory_ option:"
+  echo ""
+  echo "    -i|--initfile     Pantagruel configuration file"
+  echo "                        this file is generated at init stage, from the specified options."
+  echo ""
+  echo "Pantagruel task init:"
   echo ""
   echo "  _mandatory options_"
+  echo ""
   echo "    -d|--dbname       database name"
   echo ""
   echo "    -r|--rootdir      root directory where to create the database; defaults to current folder"
   echo ""
+  echo "  _facultative options_"
+  echo ""
   echo "    -i|--initfile     Pantagruel configuration file"
-  echo "                        For 0 to 9 tasks, this file is generated at init stage, from the specified options."
-  echo "                        For init task, a file can be derived (i.e. manualy curated) from 'environment_pantagruel_template.sh' template."
+  echo "                        a file can be derived (i.e. manualy curated) from 'environment_pantagruel_template.sh' template."
   echo "                        Parameters values specified in this file will override other options"
   echo ""
-  echo "  _facultative options_"
   echo "    -p|--ptgrepo      location of pantagruel software head folder; defaults to ${defptgrepo}"
   echo ""
   echo "    -I|--iam          database creator identity (e-mail address is preferred)"
@@ -137,7 +148,107 @@ usage (){
   echo "       quantify gene co-evolution and build gene association network"
   echo "________________________________________________________________________"
   echo ""
+
+
+setdefaults (){
+    # Default values:
+    if [ -z "$ptgrepo" ] ; then
+    export ptgrepo=$defptgrepo
+    echo "Default: set Pantagruel software repository to '$ptgrepo'"
+    fi
+    if [ -z "$myemail" ] ; then
+    export myemail="undisclosed"
+    echo "Default: set identity to '$myemail'"
+    fi
+    if [ -z "$famprefix" ] ; then
+    export famprefix="PANTAG"
+    echo "Default: set gene family prefix to '$famprefix'"
+    fi
+    if [ -z "$customassemb" ] ; then
+    export customassemb=${ptgroot}/user_genomes
+    echo "Default: set custom (raw) genome assembly source folder to '$customassemb'"
+    fi
+    if [ -z "$ncbiass" ] ; then
+    export ncbiass=${ptgroot}/NCBI/Assembly_$(date +'%Y-%m-%d')
+    echo "Default: set NCBI RefSeq(-like) genome assembly source folder to '$ncbiass'"
+    fi
+    if [ -z "$refass" ] ; then
+    export refass=${ncbiass}
+    echo "Default: set NCBI RefSeq(-like) genome assembly source folder for reference in user genome annotation to '$refass'"
+    fi
+    if [ -z "$ncbitax" ] ; then
+     export ncbitax=${ptgroot}/NCBI/Taxonomy_$(date +'%Y-%m-%d')
+     echo "Default: set NCBI Taxonomy source folder to '$ncbitax'"
+    fi
+    if [ -z "$chaintype" ] ; then
+      export chaintype='fullgenetree'
+      echo "Default: set gene tree type to '$chaintype'"
+    fi
+    if [ -z "$pseudocoremingenomes" ] ; then
+     echo "Default: will a strict core-genome establish pseudo-core gene set, i.e. genes present in a single copy in all the studied genomes."
+     echo ""
+     echo "!!! WARNING: strict core-genome definition can be very resctrictive, especially when including draft genome in the study."
+     echo "You might prefer to use a pseudo-core genome definition instead, i.e. selecting gene present in a minimum fraction of genomes, for instance 98%."
+     echo "A sensible threshold should avoid that selected genes have an approximately homogeneous distribution,"
+     echo" notably that the absent fraction is not restricted to a few genomes. This threshold will thus depend on the dataset."
+     echo "To choose a sensible value, AFTER TASK 03, you can run the INTERACTIVE script:"
+     echo" '$ptgscripts/choose_min_genome_occurrence_pseudocore_genes.sh'"
+     echo "and then manualy edit the value of variable 'pseudocoremingenomes' in the pantagruel configuration file."
+    fi
+    if [ -z "$coreseqtype" ] ; then
+     export coreseqtype='cds'
+     echo "Default (only relevant to 'core' task): core sequence type is set to '$coreseqtype'"
+    fi
+    if [ -z "$poplgthresh" ] ; then
+     export poplgthresh='default'
+     echo "Default (only relevant to 'core' task): set population delination branch support threshold to $poplgthresh"
+    fi
+    if [ -z "$popbsthresh" ] ; then
+     export popbsthresh='default'
+     echo "Default (only relevant to 'core' task): set population delination branch support threshold to $popbsthresh"
+    fi
+    if [ -z "$hpcremoteptgroot" ] ; then
+     echo "Default: all computations will be run locally"
+     export hpcremoteptgroot='none'
+    fi
 }
+
+#~ setnondefaults (){
+	#~ nondefvardecl=${ptgtmp}/nondefvardecl.sh
+	#~ rm -f ${ptgtmp}/nondefvardecl.sh
+    #~ if [ ! -z "$hpcremoteptgroot" ] ; then
+     #~ echo "Overide default: all computations will be run on a distant server (potentially a HPC service) instead of locally"
+     #~ echo "export hpcremoteptgroot=${hpcremoteptgroot}" >> ${ptgtmp}/nondefvardecl.sh
+    #~ fi
+    #~ if [ ! -z "$collapseCladeParams" ] ; then
+     #~ if [ ! -z "$chaintype" ] ; then 
+      #~ echo "Overide default: gene tree clade collapsing will use these parameters: '$collapseCladeParams'"
+     #~ echo "export collapseCladeParams=${collapseCladeParams}" >> ${ptgtmp}/nondefvardecl.sh
+     #~ fi
+    #~ fi
+    #~ if [ ! -z "$userreftree" ] ; then
+     #~ echo "Overide default (only relevant to 'core' task): a reference tree was provided; will not compute core-genome tree"
+     #~ echo "export userreftree=${userreftree}" >> ${ptgtmp}/nondefvardecl.sh
+    #~ fi
+    #~ if [ ! -z "$coreseqtype" ] ; then
+     #~ echo "Overide default (only relevant to 'core' task): core sequence type is set to '$coreseqtype'"
+     #~ echo "export coreseqtype=${coreseqtype}" >> ${ptgtmp}/nondefvardecl.sh
+    #~ fi
+    #~ if [ ! -z "$poplgthresh" ] ; then
+     #~ echo "Overide default (only relevant to 'core' task): set population delination branch support threshold to $poplgthresh"
+     #~ echo "export poplgthresh=${poplgthresh}" >> ${ptgtmp}/nondefvardecl.sh
+    #~ fi
+    #~ if [ ! -z "$popbsthresh" ] ; then
+     #~ echo "Overide default (only relevant to 'core' task): set population delination branch support threshold to $popbsthresh"
+     #~ echo "export popbsthresh=${popbsthresh}" >> ${ptgtmp}/nondefvardecl.sh
+    #~ fi
+    #~ if [ ! -z "$resumetask" ] ; then
+     #~ echo "Overide default (only relevant to 'core' task): will try and resume computation of task where it was last stopped"
+     #~ echo "export resumetask=${resumetask}" >> ${ptgtmp}/nondefvardecl.sh
+    #~ fi
+#~ }
+}
+
 testmandatoryarg (){
   if [ -z "$2" ]; then
    echo "ERROR: missing argument for option '$1'" 1>&2
@@ -175,7 +286,7 @@ while true;
 do
   case "$1" in
     -h|--help) 
-      usage
+      usagelong
       exit 0;;
     
     -d|--dbname) 
@@ -313,104 +424,6 @@ if [ -z "$ptgroot" ] ; then
  exit 1
 fi
 
-setdefaults (){
-    # Default values:
-    if [ -z "$ptgrepo" ] ; then
-    export ptgrepo=$defptgrepo
-    echo "Default: set Pantagruel software repository to '$ptgrepo'"
-    fi
-    if [ -z "$myemail" ] ; then
-    export myemail="undisclosed"
-    echo "Default: set identity to '$myemail'"
-    fi
-    if [ -z "$famprefix" ] ; then
-    export famprefix="PANTAG"
-    echo "Default: set gene family prefix to '$famprefix'"
-    fi
-    if [ -z "$customassemb" ] ; then
-    export customassemb=${ptgroot}/user_genomes
-    echo "Default: set custom (raw) genome assembly source folder to '$customassemb'"
-    fi
-    if [ -z "$ncbiass" ] ; then
-    export ncbiass=${ptgroot}/NCBI/Assembly_$(date +'%Y-%m-%d')
-    echo "Default: set NCBI RefSeq(-like) genome assembly source folder to '$ncbiass'"
-    fi
-    if [ -z "$refass" ] ; then
-    export refass=${ncbiass}
-    echo "Default: set NCBI RefSeq(-like) genome assembly source folder for reference in user genome annotation to '$refass'"
-    fi
-    if [ -z "$ncbitax" ] ; then
-     export ncbitax=${ptgroot}/NCBI/Taxonomy_$(date +'%Y-%m-%d')
-     echo "Default: set NCBI Taxonomy source folder to '$ncbitax'"
-    fi
-    if [ -z "$chaintype" ] ; then
-      export chaintype='fullgenetree'
-      echo "Default: set gene tree type to '$chaintype'"
-    fi
-    if [ -z "$pseudocoremingenomes" ] ; then
-     echo "Default: will a strict core-genome establish pseudo-core gene set, i.e. genes present in a single copy in all the studied genomes."
-     echo ""
-     echo "!!! WARNING: strict core-genome definition can be very resctrictive, especially when including draft genome in the study."
-     echo "You might prefer to use a pseudo-core genome definition instead, i.e. selecting gene present in a minimum fraction of genomes, for instance 98%."
-     echo "A sensible threshold should avoid that selected genes have an approximately homogeneous distribution,"
-     echo" notably that the absent fraction is not restricted to a few genomes. This threshold will thus depend on the dataset."
-     echo "To choose a sensible value, AFTER TASK 03, you can run the INTERACTIVE script:"
-     echo" '$ptgscripts/choose_min_genome_occurrence_pseudocore_genes.sh'"
-     echo "and then manualy edit the value of variable 'pseudocoremingenomes' in the pantagruel configuration file."
-    fi
-    if [ -z "$coreseqtype" ] ; then
-     export coreseqtype='cds'
-     echo "Default (only relevant to 'core' task): core sequence type is set to '$coreseqtype'"
-    fi
-    if [ -z "$poplgthresh" ] ; then
-     export poplgthresh='default'
-     echo "Default (only relevant to 'core' task): set population delination branch support threshold to $poplgthresh"
-    fi
-    if [ -z "$popbsthresh" ] ; then
-     export popbsthresh='default'
-     echo "Default (only relevant to 'core' task): set population delination branch support threshold to $popbsthresh"
-    fi
-    if [ -z "$hpcremoteptgroot" ] ; then
-     echo "Default: all computations will be run locally"
-     export hpcremoteptgroot='none'
-    fi
-}
-
-#~ setnondefaults (){
-	#~ nondefvardecl=${ptgtmp}/nondefvardecl.sh
-	#~ rm -f ${ptgtmp}/nondefvardecl.sh
-    #~ if [ ! -z "$hpcremoteptgroot" ] ; then
-     #~ echo "Overide default: all computations will be run on a distant server (potentially a HPC service) instead of locally"
-     #~ echo "export hpcremoteptgroot=${hpcremoteptgroot}" >> ${ptgtmp}/nondefvardecl.sh
-    #~ fi
-    #~ if [ ! -z "$collapseCladeParams" ] ; then
-     #~ if [ ! -z "$chaintype" ] ; then 
-      #~ echo "Overide default: gene tree clade collapsing will use these parameters: '$collapseCladeParams'"
-     #~ echo "export collapseCladeParams=${collapseCladeParams}" >> ${ptgtmp}/nondefvardecl.sh
-     #~ fi
-    #~ fi
-    #~ if [ ! -z "$userreftree" ] ; then
-     #~ echo "Overide default (only relevant to 'core' task): a reference tree was provided; will not compute core-genome tree"
-     #~ echo "export userreftree=${userreftree}" >> ${ptgtmp}/nondefvardecl.sh
-    #~ fi
-    #~ if [ ! -z "$coreseqtype" ] ; then
-     #~ echo "Overide default (only relevant to 'core' task): core sequence type is set to '$coreseqtype'"
-     #~ echo "export coreseqtype=${coreseqtype}" >> ${ptgtmp}/nondefvardecl.sh
-    #~ fi
-    #~ if [ ! -z "$poplgthresh" ] ; then
-     #~ echo "Overide default (only relevant to 'core' task): set population delination branch support threshold to $poplgthresh"
-     #~ echo "export poplgthresh=${poplgthresh}" >> ${ptgtmp}/nondefvardecl.sh
-    #~ fi
-    #~ if [ ! -z "$popbsthresh" ] ; then
-     #~ echo "Overide default (only relevant to 'core' task): set population delination branch support threshold to $popbsthresh"
-     #~ echo "export popbsthresh=${popbsthresh}" >> ${ptgtmp}/nondefvardecl.sh
-    #~ fi
-    #~ if [ ! -z "$resumetask" ] ; then
-     #~ echo "Overide default (only relevant to 'core' task): will try and resume computation of task where it was last stopped"
-     #~ echo "export resumetask=${resumetask}" >> ${ptgtmp}/nondefvardecl.sh
-    #~ fi
-#~ }
-
 echo -e "# will create/use Pantagruel database '$ptgdbname', set in root folder: '$ptgroot'\n#"
 export ptgscripts=${ptgrepo}/scripts
 
@@ -466,6 +479,11 @@ for task in "$tasks" ; do
      # all these variables are exported above and thus should be transfered to the child process
     checkexec
   else
+   if [ -z ${initfile} ] ; then
+     echo "Error: a Pantagruel configuration file must be provided through option -i ; exit now."
+     usage
+     exit 1
+   fi
    case "$task" in
    0)
     promptdate "Pantagrel pipeline step $task: fetch public genome data from NCBI sequence databases and annotate private genomes."
