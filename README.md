@@ -230,6 +230,61 @@ pantagruel -i /root/folder/for/database/databasename/environ_pantagruel_database
 ```  
 Note that this config file can be edited in-between tasks, for instance to change the location of key input files that you moved, or to tweak paramters - however this may cause issues in task dependencies (see above).
 
+#### Input data
+
+Here is a view of what input data passed to Pantagruel should look like.  
+When using assemblies downloaded from NCBI RefSeq, the folder which path is given as the argument of options `-A|--refseq_ass` or `--refseq_ass4annot` should  have a content looking like this:  
+```sh
+ls -AF assemblies/
+# GCF_000156855.2_ASM15685v2/
+# GCF_001026115.1_ASM102611v1/
+# GCF_001088845.1_8727_5_60/
+# ... 
+# as many separate folders as there are genomes to study
+
+ls -AF assemblies/GCF_001026115.1_ASM102611v1/
+# GCF_001026115.1_ASM102611v1_assembly_report.txt      GCF_001026115.1_ASM102611v1_protein.faa.gz
+# GCF_001026115.1_ASM102611v1_assembly_stats.txt       GCF_001026115.1_ASM102611v1_protein.gpff.gz
+# GCF_001026115.1_ASM102611v1_cds_from_genomic.fna.gz  GCF_001026115.1_ASM102611v1_rna_from_genomic.fna.gz
+# GCF_001026115.1_ASM102611v1_feature_count.txt.gz     GCF_001026115.1_ASM102611v1_translated_cds.faa.gz
+# GCF_001026115.1_ASM102611v1_feature_table.txt.gz     GCF_001026115.1_ASM102611v1_wgsmaster.gbff
+# GCF_001026115.1_ASM102611v1_genomic.fna.gz           GCF_001026115.1_ASM102611v1_wgsmaster.gbff.gz
+# GCF_001026115.1_ASM102611v1_genomic.gbff             annotation_hashes.txt
+# GCF_001026115.1_ASM102611v1_genomic.gbff.gz          assembly_status.txt
+# GCF_001026115.1_ASM102611v1_genomic.gff.gz           md5checksums.txt
+# each folder contains a set of files with all the assembly and annotation information
+```
+
+When providong your on 'custom' genomes, the folder which path is given as the argument of options `a|--custom_ass`should  have a content looking like this:  
+
+```sh
+ls -AF user_genomes/
+# contigs/
+# annotation/
+# strain_infos.txt
+
+ls -AF user_genomes/contigs/
+# B03_1.fasta
+# D03_1.fasta
+# F03_1.fasta
+
+ls -AF user_genomes/annotation/
+# B03_1/
+# C03_1/
+# D03_1/
+
+ls -AF user_genomes/annotation/B03_1/
+# Rhizobium_endolithicum_Q54.fna
+# Rhizobium_endolithicum_Q54.ffn
+# Rhizobium_endolithicum_Q54.faa
+# Rhizobium_endolithicum_Q54.gff
+# the file names within the folder do not matter, only their extensions.
+
+cat user_genomes/strain_infos.txt
+# B03_1	Rhizobium	endolithicum	Q54	1335060	REQ54
+# the values in the first and last fields must be unique; the first field value must match the contig file and annotation folder names.
+```
+
 -------------
 
 ## Installing Pantagruel and its dependencies
