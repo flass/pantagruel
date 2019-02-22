@@ -92,8 +92,8 @@ Note there are **dependencies between tasks**, which must be carried on mostly s
 - *00, 01, 02, 03 tasks* each strictly depend on the previous step: 00 -> 01 -> 02 -> 03  
 - *functional annotation task 04* is optional - though highly recomended - and depends on the previous task 01: 01 -> 04 
 - *reference tree task 05* depends on previous *task 03* (and thus the previous ones)  
-- *gene trees task 06* only depends on the previous *task 03* (and thus the previous ones) **IF** the -c|--collapse option is **NOT** used: 03 -> 06  
-- however, if the -c option is specified, *task 06* (specifically step 6.4 when in HPC mode) is also dependent on *task 05*: 03 + 05 -> 06  
+- *gene trees task 06* only depends on the previous *task 03* (and thus the previous ones) **IF** the `-c|--collapse` option is **NOT** used: 03 -> 06  
+- however, if the `-c` option is specified, *task 06* (specifically step 6.4 when in HPC mode) is also dependent on *task 05*: 03 + 05 -> 06  
 - *gene tree/species tree reconciliation task 07* strictly depends on the previous steps: 05 + 06 -> 07  
 - *orthologous group clustering task 08* depends on previous *reconciliation step 07*: 07 -> 08  
 - *co-evolution network task 09* depends on previous *reconciliation task 07*: 07 -> 09  
@@ -212,21 +212,19 @@ Options are detailed here:
 ### Usage example  
 Here is a standard examples of using `pantagruel` program.
 
-First, to create a *new* database, we run at the init task. To pass the key parameters, inlcuding where to create the database folder, and its name, we will be using options:
+First, to create a *new* database, we need to run the `init` task. To pass the key parameters, including where to create the database and its name, we will be using options:
 ```sh
 pantagruel -d databasename -r /root/folder/for/database -f PANTAGFAM -I f.lassalle@imperial.ac.uk -A /folder/of/public/genome/in/RefSeq/format init
 ```  
-Then, to actually run the pipeline, we will execute the following tasks. At this stage, all parameters are already defined
-following the database intitiation stage (see above) and were stored in a configuration file. You will now simply specify where to look up this configuration file with -i option.
+Then, to actually run the pipeline, we will execute the following tasks. At this stage, no options need to (or can) be specified trough the command line, as all parameters are already defined
+following the database intitiation stage (see above) and were stored in a configuration file. You will now simply have to specify where to find this configuration file with the `-i` option.
 Unless you moved it, the configuration file should be where it has been created automatically,
 at `${root_dir}/${db_name}/environ_pantagruel_${db_name}.sh`, with `${db_name}` and `${root_dir}` the arguments of `-d` and `-r` options on the `pantagruel init` call.
 So in our case, to execute the first three tasks, up to gene family sequence alignement, you can type the following command:  
 ```sh
 pantagruel -i /root/folder/for/database/databasename/environ_pantagruel_databasename.sh fetch homologous align
 ```  
-Note that in the task command, no options are specified trough the command line.
-Instead, the parameters are inherited from the database's configuration file produced during the `init` step.
-This config file can be edited in-between tasks, for instance to change the location of key input files that you moved, or to tweak paramters - however this may cause issues in task dependencies (see above).
+Note that this config file can be edited in-between tasks, for instance to change the location of key input files that you moved, or to tweak paramters - however this may cause issues in task dependencies (see above).
 
 -------------
 
