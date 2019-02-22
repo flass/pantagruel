@@ -209,7 +209,7 @@ echo ""
 iphost="ftp://ftp.ebi.ac.uk"
 iploc="pub/software/unix/iprscan/5/"
 
-currIPversion=$(interproscan --version | head -n 1 | sed -e 's/InterProScan version //')
+currIPversion=$(interproscan --version | head -n 1 | sed -e 's/InterProScan version //' 2> /dev/null)
 lastIPversion=$(lftp -c "open ${iphost} ; ls -tr ${iploc} ; quit" | tail -n 1 | awk '{print $NF}')
 if [[ -z "${currIPversion}" || "${currIPversion}" != "${lastIPversion}" ]] ; then
  echo "get Interproscan ${lastIPversion}"
@@ -245,7 +245,7 @@ if [[ -z "${currIPversion}" || "${currIPversion}" != "${lastIPversion}" ]] ; the
  currIPversion=${lastIPversion}
  # make sure InterProscan uses the correct version of Java (1.8)
  wrongjava=$(${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh | grep -o 'Java version .* is required to run InterProScan.')
- if [ ! -z ${wrongjava} ] ; then
+ if [ ! -z "${wrongjava}" ] ; then
    needjava=$(echo ${wrongjava} | sed -e 's/Java version \(.*\) is required to run InterProScan./\1/')
    currjava=$(readlink -f `which java`)
    goodjava=$(echo ${currjava} | sed -e "s/java-[0-9]\+-/java-${needjava}-/")
