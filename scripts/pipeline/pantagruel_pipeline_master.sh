@@ -19,12 +19,12 @@ usage (){
 
 usagelong (){
   usage
-  echo "Pantagruel task 0-9: only one _mandatory_ option:"
+  echo "# for Pantagruel task 0-9: only one _mandatory_ option:"
   echo ""
   echo "    -i|--initfile     Pantagruel configuration file"
   echo "                        this file is generated at init stage, from the specified options."
   echo ""
-  echo "Pantagruel task init:"
+  echo "# for Pantagruel task init:"
   echo ""
   echo "  _mandatory options_"
   echo ""
@@ -116,6 +116,8 @@ usagelong (){
   echo "                       A single-quoted, semicolon-delimited string containing variable definitions must be provided."
   echo "                       Default is equivalent to providing the following string:"
   echo "                          'cladesupp=70 ; subcladesupp=35 ; criterion=bs ; withinfun=median'"
+  echo ""
+  echo "# for any Pantagruel command calls:"
   echo ""
   echo "    -h|--help          print this help message and exit."
   echo ""

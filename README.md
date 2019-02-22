@@ -107,7 +107,7 @@ Options are detailed here:
                         a file can be derived (i.e. manualy curated) from 'environment_pantagruel_template.sh' template.
                         Parameters values specified in this file will override other options
 
-    -p|--ptgrepo      location of pantagruel software head folder; defaults to /home/florent/software/pantagruel
+    -p|--ptgrepo      location of pantagruel software head folder; defaults to where is located the pantagruel executable (if a link, the location of its last target)
 
     -I|--iam          database creator identity (e-mail address is preferred)
 
