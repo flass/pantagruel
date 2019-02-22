@@ -192,15 +192,20 @@ Options are detailed here:
     -h|--help          print this help message and exit.
 ```  
 Here are some examples of using options:  
-```sh
-# at the init stage, pass the key parameters using options
-pantagruel -d databasename -r /root/folder/for/database -f PANTAGFAM -I f.lassalle@imperial.ac.uk -A /folder/of/public/genome/in/RefSeq/format init
 
-# at the later task stage, all parameters are stored in the config file specified with -I option
-# following the database intitiation above, the config file should have been created automatically at /root/folder/for/database/databasename/environ_pantagruel_databasename.sh
+First,  at the init stage, pass the key parameters using options:
+```sh
+pantagruel -d databasename -r /root/folder/for/database -f PANTAGFAM -I f.lassalle@imperial.ac.uk -A /folder/of/public/genome/in/RefSeq/format init
+```
+Then, at the later task stage, all parameters are stored in the config file specified with -i option
+following the database intitiation above, the config file should have been created automatically
+at `${root_dir}/${db_name}/environ_pantagruel_${db_name}.sh`, with `${db_name}` and `${root_dir}` the arguments of `-d` and `-r` options on the `pantagruel init` call.
+```sh
 pantagruel -i /root/folder/for/database/databasename/environ_pantagruel_databasename.sh fetch homologous align
 ```  
-Note that in the later two cases, no task-specific options can be specified trough the command line; instead, you should edit the database's environment file (produced during initiation step) that should be located at `${root_dir}/${db_name}/environ_pantagruel_${db_name}.sh`, with `${db_name}` and `${root_dir}` the arguments of `-d` and `-r` options on the `pantagruel init` call.
+Note that in the later case, no task-specific options can be specified trough the command line.
+Instead, the parameters are inherited from the database's configuration file produced during the `init` step.
+This config file can be edited in-between tasks, for instance to change the location of key input files that you moved, or to tweak paramters - however this may cause issues in task dependencies (see above).
 
 -------------
 

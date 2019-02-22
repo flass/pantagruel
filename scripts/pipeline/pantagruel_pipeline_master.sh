@@ -14,7 +14,7 @@ defptgrepo=${locexec%%/scripts/pipeline/*}
 usage (){
   echo "Usage: pantagruel -d db_name -r root_dir [other init options] init"
   echo " or"
-  echo "Usage: pantagruel -i init_file TASK1 [TASK2, [...]]"
+  echo "Usage: pantagruel -i config_file TASK1 [TASK2, [...]]"
 }
 
 usagelong (){
