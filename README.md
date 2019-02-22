@@ -86,6 +86,19 @@ Finally, it is possible to run the whole pipeline at once, simply perform the `a
 pantagruel -i config_file all
 ```  
 
+Note there are *dependencies* between tasks, which must be carried on mostly sequentially:  
+- 00, 01, 02, 03 tasks each strictly depend on the previous step: 00 -> 01 -> 02 -> 03  
+- functional annotation 04 task is optional - though highly recomended - and depends on the previous task 01: 01 -> 04 
+- reference tree task 05 depnds on previous task 03 (and thus the previous ones)  
+- gene trees task 06 depend on the previous step 03 (and thus the previous ones) *ONLY IF* the -c|--collapse option is NOT used: 03 -> 06  
+- however, if the -c optionis specified, task 06 (specifically step 6.4) is also independent on task 05  
+- 07 task for gene tree/species tree reconciliations strictly depends on the previous steps: 05 + 06 -> 07  
+- orthologous group clustering 08 task depends on previous reconciliation step 07: 07 -> 08  
+- co-evolution network 09 task depends on previous reconciliation step 07: 07 -> 09  
+- but if run after task 08, another version of the co-evolution network will be made by collpasing the full network, grouping gene nodes by orthologous group: 07 + 08 -> 09
+
+So all in all, you're better off running all the tasks sequentially, for instance using `pantagruel all`.
+
 Options are detailed here:  
 ```
 # for Pantagruel task 0-9: only one _mandatory_ option:
