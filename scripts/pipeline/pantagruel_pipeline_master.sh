@@ -15,7 +15,7 @@ echo "This is Pantagruel pipeline version ${ptgversion} using source code from r
 export ptgscripts=${ptgrepo}/scripts
 
 usage (){
-  echo "Usage: pantagruel -d db_name -r root_dir [other init options] init"
+  echo "Usage: pantagruel -d db_name -r root_dir {-A refseq_assembly_folder | -a custom_assembly_folder} [other init options] init"
   echo " or"
   echo "Usage: pantagruel -i config_file TASK1 [TASK2, [...]]"
 }
@@ -35,6 +35,8 @@ usagelong (){
   echo ""
   echo "    -r|--rootdir      root directory where to create the database; defaults to current folder"
   echo ""
+  echo "  It is also necessary to specify an input genome dataset! This possible via -a or -A options, or both (see below)."
+  echo ""
   echo "  _facultative options_"
   echo ""
   echo "    -i|--initfile     Pantagruel configuration file"
@@ -51,8 +53,10 @@ usagelong (){
   echo "    -T|--taxonomy      path to folder of taxonomy database flat files; defaults to \$rootdir/NCBI/Taxonomy_YYYY-MM-DD (suffix is today's date)"
   echo "                        if this is not containing the expected file, triggers downloading the daily dump from NCBI Taxonomy at task 00"
   echo ""
-  echo "    -A|--refseq_ass  path to folder of source genome assembly flat files formated like NCBI Assembly RefSeq whole directories;"
-  echo "                       these can be obtained by searching https://www.ncbi.nlm.nih.gov/assembly and downloadingresults with options:"
+  echo "    -A|--refseq_ass  path to folder of source genome assembly __folders__, each containing flat files formated like NCBI Assembly RefSeq."
+  echo "                       (no default value)"
+  echo "                       The assembly folders (one per genome) can be obtained on https://www.ncbi.nlm.nih.gov/assembly,"
+  echo "                       by making a keyword search to select a set of assemblies and downloading results with options:"
   echo "                         Source Database = 'RefSeq' and File type = 'All file types (including assembly-structure directory)'."
   echo "                       defaults to \$rootdir/NCBI/Assembly_YYYY-MM-DD (suffix is today's date). "
   echo "                       A simple archive 'genome_assemblies.tar' (as obtained from the NCBI website)can be placed in that folder."
@@ -60,7 +64,7 @@ usagelong (){
   echo ""
   echo "    --refseq_ass4annot idem, but WILL NOT be used in the study, only as a reference to annotate user genomes (defaults to vaule of -A option)"
   echo ""
-  echo "    -a|--custom_ass  path to folder of user-provided genomes (defaults to \$rootdir/user_genomes), containing:"
+  echo "    -a|--custom_ass  path to folder of user-provided genomes (no default value). The specified folder must contain:"
   echo "                      _mandatory_ "
   echo "                       - a 'contigs/' folder, where are stored multi-FASTA files of genome assemblies (one file per genome,"
   echo "                          with extension '.fa', '.fasta' or '.fas' ...). Fasta file names will be truncated by removing"
@@ -170,13 +174,13 @@ ptgenvsetdefaults (){
     export famprefix="PANTAG"
     echo "Default: set gene family prefix to '$famprefix'"
     fi
-    if [ -z "$customassemb" ] ; then
-    export customassemb=${ptgroot}/user_genomes
-    echo "Default: set custom (raw) genome assembly source folder to '$customassemb'"
-    fi
-    if [ -z "$ncbiass" ] ; then
-    export ncbiass=${ptgroot}/NCBI/Assembly_$(date +'%Y-%m-%d')
-    echo "Default: set NCBI RefSeq(-like) genome assembly source folder to '$ncbiass'"
+    #~ if [ -z "$customassemb" ] ; then
+    #~ export customassemb=${ptgroot}/user_genomes
+    #~ echo "Default: set custom (raw) genome assembly source folder to '$customassemb'"
+    #~ fi
+    #~ if [ -z "$ncbiass" ] ; then
+    #~ export ncbiass=${ptgroot}/NCBI/Assembly_$(date +'%Y-%m-%d')
+    #~ echo "Default: set NCBI RefSeq(-like) genome assembly source folder to '$ncbiass'"
     fi
     if [ -z "$refass" ] ; then
     export refass=${ncbiass}
