@@ -86,6 +86,7 @@ def select_clades_on_conditions(tree, clade_stem_conds, within_clade_conds, dept
 	
 	def stem_testfun(node):
 		"""generic test function for selection condition at the clade stem"""
+		print repr(clade_stem_conds)
 		for crit, ope, thresh in clade_stem_conds:
 			if crit in ['bs', 'boot'] and node.is_leaf():
 				# leaf branch support is always supperior than threshold (emulates maximal value)
@@ -512,6 +513,11 @@ if __name__=='__main__':
 	alnfmtout = dopt.get('--fmt_aln_out', 'nexus')
 	fmtcoltree = dopt.get('--fmt_col_genetrees', 'nex')
 	diridentseq = dopt.get('--dir_identseq')
+	
+	if clade_stem_conds and verbose:
+		print "clade_stem_conds = %s"%repr(clade_stem_conds)
+	if within_clade_conds and verbose:
+		print "within_clade_conds = %s"%repr(within_clade_conds)
 	
 	# check accessibility of ouput dir
 	for outd, ext in doutdext.values():

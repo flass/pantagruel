@@ -100,14 +100,14 @@ else
   ## detect clades to be collapsed in gene trees
   export colalinexuscodedir=${protali}/${chaintype}_cdsfam_alignments_species_code
   export collapsecond=${criterion}_stem${cladesupp}_within${withinfun}${subcladesupp}
-  export collapsecriteriondef="--clade_stem_conds=\"[('$criterion', '>=', $cladesupp)]\" --within_clade_conds=\"[('$withinfun', '$criterion', '<=', $subcladesupp, -1), ('max', '$criterion', '<', $cladesupp, -1)]\""
+  export collapsecriteriondef="--clade_stem_conds=[('$criterion','>=',$cladesupp)] --within_clade_conds=[('$withinfun','$criterion','<=',$subcladesupp,-1),('max','$criterion','<',$cladesupp,-1)]"
   mkdir -p ${colalinexuscodedir}/${collapsecond}
   mlgenetreelist=${mlgenetrees%*s}_list
   ${ptgscripts}/lsfullpath.py "${mlgenetrees}/${mainresulttag}/*" | sort > ${mlgenetreelist}
   
   python ${ptgscripts}/mark_unresolved_clades.py --in_gene_tree_list=${mlgenetreelist} --diraln=${cdsalifastacodedir} --fmt_aln_in='fasta' \
-   --threads=${ncpus} --dirout=${colalinexuscodedir}/${collapsecond} --no_constrained_clade_subalns_output --dir_identseq=${mlgenetrees}/identical_sequences \
-   ${collapsecriteriondef}
+   --threads=$(nproc) --dirout=${colalinexuscodedir}/${collapsecond} --no_constrained_clade_subalns_output --dir_identseq=${mlgenetrees}/identical_sequences \
+   ${collapsecriteriondef} --criterion ${criterion} --clade_support ${cladesupp} --subclade_support ${subcladesupp} 
 
   export collapsecoldate=$(date +%Y-%m-%d)
   export nexusaln4chains=${colalinexuscodedir}/${collapsecond}/collapsed_alns
@@ -166,7 +166,7 @@ else
   # local parallel run
   python ${ptgscripts}/replace_species_by_pop_in_gene_trees.py -G ${tasklist} -c ${colalinexuscodedir}/${collapsecond} -S ${speciestree}.lsd.newick -o ${coltreechains}/${collapsecond} \
    --populations=${speciestree%.*}_populations --population_tree=${speciestree%.*}_collapsedPopulations.nwk --population_node_distance=${speciestree%.*}_interNodeDistPopulations \
-   --dir_full_gene_trees=${mlgenetrees}/rootedTree --method=${colmethod} --threads=${ncpus} --reuse=0 --verbose=0 --max.recursion.limit=12000 --logfile=${repllogs}_${replrun}.log
+   --dir_full_gene_trees=${mlgenetrees}/rootedTree --method=${colmethod} --threads=$(nproc) --reuse=0 --verbose=0 --max.recursion.limit=12000 --logfile=${repllogs}_${replrun}.log
 
   export replacecoldate=$(date +%Y-%m-%d)
 
