@@ -442,7 +442,7 @@ def main(nfgenetree, diraln, dirout, outtag, mkdircons=True, **kw):
 	if not 'cgt' in supressout:	
 		fmtcoltree = kw.get('format_color_tree')
 		cgtoutd, cgtext = doutdext['cgt']
-		colour_tree_with_constrained_clades(genetree, constraints)
+		colour_tree_with_constrained_clades(genetree, constraints, force=True)
 		genetree.complete_internal_labels(order=0, ffel=True)
 		if fmtcoltree.lower() in ['xml', 'phyloxml']:
 			genetree.write_phyloXML(os.path.join(dirout, cgtoutd, bnfaln+'-%s.xml'%cgtext), ignoreBS=True)

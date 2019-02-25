@@ -209,6 +209,7 @@ def colour_tree_parts(tree, **kw):
 	'dalias' provides an optional alias dict to search for leaves in the tree.
 	"""
 	dalias = kw.get('dalias', {})
+	force = kw.get('force', False)
 	if ('constraints' in kw) and ('leafgroups' in kw):
 		raise ValueError, "cannot pass both arguments 'constraints' and 'leafgroups' at the same time"
 	leafsets = kw.get('constraints', kw.get('leafgroups'))
@@ -216,7 +217,7 @@ def colour_tree_parts(tree, **kw):
 	if ('constraints' in kw):
 		for k, cons in enumerate(reversed(leafsets)):
 			# start from the last assigned node constraint, so that ealier nested clades will be painted over at a further iteration
-			n = tree.mrca([dalias.get(ll, ll) for ll in cons])
+			n = tree.mrca([dalias.get(ll, ll) for ll in cons], force=force)
 			for c in n.get_all_children():
 				c.edit_color(cols[k])
 	elif ('leafgroups' in kw):
