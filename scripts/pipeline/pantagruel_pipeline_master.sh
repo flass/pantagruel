@@ -155,7 +155,7 @@ usagelong (){
 setdefaults (){
     # Default values:
     if [ -z "$ptgrepo" ] ; then
-    export ptgrepo=$defptgrepo
+    export ptgrepo=${defptgrepo}
     echo "Default: set Pantagruel software repository to '$ptgrepo'"
     fi
     if [ -z "$myemail" ] ; then
@@ -299,17 +299,17 @@ do
     
     -r|--rootdir)
       testmandatoryarg "$1" "$2"
-      export ptgroot="$2"
+      export ptgroot=$(realpath $2)
       shift 2;;
     
     -i|--initfile)
       testmandatoryarg "$1" "$2"
-      export initfile="$2"
+      export initfile=$(realpath $2)
       shift 2;;
     
     -p|--ptgrepo)
       testmandatoryarg "$1" "$2"
-      export ptgrepo="$2"
+      export ptgrepo=$(realpath $2)
       echo "set Pantagruel software repository to '$ptgrepo'"
       shift 2;;
     
@@ -327,19 +327,19 @@ do
 
     -a|--custom_ass)
       testmandatoryarg "$1" "$2"
-      export customassemb="$2"
+      export customassemb=$(realpath $2)
       echo "set custom (raw) genome assembly source folder to '$customassemb'"
       shift 2;;
 
     -A|--refseq_ass)
       testmandatoryarg "$1" "$2"
-      export ncbiass="$2"
+      export ncbiass=$(realpath $2)
       echo "set NCBI RefSeq(-like) genome assembly source folder to '$ncbiass'"
       shift 2;;
 
     --refseq_ass4annot)
       testmandatoryarg "$1" "$2"
-      export refass="$2"
+      export refass=$(realpath $2)
       echo "set NCBI RefSeq(-like) genome assembly source folder for reference in user genome annotation to '$refass'"
       shift 2;;
 
@@ -351,7 +351,7 @@ do
 
     -t|--reftree)
       testmandatoryarg "$1" "$2"
-      export userreftree="$2"
+      export userreftree=$(realpath $2)
       echo "set reference tree as $userreftree"
       shift 2;;
 
@@ -387,7 +387,7 @@ do
 
     -T|--taxonomy)
       testmandatoryarg "$1" "$2"
-      export ncbitax="$2"
+      export ncbitax=$(realpath $2)
       echo "set NCBI Taxonomy source folder to '$ncbitax'"
       shift 2;;
 
