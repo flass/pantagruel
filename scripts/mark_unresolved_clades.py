@@ -268,7 +268,17 @@ def restrict_alignment_representative_leaves(constraints, tree, nffullali, dirou
 		lcollapsedseqids.append(collapsedseqids)
 		alicollapsedseqs = Align.MultipleSeqAlignment([seq for k,seq in enumerate(aln) if k in collapsedseqids])
 		# select outgroup sequence: first leaf of sister clade
-		anccons = tree.mrca(constraint)
+		#~ try:
+			#~ anccons = tree.mrca(constraint)
+		#~ except IndexError, e:
+			#~ for refidseq, redidseqs in didseq.iteritems():
+				#~ if (set(constraint) & set(redidseqs)):
+					#~ anccons = tree.mrca(constraint, force=True) # constraint contain labels from the identical leaf set
+					#~ break
+			#~ else:
+				#~ sys.stderr.write( "This indicate a definition of constraint clade that is inconsistent with the tree.\n" )
+				#~ raise IndexError, e
+		anccons = tree.mrca(constraint, force=True) # constraint contain labels from the identical leaf set
 		try:
 			outgroup = anccons.go_brother()
 			outgroupleaf = outgroup.get_leaf_labels()[0]
@@ -366,7 +376,7 @@ def main(nfgenetree, diraln, dirout, outtag, mkdircons=True, **kw):
 				n.set_bs(float(n.comment()))
 	else:
 		 # trees is unrooted
-		genetree = tree2.AnnotatedNode(file=nfgenetree)
+		genetree = tree2.read_check_newick(nfgenetree, treeclass='AnnotatedNode')
 		# tree is interpreted here as trifurcated at the root ; root it.
 		genetree.resolveNode(outgroups='subroot')
 	# there will be deepcopy operation on the tree, either to save its state before pruning (pop) below or in select_clades.
@@ -387,7 +397,7 @@ def main(nfgenetree, diraln, dirout, outtag, mkdircons=True, **kw):
 				refidseq, redidseq = line.rstrip('\n').split('\t')
 				didseq.setdefault(refidseq, []).append(redidseq)
 		if didseq:
-			# remove any redundant sequence from the gene tree before preocessing
+			# remove any redundant sequence from the gene tree before processing
 			cleangenetree = copy.deepcopy(genetree)
 			gtleaves = set(cleangenetree.get_leaf_labels())
 			for refidseq, redidseqs in didseq.iteritems():
@@ -401,6 +411,7 @@ def main(nfgenetree, diraln, dirout, outtag, mkdircons=True, **kw):
 		cleangenetree = genetree	
 	# detect unresolved clades
 	constraintswithsingles = mark_unresolved_clades(cleangenetree, **kw) #, pruneSelected=True, inclusive=True
+	if verbose: print 'constraintswithsingles =', constraintswithsingles
 	# add to identical sequence map to the constrained clades definitions
 	newconstraintsfromidseqs = []
 	for refidseq, redidseqs in didseq.iteritems():
@@ -411,8 +422,10 @@ def main(nfgenetree, diraln, dirout, outtag, mkdircons=True, **kw):
 				break
 		else:
 			newconstraintsfromidseqs.append([refidseq]+redidseqs)
+	if verbose: print 'newconstraintsfromidseqs =', newconstraintsfromidseqs
 	# for reporting, filter out contraint clades that are just made of one leaf (NB: these are useful for proper definitition of other constraint clades, when nested, non-inclusive clades are allowed)
 	constraints = [c for c in constraintswithsingles+newconstraintsfromidseqs if len(c)>1]
+	if verbose: print 'constraints =', constraints
 	# write out subalignments and the main alignment with collapsed clades
 	loutgroups = restrict_alignment_representative_leaves(constraints, genetree, nfaln, dirout, radout=bnfaln, selectRepr=0, didseq=didseq, **kw)
 	if not 'mbc' in supressout:	
