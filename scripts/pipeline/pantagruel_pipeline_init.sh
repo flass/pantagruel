@@ -71,25 +71,40 @@ else
   echo "updated init file save at '${envsourcescript}'"
 fi
 
-# folders for optional custom genomes
-if [ -d "${customassemb}/contigs" ] ; then
-  if [ ! -e ${straininfo} ] ; then
-   echo "assembly_id,genus,species,strain,taxid,locus_tag_prefix" | tr ',' '\t' > ${straininfo}
-   echo "please copy/link raw sequence (in multi-fasta format) files of custom (user-generated) assemblies into '${customassemb}/contigs/'"
-   echo "and fill up the information table ${straininfo} (tab-delimited fields) according to header:"
-   cat ${straininfo}
-   if [[ "$(ls -A "${customassemb}/contigs/" 2>/dev/null)" ]] ; then
-    for allcontigs in `ls ${customassemb}/contigs/` ; do
-      gproject=${allcontigs%%.fa*}
-      echo "${gproject}\t\t\t\t\t" >> ${straininfo}
-    done
-    echo "prepared tab-delimited rows in file '${straininfo}' from files found in '${customassemb}/contigs/'"
-   fi
+if [ ! -z "${customassemb}" ] ; then
+  # detected input custom genome folder
+  # check validity of the folder file structure
+  if [ ! -d "${customassemb}/contigs" ] ; then
+    echo "custom assembly folder '${customassemb}/' does not contain mandatory folder 'contigs/'"
+    echo "Error: custom assemblies must always provide contigs ; exit now"
+    exit 1
+  else
+    if [ ! -e ${straininfo} ] ; then
+     echo "assembly_id,genus,species,strain,taxid,locus_tag_prefix" | tr ',' '\t' > ${straininfo}
+     echo "please copy/link raw sequence (in multi-fasta format) files of custom (user-generated) assemblies into '${customassemb}/contigs/'"
+     echo "and fill up the information table ${straininfo} (tab-delimited fields) according to header:"
+     cat ${straininfo}
+     if [[ "$(ls -A "${customassemb}/contigs/" 2>/dev/null)" ]] ; then
+      for allcontigs in `ls ${customassemb}/contigs/` ; do
+        gproject=${allcontigs%%.fa*}
+        echo "${gproject}\t\t\t\t\t" >> ${straininfo}
+      done
+      echo "prepared tab-delimited rows in file '${straininfo}' from files found in '${customassemb}/contigs/'"
+     fi
+    fi
   fi
-else
-  if [ ! -d "${customassemb}/annotations" ] ; then
-   echo "custom assembly folder '${customassemb}/' contains the facultative folder 'annotations/' but not mandatory fodler 'contigs/'"
-   echo "Error: annotations mus always be accompanied of contigs ; exit now"
-   exit 1
+  if [ -d "${customassemb}/annotations" ] ; then
+    for dass in $(ls -A ${customassemb}/annotations/) ; do
+      if [ ! -d ${customassemb}/annotations/${dass} ] ; then
+        echo "Annotations for custom assemblies must be provided as folders of annotation files;"
+        echo "'${customassemb}/annotations/${dass}' is not a directory; exit now"
+        exit 1
+      fi
+      if [ -z "$(ls -A ${customassemb}/annotations/${dass}/*.gff 2> /dev/null)" ] ; then
+        echo "could not detect GFF file (with .gff extension) in custom assembly folder '${customassemb}/annotations/${dass}/';"
+        echo "Annotations for custom assemblies must include at least a GFF file ; exit now"
+        exit 1
+      fi
+    done
   fi
 fi
