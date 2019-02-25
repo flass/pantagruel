@@ -107,7 +107,7 @@ else
   
   python ${ptgscripts}/mark_unresolved_clades.py --in_gene_tree_list=${mlgenetreelist} --diraln=${cdsalifastacodedir} --fmt_aln_in='fasta' \
    --threads=$(nproc) --dirout=${colalinexuscodedir}/${collapsecond} --no_constrained_clade_subalns_output --dir_identseq=${mlgenetrees}/identical_sequences \
-   ${collapsecriteriondef} --criterion ${criterion} --clade_support ${cladesupp} --subclade_support ${subcladesupp} 
+   ${collapsecriteriondef} 
 
   export collapsecoldate=$(date +%Y-%m-%d)
   export nexusaln4chains=${colalinexuscodedir}/${collapsecond}/collapsed_alns
