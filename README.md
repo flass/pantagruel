@@ -230,9 +230,14 @@ Note that this config file can be edited in-between tasks, for instance to chang
 
 #### Input data
 
+Note that for the sake of computing evolutionary analyses that have any meaning at all, Pantagruel requires that you provide a minimum of **four** genomes in input - ideally much more, as Pantagruel can deal with several hundreds of genome (tested dataset of ~1,000 genomes were still effciently parsed). 
+This minimum number is to be splitat the user's discrtion between RefSeq-type and 'custom assemblies, though `-A` and `-a` options, respectively.  
+
 Here is a view of what input data passed to Pantagruel should look like.  
 When using assemblies downloaded from NCBI RefSeq, the folder which path is given as the argument of options `-A|--refseq_ass` or `--refseq_ass4annot` should  have a content looking like this:  
 ```sh
+# for instance if used the command `pantagruel  -d databasename -r /root/folder -A ./assemblies init`
+
 ls -AF assemblies/
 # GCF_000156855.2_ASM15685v2/
 # GCF_001026115.1_ASM102611v1/
@@ -256,6 +261,9 @@ ls -AF assemblies/GCF_001026115.1_ASM102611v1/
 When providong your on 'custom' genomes, the folder which path is given as the argument of options `a|--custom_ass`should  have a content looking like this:  
 
 ```sh
+# for instance if used the command `pantagruel  -d databasename -r /root/folder -a ./user_genomes init`
+
+
 ls -AF user_genomes/
 # contigs/
 # annotation/
