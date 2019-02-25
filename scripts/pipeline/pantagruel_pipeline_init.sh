@@ -41,7 +41,7 @@ fi
 
 
 #~ export PYTHONPATH=$PYTHONPATH:"${ptgrepo}/python_libs"
-cd ${ptgrepo} ; export ptgversion=$(git log | grep commit) ; cd - > /dev/null
+#~ cd ${ptgrepo} ; export ptgversion=$(git log | grep commit) ; cd - > /dev/null # ptgversion variable should be inherited from master script
 # create head folders
 export ptgdb=${ptgroot}/${ptgdbname}
 export ptglogs=${ptgdb}/logs

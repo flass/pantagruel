@@ -9,7 +9,10 @@
 # Copyright: Florent Lassalle (f.lassalle@imperial.ac.uk), 01 October 2018.
 
 locexec=$(readlink -e $0)
-defptgrepo=${locexec%%/scripts/pipeline/*}
+export ptgrepo=${locexec%%/scripts/pipeline/*}
+cd ${ptgrepo} ; export ptgversion=$(git log | grep commit) ; cd - > /dev/null
+echo "This is Pantagruel pipeline version ${ptgversion} using source code from repository '$ptgrepo'"
+export ptgscripts=${ptgrepo}/scripts
 
 usage (){
   echo "Usage: pantagruel -d db_name -r root_dir [other init options] init"
@@ -37,8 +40,8 @@ usagelong (){
   echo "    -i|--initfile     Pantagruel configuration file"
   echo "                        a file can be derived (i.e. manualy curated) from 'environment_pantagruel_template.sh' template."
   echo "                        Parameters values specified in this file will override other options"
-  echo ""
-  echo "    -p|--ptgrepo      location of pantagruel software head folder; defaults to ${defptgrepo}"
+  #~ echo ""
+  #~ echo "    -p|--ptgrepo      location of pantagruel software head folder; defaults to ${defptgrepo}"
   echo ""
   echo "    -I|--iam          database creator identity (e-mail address is preferred)"
   echo ""
@@ -154,10 +157,11 @@ usagelong (){
 
 setdefaults (){
     # Default values:
-    if [ -z "$ptgrepo" ] ; then
-    export ptgrepo=${defptgrepo}
-    echo "Default: set Pantagruel software repository to '$ptgrepo'"
-    fi
+    #~ if [ -z "$ptgrepo" ] ; then
+    #~ export ptgrepo=${defptgrepo}
+    #~ echo "Default: set Pantagruel software repository to '$ptgrepo'"
+    #~ fi
+    export ptgscripts=${ptgrepo}/scripts
     if [ -z "$myemail" ] ; then
     export myemail="undisclosed"
     echo "Default: set identity to '$myemail'"
@@ -275,7 +279,8 @@ promptdate () {
   echo $(date +'[%Y-%m-%d %H:%M:%S]') $1
 }
 
-ARGS=`getopt --options "d:r:i:p:I:f:a:T:A:s:t:RH:cC:h" --longoptions "dbname:,rootdir:,initfile:,ptgrepo:,iam:,famprefix:,refseq_ass:,refseq_ass4annot:,custom_ass:,taxonomy:,pseudocore:,core_seqtype:,pop_lg_thresh:,pop_bs_thresh:,reftree:,resume,submit_hpc:,collapse,collapse_par:,help" --name "pantagruel" -- "$@"`
+#~ ARGS=`getopt --options "d:r:i:p:I:f:a:T:A:s:t:RH:cC:h" --longoptions "dbname:,rootdir:,initfile:,ptgrepo:,iam:,famprefix:,refseq_ass:,refseq_ass4annot:,custom_ass:,taxonomy:,pseudocore:,core_seqtype:,pop_lg_thresh:,pop_bs_thresh:,reftree:,resume,submit_hpc:,collapse,collapse_par:,help" --name "pantagruel" -- "$@"`
+ARGS=`getopt --options "d:r:i:I:f:a:T:A:s:t:RH:cC:h" --longoptions "dbname:,rootdir:,initfile:,iam:,famprefix:,refseq_ass:,refseq_ass4annot:,custom_ass:,taxonomy:,pseudocore:,core_seqtype:,pop_lg_thresh:,pop_bs_thresh:,reftree:,resume,submit_hpc:,collapse,collapse_par:,help" --name "pantagruel" -- "$@"`
 
 #Bad arguments
 if [ $? -ne 0 ];
@@ -307,11 +312,11 @@ do
       export initfile=$(realpath $2)
       shift 2;;
     
-    -p|--ptgrepo)
-      testmandatoryarg "$1" "$2"
-      export ptgrepo=$(realpath $2)
-      echo "set Pantagruel software repository to '$ptgrepo'"
-      shift 2;;
+    #~ -p|--ptgrepo)
+      #~ testmandatoryarg "$1" "$2"
+      #~ export ptgrepo=$(realpath $2)
+      #~ echo "set Pantagruel software repository to '$ptgrepo'"
+      #~ shift 2;;
     
     -I|--iam)
       testmandatoryarg "$1" "$2"
@@ -426,9 +431,6 @@ if [ -z "$ptgroot" ] ; then
  usage
  exit 1
 fi
-
-echo -e "# will create/use Pantagruel database '$ptgdbname', set in root folder: '$ptgroot'\n#"
-export ptgscripts=${ptgrepo}/scripts
 
 tasks=""
 while [[ ! -z "${@}" ]] ; do
