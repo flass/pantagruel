@@ -209,7 +209,7 @@ echo ""
 iphost="ftp://ftp.ebi.ac.uk"
 iploc="pub/software/unix/iprscan/5/"
 
-currIPversion=$(interproscan --version | head -n 1 | sed -e 's/InterProScan version //' 2> /dev/null)
+currIPversion=$(interproscan --version 2> /dev/null | head -n 1 | sed -e 's/InterProScan version //')
 lastIPversion=$(lftp -c "open ${iphost} ; ls -tr ${iploc} ; quit" | tail -n 1 | awk '{print $NF}')
 if [[ -z "${currIPversion}" || "${currIPversion}" != "${lastIPversion}" ]] ; then
  echo "get Interproscan ${lastIPversion}"
@@ -268,9 +268,20 @@ if [[ -z "${currIPversion}" || "${currIPversion}" != "${lastIPversion}" ]] ; the
      checkexec "Could not store JAVA4INTERPROSCAN in .bashrc"
      editedrc=true
    fi
-   mv ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh.original
-   sed -e "s#JAVA=\$(type -p java)#JAVA=${goodjava}#g" ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh.original > ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh
-   chmod +x ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh
+   if [ -z "$(grep 'JAVA=\$(type -p java)' ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh)" ] ; then
+     mv ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh.original && \
+      sed -e "s#^JAVA=\$(type -p java)#JAVA=${goodjava}#g" ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh.original > ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh && \
+      chmod +x ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh && \
+      echo "fixed definition of JAVA in ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh (original script saved as '${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh.original')"
+     checkexec "Could not edit definition of JAVA in ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh"
+   else
+     # the file was already modified, be more agressive with sed substitution
+     mv ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh0 && \
+      sed -e "s#^JAVA=.\+#JAVA=${goodjava}#g" ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh0 > ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh && \
+      chmod +x ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh && rm ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh0 && \
+      echo "fixed definition of JAVA in ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh"
+     checkexec "Could not edit definition of JAVA in ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh"
+   fi     
  fi
  ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh -i ${SOFTWARE}/interproscan-${currIPversion}/test_proteins.fasta -f tsv
  checkexec "Interproscan test was not successful"
