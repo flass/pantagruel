@@ -124,6 +124,7 @@ if [[ -z "$(grep INFOPATH ${HOME}/.bash_profile | grep linuxbrew)" ]] ; then
   echo 'export INFOPATH="/home/linuxbrew/.linuxbrew/share/info:$INFOPATH"' >> ${HOME}/.bash_profile
   editedprofile=true
 fi
+source ${HOME}/.bash_profile
 
 # install Prokka using brew
 if [[ -z "$(brew search prokka | grep prokka)" ]] ; then
@@ -249,6 +250,8 @@ if [[ -z "${currIPversion}" || "${currIPversion}" != "${lastIPversion}" ]] ; the
    needjava=$(echo ${wrongjava} | sed -e 's/Java version \(.*\) is required to run InterProScan./\1/')
    currjava=$(readlink -f `which java`)
    goodjava=$(echo ${currjava} | sed -e "s/java-[0-9]\+-/java-${needjava}-/")
+   echo "default version of Java is wrong: ${currjava}"
+   echo "will find executable for desired version: ${needjava}"
    if [ ! -e ${goodjava} ] ; then
      goodjava=$(echo ${currjava} | sed -e "s/java-[0-9]\+-/java-${needjava}.0-/")
    fi
@@ -259,16 +262,19 @@ if [[ -z "${currIPversion}" || "${currIPversion}" != "${lastIPversion}" ]] ; the
      echo "ERROR: Could not find the required version of java for InterProScan:"
      ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh
      exit 1
+   else
+     eho "found version of java suitable for InterProScan: ${goodjava}"
    fi
-    export PATH=$(dirname ${goodjava}):$PATH
-    ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh
-   checkexec "Interproscan test was not successful"
-   if [[ -z "$(grep JAVA4INTERPROSCAN ${HOME}/.bashrc )" ]] ; then
-     echo "export JAVA4INTERPROSCAN=${goodjava}" >> ${HOME}/.bashrc
-     checkexec "Could not store JAVA4INTERPROSCAN in .bashrc"
-     editedrc=true
-   fi
-   if [ -z "$(grep 'JAVA=\$(type -p java)' ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh)" ] ; then
+    #~ export PATH=$(dirname ${goodjava}):$PATH
+    #~ ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh
+   #~ checkexec "Interproscan test was not successful"
+   #~ if [[ -z "$(grep JAVA4INTERPROSCAN ${HOME}/.bashrc )" ]] ; then
+     #~ echo "export JAVA4INTERPROSCAN=${goodjava}" >> ${HOME}/.bashrc
+     #~ checkexec "Could not store JAVA4INTERPROSCAN in .bashrc"
+     #~ editedrc=true
+   #~ fi
+   echo "will edit definition of JAVA in ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh"
+   if [ ! -z "$(grep 'JAVA=\$(type -p java)' ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh)" ] ; then
      mv ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh.original && \
       sed -e "s#^JAVA=\$(type -p java)#JAVA=${goodjava}#g" ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh.original > ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh && \
       chmod +x ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh && \
