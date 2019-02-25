@@ -263,7 +263,7 @@ if [[ -z "${currIPversion}" || "${currIPversion}" != "${lastIPversion}" ]] ; the
      ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh
      exit 1
    else
-     eho "found version of java suitable for InterProScan: ${goodjava}"
+     echo "found version of java suitable for InterProScan: ${goodjava}"
    fi
     #~ export PATH=$(dirname ${goodjava}):$PATH
     #~ ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh
