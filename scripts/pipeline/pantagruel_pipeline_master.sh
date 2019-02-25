@@ -434,6 +434,12 @@ if [ -z "$ptgroot" ] ; then
  exit 1
 fi
 
+if [ -z "$ncbiass" || -z "$customassemb" ] ; then
+ echo -e "Error: Must specify at least one folder of input assemblies with either option '-a' or '-A', or both.\n"
+ usage
+ exit 1
+fi
+
 tasks=""
 while [[ ! -z "${@}" ]] ; do
  case "$1" in

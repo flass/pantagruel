@@ -71,6 +71,25 @@ else
   echo "updated init file save at '${envsourcescript}'"
 fi
 
+## check genome input
+if [ ! -z "${ncbiass}" ] ; then
+  # detected input RefSeq genome folder
+    for dass in $(ls -A ${ncbiass}/) ; do
+    # check validity of the folder file structure
+      if [ ! -d ${ncbiass}/${dass} ] ; then
+        echo "RefSeq assemblies must be provided as folders including sequence and annotation files;"
+        echo "'${ncbiass}/${dass}' is not a directory; exit now"
+        exit 1
+      fi
+      for ext in genomic.fna genomic.gbff genomic.gff cds_from_genomic protein.faa ; do
+       if [ -z "$(ls -A ${ncbiass}/${dass}/${dass}_${ext}* 2> /dev/null)" ] ; then
+        echo "could not detect file named like '${dass}_${ext}*' extension in custom assembly folder '${ncbiass}/${dass}/';"
+        echo "Input RefSeq assemblies must include a file with extension *_${ext}[.gz] ; exit now"
+        exit 1
+       fi
+      done
+    done
+fi
 if [ ! -z "${customassemb}" ] ; then
   # detected input custom genome folder
   # check validity of the folder file structure
