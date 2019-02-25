@@ -4,7 +4,7 @@
 promptdate () {
   echo $(date +'[%Y-%m-%d %H:%M:%S]') $1
 }
-export -f dateprompt
+export -f promptdate
 datepad="                       "
 
 ## primary variables
