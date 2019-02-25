@@ -253,7 +253,6 @@ ptgenvsetdefaults (){
      #~ echo "export resumetask=${resumetask}" >> ${ptgtmp}/nondefvardecl.sh
     #~ fi
 #~ }
-}
 
 testmandatoryarg (){
   if [ -z "$2" ]; then
