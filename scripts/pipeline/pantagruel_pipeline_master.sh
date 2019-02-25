@@ -155,7 +155,7 @@ usagelong (){
   echo ""
 
 
-setdefaults (){
+ptgenvsetdefaults (){
     # Default values:
     #~ if [ -z "$ptgrepo" ] ; then
     #~ export ptgrepo=${defptgrepo}
@@ -218,7 +218,6 @@ setdefaults (){
      export hpcremoteptgroot='none'
     fi
 }
-export -f setdefaults
 
 #~ setnondefaults (){
 	#~ nondefvardecl=${ptgtmp}/nondefvardecl.sh
@@ -472,7 +471,7 @@ echo "# will run tasks: $tasks"
 for task in "$tasks" ; do
   if [[ "$task" == 'init' ]] ; then
     promptdate "Pantagrel pipeline step $task: initiate pangenome database."
-    setdefaults
+    ptgenv
     ${ptgscripts}/pipeline/pantagruel_pipeline_init.sh #\
      # ${ptgdbname} ${ptgroot} ${ptgrepo} ${myemail} ${famprefix} \
      # ${ncbiass} ${ncbitax} ${customassemb} ${refass} ${chaintype} \
