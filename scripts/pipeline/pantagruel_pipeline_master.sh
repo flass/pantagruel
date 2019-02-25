@@ -214,6 +214,7 @@ setdefaults (){
      export hpcremoteptgroot='none'
     fi
 }
+export -f setdefaults
 
 #~ setnondefaults (){
 	#~ nondefvardecl=${ptgtmp}/nondefvardecl.sh
