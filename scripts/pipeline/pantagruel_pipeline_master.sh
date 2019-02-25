@@ -471,7 +471,7 @@ echo "# will run tasks: $tasks"
 for task in "$tasks" ; do
   if [[ "$task" == 'init' ]] ; then
     promptdate "Pantagrel pipeline step $task: initiate pangenome database."
-    ptgenv
+    ptgenvsetdefaults
     ${ptgscripts}/pipeline/pantagruel_pipeline_init.sh #\
      # ${ptgdbname} ${ptgroot} ${ptgrepo} ${myemail} ${famprefix} \
      # ${ncbiass} ${ncbitax} ${customassemb} ${refass} ${chaintype} \
