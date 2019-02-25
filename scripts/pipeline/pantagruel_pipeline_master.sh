@@ -196,9 +196,9 @@ ptgenvsetdefaults (){
      echo "!!! WARNING: strict core-genome definition can be very resctrictive, especially when including draft genome in the study."
      echo "You might prefer to use a pseudo-core genome definition instead, i.e. selecting gene present in a minimum fraction of genomes, for instance 98%."
      echo "A sensible threshold should avoid that selected genes have an approximately homogeneous distribution,"
-     echo" notably that the absent fraction is not restricted to a few genomes. This threshold will thus depend on the dataset."
+     echo "notably that the absent fraction is not restricted to a few genomes. This threshold will thus depend on the dataset."
      echo "To choose a sensible value, AFTER TASK 03, you can run the INTERACTIVE script:"
-     echo" '$ptgscripts/choose_min_genome_occurrence_pseudocore_genes.sh'"
+     echo "'$ptgscripts/choose_min_genome_occurrence_pseudocore_genes.sh'"
      echo "and then manualy edit the value of variable 'pseudocoremingenomes' in the pantagruel configuration file."
     fi
     if [ -z "$coreseqtype" ] ; then
