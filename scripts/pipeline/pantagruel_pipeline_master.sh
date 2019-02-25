@@ -10,7 +10,7 @@
 
 locexec=$(readlink -e $0)
 export ptgrepo=${locexec%%/scripts/pipeline/*}
-cd ${ptgrepo} ; export ptgversion=$(git log | grep commit) ; cd - > /dev/null
+cd ${ptgrepo} ; export ptgversion=$(git log | head -n 1 | awk '{ print $2 }') ; cd - > /dev/null
 echo "This is Pantagruel pipeline version ${ptgversion} using source code from repository '$ptgrepo'"
 export ptgscripts=${ptgrepo}/scripts
 
