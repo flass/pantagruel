@@ -153,7 +153,7 @@ usagelong (){
   echo "       quantify gene co-evolution and build gene association network"
   echo "________________________________________________________________________"
   echo ""
-
+}
 
 ptgenvsetdefaults (){
     # Default values:
