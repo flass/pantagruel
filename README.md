@@ -231,10 +231,11 @@ pantagruel -i /root/folder/for/database/databasename/environ_pantagruel_database
 ```  
 Note that this config file can be edited in-between tasks, for instance to change the location of key input files that you moved, or to tweak paramters - however this may cause issues in task dependencies (see above).
 
-#### Input data
+### Input data
 
-Note that for the sake of computing evolutionary analyses that have any meaning at all, Pantagruel requires that you provide a minimum of **four** genomes in input - ideally much more, as Pantagruel can deal with several hundreds of genome (tested dataset of ~1,000 genomes were still effciently parsed). 
-This minimum number is to be splitat the user's discrtion between RefSeq-type and 'custom assemblies, though `-A` and `-a` options, respectively.  
+Note that for the sake of computing evolutionary analyses that have any meaning at all, Pantagruel requires that you provide a minimum of **four** genomes in input - 
+ideally much more, as Pantagruel can easily deal with several hundreds of genome. 
+This minimum number 4 is to be split at the user's discretion between RefSeq-type and 'custom assemblies, though `-A` and `-a` options, respectively.  
 
 Here is a view of what input data passed to Pantagruel should look like.  
 When using assemblies downloaded from NCBI RefSeq, the folder which path is given as the argument of options `-A|--refseq_ass` or `--refseq_ass4annot` should  have a content looking like this:  
