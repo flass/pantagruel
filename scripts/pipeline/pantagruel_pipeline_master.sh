@@ -181,7 +181,7 @@ ptgenvsetdefaults (){
     #~ if [ -z "$ncbiass" ] ; then
     #~ export ncbiass=${ptgroot}/NCBI/Assembly_$(date +'%Y-%m-%d')
     #~ echo "Default: set NCBI RefSeq(-like) genome assembly source folder to '$ncbiass'"
-    fi
+    #~ fi
     if [ -z "$refass" ] ; then
     export refass=${ncbiass}
     echo "Default: set NCBI RefSeq(-like) genome assembly source folder for reference in user genome annotation to '$refass'"
