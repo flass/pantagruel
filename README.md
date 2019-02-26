@@ -240,7 +240,7 @@ This minimum number 4 is to be split at the user's discretion between RefSeq-typ
 Here is a view of what input data passed to Pantagruel should look like.  
 When using assemblies downloaded from NCBI RefSeq, the folder which path is given as the argument of options `-A|--refseq_ass` or `--refseq_ass4annot` should  have a content looking like this:  
 ```sh
-# for instance if used the command `pantagruel  -d databasename -r /root/folder -A ./assemblies init`
+# for instance if used the command `pantagruel -d databasename -r /root/folder -A ./assemblies init`
 
 ls -AF assemblies/
 # GCF_000156855.2_ASM15685v2/
@@ -265,7 +265,7 @@ ls -AF assemblies/GCF_001026115.1_ASM102611v1/
 When providing your on 'custom' genomes, the folder which path is given as the argument of options `a|--custom_ass`should  have a content looking like this:  
 
 ```sh
-# for instance if used the command `pantagruel  -d databasename -r /root/folder -a ./user_genomes init`
+# for instance if used the command `pantagruel -d databasename -r /root/folder -a ./user_genomes init`
 
 
 ls -AF user_genomes/
@@ -297,11 +297,13 @@ ls -AF user_genomes/annotation/B03_1/
 # the file names within the folder do not matter, only their extensions.
 
 cat user_genomes/strain_infos.txt
+# assembly_id	genus	species	strain	taxid	locus_tag_prefix
 # B03_1	Rhizobium	endolithicum	Q54	1335060	REQ54
 # ...
-# as many rows as FASTA files in the contigs/ folder
-# the values in the first and last fields must be unique;
-# the first field value must match the begin of contig file name
+# as many rows as FASTA files in the contigs/ folder + onea header row
+# tab-separated fields; header with these field names mandatory; order does not matter.
+# the values in 'assembly_id' and 'locus_tag_prefix' fields must be unique;
+# the 'assembly_id' field value must match the begin of contig file name
 # and the annotation folder name.
 ```
 
