@@ -247,7 +247,7 @@ ls -AF assemblies/
 # GCF_001026115.1_ASM102611v1/
 # GCF_001088845.1_8727_5_60/
 # ... 
-# as many separate folders as there are genomes to study
+# as many separate assembly folders as there are genomes to study
 
 ls -AF assemblies/GCF_001026115.1_ASM102611v1/
 # GCF_001026115.1_ASM102611v1_assembly_report.txt      GCF_001026115.1_ASM102611v1_protein.faa.gz
@@ -262,7 +262,7 @@ ls -AF assemblies/GCF_001026115.1_ASM102611v1/
 # each folder contains a set of files with all the assembly and annotation information
 ```
 
-When providong your on 'custom' genomes, the folder which path is given as the argument of options `a|--custom_ass`should  have a content looking like this:  
+When providing your on 'custom' genomes, the folder which path is given as the argument of options `a|--custom_ass`should  have a content looking like this:  
 
 ```sh
 # for instance if used the command `pantagruel  -d databasename -r /root/folder -a ./user_genomes init`
@@ -277,11 +277,17 @@ ls -AF user_genomes/contigs/
 # B03_1.fasta
 # D03_1.fasta
 # F03_1.fasta
+# ... 
+# as many separate genomic FASTA files as there are genomes to study
 
 ls -AF user_genomes/annotation/
 # B03_1/
 # C03_1/
 # D03_1/
+# ... 
+# at most as many separate annotation folders as there are
+# genomic FASTA files as there are genomic FASTA files in contigs/
+# names must match!
 
 ls -AF user_genomes/annotation/B03_1/
 # Rhizobium_endolithicum_Q54.fna
@@ -292,7 +298,11 @@ ls -AF user_genomes/annotation/B03_1/
 
 cat user_genomes/strain_infos.txt
 # B03_1	Rhizobium	endolithicum	Q54	1335060	REQ54
-# the values in the first and last fields must be unique; the first field value must match the contig file and annotation folder names.
+# ...
+# as many rows as FASTA files in the contigs/ folder
+# the values in the first and last fields must be unique;
+# the first field value must match the begin of contig file name
+# and the annotation folder name.
 ```
 
 -------------
@@ -301,7 +311,7 @@ cat user_genomes/strain_infos.txt
 
 Under a Debian environment (e.g. Ubuntu), please follow the indications in the [INSTALL](https://github.com/flass/pantagruel/blob/master/INSTALL.md) page.  
 
-Below is a summary of the software on which Pantagruel dependends:
+Below is a summary of the software on which Pantagruel depends:
 
 ### Required bioinformatic software
 - **Prokka** for genome annotation
