@@ -149,8 +149,8 @@ Options are detailed here:
     --refseq_ass4annot same principle as -A, but WILL NOT be used in the study, only as a reference to annotate user genomes
                         (defaults to combined value of -A and -L options)
 
-    -L|--refseq_list  Same as -A|--refseq_ass, but just provide a list of NCBI Assembly accession ids (file with one accession per row)
-                        Accession are of the form GCx_yyyyyyyyy.z with x = {A|F} for GenBank and RefSeq, respectively, and x an y are any digit.
+    -L|--refseq_list  Same as -A|--refseq_ass, but just provide a list of NCBI Assembly accession ids (file with one accession id per row)
+                        Accession ids are of the form GCx_yyyyyyyyy.z with x = {A|F} for GenBank and RefSeq, respectively, and y an z are any digit.
                         These accessions will be fetched from the NCBI FTP site using lftp.
                         Note the LAST version of the accession will be returned, i.e. the trailing '.z' part of the accession id is ignored.
                         These assemblies saved into a folder named after the value of the option:

@@ -66,7 +66,7 @@ usagelong (){
   echo "                        (defaults to combined value of -A and -L options)"
   echo ""
   echo "    -L|--refseq_list  Same as -A|--refseq_ass, but just provide a list of NCBI Assembly accession ids (file with one accession per row)"
-  echo "                        Accession are of the form GCx_yyyyyyyyy.z with x = {A|F} for GenBank and RefSeq, respectively, and x an y are any digit."
+  echo "                        Accession ids are of the form GCx_yyyyyyyyy.z with x = {A|F} for GenBank and RefSeq, respectively, and y an z are any digit."
   echo "                        These accessions will be fetched from the NCBI FTP site using lftp."
   echo "                        Note the LAST version of the accession will be returned, i.e. the trailing '.z' part of the accession id is ignored."
   echo "                        These assemblies saved into a folder named after the value of the option:"
