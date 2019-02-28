@@ -62,7 +62,18 @@ usagelong (){
   echo "                       A simple archive 'genome_assemblies.tar' (as obtained from the NCBI website)can be placed in that folder."
   echo "                       If user genomes are also provided, these RefSeq assemblies will be used as reference for their annotation."
   echo ""
-  echo "    --refseq_ass4annot idem, but WILL NOT be used in the study, only as a reference to annotate user genomes (defaults to vaule of -A option)"
+  echo "    --refseq_ass4annot same principle as -A, but WILL NOT be used in the study, only as a reference to annotate user genomes"
+  echo "                        (defaults to combined value of -A and -L options)"
+  echo ""
+  echo "    -L|--refseq_list  Same as -A|--refseq_ass, but just provide a list of NCBI Assembly accession ids (file with one accession per row)"
+  echo "                        Accession are of the form GCx_yyyyyyyyy.z with x = {A|F} for GenBank and RefSeq, respectively, and x an y are any digit."
+  echo "                        These accessions will be fetched from the NCBI FTP site using lftp."
+  echo "                        Note the LAST version of the accession will be returned, i.e. the trailing '.z' part of the accession id is ignored."
+  echo "                        These assemblies saved into a folder named after the value of the option:"
+  echo "                          for instance, \`-L /path/to/assemblist\` will save assembly folders in /path/to/assemblist_assemblies_from_ftp/."
+  echo ""
+  echo "    --refseq_list4annot same principle as -L, but WILL NOT be used in the study, only as a reference to annotate user genomes"
+  echo "                        (defaults to combined value of -A and -L options)"
   echo ""
   echo "    -a|--custom_ass  path to folder of user-provided genomes (no default value). The specified folder must contain:"
   echo "                      _mandatory_ "
@@ -282,7 +293,7 @@ promptdate () {
 }
 
 #~ ARGS=`getopt --options "d:r:i:p:I:f:a:T:A:s:t:RH:cC:h" --longoptions "dbname:,rootdir:,initfile:,ptgrepo:,iam:,famprefix:,refseq_ass:,refseq_ass4annot:,custom_ass:,taxonomy:,pseudocore:,core_seqtype:,pop_lg_thresh:,pop_bs_thresh:,reftree:,resume,submit_hpc:,collapse,collapse_par:,help" --name "pantagruel" -- "$@"`
-ARGS=`getopt --options "d:r:i:I:f:a:T:A:s:t:RH:cC:h" --longoptions "dbname:,rootdir:,initfile:,iam:,famprefix:,refseq_ass:,refseq_ass4annot:,custom_ass:,taxonomy:,pseudocore:,core_seqtype:,pop_lg_thresh:,pop_bs_thresh:,reftree:,resume,submit_hpc:,collapse,collapse_par:,help" --name "pantagruel" -- "$@"`
+ARGS=`getopt --options "d:r:i:I:f:a:T:A:L:s:t:RH:cC:h" --longoptions "dbname:,rootdir:,initfile:,iam:,famprefix:,refseq_ass:,refseq_list:,refseq_ass4annot:,refseq_list4annot:,custom_ass:,taxonomy:,pseudocore:,core_seqtype:,pop_lg_thresh:,pop_bs_thresh:,reftree:,resume,submit_hpc:,collapse,collapse_par:,help" --name "pantagruel" -- "$@"`
 
 #Bad arguments
 if [ $? -ne 0 ];
@@ -344,10 +355,22 @@ do
       echo "set NCBI RefSeq(-like) genome assembly source folder to '$ncbiass'"
       shift 2;;
 
+    -L|--refseq_list)
+      testmandatoryarg "$1" "$2"
+      export listncbiass=$(realpath $2)
+      echo "set NCBI RefSeq(-like) genome assembly id list to '$listncbiass'"
+      shift 2;;
+
     --refseq_ass4annot)
       testmandatoryarg "$1" "$2"
       export refass=$(realpath $2)
       echo "set NCBI RefSeq(-like) genome assembly source folder for reference in user genome annotation to '$refass'"
+      shift 2;;
+
+    --refseq_list4annot)
+      testmandatoryarg "$1" "$2"
+      export listrefass=$(realpath $2)
+      echo "set NCBI RefSeq(-like) genome assembly id list for reference in user genome annotation to '$listrefass'"
       shift 2;;
 
     -s|--pseudocore)
@@ -434,8 +457,8 @@ if [ -z "$ptgroot" ] ; then
  exit 1
 fi
 
-if [ -z "$ncbiass" || -z "$customassemb" ] ; then
- echo -e "Error: Must specify at least one folder of input assemblies with either option '-a' or '-A', or both.\n"
+if [ -z "$ncbiass" || -z "$listncbiass" || -z "$customassemb" ] ; then
+ echo -e "Error: Must specify at least one folder of input assemblies with options '-A', '-L' or '-a', or any combination of them.\n"
  usage
  exit 1
 fi

@@ -56,9 +56,9 @@ echo "## built with Pantagruel version '${ptgversion}'; source code available at
 rm -f ${ptgtmp}/sedenvvar.sh
 echo -n "cat ${templateenv}" > ${ptgtmp}/sedenvvar.sh
 for var in ptgdbname ptgroot ptgrepo myemail famprefix \
-     ncbiass ncbitax customassemb refass chaintype \
-     pseudocoremingenomes hpcremoteptgroot collapseCladeParams userreftree coreseqtype \
-     poplgthresh popbsthresh ; do
+     ncbitax ncbiass listncbiass customassemb refass listrefass \
+     pseudocoremingenomes userreftree coreseqtype poplgthresh popbsthresh \
+     chaintype collapseCladeParams hpcremoteptgroot ; do
 echo -n " | sed -e \"s#REPLACE${var}#\${${var}}#\"" >> ${ptgtmp}/sedenvvar.sh
 done
 echo -n " >> ${envsourcescript}" >> ${ptgtmp}/sedenvvar.sh
@@ -89,6 +89,16 @@ if [ ! -z "${ncbiass}" ] ; then
        fi
       done
     done
+fi
+if [ ! -z "${listncbiass}" ] ; then
+  rm -f ${listncbiass}_wrongFormatAssIds
+  grep -v "GC[AF]_[0-9]\{9,\}" ${listncbiass}) > ${listncbiass}_wrongFormatAssIds
+  if [ -s ${listncbiass}_wrongFormatAssIds ] ; then
+    echo "the list of NCBI Assembly accession ids provided through option -L has uncorrectly formatted entries:"
+    cat ${listncbiass}_wrongFormatAssIds
+    echo "will not be able to download these from NCBI FTP site; exit now"
+    exit 1
+  fi
 fi
 if [ ! -z "${customassemb}" ] ; then
   # detected input custom genome folder

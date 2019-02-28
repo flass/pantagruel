@@ -146,8 +146,19 @@ Options are detailed here:
                        A simple archive 'genome_assemblies.tar' (as obtained from the NCBI website)can be placed in that folder.
                        If user genomes are also provided, these RefSeq assemblies will be used as reference for their annotation.
 
-    --refseq_ass4annot idem, but WILL NOT be used in the study, only as a reference to annotate user genomes (defaults to vaule of -A option)
+    --refseq_ass4annot same principle as -A, but WILL NOT be used in the study, only as a reference to annotate user genomes
+                        (defaults to combined value of -A and -L options)
 
+    -L|--refseq_list  Same as -A|--refseq_ass, but just provide a list of NCBI Assembly accession ids (file with one accession per row)
+                        Accession are of the form GCx_yyyyyyyyy.z with x = {A|F} for GenBank and RefSeq, respectively, and x an y are any digit.
+                        These accessions will be fetched from the NCBI FTP site using lftp.
+                        Note the LAST version of the accession will be returned, i.e. the trailing '.z' part of the accession id is ignored.
+                        These assemblies saved into a folder named after the value of the option:
+                          for instance, \`-L /path/to/assemblist\` will save assembly folders in /path/to/assemblist_assemblies_from_ftp/.
+
+    --refseq_list4annot same principle as -L, but WILL NOT be used in the study, only as a reference to annotate user genomes
+                        (defaults to combined value of -A and -L options)
+ 
     -a|--custom_ass  path to folder of user-provided genomes (no default value). The specified folder must contain:
                       _mandatory_ 
                        - a 'contigs/' folder, where are stored multi-FASTA files of genome assemblies (one file per genome,
@@ -267,7 +278,6 @@ When providing your on 'custom' genomes, the folder which path is given as the a
 ```sh
 # for instance if used the command `pantagruel -d databasename -r /root/folder -a ./user_genomes init`
 
-
 ls -AF user_genomes/
 # contigs/
 # annotation/
@@ -303,8 +313,7 @@ cat user_genomes/strain_infos.txt
 # as many rows as FASTA files in the contigs/ folder + onea header row
 # tab-separated fields; header with these field names mandatory; order does not matter.
 # the values in 'assembly_id' and 'locus_tag_prefix' fields must be unique;
-# the 'assembly_id' field value must match the begin of contig file name
-# and the annotation folder name.
+# the 'assembly_id' field value must match the begin of contig file name and match exactly the annotation folder name.
 ```
 
 -------------

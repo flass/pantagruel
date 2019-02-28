@@ -65,87 +65,104 @@ echo "did not find the relevant taxonomy flat files in '${ncbitax}/'; download t
   cd -
 fi
 
-## using NCBI web interface:
-# Search Assembly database using a query defined as convenient:  
-# e.g.: 'txid543[Organism:exp] AND ("latest refseq"[filter] AND all[filter] NOT anomalous[filter]) AND ("complete genome"[filter])'
-# save assemblies (Download Assemblies > Source Database: RefSeq; File type: All file type (including assembly-structure directory))
-# as ${ncbiass}/genome_assemblies.tar or as ${ncbiass}/genome_assemblies_DATASETTAG.tar if several datasets have to be merged
-# extract assembly data
-mkdir -p  ${assemblies}/
-cd ${ncbiass}/
-# look for assembly folders
-ls -A ${ncbiass}/ | grep -v 'assemblies' > ${ncbiass}/genome_assemblies_list
-# look for archives containing many assembly folders (datasets downloaded from NCBI Assembly website)
-assarch=$(ls genome_assemblies*.tar 2> /dev/null)
-if [ "$assarch" ] ; then
-  echo "detected archive(s) of genome assemblies (presumably downloaded from NCBI Assembly website):"
-  echo "$assarch"
-  # extract assembly folders from the archives
-  for tarf in `ls genome_assemblies*.tar` ; do 
-    tartag=${tarf#genome_assemblies*}
-    datasettag=${tartag%.*}
-    tar -tf genome_assemblies${datasettag}.tar | cut -d'/' -f2 | sort -u | grep -v "README\|report" > ${ncbiass}/genome_assemblies${datasettag}_list
-    tar -xf genome_assemblies${datasettag}.tar 
-    mv report.txt report${datasettag}.txt
-    assd=(`ls ncbi-genomes-* -d`)
-    for dass in `ls ${assd[0]}/ | grep -v README` ; do
-     if [ ! -z $dass ] ; then
-    rm -rf ${ncbiass}/$dass
-    mv ${assd[0]}/$dass ${ncbiass}/
-     fi
+mkdir -p ${assemblies}/
+
+if [ "${ncbiass}" != 'REPLACEncbiass' ] ; then
+  ## content of this folder can be obtained using NCBI web interface:
+  # Search Assembly database using a query defined as convenient:  
+  # e.g.: 'txid543[Organism:exp] AND ("latest refseq"[filter] AND all[filter] NOT anomalous[filter]) AND ("complete genome"[filter])'
+  # save assemblies (Download Assemblies > Source Database: RefSeq; File type: All file type (including assembly-structure directory))
+  # as ${ncbiass}/genome_assemblies.tar or as ${ncbiass}/genome_assemblies_DATASETTAG.tar if several datasets have to be merged
+  # extract assembly data
+  cd ${ncbiass}/
+  # look for assembly folders
+  ls -A ${ncbiass}/ | grep -v 'assemblies' > ${ncbiass}/genome_assemblies_list
+  # look for archives containing many assembly folders (datasets downloaded from NCBI Assembly website)
+  assarch=$(ls genome_assemblies*.tar 2> /dev/null)
+  if [ "$assarch" ] ; then
+    echo "detected archive(s) of genome assemblies (presumably downloaded from NCBI Assembly website):"
+    echo "$assarch"
+    # extract assembly folders from the archives
+    for tarf in `ls genome_assemblies*.tar` ; do 
+      tartag=${tarf#genome_assemblies*}
+      datasettag=${tartag%.*}
+      tar -tf genome_assemblies${datasettag}.tar | cut -d'/' -f2 | sort -u | grep -v "README\|report" > ${ncbiass}/genome_assemblies${datasettag}_list
+      tar -xf genome_assemblies${datasettag}.tar 
+      mv report.txt report${datasettag}.txt
+      assd=(`ls ncbi-genomes-* -d`)
+      for dass in `ls ${assd[0]}/ | grep -v README` ; do
+       if [ ! -z $dass ] ; then
+      rm -rf ${ncbiass}/$dass
+      mv ${assd[0]}/$dass ${ncbiass}/
+       fi
+      done
+      rm -r ${assd[0]}/ 
     done
-    rm -r ${assd[0]}/ 
+  fi
+  grep "# Organism name" ${ncbiass}/*/*_assembly_stats.txt > ${ncbiass}/all_assemblies_organism_names
+  
+  # record links in centralised folder of assemblies
+  relpathass2ncbiass=$(realpath --relative-to=${assemblies} ${ncbiass})
+  for ass in `cat ${ncbiass}/genome_assemblies*_list` ; do
+    ln -s ${relpathass2ncbiass}/${ass} ${assemblies}/
   done
 fi
 
-grep "# Organism name" ${ncbiass}/*/*_assembly_stats.txt > ${ncbiass}/all_assemblies_organism_names
+if [ "${listncbiass}" != 'REPLACElistncbiass' ] ; then
+  # fetch genome assemblies from NCBI FTP based on list prvided with -L option
+  ncbiassftpdest=${listncbiass}_assemblies_from_ftp
+  mkdir -p ${listncbiass}_assemblies_from_ftp/
+  ${ptgscripts}/fetch_refseq_assemblies_from_list.sh ${listncbiass} ${ncbiassftpdest}
+  checkexec "could not fetch all the genomes ; exit now"
+  
+  # record links in centralised folder of assemblies
+  relpathass2ncbiass=$(realpath --relative-to=${assemblies} ${${ncbiassftpdest}})
+  for ass in `ls ${${ncbiassftpdest}}/` ; do
+    ln -s ${relpathass2ncbiass}/${ass} ${assemblies}/
+  done
+fi
 
-# store in centralised folder for NCBI assemblies and just record links
-mkdir -p ${assemblies}/
-relpathass2ncbiass=$(realpath --relative-to=${assemblies} ${ncbiass})
-for ass in `cat ${ncbiass}/genome_assemblies*_list` ; do
-  ln -s ${relpathass2ncbiass}/${ass} ${assemblies}/
-done
 
-
-## if the folder of custom/user-provided set of genomes is not empty
-if [[ "$(ls -A "${contigs}/" 2>/dev/null)" ]] ; then
-
-  prokkabin=$(which prokka)
-  prokkablastdb=$(dirname $(dirname $(readlink -f $prokkabin)))/db/genus
-  if [ ! -s ${prokkablastdb}/${refgenus} ] ; then
-    # first add all the (representative) proteins in the dataset to the custom reference prot database for Prokka to search for similarities
-    makeprokkarefgenusdb
-  fi
-
-  # run Prokka 
-  mkdir -p ${annot}
-  for allcontigs in `ls ${contigs}/` ; do
-    gproject=${allcontigs%%.fa*}
-    if [ -d ${annot}/${gproject} ] ; then
-      echo "found annotation folder '${annot}/${gproject}' ; skip annotation of contigs in '${contigs}/${allcontigs}'"
-    else
-      echo "will annotate contigs in '${contigs}/${allcontigs}'"
-      promptdate
-      echo "### assembly: $gproject; contig files from: ${contigs}/${allcontigs}"
-      echo "running Prokka..."
-      ${ptgscripts}/run_prokka.sh ${gproject} ${contigs}/${allcontigs} ${straininfo} ${annot}/${gproject} ${seqcentre} &> ${ptglogs}/${ptgdbname}_customassembly_annot_prokka.${gproject}.log
-      checkexec "something went wrong when annotating genome ${gproject}; check log at '${ptglogs}/${ptgdbname}_customassembly_annot_prokka.${gproject}.log'"
-      echo "done."
-      promptdate
+if [ "${customassemb}" != 'REPLACEcustomassemb' ] ; then
+    
+  ## if the folder of custom/user-provided set of genomes is not empty
+  if [[ "$(ls -A "${contigs}/" 2>/dev/null)" ]] ; then
+  
+    prokkabin=$(which prokka)
+    prokkablastdb=$(dirname $(dirname $(readlink -f $prokkabin)))/db/genus
+    if [ ! -s ${prokkablastdb}/${refgenus} ] ; then
+      # first add all the (representative) proteins in the dataset to the custom reference prot database for Prokka to search for similarities
+      makeprokkarefgenusdb
     fi
-    if [[ $(grep ${gproject} ${straininfo} | cut -f2- | grep -P '[^\t]' | wc -l) -gt 0 ]] ; then
-      echo "fix annotation to integrate region information into GFF files"
-      annotgff=($(ls ${annot}/${gproject}/*.gff))
-      if [ -z ${annotgff[0]} ] ; then
-        echo "Error: missing mandatory GFF file in ${annot}/${gproject}/ folder"
-        exit 1
+  
+    # run Prokka 
+    mkdir -p ${annot}
+    for allcontigs in `ls ${contigs}/` ; do
+      gproject=${allcontigs%%.fa*}
+      if [ -d ${annot}/${gproject} ] ; then
+        echo "found annotation folder '${annot}/${gproject}' ; skip annotation of contigs in '${contigs}/${allcontigs}'"
+      else
+        echo "will annotate contigs in '${contigs}/${allcontigs}'"
+        promptdate
+        echo "### assembly: $gproject; contig files from: ${contigs}/${allcontigs}"
+        echo "running Prokka..."
+        ${ptgscripts}/run_prokka.sh ${gproject} ${contigs}/${allcontigs} ${straininfo} ${annot}/${gproject} ${seqcentre} &> ${ptglogs}/${ptgdbname}_customassembly_annot_prokka.${gproject}.log
+        checkexec "something went wrong when annotating genome ${gproject}; check log at '${ptglogs}/${ptgdbname}_customassembly_annot_prokka.${gproject}.log'"
+        echo "done."
+        promptdate
       fi
-      if [ -z $(grep '##sequence-region' ${annotgff[0]}) ] ; then
-      mv -f ${annotgff[0]} ${annotgff[0]}.original
-        # make GFF source file look more like the output of Prokka
-        head -n1 ${annotgff[0]}.original > ${annotgff[0]}
-        # add region annotation features
+      if [[ $(grep ${gproject} ${straininfo} | cut -f2- | grep -P '[^\t]' | wc -l) -gt 0 ]] ; then
+        echo "fix annotation to integrate region information into GFF files"
+        annotgff=($(ls ${annot}/${gproject}/*.gff))
+        if [ -z ${annotgff[0]} ] ; then
+          echo "Error: missing mandatory GFF file in ${annot}/${gproject}/ folder"
+          exit 1
+        fi
+        if [ -z $(grep '##sequence-region' ${annotgff[0]}) ] ; then
+        mv -f ${annotgff[0]} ${annotgff[0]}.original
+          # make GFF source file look more like the output of Prokka
+          head -n1 ${annotgff[0]}.original > ${annotgff[0]}
+          # add region annotation features
         python << EOF
 fcontig = open('${contigs}/${allcontigs}', 'r')
 outgff = open('${annotgff[0]}', 'a')
@@ -167,72 +184,76 @@ outgff.write("##sequence-region %s 1 %d\n"%(seqid, seqlen))
 fcontig.close()
 outgff.close()
 EOF
-        # add the rest of the file, in order of contig names!
-        tail -n +2 ${annotgff[0]}.original | sort >> ${annotgff[0]}
+          # add the rest of the file, in order of contig names!
+          tail -n +2 ${annotgff[0]}.original | sort >> ${annotgff[0]}
+        fi
+        python ${ptgscripts}/add_region_feature2prokkaGFF.py ${annotgff[0]} ${annotgff[0]/.gff/.ptg.gff} ${straininfo} ${contigs}/${allcontigs} ${assembler}
+        echo "fix annotation to integrate taxid information into GBK files"
+        annotfna=($(ls ${annot}/${gproject}/*.fna))
+        annotgbk=($(ls ${annot}/${gproject}/*.gbk))
+        annotfaa=($(ls ${annot}/${gproject}/*.faa))
+        annotffn=($(ls ${annot}/${gproject}/*.ffn))
+        if [[ -z "${annotfna[0]}" || -z "${annotgbk[0]}" || -z "${annotffn[0]}" || -z "${annotfaa[0]}" ]] ; then
+          echo "At least one of these files is missing in ${annot}/${gproject}/ folder: contig fasta file (.fna), GenBank flat file (gbk), CDS Fasta (ffn) or protein Fasta (faa)."
+          echo "Will (re)generate them from the GFF anotation and genomic Fasta sequence; files already present are kept with an added prefix '.original'"
+          for annotf in ${annotfna[@]} ${annotgbk[@]} ${annotffn[@]} ${annotfaa[@]}; do
+            if [[ ! -z "${annotf}" ]] ; then
+              mv ${annotf} ${annotf}.original
+            fi
+          done
+          cp ${contigs}/${allcontigs} ${annotgff[0]/gff/fna}
+          python ${ptgscripts}/GFFGenomeFasta2GenBankCDSProtFasta.py ${annotgff[0]/.gff/.ptg.gff} ${annotgff[0]/gff/fna}
+        checkexec "something went wrong when generating the GenBank flat file from GFF file ${annotgff[0]/.gff/.ptg.gff}"
+        fi
+        annotfna=($(ls ${annot}/${gproject}/*.fna))
+        annotgbk=($(ls ${annot}/${gproject}/*.gbk))
+        annotfaa=($(ls ${annot}/${gproject}/*.faa))
+        annotffn=($(ls ${annot}/${gproject}/*.ffn))
+        python ${ptgscripts}/add_taxid_feature2prokkaGBK.py ${annotgbk[0]} ${annotgbk[0]%*.gbk}.ptg.gbk ${straininfo}
+        checkexec "something went wrong when modifying the GenBank flat file ${annotgbk[0]}"
+        echo "done."
+      else
+        echo "Error: missing mandatory information about custom genomes"
+        echo "Please fill information in '${straininfo}' file before running this step again."
+        exit 1
       fi
-      python ${ptgscripts}/add_region_feature2prokkaGFF.py ${annotgff[0]} ${annotgff[0]/.gff/.ptg.gff} ${straininfo} ${contigs}/${allcontigs} ${assembler}
-      echo "fix annotation to integrate taxid information into GBK files"
-      annotfna=($(ls ${annot}/${gproject}/*.fna))
-      annotgbk=($(ls ${annot}/${gproject}/*.gbk))
-      annotfaa=($(ls ${annot}/${gproject}/*.faa))
-      annotffn=($(ls ${annot}/${gproject}/*.ffn))
-      if [[ -z "${annotfna[0]}" || -z "${annotgbk[0]}" || -z "${annotffn[0]}" || -z "${annotfaa[0]}" ]] ; then
-        echo "At least one of these files is missing in ${annot}/${gproject}/ folder: contig fasta file (.fna), GenBank flat file (gbk), CDS Fasta (ffn) or protein Fasta (faa)."
-        echo "Will (re)generate them from the GFF anotation and genomic Fasta sequence; files already present are kept with an added prefix '.original'"
-        for annotf in ${annotfna[@]} ${annotgbk[@]} ${annotffn[@]} ${annotfaa[@]}; do
-          if [[ ! -z "${annotf}" ]] ; then
-            mv ${annotf} ${annotf}.original
-          fi
-        done
-        cp ${contigs}/${allcontigs} ${annotgff[0]/gff/fna}
-        python ${ptgscripts}/GFFGenomeFasta2GenBankCDSProtFasta.py ${annotgff[0]/.gff/.ptg.gff} ${annotgff[0]/gff/fna}
-      checkexec "something went wrong when generating the GenBank flat file from GFF file ${annotgff[0]/.gff/.ptg.gff}"
-      fi
-      annotfna=($(ls ${annot}/${gproject}/*.fna))
-      annotgbk=($(ls ${annot}/${gproject}/*.gbk))
-      annotfaa=($(ls ${annot}/${gproject}/*.faa))
-      annotffn=($(ls ${annot}/${gproject}/*.ffn))
-      python ${ptgscripts}/add_taxid_feature2prokkaGBK.py ${annotgbk[0]} ${annotgbk[0]%*.gbk}.ptg.gbk ${straininfo}
-      checkexec "something went wrong when modifying the GenBank flat file ${annotgbk[0]}"
-      echo "done."
-    else
-      echo "Error: missing mandatory information about custom genomes"
-      echo "Please fill information in '${straininfo}' file before running this step again."
-      exit 1
-    fi
-  done
-
-  # create assembly directory and link/create relevant files
-  echo "will create GenBank-like assembly folders for user-provided genomes"
-  #~ export gblikeass=${customassemb}/genbank-format_assemblies
-  mkdir -p $gblikeass/
-  for gproject in `ls ${annot}` ; do
-    gff=$(ls ${annot}/${gproject}/ | grep 'ptg.gff')
-    assemb=${gproject}.1_${gff[0]%*.ptg.gff}
-    assembpathdir=${gblikeass}/${assemb}
-    assembpathrad=${assembpathdir}/${assemb}
-    mkdir -p ${assembpathdir}/
-    ls ${assembpathdir}/ -d
-    gffgz=${assembpathrad}_genomic.gff.gz
-    gzip -c ${annot}/${gproject}/${gff} > ${gffgz}
-    ls ${gffgz}
-    gbk=($(ls ${annot}/${gproject}/ | grep 'ptg.gbk' | grep -v '.original'))
-    gbkgz=${assembpathrad}_genomic.gbff.gz
-    gzip -c ${annot}/${gproject}/${gbk[0]} > ${gbkgz}
-    ls ${gbkgz}
-    faa=($(ls ${annot}/${gproject}/ | grep '.faa' | grep -v '.original'))
-    faagz=${assembpathrad}_protein.faa.gz
-    gzip -c ${annot}/${gproject}/${faa[0]} > ${faagz}
-    ffn=($(ls ${annot}/${gproject}/ | grep '.ffn' | grep -v '.original'))
-    fnagz=${assembpathrad}_cds_from_genomic.fna.gz
-    python ${ptgscripts}/format_prokkaCDS.py ${annot}/${gproject}/${ffn[0]} ${fnagz}
-    ls ${fnagz}
-  done > ${ptglogs}/genbank-format_assemblies.log
+    done
   
-  relpathass2gblass=$(realpath --relative-to=${assemblies} ${gblikeass})
-  for gblass in $(ls -A ${gblikeass}/) ; do
-    ln -s ${relpathass2gblass}/${gblass} ${assemblies}/
-  done
+    # create assembly directory and link/create relevant files
+    echo "will create GenBank-like assembly folders for user-provided genomes"
+    #~ export gblikeass=${customassemb}/genbank-format_assemblies
+    mkdir -p $gblikeass/
+    for gproject in `ls ${annot}` ; do
+      gff=$(ls ${annot}/${gproject}/ | grep 'ptg.gff')
+      assemb=${gproject}.1_${gff[0]%*.ptg.gff}
+      assembpathdir=${gblikeass}/${assemb}
+      assembpathrad=${assembpathdir}/${assemb}
+      mkdir -p ${assembpathdir}/
+      ls ${assembpathdir}/ -d
+      gffgz=${assembpathrad}_genomic.gff.gz
+      gzip -c ${annot}/${gproject}/${gff} > ${gffgz}
+      ls ${gffgz}
+      gbk=($(ls ${annot}/${gproject}/ | grep 'ptg.gbk' | grep -v '.original'))
+      gbkgz=${assembpathrad}_genomic.gbff.gz
+      gzip -c ${annot}/${gproject}/${gbk[0]} > ${gbkgz}
+      ls ${gbkgz}
+      faa=($(ls ${annot}/${gproject}/ | grep '.faa' | grep -v '.original'))
+      faagz=${assembpathrad}_protein.faa.gz
+      gzip -c ${annot}/${gproject}/${faa[0]} > ${faagz}
+      ffn=($(ls ${annot}/${gproject}/ | grep '.ffn' | grep -v '.original'))
+      fnagz=${assembpathrad}_cds_from_genomic.fna.gz
+      python ${ptgscripts}/format_prokkaCDS.py ${annot}/${gproject}/${ffn[0]} ${fnagz}
+      ls ${fnagz}
+    done > ${ptglogs}/genbank-format_assemblies.log
+    
+    relpathass2gblass=$(realpath --relative-to=${assemblies} ${gblikeass})
+    for gblass in $(ls -A ${gblikeass}/) ; do
+      ln -s ${relpathass2gblass}/${gblass} ${assemblies}/
+    done
+  fi
+else
+  echo "folder ${contigs} is empty! did you intend to provide custom genomeassemblies with -a option? ; exit now"
+  exit 1
 fi
 
 #### end of the block treating custom genome set
