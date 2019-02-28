@@ -229,7 +229,12 @@ Here is a standard examples of using `pantagruel` program.
 
 First, to create a *new* database, we need to run the `init` task. To pass the key parameters, including where to create the database and its name, we will be using options:
 ```sh
-pantagruel -d databasename -r /root/folder/for/database -f PANTAGFAM -I f.lassalle@imperial.ac.uk -A /folder/of/public/genome/in/RefSeq/format init
+pantagruel -d databasename -r /root/folder/for/database -f PANTAGFAM -I e.mail@institu.ti.on -A /folder/of/public/genome/in/RefSeq/format init
+```  
+or
+
+```sh
+pantagruel -d databasename -r /root/folder/for/database -f PANTAGFAM -I e.mail@institu.ti.on -L list_of_RefSeq_assemblies -a /folder/of/custom/genomes init
 ```  
 Then, to actually run the pipeline, we will execute the following tasks. At this stage, no options need to (or can) be specified trough the command line, as all parameters are already defined
 following the database intitiation stage (see above) and were stored in a configuration file. You will now simply have to specify where to find this configuration file with the `-i` option.
