@@ -142,8 +142,7 @@ Options are detailed here:
                        The assembly folders (one per genome) can be obtained on https://www.ncbi.nlm.nih.gov/assembly,
                        by making a keyword search to select a set of assemblies and downloading results with options:
                          Source Database = 'RefSeq' and File type = 'All file types (including assembly-structure directory)'.
-                       defaults to $rootdir/NCBI/Assembly_YYYY-MM-DD (suffix is today's date). 
-                       A simple archive 'genome_assemblies.tar' (as obtained from the NCBI website)can be placed in that folder.
+                       A simple archive 'genome_assemblies.tar' (as obtained from the NCBI website) can be placed in that folder.
                        If user genomes are also provided, these RefSeq assemblies will be used as reference for their annotation.
 
     --refseq_ass4annot same principle as -A, but WILL NOT be used in the study, only as a reference to annotate user genomes
