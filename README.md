@@ -256,7 +256,22 @@ ideally much more, as Pantagruel can easily deal with several hundreds of genome
 This minimum number 4 is to be split at the user's discretion between RefSeq-type and 'custom assemblies, though `-A` and `-a` options, respectively.  
 
 Here is a view of what input data passed to Pantagruel should look like.  
-When using assemblies downloaded from NCBI RefSeq, the folder which path is given as the argument of options `-A|--refseq_ass` or `--refseq_ass4annot` should  have a content looking like this:  
+
+When specifying accession ids to be downloaded from NCBI Assembly FTP using `-L|--refseq_list` or `--refseq_list4annot`, the list file which path is given as the option's argument should look like this:  
+```sh
+# for instance if used the command `pantagruel -d databasename -r /root/folder -L ./list_of_RefSeq_accession_ids init`
+cat list_of_RefSeq_accession_ids
+# GCF_000156855
+# GCF_001026115.1
+# GCF_001088845.2
+# ...
+# as many rows as there are genomes to study
+# Note the trailing '.z' (z = 1,2,3,...) indicating the assembly version is optional and if it is provided, it WILL BE IGNORED. 
+# This is beacause the LAST version of the accession will always be returned.
+# If you really want to work with an outdated version, please dowload it yourself and feed it to Pantagruel through '-A' option.
+```
+
+When using assemblies downloaded from NCBI RefSeq using options `-A|--refseq_ass` or `--refseq_ass4annot`, the folder which path is given as the option's argument should have a content looking like this:  
 ```sh
 # for instance if used the command `pantagruel -d databasename -r /root/folder -A ./assemblies init`
 
