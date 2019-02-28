@@ -238,10 +238,11 @@ or
 pantagruel -d databasename -r /root/folder/for/database -f PANTAGFAM -I e.mail@institu.ti.on \
  -L list_of_RefSeq_accession_ids -a /folder/of/custom/genomes init
 ```  
-Then, to actually run the pipeline, we will execute the following tasks. At this stage, no options need to (or can) be specified trough the command line, as all parameters are already defined
+Then, to actually run the pipeline, we will execute the subsequent tasks.  
+At this stage, no options need to (or can) be specified trough the command line, as all parameters are already defined
 following the database intitiation stage (see above) and were stored in a configuration file. You will now simply have to specify where to find this configuration file with the `-i` option.
 Unless you moved it, the configuration file should be where it has been created automatically,
-at `${root_dir}/${db_name}/environ_pantagruel_${db_name}.sh`, with `${db_name}` and `${root_dir}` the arguments of `-d` and `-r` options on the `pantagruel init` call.
+at `${root_dir}/${db_name}/environ_pantagruel_${db_name}.sh`, with `${db_name}` and `${root_dir}` the arguments of `-d` and `-r` options on the `pantagruel init` call.  
 So in our case, to execute the first three tasks, up to gene family sequence alignement, you can type the following command:  
 ```sh
 pantagruel -i /root/folder/for/database/databasename/environ_pantagruel_databasename.sh fetch homologous align
