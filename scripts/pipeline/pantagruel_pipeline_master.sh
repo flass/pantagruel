@@ -456,7 +456,7 @@ if [ -z "$ptgroot" ] ; then
  exit 1
 fi
 
-if [ -z "$ncbiass" || -z "$listncbiass" || -z "$customassemb" ] ; then
+if [[ -z "$ncbiass" && -z "$listncbiass" && -z "$customassemb" ]] ; then
  echo -e "Error: Must specify at least one folder of input assemblies with options '-A', '-L' or '-a', or any combination of them.\n"
  usage
  exit 1
