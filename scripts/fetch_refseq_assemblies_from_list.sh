@@ -22,6 +22,7 @@ for ass in $(cat ${asslist}) ; do
   if [ ! -e ${outdir}/${fullass}/md5checksums.txt ] ; then
     echo -e "fetch ${assdir}\n"
     # then download it
+    echo "# lftp ${openparam} -e \"mirror ${assdir} ; quit\""
     lftp ${openparam} -e "mirror ${assdir} ; quit"
     ls -l ${outdir}/${fullass}/
   else
