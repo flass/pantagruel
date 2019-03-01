@@ -59,7 +59,7 @@ echo "did not find the relevant taxonomy flat files in '${ncbitax}/'; download t
   source='/pub/taxonomy'
   files='taxcat.tar.gz* taxcat_readme.txt taxdump.tar.gz* taxdump_readme.txt'
   mkdir -p ${ncbitax}
-  lftp -c "cd ${source} ; mget -O ${ncbitax}/ ${files}" ${openparam}
+  lftp ${openparam} -e "cd ${source} ; mget -O ${ncbitax}/ ${files}"
   cd ${ncbitax}/
   for tgz in `ls *.tar.gz` ; do md5sum -c ${tgz}.md5 && tar -xzf ${tgz} ; done
   cd -
@@ -67,7 +67,7 @@ fi
 
 mkdir -p ${assemblies}/
 
-if [ "${ncbiass}" != 'REPLACEncbiass' ] ; then
+if [ ! -z "${ncbiass}" ] ; then
   ## content of this folder can be obtained using NCBI web interface:
   # Search Assembly database using a query defined as convenient:  
   # e.g.: 'txid543[Organism:exp] AND ("latest refseq"[filter] AND all[filter] NOT anomalous[filter]) AND ("complete genome"[filter])'
@@ -108,7 +108,7 @@ if [ "${ncbiass}" != 'REPLACEncbiass' ] ; then
   done
 fi
 
-if [ "${listncbiass}" != 'REPLACElistncbiass' ] ; then
+if [ ! -z "${listncbiass}" ] ; then
   echo "fetch assembly data from NCBI FTP accordng to list '${listncbiass}'"
   # fetch genome assemblies from NCBI FTP based on list prvided with -L option
   ncbiassftpdest=${listncbiass}_assemblies_from_ftp
@@ -124,7 +124,7 @@ if [ "${listncbiass}" != 'REPLACElistncbiass' ] ; then
 fi
 
 
-if [ "${customassemb}" != 'REPLACEcustomassemb' ] ; then
+if [ ! -z "${customassemb}" ] ; then
   echo "extract assembly data from folder '${customassemb}'"
     
   ## if the folder of custom/user-provided set of genomes is not empty
