@@ -2,6 +2,17 @@
 
 asslist="$1"
 outdir="$2"
+if [ !-z "$3" ] ; then
+  para="--parallel=$3"
+elif [ $(nproc) -gt 1 ] ; then
+  if [ $(nproc) -le 4 ] ; then
+    para="--parallel=$(nproc)"
+  else
+    para="--parallel=4"
+  fi
+else
+  para=""
+fi
 
 ### fetch REFERENCE genome assembly data from the NCBI Assembly database
 user='anonymous'
@@ -22,7 +33,7 @@ for ass in $(cat ${asslist}) ; do
   if [ ! -e ${outdir}/${fullass}/md5checksums.txt ] ; then
     echo -e "fetch ${assdir}\n"
     # then download it
-    lftp ${openparam} -e "mirror ${assdir} ; quit"
+    lftp ${openparam} -e "mirror ${para} ${assdir} ; quit"
     ls -l ${outdir}/${fullass}/
   else
     echo "assembly ${fullass} already present in ${outdir}/"
