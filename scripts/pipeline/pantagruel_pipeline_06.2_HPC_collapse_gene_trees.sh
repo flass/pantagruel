@@ -28,8 +28,8 @@ if [[ "${chaintype}" == 'fullgenetree' ]] ; then
     convalign -i fasta -e nex -t dna nexus ${alifastacodedir}/$alnfa 
   done
   mv ${alifastacodedir}/*nex ${colalinexuscodedir}/
-  export nexusaln4chains=${colalinexuscodedir}
-  export mboutputdir=${bayesgenetrees}
+  #~ export nexusaln4chains=${colalinexuscodedir}
+  #~ export mboutputdir=${bayesgenetrees}
   
 else
  if [[ "${chaintype}" == 'collapsed' ]] ; then
@@ -65,9 +65,9 @@ else
    ${collapsecriteriondef}
 EOF
   done
-  export collapsecoldate=$(date +%Y-%m-%d)
-  export nexusaln4chains=${colalinexuscodedir}/${collapsecond}/collapsed_alns
-  export mboutputdir=${bayesgenetrees}/${collapsecond}
+  #~ export collapsecoldate=$(date +%Y-%m-%d)
+  #~ export nexusaln4chains=${colalinexuscodedir}/${collapsecond}/collapsed_alns
+  #~ export mboutputdir=${bayesgenetrees}/${collapsecond}
   
  else
   echo "Error: incorrect value for variable chaintype: '${chaintype}'"

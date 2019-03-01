@@ -26,7 +26,7 @@ nruns=2
 ncpus=$(( $nchains * $nruns ))
 tasklist=${nexusaln4chains}_ali_list
 rm -f $tasklist
-${ptgscripts}/lsfullpath.py ${nexusaln4chains} > $tasklist
+${ptgscripts}/lsfullpath.py "${nexusaln4chains}/*" > $tasklist
 
 #~ # following lines are for resuming after a stop in batch computing, or to collect those jobs that crashed (and may need to be re-ran with more mem/time allowance)
 #~ alreadytrees=${mboutputdir}_list
