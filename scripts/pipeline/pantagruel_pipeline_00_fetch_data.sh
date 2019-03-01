@@ -73,7 +73,7 @@ if [ "${ncbiass}" != 'REPLACEncbiass' ] ; then
   # e.g.: 'txid543[Organism:exp] AND ("latest refseq"[filter] AND all[filter] NOT anomalous[filter]) AND ("complete genome"[filter])'
   # save assemblies (Download Assemblies > Source Database: RefSeq; File type: All file type (including assembly-structure directory))
   # as ${ncbiass}/genome_assemblies.tar or as ${ncbiass}/genome_assemblies_DATASETTAG.tar if several datasets have to be merged
-  # extract assembly data
+  echo "extract assembly data from folder '${ncbiass}'"
   cd ${ncbiass}/
   # look for assembly folders
   ls -A ${ncbiass}/ | grep -v 'assemblies' > ${ncbiass}/genome_assemblies_list
@@ -109,6 +109,7 @@ if [ "${ncbiass}" != 'REPLACEncbiass' ] ; then
 fi
 
 if [ "${listncbiass}" != 'REPLACElistncbiass' ] ; then
+  echo "fetch assembly data from NCBI FTP accordng to list '${listncbiass}'"
   # fetch genome assemblies from NCBI FTP based on list prvided with -L option
   ncbiassftpdest=${listncbiass}_assemblies_from_ftp
   mkdir -p ${listncbiass}_assemblies_from_ftp/
@@ -124,6 +125,7 @@ fi
 
 
 if [ "${customassemb}" != 'REPLACEcustomassemb' ] ; then
+  echo "extract assembly data from folder '${customassemb}'"
     
   ## if the folder of custom/user-provided set of genomes is not empty
   if [[ "$(ls -A "${contigs}/" 2>/dev/null)" ]] ; then

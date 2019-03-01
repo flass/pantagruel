@@ -1,7 +1,7 @@
 #! /bin/bash
 
 asslist="$1"
-outdir = "$2"
+outdir="$2"
 
 ### fetch REFERENCE genome assembly data from the NCBI Assembly database
 user='anonymous'
