@@ -34,7 +34,12 @@ for ass in $(cat ${asslist}) ; do
   fi
   md5sum -c md5checksums.txt
   if [ $? -gt 0 ] ; then
-    echo "Error: files in ${ncbiass}/${fullass}/ seem corrupted"
+    if [ $(md5sum --quiet -c md5checksums.txt 2> /dev/null | grep -v 'assembly_structure') ] ; then
+      echo "Error: files in ${ncbiass}/${fullass}/ seem corrupted (not only about missing *assembly_structure/ files) ; exit now"
+      exit 1
+    else
+      echo "Warning: some files are correupted or missing in the *assembly_structure/ ; this is not important for Pantagruel though."
+    fi
   fi
   cd ${outdir}/
   echo -e "${ass}: done\n"
