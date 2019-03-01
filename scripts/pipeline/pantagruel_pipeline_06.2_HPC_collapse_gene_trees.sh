@@ -16,7 +16,7 @@ source ${envsourcescript}
 
 
 #############################################################
-## 06.2 Full ML gene trees on HPC
+## 06.2 Gene tree collapsing on HPC
 #############################################################
 
 
@@ -44,7 +44,7 @@ else
   ## detect clades to be collapsed in gene trees
   #~ export colalinexuscodedir=${protali}/${chaintype}_cdsfam_alignments_species_code
   #~ export collapsecond=${criterion}_stem${cladesupp}_within${withinfun}${subcladesupp}
-  export collapsecriteriondef="--clade_stem_conds=[('$criterion','>=',$cladesupp)] --within_clade_conds=[('$withinfun','$criterion','<=',$subcladesupp,-1),('max','$criterion','<',$cladesupp,-1)]"
+  collapsecriteriondef="--clade_stem_conds=[('$criterion','>=',$cladesupp)] --within_clade_conds=[('$withinfun','$criterion','<=',$subcladesupp,-1),('max','$criterion','<',$cladesupp,-1)]"
   mkdir -p ${colalinexuscodedir}/${collapsecond}
   mlgenetreelist=${mlgenetrees%*s}_list
   ${ptgscripts}/lsfullpath.py "${mlgenetrees}/${mainresulttag}/*" > ${mlgenetreelist}

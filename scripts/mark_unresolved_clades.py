@@ -184,6 +184,7 @@ def select_clades_on_conditions(tree, clade_stem_conds, within_clade_conds, dept
 	nl0 = nl = tr.nb_leaves()
 	nl1 = nl0+1
 	nround = 0
+	if verbose: print "Starts with %d leaves in the tree"%nl
 	while nl1 > nl:
 		nround += 1
 		if verbose: print '# round %d ...'%nround
