@@ -22,11 +22,10 @@ for ass in $(cat ${asslist}) ; do
   if [ ! -e ${outdir}/${fullass}/md5checksums.txt ] ; then
     echo -e "fetch ${assdir}\n"
     # then download it
-    echo "# lftp ${openparam} -e \"mirror ${assdir} ; quit\""
     lftp ${openparam} -e "mirror ${assdir} ; quit"
     ls -l ${outdir}/${fullass}/
   else
-    echo "assembly ${fullass} already present in ${ncbiass}/"
+    echo "assembly ${fullass} already present in ${outdir}/"
   fi
   cd ${outdir}/${fullass}/
   if [ -d ${fullass}_assembly_structure ] ; then
@@ -37,6 +36,6 @@ for ass in $(cat ${asslist}) ; do
   if [ $? -gt 0 ] ; then
     echo "Error: files in ${ncbiass}/${fullass}/ seem corrupted"
   fi
-  cd ${ncbiass}/
+  cd ${outdir}/
   echo -e "${ass}: done\n"
 done
