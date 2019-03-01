@@ -117,8 +117,8 @@ if [ ! -z "${listncbiass}" ] ; then
   checkexec "could not fetch all the genomes ; exit now"
   
   # record links in centralised folder of assemblies
-  relpathass2ncbiass=$(realpath --relative-to=${assemblies} ${${ncbiassftpdest}})
-  for ass in `ls ${${ncbiassftpdest}}/` ; do
+  relpathass2ncbiass=$(realpath --relative-to=${assemblies} ${ncbiassftpdest})
+  for ass in `ls ${ncbiassftpdest}/` ; do
     ln -s ${relpathass2ncbiass}/${ass} ${assemblies}/
   done
 fi
@@ -252,10 +252,10 @@ EOF
     for gblass in $(ls -A ${gblikeass}/) ; do
       ln -s ${relpathass2gblass}/${gblass} ${assemblies}/
     done
+  else
+    echo "folder ${contigs} is empty! did you intend to provide custom genomeassemblies with -a option? ; exit now"
+    exit 1
   fi
-else
-  echo "folder ${contigs} is empty! did you intend to provide custom genomeassemblies with -a option? ; exit now"
-  exit 1
 fi
 
 #### end of the block treating custom genome set
