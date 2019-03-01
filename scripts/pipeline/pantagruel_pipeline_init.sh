@@ -92,7 +92,7 @@ if [ ! -z "${ncbiass}" ] ; then
 fi
 if [ ! -z "${listncbiass}" ] ; then
   rm -f ${listncbiass}_wrongFormatAssIds
-  grep -v "GC[AF]_[0-9]\{9,\}" ${listncbiass}) > ${listncbiass}_wrongFormatAssIds
+  grep -v "GC[AF]_[0-9]\{9,\}" ${listncbiass} > ${listncbiass}_wrongFormatAssIds
   if [ -s ${listncbiass}_wrongFormatAssIds ] ; then
     echo "the list of NCBI Assembly accession ids provided through option -L has uncorrectly formatted entries:"
     cat ${listncbiass}_wrongFormatAssIds
