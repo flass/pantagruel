@@ -86,7 +86,7 @@ def select_clades_on_conditions(tree, clade_stem_conds, within_clade_conds, dept
 	
 	def stem_testfun(node):
 		"""generic test function for selection condition at the clade stem"""
-		print repr(clade_stem_conds)
+		#~ print repr(clade_stem_conds)
 		for crit, ope, thresh in clade_stem_conds:
 			if crit in ['bs', 'boot'] and node.is_leaf():
 				# leaf branch support is always supperior than threshold (emulates maximal value)
@@ -153,7 +153,6 @@ def select_clades_on_conditions(tree, clade_stem_conds, within_clade_conds, dept
 						# restrict the leaf set to those not yet covered by selected leaf sets
 						leaves = list(set(leaves) - selectedleaves)
 						if not leaves:
-							if verbose: print 'here'
 							# all leaves are assigned to nested clades
 							continue # the while node loop
 					selectedclades.append(leaves)
@@ -203,8 +202,12 @@ def select_clades_on_conditions(tree, clade_stem_conds, within_clade_conds, dept
 		if nl==1 and not tr.get_leaf_labels()[0]:
 			# empty tree
 			nl = 0
-	if (nspeinsc+nl)!=nl0:
-		raise ValueError, "different counts of species in clades recorded: 'nspeinsc'+'nl': %d+%d; 'nl0': %d"%(nspeinsc, nl, nl0)
+	if pruneSelected:
+		if (nspeinsc+nl)!=nl0:
+			raise ValueError, "different counts of species in clades recorded: 'nspeinsc'+'nl': %d+%d; 'nl0': %d"%(nspeinsc, nl, nl0)
+	else:
+		if (nspeinsc)!=nl0:
+			raise ValueError, "different counts of species in clades recorded: 'nspeinsc': %d; 'nl0': %d"%(nspeinsc, nl0)
 	return selectedclades
 	
 def mark_unresolved_clades(tree, cladesupport=None, subcladesupport=None, crit='bs', clade_stem_conds=None, within_clade_conds=None, nested=True, inclusive=False, pruneSelected=False, depth=1, verbose=2, **kw):
