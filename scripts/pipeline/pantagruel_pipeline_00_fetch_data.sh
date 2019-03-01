@@ -59,7 +59,7 @@ echo "did not find the relevant taxonomy flat files in '${ncbitax}/'; download t
   source='/pub/taxonomy'
   files='taxcat.tar.gz* taxcat_readme.txt taxdump.tar.gz* taxdump_readme.txt'
   mkdir -p ${ncbitax}
-  lftp ${openparam} -e "cd ${source} ; mget -O ${ncbitax}/ ${files}"
+  lftp ${openparam} -e "cd ${source} ; mget -O ${ncbitax}/ ${files} ; quit"
   cd ${ncbitax}/
   for tgz in `ls *.tar.gz` ; do md5sum -c ${tgz}.md5 && tar -xzf ${tgz} ; done
   cd -
