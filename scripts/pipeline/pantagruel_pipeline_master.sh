@@ -234,8 +234,8 @@ ptgenvsetdefaults (){
 }
 
 #~ setnondefaults (){
-	#~ nondefvardecl=${ptgtmp}/nondefvardecl.sh
-	#~ rm -f ${ptgtmp}/nondefvardecl.sh
+    #~ nondefvardecl=${ptgtmp}/nondefvardecl.sh
+    #~ rm -f ${ptgtmp}/nondefvardecl.sh
     #~ if [ ! -z "$hpcremoteptgroot" ] ; then
      #~ echo "Overide default: all computations will be run on a distant server (potentially a HPC service) instead of locally"
      #~ echo "export hpcremoteptgroot=${hpcremoteptgroot}" >> ${ptgtmp}/nondefvardecl.sh
@@ -445,23 +445,6 @@ do
   esac
 done
 
-if [ -z "$ptgdbname" ] ; then
- echo -e "Error: Must specify database name\n"
- usage
- exit 1
-fi
-if [ -z "$ptgroot" ] ; then
- echo -e "Error: Must specify root directory location\n"
- usage
- exit 1
-fi
-
-if [[ -z "$ncbiass" && -z "$listncbiass" && -z "$customassemb" ]] ; then
- echo -e "Error: Must specify at least one folder of input assemblies with options '-A', '-L' or '-a', or any combination of them.\n"
- usage
- exit 1
-fi
-
 tasks=""
 while [[ ! -z "${@}" ]] ; do
  case "$1" in
@@ -502,6 +485,22 @@ echo "# will run tasks: $tasks"
 for task in "$tasks" ; do
   if [[ "$task" == 'init' ]] ; then
     promptdate "Pantagrel pipeline step $task: initiate pangenome database."
+    # check presence of mandatory arguments
+    if [ -z "$ptgdbname" ] ; then
+     echo -e "Error: Must specify database name\n"
+     usage
+     exit 1
+    fi
+    if [ -z "$ptgroot" ] ; then
+     echo -e "Error: Must specify root directory location\n"
+     usage
+     exit 1
+    fi
+    if [[ -z "$ncbiass" && -z "$listncbiass" && -z "$customassemb" ]] ; then
+     echo -e "Error: Must specify at least one folder of input assemblies with options '-A', '-L' or '-a', or any combination of them.\n"
+     usage
+     exit 1
+    fi
     ptgenvsetdefaults
     ${ptgscripts}/pipeline/pantagruel_pipeline_init.sh #\
      # ${ptgdbname} ${ptgroot} ${ptgrepo} ${myemail} ${famprefix} \
@@ -540,7 +539,7 @@ for task in "$tasks" ; do
    5)
     promptdate "Pantagrel pipeline step $task: select core-genome markers and compute reference tree."
     #~ if [[ ! -z "${pseudocoremingenomes}" ]] ; then
-	  #~ case "${pseudocoremingenomes}" in
+      #~ case "${pseudocoremingenomes}" in
         #~ ''|*[!0-9]*)
           #~ echo "'pseudocoremingenomes' variable is not set to a correct integer value: '${pseudocoremingenomes}' ; unset this variable"
           #~ unset pseudocoremingenomes
