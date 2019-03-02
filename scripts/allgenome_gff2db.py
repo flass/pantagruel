@@ -4,6 +4,7 @@ import sys, getopt
 import os
 import gzip
 import re
+from Bio import SeqIO
 
 daliasrepli = {'ANONYMOUS':'chromosome'}
 
@@ -19,15 +20,43 @@ annottype2fouttag = {'CDS':'proteins', 'rRNA':'ribosomes', 'tRNA':'ribosomes', '
 assembpatgenbank = re.compile('(GC[AF]_[^\._]+\.[0-9])_(.+)')
 assembpat = re.compile('(.+?\.[0-9])_(.+)')
 
+def extractCDSFastFromGBFF(nfgbff, nffastaout):
+	if nfgbff.endswith('.gz'):
+		fgbff = gzip.open(nfgbff, 'rb')
+	else:
+		fgbff = open(nfgbff, 'b')
+	if nffastaout.endswith('.gz'):
+		ffastaout = gzip.open(nffastaout, 'wb')
+	else:
+		ffastaout = open(nffastaout, 'w')
+	ncds = 0
+	for seqrecord in SeqIO.parse(fgbff, 'genbank'):
+		recid = seqrecord.id
+        for feature in seqrecord.features:
+            if feature.type == "CDS":
+				cds += 1
+                cdsseq = feature.location.extract(rec).seq)
+                protid = feature.qualifiers.get('protein_id')
+                qualifs = ' '.join("[%s=%s]"%(str(k), str(v)) for k,v in feature.qualifiers.iteritems())
+                if protid:
+					ffastaout.write(">lcl|%s_cds_%s_%d %s\n%s\n" % (recid, protid, ncds, qualifs, cdsseq) )
+                else:
+					ffastaout.write(">lcl|%s_cds_%d %s %s\n%s\n" % (recid, ncds, qualifs, cdsseq) )
+	ffastaout.close()
+
 def parseCDSFasta(nfcds):
 	dgenbankcdsids = {}
-	with gzip.open(nfcds, 'rb') as fcds:
-		# register unambiguously the exact naming of the CDS sequence in the corresponding extracted CDS sequence file
-		for line in fcds:
-			if line.startswith('>'):
-				genbankcdsid, cdstags = line.strip('>\n').split(' ', 1)
-				dcdstags = dict(cdstag.split('=', 1) for cdstag in cdstags.strip('[]').split('] ['))
-				dgenbankcdsids[(dcdstags['locus_tag'], dcdstags.get('protein_id', ''))] = genbankcdsid
+	if nfcds.endswith('.gz'):
+		fcds = gzip.open(nfcds, 'rb')
+	else:
+		fcds = open(nfcds, 'b')
+	# register unambiguously the exact naming of the CDS sequence in the corresponding extracted CDS sequence file
+	for line in fcds:
+		if line.startswith('>'):
+			genbankcdsid, cdstags = line.strip('>\n').split(' ', 1)
+			dcdstags = dict(cdstag.split('=', 1) for cdstag in cdstags.strip('[]').split('] ['))
+			dgenbankcdsids[(dcdstags['locus_tag'], dcdstags.get('protein_id', ''))] = genbankcdsid
+	fcds.close()
 	return dgenbankcdsids
 
 def parseGFFline(line):
@@ -116,7 +145,16 @@ def compileFeatures(fgff, dfout, dgenbankcdsids, dgeneloctag, dgenenchild, diden
 
 def parseAssemb(dirassemb, dfout, dtaxid2sciname={}, dmergedtaxid={}, didentseq={}):
 	# parse CDS fasta file
-	dgenbankcdsids = parseCDSFasta("%s/%s_cds_from_genomic.fna.gz"%(dirassemb, os.path.basename(dirassemb)))
+	nfcdsfasta = "%s/%s_cds_from_genomic.fna.gz"%(dirassemb, os.path.basename(dirassemb))
+	try:
+		dgenbankcdsids = parseCDSFasta(nfcdsfasta)
+	except IOError:
+		# the '*_cds_from_genomic.fna.gz' is missing from the assembly folder (happens for recently published assemblies)
+		# will derive its equivalent from the '*_genomic.gbff.gz'
+		nfgbff = "%s/%s_genomic.gbff.gz"%(dirassemb, os.path.basename(dirassemb))
+		print "create CDS Fasta file extracting datat from GenBank flat file: '%s' -> '%s'"%(nfgbff, nfcdsfasta)
+		extractCDSFastFromGBFF(nfgbff, nfcdsfasta)
+		dgenbankcdsids = parseCDSFasta(nfcdsfasta)
 	# extract assembly acc and name
 	assembsearch = assembpat.search(os.path.basename(dirassemb))
 	assacc, assname = assembsearch.groups()
