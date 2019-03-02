@@ -35,7 +35,7 @@ def extractCDSFastFromGBFF(nfgbff, nffastaout):
 		for feature in seqrecord.features:
 			if feature.type == "CDS":
 				ncds += 1
-				cdsseq = feature.location.extract(rec).seq
+				cdsseq = feature.location.extract(seqrecord).seq
 				protid = feature.qualifiers.get('protein_id')
 				qualifs = ' '.join("[%s=%s]"%(str(k), str(v)) for k,v in feature.qualifiers.iteritems())
 				if protid:
