@@ -32,15 +32,15 @@ def extractCDSFastFromGBFF(nfgbff, nffastaout):
 	ncds = 0
 	for seqrecord in SeqIO.parse(fgbff, 'genbank'):
 		recid = seqrecord.id
-        for feature in seqrecord.features:
-            if feature.type == "CDS":
+		for feature in seqrecord.features:
+			if feature.type == "CDS":
 				cds += 1
-                cdsseq = feature.location.extract(rec).seq
-                protid = feature.qualifiers.get('protein_id')
-                qualifs = ' '.join("[%s=%s]"%(str(k), str(v)) for k,v in feature.qualifiers.iteritems())
-                if protid:
+				cdsseq = feature.location.extract(rec).seq
+				protid = feature.qualifiers.get('protein_id')
+				qualifs = ' '.join("[%s=%s]"%(str(k), str(v)) for k,v in feature.qualifiers.iteritems())
+				if protid:
 					ffastaout.write(">lcl|%s_cds_%s_%d %s\n%s\n" % (recid, protid, ncds, qualifs, cdsseq) )
-                else:
+				else:
 					ffastaout.write(">lcl|%s_cds_%d %s %s\n%s\n" % (recid, ncds, qualifs, cdsseq) )
 	ffastaout.close()
 
