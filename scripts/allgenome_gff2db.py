@@ -35,7 +35,7 @@ def extractCDSFastFromGBFF(nfgbff, nffastaout):
         for feature in seqrecord.features:
             if feature.type == "CDS":
 				cds += 1
-                cdsseq = feature.location.extract(rec).seq)
+                cdsseq = feature.location.extract(rec).seq
                 protid = feature.qualifiers.get('protein_id')
                 qualifs = ' '.join("[%s=%s]"%(str(k), str(v)) for k,v in feature.qualifiers.iteritems())
                 if protid:
@@ -152,7 +152,7 @@ def parseAssemb(dirassemb, dfout, dtaxid2sciname={}, dmergedtaxid={}, didentseq=
 		# the '*_cds_from_genomic.fna.gz' is missing from the assembly folder (happens for recently published assemblies)
 		# will derive its equivalent from the '*_genomic.gbff.gz'
 		nfgbff = "%s/%s_genomic.gbff.gz"%(dirassemb, os.path.basename(dirassemb))
-		print "create CDS Fasta file extracting datat from GenBank flat file: '%s' -> '%s'"%(nfgbff, nfcdsfasta)
+		print "create CDS Fasta file extracting data from GenBank flat file: '%s' -> '%s'"%(nfgbff, nfcdsfasta)
 		extractCDSFastFromGBFF(nfgbff, nfcdsfasta)
 		dgenbankcdsids = parseCDSFasta(nfcdsfasta)
 	# extract assembly acc and name
