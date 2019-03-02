@@ -5,6 +5,8 @@ import os
 import gzip
 import re
 from Bio import SeqIO
+from BCBio import GFF
+from Bio.Alphabet import generic_dna
 
 daliasrepli = {'ANONYMOUS':'chromosome'}
 
@@ -20,17 +22,37 @@ annottype2fouttag = {'CDS':'proteins', 'rRNA':'ribosomes', 'tRNA':'ribosomes', '
 assembpatgenbank = re.compile('(GC[AF]_[^\._]+\.[0-9])_(.+)')
 assembpat = re.compile('(.+?\.[0-9])_(.+)')
 
-def extractCDSFastFromGBFF(nfgbff, nffastaout):
+def seqrecordsFromGBFF(nfgbff):
 	if nfgbff.endswith('.gz'):
 		fgbff = gzip.open(nfgbff, 'rb')
 	else:
 		fgbff = open(nfgbff, 'b')
+	genome = SeqIO.read(fgbff, 'genbank')
+	fgbff.close()
+	return genome
+
+def seqrecordsFromGFFandGenomicFasta(nfgff, nffastain):
+	if nfgbff.endswith('.gz'):
+		fgbff = gzip.open(nfgbff, 'rb')
+	else:
+		fgbff = open(nfgbff, 'b')
+	if nffastain.endswith('.gz'):
+		ffastain = gzip.open(nffastain, 'rb')
+	else:
+		ffastain = open(nffastain, 'b')
+	seqdict = SeqIO.to_dict(SeqIO.parse(ffastain, "fasta", alphabet=generic_dna))
+	genome = list(GFF.parse(fgff, seqdict))
+	fgff.close()
+	ffastain.close()
+	return genome
+	
+def extractCDSFastaFromSeqrecords(genome, nffastaout):
 	if nffastaout.endswith('.gz'):
 		ffastaout = gzip.open(nffastaout, 'wb')
 	else:
 		ffastaout = open(nffastaout, 'w')
 	ncds = 0
-	for seqrecord in SeqIO.parse(fgbff, 'genbank'):
+	for seqrecord in genome:
 		recid = seqrecord.id
 		for feature in seqrecord.features:
 			if feature.type == "CDS":
@@ -43,6 +65,14 @@ def extractCDSFastFromGBFF(nfgbff, nffastaout):
 				else:
 					ffastaout.write(">lcl|%s_cds_%d %s %s\n%s\n" % (recid, ncds, qualifs, cdsseq) )
 	ffastaout.close()
+
+def extractCDSFastaFromGFFandGenomicFasta(nfgff, nffastain, nffastaout):
+	genome = seqrecordsFromGFFandGenomicFasta(nfgff, nffastain)
+	extractCDSFastaFromSeqrecords(genome, nffastaout)
+	
+def extractCDSFastaFromGBFF(nfgbff, nffastaout):
+	genome = seqrecordsFromGBFF(nfgbff)
+	extractCDSFastaFromSeqrecords(genome, nffastaout)
 
 def parseCDSFasta(nfcds):
 	dgenbankcdsids = {}
@@ -150,12 +180,21 @@ def parseAssemb(dirassemb, dfout, dtaxid2sciname={}, dmergedtaxid={}, didentseq=
 		dgenbankcdsids = parseCDSFasta(nfcdsfasta)
 	except IOError:
 		# the '*_cds_from_genomic.fna.gz' is missing from the assembly folder (happens for recently published assemblies)
-		# will derive its equivalent from the '*_genomic.gbff.gz'
+		# will derive its equivalent from the genomic source
+		nfgff = "%s/%s_genomic.gff.gz"%(dirassemb, os.path.basename(dirassemb))
+		nfgenofna = "%s/%s_genomic.fna.gz"%(dirassemb, os.path.basename(dirassemb))
 		nfgbff = "%s/%s_genomic.gbff.gz"%(dirassemb, os.path.basename(dirassemb))
 		if dirnewcdsfasta:
 			nfcdsfasta = "%s/%s_cds_from_genomic.fna.gz"%(dirnewcdsfasta, os.path.basename(dirassemb))
-		print "create CDS Fasta file extracting data from GenBank flat file: '%s' -> '%s'"%(nfgbff, nfcdsfasta)
-		extractCDSFastFromGBFF(nfgbff, nfcdsfasta)
+		if os.path.exists(nfgff) and os.path.exists(nfgenofna):
+			# from '*_genomic.gff.gz' and '*_genomic.fna.gz'
+			print "create CDS Fasta file extracting data from genomic GFF and Fasta files: '%s' + '%s' -> '%s'"%(nfgff, nfgenofna, nfcdsfasta)
+			extractCDSFastaFromGFFandGenomicFasta(nfgbff, nfgenofna, nfcdsfasta)
+			dgenbankcdsids = parseCDSFasta(nfcdsfasta)
+		elif os.path.exists(nfgbff):
+			# from '*_genomic.gbff.gz'
+			print "create CDS Fasta file extracting data from GenBank flat file: '%s' -> '%s'"%(nfgbff, nfcdsfasta)
+			extractCDSFastaFromGBFF(nfgbff, nfcdsfasta)
 		dgenbankcdsids = parseCDSFasta(nfcdsfasta)
 	# extract assembly acc and name
 	assembsearch = assembpat.search(os.path.basename(dirassemb))
