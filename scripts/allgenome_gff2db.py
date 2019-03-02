@@ -143,7 +143,7 @@ def compileFeatures(fgff, dfout, dgenbankcdsids, dgeneloctag, dgenenchild, diden
 
 
 
-def parseAssemb(dirassemb, dfout, dtaxid2sciname={}, dmergedtaxid={}, didentseq={}):
+def parseAssemb(dirassemb, dfout, dtaxid2sciname={}, dmergedtaxid={}, didentseq={}, dirnewcdsfasta=None):
 	# parse CDS fasta file
 	nfcdsfasta = "%s/%s_cds_from_genomic.fna.gz"%(dirassemb, os.path.basename(dirassemb))
 	try:
@@ -152,6 +152,8 @@ def parseAssemb(dirassemb, dfout, dtaxid2sciname={}, dmergedtaxid={}, didentseq=
 		# the '*_cds_from_genomic.fna.gz' is missing from the assembly folder (happens for recently published assemblies)
 		# will derive its equivalent from the '*_genomic.gbff.gz'
 		nfgbff = "%s/%s_genomic.gbff.gz"%(dirassemb, os.path.basename(dirassemb))
+		if dirnewcdsfasta:
+			nfcdsfasta = "%s/%s_cds_from_genomic.fna.gz"%(dirnewcdsfasta, os.path.basename(dirassemb))
 		print "create CDS Fasta file extracting data from GenBank flat file: '%s' -> '%s'"%(nfgbff, nfcdsfasta)
 		extractCDSFastFromGBFF(nfgbff, nfcdsfasta)
 		dgenbankcdsids = parseCDSFasta(nfcdsfasta)
@@ -193,7 +195,11 @@ def main():
 			raise ValueError, "Cannot create folder '%s' as it already exist as a file"%(dirout)
 	else:
 		os.mkdir(dirout)
-
+	
+	dirnewcdsfasta = os.path.join(dirout, 'cds_from_genomic_fasta')
+	if not os.path.exists(dirnewcdsfasta):
+		os.mkdir(dirnewcdsfasta)
+		
 	with open(nfldirassemb, 'r') as fldirassemb:
 		ldirassemb = [line.rstrip('\n') for line in fldirassemb.readlines()]
 
@@ -247,7 +253,7 @@ def main():
 	# parse all assemblies
 	for dirassemb in ldirassemb:
 		print "parse assembly '%s'"%dirassemb
-		parseAssemb(dirassemb, dfout, dtaxid2sciname=dtaxid2sciname, dmergedtaxid=dmergedtaxid, didentseq=didentseq)
+		parseAssemb(dirassemb, dfout, dtaxid2sciname=dtaxid2sciname, dmergedtaxid=dmergedtaxid, didentseq=didentseq, dirnewcdsfasta=dirnewcdsfasta)
 
 	for fouttag in fouttags:
 		dfout[fouttag].close()
