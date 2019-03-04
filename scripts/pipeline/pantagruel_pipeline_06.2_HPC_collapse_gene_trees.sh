@@ -65,7 +65,8 @@ else
    ${collapsecriteriondef}
 EOF
   done
-  #~ export collapsecoldate=$(date +%Y-%m-%d)
+  export collapsecoldate=$(date +%Y-%m-%d)
+  echo -e "${collapsecolid}\t${collapsecoldate}" > ${genetrees}/collapsecol
   #~ export nexusaln4chains=${colalinexuscodedir}/${collapsecond}/collapsed_alns
   #~ export mboutputdir=${bayesgenetrees}/${collapsecond}
   
