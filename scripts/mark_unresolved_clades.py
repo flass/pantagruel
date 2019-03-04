@@ -108,7 +108,7 @@ def select_clades_on_conditions(tree, clade_stem_conds, within_clade_conds, dept
 			else: val = critval
 			teststr = "%s %s %s"%(str(val), ope, str(thresh))
 			etest = eval(teststr)
-			if verbose: print node.label(), ':', teststr, etest
+			if verbose>1: print node.label(), ':', teststr, etest
 			if not etest: return False
 		else:
 			return True
@@ -129,7 +129,7 @@ def select_clades_on_conditions(tree, clade_stem_conds, within_clade_conds, dept
 				llabs = node.get_leaf_labels()
 				teststr = "%s %s %s"%(str(grpval), ope, str(thresh))
 				etest = eval(teststr)
-				if verbose: print node.label(), ':', teststr, etest
+				if verbose>1: print node.label(), ':', teststr, etest
 				if not etest: return False
 			else:
 				return True

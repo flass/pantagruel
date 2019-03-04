@@ -36,6 +36,7 @@ export coreseqtype='REPLACEcoreseqtype'
 export pseudocoremingenomes='REPLACEpseudocoremingenomes'    # the minimum number of genomes in which a gene family should be present to be included in the pseudo-core genome gene set
 export userreftree='REPLACEuserreftree'                              # possible user-provided reference tree
 export poplgthresh='REPLACEpoplgthresh'
+export poplgleafmul='REPLACEpoplgleafmul'
 export popbsthresh='REPLACEpopbsthresh'
 export chaintype='REPLACEchaintype'
 export hpcremoteptgroot='REPLACEhpcremoteptgroot'

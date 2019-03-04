@@ -17,34 +17,35 @@ if [ "${resumetask}" == "true" ] ; then
   echo "will try and resume computation where it was last stopped; may skip/resume computing: core genome concatenated alignment, core ML tree search, core tree bootstrapping, core tree rooting with ${rootingmethod}"
 fi
 
-# to set misc variables ; not safe though
-if [ -e ${ptgtmp}/nondefvardecl.sh ] ; then
-  source ${ptgtmp}/nondefvardecl.sh
-fi
-
 case "${coreseqtype}" in
   prot)
       alifastacodedir=${protalifastacodedir}
       raxmloptions="-n ${treename} -m PROTCATLGX -j -p 1753 -w ${coretree}"
-      if [ "${poplgthresh}" == 'default' ] ; then
+      if [ -z "${poplgthresh}" ] ; then
         poplgthresh=0.0002
       fi
-      if [ "${popbsthresh}" == 'default' ] ; then
+      if [ -z "${poplgleafmul}" ] ; then
+        poplgleafmul=1.5
+      fi
+      if [ -z "${popbsthresh}" ] ; then
         popbsthresh=80
       fi
-      popstemconds="[('lg', '>=', ${poplgthresh}), ('bs', '>=', ${popbsthresh})]"
+      popstemconds="[('lg', '>=', ${poplgthresh}, ${poplgleafmul}), ('bs', '>=', ${popbsthresh})]"
       withinpopconds="[('max', 'lg', '<=', ${poplgthresh}, -1)]"
       ;;
   cds)
       alifastacodedir=${cdsalifastacodedir}
       raxmloptions="-n ${treename} -m GTRCATX -j -p 1753 -w ${coretree}"
-      if [ "${poplgthresh}" == 'default' ] ; then
+      if [ -z "${poplgthresh}" ] ; then
         poplgthresh=0.0005
       fi
-      if [ "${popbsthresh}" == 'default' ] ; then
+      if [ -z "${poplgleafmul}" ] ; then
+        poplgleafmul=1.5
+      fi
+      if [ -z "${popbsthresh}" ] ; then
         popbsthresh=80
       fi
-      popstemconds="[('lg', '>=', ${poplgthresh}), ('bs', '>=', ${popbsthresh})]"
+      popstemconds="[('lg', '>=', ${poplgthresh}, ${poplgleafmul}), ('bs', '>=', ${popbsthresh})]"
       withinpopconds="[('max', 'lg', '<=', ${poplgthresh}, -1)]"
       ;;
   *)
