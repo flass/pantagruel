@@ -46,12 +46,13 @@ def select_clades_on_conditions(tree, clade_stem_conds, within_clade_conds, dept
 	The conditions for selecting a clade are separated in two types relating to the the stem and within the clade, respectively.
 	For each, a list of condition tuple(s) must be given, having the following structure: 
 	
-	clade_stem_conds=[(crit, operator, threshold_val), ...]
+	clade_stem_conds=[(crit, operator, threshold_val [, leaf_mul]), ...]
 	within_clade_conds=[(groupfun, crit, operator, threshold_val, depth), ...]
 	
 	where:
 	- 'crit' is the name of a node/nbranch attribute, 
 	- 'threshold_val' is the limit value, 
+	- 'leaf_mul' is an OPTIONAL multiplicator to be applied to this threshold when the node is a leaf (default to 1.0)
 	- 'operator', one of the following strings: '<', '>', '<=', '>=', '==',
 	  indicating the logical test to do between the two former variables,
 	- 'groupfun' is one of the following strings: 'mean', 'min', 'max', 
@@ -62,7 +63,7 @@ def select_clades_on_conditions(tree, clade_stem_conds, within_clade_conds, dept
 	Note ALL conditions are to be met, i.e. they are combined with a logical 'AND'.
 	
 	Example:
-		clade_stem_conds=[('bs', '>=', 80)]
+		clade_stem_conds=[('bs', '>=', 80, 1)]
 		within_clade_conds=[('max', 'lg', '<', 0.0001, -1), ('min', 'nb_leaves', '>=', 2, 1)]
 	
 	When 'nested' is True, no constraint selected nodes can be below another, 
@@ -87,10 +88,20 @@ def select_clades_on_conditions(tree, clade_stem_conds, within_clade_conds, dept
 	def stem_testfun(node):
 		"""generic test function for selection condition at the clade stem"""
 		#~ print repr(clade_stem_conds)
-		for crit, ope, thresh in clade_stem_conds:
-			if crit in ['bs', 'boot'] and node.is_leaf():
-				# leaf branch support is always supperior than threshold (emulates maximal value)
-				critval = thresh+1
+		for clade_stem_cond in clade_stem_conds:
+			try:
+				crit, ope, thresh = clade_stem_cond
+				leafmul = 1.0
+			except ValueError:
+				# case where optional leaf_mul is supplied as 4th value
+				crit, ope, thresh, leafmul = clade_stem_cond
+			if node.is_leaf():
+				if crit in ['bs', 'boot']:
+					# leaf branch support is always supperior than threshold (emulates maximal value)
+					critval = thresh+1
+				else:
+					critval = getattr(node, crit)
+					thresh = float(thresh) * float(leafmul)
 			else:
 				critval = getattr(node, crit)
 			if callable(critval): val = critval()
@@ -196,6 +207,7 @@ def select_clades_on_conditions(tree, clade_stem_conds, within_clade_conds, dept
 		if verbose:
 			print '# round %d ... complete'%nround
 			print 'leaves in selected clades:', nspeinsc
+			print 'number of selected clades:', len(selectedclades)
 			print 'remaining tree (%d leaves):\n'%nl, tr.newick(ignoreBS=True, comment='boot')
 	else:
 		nl = tr.nb_leaves()
