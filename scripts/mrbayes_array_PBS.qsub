@@ -4,7 +4,6 @@
 #PBS -o /work/flassall/logs/mrbayes
 #PBS -j oe 
 #PBS -l walltime=24:00:00 
-#PBS -l select=1:ncpus=12:mem=16gb
 
 echo "This is job $PBS_JOBNAME, job_ID $PBS_JOBID (array_task_ID $PBS_ARRAY_INDEX) on host $HOSTNAME, running $PBS_NUM_PPN processes on these workers:"
 cat $PBS_NODEFILE
