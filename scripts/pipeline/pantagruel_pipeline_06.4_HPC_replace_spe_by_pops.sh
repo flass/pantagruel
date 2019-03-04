@@ -50,7 +50,7 @@ else
   replrun=$(date +'%d%m%Y')
 
   # PBS-submitted parallel job
-  qsub -N replSpePopinGs -l select=1:ncpus=${ncpus}:mem=64gb,walltime=24:00:00 -o $repllogd -j oe -V << EOF
+  qsub -N replSpePopinGs -l select=1:ncpus=8:mem=64gb,walltime=24:00:00 -o $repllogd -j oe -V << EOF
   module load python
   python ${ptgscripts}/replace_species_by_pop_in_gene_trees.py -G ${tasklist} -c ${colalinexuscodedir}/${collapsecond} -S ${speciestree}.lsd.newick -o ${coltreechains}/${collapsecond} \
    --populations=${speciestree%.*}_populations --population_tree=${speciestree%.*}_collapsedPopulations.nwk --population_node_distance=${speciestree%.*}_interNodeDistPopulations \
