@@ -34,7 +34,7 @@ if [[ "${chaintype}" == 'fullgenetree' ]] ; then
 else
   #### OPTION B2: collapsed rake clades in gene trees need to be replaced by mock population leaves
   #### will edit collapsed gene trees to attribute an (ancestral) species identity to the leafs representing collapsed clades = pre-reconciliation of recent gene history
-  if [-z ${replacecolid} ] ; then
+  if [ -z ${replacecolid} ] ; then
    replacecolid=1
   fi
   export coltreechains=${genetrees}/${chaintype}_tree_chains
