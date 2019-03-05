@@ -7,6 +7,7 @@ from Bio.Alphabet import generic_dna
 from Bio.Phylo import BaseTree, NewickIO, NexusIO, _io as PhyloIO
 from StringIO import StringIO
 from random import randint
+import gzip
 
 supported_formats = {'newick': NewickIO, 'nexus': NexusIO}
 
