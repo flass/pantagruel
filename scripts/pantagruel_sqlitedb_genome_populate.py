@@ -204,7 +204,7 @@ def main(dbname, protorfanclust, cdsorfanclust, nfspeclist, nfusergenomeinfo, us
 	
 	dcustomasscode = {}
 	dseqproj2assid = {}
-	if nfusergenomeinfo:
+	if nfusergenomeinfo and os.path.exists(nfusergenomeinfo):
 		with open(nfusergenomeinfo, 'r') as fusergenomeinfo:
 			uginfheader = fusergenomeinfo.readline().rstrip('\n').split('\t')
 			if not ('assembly_id' in uginfheader):
