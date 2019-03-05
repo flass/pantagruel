@@ -356,8 +356,8 @@ def extractCDSFasta(seqrecord, feature, ffastaout, ncds):
 	ncds += 1
 	recid = seqrecord.id
 	cdsseq = feature.location.extract(seqrecord).seq
-	protid = feature.qualifiers.get('protein_id')
-	qualifs = ' '.join("[%s=%s]"%(str(k), str(v)) for k,v in feature.qualifiers.iteritems())
+	protid = feature.qualifiers.get('protein_id', [None])[0]
+	qualifs = ' '.join("[%s=%s]"%(str(k), str(v[0])) for k,v in feature.qualifiers.iteritems())
 	if protid:
 		ffastaout.write(">lcl|%s_cds_%s_%d %s\n%s\n" % (recid, protid, ncds, qualifs, cdsseq) )
 	else:
