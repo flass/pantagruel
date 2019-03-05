@@ -37,7 +37,7 @@ for dirassemb in ldirassemb:
 		enfgenofna = checkExistsWithWithoutGz(nfgenofna)
 		enfgbff = checkExistsWithWithoutGz(nfgbff)
 		if dirnewcdsfasta:
-			os.mkdir(os.join(dirnewcdsfasta, os.path.basename(dirassemb)))
+			os.mkdir(os.path.join(dirnewcdsfasta, os.path.basename(dirassemb)))
 			nfcdsfasta = "%s/%s/%s_cds_from_genomic.fna.gz"%(dirnewcdsfasta, os.path.basename(dirassemb), os.path.basename(dirassemb))
 		if enfgenofna and enfgff:
 			# from '*_genomic.gff.gz' and '*_genomic.fna.gz'
