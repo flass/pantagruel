@@ -331,7 +331,7 @@ def seqrecordsFromGBFF(nfgbff):
 	if nfgbff.endswith('.gz'):
 		fgbff = gzip.open(nfgbff, 'rb')
 	else:
-		fgbff = open(nfgbff, 'b')
+		fgbff = open(nfgbff, 'r')
 	genome = SeqIO.read(fgbff, 'genbank')
 	fgbff.close()
 	return genome
@@ -340,11 +340,11 @@ def seqrecordsFromGFFandGenomicFasta(nfgff, nffastain):
 	if nfgff.endswith('.gz'):
 		fgff = gzip.open(nfgff, 'rb')
 	else:
-		fgff = open(nfgff, 'b')
+		fgff = open(nfgff, 'r')
 	if nffastain.endswith('.gz'):
 		ffastain = gzip.open(nffastain, 'rb')
 	else:
-		ffastain = open(nffastain, 'b')
+		ffastain = open(nffastain, 'r')
 	seqdict = SeqIO.to_dict(SeqIO.parse(ffastain, "fasta", alphabet=generic_dna))
 	genome = list(GFF.parse(fgff, seqdict))
 	fgff.close()
