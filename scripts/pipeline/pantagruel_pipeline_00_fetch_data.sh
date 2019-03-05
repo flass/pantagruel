@@ -287,7 +287,7 @@ for dass in $(ls -A ${indata}/extracted_cds_from_genomic_fasta) ; do
 done
 
 ## generate assembly statistics to verify genome finishing status
-${ptgscripts}/groom_refseq_data.sh${indata}/assemblies ${indata}/assembly_stats
+${ptgscripts}/groom_refseq_data.sh ${assemblies} ${indata}/assembly_stats
 
 manuin=${genomeinfo}/manual_input_metadata
 mkdir -p ${manuin}/
