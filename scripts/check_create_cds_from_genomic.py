@@ -14,10 +14,10 @@ def checkExistsWithWithoutGz(nf):
 nfldirassemb = sys.argv[1]
 if len(sys.argv) > 2:
 	dirnewcdsfasta = sys.argv[2]
-else:
-	dirnewcdsfasta = None
 	if not os.path.exists(dirnewcdsfasta):
 		os.mkdir(dirnewcdsfasta)
+else:
+	dirnewcdsfasta = None
 
 with open(nfldirassemb, 'r') as fldirassemb:
 	ldirassemb = [line.strip('\n') for line in fldirassemb]

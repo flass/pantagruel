@@ -348,11 +348,21 @@ def seqrecordsFromGFFandGenomicFasta(nfgff, nffastain):
 		ffastain = open(nffastain, 'r')
 	seqdict = SeqIO.to_dict(SeqIO.parse(ffastain, "fasta", alphabet=generic_dna))
 	genome = list(GFF.parse(fgff, seqdict))
-	print genome
 	fgff.close()
 	ffastain.close()
 	return genome
-	
+
+def extractCDSFasta(feature, ffastaout, ncds):
+	ncds += 1
+	cdsseq = feature.location.extract(seqrecord).seq
+	protid = feature.qualifiers.get('protein_id')
+	qualifs = ' '.join("[%s=%s]"%(str(k), str(v)) for k,v in feature.qualifiers.iteritems())
+	if protid:
+		ffastaout.write(">lcl|%s_cds_%s_%d %s\n%s\n" % (recid, protid, ncds, qualifs, cdsseq) )
+	else:
+		ffastaout.write(">lcl|%s_cds_%d %s %s\n%s\n" % (recid, ncds, qualifs, cdsseq) )
+	return ncds
+
 def extractCDSFastaFromSeqrecords(genome, nffastaout):
 	if nffastaout.endswith('.gz'):
 		ffastaout = gzip.open(nffastaout, 'wb')
@@ -362,16 +372,13 @@ def extractCDSFastaFromSeqrecords(genome, nffastaout):
 	for seqrecord in genome:
 		recid = seqrecord.id
 		for feature in seqrecord.features:
-			print feature
 			if feature.type == "CDS":
-				ncds += 1
-				cdsseq = feature.location.extract(seqrecord).seq
-				protid = feature.qualifiers.get('protein_id')
-				qualifs = ' '.join("[%s=%s]"%(str(k), str(v)) for k,v in feature.qualifiers.iteritems())
-				if protid:
-					ffastaout.write(">lcl|%s_cds_%s_%d %s\n%s\n" % (recid, protid, ncds, qualifs, cdsseq) )
-				else:
-					ffastaout.write(">lcl|%s_cds_%d %s %s\n%s\n" % (recid, ncds, qualifs, cdsseq) )
+				ncds = extractCDSFasta(feature, ffastaout, ncds)
+			if feature.sub_feature:
+				# deprecated in SeqIO but still used in GFF.parse
+				for subfeature in feature.sub_feature:
+					if subfeature.type == "CDS":
+						ncds = extractCDSFasta(subfeature, ffastaout, ncds)
 	ffastaout.close()
 
 def extractCDSFastaFromGFFandGenomicFasta(nfgff, nffastain, nffastaout):
