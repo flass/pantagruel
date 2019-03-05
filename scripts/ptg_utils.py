@@ -374,9 +374,9 @@ def extractCDSFastaFromSeqrecords(genome, nffastaout):
 		for feature in seqrecord.features:
 			if feature.type == "CDS":
 				ncds = extractCDSFasta(feature, ffastaout, ncds)
-			if feature.sub_feature:
-				# deprecated in SeqIO but still used in GFF.parse
-				for subfeature in feature.sub_feature:
+			if hasattr(feature, 'sub_features'):
+				# specific to records from GFF.parse
+				for subfeature in feature.sub_features:
 					if subfeature.type == "CDS":
 						ncds = extractCDSFasta(subfeature, ffastaout, ncds)
 	ffastaout.close()
