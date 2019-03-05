@@ -42,7 +42,7 @@ for dirassemb in ldirassemb:
 		if enfgenofna and enfgff:
 			# from '*_genomic.gff.gz' and '*_genomic.fna.gz'
 			print "create CDS Fasta file extracting data from genomic GFF and Fasta files: '%s' + '%s' -> '%s'"%(nfgff, nfgenofna, nfcdsfasta)
-			extractCDSFastaFromGFFandGenomicFasta(enfgbff, enfgenofna, nfcdsfasta)
+			extractCDSFastaFromGFFandGenomicFasta(enfgff, enfgenofna, nfcdsfasta)
 			dgenbankcdsids = parseCDSFasta(nfcdsfasta)
 		elif enfgbff:
 			# from '*_genomic.gbff.gz'
