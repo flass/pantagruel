@@ -482,7 +482,7 @@ done
 tasks=$(echo "${tasks}" | tr ' ' '\n' | sort -u | xargs)
 echo "# will run tasks: $tasks"
 
-for task in "$tasks" ; do
+for task in ${tasks} ; do
   if [[ "$task" == 'init' ]] ; then
     promptdate "Pantagrel pipeline step $task: initiate pangenome database."
     # check presence of mandatory arguments
@@ -502,12 +502,7 @@ for task in "$tasks" ; do
      exit 1
     fi
     ptgenvsetdefaults
-    ${ptgscripts}/pipeline/pantagruel_pipeline_init.sh #\
-     # ${ptgdbname} ${ptgroot} ${ptgrepo} ${myemail} ${famprefix} \
-     # ${ncbiass} ${ncbitax} ${customassemb} ${refass} ${chaintype} \
-     # ${pseudocoremingenomes} ${hpcremoteptgroot} ${collapseCladeParams} ${userreftree} ${coreseqtype} \
-     # ${poplgthresh} ${popbsthresh} ${initfile}
-     # all these variables are exported above and thus should be transfered to the child process
+    ${ptgscripts}/pipeline/pantagruel_pipeline_init.sh
     checkexec
   else
    if [ -z ${initfile} ] ; then
@@ -538,38 +533,14 @@ for task in "$tasks" ; do
     checkexec  ;;
    5)
     promptdate "Pantagrel pipeline step $task: select core-genome markers and compute reference tree."
-    #~ if [[ ! -z "${pseudocoremingenomes}" ]] ; then
-      #~ case "${pseudocoremingenomes}" in
-        #~ ''|*[!0-9]*)
-          #~ echo "'pseudocoremingenomes' variable is not set to a correct integer value: '${pseudocoremingenomes}' ; unset this variable"
-          #~ unset pseudocoremingenomes
-          #~ echo "will run INTERACTIVELY '$ptgscripts/choose_min_genome_occurrence_pseudocore_genes.sh' to choose a sensible value."
-          #~ echo ""
-          #~ ${ptgscripts}/choose_min_genome_occurrence_pseudocore_genes.sh ${initfile} ;;
-        #~ *)
-          #~ echo "'pseudocoremingenomes' variable is set to ${pseudocoremingenomes}"
-          #~ echo "will run non-interactively '$ptgscripts/choose_min_genome_occurrence_pseudocore_genes.sh' to record the gene family set."
-          #~ echo ""
-          #~ ${ptgscripts}/choose_min_genome_occurrence_pseudocore_genes.sh ${initfile} ${pseudocoremingenomes} ;;
-      #~ esac
-    #~ else
-       #~ echo "'pseudocoremingenomes' variable is not set"
-       #~ echo "will rely on strict core genome definition"
-       #~ echo "will run non-interactively $ptgscripts/choose_min_genome_occurrence_pseudocore_genes.sh to record the gene family set."
-       #~ echo ""
-       #~ ${ptgscripts}/choose_min_genome_occurrence_pseudocore_genes.sh ${initfile} 'REPLACEpseudocoremingenomes'
-    #~ fi
-    #~ setnondefaults
     ${ptgscripts}/pipeline/pantagruel_pipeline_05_core_genome_ref_tree.sh ${initfile}
     checkexec  ;;
    6)
     promptdate "Pantagrel pipeline step $task: compute gene trees."
-    #~ setnondefaults
     ${ptgscripts}/pipeline/pantagruel_pipeline_06_gene_trees.sh ${initfile}
     checkexec  ;;
    7)
     promptdate "Pantagrel pipeline step $task: compute species tree/gene tree reconciliations."
-    #~ setnondefaults
     ${ptgscripts}/pipeline/pantagruel_pipeline_07_reconciliations.sh ${initfile}
     checkexec  ;;
    8)
@@ -582,5 +553,4 @@ for task in "$tasks" ; do
     checkexec  ;;
     esac
   fi
-  #~ rm -f ${ptgtmp}/nondefvardecl.sh
 done
