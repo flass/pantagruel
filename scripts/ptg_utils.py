@@ -348,6 +348,7 @@ def seqrecordsFromGFFandGenomicFasta(nfgff, nffastain):
 		ffastain = open(nffastain, 'r')
 	seqdict = SeqIO.to_dict(SeqIO.parse(ffastain, "fasta", alphabet=generic_dna))
 	genome = list(GFF.parse(fgff, seqdict))
+	print genome
 	fgff.close()
 	ffastain.close()
 	return genome
@@ -361,6 +362,7 @@ def extractCDSFastaFromSeqrecords(genome, nffastaout):
 	for seqrecord in genome:
 		recid = seqrecord.id
 		for feature in seqrecord.features:
+			print feature
 			if feature.type == "CDS":
 				ncds += 1
 				cdsseq = feature.location.extract(seqrecord).seq
