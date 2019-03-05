@@ -260,6 +260,8 @@ fi
 
 #### end of the block treating custom genome set
 
+#### Summarize data
+mkdir -p ${genomeinfo}/
 rm -rf ${genomeinfo}/assemblies*
 ls -Ad ${assemblies}/* > ${genomeinfo}/assemblies_list
 
