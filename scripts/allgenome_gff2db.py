@@ -119,29 +119,9 @@ def compileFeatures(fgff, dfout, dgenbankcdsids, dgeneloctag, dgenenchild, diden
 
 
 
-def parseAssemb(dirassemb, dfout, dtaxid2sciname={}, dmergedtaxid={}, didentseq={}, dirnewcdsfasta=None):
+def parseAssemb(dirassemb, dfout, dtaxid2sciname={}, dmergedtaxid={}, didentseq={}):
 	# parse CDS fasta file
 	nfcdsfasta = "%s/%s_cds_from_genomic.fna.gz"%(dirassemb, os.path.basename(dirassemb))
-	#~ try:
-		#~ dgenbankcdsids = parseCDSFasta(nfcdsfasta)
-	#~ except IOError:
-		#~ # the '*_cds_from_genomic.fna.gz' is missing from the assembly folder (happens for recently published assemblies)
-		#~ # will derive its equivalent from the genomic source
-		#~ nfgff = "%s/%s_genomic.gff.gz"%(dirassemb, os.path.basename(dirassemb))
-		#~ nfgenofna = "%s/%s_genomic.fna.gz"%(dirassemb, os.path.basename(dirassemb))
-		#~ nfgbff = "%s/%s_genomic.gbff.gz"%(dirassemb, os.path.basename(dirassemb))
-		#~ if dirnewcdsfasta:
-			#~ nfcdsfasta = "%s/%s_cds_from_genomic.fna.gz"%(dirnewcdsfasta, os.path.basename(dirassemb))
-		#~ if os.path.exists(nfgff) and os.path.exists(nfgenofna):
-			#~ # from '*_genomic.gff.gz' and '*_genomic.fna.gz'
-			#~ print "create CDS Fasta file extracting data from genomic GFF and Fasta files: '%s' + '%s' -> '%s'"%(nfgff, nfgenofna, nfcdsfasta)
-			#~ extractCDSFastaFromGFFandGenomicFasta(nfgbff, nfgenofna, nfcdsfasta)
-			#~ dgenbankcdsids = parseCDSFasta(nfcdsfasta)
-		#~ elif os.path.exists(nfgbff):
-			#~ # from '*_genomic.gbff.gz'
-			#~ print "create CDS Fasta file extracting data from GenBank flat file: '%s' -> '%s'"%(nfgbff, nfcdsfasta)
-			#~ extractCDSFastaFromGBFF(nfgbff, nfcdsfasta)
-		#~ dgenbankcdsids = parseCDSFasta(nfcdsfasta)
 	dgenbankcdsids = parseCDSFasta(nfcdsfasta)
 	# extract assembly acc and name
 	assembsearch = assembpat.search(os.path.basename(dirassemb))
@@ -181,10 +161,6 @@ def main():
 			raise ValueError, "Cannot create folder '%s' as it already exist as a file"%(dirout)
 	else:
 		os.mkdir(dirout)
-	
-	#~ dirnewcdsfasta = os.path.join(dirout, 'cds_from_genomic_fasta')
-	#~ if not os.path.exists(dirnewcdsfasta):
-		#~ os.mkdir(dirnewcdsfasta)
 		
 	with open(nfldirassemb, 'r') as fldirassemb:
 		ldirassemb = [line.rstrip('\n') for line in fldirassemb.readlines()]
@@ -239,7 +215,7 @@ def main():
 	# parse all assemblies
 	for dirassemb in ldirassemb:
 		print "parse assembly '%s'"%dirassemb
-		parseAssemb(dirassemb, dfout, dtaxid2sciname=dtaxid2sciname, dmergedtaxid=dmergedtaxid, didentseq=didentseq, dirnewcdsfasta=dirnewcdsfasta)
+		parseAssemb(dirassemb, dfout, dtaxid2sciname=dtaxid2sciname, dmergedtaxid=dmergedtaxid, didentseq=didentseq)
 
 	for fouttag in fouttags:
 		dfout[fouttag].close()

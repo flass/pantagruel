@@ -278,7 +278,10 @@ mkdir -p ${indata}/extracted_cds_from_genomic_fasta
 python ${ptgscripts}/check_create_cds_from_genomic.py ${genomeinfo}/assemblies_list ${indata}/extracted_cds_from_genomic_fasta
 for dass in $(ls -A ${indata}/extracted_cds_from_genomic_fasta) ; do
   relpathass2extcds=$(realpath --relative-to=${assemblies}/${dass} ${indata}/extracted_cds_from_genomic_fasta/${dass})
-  ln -s ${relpathass2extcds}/${dass}/${dass}_cds_from_genomic.fna* ${assemblies}/${dass}/
+  for nfcds in $(ls -A ${indata}/extracted_cds_from_genomic_fasta/${dass}/${dass}_cds_from_genomic.fna*) ; do
+    bnnfcds=$(basename ${nfcds})
+    ln -s ${relpathass2extcds}/${bnnfcds} ${assemblies}/${dass}/
+  done
 done
 
 ## generate assembly statistics to verify genome finishing status
