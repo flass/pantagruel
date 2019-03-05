@@ -376,8 +376,10 @@ def extractCDSFastaFromSeqrecords(genome, nffastaout):
 				ncds = extractCDSFasta(seqrecord, feature, ffastaout, ncds)
 			if hasattr(feature, 'sub_features'):
 				# specific to records from GFF.parse
+				loctagqual = feature.qualifiers.get('locus_tag', [''])
 				for subfeature in feature.sub_features:
 					if subfeature.type == "CDS":
+						subfeature.qualifiers['locus_tag'] = loctagqual
 						ncds = extractCDSFasta(seqrecord, subfeature, ffastaout, ncds)
 	ffastaout.close()
 
