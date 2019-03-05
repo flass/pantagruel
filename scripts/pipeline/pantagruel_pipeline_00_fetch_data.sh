@@ -261,7 +261,7 @@ fi
 #### end of the block treating custom genome set
 
 rm -rf ${genomeinfo}/assemblies*
-ls -Ad "${assemblies}/*" > ${genomeinfo}/assemblies_list
+ls -Ad ${assemblies}/* > ${genomeinfo}/assemblies_list
 
 ### Groom data
 ## test that there are at least 4 genomes to process
