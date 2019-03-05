@@ -275,14 +275,14 @@ fi
 
 ## verify the presence of '*_cds_from_genomic.fna[.gz]' file, as it is sometimes missing even from a RefSeq-downloaded assembly folder (happens for recently published assemblies)
 mkdir -p ${indata}/extracted_cds_from_genomic_fasta 
-python ${ptgscripts}/check_create_cds_from_genomic.py ${indata}/assembly_stats ${genomeinfo}/assemblies_list ${indata}/extracted_cds_from_genomic_fasta
+python ${ptgscripts}/check_create_cds_from_genomic.py ${genomeinfo}/assemblies_list ${indata}/extracted_cds_from_genomic_fasta
 for dass in $(ls -A ${indata}/extracted_cds_from_genomic_fasta) ; do
   relpathass2extcds=$(realpath --relative-to=${assemblies}/${dass} ${indata}/extracted_cds_from_genomic_fasta/${dass})
   ln -s ${relpathass2extcds}/${dass}/${dass}_cds_from_genomic.fna* ${assemblies}/${dass}/
 done
 
 ## generate assembly statistics to verify genome finishing status
-${ptgscripts}/groom_refseq_data.sh${indata}/assemblies
+${ptgscripts}/groom_refseq_data.sh${indata}/assemblies ${indata}/assembly_stats
 
 manuin=${genomeinfo}/manual_input_metadata
 mkdir -p ${manuin}/
