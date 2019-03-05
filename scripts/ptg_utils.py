@@ -354,6 +354,7 @@ def seqrecordsFromGFFandGenomicFasta(nfgff, nffastain):
 
 def extractCDSFasta(seqrecord, feature, ffastaout, ncds):
 	ncds += 1
+	recid = seqrecord.id
 	cdsseq = feature.location.extract(seqrecord).seq
 	protid = feature.qualifiers.get('protein_id')
 	qualifs = ' '.join("[%s=%s]"%(str(k), str(v)) for k,v in feature.qualifiers.iteritems())
@@ -370,7 +371,6 @@ def extractCDSFastaFromSeqrecords(genome, nffastaout):
 		ffastaout = open(nffastaout, 'w')
 	ncds = 0
 	for seqrecord in genome:
-		recid = seqrecord.id
 		for feature in seqrecord.features:
 			if feature.type == "CDS":
 				ncds = extractCDSFasta(seqrecord, feature, ffastaout, ncds)
