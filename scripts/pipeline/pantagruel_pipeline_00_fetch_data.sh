@@ -260,8 +260,12 @@ fi
 
 #### end of the block treating custom genome set
 
+rm -rf ${genomeinfo}/assemblies*
+ls -Ad "${assemblies}/*" > ${genomeinfo}/assemblies_list
+
+### Groom data
 ## test that there are at least 4 genomes to process
-export ngenomes=$(ls -A "${indata}/assemblies/" 2>/dev/null | wc -l)
+export ngenomes=$(ls -A "${assemblies}/" 2>/dev/null | wc -l)
 if [ ${ngenomes} -lt 4 ] ; then
   echo "Error: there are not enough genomes (< 4) in input for pantegruel to produce anything meaningful."
   echo "please add more genome assemblies in either ${ncbiass}/ or ${contigs}/ (see manual with \`pantagruel -- help\`)"
@@ -269,15 +273,20 @@ if [ ${ngenomes} -lt 4 ] ; then
   exit 1
 fi
 
-### Groom data
+## verify the presence of '*_cds_from_genomic.fna[.gz]' file, as it is sometimes missing even from a RefSeq-downloaded assembly folder (happens for recently published assemblies)
+python ${ptgscripts}/check_create_cds_from_genomic.py 
+
 ## generate assembly statistics to verify genome finishing status
-${ptgscripts}/groom_refseq_data.sh ${indata}/assemblies ${indata}/assembly_stats
+mkdir -p ${indata}/extracted_cds_from_genomic_fasta
+${ptgscripts}/groom_refseq_data.sh ${indata}/assemblies ${indata}/assembly_stats ${genomeinfo}/assemblies_list ${indata}/extracted_cds_from_genomic_fasta
+for dass in $(ls -A ${indata}/extracted_cds_from_genomic_fasta) ; do
+  relpathass2extcds=$(realpath --relative-to=${assemblies}/${dass} ${indata}/extracted_cds_from_genomic_fasta/${dass})
+  ln -s ${relpathass2extcds}/${dass}/${dass}_cds_from_genomic.fna* ${assemblies}/${dass}/
+done
 
 manuin=${genomeinfo}/manual_input_metadata
 mkdir -p ${manuin}/
 touch ${manuin}/manual_metadata_dictionary.tab ${manuin}/manual_curated_metadata_dictionary.tab ${manuin}/manual_dbxrefs.tab
-rm -rf ${genomeinfo}/assemblies*
-ls ${assemblies}/* -d > ${genomeinfo}/assemblies_list
 mkdir -p ${genomeinfo}/assembly_metadata
 ## extract assembly/sample metadata from flat files
 python ${ptgscripts}/extract_metadata_from_gbff.py --assembly_folder_list=${genomeinfo}/assemblies_list --add_raw_metadata=${manuin}/manual_metadata_dictionary.tab \
