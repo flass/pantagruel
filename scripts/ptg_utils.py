@@ -1,7 +1,9 @@
 #!/usr/bin/python
 
 import sys
-from Bio import File
+from Bio import File,  SeqIO
+from BCBio import GFF
+from Bio.Alphabet import generic_dna
 from Bio.Phylo import BaseTree, NewickIO, NexusIO, _io as PhyloIO
 from StringIO import StringIO
 from random import randint
@@ -324,6 +326,58 @@ def parseChain(lnfchains, dold2newname={}, nfchainout=None, inchainfmt='nexus', 
 	if treebuffer: treeappend(treebuffer, nfout, outchainfmt)
 	print '%s%s ...done (%d trees)'%(('\n' if verbose else ''), nfout, ntree)
 	return None
+
+def seqrecordsFromGBFF(nfgbff):
+	if nfgbff.endswith('.gz'):
+		fgbff = gzip.open(nfgbff, 'rb')
+	else:
+		fgbff = open(nfgbff, 'b')
+	genome = SeqIO.read(fgbff, 'genbank')
+	fgbff.close()
+	return genome
+
+def seqrecordsFromGFFandGenomicFasta(nfgff, nffastain):
+	if nfgff.endswith('.gz'):
+		fgff = gzip.open(nfgff, 'rb')
+	else:
+		fgff = open(nfgff, 'b')
+	if nffastain.endswith('.gz'):
+		ffastain = gzip.open(nffastain, 'rb')
+	else:
+		ffastain = open(nffastain, 'b')
+	seqdict = SeqIO.to_dict(SeqIO.parse(ffastain, "fasta", alphabet=generic_dna))
+	genome = list(GFF.parse(fgff, seqdict))
+	fgff.close()
+	ffastain.close()
+	return genome
+	
+def extractCDSFastaFromSeqrecords(genome, nffastaout):
+	if nffastaout.endswith('.gz'):
+		ffastaout = gzip.open(nffastaout, 'wb')
+	else:
+		ffastaout = open(nffastaout, 'w')
+	ncds = 0
+	for seqrecord in genome:
+		recid = seqrecord.id
+		for feature in seqrecord.features:
+			if feature.type == "CDS":
+				ncds += 1
+				cdsseq = feature.location.extract(seqrecord).seq
+				protid = feature.qualifiers.get('protein_id')
+				qualifs = ' '.join("[%s=%s]"%(str(k), str(v)) for k,v in feature.qualifiers.iteritems())
+				if protid:
+					ffastaout.write(">lcl|%s_cds_%s_%d %s\n%s\n" % (recid, protid, ncds, qualifs, cdsseq) )
+				else:
+					ffastaout.write(">lcl|%s_cds_%d %s %s\n%s\n" % (recid, ncds, qualifs, cdsseq) )
+	ffastaout.close()
+
+def extractCDSFastaFromGFFandGenomicFasta(nfgff, nffastain, nffastaout):
+	genome = seqrecordsFromGFFandGenomicFasta(nfgff, nffastain)
+	extractCDSFastaFromSeqrecords(genome, nffastaout)
+	
+def extractCDSFastaFromGBFF(nfgbff, nffastaout):
+	genome = seqrecordsFromGBFF(nfgbff)
+	extractCDSFastaFromSeqrecords(genome, nffastaout)
 
 #### Database connection functions
 
