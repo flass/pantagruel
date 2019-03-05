@@ -80,6 +80,8 @@ def compileFeatures(fgff, dfout, dgenbankcdsids, dgeneloctag, dgenenchild, diden
 	dgenerangeprods = {}
 	#~ annottype = None
 	nprintmullicds = 0
+	bufflineouts = []
+	bufflocustags = []
 	for line in fgff:
 		if line.startswith('#'): continue
 		elif line.startswith('>'): break
@@ -106,15 +108,29 @@ def compileFeatures(fgff, dfout, dgenbankcdsids, dgeneloctag, dgenenchild, diden
 				#~ if products[0]!=productid: raise IndexError, "multiline feature not pointing at the same product: %s and %s"%(products[0], productid)
 				if products[0]!=productid:
 					print "Warning: multiline feature not pointing at the same product: %s and %s"%(products[0], productid)
+					bufflocustags.append(locustag)
 					locustag = "%s_%d"%(locustag, len(dgenerangeprods[parentgene])-1)
 					print "Create new locus_tag to disembiguate loci:", locustag, "->", productid
 			elif nprintmullicds>0:
 				nprintmullicds = 0 ; print ''
-			if len(dgenerangeprods[parentgene])==dgenenchild[parentgene]:
+			lineout = [productid, seqreg, locustag, min(begs), max(ends), strand, desc.get('product', '')] + lineoutend
+			if len(dgenerangeprods[parentgene]) < dgenenchild[parentgene]:
+				bufflineouts.append((annottype, lineout))
+			elif len(dgenerangeprods[parentgene]) == dgenenchild[parentgene]:
+				if bufflocustags:
+					# must first write out the previous line of the gene that actually pointed at something different
+					for prelocustag in bufflocustags:
+						for preannottype, prelineout in bufflineouts:
+							if prelineout[2]==prelocustag:
+								break
+						else:
+							raise IndexError, "could not find locus_tag '%s' in buffer of output lines\n%s:"%(prelocustag, '\n'.join(repr(bufflineouts)))
+						dfout[annottype2fouttag.get(preannottype, 'misc_features')].write('\t'.join(prelineout)+'\n')
 				# write out previous CDS/RNA gene info (potential synthesis of several lines)
-				lineout = [productid, seqreg, locustag, min(begs), max(ends), strand, desc.get('product', '')] + lineoutend
 				dfout[annottype2fouttag.get(annottype, 'misc_features')].write('\t'.join(lineout)+'\n')
 				del dgenenchild[parentgene]
+				bufflocustags = []
+				bufflineouts = []
 	
 	if dgenenchild:
 		raise IndexError, "some genes not written:\n%s"%(repr(dgenenchild))
