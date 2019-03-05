@@ -42,12 +42,12 @@ for dirassemb in ldirassemb:
 		if enfgenofna and enfgff:
 			# from '*_genomic.gff.gz' and '*_genomic.fna.gz'
 			print "create CDS Fasta file extracting data from genomic GFF and Fasta files: '%s' + '%s' -> '%s'"%(nfgff, nfgenofna, nfcdsfasta)
-			extractCDSFastaFromGFFandGenomicFasta(nfgbff, nfgenofna, nfcdsfasta)
+			extractCDSFastaFromGFFandGenomicFasta(enfgbff, enfgenofna, nfcdsfasta)
 			dgenbankcdsids = parseCDSFasta(nfcdsfasta)
 		elif enfgbff:
 			# from '*_genomic.gbff.gz'
 			print "create CDS Fasta file extracting data from GenBank flat file: '%s' -> '%s'"%(nfgbff, nfcdsfasta)
-			extractCDSFastaFromGBFF(nfgbff, nfcdsfasta)
+			extractCDSFastaFromGBFF(enfgbff, nfcdsfasta)
 		else:
 			missingfiles = '\n'.join(['%s[.gz]'%nf for nf, enf in zip([nfcdsfasta, nfgff, nfgenofna, nfgbff], [enfcdsfasta, enfgff, enfgenofna, enfgbff]) if not enf])
 			raise IOError, "could not find any genomic source file to extract CDS from; files are missing:\n"+missingfiles
