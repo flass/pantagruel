@@ -63,7 +63,15 @@ def indexRegionsAndGenes(fgff, dfout, assacc, assname, dtaxid2sciname={}, dmerge
 				taxid = dbxref['taxon']
 				strain = desc.get('strain', '')
 				repliname = desc.get('Name', '')
-				replitype = desc.get('genome', '')
+				replitype = desc.get('genome')
+				if not replitype:
+					# for GenBank GCA_* assemblies with non-standard annotation (not RefSeq GCF_*)
+					if 'chromosome' in desc:
+						replitype = 'chromosome'
+					elif 'plasmid' in desc:
+						replitype = 'plasmid'
+					else:
+						replitype = desc.get('mol_type', 'genomic').split()[0]
 				replineout = [assacc, assname, seqreg, daliasrepli.get(repliname, repliname), replitype, end, taxid, strain]
 				tid = int(taxid)
 				if dtaxid2sciname: replineout.append(dtaxid2sciname[dmergedtaxid.get(tid, tid)])
