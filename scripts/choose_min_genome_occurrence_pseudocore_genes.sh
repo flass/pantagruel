@@ -44,6 +44,6 @@ else
 fi
 echo "set min number of genomes for inclusion in pseudo-core gene set as $pseudocoremingenomes"
 mv ${envsourcescript} ${envsourcescript}0 && \
- sed -e "s#'REPLACEpseudocoremingenomes'#$pseudocoremingenomes#" ${envsourcescript}0 > ${envsourcescript} && \
+ sed -e "s#REPLACEpseudocoremingenomes#${pseudocoremingenomes}#" ${envsourcescript}0 > ${envsourcescript} && \
  rm ${envsourcescript}0
 echo "'export pseudocoremingenomes=$pseudocoremingenomes' recorded in ${envsourcescript}"
