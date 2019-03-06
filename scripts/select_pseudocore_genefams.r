@@ -79,8 +79,8 @@ selectMinGenomes = function(countmatrix, dirout, pseudocoremingenomes=-1, ngenom
 		cat(sprintf("Written list of pseudo-core unicopy gene families (with min. genome nb. = %d) and graphical representation of their distribution at:\n%s\n%s\n",
 		 p, nfpdfout, nftabout))
 		pseudocore[[as.character(p)]] = pseudocorefams
+		nloop = nloop + 1
 		if (nloop < length(pseudocoremingenomes)){
-			nloop = nloop + 1
 			p = pseudocoremingenomes[nloop]
 		}else{ if (is.null(pseudocoremingenomes)){
 			# interactive prompt
