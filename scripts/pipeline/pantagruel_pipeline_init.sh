@@ -58,14 +58,14 @@ if [ ! -z "${ncbiass}" ] ; then
     for dass in $(ls -A ${ncbiass}/) ; do
     # check validity of the folder file structure
       if [ ! -d ${ncbiass}/${dass} ] ; then
-        echo "RefSeq assemblies must be provided as folders including sequence and annotation files;"
-        echo "'${ncbiass}/${dass}' is not a directory; exit now"
+        echo "Error: RefSeq assemblies must be provided as folders including sequence and annotation files;"
+        echo " '${ncbiass}/${dass}' is not a directory; exit now"
         exit 1
       fi
       for ext in genomic.fna genomic.gbff genomic.gff cds_from_genomic protein.faa ; do
        if [ -z "$(ls -A ${ncbiass}/${dass}/${dass}_${ext}* 2> /dev/null)" ] ; then
-        echo "could not detect file named like '${dass}_${ext}*' extension in custom assembly folder '${ncbiass}/${dass}/';"
-        echo "Input RefSeq assemblies must include a file with extension *_${ext}[.gz] ; exit now"
+        echo "Error: could not detect file named like '${dass}_${ext}*' extension in custom assembly folder '${ncbiass}/${dass}/';"
+        echo " Input RefSeq assemblies must include a file with extension *_${ext}[.gz] ; exit now"
         exit 1
        fi
       done
@@ -85,34 +85,38 @@ if [ ! -z "${customassemb}" ] ; then
   # detected input custom genome folder
   # check validity of the folder file structure
   if [ ! -d "${customassemb}/contigs" ] ; then
-    echo "custom assembly folder '${customassemb}/' does not contain mandatory folder 'contigs/'"
-    echo "Error: custom assemblies must always provide contigs ; exit now"
+    echo "Error: custom assembly folder '${customassemb}/' does not contain mandatory folder 'contigs/'"
+    echo " custom assemblies must always provide contigs"
+    echo " please copy/link raw sequence (in multi-fasta format) files of custom (user-generated) assemblies into '${customassemb}/contigs/'"
+    echo " exit now"
     exit 1
   else
     if [ ! -e ${straininfo} ] ; then
-     echo "assembly_id,genus,species,strain,taxid,locus_tag_prefix" | tr ',' '\t' > ${straininfo}
-     echo "please copy/link raw sequence (in multi-fasta format) files of custom (user-generated) assemblies into '${customassemb}/contigs/'"
-     echo "and fill up the information table ${straininfo} (tab-delimited fields) according to header:"
+     echo "Error: '${straininfo}' is missing"
+     echo " assembly_id,genus,species,strain,taxid,locus_tag_prefix" | tr ',' '\t' > ${straininfo}
+     echo " and fill up the information table ${straininfo} (tab-delimited fields) according to header:"
      cat ${straininfo}
      if [[ "$(ls -A "${customassemb}/contigs/" 2>/dev/null)" ]] ; then
       for allcontigs in `ls ${customassemb}/contigs/` ; do
         gproject=${allcontigs%%.fa*}
         echo "${gproject}\t\t\t\t\t" >> ${straininfo}
       done
-      echo "prepared tab-delimited rows in file '${straininfo}' from files found in '${customassemb}/contigs/'"
+      echo " a tab-delimited template was prepared in file '${straininfo}' with assembly_id values copied from names of files found in '${customassemb}/contigs/'"
      fi
+     echo " exit now"
+     exit 1
     fi
   fi
   if [ -d "${customassemb}/annotations" ] ; then
     for dass in $(ls -A ${customassemb}/annotations/) ; do
       if [ ! -d ${customassemb}/annotations/${dass} ] ; then
         echo "Annotations for custom assemblies must be provided as folders of annotation files;"
-        echo "'${customassemb}/annotations/${dass}' is not a directory; exit now"
+        echo " '${customassemb}/annotations/${dass}' is not a directory; exit now"
         exit 1
       fi
       if [ -z "$(ls -A ${customassemb}/annotations/${dass}/*.gff 2> /dev/null)" ] ; then
-        echo "could not detect GFF file (with .gff extension) in custom assembly folder '${customassemb}/annotations/${dass}/';"
-        echo "Annotations for custom assemblies must include at least a GFF file ; exit now"
+        echo "Error: could not detect GFF file (with .gff extension) in custom assembly folder '${customassemb}/annotations/${dass}/';"
+        echo " Annotations for custom assemblies must include at least a GFF file ; exit now"
         exit 1
       fi
     done

@@ -164,7 +164,8 @@ Options are detailed here:
                           with extension '.fa', '.fasta' or '.fas' ...). Fasta file names will be truncated by removing
                           the '.fa' string and everything occuring after) and will be retained as the assembly_id (beware 
                           of names redundant with RefSeq assemblies).
-                       - a 'strain_infos.txt' file describing the organism, with columns headed:
+                       - a 'strain_infos_${databasename}.txt' file describing the organism, with ${databasename} the value of option -d"
+                          columns should be headed with these fields (replace quotes and semicolons by tabs!):"
                            'sequencing_project_id'; 'genus'; 'species'; 'strain'; 'taxid'; 'locus_tag_prefix'
                          'sequencing_project_id' must match the name of a contig file (e.g. 'seqProjID.fasta')
                          'locus_tag_prefix' must match the prefix of ids given to CDS, proteins and genome regions (contigs)
@@ -328,7 +329,7 @@ ls -AF user_genomes/annotation/B03_1/
 # Rhizobium_endolithicum_Q54.gff
 # the file names within the folder do not matter, only their extensions.
 
-cat user_genomes/strain_infos.txt
+cat user_genomes/strain_infos_databasename.txt
 # assembly_id	genus	species	strain	taxid	locus_tag_prefix
 # B03_1	Rhizobium	endolithicum	Q54	1335060	REQ54
 # ...
