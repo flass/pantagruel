@@ -13,8 +13,9 @@ readInput = function(prompt){
 }
 
 promptselectmingenomes = function(P=-1, silent=F){
+	cat("Please confirm or enter a new value for P [or stop by choosing 0]: \n")
 	while (P < 0){
-		P = as.numeric(readInput(prompt=ifelse(silent, "", "Please enter non-zero integer value for P: ")))
+		P = as.numeric(readInput(prompt=ifelse(silent, "", "Please enter non-negative integer value for P: ")))
 	}
 	return(P)
 }
@@ -42,7 +43,7 @@ selectMinGenomes = function(countmatrix, dirout, pseudocoremingenomes=-1, ngenom
 		nloop = nloop + 1
 		p = pseudocoremingenomes[nloop]
 		if ( p <= 0 ) stop("needs a non-null value for 'pseudocoremingenomes'")
-		print(sprintf("test value %d for P, the minimum number of genomes to be represented in pseudo-core unicopy gene families"), p)
+		print(sprintf("test value %d for P, the minimum number of genomes to be represented in pseudo-core unicopy gene families", p), quote=F)
 	}
 	pseudocorefams = NULL
 	pseudocore = list()
@@ -77,7 +78,6 @@ selectMinGenomes = function(countmatrix, dirout, pseudocoremingenomes=-1, ngenom
 		write(pseudocorefams, file=nftabout)
 		cat(sprintf("Written list of pseudo-core unicopy gene families (with min. genome nb. = %d) and graphical representation of their distribution at:\n%s\n%s\n",
 		 p, nfpdfout, nftabout))
-		if (is.null(pseudocoremingenomes)){ cat("Please confirm or enter a new value for P [or stop by choosing 0]: \n") }
 		pseudocore[[as.character(p)]] = pseudocorefams
 		if (nloop < length(pseudocoremingenomes)){
 			nloop = nloop + 1
@@ -90,7 +90,7 @@ selectMinGenomes = function(countmatrix, dirout, pseudocoremingenomes=-1, ngenom
 		if (p==0){ break }
 	}
 	if (interactive.X){ dev.off() }
-	print(sprintf("Selected %d as value of P\n", pseudocore))
+	cat(sprintf("Selected %d as value of P\n", pseudocore))
 	return(pseudocore)
 }
 
@@ -108,12 +108,16 @@ nflasscode = cargs[2]
 dirout = cargs[3]
 if (length(cargs) > 3){
 	pseudocoremingenomes = as.numeric(cargs[4])
-	if (is.na(pseudocoremingenomes)){
+	if (!is.na(pseudocoremingenomes)){
+		cat(sprintf("try value of pseudocoremingenomes = %d\n", pseudocoremingenomes))
+	}else{
+		if (cargs[4]==''){
+			pseudocoremingenomes = NULL
+			cat(sprintf("no input for pseudocoremingenomes; turns on INTERACTIVE mode\n", pseudocoremingenomes))
+		}
 		print(sprintf("extract values of pseudocoremingenomes from file '%s'", cargs[4]), quote=F)
 		pseudocoremingenomes = as.numeric(readLines(cargs[4]))
-		print(c("try values of pseudocoremingenomes = ", pseudocoremingenomes), quote=F)
-	}else{
-		print(sprintf("try value of pseudocoremingenomes = %d", pseudocoremingenomes), quote=F)
+		cat(sprintf("try values of pseudocoremingenomes = %s\n", paste(pseudocoremingenomes, collapse=', '))
 	}
 }else{
 	pseudocoremingenomes = NULL
