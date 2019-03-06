@@ -109,10 +109,10 @@ dirout = cargs[3]
 if (length(cargs) > 3){
 	pseudocoremingenomes = as.numeric(cargs[4])
 	if (is.na(pseudocoremingenomes)){
-		pseudocoremingenomes = readLines(cargs[4])
+		pseudocoremingenomes = as.numeric(readLines(cargs[4]))
 	}
 }else{
-	pseudocoremingenomes = -1
+	pseudocoremingenomes = NULL
 }
 if (length(cargs) > 4){
 	interactive.X = as.logical(toupper(cargs[5]))
