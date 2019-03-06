@@ -38,7 +38,7 @@ selectMinGenomes = function(countmatrix, dirout, pseudocoremingenomes=-1, ngenom
 	nloop = 0
 	if (is.null(pseudocoremingenomes)){
 		p = selectmingenomes()
-	}else{(length(pseudocoremingenomes) > 1){
+	}else{ if (length(pseudocoremingenomes) > 1){
 		nloop = nloop + 1
 		p = pseudocoremingenomes[nloop]
 	}else{
