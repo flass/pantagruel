@@ -85,7 +85,7 @@ selectMinGenomes = function(countmatrix, dirout, pseudocoremingenomes=-1, ngenom
 		}else{ if (is.null(pseudocoremingenomes)){
 			# interactive prompt
 			p = promptselectmingenomes()
-		}
+		}}
 		# else just keep value of p, which will lead to p == pcmg and breaking the while loop
 		if (p==0){ break }
 	}
@@ -108,7 +108,6 @@ nflasscode = cargs[2]
 dirout = cargs[3]
 if (length(cargs) > 3){
 	pseudocoremingenomes = as.numeric(cargs[4])
-	
 	if (is.na(pseudocoremingenomes)){
 		print(sprintf("extract values of pseudocoremingenomes from file '%s'", cargs[4]), quote=F)
 		pseudocoremingenomes = as.numeric(readLines(cargs[4]))
