@@ -43,15 +43,27 @@ else
 
   ## edit the gene trees, producing the corresponding (potentially collapsed) species tree based on the 'time'-tree backbone
   mkdir -p ${ptgdb}/logs/replspebypop
-  tasklist=${coltreechains}_${collapsecond}_nexus_list
-  ls $bayesgenetrees/${collapsecond}/*run1.t > $tasklist
+  tasklist=${coltreechains}_${collapsecond}_mbrun1t_list
+  ls ${bayesgenetrees}/${collapsecond}/*run1.t > $tasklist
   repllogd=${ptgdb}/logs/replspebypop
-  repllogs=$repllogd/replace_species_by_pop_in_gene_trees
+  repllogs=${repllogd}/replace_species_by_pop_in_gene_trees
   replrun=$(date +'%d%m%Y')
 
+  if [ "${resumetask}" == 'true' ] ; then
+    #~ # following lines are for resuming after a stop in batch computing, or to collect those jobs that crashed (and may need to be re-ran with more mem/time allowance)
+    for nfrun1t in $(cat $tasklist) ; do
+     bnrun1t=$(basename $nfrun1t)
+     bnGtre=${bnrun1t/mb.run1.t/Gtrees.nwk}
+     bnStre=${bnrun1t/mb.run1.t/Stree.nwk}
+     if [[ ! -e ${coltreechains}/${collapsecond}/${bnGtre} || ! -e ${coltreechains}/${collapsecond}/${bnStre} ]] ; then
+       echo ${nfrun1t}
+     fi
+    done > ${tasklist}_resumetask_${dtag}
+    tasklist=${tasklist}_resumetask_${dtag}
+  fi
   # PBS-submitted parallel job
   ncpus=8
-  qsub -N replSpePopinGs -l select=1:ncpus=${ncpus}:mem=64gb,walltime=24:00:00 -o $repllogd -j oe -V << EOF
+  qsub -N replSpePopinGs -l select=1:ncpus=${ncpus}:mem=96gb,walltime=24:00:00 -o ${repllogd} -j oe -V << EOF
   module load python
   python ${ptgscripts}/replace_species_by_pop_in_gene_trees.py -G ${tasklist} -c ${colalinexuscodedir}/${collapsecond} -S ${speciestree}.lsd.newick -o ${coltreechains}/${collapsecond} \
    --populations=${speciestree%.*}_populations --population_tree=${speciestree%.*}_collapsedPopulations.nwk --population_node_distance=${speciestree%.*}_interNodeDistPopulations \

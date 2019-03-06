@@ -199,7 +199,7 @@ if  [[ ! -s ${speciestree} ]] ; then
    # ML tree search already done
    echo "skip ML tree search"
   else
-   ckps=($(ls -t ${coretree}/RAxML_checkpoint.${treename}.*))
+   ckps=($(ls -t ${coretree}/RAxML_checkpoint.${treename}.* 2> /dev/null))
    if [[ "${resumetask}" == "true" && -z "${ckps}" ]] ; then
     # resume search from checkpoint
     echo "resume from checkpoint ${ckps[0]##*.}"

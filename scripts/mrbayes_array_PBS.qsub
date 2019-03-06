@@ -31,17 +31,17 @@ EOF
 
 
 # use installation of mrbayes as a cluster module
-module -v load mrbayes/${mbversion}
+module load mrbayes/${mbversion}
 # use parallel environment
 module load intel-suite
 if [ ${mbversion%.*} == '3.1' ] ; then
 # mpi/intel-5.1 is default MPI lib but old install of mrbayes requires loading both current version AND the deprecated mpi/intel-3.1
-module -v load deprecated/mpi/intel-3.1
+module load deprecated/mpi/intel-3.1
 fi
-module -v load mpi
+module load mpi
 if [ ${mbversion%.*} == '3.2' ] ; then
 # used by MrBayes v3.2
-module -v load beagle-lib
+module load beagle-lib
 fi
 module list
 
