@@ -91,7 +91,7 @@ if [ ! -z "${customassemb}" ] ; then
     echo " exit now"
     exit 1
   else
-    if [ ! -e ${straininfo} ] ; then
+    if [ ! -e "${straininfo}" ] ; then
      echo "Error: '${straininfo}' is missing"
      echo " assembly_id,genus,species,strain,taxid,locus_tag_prefix" | tr ',' '\t' > ${straininfo}
      echo " and fill up the information table ${straininfo} (tab-delimited fields) according to header:"

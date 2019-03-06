@@ -321,8 +321,8 @@ if __name__=='__main__':
 		usergenomefinalassdir = sys.argv[6]
 	else:
 		usergenomefinalassdir = None
-		
-	for nf in [dbname, nfspeclist, nfusergenomeinfo]:
+	
+	for nf in [dbname, nfspeclist, nfusergenomeinfo, usergenomefinalassdir]:
 		if (nf is not None) and not (os.path.exists(nf)):
 			raise ValueError, "specified input file '%s' cannot be found"%nf
 	

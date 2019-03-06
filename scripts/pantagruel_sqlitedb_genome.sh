@@ -31,12 +31,12 @@ if [ ! -e speclist ] ; then
 fi
  
 ### if no set db name env variable, INTERACTIVE prompt asks for database name and password
-while [ -z $dbname ] ; do
+while [ -z ${dbname} ] ; do
   read -p 'Set PostgreSQL database name: ' dbname ; echo ''
 done
 
 ## create database and load database schema
-sqlite3 $dbname < $initiatescript
+sqlite3 ${dbname} < $initiatescript
 
 
 ## generate input data tables
@@ -51,9 +51,9 @@ getnumfield (){
 }
 # verify occurence of 'nr_protein_id' or 'protein_id' field in 'allproteins_info.tab'
 protidfield=$(head -n 1 ${assemblyinfo}/allproteins_info.tab | grep -o 'nr_protein_id')
-if [ -z $protidfield ] ; then 
+if [ -z "${protidfield}" ] ; then 
  protidfield=$(head -n 1 ${assemblyinfo}/allproteins_info.tab | grep -o 'protein_id')
- if [ -z $protidfield ] ; then 
+ if [ -z "${protidfield}" ] ; then 
   echo "Error, file '${assemblyinfo}/allproteins_info.tab' if missing a field headed 'nr_protein_id' or 'protein_id'"
   exit 1
  fi
@@ -68,19 +68,22 @@ cut -f $replifieldnums ${assemblyinfo}/allreplicons_info.tab > genome_replicons.
 # gene_family table
 cut -f 2,3 ${protali}/full_families_info-noORFans.tab > genome_gene_families.tab
 # protein_family table
-awk -v"OFS=\t" '{print $2 ,$1}' $protfamseqs.tab ${protfamseqtab} > genome_protein_families.tab
+awk -v"OFS=\t" '{print $2 ,$1}' ${protfamseqs}.tab ${protfamseqtab} > genome_protein_families.tab
 # coding_sequences table
 cdsfields="$protidfield genomic_accession locus_tag cds_begin cds_end cds_strand genbank_cds_id"
 cdsfieldnums=$(getnumfield ${assemblyinfo}/allproteins_info.tab $cdsfields)
-head -n 1  ${assemblyinfo}/allproteins_info.tab | cut -f ${cdsfieldnums} | sed -e $protidsedfilter > genome_coding_sequences.tab && \
+head -n 1  ${assemblyinfo}/allproteins_info.tab | cut -f ${cdsfieldnums} | sed -e ${protidsedfilter} > genome_coding_sequences.tab && \
 tail -n +2 ${assemblyinfo}/allproteins_info.tab | cut -f ${cdsfieldnums} >> genome_coding_sequences.tab
 # proteins table
 protfields="$protidfield product"
 protfieldnums=$(getnumfield ${assemblyinfo}/allproteins_info.tab $protfields)
-head -n 1  ${assemblyinfo}/allproteins_info.tab | cut -f ${protfieldnums} | sed -e $protidsedfilter > genome_protein_products.tab && \
+head -n 1  ${assemblyinfo}/allproteins_info.tab | cut -f ${protfieldnums} | sed -e ${protidsedfilter} > genome_protein_products.tab && \
 tail -n +2 ${assemblyinfo}/allproteins_info.tab | cut -f ${protfieldnums} | grep -vP "^\t" | sort -u | sed -e "s/%2C/,/g" | sed -e "s/%3B/;/g" >> genome_protein_products.tab
 
 ## populate database
-python $populatescript $dbname ${protorfanclust} ${cdsorfanclust} ${database}/speclist ${usergenomeinfo} ${usergenomefinalassdir}
-
+if [ -z  "${customassemb}" ] ; then
+  python ${populatescript} ${dbname} ${protorfanclust} ${cdsorfanclust} ${database}/speclist ${usergenomeinfo} ${usergenomefinalassdir}
+else
+  python ${populatescript} ${dbname} ${protorfanclust} ${cdsorfanclust} ${database}/speclist
+fi
 cd -
