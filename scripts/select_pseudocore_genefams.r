@@ -36,12 +36,14 @@ selectMinGenomes = function(countmatrix, dirout, pseudocoremingenomes=-1, ngenom
 	print("Select a value for P, the minimum number of genomes to be represented in pseudo-core unicopy gene families")
 	
 	nloop = 0
-	if (length(pseudocoremingenomes) > 1){
-		nloop = 1
+	if (is.null(pseudocoremingenomes)){
+		p = selectmingenomes()
+	}else{(length(pseudocoremingenomes) > 1){
+		nloop = nloop + 1
 		p = pseudocoremingenomes[nloop]
 	}else{
 		p = selectmingenomes(pseudocoremingenomes)
-	}
+	}}
 	pseudocorefams = NULL
 	pseudocore = list()
 	pcmg = -1

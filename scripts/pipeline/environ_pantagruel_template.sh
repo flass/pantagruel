@@ -20,27 +20,27 @@ datepad="                      "
 # the first lot are derived from arguments passed as options in call `pantagruel [options] init`,
 # for instance, options `-d TheDatabaseName` and `-r /where/it/is/built`
 # will lead to setting variables ptgdbname='TheDatabaseName' and ptgroot='/where/it/is/built', respectively.
-export ptgroot='REPLACEptgroot'
-export ptgdbname='REPLACEptgdbname'
-export ptgrepo='REPLACEptgrepo'
-export myemail='REPLACEmyemail'
-export famprefix='REPLACEfamprefix'
-export ncbitax='REPLACEncbitax'
-export ncbiass='REPLACEncbiass'
-export listncbiass='REPLACElistncbiass'
-export customassemb='REPLACEcustomassemb'
-export refass='REPLACErefass'
-export listrefass='REPLACElistrefass'
-export ngenomes='REPLACEngenomes'    # the count of genomes in the dataset
-export coreseqtype='REPLACEcoreseqtype'
-export pseudocoremingenomes='REPLACEpseudocoremingenomes'    # the minimum number of genomes in which a gene family should be present to be included in the pseudo-core genome gene set
-export userreftree='REPLACEuserreftree'                              # possible user-provided reference tree
-export poplgthresh='REPLACEpoplgthresh'
-export poplgleafmul='REPLACEpoplgleafmul'
-export popbsthresh='REPLACEpopbsthresh'
-export chaintype='REPLACEchaintype'
-export hpcremoteptgroot='REPLACEhpcremoteptgroot'
-export collapseCladeParams='REPLACEcollapseCladeParams'
+export ptgroot='REPLACEptgroot'                            # root folder where to build the database
+export ptgdbname='REPLACEptgdbname'                        # name of dataabse
+export ptgrepo='REPLACEptgrepo'                            # location (folder) of Pantagruel software
+export myemail='REPLACEmyemail'                            # user identity (better use e-amil address)
+export famprefix='REPLACEfamprefix'                        # gene family prefix
+export ncbitax='REPLACEncbitax'                            # folder of up-to-date NCBI Taxonomy database
+export ncbiass='REPLACEncbiass'                            # folder of RefSeq genomes to include in the study
+export listncbiass='REPLACElistncbiass'                    # list of accessions of RefSeq genomes to include in the study
+export customassemb='REPLACEcustomassemb'                  # folder of custom genome assemblies to include in the study
+export refass='REPLACErefass'                              # folder of reference (RefSeq) genomes only to use as reference for the annotation of custom genome assemblies
+export listrefass='REPLACElistrefass'                      # list of accessions of reference (RefSeq) genomes only to use as reference for the annotation of custom genome assemblies
+export ngenomes=REPLACEngenomes                            # the count of genomes in the dataset
+export coreseqtype='REPLACEcoreseqtype'                    # either 'cds' or 'protein'
+export pseudocoremingenomes=REPLACEpseudocoremingenomes    # the minimum number of genomes in which a gene family should be present to be included in the pseudo-core genome gene set
+export userreftree='REPLACEuserreftree'                    # possible user-provided reference tree
+export poplgthresh='REPLACEpoplgthresh'                    # parameter to define populations of genomes in the reference tree (stem branch length threshold)
+export poplgleafmul='REPLACEpoplgleafmul'                  # parameter to define populations of genomes in the reference tree (multiplier to the former in case it is a leaf)
+export popbsthresh='REPLACEpopbsthresh'                    # parameter to define populations of genomes in the reference tree (stem branch support threshold)
+export chaintype='REPLACEchaintype'                        # whether gene trees will be collapsed ('collapsed') or not ('fullgenetree')
+export collapseCladeParams='REPLACEcollapseCladeParams'    # if not empty, non-default parameters for gene trees collapsing
+export hpcremoteptgroot='REPLACEhpcremoteptgroot'          # if not empty, will use this server address to send data and scripts to run heavy computions there 
 # the rest have fixed values that can be modified here or overriden with certain task-specific options
 # default values are:
 export cladesupp=70
@@ -126,7 +126,7 @@ export nrbesttree=${coretreerad}.topology
 export nrbiparts=${coretreerad}.supports
 export nrrootedtree=${coretreerad}.rooted
 export speciestree=${coretreerad}.full
-if [[ "${pseudocoremingenomes}" == "REPLACEpseudocoremingenomes" || "${pseudocoremingenomes}" == "${ngenomes}" ]] ; then
+if [[ "${pseudocoremingenomes}" == "${ngenomes}" ]] ; then
   export pseudocore='strict-core-unicopy'
 else
   export pseudocore=pseudo-core-${pseudocoremingenomes}-unicopy
