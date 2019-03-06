@@ -35,7 +35,7 @@ if [ ! -z "$pseudocoremingenomes" ] ; then
   # repeat last value and thus make it the chosen value (other values will just have had their gene family set and heatmap representation computed for consultation)
   echo ${p} >> ${ptgtmp}/mingenom
   Rscript --vanilla --silent ${ptgscripts}/select_pseudocore_genefams.r \
-   ${protali}/full_families_genome_counts-noORFans.mat ${database}/genome_codes.tab ${coregenome}/pseudo-coregenome_sets < ${ptgtmp}/mingenom
+   ${protali}/full_families_genome_counts-noORFans.mat ${database}/genome_codes.tab ${coregenome}/pseudo-coregenome_sets ${ptgtmp}/mingenom
 else
   # interactive call
   Rscript --vanilla --silent ${ptgscripts}/select_pseudocore_genefams.r \

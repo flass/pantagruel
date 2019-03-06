@@ -141,7 +141,7 @@ EOF
 fi
 
 echo "run non-interactively '$ptgscripts/choose_min_genome_occurrence_pseudocore_genes.sh' to record the gene family set."
-if [[ ! -z "${pseudocoremingenomes}" ]] ; then	
+if [[ -z "${pseudocoremingenomes}" ]] ; then	
      echo "Default: will use a strict core-genome gene set, i.e. genes present in a single copy in all the ${ngenomes} studied genomes."
 	 ${ptgscripts}/choose_min_genome_occurrence_pseudocore_genes.sh ${initfile} ${ngenomes}
 else	

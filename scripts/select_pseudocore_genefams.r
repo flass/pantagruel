@@ -37,18 +37,18 @@ selectMinGenomes = function(countmatrix, dirout, pseudocoremingenomes=-1, ngenom
 	
 	nloop = 0
 	if (is.null(pseudocoremingenomes)){
+		# interactive prompt
 		p = selectmingenomes()
-	}else{ if (length(pseudocoremingenomes) > 1){
+	}else{
 		nloop = nloop + 1
 		p = pseudocoremingenomes[nloop]
-	}else{
-		p = selectmingenomes(pseudocoremingenomes)
-	}}
+		if ( p <= 0 ) stop("needs a non-null value for 'pseudocoremingenomes'")
+	}
 	pseudocorefams = NULL
 	pseudocore = list()
 	pcmg = -1
 	if (interactive.X){ X11(width=16, height=10) }
-	while (p!=pcmg | nloop==length(pseudocoremingenomes)){
+	while (p!=pcmg | nloop<=length(pseudocoremingenomes)){
 		if (p<N){ pseudocorerad = sprintf("pseudo-core-%d-unicopy", p)
 		}else{  pseudocorerad = "strict-core-unicopy" }
 		nftabout = file.path(dirout, sprintf("%s_families.tab", pseudocorerad))
@@ -79,7 +79,7 @@ selectMinGenomes = function(countmatrix, dirout, pseudocoremingenomes=-1, ngenom
 		 p, nfpdfout, nftabout))
 		cat("Please confirm or enter a new value for P [or stop by choosing 0]: \n")
 		pseudocore[[as.character(p)]] = pseudocorefams
-		if (nloop>0){
+		if (nloop < length(pseudocoremingenomes)){
 			nloop = nloop + 1
 			p = pseudocoremingenomes[nloop]
 		}else{
@@ -105,6 +105,9 @@ nflasscode = cargs[2]
 dirout = cargs[3]
 if (length(cargs) > 3){
 	pseudocoremingenomes = as.numeric(cargs[4])
+	if (is.na(pseudocoremingenomes)){
+		pseudocoremingenomes = readLines(cargs[4])
+	}
 }else{
 	pseudocoremingenomes = -1
 }
