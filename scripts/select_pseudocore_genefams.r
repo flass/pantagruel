@@ -117,7 +117,7 @@ if (length(cargs) > 3){
 		}
 		print(sprintf("extract values of pseudocoremingenomes from file '%s'", cargs[4]), quote=F)
 		pseudocoremingenomes = as.numeric(readLines(cargs[4]))
-		cat(sprintf("try values of pseudocoremingenomes = %s\n", paste(pseudocoremingenomes, collapse=', '))
+		cat(sprintf("try values of pseudocoremingenomes = %s\n", paste(pseudocoremingenomes, collapse=', ')))
 	}
 }else{
 	pseudocoremingenomes = NULL
