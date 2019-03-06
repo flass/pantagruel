@@ -32,33 +32,21 @@ ${ptgscripts}/lsfullpath.py "${outrecdir}/ale_collapsed_${rectype}/*ml_rec" > $r
  
 ## normalise the species tree branch labels across gene families
 ## and look for correlated transfer events across gene families
+
+# PBS-submitted parallel job
+parsecollogd=${ptgdb}/logs/parsecol
+parsecollogs=${parsecollogd}/parse_collapsedALE_scenarios.og
+ncpus=8
+qsub -N parseColALE -l select=1:ncpus=${ncpus}:mem=96gb,walltime=24:00:00 -o ${parsecollogs} -j oe -V << EOF
+module load python
 python ${ptgscripts}/parse_collapsedALE_scenarios.py --rec_sample_list ${reclist} \
  --populations ${speciestree/.full/}_populations --reftree ${speciestree}.lsd.newick \
  --dir_table_out ${parsedrecs} --evtype ${evtypeparse} --minfreq ${minevfreqparse} \
- --threads 8  &> $entlogs/parse_collapsedALE_scenarios.log &
+ --threads 8
 
 export parsedreccoldate=$(date +%Y-%m-%d)
 echo -e "${parsedreccolid}\t${parsedreccoldate}" > ${genetrees}/parsedreccol
 
 ## store reconciliation parameters and load parsed reconciliation data into database
 ${ptgscripts}/pantagruel_sqlitedb_phylogeny_populate_reconciliations.sh ${database} ${sqldb} ${parsedrecs} ${ALEversion} ${ALEalgo} ${ALEsourcenote} ${parsedreccol} ${parsedreccolid} ${parsedreccoldate}
-
-# rapid survey of event density over the reference tree
-for freqthresh in 0.1 0.25 0.5 ; do
-sqlite3 ${sqldb} """
-.mode tabs 
-select don_branch_id, don_branch_name, rec_branch_id, rec_branch_name, event_type, nb_lineages, cum_freq, cum_freq/nb_lineages as avg_support from (
- select don_branch_id, don_stree.branch_name as don_branch_name, rec_branch_id, rec_stree.branch_name as rec_branch_name, event_type, count(*) as nb_lineages, sum(freq)::real/${nsample} as cum_freq
-  from gene_lineage_events 
-  inner join species_tree_events using (event_id) 
-  inner join species_tree as rec_stree on rec_branch_id=rec_stree.branch_id
-  left join species_tree as don_stree on don_branch_id=don_stree.branch_id
- where freq >= ( ${freqthresh} * ${recsamplesize} )
- group by don_branch_id, don_branch_name, rec_branch_name, rec_branch_id, event_type 
-) as weg
-order by nb_lineages desc, avg_support desc;
-""" > ${parsedrecs}/summary_gene_tree_events_minfreq${freqthresh} 
-wc -l ${parsedrecs}/summary_gene_tree_events_minfreq${freqthresh} 
-${ptgscripts}/plot_spetree_event_density.r ${parsedrecs}/summary_gene_tree_events_minfreq${freqthresh} ${speciestree/.full/}_collapsedPopulations.nwk
-done &
-
+EOF
