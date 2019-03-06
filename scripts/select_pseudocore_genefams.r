@@ -12,16 +12,15 @@ readInput = function(prompt){
 	return(val)
 }
 
-selectmingenomes = function(pseudocoremingenomes=-1, silent=F){
-	while (pseudocoremingenomes < 0){
-		pseudocoremingenomes = as.numeric(readInput(prompt="Please enter non-zero integer value for P: "))
+promptselectmingenomes = function(P=-1, silent=F){
+	while (P < 0){
+		P = as.numeric(readInput(prompt=ifelse(silent, "", "Please enter non-zero integer value for P: ")))
 	}
-	if (!silent){ cat(sprintf("Selected %d as value of P\n", pseudocoremingenomes)) }
-	return(pseudocoremingenomes)
+	return(P)
 }
 
-getpseudocorefams = function(pseudocoremingenomes, countsbyfam){
-	pseudocorefams = names(countsbyfam[countsbyfam >= pseudocoremingenomes])
+getpseudocorefams = function(P, countsbyfam){
+	pseudocorefams = names(countsbyfam[countsbyfam >= P])
 	cat(sprintf("results in a set of %d pseudo-core unicopy gene families\n", length(pseudocorefams)))
 	return(pseudocorefams)
 }
@@ -33,16 +32,17 @@ selectMinGenomes = function(countmatrix, dirout, pseudocoremingenomes=-1, ngenom
 	cat(sprintf("number of unicopy gene families present in at least n genomes (out of %d):\n", N))
 	cscbf = cumsum(rev(table(countsbyfam)))
 	print(cscbf[intersect(names(cscbf), as.character(floor(N*minfracNgenomeshow):N))])
-	print("Select a value for P, the minimum number of genomes to be represented in pseudo-core unicopy gene families")
+	if (is.null(pseudocoremingenomes)){ print("Select a value for P, the minimum number of genomes to be represented in pseudo-core unicopy gene families") }
 	
 	nloop = 0
 	if (is.null(pseudocoremingenomes)){
 		# interactive prompt
-		p = selectmingenomes()
+		p = promptselectmingenomes()
 	}else{
 		nloop = nloop + 1
-		p = pseudocoremingenomes[nloop]
 		if ( p <= 0 ) stop("needs a non-null value for 'pseudocoremingenomes'")
+		print(sprintf("test value %d for P, the minimum number of genomes to be represented in pseudo-core unicopy gene families"), p)
+		p = pseudocoremingenomes[nloop]
 	}
 	pseudocorefams = NULL
 	pseudocore = list()
@@ -77,17 +77,20 @@ selectMinGenomes = function(countmatrix, dirout, pseudocoremingenomes=-1, ngenom
 		write(pseudocorefams, file=nftabout)
 		cat(sprintf("Written list of pseudo-core unicopy gene families (with min. genome nb. = %d) and graphical representation of their distribution at:\n%s\n%s\n",
 		 p, nfpdfout, nftabout))
-		cat("Please confirm or enter a new value for P [or stop by choosing 0]: \n")
+		if (is.null(pseudocoremingenomes)){ cat("Please confirm or enter a new value for P [or stop by choosing 0]: \n") }
 		pseudocore[[as.character(p)]] = pseudocorefams
 		if (nloop < length(pseudocoremingenomes)){
 			nloop = nloop + 1
 			p = pseudocoremingenomes[nloop]
-		}else{
-			p = selectmingenomes(silent=T)
+		}else{ if (is.null(pseudocoremingenomes)){
+			# interactive prompt
+			p = promptselectmingenomes()
 		}
+		# else just keep value of p, which will lead to p == pcmg and breaking the while loop
 		if (p==0){ break }
 	}
 	if (interactive.X){ dev.off() }
+	print(sprintf("Selected %d as value of P\n", pseudocore))
 	return(pseudocore)
 }
 
@@ -153,8 +156,7 @@ nfdataout = file.path(dirout, "pseudo-core-all.RData")
 save(genocountunicopy, pseudocore, file=nfdataout)
 cat(sprintf("Saved data in file: '%s'.\n", nfdataout))
 
-pseudocoremingenomes = names(pseudocore)[length(pseudocore)]
-cat(sprintf("Final choice of %d pseudo-core unicopy gene families (present in at least %d genomes).\n", length(pseudocore[[pseudocoremingenomes]]), as.numeric(pseudocoremingenomes)))
+P = names(pseudocore)[length(pseudocore)]
+cat(sprintf("Final choice of %d pseudo-core unicopy gene families (present in at least %d genomes).\n", length(pseudocore[[P]]), as.numeric(P)))
 
-#~ quit(status=as.numeric(pseudocoremingenomes), save='no')
-write(sprintf("pseudocoremingenomes=%d", as.numeric(pseudocoremingenomes)), stderr())
+write(sprintf("pseudocoremingenomes=%d", as.numeric(P)), stderr())
