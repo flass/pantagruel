@@ -69,7 +69,7 @@ else
    --populations=${speciestree%.*}_populations --population_tree=${speciestree%.*}_collapsedPopulations.nwk --population_node_distance=${speciestree%.*}_interNodeDistPopulations \
    --dir_full_gene_trees=${mlgenetrees}/rootedTree --method=${colmethod} --threads=${ncpus} --reuse=0 --max.recursion.limit=12000 --logfile=${repllogs}_${replrun}.log
   export replacecoldate=$(date +%Y-%m-%d)
-
+  echo -e "${replacecolid}\t${replacecoldate}" > ${genetrees}/replacecol
   ## load these information into the database
   collapsecolid=$(cut -f1 ${genetrees}/collapsecol)
   collapsecoldate=$(cut -f2 ${genetrees}/collapsecol)
