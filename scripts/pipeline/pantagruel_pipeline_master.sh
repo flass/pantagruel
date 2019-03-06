@@ -42,8 +42,6 @@ usagelong (){
   echo "    -i|--initfile     Pantagruel configuration file"
   echo "                        a file can be derived (i.e. manualy curated) from 'environment_pantagruel_template.sh' template."
   echo "                        Parameters values specified in this file will override other options"
-  #~ echo ""
-  #~ echo "    -p|--ptgrepo      location of pantagruel software head folder; defaults to ${defptgrepo}"
   echo ""
   echo "    -I|--iam          database creator identity (e-mail address is preferred)"
   echo ""
@@ -206,7 +204,7 @@ ptgenvsetdefaults (){
       echo "Default: set gene tree type to '$chaintype'"
     fi
     if [ -z "$pseudocoremingenomes" ] ; then
-     echo "Default: will a strict core-genome establish pseudo-core gene set, i.e. genes present in a single copy in all the studied genomes."
+     echo "Default: will use a strict core-genome gene set, i.e. genes present in a single copy in all the studied genomes."
      echo ""
      echo "!!! WARNING: strict core-genome definition can be very resctrictive, especially when including draft genome in the study."
      echo "You might prefer to use a pseudo-core genome definition instead, i.e. selecting gene present in a minimum fraction of genomes, for instance 98%."
@@ -215,6 +213,13 @@ ptgenvsetdefaults (){
      echo "To choose a sensible value, AFTER TASK 03, you can run the INTERACTIVE script:"
      echo "'$ptgscripts/choose_min_genome_occurrence_pseudocore_genes.sh'"
      echo "and then manualy edit the value of variable 'pseudocoremingenomes' in the pantagruel configuration file."
+    else
+      case "${pseudocoremingenomes}" in		
+        ''|*[!0-9]*)		
+      	 echo "'pseudocoremingenomes' variable is not set to a correct integer value: '${pseudocoremingenomes}'" ;;
+        *)		
+      	 echo "'pseudocoremingenomes' variable is set to ${pseudocoremingenomes}";;
+      esac
     fi
     if [ -z "$coreseqtype" ] ; then
      export coreseqtype='cds'
@@ -233,41 +238,6 @@ ptgenvsetdefaults (){
      export hpcremoteptgroot='none'
     fi
 }
-
-#~ setnondefaults (){
-    #~ nondefvardecl=${ptgtmp}/nondefvardecl.sh
-    #~ rm -f ${ptgtmp}/nondefvardecl.sh
-    #~ if [ ! -z "$hpcremoteptgroot" ] ; then
-     #~ echo "Overide default: all computations will be run on a distant server (potentially a HPC service) instead of locally"
-     #~ echo "export hpcremoteptgroot=${hpcremoteptgroot}" >> ${ptgtmp}/nondefvardecl.sh
-    #~ fi
-    #~ if [ ! -z "$collapseCladeParams" ] ; then
-     #~ if [ ! -z "$chaintype" ] ; then 
-      #~ echo "Overide default: gene tree clade collapsing will use these parameters: '$collapseCladeParams'"
-     #~ echo "export collapseCladeParams=${collapseCladeParams}" >> ${ptgtmp}/nondefvardecl.sh
-     #~ fi
-    #~ fi
-    #~ if [ ! -z "$userreftree" ] ; then
-     #~ echo "Overide default (only relevant to 'core' task): a reference tree was provided; will not compute core-genome tree"
-     #~ echo "export userreftree=${userreftree}" >> ${ptgtmp}/nondefvardecl.sh
-    #~ fi
-    #~ if [ ! -z "$coreseqtype" ] ; then
-     #~ echo "Overide default (only relevant to 'core' task): core sequence type is set to '$coreseqtype'"
-     #~ echo "export coreseqtype=${coreseqtype}" >> ${ptgtmp}/nondefvardecl.sh
-    #~ fi
-    #~ if [ ! -z "$poplgthresh" ] ; then
-     #~ echo "Overide default (only relevant to 'core' task): set population delination branch support threshold to $poplgthresh"
-     #~ echo "export poplgthresh=${poplgthresh}" >> ${ptgtmp}/nondefvardecl.sh
-    #~ fi
-    #~ if [ ! -z "$popbsthresh" ] ; then
-     #~ echo "Overide default (only relevant to 'core' task): set population delination branch support threshold to $popbsthresh"
-     #~ echo "export popbsthresh=${popbsthresh}" >> ${ptgtmp}/nondefvardecl.sh
-    #~ fi
-    #~ if [ ! -z "$resumetask" ] ; then
-     #~ echo "Overide default (only relevant to 'core' task): will try and resume computation of task where it was last stopped"
-     #~ echo "export resumetask=${resumetask}" >> ${ptgtmp}/nondefvardecl.sh
-    #~ fi
-#~ }
 
 testmandatoryarg (){
   if [ -z "$2" ]; then
