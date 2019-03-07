@@ -1,16 +1,16 @@
 #!/bin/bash
-thisscript=$0
-database=$1
-dbfile=$2
-colalinexuscodedir=$3
-coltreechains=$4
-collapsecond=$5
-colmethod=$6
-collapsecriteriondef=$7
-collapsecolid=$8
-replacecolid=$9
-collapsecoldate=$10
-replacecoldate=$11
+thisscript=${0}
+database=${1}
+dbfile=${2}
+colalinexuscodedir=${3}
+coltreechains=${4}
+collapsecond=${5}
+colmethod=${6}
+collapsecriteriondef=${7}
+collapsecolid=${8}
+replacecolid=${9}
+collapsecoldate=${10}
+replacecoldate=${11}
 
 if [ -z $database ] ; then
  echo "Error: incomplete argument list. Usage:"
