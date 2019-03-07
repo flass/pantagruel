@@ -29,6 +29,7 @@ for fam in os.listdir(dircons):
 
 globreplaced = "%s/*%s"%(dirrepl, replacedtag)
 lnfreplaced = glob.glob(globreplaced)
+print "found %d files listing replaced caldes in '%s'"%( len(lnfreplaced), globreplaced )
 for nfreplaced in lnfreplaced:
 	fam = os.path.basename(nfreplaced).split('-', 1)[0]
 	with open(nfreplaced, 'r') as freplaced:

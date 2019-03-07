@@ -32,8 +32,9 @@ sqlite3 ${dbfile} << EOF
 INSERT INTO criteria_collapse_gene_tree_clades (criterion_id, criterion_name, criterion_definition, collapsed_clade_collection_creation)
  VALUES (${collapsecolid}, '${collapsecond}', '$(echo ${collapsecriteriondef} | sed -e "s/'/''/g")', '${collapsecoldate}') ;
 INSERT INTO criteria_replace_gene_tree_clades (criterion_id, criterion_name, criterion_definition, replaced_clade_collection_creation)
- VALUES (${replacecolid}, '${colmethod}', ' --method=${colmethod}', '${replacecoldate}') ;
+ VALUES (${replacecolid}, '${colmethod}', '--method=${colmethod}', '${replacecoldate}') ;
 EOF
+
 # create big table files for collapsed gene tree clades and replaced clades in reconciled gene trees
 python ${ptgscripts}/generate_collapsed_replaced_clades_tables.py \
  ${colalinexuscodedir}/${collapsecond}/mbconstraints ${coltreechains}/${collapsecond}/${colmethod} \
