@@ -70,6 +70,7 @@ else
   ## load these information into the database
   collapsecolid=$(cut -f1 ${genetrees}/collapsecol)
   collapsecoldate=$(cut -f2 ${genetrees}/collapsecol)
+  collapsecriteriondef=$(cut -f3 ${genetrees}/collapsecol)
   ${ptgscripts}/pantagruel_sqlitedb_phylogeny_populate_collapsed_clades.sh ${database} ${sqldb} ${colalinexuscodedir} ${coltreechains} ${collapsecond} ${colmethod} ${collapsecriteriondef} ${collapsecolid} ${replacecolid} ${collapsecoldate} ${replacecoldate}
 EOF
 
