@@ -170,10 +170,6 @@ usagelong (){
 
 ptgenvsetdefaults (){
     # Default values:
-    #~ if [ -z "$ptgrepo" ] ; then
-    #~ export ptgrepo=${defptgrepo}
-    #~ echo "Default: set Pantagruel software repository to '$ptgrepo'"
-    #~ fi
     export ptgscripts=${ptgrepo}/scripts
     if [ -z "$myemail" ] ; then
     export myemail="undisclosed"
@@ -183,14 +179,6 @@ ptgenvsetdefaults (){
     export famprefix="PANTAG"
     echo "Default: set gene family prefix to '$famprefix'"
     fi
-    #~ if [ -z "$customassemb" ] ; then
-    #~ export customassemb=${ptgroot}/user_genomes
-    #~ echo "Default: set custom (raw) genome assembly source folder to '$customassemb'"
-    #~ fi
-    #~ if [ -z "$ncbiass" ] ; then
-    #~ export ncbiass=${ptgroot}/NCBI/Assembly_$(date +'%Y-%m-%d')
-    #~ echo "Default: set NCBI RefSeq(-like) genome assembly source folder to '$ncbiass'"
-    #~ fi
     if [ -z "$refass" ] ; then
     export refass=${ncbiass}
     echo "Default: set NCBI RefSeq(-like) genome assembly source folder for reference in user genome annotation to '$refass'"

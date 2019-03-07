@@ -713,7 +713,7 @@ def mapPop2GeneTree(nfingtchain1, dircons, dirout, method, spetree, poptree, dsp
 				elif isinstance(newlaborst, BaseTree.TreeElement):
 					newlabs = [tip.name for tip in newlaborst.get_terminals()]
 				for newlab in newlabs:
-					newlabpop, fam, ngtag = newlab.split('_',2)
+					newlabpop, fam, ngtag = newlab.rsplit('_',2)
 					dpoptyperepcount.setdefault(newlabpop, {rt:0 for rt in reptypes})[ngtag[:2]] += 1
 					foutreflab.write('\t'.join((oldlab, newlab))+'\n')
 	if dpoptyperepcount or ((not os.path.exists(nfoutlabpoplab)) or (not reuseOutput)):

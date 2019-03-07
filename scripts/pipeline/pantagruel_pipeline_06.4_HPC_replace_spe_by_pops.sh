@@ -65,12 +65,16 @@ else
   python ${ptgscripts}/replace_species_by_pop_in_gene_trees.py -G ${tasklist} -c ${colalinexuscodedir}/${collapsecond} -S ${speciestree}.lsd.newick -o ${coltreechains}/${collapsecond} \
    --populations=${speciestree%.*}_populations --population_tree=${speciestree%.*}_collapsedPopulations.nwk --population_node_distance=${speciestree%.*}_interNodeDistPopulations \
    --dir_full_gene_trees=${mlgenetrees}/rootedTree --method=${colmethod} --threads=${ncpus} --reuse=0 --max.recursion.limit=12000 --logfile=${repllogs}_${replrun}.log
+  if [$? != 0 ] ; then
+    echo "ERROR: ${ptgscripts}/replace_species_by_pop_in_gene_trees.py call returned wth an error status ; quit now" 1>&2
+    exit 1
+  fi
   export replacecoldate=$(date +%Y-%m-%d)
   echo -e "${replacecolid}\t${replacecoldate}" > ${genetrees}/replacecol
   ## load these information into the database
   collapsecolid=$(cut -f1 ${genetrees}/collapsecol)
   collapsecoldate=$(cut -f2 ${genetrees}/collapsecol)
-  collapsecriteriondef=$(cut -f3 ${genetrees}/collapsecol)
+  collapsecriteriondef="$(cut -f3 ${genetrees}/collapsecol)"
   ${ptgscripts}/pantagruel_sqlitedb_phylogeny_populate_collapsed_clades.sh ${database} ${sqldb} ${colalinexuscodedir} ${coltreechains} ${collapsecond} ${colmethod} "${collapsecriteriondef}" ${collapsecolid} ${replacecolid} ${collapsecoldate} ${replacecoldate}
 EOF
 
