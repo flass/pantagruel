@@ -50,4 +50,4 @@ qsubvars="tasklist=$tasklist, resultdir=$outrecdir, spetree=Stree.nwk, nrecs=${r
 qsub -J 1-$Njob -N ${reccol} -l select=1:ncpus=1:mem=20gb,walltime=24:00:00 -o $alelogs/${reccol} -j oe -v "$qsubvars" ${ptgscripts}/ale_array_PBS.qsub
 
 export reccoldate=$(date +%Y-%m-%d)
-echo -e "${reccolid}\t${reccoldate}" > ${genetrees}/reccol
+echo -e "${reccolid}\t${reccoldate}" > ${alerec}/reccol
