@@ -91,7 +91,7 @@ def var(seq, correct=1):
 ## Functions related to Species-to-Population matching and Gene Tree Clade Collpasing
 
 def getSpeFromGenes(leaflabs, species_sep='_', **kw):
-	return [leaflab.rsplit(species_sep, 1)[-1] for leaflab in leaflabs]
+	return [leaflab.rsplit(species_sep, 1)[0] for leaflab in leaflabs]
 
 def getdspe2pop(lnamepops, spetree=None):
 	dspe2pop = {}
