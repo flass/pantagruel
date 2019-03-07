@@ -36,4 +36,4 @@ for nfreplaced in lnfreplaced:
 			#~ if line.startswith(cladenameprefix): li = line.split(cladenameprefix, 1)[1]
 			#~ else: li = line
 			#~ foutrepl.write(fam+'\t'+li)
-			foutrepl.write('\t'.join([fam, line.rstrip('\n'), str(replcolid)]+'\n')
+			foutrepl.write('\t'.join([fam, line.rstrip('\n'), str(replcolid)])+'\n')
