@@ -29,17 +29,47 @@ export ptglogs=${ptgdb}/logs
 export ptgtmp=${ptgdb}/tmp
 mkdir -p ${ptgdb}/ ${ptglogs}/ ${ptgtmp}/
 
+# evaluate 'freely specified' collapsing parameters; expect some define paatern though
+# e.g.:  eval 'cladesupp=70 ; subcladesupp=35 ; criterion=bs ; withinfun=median'
+if [ ! -z "$collapseCladeParams" ] ; then
+  for param in 'cladesupp' 'subcladesupp' 'criterion' 'withinfun' ; do
+    # parse free text to only evaluate code defining 
+    parameqval=$(python << EOF
+parameqvals="$collapseCladeParams".lower().split()
+for parameqval in parameqvals:
+  pareqval = parameqval.strip(';,\t\n ')
+  if '=' not in pareqval: continue
+  par, val = pareqval.split('=')
+  if par=='$param':
+    print '%s=%s'%(par, val)
+    break
+EOF
+)
+    if [ ! -z "${parameqval}" ] ; then
+      echo "export ${parameqval}"
+      eval "export ${parameqval}"
+    else
+      eval "paramdef=\${${param}def}"
+      echo "export ${param}=${paramdef}"
+      eval "export ${param}=${paramdef}"
+    fi
+  done
+fi
+
 #### Set facultative environment variables / parameters
 envsourcescript=${ptgdb}/environ_pantagruel_${ptgdbname}.sh
 echo "## Pantagruel database '${ptgdbname}'" > ${envsourcescript}
 echo "## built with Pantagruel version '${ptgversion}'; source code available at 'https://github.com/flass/pantagruel'" >> ${envsourcescript}
 
+
+
+
 rm -f ${ptgtmp}/sedenvvar.sh
 echo -n "cat ${templateenv}" > ${ptgtmp}/sedenvvar.sh
-for var in ptgdbname ptgroot ptgrepo myemail famprefix \
-     ncbitax ncbiass listncbiass customassemb refass listrefass \
-     pseudocoremingenomes userreftree coreseqtype poplgthresh poplgleafmul popbsthresh \
-     chaintype collapseCladeParams hpcremoteptgroot ; do
+for var in 'ptgdbname' 'ptgroot' 'ptgrepo' 'myemail' 'famprefix' \
+     'ncbitax' 'ncbiass' 'listncbiass' 'customassemb' 'refass' 'listrefass' \
+     'pseudocoremingenomes' 'userreftree' 'coreseqtype' 'poplgthresh' 'poplgleafmul' 'popbsthresh' \
+     'chaintype' 'cladesupp' 'subcladesupp' 'criterion' 'withinfun' 'hpcremoteptgroot' ; do
 echo -n " | sed -e \"s#REPLACE${var}#\${${var}}#\"" >> ${ptgtmp}/sedenvvar.sh
 done
 echo -n " >> ${envsourcescript}" >> ${ptgtmp}/sedenvvar.sh

@@ -295,12 +295,6 @@ do
       export initfile=$(realpath $2)
       shift 2;;
     
-    #~ -p|--ptgrepo)
-      #~ testmandatoryarg "$1" "$2"
-      #~ export ptgrepo=$(realpath $2)
-      #~ echo "set Pantagruel software repository to '$ptgrepo'"
-      #~ shift 2;;
-    
     -I|--iam)
       testmandatoryarg "$1" "$2"
       export myemail="$2"

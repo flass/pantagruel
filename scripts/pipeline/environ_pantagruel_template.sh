@@ -38,15 +38,19 @@ export userreftree='REPLACEuserreftree'                    # possible user-provi
 export poplgthresh='REPLACEpoplgthresh'                    # parameter to define populations of genomes in the reference tree (stem branch length threshold)
 export poplgleafmul='REPLACEpoplgleafmul'                  # parameter to define populations of genomes in the reference tree (multiplier to the former in case it is a leaf)
 export popbsthresh='REPLACEpopbsthresh'                    # parameter to define populations of genomes in the reference tree (stem branch support threshold)
-export chaintype='REPLACEchaintype'                        # whether gene trees will be collapsed ('collapsed') or not ('fullgenetree')
-export collapseCladeParams='REPLACEcollapseCladeParams'    # if not empty, non-default parameters for gene trees collapsing
+export chaintype='REPLACEchaintype'                        # whether gene trees will be collapsed ('collapsed', if -c option enabled) or not ('fullgenetree', default)
+# non-default parameters for gene trees collapsing derived from -C option value (passed to init script via ${collapseCladeParams}): 
+export cladesupp=REPLACEcladesupp                          # - clade criterion trheshold (int)
+export subcladesupp=REPLACEsubcladesupp                    # - wihtin-clade criterion trheshold (int)
+export criterion='REPLACEcriterion'                        # - criterion (branch support: 'bs', branch length 'lg')
+export withinfun='REPLACEwithinfun'                        # - aggregate function for testing within the clade ('min', 'max', 'mean', 'median')
 export hpcremoteptgroot='REPLACEhpcremoteptgroot'          # if not empty, will use this server address to send data and scripts to run heavy computions there 
 # the rest have fixed values that can be modified here or overriden with certain task-specific options
 # default values are:
-export cladesupp=70
-export subcladesupp=35
-export criterion='bs'
-export withinfun='median'
+export cladesuppdef=70
+export subcladesuppdef=35
+export criteriondef='bs'
+export withinfundef='median'
 export ALEalgo='ALEml_undated'
 export recsamplesize=1000
 export evtypeparse='ST'

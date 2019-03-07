@@ -92,14 +92,8 @@ else
   if [ -z ${collapsecolid} ] ; then
     collapsecolid=1
   fi
-  if [[ "$collapseCladeParams" != 'default' ]] ; then
-    eval "$collapseCladeParams"
-    # e.g.:  eval 'cladesupp=70 ; subcladesupp=35 ; criterion=bs ; withinfun=median'
-  fi
   
   ## detect clades to be collapsed in gene trees
-  export colalinexuscodedir=${protali}/${chaintype}_cdsfam_alignments_species_code
-  export collapsecond=${criterion}_stem${cladesupp}_within${withinfun}${subcladesupp}
   export collapsecriteriondef="--clade_stem_conds=[('$criterion','>=',$cladesupp)] --within_clade_conds=[('$withinfun','$criterion','<=',$subcladesupp,-1),('max','$criterion','<',$cladesupp,-1)]"
   mkdir -p ${colalinexuscodedir}/${collapsecond}
   mlgenetreelist=${mlgenetrees%*s}_list
@@ -112,7 +106,7 @@ else
   export collapsecoldate=$(date +%Y-%m-%d)
   export nexusaln4chains=${colalinexuscodedir}/${collapsecond}/collapsed_alns
   export mboutputdir=${bayesgenetrees}/${collapsecond}
-  
+  echo -e "${collapsecolid}\t${collapsecoldate}\t${collapsecriteriondef}" > ${genetrees}/replacecol
 fi
 #### end OPTION B1
 
@@ -166,7 +160,8 @@ else
    --dir_full_gene_trees=${mlgenetrees}/rootedTree --method=${colmethod} --threads=$(nproc) --reuse=0 --verbose=0 --max.recursion.limit=12000 --logfile=${repllogs}_${replrun}.log
 
   export replacecoldate=$(date +%Y-%m-%d)
-
+  echo -e "${replacecolid}\t${replacecoldate}" > ${genetrees}/replacecol
+  
   ## load these information into the database
   ${ptgscripts}/pantagruel_sqlitedb_phylogeny_populate_collapsed_clades.sh ${database} ${sqldb} ${colalinexuscodedir} ${coltreechains} ${collapsecond} ${colmethod} ${collapsecriteriondef} ${collapsecolid} ${replacecolid} ${collapsecoldate} ${replacecoldate}
 
