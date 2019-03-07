@@ -138,7 +138,6 @@ ${ptgscripts}/mrbayes_sequential.sh ${tasklist} ${mboutputdir} 'Nruns=${nruns} N
 
 if [[ "${chaintype}" == 'fullgenetree' ]] ; then
   #### OPTION A2: 
-  export coltreechains=${genetrees}/${chaintype}_tree_chains
   echo "Error: not implemented yet:"
   echo "must generalize the script replace_species_by_pop_in_gene_trees.py so to only convert the format of gene tree chains, not replacing anything in them"
   #~ python ${ptgscripts}/replace_species_by_pop_in_gene_trees.py -G ${tasklist} -o ${coltreechains} --threads=${ncpus} --reuse=0 --verbose=0 --logfile=${repllogs}_${replrun}.log &
@@ -151,8 +150,6 @@ else
   if [-z ${replacecolid} ] ; then
    replacecolid=1
   fi
-  export coltreechains=${genetrees}/${chaintype}_tree_chains
-  export colmethod='replaceCCinGasinS-collapsePOPinSnotinG'
   mkdir -p ${coltreechains}/${collapsecond}
 
   ## edit the gene trees, producing the corresponding (potentially collapsed) species tree based on the 'time'-tree backbone

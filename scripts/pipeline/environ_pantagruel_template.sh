@@ -99,7 +99,7 @@ export mlgenetrees=${genetrees}/raxml_trees
 # sub folders that depend on the gene tree clade collapsing option
 export colalinexuscodedir=${protali}/${chaintype}_cdsfam_alignments_species_code
 export bayesgenetrees=${genetrees}/${chaintype}_mrbayes_trees
-export coltreechains=${alerec}/${chaintype}_tree_chains
+export coltreechains=${genetrees}/${chaintype}_tree_chains
 export recs=${alerec}/${chaintype}_recs
 export goterms=${funcannot}/GeneOntology
 export claderefgodir=${goterms}/clade_go_term_reference_sets
