@@ -8,8 +8,10 @@ replacedtag = 'leaflabels_Spe2Pop.txt'
 
 dircons = sys.argv[1]
 dirrepl = sys.argv[2]
-nfoutcons = sys.argv[3]
-nfoutrepl = sys.argv[4]
+colapsecolid = int(sys.argv[3])
+replcolid = int(sys.argv[4])
+nfoutcons = sys.argv[5]
+nfoutrepl = sys.argv[6]
 
 assert os.path.isdir(dircons)
 assert os.path.isdir(dirrepl)
@@ -23,7 +25,7 @@ for fam in os.listdir(dircons):
 	for cla, leaflabs in constraintclades.iteritems():
 		#~ claid = int(cla.split(cladenameprefix, 1)[-1])
 		#~ foutcons.write('\n'.join(["%s\t%d\t%s"%(fam, claid, leaflab) for leaflab in leaflabs])+'\n')
-		foutcons.write('\n'.join(["%s\t%s\t%s"%(fam, cla, leaflab) for leaflab in leaflabs])+'\n')
+		foutcons.write('\n'.join(["%s\t%s\t%s\t%d"%(fam, cla, leaflab, colapsecolid) for leaflab in leaflabs])+'\n')
 
 globreplaced = "%s/*%s"%(dirrepl, replacedtag)
 lnfreplaced = glob.glob(globreplaced)
@@ -34,4 +36,4 @@ for nfreplaced in lnfreplaced:
 			#~ if line.startswith(cladenameprefix): li = line.split(cladenameprefix, 1)[1]
 			#~ else: li = line
 			#~ foutrepl.write(fam+'\t'+li)
-			foutrepl.write(fam+'\t'+line)
+			foutrepl.write('\t'.join([fam, line.rstrip('\n'), str(replcolid)]+'\n')
