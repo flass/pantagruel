@@ -47,7 +47,7 @@ mkdir -p $outrecdir
 
 Njob=`wc -l $tasklist | cut -f1 -d' '`
 qsubvars="tasklist=$tasklist, resultdir=$outrecdir, spetree=Stree.nwk, nrecs=${recsamplesize}, alealgo=${ALEalgo}"
-qsub -J 1-$Njob -N ${reccol} -l select=1:ncpus=1:mem=20gb,walltime=24:00:00 -o $alelogs/${reccol} -j oe -v "$qsubvars" ${ptgscripts}/ALE_array_PBS.qsub
+qsub -J 1-$Njob -N ${reccol} -l select=1:ncpus=1:mem=20gb,walltime=24:00:00 -o $alelogs/${reccol} -j oe -v "$qsubvars" ${ptgscripts}/ale_array_PBS.qsub
 
 export reccoldate=$(date +%Y-%m-%d)
 echo -e "${reccolid}\t${reccoldate}" > ${genetrees}/reccol
