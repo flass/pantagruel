@@ -9,42 +9,42 @@ nbthreads=$6
 reducedaln=$7
 
 # mandatory variables
-if [ -z $tasklist ] ; then
+if [ -z "$tasklist" ] ; then
   echo "!!! ERROR : must provide a task list through 'tasklist' variable ; exit now"
   exit 1
 fi
-if [ -z $outputdir ] ; then
+if [ -z "${outputdir}" ] ; then
   echo "!!! ERROR : must provide a output directory path through 'outputdir' variable ; exit now"
   exit 1
 fi
 # options
-if [ -z $model ] ; then
+if [ -z "$model" ] ; then
   model='GTRCAT'
 fi
-if [ -z $mainresulttag ] ; then
+if [ -z "$mainresulttag" ] ; then
   #~ mainresulttag='bipartitions'
   mainresulttags=('bipartitions' 'rootedTree' 'identical_sequences')
 else
   mainresulttags=("$mainresulttag")
 fi
-if [ -z $bootstrapalgo ] ; then
+if [ -z "$bootstrapalgo" ] ; then
   bootstrapalgo='x'
 fi
-if [ -z $nbthreads ] ; then
+if [ -z "$nbthreads" ] ; then
   nbthreads=4
 fi
-if [ -z $reducedaln ] ; then
+if [ -z "$reducedaln" ] ; then
   reducedaln=false
 fi
 
 for mainresulttag in bulk ${mainresulttags[@]} ; do
-  mkdir -p $outputdir/$mainresulttag/
-  if [ ! -d $outputdir/$mainresulttag ] ; then 
+  mkdir -p ${outputdir}/$mainresulttag/
+  if [ ! -d ${outputdir}/$mainresulttag ] ; then 
     echo "!!! ERROR : unable to access output directory 'outputdir/$mainresulttag/' ; exit now"
     exit 1
   fi
 done
-if [ ! -e $tasklist ] ; then 
+if [ ! -e "$tasklist" ] ; then 
   echo "!!! ERROR : unable to access task list file '$tasklist' ; exit now"
   exit 1
 fi
@@ -59,16 +59,16 @@ nfrad2=${nfrad1%.*}
 echo $nfrad2
 
 
-cd $outputdir/bulk/
+cd ${outputdir}/bulk/
 echo "current directory is $PWD"
 
 
 # convert file format
 if [ "$nfext" == 'nex' ] ; then
-  python -c "from Bio import AlignIO ; AlignIO.convert('$nfaln', 'nexus', '$outputdir/bulk/${nfrad2}.fasta', 'fasta')"
+  python -c "from Bio import AlignIO ; AlignIO.convert('$nfaln', 'nexus', '${outputdir}/bulk/${nfrad2}.fasta', 'fasta')"
   if [ $? == 0 ] ; then
     echo "succesfully converted Nexus input file $nfrad1 into FASTA format: ${nfrad2}.fasta"
-    localn=$outputdir/bulk/${nfrad2}.fasta
+    localn=${outputdir}/bulk/${nfrad2}.fasta
   else
     echo "failed conversion of input file $nfrad1 into FASTA format; we'll see if it goes through..."
   fi
@@ -133,8 +133,8 @@ for i in {0..5} ; do
       if [[ -e ${localn}.reduced ]] ; then
         nbnrseq=$(head -n1 ${localn}.reduced | cut -d' ' -f1)
         if [[ $nbnrseq -lt 4 ]] ; then
-          echo "WARNING: Reduced alignment is too small to pass further steps ; copy the identical_sequences file to '$outputdir/identical_sequences/' and quit"
-          mv RAxML_identical_sequences.${nfrad2} $outputdir/identical_sequences/
+          echo "WARNING: Reduced alignment is too small to pass further steps ; copy the identical_sequences file to '${outputdir}/identical_sequences/' and quit"
+          mv RAxML_identical_sequences.${nfrad2} ${outputdir}/identical_sequences/
           exit 0
         else
           echo "# Found $(wc -l RAxML_identical_sequences.${nfrad2} | cut -d':' -f2) redundant sequences; replace input alignment '${localn}' by '${localn}.reduced'."
@@ -148,7 +148,7 @@ for i in {0..5} ; do
 done
 
 for mainresulttag in ${mainresulttags[@]} ; do
-  mv -f $outputdir/bulk/RAxML_${mainresulttag}.$nfrad2 $outputdir/$mainresulttag/
+  mv -f ${outputdir}/bulk/RAxML_${mainresulttag}.$nfrad2 ${outputdir}/${mainresulttag}/
 done
 
 ### end loop over alignments
