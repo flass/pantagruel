@@ -36,8 +36,9 @@ if [[ ! -z "$hpcremoteptgroot" && "$hpcremoteptgroot" != 'none' ]] ; then
   # try and size the job regarding to the gene tree sizes: do separate lists by gene family size
   python ${ptgscripts}/pantagruel_sqlitedb_query_gene_fam_sets.py --db=${sqldb} --outprefix='cdsfams' --dirout=${genetrees} --base.query="${basequery}" \
    --famsets.min.sizes="4,500,2000,10000" --famsets.max.sizes="499,1999,9999,"
+  allfamlists=$(ls ${genetrees}/cdsfams_*)
   if [ -z "$genefamlist" ] ; then
-    famlists=$(ls ${genetrees}/cdsfams_*)
+    famlists="${allfamlists}"
   else
     echo "will restrict the gene families to be processed to those listed in '$genefamlist':"
     cut -f1 ${genefamlist} | head
@@ -48,7 +49,7 @@ if [[ ! -z "$hpcremoteptgroot" && "$hpcremoteptgroot" != 'none' ]] ; then
     bngenefamlist=$(basename ${genefamlist})
     rm -f ${genetrees}/${bngenefamlist}_*
     for fam in `cut -f1 ${genefamlist}` ; do
-      for cdsfamlist in $(ls ${genetrees}/cdsfams_*) ; do
+      for cdsfamlist in ${allfamlists} ; do
         grep fam ${cdsfamlist} >>  ${genetrees}/${bngenefamlist}_${cdsfamlist}
       done
     done
@@ -75,9 +76,10 @@ fi
     
 python ${ptgscripts}/pantagruel_sqlitedb_query_gene_fam_sets.py --db=${sqldb} --outprefix='cdsfams' --dirout=${genetrees} --base.query="${basequery}" \
  --famsets.min.sizes="4"
+allfamlist=${genetrees}/cdsfams_minsize4
 
 if [ -z "$genefamlist" ] ; then
-  famlist=${genetrees}/cdsfams_minsize4
+  famlist=${allfamlist}
 else
   echo "will restrict the gene families to be processed to those listed in '$genefamlist':"
   cut -f1 ${genefamlist} | head
@@ -89,7 +91,7 @@ else
   bngenefamlist=$(basename ${genefamlist})
   rm -f ${famlist}
   for fam in `cut -f1 ${genefamlist}` ; do
-    grep fam ${cdsfamlist} >> ${famlist}
+    grep fam ${allfamlist} >> ${famlist}
   done
 fi
 
