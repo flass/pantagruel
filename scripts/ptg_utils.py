@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import sys
+import tree2
 from Bio import File,  SeqIO
 from BCBio import GFF
 from Bio.Alphabet import generic_dna
