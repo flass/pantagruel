@@ -36,7 +36,6 @@ fi
 
 #### OPTION: edit collapsed gene trees to attribute an (ancestral) species identity to the leafs representing collapsed clades = pre-reconciliation of recent gene history
 if [[ "${chaintype}" == 'fullgenetree' ]] ; then
-  export colalinexuscodedir=${protali}/${chaintype}_cdsfam_alignments_species_code
   # no collapsing, just convert the alignments from fasta to nexus
   for aln in `ls ${alifastacodedir}` ; do
     convalign -i fasta -e nex -t dna nexus ${alifastacodedir}/$alnfa 

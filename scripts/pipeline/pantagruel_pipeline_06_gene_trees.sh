@@ -67,7 +67,6 @@ if [[ ! -z "$hpcremoteptgroot" && "$hpcremoteptgroot" != 'none' ]] ; then
   echo "- pantagruel_pipeline_06.4_HPC_replace_spe_by_pops.sh"
   echo "then copy back ouput files and updated database file by syncing the root folder from remote host to this host"
 
-
   exit 0
   
 fi
@@ -96,7 +95,6 @@ fi
 
 if [[ "${chaintype}" == 'fullgenetree' ]] ; then
   #### OPTION A1: no collapsing, just convert the alignments from fasta to nexus to directly compute bayesian trees
-  export colalinexuscodedir=${protali}/${chaintype}_cdsfam_alignments_species_code  #
   for aln in `ls ${alifastacodedir}` ; do
     convalign -i fasta -e nex -t dna nexus ${alifastacodedir}/$alnfa 
   done

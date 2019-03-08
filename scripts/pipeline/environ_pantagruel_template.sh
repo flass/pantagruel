@@ -101,7 +101,7 @@ export protalifastacodedir=${protali}/full_protfam_alignments_species_code
 export coretree=${coregenome}/raxml_tree
 export mlgenetrees=${genetrees}/raxml_trees
 # sub folders that depend on the gene tree clade collapsing option
-export colalinexuscodedir=${protali}/${chaintype}_cdsfam_alignments_species_code
+export colalinexuscodedir=${genetrees}/${chaintype}_cdsfam_alignments_species_code
 export bayesgenetrees=${genetrees}/${chaintype}_mrbayes_trees
 export coltreechains=${genetrees}/${chaintype}_tree_chains
 export recs=${alerec}/${chaintype}_recs
