@@ -50,7 +50,7 @@ if [[ ! -z "$hpcremoteptgroot" && "$hpcremoteptgroot" != 'none' ]] ; then
     rm -f ${genetrees}/${bngenefamlist}_*
     for fam in $(cut -f1 ${genefamlist}) ; do
       for cdsfamlist in ${allfamlists} ; do
-        grep fam ${cdsfamlist} >>  ${genetrees}/${bngenefamlist}_${cdsfamlist}
+        grep ${fam} ${cdsfamlist} >>  ${genetrees}/${bngenefamlist}_${cdsfamlist}
       done
     done
     famlists=$(ls ${genetrees}/${bngenefamlist}_cdsfams_*)
@@ -87,11 +87,11 @@ else
   if [ $ngf -gt 6 ] ; then
     echo "... ($ngf families)"
   fi
-  famlist=${genetrees}/${bngenefamlist}_cdsfams_minsize4
   bngenefamlist=$(basename ${genefamlist})
+  famlist=${genetrees}/${bngenefamlist}_cdsfams_minsize4
   rm -f ${famlist}
   for fam in $(cut -f1 ${genefamlist}) ; do
-    grep fam ${allfamlist} >> ${famlist}
+    grep ${fam} ${allfamlist} >> ${famlist}
   done
 fi
 
