@@ -201,8 +201,8 @@ if [[ -z "$(grep 'alias ALEml' ${HOME}/.bashrc)" ]] ; then
 fi
 
 # add Python modules to PYTHONPATH
-if [[ -z "$(grep PYTHONPATH ${HOME}/.bashrc | grep '${SOFTWARE}/tree2' )" || -z "$(grep PYTHONPATH ${HOME}/.bashrc | grep '${SOFTWARE}/pantagruel/python_libs' )" ]] ; then
-  echo 'export PYTHONPATH=${PYTHONPATH}:${SOFTWARE}/tree2:${SOFTWARE}/pantagruel/python_libs' >> ${HOME}/.bashrc
+if [[ -z "$(grep PYTHONPATH ${HOME}/.bashrc | grep ${SOFTWARE}/tree2 )" || -z "$(grep PYTHONPATH ${HOME}/.bashrc | grep ${SOFTWARE}/pantagruel/python_libs )" ]] ; then
+  echo "export PYTHONPATH=${PYTHONPATH}:${SOFTWARE}/tree2:${SOFTWARE}/pantagruel/python_libs" >> ${HOME}/.bashrc
   checkexec "Could not store PYTHONPATH in .bashrc"
   editedrc=true
 fi
