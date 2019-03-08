@@ -33,14 +33,21 @@ if [[ "$hpcremoteptgroot" != 'none' ]] ; then
   export hpcremotehost=$(echo "$hpcremoteptgroot" | cut -d':' -f1)
   export hpcremotefolder=$(echo "$hpcremoteptgroot" | cut -d':' -f2)
   
+  # try and size the job regarding to the gene tree sizes: do separate lists by gene family size
   python ${ptgscripts}/pantagruel_sqlitedb_query_gene_fam_sets.py --db=${sqldb} --outprefix='cdsfams' --dirout=${protali} --base.query="${basequery}" \
    --famsets.min.sizes="4,500,2000,10000" --famsets.max.sizes="499,1999,9999,"
   if [ -z "$genefamlist" ] ; then
     famlists=$(ls ${protali}/cdsfams_*)
   else
-    bngenefamlist=$(basename $genefamlist)
+    echo "will restrict the gene families to be processed to those listed in '$genefamlist':"
+    cut -f1 ${genefamlist} | head
+    ngf=$(wc -l ${genefamlist} | cut -d' ' -f1)
+    if [ $ngf -gt 6 ] ; then
+      echo "... ($ngf families)"
+    fi
+    bngenefamlist=$(basename ${genefamlist})
     rm -f ${protali}/${bngenefamlist}_*
-    for fam in `cat $genefamlist` ; do
+    for fam in `cut -f1 ${genefamlist}` ; do
       for cdsfamlist in $(ls ${protali}/cdsfams_*) ; do
         grep fam ${cdsfamlist} >>  ${protali}/${bngenefamlist}_${cdsfamlist}
       done
@@ -73,10 +80,16 @@ python ${ptgscripts}/pantagruel_sqlitedb_query_gene_fam_sets.py --db=${sqldb} --
 if [ -z "$genefamlist" ] ; then
   famlist=${protali}/cdsfams_minsize4
 else
+  echo "will restrict the gene families to be processed to those listed in '$genefamlist':"
+  cut -f1 ${genefamlist} | head
+  ngf=$(wc -l ${genefamlist} | cut -d' ' -f1)
+  if [ $ngf -gt 6 ] ; then
+    echo "... ($ngf families)"
+  fi
   famlist=${protali}/${bngenefamlist}_cdsfams_minsize4
-  bngenefamlist=$(basename $genefamlist)
+  bngenefamlist=$(basename ${genefamlist})
   rm -f ${protali}/${bngenefamlist}_*
-  for fam in `cat $genefamlist` ; do
+  for fam in `cut -f1 ${genefamlist}` ; do
     grep fam ${cdsfamlist} >>  ${famlist}
   done
 fi
