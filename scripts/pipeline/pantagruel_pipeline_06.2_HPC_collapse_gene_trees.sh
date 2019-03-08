@@ -9,11 +9,25 @@
 
 # Copyright: Florent Lassalle (f.lassalle@imperial.ac.uk), 15 Jan 2019
 
-if [ -z "$1" ] ; then echo "missing mandatory parameter: pantagruel config file" ; echo "Usage: $0 ptg_env_file" ; exit 1 ; fi
+if [ -z "$1" ] ; then echo "missing mandatory parameter: pantagruel config file" ; echo "Usage: $0 ptg_env_file [ncpus=8] [mem=32gb] [walltimehours=4]" ; exit 1 ; fi
 envsourcescript="$1"
 source ${envsourcescript}
 
-
+if [ ! -z "$2" ] ; then
+  ncpus="$2"
+else
+  ncpus=8
+fi
+if [ ! -z "$3" ] ; then
+  mem="$3"
+else
+  mem=32gb
+fi
+if [ ! -z "$4" ] ; then
+  wth="$4"
+else
+  wth=4
+fi
 
 #############################################################
 ## 06.2 Gene tree collapsing on HPC
@@ -53,12 +67,11 @@ else
   Njob=`wc -l ${mlgenetreelist} | cut -f1 -d' '`
   chunksize=3000
   jobranges=($(${ptgscripts}/get_jobranges.py $chunksize $Njob))
-  ncpus=4
 
   for jobrange in ${jobranges[@]} ; do
   beg=`echo $jobrange | cut -d'-' -f1`
   tail -n +${beg} ${mlgenetreelist} | head -n ${chunksize} > ${mlgenetreelist}_${jobrange}
-  qsub -N mark_unresolved_clades -l select=1:ncpus=${ncpus}:mem=16gb,walltime=4:00:00 -o ${ptglogs}/mark_unresolved_clades.${collapsecond}_${jobrange}.log -j oe -V -S /usr/bin/bash << EOF
+  qsub -N mark_unresolved_clades -l select=1:ncpus=${ncpus}:mem=${mem},walltime=${wth}:00:00 -o ${ptglogs}/mark_unresolved_clades.${collapsecond}_${jobrange}.log -j oe -V -S /usr/bin/bash << EOF
   module load python
   python ${ptgscripts}/mark_unresolved_clades.py --in_gene_tree_list=${mlgenetreelist}_${jobrange} --diraln=${cdsalifastacodedir} --fmt_aln_in='fasta' \
    --threads=${ncpus} --dirout=${colalinexuscodedir}/${collapsecond} --no_constrained_clade_subalns_output --dir_identseq=${mlgenetrees}/identical_sequences \

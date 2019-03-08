@@ -9,9 +9,25 @@
 
 # Copyright: Florent Lassalle (f.lassalle@imperial.ac.uk), 30 July 2018
 
-if [ -z "$1" ] ; then echo "missing mandatory parameter: pantagruel config file" ; echo "Usage: $0 ptg_env_file" ; exit 1 ; fi
+if [ -z "$1" ] ; then echo "missing mandatory parameter: pantagruel config file" ; echo "Usage: $0 ptg_env_file [ncpus=8] [mem=124gb] [walltimehours=24]" ; exit 1 ; fi
 envsourcescript="$1"
 source ${envsourcescript}
+
+if [ ! -z "$2" ] ; then
+  ncpus="$2"
+else
+  ncpus=8
+fi
+if [ ! -z "$3" ] ; then
+  mem="$3"
+else
+  mem=124gb
+fi
+if [ ! -z "$4" ] ; then
+  wth="$4"
+else
+  wth=24
+fi
 
 ######################################################
 ## 07.2 Parse gene tree / Species tree reconciliations
@@ -36,8 +52,8 @@ ${ptgscripts}/lsfullpath.py "${outrecdir}/ale_collapsed_${rectype}/*ml_rec" > $r
 # PBS-submitted parallel job
 parsecollogd=${ptgdb}/logs/parsecol
 parsecollogs=${parsecollogd}/parse_collapsedALE_scenarios.og
-ncpus=8
-qsub -N parseColALE -l select=1:ncpus=${ncpus}:mem=96gb,walltime=24:00:00 -o ${parsecollogs} -j oe -V << EOF
+
+qsub -N parseColALE -l select=1:ncpus=${ncpus}:mem=${mem},walltime=${wth}:00:00 -o ${parsecollogs} -j oe -V << EOF
 module load python
 python ${ptgscripts}/parse_collapsedALE_scenarios.py --rec_sample_list ${reclist} \
  --populations ${speciestree/.full/}_populations --reftree ${speciestree}.lsd.newick \

@@ -9,10 +9,25 @@
 
 # Copyright: Florent Lassalle (f.lassalle@imperial.ac.uk), 15 Jan 2019
 
-if [ -z "$1" ] ; then echo "missing mandatory parameter: pantagruel config file" ; echo "Usage: $0 ptg_env_file" ; exit 1 ; fi
+if [ -z "$1" ] ; then echo "missing mandatory parameter: pantagruel config file" ; echo "Usage: $0 ptg_env_file [ncpus=12] [mem=124gb] [walltimehours=72]" ; exit 1 ; fi
 envsourcescript="$1"
 source ${envsourcescript}
 
+if [ ! -z "$2" ] ; then
+  ncpus="$2"
+else
+  ncpus=12
+fi
+if [ ! -z "$3" ] ; then
+  mem="$3"
+else
+  mem=124gb
+fi
+if [ ! -z "$4" ] ; then
+  wth="$4"
+else
+  wth=72
+fi
 
 ################################################################################
 ## 06.4 Convert format of Bayesian gene trees and replace species by populations
@@ -59,8 +74,7 @@ else
     tasklist=${tasklist}_resumetask_${dtag}
   fi
   # PBS-submitted parallel job
-  ncpus=8
-  qsub -N replSpePopinGs -l select=1:ncpus=${ncpus}:mem=96gb,walltime=72:00:00 -o ${repllogd} -j oe -V << EOF
+  qsub -N replSpePopinGs -l select=1:ncpus=${ncpus}:mem=${mem},walltime=${wth}:00:00 -o ${repllogd} -j oe -V << EOF
   module load python
   python ${ptgscripts}/replace_species_by_pop_in_gene_trees.py -G ${tasklist} -c ${colalinexuscodedir}/${collapsecond} -S ${speciestree}.lsd.newick -o ${coltreechains}/${collapsecond} \
    --populations=${speciestree%.*}_populations --population_tree=${speciestree%.*}_collapsedPopulations.nwk --population_node_distance=${speciestree%.*}_interNodeDistPopulations \
