@@ -55,20 +55,36 @@ mkdir -p ${SOFTWARE}/ ${BINS}/
 cd ${SOFTWARE}/
 
 # Install Pantagruel pipeline and specific phylogenetic modules 
-echo "get/update git repositories for Pantagruel pipeline and specific phylogenetic modules"
-#~ for repo in tree2 pantagruel ; do
-for repo in pantagruel ; do
-  if [ -d ${SOFTWARE}/${repo} ] ; then
-    cd ${repo} && git pull && cd -
-  else
-    git clone https://github.com/flass/${repo}
-  fi
-  if [ $? != 0 ] ; then
-    echo "ERROR: Unable to create/update git repository ${SOFTWARE}/${repo}"
-    exit 1
-  fi
-done
+echo "get/update git repositories for Pantagruel pipeline"
+if [ -d ${SOFTWARE}/pantagruel ] ; then
+  cd ${SOFTWARE}/pantagruel && git pull && cd -
+else
+  git clone https://github.com/flass/pantagruel
+fi
+if [ $? != 0 ] ; then
+  echo "ERROR: Unable to create/update git repository ${SOFTWARE}/pantagruel"
+  exit 1
+fi
+git submodule init
+git submodule update
+if [ $? != 0 ] ; then
+  echo "ERROR: Unable to create/update git submodules"
+  exit 1
+fi
 echo ""
+
+#~ for repo in tree2 pantagruel ; do
+  #~ if [ -d ${SOFTWARE}/${repo} ] ; then
+    #~ cd ${repo} && git pull && cd -
+  #~ else
+    #~ git clone https://github.com/flass/${repo}
+  #~ fi
+  #~ if [ $? != 0 ] ; then
+    #~ echo "ERROR: Unable to create/update git repository ${SOFTWARE}/${repo}"
+    #~ exit 1
+  #~ fi
+#~ done
+#~ echo ""
 
 # basic dependencies, libs and standalone software, R and packages, Python and packages
 echo "get/update required Debian packages"
