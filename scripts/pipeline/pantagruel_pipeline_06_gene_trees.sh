@@ -34,10 +34,10 @@ if [[ ! -z "$hpcremoteptgroot" && "$hpcremoteptgroot" != 'none' ]] ; then
   export hpcremotefolder=$(echo "$hpcremoteptgroot" | cut -d':' -f2)
   
   # try and size the job regarding to the gene tree sizes: do separate lists by gene family size
-  python ${ptgscripts}/pantagruel_sqlitedb_query_gene_fam_sets.py --db=${sqldb} --outprefix='cdsfams' --dirout=${protali} --base.query="${basequery}" \
+  python ${ptgscripts}/pantagruel_sqlitedb_query_gene_fam_sets.py --db=${sqldb} --outprefix='cdsfams' --dirout=${genetrees} --base.query="${basequery}" \
    --famsets.min.sizes="4,500,2000,10000" --famsets.max.sizes="499,1999,9999,"
   if [ -z "$genefamlist" ] ; then
-    famlists=$(ls ${protali}/cdsfams_*)
+    famlists=$(ls ${genetrees}/cdsfams_*)
   else
     echo "will restrict the gene families to be processed to those listed in '$genefamlist':"
     cut -f1 ${genefamlist} | head
@@ -46,13 +46,13 @@ if [[ ! -z "$hpcremoteptgroot" && "$hpcremoteptgroot" != 'none' ]] ; then
       echo "... ($ngf families)"
     fi
     bngenefamlist=$(basename ${genefamlist})
-    rm -f ${protali}/${bngenefamlist}_*
+    rm -f ${genetrees}/${bngenefamlist}_*
     for fam in `cut -f1 ${genefamlist}` ; do
-      for cdsfamlist in $(ls ${protali}/cdsfams_*) ; do
-        grep fam ${cdsfamlist} >>  ${protali}/${bngenefamlist}_${cdsfamlist}
+      for cdsfamlist in $(ls ${genetrees}/cdsfams_*) ; do
+        grep fam ${cdsfamlist} >>  ${genetrees}/${bngenefamlist}_${cdsfamlist}
       done
     done
-    famlists=$(ls ${protali}/${bngenefamlist}_cdsfams_*)
+    famlists=$(ls ${genetrees}/${bngenefamlist}_cdsfams_*)
   fi
   
   # sync input and ouput folders with remote HPC host
@@ -73,11 +73,11 @@ fi
 
 ### local version
     
-python ${ptgscripts}/pantagruel_sqlitedb_query_gene_fam_sets.py --db=${sqldb} --outprefix='cdsfams' --dirout=${protali} --base.query="${basequery}" \
+python ${ptgscripts}/pantagruel_sqlitedb_query_gene_fam_sets.py --db=${sqldb} --outprefix='cdsfams' --dirout=${genetrees} --base.query="${basequery}" \
  --famsets.min.sizes="4"
 
 if [ -z "$genefamlist" ] ; then
-  famlist=${protali}/cdsfams_minsize4
+  famlist=${genetrees}/cdsfams_minsize4
 else
   echo "will restrict the gene families to be processed to those listed in '$genefamlist':"
   cut -f1 ${genefamlist} | head
@@ -85,11 +85,11 @@ else
   if [ $ngf -gt 6 ] ; then
     echo "... ($ngf families)"
   fi
-  famlist=${protali}/${bngenefamlist}_cdsfams_minsize4
+  famlist=${genetrees}/${bngenefamlist}_cdsfams_minsize4
   bngenefamlist=$(basename ${genefamlist})
-  rm -f ${protali}/${bngenefamlist}_*
+  rm -f ${famlist}
   for fam in `cut -f1 ${genefamlist}` ; do
-    grep fam ${cdsfamlist} >>  ${famlist}
+    grep fam ${cdsfamlist} >> ${famlist}
   done
 fi
 
