@@ -21,14 +21,14 @@ case "${coreseqtype}" in
   prot)
       alifastacodedir=${protalifastacodedir}
       raxmloptions="-n ${treename} -m PROTCATLGX -j -p 1753 -w ${coretree}"
-      if [[ -z "${poplgthresh}" || "${poplgthresh}" == 'default' ]] ; then
+      if [[ -z "${poplgthresh}" && "${poplgthresh}" == 'default' ]] ; then
         poplgthresh=0.0002
       fi
       ;;
   cds)
       alifastacodedir=${cdsalifastacodedir}
       raxmloptions="-n ${treename} -m GTRCATX -j -p 1753 -w ${coretree}"
-      if [[ -z "${poplgthresh}" || "${poplgthresh}" == 'default' ]] ; then
+      if [[ -z "${poplgthresh}" && "${poplgthresh}" == 'default' ]] ; then
         poplgthresh=0.0005
       fi
       ;;

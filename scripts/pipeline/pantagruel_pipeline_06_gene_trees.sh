@@ -28,7 +28,7 @@ basequery="select gene_family_id, size from gene_family_sizes where gene_family_
  
  
 ### prepare HPC version
-if [[ "$hpcremoteptgroot" != 'none' ]] ; then
+if [[ ! -z "$hpcremoteptgroot" && "$hpcremoteptgroot" != 'none' ]] ; then
 
   export hpcremotehost=$(echo "$hpcremoteptgroot" | cut -d':' -f1)
   export hpcremotefolder=$(echo "$hpcremoteptgroot" | cut -d':' -f2)
