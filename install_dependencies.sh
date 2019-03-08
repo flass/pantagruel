@@ -22,7 +22,7 @@ checkexec (){
 }
 
 usage (){
-	echo "Usage: $0 [software_dir [bin_dir]]"
+	echo "Usage: $0 software_dir [bin_dir]"
 	echo "  software_dir: target installation folder for pantagruel and other software"
 	echo "  bin_dir: folder where to link relevant executable files, including the main `pantagruel` excutable (defaults to ~/bin/); the path to this folder will be permatnently added to your path (via editing your ~/.bashrc)"
 }
@@ -32,7 +32,7 @@ if [ -z "$1" ] ; then
   usage
   exit 1
 else
-  if [ "$1" == '-h' || "$1" == '--help' ] ; then
+  if [[ "$1" == '-h' || "$1" == '--help' ]] ; then
     usage
     exit 0
   else
@@ -128,6 +128,7 @@ source ${HOME}/.bash_profile
 
 # install Prokka using brew
 if [[ -z "$(brew search prokka | grep prokka)" ]] ; then
+  brew update
   brew doctor
   brew install brewsci/bio/prokka
   checkexec "Could not install Prokka using Brew"
@@ -177,7 +178,8 @@ if [[ -z "$(grep docker /etc/group)" ]] ; then
 fi
 if [[ -z "$(grep docker /etc/group | grep ${USER})" ]] ; then
   sudo usermod -aG docker $USER
-  newgrp docker < echo ""
+  newgrp docker << EOF
+EOF
 fi
 checkexec "Could not set group 'docker' or let user '$USER' join it"
 
