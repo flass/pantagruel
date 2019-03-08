@@ -48,7 +48,7 @@ if [[ ! -z "$hpcremoteptgroot" && "$hpcremoteptgroot" != 'none' ]] ; then
     fi
     bngenefamlist=$(basename ${genefamlist})
     rm -f ${genetrees}/${bngenefamlist}_*
-    for fam in `cut -f1 ${genefamlist}` ; do
+    for fam in $(cut -f1 ${genefamlist}) ; do
       for cdsfamlist in ${allfamlists} ; do
         grep fam ${cdsfamlist} >>  ${genetrees}/${bngenefamlist}_${cdsfamlist}
       done
@@ -90,7 +90,7 @@ else
   famlist=${genetrees}/${bngenefamlist}_cdsfams_minsize4
   bngenefamlist=$(basename ${genefamlist})
   rm -f ${famlist}
-  for fam in `cut -f1 ${genefamlist}` ; do
+  for fam in $(cut -f1 ${genefamlist}) ; do
     grep fam ${allfamlist} >> ${famlist}
   done
 fi
@@ -118,9 +118,9 @@ else
   
   ## compute first pass of gene trees with RAxML, using rapid bootstrap to estimate branch supports
   tasklist=${famlist}_aln_list
-  rm -f $tasklist
-  for fam in `cut -f1 $cdsfam2phylo` ; do
-   ls ${cdsalifastacodedir}/${fam}.codes.aln >> $tasklist
+  rm -f ${tasklist}
+  for fam in $(cut -f1 ${famlist}) ; do
+   ls ${cdsalifastacodedir}/${fam}.codes.aln >> ${tasklist}
   done
   ${ptgscripts}/raxml_sequential.sh ${tasklist} ${mlgenetrees} 'GTRCATX' 'bipartitions rootedTree identical_sequences' 'x' $(nproc) 'true'
   
