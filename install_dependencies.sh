@@ -65,8 +65,7 @@ if [ $? != 0 ] ; then
   echo "ERROR: Unable to create/update git repository ${SOFTWARE}/pantagruel"
   exit 1
 fi
-git submodule init
-git submodule update
+cd ${SOFTWARE}/pantagruel && git submodule init && git submodule update && cd -
 if [ $? != 0 ] ; then
   echo "ERROR: Unable to create/update git submodules"
   exit 1
