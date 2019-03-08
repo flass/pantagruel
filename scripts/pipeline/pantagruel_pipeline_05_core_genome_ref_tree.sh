@@ -24,14 +24,6 @@ case "${coreseqtype}" in
       if [[ -z "${poplgthresh}" || "${poplgthresh}" == 'default' ]] ; then
         poplgthresh=0.0002
       fi
-      if [[ -z "${poplgleafmul}" || "${poplgleafmul}" == 'default' ]] ; then
-        poplgleafmul=1.5
-      fi
-      if [[ -z "${popbsthresh}" || "${popbsthresh}" == 'default' ]] ; then
-        popbsthresh=80
-      fi
-      popstemconds="[('lg', '>=', ${poplgthresh}, ${poplgleafmul}), ('bs', '>=', ${popbsthresh})]"
-      withinpopconds="[('max', 'lg', '<=', ${poplgthresh}, -1)]"
       ;;
   cds)
       alifastacodedir=${cdsalifastacodedir}
@@ -39,19 +31,14 @@ case "${coreseqtype}" in
       if [[ -z "${poplgthresh}" || "${poplgthresh}" == 'default' ]] ; then
         poplgthresh=0.0005
       fi
-      if [[ -z "${poplgleafmul}" || "${poplgleafmul}" == 'default' ]] ; then
-        poplgleafmul=1.5
-      fi
-      if [[ -z "${popbsthresh}" || "${popbsthresh}" == 'default' ]] ; then
-        popbsthresh=80
-      fi
-      popstemconds="[('lg', '>=', ${poplgthresh}, ${poplgleafmul}), ('bs', '>=', ${popbsthresh})]"
-      withinpopconds="[('max', 'lg', '<=', ${poplgthresh}, -1)]"
       ;;
   *)
       echo "ERROR: incorrect core sequence type was specified: ${coreseqtype} (must be 'prot' or 'cds'); exit now"
       exit 1 ;;
 esac
+popstemconds="[('lg', '>=', ${poplgthresh}, ${poplgleafmul}), ('bs', '>=', ${popbsthresh})]"
+withinpopconds="[('max', 'lg', '<=', ${poplgthresh}, -1)]"
+
 
 ###########################################
 ## 05. Core Genome Phylogeny (Species tree)

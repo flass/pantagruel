@@ -35,16 +35,16 @@ export ngenomes=REPLACEngenomes                            # the count of genome
 export coreseqtype='REPLACEcoreseqtype'                    # either 'cds' or 'protein'
 export pseudocoremingenomes=REPLACEpseudocoremingenomes    # the minimum number of genomes in which a gene family should be present to be included in the pseudo-core genome gene set
 export userreftree='REPLACEuserreftree'                    # possible user-provided reference tree
-export poplgthresh='REPLACEpoplgthresh'                    # parameter to define populations of genomes in the reference tree (stem branch length threshold)
-export poplgleafmul='REPLACEpoplgleafmul'                  # parameter to define populations of genomes in the reference tree (multiplier to the former in case it is a leaf)
-export popbsthresh='REPLACEpopbsthresh'                    # parameter to define populations of genomes in the reference tree (stem branch support threshold)
+export poplgthresh='REPLACEpoplgthresh'                    # parameter to define populations of genomes in the reference tree (stem branch length threshold, default value depends on coreseqtype)
+export poplgleafmul='REPLACEpoplgleafmul'                  # parameter to define populations of genomes in the reference tree (multiplier to the former in case it is a leaf, default 1.5)
+export popbsthresh='REPLACEpopbsthresh'                    # parameter to define populations of genomes in the reference tree (stem branch support threshold, default 80)
 export chaintype='REPLACEchaintype'                        # whether gene trees will be collapsed ('collapsed', if -c option enabled) or not ('fullgenetree', default)
 # non-default parameters for gene trees collapsing derived from -C option value (passed to init script via ${collapseCladeParams}): 
 export cladesupp=REPLACEcladesupp                          # - clade criterion trheshold (int)
 export subcladesupp=REPLACEsubcladesupp                    # - wihtin-clade criterion trheshold (int)
 export criterion='REPLACEcriterion'                        # - criterion (branch support: 'bs', branch length 'lg')
 export withinfun='REPLACEwithinfun'                        # - aggregate function for testing within the clade ('min', 'max', 'mean', 'median')
-export hpcremoteptgroot='REPLACEhpcremoteptgroot'          # if not empty, will use this server address to send data and scripts to run heavy computions there 
+export hpcremoteptgroot='REPLACEhpcremoteptgroot'          # if not empty nor 'none', will use this server address to send data and scripts to run heavy computions there 
 # the rest have fixed values that can be modified here or overriden with certain task-specific options
 # default values are:
 export cladesuppdef=70
