@@ -1,0 +1,3 @@
+[submodule "python_libs/tree2"]
+	path = python_libs/tree2
+	url = https://github.com/flass/tree2.git
