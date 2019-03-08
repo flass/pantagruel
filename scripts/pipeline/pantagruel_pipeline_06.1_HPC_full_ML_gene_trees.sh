@@ -23,7 +23,7 @@ mkdir -p ${ptglogs}/raxml/gene_trees/ ${$mlgenetrees}/
 
 ## compute first pass of gene trees with RAxML, using rapid bootstrap to estimate branch supports
 rm -f ${protali}/cdsfams_*_aln_list
-sortminsizes=($(for famset in `ls ${protali}/cdsfams_*` ; do echo $famset | sed -e 's/.*cdsfams_minsize\([0-9]\+.*\)/\1/' ; done | sort -n))
+sortminsizes=($(for famset in `ls ${protali}/*cdsfams_*` ; do echo $famset | sed -e 's/.*cdsfams_minsize\([0-9]\+.*\)/\1/' ; done | sort -n))
 allcdsfam2phylo=($(for famminsize in ${sortminsizes[@]} ; do ls ${protali}/*${famminsize} ; done))
 allmems=(4 8 32 64)
 allwalltimes=(24 24 72 72)

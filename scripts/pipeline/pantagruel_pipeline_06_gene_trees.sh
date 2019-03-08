@@ -9,9 +9,13 @@
 
 # Copyright: Florent Lassalle (f.lassalle@imperial.ac.uk), 30 July 2018
 
-if [ -z "$1" ] ; then echo "missing mandatory parameter: pantagruel config file" ; echo "Usage: $0 ptg_env_file" ; exit 1 ; fi
+if [ -z "$1" ] ; then echo "missing mandatory parameter: pantagruel config file" ; echo "Usage: $0 ptg_env_file [gene_fam_list]" ; exit 1 ; fi
 envsourcescript="$1"
 source ${envsourcescript}
+
+if [ ! -z "$2" ] ; then
+  export genefamlist="$2"
+fi
 
 #############################################################
 ## 06. Gene trees (full [ML] and collapsed [bayesian sample])
@@ -28,13 +32,25 @@ if [[ "$hpcremoteptgroot" != 'none' ]] ; then
 
   export hpcremotehost=$(echo "$hpcremoteptgroot" | cut -d':' -f1)
   export hpcremotefolder=$(echo "$hpcremoteptgroot" | cut -d':' -f2)
-
+  
   python ${ptgscripts}/pantagruel_sqlitedb_query_gene_fam_sets.py --db=${sqldb} --outprefix='cdsfams' --dirout=${protali} --base.query="${basequery}" \
    --famsets.min.sizes="4,500,2000,10000" --famsets.max.sizes="499,1999,9999,"
-
+  if [ -z "$genefamlist" ] ; then
+    famlists=$(ls ${protali}/cdsfams_*)
+  else
+    bngenefamlist=$(basename $genefamlist)
+    rm -f ${protali}/${bngenefamlist}_*
+    for fam in `cat $genefamlist` ; do
+      for cdsfamlist in $(ls ${protali}/cdsfams_*) ; do
+        grep fam ${cdsfamlist} >>  ${protali}/${bngenefamlist}_${cdsfamlist}
+      done
+    done
+    famlists=$(ls ${protali}/${bngenefamlist}_cdsfams_*)
+  fi
+  
   # sync input and ouput folders with remote HPC host
   ${ptgscripts}/sync_ptgdb_with_remote_host.sh ${ptgdbname} ${ptgroot} \
-   ${hpcremoteptgroot} ${cdsalifastacodedir} ${colalinexuscodedir}/${collapsecond} ${mlgenetrees} ${bayesgenetrees} ${protali}/cdsfams_* ${sqldb}
+   ${hpcremoteptgroot} ${cdsalifastacodedir} ${colalinexuscodedir}/${collapsecond} ${mlgenetrees} ${bayesgenetrees} ${famlists} ${sqldb}
 
   echo "please connect to remote host $hpcremotehost and execute the following scripts in order "
   echo "(waiting for completion of all array jobs submitted by one script before executing the next):"
@@ -52,7 +68,18 @@ fi
 ### local version
     
 python ${ptgscripts}/pantagruel_sqlitedb_query_gene_fam_sets.py --db=${sqldb} --outprefix='cdsfams' --dirout=${protali} --base.query="${basequery}" \
---famsets.min.sizes="4"
+ --famsets.min.sizes="4"
+
+if [ -z "$genefamlist" ] ; then
+  famlist=${protali}/cdsfams_minsize4
+else
+  famlist=${protali}/${bngenefamlist}_cdsfams_minsize4
+  bngenefamlist=$(basename $genefamlist)
+  rm -f ${protali}/${bngenefamlist}_*
+  for fam in `cat $genefamlist` ; do
+    grep fam ${cdsfamlist} >>  ${famlist}
+  done
+fi
 
 if [[ "${chaintype}" == 'fullgenetree' ]] ; then
   #### OPTION A1: no collapsing, just convert the alignments from fasta to nexus to directly compute bayesian trees
@@ -77,8 +104,7 @@ else
   ##########################
   
   ## compute first pass of gene trees with RAxML, using rapid bootstrap to estimate branch supports
-  allcdsfam2phylo=${protali}/cdsfams_minsize4
-  tasklist=${cdsfam2phylo}_aln_list
+  tasklist=${famlist}_aln_list
   rm -f $tasklist
   for fam in `cut -f1 $cdsfam2phylo` ; do
    ls ${cdsalifastacodedir}/${fam}.codes.aln >> $tasklist
