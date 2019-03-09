@@ -9,7 +9,7 @@
 
 # Copyright: Florent Lassalle (f.lassalle@imperial.ac.uk), 15 Jan 2019
 
-if [ -z "$1" ] ; then echo "missing mandatory parameter: pantagruel config file" ; echo "Usage: $0 ptg_env_file [ncpus=12] [mem=124gb] [walltimehours=72]" ; exit 1 ; fi
+if [ -z "$1" ] ; then echo "missing mandatory parameter: pantagruel config file" ; echo "Usage: $0 ptg_env_file [ncpus=12] [mem=124gb] [walltimehours=72] [parallelflags='']" ; exit 1 ; fi
 envsourcescript="$1"
 source ${envsourcescript}
 
@@ -28,6 +28,18 @@ if [ ! -z "$4" ] ; then
 else
   wth=72
 fi
+if [ ! -z "$5" ] ; then
+  parallelflags=":$5"
+  # for instance, parallelflags="mpiprocs=1:ompthreads=8"
+  # will force the use of OpenMP multi-threading instead of default MPI parallelism
+  # note this is not standard and might not be the default on your HPC system;
+  # also the flags may be different depending on the HPC system config.
+  # you should get in touch with your system admins to know the right flags
+else
+  parallelflags=""
+fi
+
+
 
 ################################################################################
 ## 06.4 Convert format of Bayesian gene trees and replace species by populations
@@ -74,7 +86,7 @@ else
     tasklist=${tasklist}_resumetask_${dtag}
   fi
   # PBS-submitted parallel job
-  qsub -N replSpePopinGs -l select=1:ncpus=${ncpus}:mem=${mem},walltime=${wth}:00:00 -o ${repllogd} -j oe -V << EOF
+  qsub -N replSpePopinGs -l select=1:ncpus=${ncpus}:mem=${mem}${parallelflags},walltime=${wth}:00:00 -o ${repllogd} -j oe -V << EOF
   module load python
   python ${ptgscripts}/replace_species_by_pop_in_gene_trees.py -G ${tasklist} -c ${colalinexuscodedir}/${collapsecond} -S ${speciestree}.lsd.newick -o ${coltreechains}/${collapsecond} \
    --populations=${speciestree%.*}_populations --population_tree=${speciestree%.*}_collapsedPopulations.nwk --population_node_distance=${speciestree%.*}_interNodeDistPopulations \
