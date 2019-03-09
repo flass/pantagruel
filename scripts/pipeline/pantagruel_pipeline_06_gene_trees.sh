@@ -66,6 +66,7 @@ if [[ ! -z "$hpcremoteptgroot" && "$hpcremoteptgroot" != 'none' ]] ; then
   echo "- pantagruel_pipeline_06.2_HPC_collapse_gene_trees.sh"
   echo "- pantagruel_pipeline_06.3_HPC_bayesian_gene_trees.sh"
   echo "- pantagruel_pipeline_06.4_HPC_replace_spe_by_pops.sh"
+  echo "- pantagruel_pipeline_06.5_HPC_populate_db.sh"
   echo "then copy back ouput files and updated database file by syncing the root folder from remote host to this host"
 
   exit 0

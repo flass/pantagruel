@@ -1,0 +1,18 @@
+#!/bin/bash
+#PBS -S /bin/bash
+#PBS -N replSpePopinGs
+#PBS -o /work/flassall/logs/mrbayes
+#PBS -j oe 
+#PBS -l walltime=24:00:00 
+
+echo "This is job $PBS_JOBNAME, job_ID $PBS_JOBID (array_task_ID $PBS_ARRAY_INDEX) on host $HOSTNAME, running $PBS_NUM_PPN processes on these workers:"
+cat $PBS_NODEFILE
+echo ""
+
+module load python
+
+taskchunklist=`awk "NR==$PBS_ARRAY_INDEX" $tasklist`
+
+python ${ptgscripts}/replace_species_by_pop_in_gene_trees.py -G ${taskchunklist} -c ${colalinexuscodedir}/${collapsecond} -S ${speciestree}.lsd.newick -o ${coltreechains}/${collapsecond} \
+ --populations=${speciestree%.*}_populations --population_tree=${speciestree%.*}_collapsedPopulations.nwk --population_node_distance=${speciestree%.*}_interNodeDistPopulations \
+ --dir_full_gene_trees=${mlgenetrees}/rootedTree --method=${colmethod} --threads=${ncpus} --reuse=0 --max.recursion.limit=12000 --logfile=${repllogs}_${replrun}.log

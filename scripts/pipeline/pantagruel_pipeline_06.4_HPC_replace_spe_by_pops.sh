@@ -9,7 +9,7 @@
 
 # Copyright: Florent Lassalle (f.lassalle@imperial.ac.uk), 15 Jan 2019
 
-if [ -z "$1" ] ; then echo "missing mandatory parameter: pantagruel config file" ; echo "Usage: $0 ptg_env_file [ncpus=12] [mem=124gb] [walltimehours=72] [parallelflags='']" ; exit 1 ; fi
+if [ -z "$1" ] ; then echo "missing mandatory parameter: pantagruel config file" ; echo "Usage: $0 ptg_env_file [ncpus=12] [mem=124gb] [walltimehours=24] [parallelflags='']" ; exit 1 ; fi
 envsourcescript="$1"
 source ${envsourcescript}
 
@@ -26,7 +26,7 @@ fi
 if [ ! -z "$4" ] ; then
   wth="$4"
 else
-  wth=72
+  wth=24
 fi
 if [ ! -z "$5" ] ; then
   parallelflags=":$5"
@@ -61,49 +61,49 @@ else
   #### OPTION B2: collapsed rake clades in gene trees need to be replaced by mock population leaves
   #### will edit collapsed gene trees to attribute an (ancestral) species identity to the leafs representing collapsed clades = pre-reconciliation of recent gene history
   if [ -z ${replacecolid} ] ; then
-   replacecolid=1
+   export replacecolid=1
   fi
   mkdir -p ${coltreechains}/${collapsecond}
 
   ## edit the gene trees, producing the corresponding (potentially collapsed) species tree based on the 'time'-tree backbone
   mkdir -p ${ptgdb}/logs/replspebypop
-  tasklist=${bayesgenetrees}_${collapsecond}_mbrun1t_list
+  export tasklist=${bayesgenetrees}_${collapsecond}_mbrun1t_list
   ls ${bayesgenetrees}/${collapsecond}/*run1.t > $tasklist
   repllogd=${ptgdb}/logs/replspebypop
   repllogs=${repllogd}/replace_species_by_pop_in_gene_trees
-  replrun=$(date +'%d%m%Y')
-
+  replacecoldate=$(date +%Y-%m-%d)
+  echo -e "${replacecolid}\t${replacecoldate}" > ${genetrees}/replacecol
+  
+  export dtag="$(date +'%Y%m%d-%H%M%S')"
   if [ "${resumetask}" == 'true' ] ; then
     #~ # following lines are for resuming after a stop in batch computing, or to collect those jobs that crashed (and may need to be re-ran with more mem/time allowance)
     for nfrun1t in $(cat $tasklist) ; do
      bnrun1t=$(basename $nfrun1t)
-     bnGtre=${bnrun1t/mb.run1.t/Gtrees.nwk}
-     bnStre=${bnrun1t/mb.run1.t/Stree.nwk}
+     bnGtre=${bnrun1t/.mb.run1.t/-Gtrees.nwk}
+     bnStre=${bnrun1t/.mb.run1.t/-Stree.nwk}
      if [[ ! -e ${coltreechains}/${collapsecond}/${colmethod}/${bnGtre} || ! -e ${coltreechains}/${collapsecond}/${colmethod}/${bnStre} ]] ; then
        echo ${nfrun1t}
      fi
-    done > ${tasklist}_resumetask_${dtag}
-    tasklist=${tasklist}_resumetask_${dtag}
+    done > ${tasklist}_resumetasklist
+    export tasklist=${tasklist}_resumetasklist
   fi
   # PBS-submitted parallel job
-  qsub -N replSpePopinGs -l select=1:ncpus=${ncpus}:mem=${mem}${parallelflags},walltime=${wth}:00:00 -o ${repllogd} -j oe -V << EOF
-  module load python
-  python ${ptgscripts}/replace_species_by_pop_in_gene_trees.py -G ${tasklist} -c ${colalinexuscodedir}/${collapsecond} -S ${speciestree}.lsd.newick -o ${coltreechains}/${collapsecond} \
-   --populations=${speciestree%.*}_populations --population_tree=${speciestree%.*}_collapsedPopulations.nwk --population_node_distance=${speciestree%.*}_interNodeDistPopulations \
-   --dir_full_gene_trees=${mlgenetrees}/rootedTree --method=${colmethod} --threads=${ncpus} --reuse=0 --max.recursion.limit=12000 --logfile=${repllogs}_${replrun}.log
-  if [ $? != 0 ] ; then
-    echo "ERROR: ${ptgscripts}/replace_species_by_pop_in_gene_trees.py call returned wth an error status ; quit now" 1>&2
-    exit 1
-  fi
-  export replacecoldate=$(date +%Y-%m-%d)
-  echo -e "${replacecolid}\t${replacecoldate}" > ${genetrees}/replacecol
+  # divide run in small chunks o be run in different jobs
+  chunksize=100
+  Njob=`wc -l ${tasklist} | cut -f1 -d' '`
+  jobranges=($(${ptgscripts}/get_jobranges.py $chunksize $Njob))
+  rm -f ${tasklist}_${dtag}_taskchunks
+  for jobrange in ${jobranges[@]} ; do
+    replrun="${dtag}_${jobrange}"
+    tail -n +$(echo $jobrange | cut -d'-' -f1) ${tasklist} | head -n ${chunksize} > ${tasklist}_${replrun}
+    echo ${tasklist}_${replrun} >> ${tasklist}_${dtag}_taskchunks
+  done
+  
+  Nchunk=`wc -l ${tasklist}_${dtag}_taskchunks | cut -f1 -d' '`
+  qsub -J 1-${Nchunk} -N replSpePopinGs -l select=1:ncpus=${ncpus}:mem=${mem}${parallelflags},walltime=${wth}:00:00 -o ${repllogd} -j oe -V ${ptgscripts}/replSpePopinGs_array_PBS.qsub
+  
   ## load these information into the database
-  collapsecolid=$(cut -f1 ${genetrees}/collapsecol)
-  collapsecoldate=$(cut -f2 ${genetrees}/collapsecol)
-  collapsecriteriondef="$(cut -f3 ${genetrees}/collapsecol)"
   ${ptgscripts}/pantagruel_sqlitedb_phylogeny_populate_collapsed_clades.sh ${database} ${sqldb} ${colalinexuscodedir} ${coltreechains} ${collapsecond} ${colmethod} "${collapsecriteriondef}" ${collapsecolid} ${replacecolid} ${collapsecoldate} ${replacecoldate}
-EOF
-
 
 fi
 #### end OPTION B2
