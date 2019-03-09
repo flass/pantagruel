@@ -98,9 +98,14 @@ else
     tail -n +$(echo $jobrange | cut -d'-' -f1) ${tasklist} | head -n ${chunksize} > ${tasklist}_${replrun}
     echo ${tasklist}_${replrun} >> ${tasklist}_${dtag}_taskchunks
   done
-  
   Nchunk=`wc -l ${tasklist}_${dtag}_taskchunks | cut -f1 -d' '`
-  qsub -J 1-${Nchunk} -N replSpePopinGs -l select=1:ncpus=${ncpus}:mem=${mem}${parallelflags},walltime=${wth}:00:00 -o ${repllogd} -j oe -V ${ptgscripts}/replSpePopinGs_array_PBS.qsub
+  if [ ${Nchunk} -gt 2 ] ; then
+    # run as an array job
+    arrayspec=" -J 1-${Nchunk}"
+  else
+    arrayspec=""
+  fi
+  qsub${arrayspec} -N replSpePopinGs -l select=1:ncpus=${ncpus}:mem=${mem}${parallelflags},walltime=${wth}:00:00 -o ${repllogd} -j oe -V ${ptgscripts}/replSpePopinGs_array_PBS.qsub
   
   ## load these information into the database
   ${ptgscripts}/pantagruel_sqlitedb_phylogeny_populate_collapsed_clades.sh ${database} ${sqldb} ${colalinexuscodedir} ${coltreechains} ${collapsecond} ${colmethod} "${collapsecriteriondef}" ${collapsecolid} ${replacecolid} ${collapsecoldate} ${replacecoldate}
