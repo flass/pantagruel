@@ -47,18 +47,12 @@ fi
 runmb(){
 
 nfaln=$1
-nfrad1=$(basename $nfaln)
+nfrad1=$(basename ${nfaln})
 nfrad2=${nfrad1%.*}
-echo $nfrad2
+echo ${nfrad2}
 echo ""
 
 echo "current directory (output directory) is $HOSTNAME:$PWD"
-
-#~ # remove traces from potential previous chains 
-#~ rm ./*$nfrad2*
-#~ echo "removed pre-existing files with name containing '$nfrad2' with exit status $?"
-#~ echo ""
-# directory is supposed to be clean anyway
 
 echo 'mbmcmcopt="$mbmcmcopt"'
 
@@ -72,12 +66,18 @@ print mbresume
 EOF
 )
 if [ "$mbresume" == 'yes' ] ; then
-  # import files from previous interupted analysis
-  echo "rsync -avz $outputdir/*${nfrad2}* ./"
-  rsync -avz $outputdir/*${nfrad2}* ./
+  if [ "$PWD" != "$(realpath ${outputdir})" ] ; then
+    # import files from previous interupted analysis
+    echo "rsync -avz $outputdir/*${nfrad2}* ./"
+    rsync -avz $outputdir/*${nfrad2}* ./
+  fi
 else
-  echo "rsync -avz $nfaln ./"
-  rsync -avz $nfaln ./
+  if [ ! -z "$(ls ./${nfrad2}.mb* 2> /dev/null)" ] ; then
+    echo "there are already files matching pattern './${nfrad2}.mb*' ; I do not risk overwritting them: exit now"
+    exit 1
+  fi
+  echo "rsync -avz ${nfaln} ./"
+  rsync -avz ${nfaln} ./
 fi
 echo "copied input files with exit status $?"
 echo "ls ./"
@@ -86,52 +86,48 @@ echo ""
 
 # give a glimpse of data complexity
 echo "data matrix:"
-\grep 'dimensions' $nfrad1
+\grep 'dimensions' ${nfrad1}
 echo ""
 
 # set MrBayes parameters
-echo "set autoclose=yes nowarn=yes" > $nfrad2.mbparam.txt
-echo "execute $nfrad1" >> $nfrad2.mbparam.txt
+echo "set autoclose=yes nowarn=yes" > ${nfrad2}.mbparam.txt
+echo "execute ${nfrad1}" >> ${nfrad2}.mbparam.txt
 if [ "${mbversion%.*}" == '3.2' ] ; then
-  echo "lset nst=6 rates=invgamma ploidy=haploid" >> $nfrad2.mbparam.txt
+  echo "lset nst=6 rates=invgamma ploidy=haploid" >> ${nfrad2}.mbparam.txt
 else
 # following line WORKED with MrBayes v3.2.2, but DID NOT WORK with v3.1.2 due to a bug not recognizing ploidy option
-  echo "lset nst=6 rates=invgamma" >> $nfrad2.mbparam.txt
+  echo "lset nst=6 rates=invgamma" >> ${nfrad2}.mbparam.txt
 fi
-echo "showmodel" >> $nfrad2.mbparam.txt
+echo "showmodel" >> ${nfrad2}.mbparam.txt
 if [ "${mbversion%.*}" == '3.2' ] ; then
 # following line WORKED with MrBayes v3.2.2, but DID NOT WORK with v3.1.2 as the checkpoint option is new to v3.2
-  echo "mcmcp $mbmcmcopt file=$nfrad2.mb.nex checkpoint=yes checkfreq=100000" >> $nfrad2.mbparam.txt
+  echo "mcmcp $mbmcmcopt file=${nfrad2}.mb.nex checkpoint=yes checkfreq=100000" >> ${nfrad2}.mbparam.txt
 else
-  echo "mcmcp $mbmcmcopt file=$nfrad2.mb.nex" >> $nfrad2.mbparam.txt
+  echo "mcmcp $mbmcmcopt file=${nfrad2}.mb.nex" >> ${nfrad2}.mbparam.txt
 fi
-echo "mcmc" >> $nfrad2.mbparam.txt
+echo "mcmc" >> ${nfrad2}.mbparam.txt
 if [ "${mbversion%.*}" == '3.2' ] ; then
 # following line WORKED with MrBayes v3.2.2, but DID NOT WORK with v3.1.2 as the conformat option is new to v3.2
-  echo "sumt conformat=simple contype=allcompat minpartfreq=0.001" >> $nfrad2.mbparam.txt
+  echo "sumt conformat=simple contype=allcompat minpartfreq=0.001" >> ${nfrad2}.mbparam.txt
 else
-  echo "sumt minpartfreq=0.001 contype=allcompat" >> $nfrad2.mbparam.txt
+  echo "sumt minpartfreq=0.001 contype=allcompat" >> ${nfrad2}.mbparam.txt
 fi
-echo "sump" >> $nfrad2.mbparam.txt
-echo "quit" >> $nfrad2.mbparam.txt
+echo "sump" >> ${nfrad2}.mbparam.txt
+echo "quit" >> ${nfrad2}.mbparam.txt
 
-cat $nfrad2.mbparam.txt
+cat ${nfrad2}.mbparam.txt
 echo ""
 
 
-# run the progrram in background
+# run the progrram
 echo "running MrBayes:"
-#~ echo "mpirun -np $nbcores mb < $nfrad2.mbparam.txt &"
-#~ mpirun -np $nbcores mb < $nfrad2.mbparam.txt &
-#~ echo "mpiexec mb < $nfrad2.mbparam.txt"
-#~ mpiexec mb < $nfrad2.mbparam.txt
-echo "mb < $nfrad2.mbparam.txt"
-mb < $nfrad2.mbparam.txt
+echo "mb < ${nfrad2}.mbparam.txt"
+mb < ${nfrad2}.mbparam.txt
 
 
 echo "output of MrBayes phylogenetic reconstruction is :"
-echo "ls ./*$nfrad2*"
-ls ./*$nfrad2*
+echo "ls ./*${nfrad2}*"
+ls ./*${nfrad2}*
 echo ""
 
 
@@ -142,4 +138,4 @@ echo ""
 
 export -f runmb 
 # choose to run each tree on only one process, and to parallelize by the tasks (avoid relying on MPI interface)
-parallel runmb ::: `cat $tasklist`
+parallel runmb ::: `cat ${tasklist}`
