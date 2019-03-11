@@ -166,30 +166,40 @@ fi
 echo ""
 
 # fetch Pal2Nal script
-echo "get pal2nal"
-if [ ! -x ${SOFTWARE}/pal2nal.v14/pal2nal.pl ] ; then
-  wget http://www.bork.embl.de/pal2nal/distribution/pal2nal.v14.tar.gz
-  tar -xzf ${SOFTWARE}/pal2nal.v14.tar.gz
-  chmod +x ${SOFTWARE}/pal2nal.v14/pal2nal.pl
-  checkexec "Could not install pal2nal.pl" "Succesfully installed pal2nal.pl"
-fi
 if [ ! -x ${BINS}/pal2nal.pl ] ; then
+  if [ ! -x ${SOFTWARE}/pal2nal.v14/pal2nal.pl ] ; then
+    echo "get pal2nal"
+    wget http://www.bork.embl.de/pal2nal/distribution/pal2nal.v14.tar.gz
+    tar -xzf ${SOFTWARE}/pal2nal.v14.tar.gz
+    chmod +x ${SOFTWARE}/pal2nal.v14/pal2nal.pl
+    checkexec "Could not install pal2nal.pl" "Succesfully installed pal2nal.pl"
+  fi
   ln -s ${SOFTWARE}/pal2nal.v14/pal2nal.pl ${BINS}/
   checkexec "Could not link pal2nal.pl executable to ${BINS}/" "Succesfully linked pal2nal.pl executable to ${BINS}/"
+else
+  echo "found pal2nal.pl executable: ${BINS}/pal2nal.pl"
+  if [ -L ${BINS}/pal2nal.pl ] ; then
+    echo " linking to $(readlink -f ${BINS}/pal2nal.pl)"
+  fi
 fi
 echo ""
 
 # fetch MAD program
-echo "get MAD"
-if [ ! -x ${SOFTWARE}/mad/mad ] ; then
-  wget https://www.mikrobio.uni-kiel.de/de/ag-dagan/ressourcen/mad2-2.zip
-  unzip ${SOFTWARE}/mad2-2.zip
-  chmod +x ${SOFTWARE}/mad/mad
-  checkexec "Could not install MAD" "Succesfully installed MAD"
-fi
 if [ ! -x ${BINS}/mad ] ; then
+  if [ ! -x ${SOFTWARE}/mad/mad ] ; then
+    echo "get MAD"
+    wget https://www.mikrobio.uni-kiel.de/de/ag-dagan/ressourcen/mad2-2.zip
+    unzip ${SOFTWARE}/mad2-2.zip
+    chmod +x ${SOFTWARE}/mad/mad
+    checkexec "Could not install MAD" "Succesfully installed MAD"
+  fi
   ln -s ${SOFTWARE}/mad/mad ${BINS}/
   checkexec "Could not link MAD executable to ${BINS}/" "Succesfully linked MAD executable to ${BINS}/"
+else
+  echo "found MAD executable: ${BINS}/mad"
+  if [ -L ${BINS}/mad ] ; then
+    echo " linking to $(readlink -f ${BINS}/mad)"
+  fi
 fi
 echo ""
 
