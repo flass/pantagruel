@@ -60,7 +60,7 @@ def sorttasksbysource(dprotfiletasks):
 def joinlistasline(l):
 	return '\t'.join([str(e) for e in l])+'\n'
 	
-def castPal2Nal(cdsfam, dirfullprotout, dirfullcdsseqout, dirfullcdsaliout, fpal2nallog):
+def castPal2Nal(cdsfam, dirfullprotout, dirfullcdsseqout, dirfullcdsaliout, fpal2nallog, verbose=False):
 	"""sequential call to pal2nal.pl alignment reverse-translation script
 	
 	given gene family name, folders of protein alignements and aligned gene sequence, respectively,
@@ -68,7 +68,7 @@ def castPal2Nal(cdsfam, dirfullprotout, dirfullcdsseqout, dirfullcdsaliout, fpal
 	nfprotali = "%s/%s.aln"%(dirfullprotout, cdsfam)
 	nfcdsseq = "%s/%s.fasta"%(dirfullcdsseqout, cdsfam)
 	p2ncmd = ["pal2nal.pl", "-output", "fasta", "-codontable", "11", nfprotali, nfcdsseq]
-	#~ print ' '.join(p2ncmd)
+	if verbose: print ' '.join(p2ncmd)
 	nfoutalnc = "%s/%s.aln"%(dirfullcdsaliout, cdsfam)
 	with open(nfoutalnc, 'w') as foutalnc:
 		subprocess.check_call(p2ncmd, stdout=foutalnc, stderr=fpal2nallog)
@@ -81,17 +81,17 @@ def castMultiPal2Nal(argtup):
 	returns pal2nal.pl verbose log (text string)"""
 	try:
 		# with multiprocessing
-		if len(argtup)==6:
-			cdsfam, dirfullprotout, dirfullcdsseqout, dirfullcdsaliout, fpal2nallog, queue = argtup
-		elif len(argtup)==5:
-			cdsfam, dirfullprotout, dirfullcdsseqout, dirfullcdsaliout, fpal2nallog = argtup
+		if len(argtup)==7:
+			cdsfam, dirfullprotout, dirfullcdsseqout, dirfullcdsaliout, fpal2nallog, verbose, queue = argtup
+		elif len(argtup)==6:
+			cdsfam, dirfullprotout, dirfullcdsseqout, dirfullcdsaliout, fpal2nallog, verbose = argtup
 			queue = None
 		else:
 			raise ValueError,  "incorrect number of arguments: the argument tuple should contain (cdsfam, dirfullprotout, dirfullcdsseqout, dirfullcdsaliout, fpal2nallog [, queue])"
 		nfprotali = "%s/%s.aln"%(dirfullprotout, cdsfam)
 		nfcdsseq = "%s/%s.fasta"%(dirfullcdsseqout, cdsfam)
 		p2ncmd = ["pal2nal.pl", "-output", "fasta", "-codontable", "11", nfprotali, nfcdsseq]
-		#~ print ' '.join(p2ncmd)
+		if verbose: print ' '.join(p2ncmd)
 		nfoutalnc = "%s/%s.aln"%(dirfullcdsaliout, cdsfam)
 		foutalnc = open(nfoutalnc, 'w')
 		p2npipe = subprocess.Popen(p2ncmd, stdout=foutalnc, stderr=subprocess.PIPE)
@@ -105,7 +105,7 @@ def castMultiPal2Nal(argtup):
 			raise e
 	#~ fpal2nallog.write(p2npipe.stderr.read())
 
-def main(dirnrprotaln, nfsingletonfasta, nfprotinfotab, nfreplinfotab, dirassemb, dirout, fam_prefix, dirlogs, nfidentseq=None, nbcores=1):
+def main(dirnrprotaln, nfsingletonfasta, nfprotinfotab, nfreplinfotab, dirassemb, dirout, fam_prefix, dirlogs, nfidentseq=None, nbcores=1, verbose=False):
 
 	# define output folders
 	suffdirout = os.path.basename(dirout)
@@ -401,9 +401,9 @@ def main(dirnrprotaln, nfsingletonfasta, nfprotinfotab, nfreplinfotab, dirassemb
 		pool = multiprocessing.Pool(processes=nbcores)
 		#~ manag = multiprocessing.Manager()
 		#~ queue = manag.Queue()
-		#~ p2nlog = pool.map(castMultiPal2Nal, ((cdsfam, dirfullprotout, dirfullcdsseqout, dirfullcdsaliout, fpal2nallog, queue) for cdsfam in allcdsfam))
-		p2nlog = pool.map(castMultiPal2Nal, ((cdsfam, dirfullprotout, dirfullcdsseqout, dirfullcdsaliout, fpal2nallog) for cdsfam in allcdsfam))
-		#~ result = pool.map_async(castMultiPal2Nal, ((cdsfam, dirfullprotout, dirfullcdsseqout, dirfullcdsaliout, fpal2nallog, queue) for cdsfam in allcdsfam))
+		#~ p2nlog = pool.map(castMultiPal2Nal, ((cdsfam, dirfullprotout, dirfullcdsseqout, dirfullcdsaliout, fpal2nallog, verbose, queue) for cdsfam in allcdsfam))
+		p2nlog = pool.map(castMultiPal2Nal, ((cdsfam, dirfullprotout, dirfullcdsseqout, dirfullcdsaliout, fpal2nallog, verbose) for cdsfam in allcdsfam))
+		#~ result = pool.map_async(castMultiPal2Nal, ((cdsfam, dirfullprotout, dirfullcdsseqout, dirfullcdsaliout, fpal2nallog, verbose, queue) for cdsfam in allcdsfam))
 		#~ # monitor loop
 		#~ while True:
 			#~ if result.ready():
@@ -437,7 +437,9 @@ def usage():
 	s += 'Other options:\n'
 	s += '--logs\t\tpath to log folder (default to \'dirout/logs\')\n'
 	s += '--identical_seqs\t\tpath to table of identical protein sequences\n'
-	s += '--threads\t\tnumber of threads for running Pal2Nal in parallel (defaut to full CPU core capacity)'
+	s += '--threads\t\tnumber of threads for running Pal2Nal in parallel (defaut to full CPU core capacity)\n'
+	s += '--verbose|-v\tverbose output'
+	s += '--help|-h\tprint this help message'
 	return s
 
 ## script
@@ -446,7 +448,7 @@ if __name__ == '__main__':
 	opts, args = getopt.getopt(sys.argv[1:], 'h', ['nrprot_fam_alns=', 'assemblies=', 'singletons=', \
 	                                               'prot_info=', 'repli_info=', 'identical_prots=', \
 	                                               'famprefix=', \
-	                                               'dirout=', 'logs=', 'threads=', 'help'])
+	                                               'dirout=', 'logs=', 'threads=', 'help', 'verbose'])
 	dopt = dict(opts)
 	if ('-h' in dopt) or ('--help' in dopt):
 		print usage()
@@ -462,8 +464,9 @@ if __name__ == '__main__':
 	dirlogs = dopt.get('--logs', "%s/logs"%(dirout))
 	nfidentseq = dopt.get('--identical_prots')
 	nbcores = int(dopt.get('--threads', multiprocessing.cpu_count()))
+	verbose = ('-v' in dopt) or ('--verbose' in dopt)
 	
-	main(dirnrprotaln, nfsingletonfasta, nfprotinfotab, nfreplinfotab, dirassemb, dirout, fam_prefix, dirlogs, nfidentseq, nbcores)
+	main(dirnrprotaln, nfsingletonfasta, nfprotinfotab, nfreplinfotab, dirassemb, dirout, fam_prefix, dirlogs, nfidentseq, nbcores, verbose)
 	
         
        

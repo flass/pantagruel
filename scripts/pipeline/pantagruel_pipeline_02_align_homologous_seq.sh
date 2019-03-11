@@ -20,7 +20,6 @@ source $envsourcescript
 export protfamseqs=${mmseqsclout}_clusters_fasta
 export protali=${ptgdb}/02.gene_alignments
 ## prepare protein families for alignment
-nrprotali=$protali/nr_protfam_clustalo_alignments
 mkdir -p ${nrprotali}/ ${ptglogs}/clustalo/
 tasklist=$protali/$(basename ${protfamseqs})_tasklist
 python ${ptgscripts}/schedule_ali_task.py ${protfamseqs}.tab ${protfamseqs} ${tasklist} 1 "${famprefix}P000000"

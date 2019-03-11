@@ -35,8 +35,6 @@ sqlite3 ${sqldb} "select code, organism, strain from assemblies;" | sed -e 's/|/
 sqlite3 ${sqldb} "select genbank_cds_id, cds_code from coding_sequences;" | sed -e 's/lcl|//g'  | sed -e 's/|/\t/g' > ${database}/cds_codes.tab
 
 # translates the header of the alignment files
-export protalifastacodedir=${protali}/full_protfam_alignments_species_code
-export cdsalifastacodedir=${protali}/full_cdsfam_alignments_species_code
 for mol in prot cds ; do
   alifastacodedir=${protali}/full_${mol}fam_alignments_species_code
   mkdir -p ${alifastacodedir}
