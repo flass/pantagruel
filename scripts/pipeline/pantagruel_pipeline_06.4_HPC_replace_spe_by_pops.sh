@@ -70,7 +70,7 @@ else
   export tasklist=${bayesgenetrees}_${collapsecond}_mbrun1t_list
   ls ${bayesgenetrees}/${collapsecond}/*run1.t > $tasklist
   repllogd=${ptgdb}/logs/replspebypop
-  repllogs=${repllogd}/replace_species_by_pop_in_gene_trees
+  export repllogs=${repllogd}/replace_species_by_pop_in_gene_trees
   replacecoldate=$(date +%Y-%m-%d)
   echo -e "${replacecolid}\t${replacecoldate}" > ${genetrees}/replacecol
   
