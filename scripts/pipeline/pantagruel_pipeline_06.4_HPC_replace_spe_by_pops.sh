@@ -14,9 +14,9 @@ envsourcescript="$1"
 source ${envsourcescript}
 
 if [ ! -z "$2" ] ; then
-  ncpus="$2"
+  export ncpus="$2"
 else
-  ncpus=12
+  export ncpus=12
 fi
 if [ ! -z "$3" ] ; then
   mem="$3"
@@ -106,9 +106,6 @@ else
     arrayspec=""
   fi
   qsub${arrayspec} -N replSpePopinGs -l select=1:ncpus=${ncpus}:mem=${mem}${parallelflags},walltime=${wth}:00:00 -o ${repllogd} -j oe -V ${ptgscripts}/replSpePopinGs_array_PBS.qsub
-  
-  ## load these information into the database
-  ${ptgscripts}/pantagruel_sqlitedb_phylogeny_populate_collapsed_clades.sh ${database} ${sqldb} ${colalinexuscodedir} ${coltreechains} ${collapsecond} ${colmethod} "${collapsecriteriondef}" ${collapsecolid} ${replacecolid} ${collapsecoldate} ${replacecoldate}
-
+ 
 fi
 #### end OPTION B2

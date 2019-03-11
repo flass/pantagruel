@@ -38,6 +38,10 @@ if [ ! -s "${speciestree%.*}_populations" ] ; then
   exit 1
 fi
 
+if [ ! -z "$ncpus" ] ; then
+  ncpus=1
+fi
+
 
 taskchunklist=`awk "NR==$PBS_ARRAY_INDEX" ${tasklist}_${dtag}_taskchunks`
 if [ -z "${taskchunklist}" ] ; then
