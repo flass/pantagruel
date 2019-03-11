@@ -234,7 +234,7 @@ fi
 
 # add Python modules to PYTHONPATH
 if [[ -z "$(grep 'export PYTHONPATH=' ${HOME}/.bashrc | grep ${SOFTWARE}/pantagruel/python_libs )" ]] ; then
-  echo "export PYTHONPATH=${PYTHONPATH}:${SOFTWARE}/pantagruel/python_libs" >> ${HOME}/.bashrc
+  echo "export PYTHONPATH=\${PYTHONPATH}:${SOFTWARE}/pantagruel/python_libs" >> ${HOME}/.bashrc
   checkexec "Could not store PYTHONPATH in .bashrc"
   editedrc=true
 fi
@@ -334,7 +334,7 @@ else
 fi
 
 if [[ -z "$(grep 'export PATH=' ${HOME}/.bashrc | grep ${BINS})" ]] ; then
-  echo 'export PATH=$PATH:${BINS}' >> ${HOME}/.bashrc
+  echo "export PATH=\$PATH:${BINS}" >> ${HOME}/.bashrc
   editedrc=true
 fi
 
@@ -344,20 +344,6 @@ checkexec "Failed to link pantagruel executable to ${BINS}/" "Succesfully linked
 
 echo "Installation of Pantagruel and dependencies: complete"
 
-#~ if [[ -z "$(export | grep PATH | grep linuxbrew)" ]] ; then
-  #~ export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"
-#~ fi
-#~ if [[ -z "$(which ALEml)" ]] ; then
-  #~ alias ALEobserve="docker run -v $PWD:$PWD -w $PWD boussau/alesuite ALEobserve"
-  #~ alias ALEml="docker run -v $PWD:$PWD -w $PWD boussau/alesuite ALEml"
-  #~ alias ALEml_undated="docker run -v $PWD:$PWD -w $PWD boussau/alesuite ALEml_undated"
-#~ fi
-#~ if [[ -z "$(export | grep PYTHONPATH | grep tree2 )" || -z "$(export | grep PYTHONPATH | grep pantagruel/python_libs )" ]] ; then
-  #~ export PYTHONPATH=${PYTHONPATH}:${SOFTWARE}/tree2:${SOFTWARE}/pantagruel/python_libs
-#~ fi
-#~ if [[ -z "$(export | grep ' PATH=' | grep ${BINS})" ]] ; then
-  #~ export PATH=$PATH:${BINS}
-#~ fi
 
 if [ "${editedprofile}" == 'true' ] ; then
   echo "the file '~/.bash_profile' was edited to set environment variables; please reload it with \`source ~/.bash_profile\` or reset your session for changes to take effect" 
