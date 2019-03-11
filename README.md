@@ -122,7 +122,8 @@ Options are detailed here:
 
     -r|--rootdir      root directory where to create the database; defaults to current folder
   
-  It is also necessary to specify an input genome dataset! This possible via -a or -A options, or both (see below).
+  It is also necessary to specify an input genome dataset! 
+  This is possible via -a, -A or -L options, or a mixture of them.
   
   _facultative options_
 
@@ -254,7 +255,7 @@ Note that this config file can be edited in-between tasks, for instance to chang
 
 Note that for the sake of computing evolutionary analyses that have any meaning at all, Pantagruel requires that you provide a minimum of **four** genomes in input - 
 ideally much more, as Pantagruel can easily deal with several hundreds of genome. 
-This minimum number 4 is to be split at the user's discretion between RefSeq-type and 'custom assemblies, though `-A` and `-a` options, respectively.  
+This minimum number 4 is to be split at the user's discretion between RefSeq-type and 'custom assemblies, through `-A`/`-L` and `-a` options, respectively.  
 
 Here is a view of what input data passed to Pantagruel should look like.  
 
@@ -267,9 +268,11 @@ cat list_of_RefSeq_accession_ids
 # GCF_001088845.2
 # ...
 # as many rows as there are genomes to study
-# Note the trailing '.z' (z = 1,2,3,...) indicating the assembly version is optional and if it is provided, it WILL BE IGNORED. 
+# Note the trailing '.z' (z = 1,2,3,...) indicating the assembly version is optional 
+# and if it is provided, it WILL BE IGNORED. 
 # This is beacause the LAST version of the accession will always be returned.
-# If you really want to work with an outdated version, please dowload it yourself and feed it to Pantagruel through '-A' option.
+# If you really want to work with an outdated version, please download it yourself
+# and feed it to Pantagruel using '-A' option.
 ```
 
 When using assemblies downloaded from NCBI RefSeq using options `-A|--refseq_ass` or `--refseq_ass4annot`, the folder which path is given as the option's argument should have a content looking like this:  
@@ -304,7 +307,7 @@ When providing your on 'custom' genomes, the folder which path is given as the a
 ls -AF user_genomes/
 # contigs/
 # annotation/
-# strain_infos.txt
+# strain_infos_databasename.txt
 
 ls -AF user_genomes/contigs/
 # B03_1.fasta
@@ -318,16 +321,16 @@ ls -AF user_genomes/annotation/
 # C03_1/
 # D03_1/
 # ... 
-# at most as many separate annotation folders as there are
-# genomic FASTA files as there are genomic FASTA files in contigs/
-# names must match!
+# arbitrary number of annotation folders, only those which names
+# match a genomic FASTA files in contigs/ will be considered
+#
 
 ls -AF user_genomes/annotation/B03_1/
 # Rhizobium_endolithicum_Q54.fna
 # Rhizobium_endolithicum_Q54.ffn
 # Rhizobium_endolithicum_Q54.faa
 # Rhizobium_endolithicum_Q54.gff
-# the file names within the folder do not matter, only their extensions.
+# the file names within ech annotation folder do not matter, only their extensions.
 
 cat user_genomes/strain_infos_databasename.txt
 # assembly_id	genus	species	strain	taxid	locus_tag_prefix
@@ -336,7 +339,8 @@ cat user_genomes/strain_infos_databasename.txt
 # as many rows as FASTA files in the contigs/ folder + onea header row
 # tab-separated fields; header with these field names mandatory; order does not matter.
 # the values in 'assembly_id' and 'locus_tag_prefix' fields must be unique;
-# the 'assembly_id' field value must match the begin of contig file name and match exactly the annotation folder name.
+# the 'assembly_id' field value must match the begin of contig file name
+# and match exactly the annotation folder name.
 ```
 
 -------------
