@@ -20,11 +20,11 @@ fi
 ### e.g. qsub -v tasklist=/path/list outputdir=/path/dir mbmcmcopt="params string"
 
 # test key variables have been provided
-if [ -z $tasklist ] ; then
+if [ -z "$tasklist" ] ; then
   echo "!!! ERROR : mandatory variable \$tasklist not declared ; exit now"
   exit 1
 fi
-if [ -z $outputdir ] ; then
+if [ -z "$outputdir" ] ; then
   echo "!!! ERROR : mandatory variable \$outputdir not declared ; exit now"
   exit 1
 fi
@@ -37,7 +37,7 @@ if [ $? != 0 ] ; then
   echo "!!! ERROR : unable to access output directory '$outputdir/' ; exit now"
   exit 1
 fi
-if [ ! -e $tasklist ] ; then 
+if [ ! -e "$tasklist" ] ; then 
   echo "!!! ERROR : unable to access task list file '$tasklist' ; exit now"
   exit 1
 fi
@@ -83,7 +83,7 @@ for opteqval in mbmcmcopts:
 print mbresume
 EOF
 )
-if [ $mbresume == 'yes' ] ; then
+if [ "$mbresume" == 'yes' ] ; then
   # import files from previous interupted analysis
   echo "rsync -avz $outputdir/*${nfrad2}* ./"
   rsync -avz $outputdir/*${nfrad2}* ./
