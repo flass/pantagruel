@@ -47,6 +47,10 @@ taskchunklist=`awk "NR==$PBS_ARRAY_INDEX" ${tasklist}_${dtag}_taskchunks`
 if [ -z "${taskchunklist}" ] ; then
   # to cover the case when not running as an array job
   taskchunklist=${tasklist}
+  replrun="${dtag}"
+else
+  jobrange=$(echo $taskchunklist | awk -F'_' '{print $NF}')
+  replrun="${dtag}_${jobrange}"
 fi
 
 if [ ! -z "${verbosereplSpePopinGs}" ] ; then
