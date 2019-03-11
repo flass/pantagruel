@@ -214,7 +214,7 @@ else
   echo "found ALE suite already installed with Docker:"
   sudo docker images | grep boussau/alesuite
 fi
-if [[ -z "$(grep 'alias ALEml' ${HOME}/.bashrc)" ]] ; then
+if [[ -z "$(grep 'alias ALEml=' ${HOME}/.bashrc)" ]] ; then
   echo 'alias ALEobserve="docker run -v $PWD:$PWD -w $PWD boussau/alesuite ALEobserve"' >> ${HOME}/.bashrc
   echo 'alias ALEml="docker run -v $PWD:$PWD -w $PWD boussau/alesuite ALEml"' >> ${HOME}/.bashrc
   echo 'alias ALEml_undated="docker run -v $PWD:$PWD -w $PWD boussau/alesuite ALEml_undated"' >> ${HOME}/.bashrc
@@ -223,7 +223,7 @@ if [[ -z "$(grep 'alias ALEml' ${HOME}/.bashrc)" ]] ; then
 fi
 
 # add Python modules to PYTHONPATH
-if [[ -z "$(grep PYTHONPATH ${HOME}/.bashrc | grep ${SOFTWARE}/pantagruel/python_libs )" ]] ; then
+if [[ -z "$(grep 'export PYTHONPATH=' ${HOME}/.bashrc | grep ${SOFTWARE}/pantagruel/python_libs )" ]] ; then
   echo "export PYTHONPATH=${PYTHONPATH}:${SOFTWARE}/pantagruel/python_libs" >> ${HOME}/.bashrc
   checkexec "Could not store PYTHONPATH in .bashrc"
   editedrc=true
@@ -323,8 +323,8 @@ else
  echo "found up-to-date version of Interproscan at $(ls -l `which interproscan` | awk '{print $NF}')"
 fi
 
-if [[ -z "$(grep 'PATH=$PATH:$HOME/bin' ${HOME}/.bashrc)" ]] ; then
-  echo 'export PATH=$PATH:$HOME/bin' >> ${HOME}/.bashrc
+if [[ -z "$(grep 'export PATH=' ${HOME}/.bashrc | grep ${BINS})" ]] ; then
+  echo 'export PATH=$PATH:${BINS}' >> ${HOME}/.bashrc
   editedrc=true
 fi
 
