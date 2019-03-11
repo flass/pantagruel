@@ -182,11 +182,10 @@ mkdir -p ${mboutputdir}
 nchains=4
 nruns=2
 ncpus=$(( $nchains * $nruns ))
-tasklist=${nexusaln4chains}_ali_list
-rm -f $tasklist
-${ptgscripts}/lsfullpath.py "${nexusaln4chains}/*" > $tasklist
+mbtasklist=${nexusaln4chains}_ali_list
+${ptgscripts}/lsfullpath.py "${nexusaln4chains}/*" > $mbtasklist
 
-${ptgscripts}/mrbayes_sequential.sh ${tasklist} ${mboutputdir} 'Nruns=${nruns} Ngen=2000000 Nchains=${nchains}'
+${ptgscripts}/mrbayes_sequential.sh ${mbtasklist} ${mboutputdir} 'Nruns=${nruns} Ngen=2000000 Nchains=${nchains}'
 checkexec "MrBayes tree estimation was interupted ; exit now" "MrBayes tree estimation complete"
 
 ################################################################################
@@ -211,14 +210,14 @@ else
 
   ## edit the gene trees, producing the corresponding (potentially collapsed) species tree based on the 'time'-tree backbone
   mkdir -p ${ptgdb}/logs/replspebypop
-  tasklist=${coltreechains}_${collapsecond}_nexus_list
-  ls $bayesgenetrees/${collapsecond}/*run1.t > $tasklist
+  repltasklist=${coltreechains}_${collapsecond}_nexus_list
+  ${ptgscripts}/lsfullpath.py "${bayesgenetrees}/${collapsecond}/*run1.t" > $repltasklist
   repllogd=${ptgdb}/logs/replspebypop
   repllogs=$repllogd/replace_species_by_pop_in_gene_trees
   replrun=$(date +'%d%m%Y')
 
   # local parallel run
-  python ${ptgscripts}/replace_species_by_pop_in_gene_trees.py -G ${tasklist} -c ${colalinexuscodedir}/${collapsecond} -S ${speciestree}.lsd.newick -o ${coltreechains}/${collapsecond} \
+  python ${ptgscripts}/replace_species_by_pop_in_gene_trees.py -G ${repltasklist} -c ${colalinexuscodedir}/${collapsecond} -S ${speciestree}.lsd.newick -o ${coltreechains}/${collapsecond} \
    --populations=${speciestree%.*}_populations --population_tree=${speciestree%.*}_collapsedPopulations.nwk --population_node_distance=${speciestree%.*}_interNodeDistPopulations \
    --dir_full_gene_trees=${mlgenetrees}/rootedTree --method=${colmethod} --threads=$(nproc) --reuse=0 --verbose=0 --max.recursion.limit=12000 --logfile=${repllogs}_${replrun}.log
   checkexec "replacement of collapsed clades was interupted ; exit now" "replacement of collapsed clades complete"

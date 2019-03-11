@@ -73,7 +73,8 @@ if [ "$nfext" == 'nex' ] ; then
     echo "failed conversion of input file $nfrad1 into FASTA format; we'll see if it goes through..."
   fi
 else
-  localn=${nfaln}
+  cp ${nfaln} ./
+  localn=${nfrad1}
 fi
 
 # test presence of AVX/AVX2 instruction support
