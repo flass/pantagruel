@@ -185,7 +185,7 @@ ncpus=$(( $nchains * $nruns ))
 mbtasklist=${nexusaln4chains}_ali_list
 ${ptgscripts}/lsfullpath.py "${nexusaln4chains}/*" > $mbtasklist
 
-${ptgscripts}/mrbayes_sequential.sh ${mbtasklist} ${mboutputdir} 'Nruns=${nruns} Ngen=2000000 Nchains=${nchains}'
+${ptgscripts}/mrbayes_sequential.sh ${mbtasklist} ${mboutputdir} "Nruns=${nruns} Ngen=2000000 Nchains=${nchains}"
 checkexec "MrBayes tree estimation was interupted ; exit now" "MrBayes tree estimation complete"
 
 ################################################################################

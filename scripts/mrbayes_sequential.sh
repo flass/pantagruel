@@ -1,8 +1,8 @@
 #!/bin/bash
 
-tasklist=$1
-outputdir=$2
-export mbmcmcopt=$3
+tasklist="${1}"
+outputdir="${2}"
+export mbmcmcopt="${3}"
 
 if [ -z $mbversion ] ; then
 # assumes use of most recent version
@@ -62,18 +62,6 @@ echo "current directory (output directory) is $HOSTNAME:$PWD"
 
 echo 'mbmcmcopt="$mbmcmcopt"'
 
-#~ nbcores=$(python << EOF
-#~ mbmcmcopts="$mbmcmcopt".lower().split()
-#~ nruns = 2
-#~ nchains = 4
-#~ for opteqval in mbmcmcopts:
-  #~ opt, val = opteqval.split('=')
-  #~ if opt.strip(' "').lower()=='nruns': nruns = int(val.strip(' "'))
-  #~ if opt.strip(' "').lower()=='nchains': nchains = int(val.strip(' "'))
-#~ print nruns*nchains
-#~ EOF
-#~ )
-
 mbresume=$(python << EOF
 mbmcmcopts="$mbmcmcopt".lower().split()
 mbresume = 'no'
@@ -104,21 +92,21 @@ echo ""
 # set MrBayes parameters
 echo "set autoclose=yes nowarn=yes" > $nfrad2.mbparam.txt
 echo "execute $nfrad1" >> $nfrad2.mbparam.txt
-if [ ${mbversion%.*} == '3.2' ] ; then
+if [ "${mbversion%.*}" == '3.2' ] ; then
   echo "lset nst=6 rates=invgamma ploidy=haploid" >> $nfrad2.mbparam.txt
 else
 # following line WORKED with MrBayes v3.2.2, but DID NOT WORK with v3.1.2 due to a bug not recognizing ploidy option
   echo "lset nst=6 rates=invgamma" >> $nfrad2.mbparam.txt
 fi
 echo "showmodel" >> $nfrad2.mbparam.txt
-if [ ${mbversion%.*} == '3.2' ] ; then
+if [ "${mbversion%.*}" == '3.2' ] ; then
 # following line WORKED with MrBayes v3.2.2, but DID NOT WORK with v3.1.2 as the checkpoint option is new to v3.2
   echo "mcmcp $mbmcmcopt file=$nfrad2.mb.nex checkpoint=yes checkfreq=100000" >> $nfrad2.mbparam.txt
 else
   echo "mcmcp $mbmcmcopt file=$nfrad2.mb.nex" >> $nfrad2.mbparam.txt
 fi
 echo "mcmc" >> $nfrad2.mbparam.txt
-if [ ${mbversion%.*} == '3.2' ] ; then
+if [ "${mbversion%.*}" == '3.2' ] ; then
 # following line WORKED with MrBayes v3.2.2, but DID NOT WORK with v3.1.2 as the conformat option is new to v3.2
   echo "sumt conformat=simple contype=allcompat minpartfreq=0.001" >> $nfrad2.mbparam.txt
 else
