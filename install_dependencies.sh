@@ -187,7 +187,7 @@ if [ ! -x ${SOFTWARE}/mad/mad ] ; then
   chmod +x ${SOFTWARE}/mad/mad
   checkexec "Could not install MAD" "Succesfully installed MAD"
 fi
-if [ ! -x ${SOFTWARE}/mad/mad ] ; then
+if [ ! -x ${BINS}/mad ] ; then
   ln -s ${SOFTWARE}/mad/mad ${BINS}/
   checkexec "Could not link MAD executable to ${BINS}/" "Succesfully linked MAD executable to ${BINS}/"
 fi
