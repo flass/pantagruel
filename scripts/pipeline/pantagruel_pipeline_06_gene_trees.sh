@@ -17,6 +17,19 @@ if [ ! -z "$2" ] ; then
   export genefamlist="$2"
 fi
 
+# function for checking the success of every step
+checkexec (){
+  if [ $? != 0 ]; then
+    echo "ERROR: $1" 1>&2
+    exit 1
+  else
+    if [ ! -z "$2" ] ; then
+      echo "$2"
+    fi
+  fi
+}
+
+
 #############################################################
 ## 06. Gene trees (full [ML] and collapsed [bayesian sample])
 #############################################################
@@ -37,6 +50,8 @@ if [[ ! -z "$hpcremoteptgroot" && "$hpcremoteptgroot" != 'none' ]] ; then
   python ${ptgscripts}/pantagruel_sqlitedb_query_gene_fam_sets.py --db=${sqldb} --outprefix='cdsfams' --dirout=${genetrees} --base.query="${basequery}" \
    --famsets.min.sizes="4,500,2000,10000" --famsets.max.sizes="499,1999,9999,"
   allfamlists=$(ls ${genetrees}/cdsfams_*)
+  checkexec "could not generate gene family lists ; exit now" "succesfully generated gene family lists : $allfamlists"
+  
   if [ -z "$genefamlist" ] ; then
     famlists="${allfamlists}"
   else
@@ -54,6 +69,7 @@ if [[ ! -z "$hpcremoteptgroot" && "$hpcremoteptgroot" != 'none' ]] ; then
       done
     done
     famlists=$(ls ${genetrees}/${bngenefamlist}_cdsfams_*)
+    checkexec "could not generate restricted gene family lists ; exit now" "succesfully generated restricted gene family lists : $famlists"
   fi
   
   # sync input and ouput folders with remote HPC host
@@ -75,9 +91,10 @@ fi
 
 ### local version
     
+allfamlist=${genetrees}/cdsfams_minsize4
 python ${ptgscripts}/pantagruel_sqlitedb_query_gene_fam_sets.py --db=${sqldb} --outprefix='cdsfams' --dirout=${genetrees} --base.query="${basequery}" \
  --famsets.min.sizes="4"
-allfamlist=${genetrees}/cdsfams_minsize4
+checkexec "could not generate gene family list ; exit now" "succesfully generated gene family list : $allfamlist"
 
 if [ -z "$genefamlist" ] ; then
   famlist=${allfamlist}
@@ -94,6 +111,7 @@ else
   for fam in $(cut -f1 ${genefamlist}) ; do
     grep ${fam} ${allfamlist} >> ${famlist}
   done
+  checkexec "could not generate restricted gene family list ; exit now" "succesfully generated restricted gene family lists : $famlist"
 fi
 
 if [[ "${chaintype}" == 'fullgenetree' ]] ; then
@@ -101,7 +119,9 @@ if [[ "${chaintype}" == 'fullgenetree' ]] ; then
   for aln in `ls ${alifastacodedir}` ; do
     convalign -i fasta -e nex -t dna nexus ${alifastacodedir}/$alnfa 
   done
+  checkexec "could not convert alignemts from Fasta to Nexus format ; exit now" "succesfully converted alignemts from Fasta to Nexus format"
   mv ${alifastacodedir}/*nex ${colalinexuscodedir}/
+  checkexec "could not move Nexus alignemts to destination folder ${colalinexuscodedir}/ ; exit now" "succesfully moved Nexus alignemts to destination folder ${colalinexuscodedir}/"
   export nexusaln4chains=${colalinexuscodedir}
   export mboutputdir=${bayesgenetrees}
   
@@ -124,6 +144,7 @@ else
    ls ${cdsalifastacodedir}/${fam}.codes.aln >> ${tasklist}
   done
   ${ptgscripts}/raxml_sequential.sh ${tasklist} ${mlgenetrees} 'GTRCATX' 'bipartitions rootedTree identical_sequences' 'x' $(nproc) 'true'
+  checkexec "RAxML tree estimation was interupted ; exit now" "RAxML tree estimation complete"
   
   ############################
   ## 06.2 Gene tree collapsing
@@ -142,6 +163,7 @@ else
   python ${ptgscripts}/mark_unresolved_clades.py --in_gene_tree_list=${mlgenetreelist} --diraln=${cdsalifastacodedir} --fmt_aln_in='fasta' \
    --threads=$(nproc) --dirout=${colalinexuscodedir}/${collapsecond} --no_constrained_clade_subalns_output --dir_identseq=${mlgenetrees}/identical_sequences \
    ${collapsecriteriondef} 
+  checkexec "ML tree collapsing was interupted ; exit now" "ML tree collapsing complete"
 
   export collapsecoldate=$(date +%Y-%m-%d)
   export nexusaln4chains=${colalinexuscodedir}/${collapsecond}/collapsed_alns
@@ -162,9 +184,10 @@ nruns=2
 ncpus=$(( $nchains * $nruns ))
 tasklist=${nexusaln4chains}_ali_list
 rm -f $tasklist
-${ptgscripts}/lsfullpath.py ${nexusaln4chains} > $tasklist
+${ptgscripts}/lsfullpath.py "${nexusaln4chains}/*" > $tasklist
 
 ${ptgscripts}/mrbayes_sequential.sh ${tasklist} ${mboutputdir} 'Nruns=${nruns} Ngen=2000000 Nchains=${nchains}'
+checkexec "MrBayes tree estimation was interupted ; exit now" "MrBayes tree estimation complete"
 
 ################################################################################
 ## 06.4 Convert format of Bayesian gene trees and replace species by populations
@@ -198,12 +221,14 @@ else
   python ${ptgscripts}/replace_species_by_pop_in_gene_trees.py -G ${tasklist} -c ${colalinexuscodedir}/${collapsecond} -S ${speciestree}.lsd.newick -o ${coltreechains}/${collapsecond} \
    --populations=${speciestree%.*}_populations --population_tree=${speciestree%.*}_collapsedPopulations.nwk --population_node_distance=${speciestree%.*}_interNodeDistPopulations \
    --dir_full_gene_trees=${mlgenetrees}/rootedTree --method=${colmethod} --threads=$(nproc) --reuse=0 --verbose=0 --max.recursion.limit=12000 --logfile=${repllogs}_${replrun}.log
+  checkexec "replacement of collapsed clades was interupted ; exit now" "replacement of collapsed clades complete"
 
   export replacecoldate=$(date +%Y-%m-%d)
   echo -e "${replacecolid}\t${replacecoldate}" > ${genetrees}/replacecol
   
   ## load these information into the database
   ${ptgscripts}/pantagruel_sqlitedb_phylogeny_populate_collapsed_clades.sh ${database} ${sqldb} ${colalinexuscodedir} ${coltreechains} ${collapsecond} ${colmethod} "${collapsecriteriondef}" ${collapsecolid} ${replacecolid} ${collapsecoldate} ${replacecoldate}
+  checkexec "populating the SQL database with collapsed/replaced gene tree clades was interupted ; exit now" "populating the SQL database with collapsed/replaced gene tree clades complete"
 
 fi
 #### end OPTION B2
