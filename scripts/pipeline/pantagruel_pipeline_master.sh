@@ -98,10 +98,10 @@ usagelong (){
   echo "                      NOTE: to ensure proper parsing, it is strongly advised that any provided annotation was generated with Prokka"
   echo "                      NOTE: to ensure uniform annotation of the dataset, it is advised to let Pantagruel annotate the contigs (calling Prokka)"
   echo ""
-  echo "    -s|--pseudocore  integer or string, the minimum number of genomes in which a gene family should be present to be included in"
-  echo "                       the pseudo-core genome, i.e. the gene set which alignments will be concatenated for reference tree search."
-  echo "                       Only relevant when running task 'core'; a non-integer value will trigger an INTERACTIVE prompt for search of an optimal value."
-  echo "                       Defaults to the total number of genomes (work with a strict core genome set)."
+  echo "    -s|--pseudocore  integer, float <=1.0 or string. The minimum number or fraction of genomes in which a gene family should be present"
+  echo "                       to be included in the pseudo-core genome, i.e. the gene set which alignments will be concatenated for reference tree search."
+  echo "                       Only relevant when running task 'core'; a non-numeric value will trigger an INTERACTIVE prompt for search of an optimal value."
+  echo "                       Defaults to the total number of genomes (strict core genome set)."
   echo ""
   echo "    -t|--reftree     specify a reference tree for reconciliation and clade-specific gene analyses;"
   echo "                       over-rides the computation of tree from the concatenate of (pseudo-)core genome gene during taske 'core'."
@@ -203,12 +203,13 @@ ptgenvsetdefaults (){
      echo "'$ptgscripts/choose_min_genome_occurrence_pseudocore_genes.sh'"
      echo "and then manualy edit the value of variable 'pseudocoremingenomes' in the pantagruel configuration file."
     else
-      case "${pseudocoremingenomes}" in		
-        ''|*[!0-9]*)		
-      	 echo "'pseudocoremingenomes' variable is not set to a correct integer value: '${pseudocoremingenomes}'" ;;
-        *)		
-      	 echo "'pseudocoremingenomes' variable is set to ${pseudocoremingenomes}";;
-      esac
+      if [[ "$pseudocoremingenomes" =~ ^[0-9]+$ ]]; then
+      	 echo "'pseudocoremingenomes' variable is set to ${pseudocoremingenomes}; this integer value is interpreted as a number of genomes"
+      elif [[ "$pseudocoremingenomes" =~ ^0*\.[0-9]+$ ]]; then
+      	 echo "'pseudocoremingenomes' variable is set to ${pseudocoremingenomes}; this float value is interpreted as a fraction of total number of genomes"
+      else		
+      	 echo "'pseudocoremingenomes' variable is not set to a numeric value: '${pseudocoremingenomes}'; will run INTERACTIVE script to pick an appropriate one"
+      fi
     fi
     if [ -z "$coreseqtype" ] ; then
      export coreseqtype='cds'

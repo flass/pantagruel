@@ -20,12 +20,23 @@ mkdir -p ${coregenome}/pseudo-coregenome_sets/
 # have glimpse of (almost-)universal unicopy gene family distribution and select those intended for core-genome tree given pseudocoremingenomes threshold
 #~ let "t = ($ngenomes * 9 / 10)" ; let "u = $t - ($t%20)" ; seq $u 10 $ngenomes | sort -r > ${ptgtmp}/mingenom ; echo "0" >> ${ptgtmp}/mingenom
 
+if [[ "${pseudocoremingenomes}" == 'REPLACEpseudocoremingenomes' || "${pseudocoremingenomes}" == "${ngenomes}" ]] ; then
+  echo "WARNING: Will rely on strict core genome definition to compute reference tree. This is often not advisable as the strict core genome can be very small." 1>&2
+  echo "To choose a sensible 'pseudocore genomes' gene set, please run interactively '$ptgscripts/choose_min_genome_occurrence_pseudocore_genes.sh'." 1>&2
+  export pseudocoremingenomes=${ngenomes}
+fi
+if [[ "$pseudocoremingenomes" =~ ^[0-9]+$ ]]; then
+	 echo "'pseudocoremingenomes' variable is set to ${pseudocoremingenomes}; this integer value is interpreted as a number of genomes"
+elif [[ "$pseudocoremingenomes" =~ ^0*\.[0-9]+$ ]]; then
+	 echo "'pseudocoremingenomes' variable is set to ${pseudocoremingenomes}; this float value is interpreted as a fraction of total number of genomes"
+	 export pseudocoremingenomes=$(python -c "p = ${pseudocoremingenomes} * ${ngenomes} ; print int(p)")
+	 echo "'pseudocoremingenomes' was transformed into a number of genomes:  ${pseudocoremingenomes}."
+else		
+	 echo "'pseudocoremingenomes' variable is not set to a numeric value: '${pseudocoremingenomes}'; will run INTERACTIVE script to pick an appropriate one"
+	 export pseudocoremingenomes=""
+fi
+
 if [ ! -z "$pseudocoremingenomes" ] ; then
-  if [[ "${pseudocoremingenomes}" == 'REPLACEpseudocoremingenomes' || "${pseudocoremingenomes}" == "${ngenomes}" ]] ; then
-    echo "WARNING: Will rely on strict core genome definition to compute reference tree. This is often not advisable as the strict core genome can be very small." 1>&2
-    echo "To choose a sensible 'pseudocore genomes' gene set, please run interactively '$ptgscripts/choose_min_genome_occurrence_pseudocore_genes.sh'." 1>&2
-    export pseudocoremingenomes=${ngenomes}
-  fi 
   # override interactivity with input file
   rm -f ${ptgtmp}/mingenom
   # if several values entered, iterate over them
