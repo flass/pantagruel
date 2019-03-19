@@ -210,7 +210,7 @@ def combineMonophyleticPopulations(dpopcount, poptree, dnamepops, dpopnd={}, max
 	and each have at least a moderately high occurence frequency of the gene (median >= 0.5).
 	
 	maxpopnodedist gives an extended criterion to consider the monophyly of populations, 
-	based on node (Robinson-Fould) distance of clade ancestors:
+	based on node distance of clade ancestors:
 	if maxpopnodedist < 2, NO populations will be lumped together;
 	if maxpopnodedist = 2, the criterion is that only sister (i.e. truly monophyletic) populations will be lumped together;
 	if maxpopnodedist > 2, it is possible that populations that are close in the tree but not sister can be joined;
@@ -259,7 +259,7 @@ def getCladeAncestor(dpopcount, dnamepops, spetree, dspe2pop, medpopcountthresh=
 	
 	determine what population (or group of populations) was the original donor of the sequence based on:
 	# 1) the median gene occurence frequency being >= 0.5 AND the population census being > 1 (i.e. lone strains don't count) [True rank first] 
-	# 2) the higher depth of the (joint) population ancestor in the species tree (= minimum cumulated branch distance from the root) [best with ultrametric] 
+	# 2) the higher depth in the species tree of most recent common ancestor of the population(s) (= minimum cumulated branch distance from the root) [best with ultrametric] 
 	# 3) the larger census (= count of species classified in the population(s), regarless of the gene presence/absence = sample size when estimating freq)
 	# 4) the mean gene occurence frequency
 	
@@ -482,7 +482,7 @@ def mapPop2GeneTree(nfingtchain1, dircons, dirout, method, spetree, poptree, dsp
 		"""collapsed clade is replaced by a single leaf with a species or species population label
 		
 		new G leaf label has the following structure: POPNAME_FAM_XX-xxxx, 
-		with XX=CC referring to a collapsed 'bush' clade; xxxx then contains the collapsed clade id 'clade1234'
+		with XX=CC referring to a collapsed 'bush' clade; xxxx then contains the collapsed clade id e.g. 'clade1234'
 		or XX=SG referring to a single gene sequence (located out of a collapsed 'bush' clade); xxxx then contains the original CDS code 'SPENAME_6789'.
 		"""
 		newname = "%s_%s_%s-%s"%(speorpop, fam, tag, cla)
@@ -490,7 +490,11 @@ def mapPop2GeneTree(nfingtchain1, dircons, dirout, method, spetree, poptree, dsp
 		if verbose: print 'rename leaf:', newname
 	
 	def replaceCCwithSubtree(cla, ancpopnodelabels, fam, dold2newname, lostpops=[], speciestoprune=[], tag='RC'): #, onlyancs=False
-		"""collapsed clade is replaced by a subtree"""
+		"""collapsed clade is replaced by a subtree of populations and/or single species copied from the population tree (collapsed species tree).
+		
+		new G subtree has leaf labels with the following structure: POPNAME_FAM_RC-xxxx, 
+		POPNAME is the population or species label in the species tree; xxxx then contains the collapsed clade id e.g. 'clade1234'.
+		"""
 		if verbose: print "replaceCCwithSubtree(%s)"%repr(ancpopnodelabels)
 		spesubtree = spetree[ancpopnodelabels] # ancpop can be a label (string) or a tuple of labels, in which case their MRCA will be fetched via Node.coalesce()
 		sublnamepops = [(apnl, dnamepops.get(apnl, (apnl,))) for apnl in ancpopnodelabels]
@@ -519,7 +523,7 @@ def mapPop2GeneTree(nfingtchain1, dircons, dirout, method, spetree, poptree, dsp
 				newspename = "%s_%s_%s-%s"%(popnode.label(), fam, tag, cla)
 				popnode.edit_label(newspename)
 			else:
-				# naming internal nodes might lead to Gene trees incompatible with ALE
+				# naming internal nodes might lead to Gene being trees incompatible with ALE
 				popnode.edit_label("")
 		if verbose: print popsubtree.newick(ignoreBS=1)
 		dold2newname[cla] = tree2toBioPhylo(popsubtree) # already formats the tree in Bio.Phylo format to later integration to the parsed gene tree chain	
