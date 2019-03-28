@@ -110,6 +110,7 @@ export claderefgodir=${goterms}/clade_go_term_reference_sets
 export dirgotablescladespe=${orthomatrad}_specific_genes.tables_byclade_goterms_pathways
 export dirgoenrichcladespecore=${goterms}/clade_go_term_enriched_cladespecific_vs_coregenome
 export dirgoenrichcladespepan=${goterms}/clade_go_term_enriched_cladespecific_vs_pangenome
+export compoutdir=${comparerecs}/${parsedreccol}
 
 # other secondary variables
 export ngenomes=$(ls -A "${indata}/assemblies/" 2> /dev/null | wc -l)

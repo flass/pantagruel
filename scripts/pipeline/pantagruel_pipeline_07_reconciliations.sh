@@ -13,11 +13,25 @@ if [ -z "$1" ] ; then echo "missing mandatory parameter: pantagruel config file"
 envsourcescript="$1"
 source ${envsourcescript}
 
+checkfoldersafe (){
+  if [ -d ${1} ] ; then
+    if [ ${runmode} != 'force' ] ; then
+      echo "Task folder ${1} already exists; will stop here rther then overwritting data."
+      echo "If you want previous data to be reased, use FORCE mode with -F|--FORCE option."
+    else
+      echo "Task folder ${1} already exists; FORCE mode is on: WILL ERASE the folder and write new result in its place"
+      rm -r ${1}
+    fi
+  else
+    mkdir ${1}
+  fi
+}
+
+checkfoldersafe ${alerec}
+
 ###############################################
 ## 07. Gene tree / Species tree reconciliations
 ###############################################
-
-mkdir -p ${alerec}
 
 ### perform reconciliations with ALE
 

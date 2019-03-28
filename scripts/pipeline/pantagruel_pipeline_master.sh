@@ -22,10 +22,17 @@ usage (){
 
 usagelong (){
   usage
-  echo "# for Pantagruel task 0-9: only one _mandatory_ option:"
+  echo "# for Pantagruel task 0-9:"
+  echo ""
+  echo "_only one mandatory option_"
   echo ""
   echo "    -i|--initfile     Pantagruel configuration file"
   echo "                        this file is generated at init stage, from the specified options."
+  echo ""
+  echo "  _facultative options_"
+  echo ""
+  echo "    -F|--FORCE        FORCE mode: will erase any pre-existing main folder for the task"
+  echo "                        (default: off, pre-exisitance of a folder will result in an early error)"
   echo ""
   echo "# for Pantagruel task init:"
   echo ""
@@ -35,8 +42,8 @@ usagelong (){
   echo ""
   echo "    -r|--rootdir      root directory where to create the database; defaults to current folder"
   echo ""
-  echo "  It is also necessary to specify an input genome dataset!"
-  echo "  This is possible via -a, -A or -L options, or a mixture of them."
+  echo "    It is also necessary to specify an input genome dataset!"
+  echo "    This is possible via -a, -A or -L options, or a mixture of them."
   echo ""
   echo "  _facultative options_"
   echo ""
@@ -172,17 +179,21 @@ usagelong (){
 ptgenvsetdefaults (){
     # Default values:
     export ptgscripts=${ptgrepo}/scripts
+    if [ -z "$runmode" ] ; then
+      export runmode="normal"
+      echo "Default: set runmode to '$runmode'"
+    fi
     if [ -z "$myemail" ] ; then
-    export myemail="undisclosed"
-    echo "Default: set identity to '$myemail'"
+      export myemail="undisclosed"
+      echo "Default: set identity to '$myemail'"
     fi
     if [ -z "$famprefix" ] ; then
-    export famprefix="PANTAG"
-    echo "Default: set gene family prefix to '$famprefix'"
+      export famprefix="PANTAG"
+      echo "Default: set gene family prefix to '$famprefix'"
     fi
     if [ -z "$refass" ] ; then
-    export refass=${ncbiass}
-    echo "Default: set NCBI RefSeq(-like) genome assembly source folder for reference in user genome annotation to '$refass'"
+      export refass=${ncbiass}
+      echo "Default: set NCBI RefSeq(-like) genome assembly source folder for reference in user genome annotation to '$refass'"
     fi
     if [ -z "$ncbitax" ] ; then
      export ncbitax=${ptgroot}/NCBI/Taxonomy_$(date +'%Y-%m-%d')
@@ -257,7 +268,7 @@ promptdate () {
 }
 
 #~ ARGS=`getopt --options "d:r:i:p:I:f:a:T:A:s:t:RH:cC:h" --longoptions "dbname:,rootdir:,initfile:,ptgrepo:,iam:,famprefix:,refseq_ass:,refseq_ass4annot:,custom_ass:,taxonomy:,pseudocore:,core_seqtype:,pop_lg_thresh:,pop_bs_thresh:,reftree:,resume,submit_hpc:,collapse,collapse_par:,help" --name "pantagruel" -- "$@"`
-ARGS=`getopt --options "d:r:i:I:f:a:T:A:L:s:t:RH:cC:h" --longoptions "dbname:,rootdir:,initfile:,iam:,famprefix:,refseq_ass:,refseq_list:,refseq_ass4annot:,refseq_list4annot:,custom_ass:,taxonomy:,pseudocore:,core_seqtype:,pop_lg_thresh:,pop_bs_thresh:,reftree:,resume,submit_hpc:,collapse,collapse_par:,help" --name "pantagruel" -- "$@"`
+ARGS=`getopt --options "d:r:i:I:f:a:T:A:L:s:t:RH:cC:h:F" --longoptions "dbname:,rootdir:,initfile:,iam:,famprefix:,refseq_ass:,refseq_list:,refseq_ass4annot:,refseq_list4annot:,custom_ass:,taxonomy:,pseudocore:,core_seqtype:,pop_lg_thresh:,pop_bs_thresh:,reftree:,resume,submit_hpc:,collapse,collapse_par:,help,FORCE" --name "pantagruel" -- "$@"`
 
 #Bad arguments
 if [ $? -ne 0 ];
@@ -274,6 +285,10 @@ do
       usagelong
       exit 0;;
     
+    -F|--FORCE) 
+      export runmode='force'
+      shift ;;
+      
     -d|--dbname) 
       testmandatoryarg "$1" "$2"
       export ptgdbname="$2"

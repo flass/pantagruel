@@ -109,10 +109,16 @@ So all in all, you're better off running all the tasks sequentially, for instanc
 
 Options are detailed here:  
 ```
-# for Pantagruel task 0-9: only one _mandatory_ option:
+# for Pantagruel task 0-9: 
+
+  _only one mandatory option_
 
     -i|--initfile     Pantagruel configuration file
                         this file is generated at init stage, from the specified options.
+  _facultative options_
+
+    -F|--FORCE        FORCE mode: will erase any pre-existing main folder for the task
+                        (default: off, pre-exisitance of a folder will result in an early error)
 
 # for Pantagruel task init:
 
@@ -122,8 +128,8 @@ Options are detailed here:
 
     -r|--rootdir      root directory where to create the database; defaults to current folder
   
-  It is also necessary to specify an input genome dataset! 
-  This is possible via -a, -A or -L options, or a mixture of them.
+    It is also necessary to specify an input genome dataset! 
+    This is possible via -a, -A or -L options, or a mixture of them.
   
   _facultative options_
 

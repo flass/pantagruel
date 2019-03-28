@@ -29,6 +29,22 @@ checkexec (){
   fi
 }
 
+checkfoldersafe (){
+  if [ -d ${1} ] ; then
+    if [ ${runmode} != 'force' ] ; then
+      echo "Task folder ${1} already exists; will stop here rther then overwritting data."
+      echo "If you want previous data to be reased, use FORCE mode with -F|--FORCE option."
+    else
+      echo "Task folder ${1} already exists; FORCE mode is on: WILL ERASE the folder and write new result in its place"
+      rm -r ${1}
+    fi
+  else
+    mkdir ${1}
+  fi
+}
+
+checkfoldersafe ${genetrees}
+
 
 #############################################################
 ## 06. Gene trees (full [ML] and collapsed [bayesian sample])

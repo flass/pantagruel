@@ -11,7 +11,24 @@
 
 if [ -z "$1" ] ; then echo "missing mandatory parameter: pantagruel config file" ; echo "Usage: $0 ptg_env_file" ; exit 1 ; fi
 envsourcescript="$1"
-source $envsourcescript
+source ${envsourcescript}
+
+checkfoldersafe (){
+  if [ -d ${1} ] ; then
+    if [ ${runmode} != 'force' ] ; then
+      echo "Task folder ${1} already exists; will stop here rther then overwritting data."
+      echo "If you want previous data to be reased, use FORCE mode with -F|--FORCE option."
+    else
+      echo "Task folder ${1} already exists; FORCE mode is on: WILL ERASE the folder and write new result in its place"
+      rm -r ${1}
+    fi
+  else
+    mkdir ${1}
+  fi
+}
+
+checkfoldersafe ${protali}
+
 
 ####################################
 ## 02. Homologous Sequence Alignemnt
