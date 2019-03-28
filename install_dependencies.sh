@@ -247,7 +247,7 @@ iphost="ftp://ftp.ebi.ac.uk"
 iploc="pub/software/unix/iprscan/5/"
 
 currIPversion=$(interproscan --version 2> /dev/null | head -n 1 | sed -e 's/InterProScan version //')
-lastIPversion=$(lftp -c "open ${iphost} ; ls -tr ${iploc} ; quit" | tail -n 1 | awk '{print $NF}')
+lastIPversion=$(lftp -c "open ${iphost} ; ls -tr ${iploc}/[0-9].[0-9][0-9]*-[0-9][0-9]*.[0-9] ; quit" | tail -n 1 | awk '{print $NF}')
 if [[ -z "${currIPversion}" || "${currIPversion}" != "${lastIPversion}" ]] ; then
  echo "get Interproscan ${lastIPversion}"
  if [[ ! -x ${SOFTWARE}/interproscan-${lastIPversion}/interproscan.sh ]] ; then
