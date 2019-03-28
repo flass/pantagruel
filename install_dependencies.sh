@@ -98,6 +98,8 @@ echo ""
 
 # install Python package BCBio.GFF
 sudo -H pip install bcbio-gff
+# install Python package bioscripts.convert
+sudo -H pip install bioscripts.convert
 
 # install R packages not supported by Debian
 if [[ -z "$(Rscript -e 'print(installed.packages()[,1:2])' | grep topGO | cut -d' ' -f1)" ]] ; then
