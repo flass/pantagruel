@@ -1,5 +1,13 @@
 # *Pantagruel*: a bioinformatic pipeline for the inference of gene evolution scenarios in bacterial pangenomes.
 
+## Reference
+
+26/03/2019: now on bioRxiv! [https://www.biorxiv.org/content/10.1101/586495v2](https://www.biorxiv.org/content/10.1101/586495v2)
+
+If using this software, please cite:  
+Lassalle F, Veber P, Jauneikaite E, Didelot X. Automated Reconstruction of All Gene Histories in Large Bacterial Pangenome Datasets and Search for Co-Evolved Gene Modules with Pantagruel.” *bioRxiv* 586495. doi: 10.1101/586495
+
+
 ## Aim and description
 *Pantagruel* provides an all-in-one software solution to reconstruct the complex evolutionary process of diversification of bacterial genomes.  
 
