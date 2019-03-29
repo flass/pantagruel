@@ -34,6 +34,7 @@ checkfoldersafe (){
     if [ ${runmode} != 'force' ] ; then
       echo "Task folder ${1} already exists; will stop here rther then overwritting data."
       echo "If you want previous data to be reased, use FORCE mode with -F|--FORCE option."
+      exit 2
     else
       echo "Task folder ${1} already exists; FORCE mode is on: WILL ERASE the folder and write new result in its place"
       rm -r ${1}
