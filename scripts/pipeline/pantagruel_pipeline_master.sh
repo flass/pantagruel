@@ -252,14 +252,12 @@ testmandatoryarg (){
   fi
 }
 
-checkexec (){
+checkexectask (){
   if [ $? != 0 ]; then
-    echo "ERROR: $1" 1>&2
+    echo "ERROR: Pantagrel pipeline task $1: failed." 1>&2
     exit 1
   else
-    if [ ! -z "$2" ] ; then
-      echo "$2"
-    fi
+    echo "Pantagrel pipeline task $1: complete."
   fi
 }
 
@@ -458,7 +456,7 @@ echo "# will run tasks: $tasks"
 
 for task in ${tasks} ; do
   if [[ "$task" == 'init' ]] ; then
-    promptdate "Pantagrel pipeline step $task: initiate pangenome database."
+    promptdate "Pantagrel pipeline task $task: initiate pangenome database."
     # check presence of mandatory arguments
     if [ -z "$ptgdbname" ] ; then
      echo -e "Error: Must specify database name\n"
@@ -477,7 +475,7 @@ for task in ${tasks} ; do
     fi
     ptgenvsetdefaults
     ${ptgscripts}/pipeline/pantagruel_pipeline_init.sh
-    checkexec
+    checkexectask "$task"
   else
    if [ -z ${initfile} ] ; then
      echo "Error: a Pantagruel configuration file must be provided through option -i ; exit now."
@@ -486,45 +484,45 @@ for task in ${tasks} ; do
    fi
    case "$task" in
    0)
-    promptdate "Pantagrel pipeline step $task: fetch public genome data from NCBI sequence databases and annotate private genomes."
+    promptdate "Pantagrel pipeline task $task: fetch public genome data from NCBI sequence databases and annotate private genomes."
     ${ptgscripts}/pipeline/pantagruel_pipeline_00_fetch_data.sh ${initfile}
-    checkexec  ;;
+    checkexectask "$task" ;;
    1)
-    promptdate "Pantagrel pipeline step $task: classify protein sequences into homologous families."
+    promptdate "Pantagrel pipeline task $task: classify protein sequences into homologous families."
     ${ptgscripts}/pipeline/pantagruel_pipeline_01_homologous_seq_families.sh ${initfile}
-    checkexec  ;;
+    checkexectask "$task"  ;;
    2)
-    promptdate "Pantagrel pipeline step $task: align homologous protein sequences and translate alignemnts into coding sequences."
+    promptdate "Pantagrel pipeline task $task: align homologous protein sequences and translate alignemnts into coding sequences."
     ${ptgscripts}/pipeline/pantagruel_pipeline_02_align_homologous_seq.sh ${initfile}
-    checkexec  ;;
+    checkexectask "$task"  ;;
    3)
-    promptdate "Pantagrel pipeline step $task: initiate SQL database and load genomic object relationships."
+    promptdate "Pantagrel pipeline task $task: initiate SQL database and load genomic object relationships."
     ${ptgscripts}/pipeline/pantagruel_pipeline_03_create_sqlite_db.sh ${initfile}
-    checkexec  ;;
+    checkexectask "$task"  ;;
    4)
-    promptdate "Pantagrel pipeline step $task: use InterProScan to functionally annotate proteins in the database."
+    promptdate "Pantagrel pipeline task $task: use InterProScan to functionally annotate proteins in the database."
     ${ptgscripts}/pipeline/pantagruel_pipeline_04_functional_annotation.sh ${initfile}
-    checkexec  ;;
+    checkexectask "$task"  ;;
    5)
-    promptdate "Pantagrel pipeline step $task: select core-genome markers and compute reference tree."
+    promptdate "Pantagrel pipeline task $task: select core-genome markers and compute reference tree."
     ${ptgscripts}/pipeline/pantagruel_pipeline_05_core_genome_ref_tree.sh ${initfile}
-    checkexec  ;;
+    checkexectask "$task"  ;;
    6)
-    promptdate "Pantagrel pipeline step $task: compute gene trees."
+    promptdate "Pantagrel pipeline task $task: compute gene trees."
     ${ptgscripts}/pipeline/pantagruel_pipeline_06_gene_trees.sh ${initfile}
-    checkexec  ;;
+    checkexectask "$task"  ;;
    7)
-    promptdate "Pantagrel pipeline step $task: compute species tree/gene tree reconciliations."
+    promptdate "Pantagrel pipeline task $task: compute species tree/gene tree reconciliations."
     ${ptgscripts}/pipeline/pantagruel_pipeline_07_reconciliations.sh ${initfile}
-    checkexec  ;;
+    checkexectask "$task"  ;;
    8)
-    promptdate "Pantagrel pipeline step $task: classify genes into orthologous groups (OGs) and search clade-specific OGs."
+    promptdate "Pantagrel pipeline task $task: classify genes into orthologous groups (OGs) and search clade-specific OGs."
     ${ptgscripts}/pipeline/pantagruel_pipeline_08_clade_specific_genes.sh ${initfile}
-    checkexec  ;;
+    checkexectask "$task"  ;;
    9)
-    promptdate "Pantagrel pipeline step $task: evaluate gene co-evolution and build gene association network."
+    promptdate "Pantagrel pipeline task $task: evaluate gene co-evolution and build gene association network."
     ${ptgscripts}/pipeline/pantagruel_pipeline_09_coevolution.sh ${initfile}
-    checkexec  ;;
+    checkexectask "$task"  ;;
     esac
   fi
 done
