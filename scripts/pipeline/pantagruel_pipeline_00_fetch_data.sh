@@ -31,32 +31,6 @@ makeprokkarefgenusdb (){
   fi
 }
 
-checkexec (){
-  if [ $? != 0 ]; then
-    echo "ERROR: $1" 1>&2
-    exit 1
-  else
-    if [ ! -z "$2" ] ; then
-      echo "$2"
-    fi
-  fi
-}
-
-checkfoldersafe (){
-  if [ -d ${1} ] ; then
-    if [ ${runmode} != 'force' ] ; then
-      echo "Task folder ${1} already exists; will stop here rther then overwritting data."
-      echo "If you want previous data to be reased, use FORCE mode with -F|--FORCE option."
-      exit 2
-    else
-      echo "Task folder ${1} already exists; FORCE mode is on: WILL ERASE the folder and write new result in its place"
-      rm -r ${1}
-    fi
-  else
-    mkdir ${1}
-  fi
-}
-
 checkfoldersafe ${indata}
 
 #################################

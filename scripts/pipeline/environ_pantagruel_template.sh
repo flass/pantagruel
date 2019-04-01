@@ -1,12 +1,5 @@
 #!/bin/bash
 
-# logging variables and functions
-promptdate () {
-  echo $(date +'[%Y-%m-%d %H:%M:%S]') $1
-}
-export -f promptdate
-datepad="                      "
-
 ## primary variables
 
 # OPTIONALLY, values of primary variables below can be manually modified here;
@@ -143,3 +136,40 @@ export IPversion=$(interproscan --version | head -n 1 | sed -e 's/InterProScan v
 export interpro=${funcannot}/InterProScan_${IPversion}
 
 
+
+# logging variable and function
+promptdate () {
+  echo $(date +'[%Y-%m-%d %H:%M:%S]') $1
+}
+export -f promptdate
+export datepad="                      "
+
+# function for checking that no pre-existing data will be over-writen, unless specified
+checkfoldersafe (){
+  if [ -d ${1} ] ; then
+    if [ "${runmode}" != 'force' ] ; then
+      echo "Task folder ${1} already exists; will stop here rther then overwritting data."
+      echo "If you want previous data to be reased, use FORCE mode with -F|--FORCE option."
+      exit 2
+    else
+      echo "Task folder ${1} already exists; FORCE mode is on: WILL ERASE the folder and write new result in its place"
+      rm -r ${1}
+    fi
+  else
+    mkdir ${1}
+  fi
+}
+export -f checkfoldersafe
+
+# function for checking the success of every step
+checkexec (){
+  if [ $? != 0 ]; then
+    echo "ERROR: $1" 1>&2
+    exit 1
+  else
+    if [ ! -z "$2" ] ; then
+      echo "$2"
+    fi
+  fi
+}
+export -f checkexec
