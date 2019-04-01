@@ -148,14 +148,16 @@ export datepad="                      "
 checkfoldersafe (){
   if [ -d ${1} ] ; then
     if [ "${runmode}" != 'force' ] ; then
-      echo "Task folder ${1} already exists; will stop here rther then overwritting data."
+      echo "Task folder '${1}' already exists; will stop here rther then overwritting data."
       echo "If you want previous data to be reased, use FORCE mode with -F|--FORCE option."
       exit 2
     else
-      echo "Task folder ${1} already exists; FORCE mode is on: WILL ERASE the folder and write new result in its place"
+      echo "Task folder '${1}' already exists; FORCE mode is on: ERASE and recreate the folder to write new result in its place"
       rm -r ${1}
+      mkdir ${1}
     fi
   else
+    echo "Create new task folder '${1}'"
     mkdir ${1}
   fi
 }
