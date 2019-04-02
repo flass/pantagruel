@@ -187,12 +187,12 @@ if  [[ ! -s ${speciestree} ]] ; then
 
   # search ML tree topology on reduced alignment nuder CAT-based model and with -F option
   # this means no final thorough tree optimization is conducted under GAMMA-based model
-  # and the output file is thus RAxML_result.* (not RAxML_bestTree.*)
+  # and the output file is thus RAxML_result.* (not RAxML_bestTree.*) ; to avoid overwriting by next step, it is automatically renamed as RAxML_resultTopo.* 
   if [[ "${resumetask}" == "true" && -s ${nrbesttopo} ]] ; then
    # ML tree search already done
    echo "skip ML tree topology search"
   else
-   ckps=($(ls -t ${coretree}/RAxML_checkpoint.${treename}.* ${coretree}/RAxML_result.${treename} 2> /dev/null))
+   ckps=($(ls -t ${coretree}/RAxML_checkpoint.${treename}.* ${coretree}/RAxML_result*.${treename} 2> /dev/null))
    if [[ "${resumetask}" == "true" && -z "${ckps}" ]] ; then
     if [[ "${ckps[0]}" == "${coretree}/RAxML_result.${treename}" ]] ; then
       echo "found best topology tree file '${ckps[0]}'"
@@ -209,12 +209,13 @@ if  [[ ! -s ${speciestree} ]] ; then
     $raxmlbin -s ${coretreealn} ${raxmloptions} -F &> ${ptglogs}/raxml/${treename}.ML_topo.log
    fi
    mv ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_result.${treename}
+   mv ${coretree}/RAxML_result.${treename} ${coretree}/RAxML_resultTopo.${treename}
    rm -f ${nrbesttopo}
-   ln -s $(realpath --relative-to=$(dirname ${nrbesttopo}) ${coretree}/RAxML_result.${treename}) ${nrbesttopo}
+   ln -s $(realpath --relative-to=$(dirname ${nrbesttopo}) ${coretree}/RAxML_resultTopo.${treename}) ${nrbesttopo}
   fi
   
-  # now optimize the branch length and model parameters on ML tree topology under GAMMA-based model
-  # this time the output file is RAxML_bestTree.*
+  # now optimize the branch length and model parameters on ML tree topology under GAMMA-based model with -f e option
+  # the output file is also RAxML_result.* ; for clarity and backward comaptibility reasons, it is automatically renamed as RAxML_bestTree.*
   if [[ "${resumetask}" == "true" && -s ${nrbesttree} ]] ; then
    # ML tree search already done
    echo "skip ML tree parameter & branch length search"
@@ -226,7 +227,8 @@ if  [[ ! -s ${speciestree} ]] ; then
       $raxmlbin -s ${coretreealn} ${raxmloptionsG} -f e -t ${nrbesttopo} &> ${ptglogs}/raxml/${treename}.ML_brlen.log
     fi
     mv ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_bestTree.${treename}
-    rm -f ${nrbesttopo}
+    mv ${coretree}/RAxML_result.${treename} ${coretree}/RAxML_bestTree.${treename}
+    rm -f ${nrbesttree}
     ln -s $(realpath --relative-to=$(dirname ${nrbesttree}) ${coretree}/RAxML_bestTree.${treename}) ${nrbesttree}
   fi
 
