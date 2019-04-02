@@ -66,17 +66,6 @@ sudo apt install python python-scipy python-numpy python-biopython python-biopyt
 sudo apt install mpi-default-bin mpi-default-dev mrbayes-mpi
 ```
 
-#### Fetch Pantagruel pipeline and specific phylogenetic modules
-```sh
-cd ${SOFTWARE}/
-git clone https://github.com/flass/tree2
-git clone https://github.com/flass/pantagruel
-```
-This commands need to be added to your .bashrc file for it to last beyond the current session:
-```sh
-PYTHONPATH=${PYTHONPATH}:${SOFTWARE}/tree2:${SOFTWARE}/pantagruel/python_libs
-```
-
 Regarding the installation of ALE, you may need to install either the Docker daemon, or the Boost and Bio++ C++ libraries (see [installing_ALE](https://github.com/flass/pantagruel/blob/master/doc/installing_ALE.md)).
 
 #### Install Docker:
@@ -98,6 +87,19 @@ sudo apt install libbpp-core-dev libbpp-phyl-dev libbpp-seq-dev libbpp-seq-omics
 ```
 
 ### Platform-independent software installation
+
+#### Fetch Pantagruel pipeline and specific phylogenetic modules
+```sh
+# assuming you want to install this in a folder named 'software':
+cd software/
+git clone https://github.com/flass/pantagruel
+cd pantagruel/ && git submodule init && git submodule update && cd -
+```
+You then need to add the Python modules to your `PYTHONPATH`.
+This commands need to be added to your `~/.bashrc` file for the module to be permanently available:
+```sh
+PYTHONPATH=${PYTHONPATH}:/full/path/to/software/pantagruel/python_libs
+```
 
 #### Install Prokka using brew
 ```sh
