@@ -178,12 +178,12 @@ if  [[ ! -s ${speciestree} ]] ; then
    $raxmlbin -s ${pseudocorealn} ${raxmloptions} -f c &>> ${ptglogs}/raxml/${treename}.check.log
    grep 'exactly identical$' ${coretree}/RAxML_info.${treename} | sed -e 's/IMPORTANT WARNING: Sequences \(.\+\) and \(.\+\) are exactly identical/\1\t\2/g' > ${pseudocorealn}.identical_sequences
    mv ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_identical_sequences.${treename}
-   if [[ ! -z "${userreftree}" ]] ; then 
-     # work on the full alignment as the user-provided tree is expected to bear all leaves
-     coretreealn=${pseudocorealn}
-   else
-     coretreealn=${pseudocorealn}.reduced
-   fi
+  fi
+  if [[ ! -z "${userreftree}" ]] ; then 
+    # work on the full alignment as the user-provided tree is expected to bear all leaves
+    coretreealn=${pseudocorealn}
+  else
+    coretreealn=${pseudocorealn}.reduced
   fi
 
   # search ML tree topology on reduced alignment nuder CAT-based model and with -F option
