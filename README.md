@@ -233,6 +233,16 @@ Options are detailed here:
                        A single-quoted, semicolon-delimited string containing variable definitions must be provided.
                        Default is equivalent to providing the following string:
                           'cladesupp=70 ; subcladesupp=35 ; criterion=bs ; withinfun=median'
+                          
+     
+     Please note that Pantagruel is still under developemnt and may evolve rapidly to fix bugs and solve issues. 
+     It is strongly recomended to update this software regularly to integrate those fixes using `git pull` in the
+     pantagruel/ git repository folder.
+     
+     If Pantagruel is updated in-between the running of tasks of a database project, it is higly recommended to 
+     run the init task again before proceeding to the next steps, to ensure the environment defined by the 
+     configuration file is compatible with the software. 
+     (Note that regenerating the configuration file will not erase other data.)
 
 
 # for any Pantagruel command calls:

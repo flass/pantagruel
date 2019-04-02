@@ -172,7 +172,17 @@ usagelong (){
   echo "       classify genes into orthologous groups (OGs) and search clade-specific OGs"
   echo "  9|09|coevolution"
   echo "       quantify gene co-evolution and build gene association network"
-  echo "________________________________________________________________________"
+  echo "_________________________________________________________________________________________________________________"
+  echo "     "
+  echo "     Please note that Pantagruel is still under developemnt and may evolve rapidly to fix bugs and solve issues. "
+  echo "     It is strongly recomended to update this software regularly to integrate those fixes using `git pull` in the"
+  echo "     pantagruel/ git repository folder."
+  echo "     "
+  echo "     If Pantagruel is updated in-between the running of tasks of a database project, it is higly recommended to "
+  echo "     run the init task again before proceeding to the next steps, to ensure the environment defined by the "
+  echo "     configuration file is compatible with the software. "
+  echo "     (Note that regenerating the configuration file will not erase other data.)"
+  echo "_________________________________________________________________________________________________________________"
   echo ""
 }
 
