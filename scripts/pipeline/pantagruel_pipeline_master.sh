@@ -175,7 +175,7 @@ usagelong (){
   echo "_________________________________________________________________________________________________________________"
   echo "     "
   echo "     Please note that Pantagruel is still under developemnt and may evolve rapidly to fix bugs and solve issues. "
-  echo "     It is strongly recomended to update this software regularly to integrate those fixes using `git pull` in the"
+  echo "     It is strongly recomended to update this software regularly to integrate those fixes using \`git pull\` in the"
   echo "     pantagruel/ git repository folder."
   echo "     "
   echo "     If Pantagruel is updated in-between the running of tasks of a database project, it is higly recommended to "
