@@ -30,7 +30,7 @@ ________
 
 If you are using a Debian environment but don't want to run the install script all at once (you may have your own reasons), here is a summary of what it does, so you can manually install each piece of software at your own discretion.  
 These indications would also stand for installation on another type of Linux/Unix OS (e.g. Redhat, MacOS), but you would have to adapt the first part (using `apt` to install system packages on a Debian OS) to the relevant system (e.g. for a Red Hat OS, using `yum` instead of `apt`, and finding the matching packages).  
-A special note about clarifying defiirent scenarios to installi ALE can be found [here](https://github.com/flass/pantagruel/blob/master/doc/installing_ALE.md).
+A special note clarifying deferent scenarios to install ALE can be found [here](https://github.com/flass/pantagruel/blob/master/doc/installing_ALE.md).
 
 ### Platform-dependent software installation: using Debian system packages
 
