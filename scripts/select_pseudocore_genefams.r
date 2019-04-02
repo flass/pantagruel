@@ -90,7 +90,7 @@ selectMinGenomes = function(countmatrix, dirout, pseudocoremingenomes=-1, ngenom
 		if (p==0){ break }
 	}
 	if (interactive.X){ dev.off() }
-	cat(sprintf("Selected %d as value of P\n", pseudocore))
+	cat(sprintf("Selected %d as value of P\n", p))
 	return(pseudocore)
 }
 
