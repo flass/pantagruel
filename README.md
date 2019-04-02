@@ -264,11 +264,11 @@ pantagruel -i /root/folder/for/database/databasename/environ_pantagruel_database
 ```  
 Note that this config file can be edited in-between tasks, for instance to change the location of key input files that you moved, or to tweak paramters - however this may cause issues in task dependencies (see above).
 
-Please note that Pantagruel is still under developemnt and may evolve rapidly to fix bugs and solve issues. 
+Please note that Pantagruel is still under development and may evolve rapidly to fix bugs and solve issues. 
 It is strongly recomended to update this software regularly to integrate those fixes using `git pull` in the `pantagruel/` git repository folder.
      
 **If Pantagruel is updated** in-between the running of tasks of a database project, 
-it is higly recommended to **run the init task again** before proceeding to the next steps, 
+it is higly recommended to **run the init task again (with the same options)** before proceeding to the next steps, 
 to ensure the environment defined by the configuration file is compatible with the software. 
 Regenerating the configuration file *will not erase other data*.
 
