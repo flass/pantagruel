@@ -174,7 +174,8 @@ if  [[ ! -s ${speciestree} ]] ; then
   if [[ "${resumetask}" == "true" && -e ${pseudocorealn}.identical_sequences ]] ; then
    echo "skip identical sequence removal in core alignment"
   else
-   $raxmlbin -s ${pseudocorealn} ${raxmloptions} -f c &> ${ptglogs}/raxml/${treename}.check.log
+   echo "# call: $raxmlbin -s ${pseudocorealn} ${raxmloptions} -f c" > ${ptglogs}/raxml/${treename}.check.log
+   $raxmlbin -s ${pseudocorealn} ${raxmloptions} -f c &>> ${ptglogs}/raxml/${treename}.check.log
    grep 'exactly identical$' ${coretree}/RAxML_info.${treename} | sed -e 's/IMPORTANT WARNING: Sequences \(.\+\) and \(.\+\) are exactly identical/\1\t\2/g' > ${pseudocorealn}.identical_sequences
    mv ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_identical_sequences.${treename}
    if [[ ! -z "${userreftree}" ]] ; then 
@@ -201,12 +202,14 @@ if  [[ ! -s ${speciestree} ]] ; then
       echo "resume ML tree topology search from checkpoint ${ckps[0]##*.}"
       mv ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_bestTree.${treename}.up_to_ckp${ckps[0]##*.}
       mv ${ptglogs}/raxml/${treename}.ML_topo.log ${ptglogs}/raxml/${treename}.ML_topo.log.up_to_ckp${ckps[0]##*.}
-      $raxmlbin -s ${coretreealn} ${raxmloptions} -F -t ${ckps[0]} &> ${ptglogs}/raxml/${treename}.ML_topo.log
+      echo "# call: $raxmlbin -s ${coretreealn} ${raxmloptions} -F -t ${ckps[0]}" > ${ptglogs}/raxml/${treename}.ML_topo.log
+      $raxmlbin -s ${coretreealn} ${raxmloptions} -F -t ${ckps[0]} &>> ${ptglogs}/raxml/${treename}.ML_topo.log
     fi
    else
     # initial search
     echo "ML tree topology search"
-    $raxmlbin -s ${coretreealn} ${raxmloptions} -F &> ${ptglogs}/raxml/${treename}.ML_topo.log
+    echo "# call: $raxmlbin -s ${coretreealn} ${raxmloptions} -F" > ${ptglogs}/raxml/${treename}.ML_topo.log
+    $raxmlbin -s ${coretreealn} ${raxmloptions} -F &>> ${ptglogs}/raxml/${treename}.ML_topo.log
    fi
    mv ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_result.${treename}
    mv ${coretree}/RAxML_result.${treename} ${coretree}/RAxML_resultTopo.${treename}
@@ -224,7 +227,8 @@ if  [[ ! -s ${speciestree} ]] ; then
       echo "found best tree parameter & branch length file '${coretree}/RAxML_bestTree.${treename}'"
     else
       echo "ML tree parameter & branch length search under GAMMA-based model"
-      $raxmlbin -s ${coretreealn} ${raxmloptionsG} -f e -t ${nrbesttopo} &> ${ptglogs}/raxml/${treename}.ML_brlen.log
+      echo "# call: $raxmlbin -s ${coretreealn} ${raxmloptionsG} -f e -t ${nrbesttopo}" > ${ptglogs}/raxml/${treename}.ML_brlen.log
+      $raxmlbin -s ${coretreealn} ${raxmloptionsG} -f e -t ${nrbesttopo} &>> ${ptglogs}/raxml/${treename}.ML_brlen.log
     fi
     mv ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_bestTree.${treename}
     mv ${coretree}/RAxML_result.${treename} ${coretree}/RAxML_bestTree.${treename}
@@ -249,17 +253,20 @@ if  [[ ! -s ${speciestree} ]] ; then
      mv ${coretree}/RAxML_bootstrap.${treename} ${coretree}/RAxML_bootstrap.${treename}.firstbs${nbs}
      mv ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_bootstrap.${treename}.up_to_bs${nbs}
      mv ${ptglogs}/raxml/${treename}_bs.log ${ptglogs}/raxml/${treename}_bs.log.up_to_bs${nbs}
-     $raxmlbin -s ${coretreealn} ${raxmloptions} -x 198237 -N ${ncorebootstrap} &> ${ptglogs}/raxml/${treename}_bs.log
+     echo "# call: $raxmlbin -s ${coretreealn} ${raxmloptions} -x 198237 -N ${ncorebootstrap}" > ${ptglogs}/raxml/${treename}_bs.log
+     $raxmlbin -s ${coretreealn} ${raxmloptions} -x 198237 -N ${ncorebootstrap} &>> ${ptglogs}/raxml/${treename}_bs.log
     fi
    else
     # bootstrapping tree search from scratch
     echo "search bootstrap trees"
-    $raxmlbin -s ${coretreealn} ${raxmloptions} -x 198237 -N ${ncorebootstrap} &> ${ptglogs}/raxml/${treename}_bs.log
+    echo "# call: $raxmlbin -s ${coretreealn} ${raxmloptions} -x 198237 -N ${ncorebootstrap}" > ${ptglogs}/raxml/${treename}_bs.log
+    $raxmlbin -s ${coretreealn} ${raxmloptions} -x 198237 -N ${ncorebootstrap} &>> ${ptglogs}/raxml/${treename}_bs.log
    fi
    # mapping bootstraps to ML tree
    mv ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_bootstrap.${treename}
    echo "map branch supports on ML tree"
-   $raxmlbin -s ${coretreealn} ${raxmloptions} -f b -z ${coretree}/RAxML_bootstrap.${treename} -t ${nrbesttree} 
+   echo "# call: $raxmlbin -s ${coretreealn} ${raxmloptions} -f b -z ${coretree}/RAxML_bootstrap.${treename} -t ${nrbesttree}" > ${ptglogs}/raxml/${treename}_mapbs.log
+   $raxmlbin -s ${coretreealn} ${raxmloptions} -f b -z ${coretree}/RAxML_bootstrap.${treename} -t ${nrbesttree} &>> ${ptglogs}/raxml/${treename}_mapbs.log
    mv ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_bipartitions.${treename}
    rm -f ${nrbiparts}
    ln -s $(realpath --relative-to=$(dirname ${nrbiparts}) ${coretree}/RAxML_bipartitions.${treename}) ${nrbiparts}
@@ -280,7 +287,8 @@ if  [[ ! -s ${speciestree} ]] ; then
       echo "Error: could not detect tree file with brach support annotated on the branches ; exit now"
       exit 1
     fi
-    $raxmlbin -s ${coretreealn} ${raxmloptions} -f I -t ${nrbipartbranchlab}  
+    echo "# call: $raxmlbin -s ${coretreealn} ${raxmloptions} -f I -t ${nrbipartbranchlab}" > ${ptglogs}/raxml/${treename}_root.log
+    $raxmlbin -s ${coretreealn} ${raxmloptions} -f I -t ${nrbipartbranchlab} &>> ${ptglogs}/raxml/${treename}_root.log
     mv ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_rootedTree.${treename}
     rm -f ${nrrootedtree}
     ln -s $(realpath --relative-to=$(dirname ${nrrootedtree}) ${coretree}/RAxML_rootedTree.${treename}) ${nrrootedtree}
