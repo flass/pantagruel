@@ -1,7 +1,8 @@
-## Installing Pantagruel and its dependencies
+# Installing Pantagruel and its dependencies
 
-Under a Debian environment (e.g. Ubuntu), please follow the indications below.  
-In the case of setting-up a virtual machine, the script [install_dependencies.sh](https://github.com/flass/pantagruel/blob/master/install_dependencies.sh) can do that work for you.  
+## The automatic, easy way
+
+Under a Debian environment (e.g. Ubuntu), you can automatically install all dependencies using the script [install_dependencies.sh](https://github.com/flass/pantagruel/blob/master/install_dependencies.sh), following the indications below:  
 
 Assuming you want to create a folder named `pantagruel_pipeline/` in the current working directory and install the whole software pipeline (the *pantagruel* package and its dependencies) in it, you should first do:
 ```sh
@@ -12,10 +13,10 @@ Then, you have to get the pantagruel scripts by dowloading the [archive of the l
 cd pantagruel_pipeline/
 git clone https://github.com/flass/pantagruel.git
 ```
-Finally, you can run the installation script:  
+Finally, you may run the installation script:  
 !!! Note that for this step, you (i.e. your linux user) need to have the sudo rights (be part of the sudo group, check with `grep sudo /etc/group`); however, DO NOT execute the installtion script with `sudo` (which would make all software owned by the root user).  
 ```sh
-cd .. # retrun to parent folder
+cd .. # return to parent folder
 pantagruel_pipeline/pantagruel/install_dependencies.sh pantagruel_pipeline/
 ```  
 
@@ -25,7 +26,12 @@ pantagruel_pipeline/pantagruel/install_dependencies.sh pantagruel_pipeline/ pant
 ```
 ________
 
-Otherwise, you can manually install the software following the indications below:
+## The details if you are picky
+
+If you are using a Debian environment but don't want to run the install script all at once (you may have your own reasons), here is a summary of what it does, so you can manually install each piece of software at your own discretion.
+These indications would also stand for installation on another type of Linux/Unix OS (e.g. Redhat, MacOS), but you would have to adapt the first part (using `apt` to install system packages on a Debian OS) to the relevant system (e.g. for a Red Hat OS, using `yum` instead of `apt`, and finding the matching packages).  
+
+Most software you can simply install from the Debian system package repository:  
 
 ### basic dependencies, libraries and standalone software
 ```sh
