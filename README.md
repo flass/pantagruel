@@ -361,7 +361,8 @@ cat user_genomes/strain_infos_databasename.txt
 
 ## Installing Pantagruel and its dependencies
 
-This bioinformatic pipeline rely on a quite a few other pieces of software. To install them, please follow the indications in the [INSTALL](https://github.com/flass/pantagruel/blob/master/INSTALL.md) page.  
+This bioinformatic pipeline relies on a quite a few other pieces of software.  
+To install them, please follow the indications in the [INSTALL](https://github.com/flass/pantagruel/blob/master/INSTALL.md) page.  
 
 -------------
 
