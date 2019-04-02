@@ -172,7 +172,7 @@ if  [[ ! -s ${speciestree} ]] ; then
   if [[ "${resumetask}" == "true" && -e ${pseudocorealn}.identical_sequences ]] ; then
    echo "skip identical sequence removal in core alignment"
   else
-   $raxmlbin -s ${pseudocorealn} ${raxmloptions} -f c &> ${ptglogs}/raxml/${treename}.check.
+   $raxmlbin -s ${pseudocorealn} ${raxmloptions} -f c &> ${ptglogs}/raxml/${treename}.check.log
    grep 'exactly identical$' ${coretree}/RAxML_info.${treename} | sed -e 's/IMPORTANT WARNING: Sequences \(.\+\) and \(.\+\) are exactly identical/\1\t\2/g' > ${pseudocorealn}.identical_sequences
    mv ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_identical_sequences.${treename}
    if [[ ! -z "${userreftree}" ]] ; then 
@@ -183,25 +183,34 @@ if  [[ ! -s ${speciestree} ]] ; then
    fi
   fi
 
-  # compute bestTree (ML tree) on reduced alignment
+  # compute ML tree on reduced alignment with -F option
+  # this means no final thorough tree optimization is conducted under GAMMA-based model
+  # and the final output file is thus RAxML_result.* (not RAxML_bestTree.*)
+  # for backward-compatibility reasons, logs will still be placed in RAxML_info_bestTree.*
   if [[ "${resumetask}" == "true" && -s ${nrbesttree} ]] ; then
    # ML tree search already done
    echo "skip ML tree search"
   else
-   ckps=($(ls -t ${coretree}/RAxML_checkpoint.${treename}.* 2> /dev/null))
+   ckps=($(ls -t ${coretree}/RAxML_checkpoint.${treename}.* ${coretree}/RAxML_result.${treename} ${coretree}/RAxML_bestTree.${treename} 2> /dev/null))
    if [[ "${resumetask}" == "true" && -z "${ckps}" ]] ; then
-    # resume search from checkpoint
-    echo "resume from checkpoint ${ckps[0]##*.}"
-    mv ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_bestTree.${treename}.up_to_ckp${ckps[0]##*.}
-    mv ${ptglogs}/raxml/${treename}.ML_run.log ${ptglogs}/raxml/${treename}.ML_run.log.up_to_ckp${ckps[0]##*.}
-    $raxmlbin -s ${coretreealn} ${raxmloptions} -t ${ckps[0]} &> ${ptglogs}/raxml/${treename}.ML_run.log
+    if [[ "${ckps[0]}" == "${coretree}/RAxML_result.${treename}" || "${ckps[0]}" == "${coretree}/RAxML_bestTree.${treename}" ]] ; then
+      echo "found best tree file '${ckps[0]}'"
+    else
+      # resume search from checkpoint
+      echo "resume from checkpoint ${ckps[0]##*.}"
+      mv ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_bestTree.${treename}.up_to_ckp${ckps[0]##*.}
+      mv ${ptglogs}/raxml/${treename}.ML_run.log ${ptglogs}/raxml/${treename}.ML_run.log.up_to_ckp${ckps[0]##*.}
+      $raxmlbin -s ${coretreealn} ${raxmloptions} -F -t ${ckps[0]} &> ${ptglogs}/raxml/${treename}.ML_run.log
+    fi
    else
     # initial search
-    $raxmlbin -s ${coretreealn} ${raxmloptions} &> ${ptglogs}/raxml/${treename}.ML_run.log
+    echo "initial ML tree search"
+    $raxmlbin -s ${coretreealn} ${raxmloptions} -F &> ${ptglogs}/raxml/${treename}.ML_run.log
    fi
    mv ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_bestTree.${treename}
    rm -f ${nrbesttree}
-   ln -s $(realpath --relative-to=$(dirname ${nrbesttree}) ${coretree}/RAxML_bestTree.${treename}) ${nrbesttree}
+   bt=($(ls -t ${coretree}/RAxML_result.${treename} ${coretree}/RAxML_bestTree.${treename} 2> /dev/null))
+   ln -s $(realpath --relative-to=$(dirname ${nrbesttree}) ${bt[0]}) ${nrbesttree}
   fi
 
   # compute ${ncorebootstrap} rapid bootstraps (you can set variable by editing ${envsourcescript})
