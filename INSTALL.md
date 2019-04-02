@@ -81,11 +81,12 @@ This is more cumbersome, but safer when installing this software on a computer t
 sudo apt install libboost-dev libboost-serialization-dev libboost-mpi-dev
 ```
 #### Install Bio++ libraries 
-To compile ALE from source, Bio++ version >2.2.0 is required. The version 2.4.1 can be found as a Debian package on Ubuntu 18.4 LTS (Bionic Beaver). Previous Ubuntu versions, such as 16.4 LTS (Xenial Xerius) have version 2.1.0, in which case Bio++ have to be compiled from source (much heavier).  
+To compile ALE from source, Bio++ version >=2.2.0 is required. The version 2.4.1 can be found as a Debian package on Ubuntu 18.4 LTS (Bionic Beaver).  
 ```sh
 sudo apt install libbpp-core-dev libbpp-phyl-dev libbpp-seq-dev libbpp-seq-omics-dev
 ```
-
+Previous Ubuntu versions, such as 16.4 LTS (Xenial Xerius) have version 2.1.0, in which case Bio++ have to be compiled from source (much heavier, see [installing_ALE](https://github.com/flass/pantagruel/blob/master/doc/installing_ALE.md)).  
+ 
 ### Platform-independent software installation
 
 #### Fetch Pantagruel pipeline and specific phylogenetic modules
