@@ -147,8 +147,10 @@ export datepad="                      "
 # function for checking that no pre-existing data will be over-writen, unless specified
 checkfoldersafe (){
   if [ -d ${1} ] ; then
-    if [ "${runmode}" != 'force' ] ; then
-      echo "Task folder '${1}' already exists; will stop here rther then overwritting data."
+    if [ "${resumetask}" == 'true' ] ; then
+      echo "Task folder '${1}' already exists; -R|--resume option was used so Pantagruel will atempt to resume from an interupted previous run"
+    elif [ "${runmode}" != 'force' ] ; then
+      echo "Task folder '${1}' already exists; will stop here rather then overwritting data."
       echo "If you want previous data to be reased, use FORCE mode with -F|--FORCE option."
       exit 2
     else
