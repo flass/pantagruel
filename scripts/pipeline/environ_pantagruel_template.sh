@@ -125,7 +125,7 @@ export nrbesttree=${coretreerad}.branlen
 export nrbiparts=${coretreerad}.supports
 export nrrootedtree=${coretreerad}.rooted
 export speciestree=${coretreerad}.full
-if [[ "${pseudocoremingenomes}" == "${ngenomes}" ]] ; then
+if [[ -z "${pseudocoremingenomes}" || "${pseudocoremingenomes}" == "${ngenomes}" ]] ; then
   export pseudocore='strict-core-unicopy'
 else
   export pseudocore=pseudo-core-${pseudocoremingenomes}-unicopy
