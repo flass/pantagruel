@@ -120,7 +120,8 @@ if [ "$userreftree" != "REPLACEuserreftree" ] ; then
 else
   export coretreerad=${coregenome}/core-genome-based_reference_tree_${ptgdbname}
 fi
-export nrbesttree=${coretreerad}.topology
+export nrbesttopo=${coretreerad}.topology
+export nrbesttree=${coretreerad}.branlen
 export nrbiparts=${coretreerad}.supports
 export nrrootedtree=${coretreerad}.rooted
 export speciestree=${coretreerad}.full
@@ -149,14 +150,14 @@ checkfoldersafe (){
   if [ -d ${1} ] ; then
     if [ "${resumetask}" == 'true' ] ; then
       echo "Task folder '${1}' already exists; -R|--resume option was used so Pantagruel will atempt to resume from an interupted previous run"
-    elif [ "${runmode}" != 'force' ] ; then
-      echo "Task folder '${1}' already exists; will stop here rather then overwritting data."
-      echo "If you want previous data to be reased, use FORCE mode with -F|--FORCE option."
-      exit 2
-    else
+    elif [ "${runmode}" == 'force' ] ; then
       echo "Task folder '${1}' already exists; FORCE mode is on: ERASE and recreate the folder to write new result in its place"
       rm -r ${1}
       mkdir ${1}
+    else
+      echo "Task folder '${1}' already exists; will stop here rather then overwritting data."
+      echo "If you want previous data to be reased, use FORCE mode with -F|--FORCE option."
+      exit 2
     fi
   else
     echo "Create new task folder '${1}'"

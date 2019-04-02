@@ -23,6 +23,7 @@ case "${coreseqtype}" in
   prot)
       alifastacodedir=${protalifastacodedir}
       raxmloptions="-n ${treename} -m PROTCATLGX -j -p 1753 -w ${coretree}"
+      raxmloptionsG="-n ${treename} -m PROTGAMMALGX -j -p 1753 -w ${coretree}"
       if [[ -z "${poplgthresh}" || "${poplgthresh}" == 'default' ]] ; then
         poplgthresh=0.0002
       fi
@@ -30,6 +31,7 @@ case "${coreseqtype}" in
   cds)
       alifastacodedir=${cdsalifastacodedir}
       raxmloptions="-n ${treename} -m GTRCATX -j -p 1753 -w ${coretree}"
+      raxmloptionsG="-n ${treename} -m GTRGAMMAX -j -p 1753 -w ${coretree}"
       if [[ -z "${poplgthresh}" || "${poplgthresh}" == 'default' ]] ; then
         poplgthresh=0.0005
       fi
@@ -183,34 +185,49 @@ if  [[ ! -s ${speciestree} ]] ; then
    fi
   fi
 
-  # compute ML tree on reduced alignment with -F option
+  # search ML tree topology on reduced alignment nuder CAT-based model and with -F option
   # this means no final thorough tree optimization is conducted under GAMMA-based model
-  # and the final output file is thus RAxML_result.* (not RAxML_bestTree.*)
-  # for backward-compatibility reasons, logs will still be placed in RAxML_info_bestTree.*
-  if [[ "${resumetask}" == "true" && -s ${nrbesttree} ]] ; then
+  # and the output file is thus RAxML_result.* (not RAxML_bestTree.*)
+  if [[ "${resumetask}" == "true" && -s ${nrbesttopo} ]] ; then
    # ML tree search already done
-   echo "skip ML tree search"
+   echo "skip ML tree topology search"
   else
-   ckps=($(ls -t ${coretree}/RAxML_checkpoint.${treename}.* ${coretree}/RAxML_result.${treename} ${coretree}/RAxML_bestTree.${treename} 2> /dev/null))
+   ckps=($(ls -t ${coretree}/RAxML_checkpoint.${treename}.* ${coretree}/RAxML_result.${treename} 2> /dev/null))
    if [[ "${resumetask}" == "true" && -z "${ckps}" ]] ; then
-    if [[ "${ckps[0]}" == "${coretree}/RAxML_result.${treename}" || "${ckps[0]}" == "${coretree}/RAxML_bestTree.${treename}" ]] ; then
-      echo "found best tree file '${ckps[0]}'"
+    if [[ "${ckps[0]}" == "${coretree}/RAxML_result.${treename}" ]] ; then
+      echo "found best topology tree file '${ckps[0]}'"
     else
       # resume search from checkpoint
-      echo "resume from checkpoint ${ckps[0]##*.}"
+      echo "resume ML tree topology search from checkpoint ${ckps[0]##*.}"
       mv ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_bestTree.${treename}.up_to_ckp${ckps[0]##*.}
-      mv ${ptglogs}/raxml/${treename}.ML_run.log ${ptglogs}/raxml/${treename}.ML_run.log.up_to_ckp${ckps[0]##*.}
-      $raxmlbin -s ${coretreealn} ${raxmloptions} -F -t ${ckps[0]} &> ${ptglogs}/raxml/${treename}.ML_run.log
+      mv ${ptglogs}/raxml/${treename}.ML_topo.log ${ptglogs}/raxml/${treename}.ML_topo.log.up_to_ckp${ckps[0]##*.}
+      $raxmlbin -s ${coretreealn} ${raxmloptions} -F -t ${ckps[0]} &> ${ptglogs}/raxml/${treename}.ML_topo.log
     fi
    else
     # initial search
-    echo "initial ML tree search"
-    $raxmlbin -s ${coretreealn} ${raxmloptions} -F &> ${ptglogs}/raxml/${treename}.ML_run.log
+    echo "ML tree topology search"
+    $raxmlbin -s ${coretreealn} ${raxmloptions} -F &> ${ptglogs}/raxml/${treename}.ML_topo.log
    fi
-   mv ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_bestTree.${treename}
-   rm -f ${nrbesttree}
-   bt=($(ls -t ${coretree}/RAxML_result.${treename} ${coretree}/RAxML_bestTree.${treename} 2> /dev/null))
-   ln -s $(realpath --relative-to=$(dirname ${nrbesttree}) ${bt[0]}) ${nrbesttree}
+   mv ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_result.${treename}
+   rm -f ${nrbesttopo}
+   ln -s $(realpath --relative-to=$(dirname ${nrbesttopo}) ${coretree}/RAxML_result.${treename}) ${nrbesttopo}
+  fi
+  
+  # now optimize the branch length and model parameters on ML tree topology under GAMMA-based model
+  # this time the output file is RAxML_bestTree.*
+  if [[ "${resumetask}" == "true" && -s ${nrbesttree} ]] ; then
+   # ML tree search already done
+   echo "skip ML tree parameter & branch length search"
+  else
+    if [[ -s ${coretree}/RAxML_bestTree.${treename} ]] ; then
+      echo "found best tree parameter & branch length file '${coretree}/RAxML_bestTree.${treename}'"
+    else
+      echo "ML tree parameter & branch length search under GAMMA-based model"
+      $raxmlbin -s ${coretreealn} ${raxmloptionsG} -f e -t ${nrbesttopo} &> ${ptglogs}/raxml/${treename}.ML_brlen.log
+    fi
+    mv ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_bestTree.${treename}
+    rm -f ${nrbesttopo}
+    ln -s $(realpath --relative-to=$(dirname ${nrbesttree}) ${coretree}/RAxML_bestTree.${treename}) ${nrbesttree}
   fi
 
   # compute ${ncorebootstrap} rapid bootstraps (you can set variable by editing ${envsourcescript})
