@@ -28,16 +28,19 @@ ________
 
 ## The details if you are picky
 
-If you are using a Debian environment but don't want to run the install script all at once (you may have your own reasons), here is a summary of what it does, so you can manually install each piece of software at your own discretion.
+If you are using a Debian environment but don't want to run the install script all at once (you may have your own reasons), here is a summary of what it does, so you can manually install each piece of software at your own discretion.  
 These indications would also stand for installation on another type of Linux/Unix OS (e.g. Redhat, MacOS), but you would have to adapt the first part (using `apt` to install system packages on a Debian OS) to the relevant system (e.g. for a Red Hat OS, using `yum` instead of `apt`, and finding the matching packages).  
+A special note about clarifying defiirent scenarios to installi ALE can be found [here](https://github.com/flass/pantagruel/blob/master/doc/installing_ALE.md).
 
-Most software you can simply install from the Debian system package repository:  
+### Platform-dependent software installation: using Debian system packages
 
-### basic dependencies, libraries and standalone software
+Most required software can simply be installed using the Debian system package manager `apt` (or any frontend like `synaptic`):    
+
+#### basic dependencies, libraries and standalone software
 ```sh
 sudo apt install git cmake gcc g++ libmagick++-dev sqlite3 sqlite3-doc linuxbrew-wrapper bioperl lftp clustalo raxml libhmsbeagle1v5 mrbayes openjdk-8-jdk openjdk-8-jre cd-hit
 ```
-### R and packages
+#### R and packages
 ```sh
 sudo apt install r-base-core r-recommended r-cran-ape r-cran-phytools r-cran-ade4 r-cran-vegan r-cran-dbi r-cran-rsqlite r-cran-igraph r-cran-getopt
 ```
@@ -52,17 +55,18 @@ install.packages('pvclust', repos=CRANmirror)
 install.packages('phytools', repos=CRANmirror)
 ```
 
-### Python and packages
+#### Python and packages
 ```sh
+# install Python 2.7, the Cython extension, the pip package manager and core packages
 sudo apt install python python-scipy python-numpy python-biopython python-biopython-sql python-igraph cython python-pip
 ```
 
-### if using MPI for MrBayes (recommended)
+#### if using MPI for MrBayes (recommended)
 ```sh
 sudo apt install mpi-default-bin mpi-default-dev mrbayes-mpi
 ```
 
-### Fetch Pantagruel pipeline and specific phylogenetic modules
+#### Fetch Pantagruel pipeline and specific phylogenetic modules
 ```sh
 cd ${SOFTWARE}/
 git clone https://github.com/flass/tree2
@@ -73,17 +77,39 @@ This commands need to be added to your .bashrc file for it to last beyond the cu
 PYTHONPATH=${PYTHONPATH}:${SOFTWARE}/tree2:${SOFTWARE}/pantagruel/python_libs
 ```
 
-### Install Prokka using brew
+Regarding the installation of ALE, you may need to install either the Docker daemon, or the Boost and Bio++ C++ libraries (see [installing_ALE](https://github.com/flass/pantagruel/blob/master/doc/installing_ALE.md)).
+
+#### Install Docker:
+```sh
+sudo apt install docker.io
+sudo groupadd docker
+sudo usermod -aG docker $USER
+sudo newgrp docker
+```
+#### Install Boost libraries
+This is more cumbersome, but safer when installing this software on a computer that has other functions, especially on  al large production server. See [ALE's own installation page](https://github.com/ssolo/ALE/blob/master/INSTALL.md) for more details and updates.
+```sh
+sudo apt install libboost-dev libboost-serialization-dev libboost-mpi-dev
+```
+#### Install Bio++ libraries 
+To compile ALE from source, Bio++ version >2.2.0 is required. The version 2.4.1 can be found as a Debian package on Ubuntu 18.4 LTS (Bionic Beaver). Previous Ubuntu versions, such as 16.4 LTS (Xenial Xerius) have version 2.1.0, in which case Bio++ have to be compiled from source (much heavier).  
+```sh
+sudo apt install libbpp-core-dev libbpp-phyl-dev libbpp-seq-dev libbpp-seq-omics-dev
+```
+
+### Platform-independent software installation
+
+#### Install Prokka using brew
 ```sh
 brew install brewsci/bio/prokka
 ```
 
-### Install MMSeqs using brew
+#### Install MMSeqs using brew
 ```sh
 brew install mmseqs2
 ```
 
-### Fetch Pal2Nal script
+#### Fetch Pal2Nal script
 ```sh
 wget http://www.bork.embl.de/pal2nal/distribution/pal2nal.v14.tar.gz
 tar -xzf pal2nal.v14.tar.gz
@@ -91,7 +117,7 @@ chmod +x ${SOFTWARE}/pal2nal.v14/pal2nal.pl
 ln -s ${SOFTWARE}/pal2nal.v14/pal2nal.pl ${BINS}/
 ```
 
-### Fetch MAD program
+#### Fetch MAD program
 ```sh
 wget https://www.mikrobio.uni-kiel.de/de/ag-dagan/ressourcen/mad2-2.zip
 mkdir -p ${SOFTWARE}/MAD/
@@ -100,17 +126,19 @@ chmod +x ${SOFTWARE}/MAD/mad
 ln -s ${SOFTWARE}/MAD/mad
 ```
 
-### Using Docker to install ALE
+#### Install custom packages from PyPI
+```sh
+# install BCBio.GFF
+sudo -H pip install bcbio-gff
+
+# install bioscripts.convert
+sudo -H pip install bioscripts.convert
+```
+
+#### Using Docker to install ALE
 This is recommended for use within a virtual machine with no other function.
 It is however to avoid on a server or desktop due to the need to grant root-equivalent right to main user which leads to significant security breach exposure.
-First install Docker:
-```sh
-sudo apt install docker.io
-sudo groupadd docker
-sudo usermod -aG docker $USER
-sudo newgrp docker
-```
-Then install ALE:  
+
 ```sh
 docker pull boussau/alesuite
 ```
@@ -119,48 +147,4 @@ Then set the following command aliases (add these lines to your .bashrc file for
 alias ALEobserve="docker run -v $PWD:$PWD -w $PWD boussau/alesuite ALEobserve"
 alias ALEml="docker run -v $PWD:$PWD -w $PWD boussau/alesuite ALEml"
 alias ALEml_undated="docker run -v $PWD:$PWD -w $PWD boussau/alesuite ALEml_undated"
-```
-
-### Installing ALE from source (s)
-This is more cumbersome, but safer when installing this software on a computer that has other functions, especially on  al large production server. See [ALE's own installation page](https://github.com/ssolo/ALE/blob/master/INSTALL.md) for more details and updates.
-```sh
-sudo apt install libboost-dev libboost-serialization-dev libboost-mpi-dev
-```
-#### Bio++ libraries version >2.2.0 are required
-The version 2.4.1 can be found as a Debian package on Ubuntu 18.4 LTS (Bionic Beaver). Previous Ubuntu versions, such as 16.4 LTS (Xenial Xerius) have version 2.1.0, in which case Bio++ have to be compiled from source (much heavier).  
-Using Debian packages:  
-```sh
-sudo apt install libbpp-core-dev libbpp-phyl-dev libbpp-seq-dev libbpp-seq-omics-dev
-```
-OR from source:  
-```sh
-mkdir ${SOFTWARE}/bpp
-cd ${SOFTWARE}/bpp
-git clone https://github.com/BioPP/bpp-core
-git clone https://github.com/BioPP/bpp-seq
-git clone https://github.com/BioPP/bpp-phyl
-mkdir bpp-core-build
-mkdir bpp-phyl-build
-mkdir bpp-seq-build
-cd bpp-core-build/
-cmake ../bpp-core -DCMAKE_INSTALL_PREFIX=/usr/ -DBUILD_TESTING=FALSE
-make
-sudo make install
-cd ../bpp-seq-build/
-cmake ../bpp-seq -DCMAKE_INSTALL_PREFIX=/usr/ -DBUILD_TESTING=FALSE
-make
-sudo make install
-cd ../bpp-phyl-build/
-cmake ../bpp-phyl -DCMAKE_INSTALL_PREFIX=/usr/ -DBUILD_TESTING=FALSE
-make
-sudo make install
-cd ../..
-```
-Finally install ALE:  
-```sh
-git clone https://github.com/ssolo/ALE
-mkdir build
-cd build
-cmake ..
-make
 ```
