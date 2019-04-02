@@ -361,68 +361,7 @@ cat user_genomes/strain_infos_databasename.txt
 
 ## Installing Pantagruel and its dependencies
 
-Under a Debian environment (e.g. Ubuntu), please follow the indications in the [INSTALL](https://github.com/flass/pantagruel/blob/master/INSTALL.md) page.  
-
-Below is a summary of the software on which Pantagruel depends:
-
-### Required bioinformatic software
-- **Prokka** for genome annotation
-  (Install from  [source code](https://github.com/tseemann/prokka); )
-
-- **MMseqs2/Linclust** for homologous sequence clustering  
-  (Install from [source code](https://github.com/soedinglab/MMseqs2); last tested version https://github.com/soedinglab/MMseqs2/commit/c92411b91175a2362554849b8889a5770a1ae537)
-
-- **Clustal Omega** for homologous sequence alignment  
-  (Install from [source code](http://www.clustal.org/omega/) or *clustalo* debian package; version used and recommended: 1.2.1)  
-  - \[ future development: consider using [FAMSA](http://sun.aei.polsl.pl/REFRESH/famsa) \]
-
-- **PAL2NAL** for reverse tanslation of protein sequence alignments into CDS alignments  
-  ([Perl source code](http://www.bork.embl.de/pal2nal/))
-
-- **RAxML** for species tree and initial (full) gene tree estimation  
-  (Install from [source code](https://github.com/stamatak/standard-RAxML) or *raxml* debian package; version used and recommended: 8.2.9)  
-  - \[ future development: consider using RAxML-NG (Install from [source code](https://github.com/amkozlov/raxml-ng)) \]
-
-- **MrBayes** for secondary estimation of (collapsed) gene trees  
-  (Install from [source code](http://mrbayes.sourceforge.net/) or *mrbayes* and *mrbayes-mpi* debian packages; version used and recommended: 3.2.6)  
-  - \[ future development: consider using [RevBayes](http://revbayes.github.io/) \]
-
-- **MAD** for species tree rooting  
-  ([R source code](https://www.mikrobio.uni-kiel.de/de/ag-dagan/ressourcen/mad-r-tar.gz))
-
-- **ALE/xODT** for gene tree / species tree reconciliation  
-  (Install from [source code](https://github.com/ssolo/ALE); version used and recommended: 0.4; notably depends on [Bio++ libs](https://github.com/BioPP) (v2.2.0))
-  
-### Required code libraries
-- **R** (version 3, >=3.2.3 recommended) + packages:
-  - ape
-  - phytools
-  - vegan
-  - ade4
-  - igraph
-  - getopt
-  - parallel
-  - DBI, RSQLite
-  - topGO (optional)
-  - pvclust (optional)
-  
-- **Python** (version 2.7, >=2.7.13 recommended) + packages:
-  - [sqlite3](https://docs.python.org/2/library/sqlite3.html) (standard package in Python 2.7)
-  - [scipy/numpy](https://www.scipy.org/scipylib/download.html)
-  - [tree2](https://github.com/flass/tree2)
-  - [BioPython](http://biopython.org/wiki/Download)
-  - [BCBio.GFF](https://pypi.org/project/bcbio-gff)
-  - [Cython](https://pypi.org/project/Cython/)
-  - [igraph](http://igraph.org/python/) (available as a Debian package)
-
-### Other required software
-- [sqlite3](https://www.sqlite.org) (available as a Debian package *sqlite3*)
-- [LFTP](https://lftp.yar.ru/get.html) (available as a Debian package *lftp*)
-- [(linux)brew](http://linuxbrew.sh/) (available as a Debian package *linuxbrew-wrapper*)
-- [docker](https://www.docker.com/) (available as a Debian package *docker.io*)
-- [JAVA Runtime (JDK 8.0)](https://openjdk.java.net) (available as Debian packages *openjdk-8-jdk* and *openjdk-8-jre*)
-- [CD-HIT](https://cd-hit.org) (available as a Debian package *cd-hit*)
-- [bioperl](https://bioperl.org) (available as a Debian package *bioperl*)
+This bioinformatic pipeline rely on a quite a few other pieces of software. To install them, please follow the indications in the [INSTALL](https://github.com/flass/pantagruel/blob/master/INSTALL.md) page.  
 
 -------------
 
