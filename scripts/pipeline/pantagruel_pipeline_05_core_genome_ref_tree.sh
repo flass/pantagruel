@@ -253,10 +253,12 @@ if  [[ ! -s ${speciestree} ]] ; then
     fi
    else
     # bootstrapping tree search from scratch
+    echo "search bootstrap trees"
     $raxmlbin -s ${coretreealn} ${raxmloptions} -x 198237 -N ${ncorebootstrap} &> ${ptglogs}/raxml/${treename}_bs.log
    fi
    # mapping bootstraps to ML tree
    mv ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_bootstrap.${treename}
+   echo "map branch supports on ML tree"
    $raxmlbin -s ${coretreealn} ${raxmloptions} -f b -z ${coretree}/RAxML_bootstrap.${treename} -t ${nrbesttree} 
    mv ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_bipartitions.${treename}
    rm -f ${nrbiparts}

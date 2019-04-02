@@ -24,7 +24,6 @@ export listncbiass='REPLACElistncbiass'                    # list of accessions 
 export customassemb='REPLACEcustomassemb'                  # folder of custom genome assemblies to include in the study
 export refass='REPLACErefass'                              # folder of reference (RefSeq) genomes only to use as reference for the annotation of custom genome assemblies
 export listrefass='REPLACElistrefass'                      # list of accessions of reference (RefSeq) genomes only to use as reference for the annotation of custom genome assemblies
-export ngenomes=REPLACEngenomes                            # the count of genomes in the dataset
 export coreseqtype='REPLACEcoreseqtype'                    # either 'cds' or 'protein'
 export pseudocoremingenomes=REPLACEpseudocoremingenomes    # the minimum number of genomes in which a gene family should be present to be included in the pseudo-core genome gene set
 export userreftree='REPLACEuserreftree'                    # possible user-provided reference tree
