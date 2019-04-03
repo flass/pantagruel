@@ -342,6 +342,7 @@ EOF
     python ${ptgscripts}/putidentseqbackintree.py --input.nr.tree=${nrbiparts} --ref.rooted.nr.tree=${nrrootedtree} \
      --output.tree=${speciestree}
   fi
+  checkexec "failed re-introducing identical sequences into reference tree" "succesfully re-introduced identical sequences into reference tree; full reference tree stored in file '${speciestree}'"
 fi
 
 ### make version of full reference tree with actual organism names
