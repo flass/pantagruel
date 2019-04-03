@@ -153,6 +153,7 @@ if  [[ ! -s ${speciestree} ]] ; then
    done
    # concatenate pseudo-core prot/CDS alignments
    python ${ptgscripts}/concat.py ${coregenome}/pseudo-coregenome_sets/${pseudocore}_${coreseqtype}_aln_list ${pseudocorealn}
+   checkexec "failed to produce concatenated (pseudo)core-genome alignment" "created concatenated (pseudo)core-genome alignment in file '${pseudocorealn}'"
    rm ${alifastacodedir}/*_all_sp_new
   fi
 
@@ -176,6 +177,7 @@ if  [[ ! -s ${speciestree} ]] ; then
   else
    echo "# call: $raxmlbin -s ${pseudocorealn} ${raxmloptions} -f c" > ${ptglogs}/raxml/${treename}.check.log
    $raxmlbin -s ${pseudocorealn} ${raxmloptions} -f c &>> ${ptglogs}/raxml/${treename}.check.log
+   checkexec "failed to remove identical sequence in core alignment" "removed identical sequence in core alignment; reduced alignemnt stored in file '${pseudocorealn}.reduced'"
    grep 'exactly identical$' ${coretree}/RAxML_info.${treename} | sed -e 's/IMPORTANT WARNING: Sequences \(.\+\) and \(.\+\) are exactly identical/\1\t\2/g' > ${pseudocorealn}.identical_sequences
    mv ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_identical_sequences.${treename}
   fi
@@ -215,6 +217,7 @@ if  [[ ! -s ${speciestree} ]] ; then
    mv ${coretree}/RAxML_result.${treename} ${coretree}/RAxML_resultTopo.${treename}
    rm -f ${nrbesttopo}
    ln -s $(realpath --relative-to=$(dirname ${nrbesttopo}) ${coretree}/RAxML_resultTopo.${treename}) ${nrbesttopo}
+   checkexec "failed search for ML tree topology" "ML tree topology search complete; best tree stored in file '${nrbesttopo}'"
   fi
   
   # now optimize the branch length and model parameters on ML tree topology under GAMMA-based model with -f e option
@@ -234,6 +237,7 @@ if  [[ ! -s ${speciestree} ]] ; then
     mv ${coretree}/RAxML_result.${treename} ${coretree}/RAxML_bestTree.${treename}
     rm -f ${nrbesttree}
     ln -s $(realpath --relative-to=$(dirname ${nrbesttree}) ${coretree}/RAxML_bestTree.${treename}) ${nrbesttree}
+   checkexec "failed search for ML tree parameter & branch length" "ML tree parameter & branch length search complete; best tree stored in file '${nrbesttree}'"
   fi
 
   # compute ${ncorebootstrap} rapid bootstraps (you can set variable by editing ${envsourcescript})
@@ -270,6 +274,7 @@ if  [[ ! -s ${speciestree} ]] ; then
    mv ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_bipartitions.${treename}
    rm -f ${nrbiparts}
    ln -s $(realpath --relative-to=$(dirname ${nrbiparts}) ${coretree}/RAxML_bipartitions.${treename}) ${nrbiparts}
+   checkexec "failed bootstrapping" "bootstrapping complete; bootstrap trees stored in file '${nrbiparts}'"
   fi
 
   # root ML tree
@@ -325,6 +330,7 @@ EOF
     fi
    fi
   fi
+  checkexec "failed rooting reference tree" "reference tree rooting complete; rooted tree stored in file '${nrrootedtree}'"
 
   # from here no skipping in resume mode
   if [ "${coretreealn}" == "${pseudocorealn}.reduced" ] ; then
@@ -340,6 +346,7 @@ fi
 
 ### make version of full reference tree with actual organism names
 python ${ptgscripts}/code2orgnames_in_tree.py ${speciestree} $database/organism_codes.tab ${speciestree}.names
+checkexec "failed name translation in reference tree" "reference tree name translation in complete; tree with organism names stored in file '${speciestree}.names'"
 
 ### generate ultrametric 'dated' species tree for more meaningfulgptghical representation of reconciliation AND to use the dated (original) version of ALE
 ## use LSD (v 0.3 beta; To et al. Syst. Biol. 2015) to generate an ultrametric tree from the rooted ML tree (only assumin different, uncorrelated clocks for each branch)
@@ -351,10 +358,12 @@ else
   alnlen=500000 # arbitrary length similar to a 500 CDS concatenate
 fi
 lsd -i ${speciestree} -c -v 1 -s ${alnlen} -o ${speciestree}.lsd
+checkexec "failed ultrametrization of reference tree" "ultrametrization of reference tree complete; ultrametric tree stored in file '${speciestree}.lsd'"
 
 ### delineate populations of near-identical strains (based on tree with branch lengths in subs/site) and generate the population tree, i.e. the species tree withs population collapsed
 python ${ptgscripts}/replace_species_by_pop_in_gene_trees.py -S ${speciestree} --threads=8 \
 --pop_stem_conds="${popstemconds}" --within_pop_conds="${withinpopconds}"
+checkexec "failed search of populations in reference tree" "search of populations in reference tree complete; population description stored in file '${speciestree}_populations'"
 nspepop=$(tail -n+3 ${speciestree%.*}_populations | wc -l)
 echo "Found $nspepop disctinct populations in the species tree"
 
@@ -382,3 +391,4 @@ for node in reftree:
 
 fout.close()
 EOF
+checkexec "failed defining contrasting clades in reference tree" "defining contrasting clades in reference tree complete; clade description stored in file '${speciestree}_clade_defs'"
