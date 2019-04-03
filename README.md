@@ -128,6 +128,8 @@ Options are detailed here:
     -F|--FORCE        FORCE mode: will erase any pre-existing main folder for the task
                         (default: off, pre-exisitance of a folder will result in an early error)
 
+    -R|--resume      try and resume the task from previous run that was interupted (for the moment only available for task 'core')
+
 # for Pantagruel task init:
 
   _mandatory options_
@@ -212,8 +214,6 @@ Options are detailed here:
                        (default: 0.0005 for nucleotide alignemnt-based tree; 0.0002 for protein-based)
 
     --pop_bs_thresh  definee the threshold of branch support for delinating populations in the reference tree (default: 80)
-
-    -R|--resume      try and resume the task from previous run that was interupted (for the moment only available for taske 'core')
 
     -H|--submit_hpc  full address (hostname:/folder/location) of a folder on a remote high-performance computating (HPC) cluster server
                        This indicate that computationally intensive tasks, including building the gene tree collection

@@ -312,22 +312,22 @@ EOF
     ln -s $(realpath --relative-to=$(dirname ${nrrootedtree}) ${nrbiparts}.${rootingmethod}rooting) ${nrrootedtree}
     else
      if [[ "${rootingmethod:0:8}" == 'outgroup' ]] ; then
-    # outgroup rooting; assume argument was of the shape 'outgroup:SPECIESCODE'
-    # verify the presence of outgroup species in tree
-    outgroup=$(echo ${rootingmethod} | cut -d':' -f2)
-    if [ -z $(grep ${outgroup} ${nrbesttree}) ] ; then
-      echo "Error, outgroup species '$outgroup' is absent from tree '${nrbesttree}'"
-      exit 1
-    fi
-    roottag=${rootingmethod/:/-}rooted
-    R --vanilla --slave << EOF
-    library('ape')
-    tree = read.tree('${nrbiparts}')
-    rtree = root(tree, outgroup='${outgroup}', resolve.root=T)
-    write.tree(rtree, file='${nrbiparts}.${roottag}')
+      # outgroup rooting; assume argument was of the shape 'outgroup:SPECIESCODE'
+      # verify the presence of outgroup species in tree
+      outgroup=$(echo ${rootingmethod} | cut -d':' -f2)
+      if [ -z $(grep ${outgroup} ${nrbesttree}) ] ; then
+        echo "Error, outgroup species '$outgroup' is absent from tree '${nrbesttree}'"
+        exit 1
+      fi
+      roottag=${rootingmethod/:/-}rooted
+      R --vanilla --slave << EOF
+      library('ape')
+      tree = read.tree('${nrbiparts}')
+      rtree = root(tree, outgroup='${outgroup}', resolve.root=T)
+      write.tree(rtree, file='${nrbiparts}.${roottag}')
 EOF
-    rm -f ${nrrootedtree}
-    ln -s $(realpath --relative-to=$(dirname ${nrrootedtree}) ${nrbiparts}.${roottag}) ${nrrootedtree}
+      rm -f ${nrrootedtree}
+      ln -s $(realpath --relative-to=$(dirname ${nrrootedtree}) ${nrbiparts}.${roottag}) ${nrrootedtree}
      fi
     fi
    fi
@@ -366,7 +366,7 @@ checkexec "failed ultrametrization of reference tree" "ultrametrization of refer
 ### delineate populations of near-identical strains (based on tree with branch lengths in subs/site) and generate the population tree, i.e. the species tree withs population collapsed
 python ${ptgscripts}/replace_species_by_pop_in_gene_trees.py -S ${speciestree} --threads=8 \
 --pop_stem_conds="${popstemconds}" --within_pop_conds="${withinpopconds}"
-checkexec "failed search of populations in reference tree" "search of populations in reference tree complete; population description stored in file '${speciestree}_populations'"
+checkexec "failed search of populations in reference tree" "search of populations in reference tree complete; population description stored in file '${speciestree%.*}_populations'"
 nspepop=$(tail -n+3 ${speciestree%.*}_populations | wc -l)
 echo "Found $nspepop disctinct populations in the species tree"
 

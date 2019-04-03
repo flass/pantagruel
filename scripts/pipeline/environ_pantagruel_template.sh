@@ -30,6 +30,7 @@ export userreftree='REPLACEuserreftree'                    # possible user-provi
 export poplgthresh='REPLACEpoplgthresh'                    # parameter to define populations of genomes in the reference tree (stem branch length threshold, default value depends on coreseqtype)
 export poplgleafmul='REPLACEpoplgleafmul'                  # parameter to define populations of genomes in the reference tree (multiplier to the former in case it is a leaf, default 1.5)
 export popbsthresh='REPLACEpopbsthresh'                    # parameter to define populations of genomes in the reference tree (stem branch support threshold, default 80)
+export rootingmethod='REPLACErootingmethod'
 export chaintype='REPLACEchaintype'                        # whether gene trees will be collapsed ('collapsed', if -c option enabled) or not ('fullgenetree', default)
 # non-default parameters for gene trees collapsing derived from -C option value (passed to init script via ${collapseCladeParams}): 
 export cladesupp=REPLACEcladesupp                          # - clade criterion trheshold (int)
@@ -53,7 +54,6 @@ export maxreftreeheight=0.25
 export colmethod='replaceCCinGasinS-collapsePOPinSnotinG'
 export ncorebootstrap=200
 export mainresulttag='rootedTree'
-export rootingmethod='treebalance'
 # only relevant if user-defined genomes are provided
 export assembler="somesoftware"
 export seqcentre="somewhere"

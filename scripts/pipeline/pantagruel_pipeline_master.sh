@@ -34,6 +34,8 @@ usagelong (){
   echo "    -F|--FORCE        FORCE mode: will erase any pre-existing main folder for the task"
   echo "                        (default: off, pre-exisitance of a folder will result in an early error)"
   echo ""
+  echo "    -R|--resume       try and resume the task from previous run that was interupted (for the moment only available for task 'core')"
+  echo ""
   echo "# for Pantagruel task init:"
   echo ""
   echo "  _mandatory options_"
@@ -120,7 +122,16 @@ usagelong (){
   echo ""
   echo "    --pop_bs_thresh  definee the threshold of branch support for delinating populations in the reference tree (default: 80)"
   echo ""
-  echo "    -R|--resume      try and resume the task from previous run that was interupted (for the moment only available for taske 'core')"
+  echo "    --rooting        string. defines the method to root the reference tree during task 5|core_genome_ref_tree. "
+  echo "                       Possible values are 'treebalance', 'MAD' and 'outgroup:SPECIESCODELIST' (default: 'treebalance'),"
+  echo "                       - 'treebalance' uses the '-f I' algorthm of RAxML to root the tree towards an optimal balance of branch lengths"
+  echo "                          on either sides of the root;"
+  echo "                       - 'MAD' uses the minimal ancestor deviation method described in \"Tria, et al. (2017) Nat. Ecol. Evol. 1, 0193\"."
+  echo "                       - 'outgroup:SPECIESCODELIST' will root according tothe specified outgroup(s), with SPECIESCODELIST a comma-sperated list of species codes:"
+  echo "                            'outgroup:SPECIESCODE' for rooting with a single species"
+  echo "                            'outgroup:SPECIESCODE1,SPECIESCODE2,... for mutilple species (in which case their MRCA in  the tree will be the outgroup)"
+  echo "                          For codes, please refer to the file 'genome_codes.tab' generated during task 3|create_sqlite_db; you may thus want run task 3 first,"
+  echo "                          then run task init again with this option to regenerate the config file with the desired outgroup value and only then run task 5."
   echo ""
   echo "    -H|--submit_hpc  full address (hostname:/folder/location) of a folder on a remote high-performance computating (HPC) cluster server"
   echo "                       This indicate that computationally intensive tasks, including building the gene tree collection"
@@ -136,7 +147,7 @@ usagelong (){
   echo ""
   echo "    -c|--collapse      enable collapsing the rake clades in the gene trees (strongly recomended in datasets of size > 50 genomes)."
   echo ""
-  echo "    -C|--collapse_par  [only for 'genetrees' task] specify parameters for collapsing the rake clades in the gene trees."
+  echo "    --collapse_param quoted string. specify parameters for collapsing the rake clades in the gene trees."
   echo "                       A single-quoted, semicolon-delimited string containing variable definitions must be provided."
   echo "                       Default is equivalent to providing the following string:"
   echo "                          'cladesupp=70 ; subcladesupp=35 ; criterion=bs ; withinfun=median'"
@@ -248,6 +259,10 @@ ptgenvsetdefaults (){
      export popbsthresh=80
      echo "Default (only relevant to 'core' task): set population delination branch support threshold to $popbsthresh"
     fi
+    if [ -z "$rootingmethod" ] ; then
+     export rootingmethod='treebalance'
+     echo "Default (only relevant to 'core' task): set reference tree rooting method to $rootingmethod"
+    fi
     if [ -z "$hpcremoteptgroot" ] ; then
      echo "Default: all computations will be run locally"
      export hpcremoteptgroot='none'
@@ -275,7 +290,7 @@ promptdate () {
   echo $(date +'[%Y-%m-%d %H:%M:%S]') $1
 }
 
-ARGS=`getopt --options "d:r:i:I:f:a:T:A:L:s:t:RH:cC:hF" --longoptions "dbname:,rootdir:,initfile:,iam:,famprefix:,refseq_ass:,refseq_list:,refseq_ass4annot:,refseq_list4annot:,custom_ass:,taxonomy:,pseudocore:,core_seqtype:,pop_lg_thresh:,pop_bs_thresh:,reftree:,resume,submit_hpc:,collapse,collapse_par:,help,FORCE" --name "pantagruel" -- "$@"`
+ARGS=`getopt --options "d:r:i:I:f:a:T:A:L:s:t:RH:chF" --longoptions "dbname:,rootdir:,initfile:,iam:,famprefix:,refseq_ass:,refseq_list:,refseq_ass4annot:,refseq_list4annot:,custom_ass:,taxonomy:,pseudocore:,core_seqtype:,pop_lg_thresh:,pop_bs_thresh:,rooting:,reftree:,resume,submit_hpc:,collapse,collapse_param:,help,FORCE" --name "pantagruel" -- "$@"`
 
 #Bad arguments
 if [ $? -ne 0 ];
@@ -389,6 +404,12 @@ do
       export popbsthresh="$2"
       echo "set population delination branch support threshold to $popbsthresh"
       shift 2;;
+      
+    --rooting)
+      testmandatoryarg "$1" "$2"
+      export rootingmethod="$2"
+      echo "set reference tree rooting method to $rootingmethod"
+      shift 2;;
 
     -R|--resume)
       export resumetask=true
@@ -412,7 +433,7 @@ do
       echo "gene tree clade collapsing enabled"
       shift ;;
 
-    -C|--collapse_par)
+    --collapse_param)
       testmandatoryarg "$1" "$2"
       export collapseCladeParams="$2"
       echo "set parameters for rake clade collapsing in gene trees"

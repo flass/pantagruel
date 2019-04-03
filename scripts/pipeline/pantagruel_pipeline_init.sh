@@ -68,7 +68,7 @@ rm -f ${ptgtmp}/sedenvvar.sh
 echo -n "cat ${templateenv}" > ${ptgtmp}/sedenvvar.sh
 for var in 'ptgdbname' 'ptgroot' 'ptgrepo' 'myemail' 'famprefix' \
      'ncbitax' 'ncbiass' 'listncbiass' 'customassemb' 'refass' 'listrefass' \
-     'pseudocoremingenomes' 'userreftree' 'coreseqtype' 'poplgthresh' 'poplgleafmul' 'popbsthresh' \
+     'pseudocoremingenomes' 'userreftree' 'coreseqtype' 'poplgthresh' 'poplgleafmul' 'popbsthresh' 'rootingmethod' \
      'chaintype' 'cladesupp' 'subcladesupp' 'criterion' 'withinfun' 'hpcremoteptgroot' ; do
 echo -n " | sed -e \"s#REPLACE${var}#\${${var}}#\"" >> ${ptgtmp}/sedenvvar.sh
 done
