@@ -140,7 +140,9 @@ else
 	 ${ptgscripts}/choose_min_genome_occurrence_pseudocore_genes.sh ${initfile} ${pseudocoremingenomes}
 fi
 
-if  [[ ! -s ${speciestree} ]] ; then
+if  [[ "${resumetask}" == "true" && -s ${speciestree} ]] ; then
+  echo "found reference tree in file '${speciestree}' ; skip reference tree inferrence"
+else
   ### compute reference tree from (pseudo-)core genome
   
   ## generate core genome alignment path list
