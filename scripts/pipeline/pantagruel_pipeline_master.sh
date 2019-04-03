@@ -241,7 +241,7 @@ ptgenvsetdefaults (){
      echo "Default (only relevant to 'core' task): set population delination branch support threshold to $poplgthresh"
     fi
     if [ -z "$poplgleafmul" ] ; then
-     export poplgleafmul='default'
+     export poplgleafmul=1.5
      echo "Default (only relevant to 'core' task): set population delination branch support threshold multiplier for leaf populations to $poplgleafmul"
     fi
     if [ -z "$popbsthresh" ] ; then
