@@ -228,3 +228,4 @@ for (i in 1:length(cladedefs)){
 #~ print("Warnings:", quote=F)
 #~ print(warnings(), quote=F)
 print(sprintf("wrote ouput in file '%s'", nfoutspege), quote=F)
+dbDisconnect(dbcon)

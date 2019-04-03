@@ -89,18 +89,25 @@ Previous Ubuntu versions, such as 16.4 LTS (Xenial Xerius) have version 2.1.0, i
  
 ### Platform-independent software installation
 
+in the following generic commands, the `${SOFTWARE}` and `${BINS}` environment variables would contain the path to folders where you want to install programs and where you want to link their executables, respectively.
+For programs to be accessible for execution during by the pipeline, `${BINS}` should feature in your `${PATH}` variable definition:
+```sh
+export PATH=${PATH}:${BINS}
+```
+The command above need to be added to your `~/.bashrc` file for the programs to be permanently available.
+
 #### Fetch Pantagruel pipeline and specific phylogenetic modules
 ```sh
-# assuming you want to install this in a folder named 'software':
-cd software/
+# assuming you want to install this in a folder named ${SOFTWARE}:
+cd ${SOFTWARE}/
 git clone https://github.com/flass/pantagruel
 cd pantagruel/ && git submodule init && git submodule update && cd -
 ```
-You then need to add the Python modules to your `PYTHONPATH`.
-This commands need to be added to your `~/.bashrc` file for the module to be permanently available:
+You then need to add the Python modules to your `PYTHONPATH`:
 ```sh
-PYTHONPATH=${PYTHONPATH}:/full/path/to/software/pantagruel/python_libs
+export PYTHONPATH=${PYTHONPATH}:${SOFTWARE}/pantagruel/python_libs
 ```
+The command above need to be added to your `~/.bashrc` file for the module to be permanently available.
 
 #### Install Prokka using brew
 ```sh
@@ -126,7 +133,13 @@ wget https://www.mikrobio.uni-kiel.de/de/ag-dagan/ressourcen/mad2-2.zip
 mkdir -p ${SOFTWARE}/MAD/
 tar -xzf ../mad2-2.zip -d ${SOFTWARE}/MAD/
 chmod +x ${SOFTWARE}/MAD/mad
-ln -s ${SOFTWARE}/MAD/mad
+ln -s ${SOFTWARE}/MAD/mad ${BINS}/
+```
+#### Fetch LSD program
+```sh
+wget https://github.com/tothuhien/lsd-0.3beta/releases/download/v0.3.3/lsd_unix
+chmod +x ${SOFTWARE}/lsd_unix
+ln -s ${SOFTWARE}/lsd_unix ${BINS}/lsd
 ```
 
 #### Install custom packages from PyPI
@@ -181,7 +194,10 @@ If you feel like installing the depedencies your own way without following the a
 
 - **MAD** for species tree rooting  
   ([R source code](https://www.mikrobio.uni-kiel.de/de/ag-dagan/ressourcen/mad2-2.zip))
-
+  
+- **LSD** for species tree rooting  
+  ([source code](http://www.atgc-montpellier.fr/LSD/))
+  
 - **ALE/xODT** for gene tree / species tree reconciliation  
   (Install from [source code](https://github.com/ssolo/ALE); version used and recommended: 0.4; notably depends on [Bio++ libs](https://github.com/BioPP) (v2.2.0+))
   

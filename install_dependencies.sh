@@ -199,8 +199,26 @@ if [ ! -x ${BINS}/mad ] ; then
   checkexec "Could not link MAD executable to ${BINS}/" "Succesfully linked MAD executable to ${BINS}/"
 else
   echo "found MAD executable: ${BINS}/mad"
-  if [ -L ${BINS}/mad ] ; then
+  if [ -L ${BINS}/lsd ] ; then
     echo " linking to $(readlink -f ${BINS}/mad)"
+  fi
+fi
+echo ""
+
+# fetch LSD program
+if [ ! -x ${BINS}/lsd ] ; then
+  if [ ! -x ${SOFTWARE}/lsd_unix ] ; then
+    echo "get LSD"
+    wget https://github.com/tothuhien/lsd-0.3beta/releases/download/v0.3.3/lsd_unix
+    chmod +x ${SOFTWARE}/lsd_unix
+    checkexec "Could not install LSD" "Succesfully installed LSD"
+  checkexec "Could not link LSD executable to ${BINS}/" "Succesfully linked LSD executable to ${BINS}/"
+  fi
+  ln -s ${SOFTWARE}/lsd_unix ${BINS}/lsd
+else
+  echo "found LSD executable: ${BINS}/lsd"
+  if [ -L ${BINS}/lsd ] ; then
+    echo " linking to $(readlink -f ${BINS}/lsd)"
   fi
 fi
 echo ""
