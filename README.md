@@ -387,8 +387,8 @@ This bioinformatic pipeline relies on a quite a few other pieces of software.
 To install them, please follow the indications in the [INSTALL](https://github.com/flass/pantagruel/blob/master/INSTALL.md) page.  
 
 Main options are to use either: 
-- the automated install_dependencies.sh script (for Debian systems; tested on Ubuntu 18.04)
-- (SOON) the Docker instance file containing all dependencies
+- the automated [install_dependencies.sh](https://github.com/flass/pantagruel/blob/master/install_dependencies.sh) shell script (for Debian systems; tested on Ubuntu 18.04)
+- (SOON) the Docker instance file containing all dependencies; pantegruel can be run within that container
 
 -------------
 

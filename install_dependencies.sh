@@ -119,9 +119,15 @@ install.packages('pvclust', repos='${CRANmirror}')
 EOF
 fi
 echo "library('topGO')" | R --vanilla &> /dev/null
-checkexec "Could not install R package 'topGO'"
+#~ checkexec "Could not install R package 'topGO'"
+if [ $? != 0 ] ; then
+ echo "WARNING: Could not install R package 'topGO'; testing of GO term enrichment in clade-specific gene sets will not be available"
+fi
 echo "library('pvclust')" | R --vanilla &> /dev/null
-checkexec "Could not install R package 'pvclust'"
+#~ checkexec "Could not install R package 'pvclust'"
+if [ $? != 0 ] ; then
+ echo "WARNING: Could not install R package 'pvclust'; confidence values on accessory genome-based clustering of genomes will not be computed"
+fi
 echo ""
 
 # Configure Linuxbrew
