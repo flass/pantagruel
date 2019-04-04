@@ -113,132 +113,6 @@ Note there are **dependencies between tasks**, which must be carried on mostly s
 
 So all in all, you're better off running all the tasks sequentially, for instance using `pantagruel all`.
 
-### Options
-
-Options are detailed here:  
-```
-# for Pantagruel task 0-9: 
-
-  _only one mandatory option_
-
-    -i|--initfile     Pantagruel configuration file
-                        this file is generated at init stage, from the specified options.
-  _facultative options_
-
-    -F|--FORCE        FORCE mode: will erase any pre-existing main folder for the task
-                        (default: off, pre-exisitance of a folder will result in an early error)
-
-    -R|--resume      try and resume the task from previous run that was interupted (for the moment only available for task 'core')
-
-# for Pantagruel task init:
-
-  _mandatory options_
-
-    -d|--dbname       database name
-
-    -r|--rootdir      root directory where to create the database; defaults to current folder
-  
-    It is also necessary to specify an input genome dataset! 
-    This is possible via -a, -A or -L options, or a mixture of them.
-  
-  _facultative options_
-
-    -i|--initfile     Pantagruel configuration file
-                        a file can be derived (i.e. manualy curated) from 'environment_pantagruel_template.sh' template.
-                        Parameters values specified in this file will override other options
-
-    -I|--iam          database creator identity (e-mail address is preferred)
-
-    -f|--famprefix    alphanumerical prefix (no number first) of the names for homologous protein/gene family clusters; defaults to 'PANTAG'
-                       the chosen prefix will be appended with a 'P' for protein families and a 'C' for CDS families.
-
-    -T|--taxonomy      path to folder of taxonomy database flat files; defaults to $rootdir/NCBI/Taxonomy_YYYY-MM-DD (suffix is today's date)
-                        if this is not containing the expected file, triggers downloading the daily dump from NCBI Taxonomy at task 00
-
-    -A|--refseq_ass  path to folder of source genome assembly __folders__ containing flat files formated like NCBI Assembly RefSeq (no default value).
-                       The assembly folders (one per genome) can be obtained on https://www.ncbi.nlm.nih.gov/assembly,
-                       by making a keyword search to select a set of assemblies and downloading results with options:
-                         Source Database = 'RefSeq' and File type = 'All file types (including assembly-structure directory)'.
-                       A simple archive 'genome_assemblies.tar' (as obtained from the NCBI website) can be placed in that folder.
-                       If user genomes are also provided, these RefSeq assemblies will be used as reference for their annotation.
-
-    --refseq_ass4annot same principle as -A, but WILL NOT be used in the study, only as a reference to annotate user genomes
-                        (defaults to combined value of -A and -L options)
-
-    -L|--refseq_list  Same as -A|--refseq_ass, but just provide a list of NCBI Assembly accession ids (file with one accession id per row)
-                        Accession ids are of the form GCx_yyyyyyyyy.z with x = {A|F} for GenBank and RefSeq, respectively, and y an z are any digit.
-                        These accessions will be fetched from the NCBI FTP site using lftp.
-                        Note the LAST version of the accession will be returned, i.e. the trailing '.z' part of the accession id is ignored.
-                        These assemblies saved into a folder named after the value of the option:
-                          for instance, \`-L /path/to/assemblist\` will save assembly folders in /path/to/assemblist_assemblies_from_ftp/.
-
-    --refseq_list4annot same principle as -L, but WILL NOT be used in the study, only as a reference to annotate user genomes
-                        (defaults to combined value of -A and -L options)
- 
-    -a|--custom_ass  path to folder of user-provided genomes (no default value). The specified folder must contain:
-                      _mandatory_ 
-                       - a 'contigs/' folder, where are stored multi-FASTA files of genome assemblies (one file per genome,
-                          with extension '.fa', '.fasta' or '.fas' ...). Fasta file names will be truncated by removing
-                          the '.fa' string and everything occuring after) and will be retained as the assembly_id (beware 
-                          of names redundant with RefSeq assemblies).
-                       - a 'strain_infos_${databasename}.txt' file describing the organism, with ${databasename} the value of option -d"
-                          columns should be headed with these fields (replace quotes and semicolons by tabs!):"
-                           'sequencing_project_id'; 'genus'; 'species'; 'strain'; 'taxid'; 'locus_tag_prefix'
-                         'sequencing_project_id' must match the name of a contig file (e.g. 'seqProjID.fasta')
-                         'locus_tag_prefix' must match the prefix of ids given to CDS, proteins and genome regions (contigs)
-                         in potentially provided annotation files (see below).
-                      _optional_ 
-                       - an 'annotation/' folder, where are stored annotation files: 
-                         - one mandatory in GFF 3.0 file format (with a '.gff' extension);
-                          and optionally, the following files (with consistent ids!!):
-                         - one in GenBank flat file format (with a '.gbk' extension);
-                         - one in Fasta format containing CDS sequences (with a '.ffn' extension).
-                         - one in Fasta format containing matching protein sequences (with a '.faa' extension).
-                         These four files are produced when using Prokka for annotation; if at least one of the .gbk, .ffn or .faa
-                         are missing, all three will be derived from the .gff source. Each genome annotation file set must be stored
-                         in a separate folder, which name must match a contig file (e.g. 'seqProjID/' for 'seqProjID.fasta').
-                      NOTE: to ensure proper parsing, it is strongly advised that any provided annotation was generated with Prokka
-                      NOTE: to ensure uniform annotation of the dataset, it is advised to let Pantagruel annotate the contigs (calling Prokka)
-
-    -s|--pseudocore  integer, float <=1.0 or string. The minimum number or fraction of genomes in which a gene family should be present
-                       to be included in the pseudo-core genome, i.e. the gene set which alignments will be concatenated for reference tree search.
-                       Only relevant when running task 'core'; a non-numeric value will trigger an INTERACTIVE prompt for search of an optimal value.
-                       Defaults to the total number of genomes (strict core genome set).
-
-    -t|--reftree     specify a reference tree for reconciliation and clade-specific gene analyses;
-                       over-rides the computation of tree from the concatenate of (pseudo-)core genome gene during taske 'core'.
-
-    --core_seqtype   {cds|prot} define the type of sequence that will be used to compute the (pseudo-)core genome tree (default to 'cds')
-
-    --pop_lg_thresh  definee the threshold of branch length for delinating populations in the reference tree 
-                       (default: 0.0005 for nucleotide alignemnt-based tree; 0.0002 for protein-based)
-
-    --pop_bs_thresh  definee the threshold of branch support for delinating populations in the reference tree (default: 80)
-
-    -H|--submit_hpc  full address (hostname:/folder/location) of a folder on a remote high-performance computating (HPC) cluster server
-                       This indicate that computationally intensive tasks, including building the gene tree collection
-                       ('genetrees') and reconciling gene tree with species tree ('reconciliations') will be run
-                       on a HPC server (only Torque/PBS job submission system is supported so far).
-                       [support for core genome tree building ('core') remains to be implemented].
-                       Instead of running the computations, scripts for cluster job submission will be generated automatically.
-                       Data and scripts will be transfered to the specified address (the database folder structure
-                       will be duplicated there, but only relevant files will be synced). Note that job submission
-                       scripts will need to be executed manually on the cluster server.
-                       If set at init stage, this option will be maintained for all tasks. However, the remote address
-                       can be updated when calling a specific task; string 'none' cancels the HPC behaviour.
-
-    -c|--collapse      enable collapsing the rake clades in the gene trees (strongly recomended in datasets of size > 50 genomes).
-
-    -C|--collapse_par  [only for 'genetrees' task] specify parameters for collapsing the rake clades in the gene trees.
-                       A single-quoted, semicolon-delimited string containing variable definitions must be provided.
-                       Default is equivalent to providing the following string:
-                          'cladesupp=70 ; subcladesupp=35 ; criterion=bs ; withinfun=median'
-
-# for any Pantagruel command calls:
-
-    -h|--help          print this help message and exit.
-```  
-
 ### Usage example  
 Here is a standard examples of using `pantagruel` program.
 
@@ -364,12 +238,157 @@ cat user_genomes/strain_infos_databasename.txt
 # and match exactly the annotation folder name.
 ```
 
+### Options
+
+Options are detailed here:  
+```
+# for Pantagruel task 0-9: 
+
+  _only one mandatory option_
+
+    -i|--initfile     Pantagruel configuration file
+                        this file is generated at init stage, from the specified options.
+  _facultative options_
+
+    -F|--FORCE        FORCE mode: will erase any pre-existing main folder for the task
+                        (default: off, pre-exisitance of a folder will result in an early error)
+
+    -R|--resume      try and resume the task from previous run that was interupted (for the moment only available for task 'core')
+
+# for Pantagruel task init:
+
+  _mandatory options_
+
+    -d|--dbname       database name
+
+    -r|--rootdir      root directory where to create the database; defaults to current folder
+  
+    It is also necessary to specify an input genome dataset! 
+    This is possible via -a, -A or -L options, or a mixture of them.
+  
+  _facultative options_
+
+    -i|--initfile     Pantagruel configuration file
+                        a file can be derived (i.e. manualy curated) from 'environment_pantagruel_template.sh' template.
+                        Parameters values specified in this file will override other options
+
+    -I|--iam          database creator identity (e-mail address is preferred)
+
+    -f|--famprefix    alphanumerical prefix (no number first) of the names for homologous protein/gene family clusters; defaults to 'PANTAG'
+                       the chosen prefix will be appended with a 'P' for protein families and a 'C' for CDS families.
+
+    -T|--taxonomy      path to folder of taxonomy database flat files; defaults to $rootdir/NCBI/Taxonomy_YYYY-MM-DD (suffix is today's date)
+                        if this is not containing the expected file, triggers downloading the daily dump from NCBI Taxonomy at task 00
+
+    -A|--refseq_ass  path to folder of source genome assembly __folders__ containing flat files formated like NCBI Assembly RefSeq (no default value).
+                       The assembly folders (one per genome) can be obtained on https://www.ncbi.nlm.nih.gov/assembly,
+                       by making a keyword search to select a set of assemblies and downloading results with options:
+                         Source Database = 'RefSeq' and File type = 'All file types (including assembly-structure directory)'.
+                       A simple archive 'genome_assemblies.tar' (as obtained from the NCBI website) can be placed in that folder.
+                       If user genomes are also provided, these RefSeq assemblies will be used as reference for their annotation.
+
+    --refseq_ass4annot same principle as -A, but WILL NOT be used in the study, only as a reference to annotate user genomes
+                        (defaults to combined value of -A and -L options)
+
+    -L|--refseq_list  Same as -A|--refseq_ass, but just provide a list of NCBI Assembly accession ids (file with one accession id per row)
+                        Accession ids are of the form GCx_yyyyyyyyy.z with x = {A|F} for GenBank and RefSeq, respectively, and y an z are any digit.
+                        These accessions will be fetched from the NCBI FTP site using lftp.
+                        Note the LAST version of the accession will be returned, i.e. the trailing '.z' part of the accession id is ignored.
+                        These assemblies saved into a folder named after the value of the option:
+                          for instance, \`-L /path/to/assemblist\` will save assembly folders in /path/to/assemblist_assemblies_from_ftp/.
+
+    --refseq_list4annot same principle as -L, but WILL NOT be used in the study, only as a reference to annotate user genomes
+                        (defaults to combined value of -A and -L options)
+ 
+    -a|--custom_ass  path to folder of user-provided genomes (no default value). The specified folder must contain:
+                      _mandatory_ 
+                       - a 'contigs/' folder, where are stored multi-FASTA files of genome assemblies (one file per genome,
+                          with extension '.fa', '.fasta' or '.fas' ...). Fasta file names will be truncated by removing
+                          the '.fa' string and everything occuring after) and will be retained as the assembly_id (beware 
+                          of names redundant with RefSeq assemblies).
+                       - a 'strain_infos_${databasename}.txt' file describing the organism, with ${databasename} the value of option -d"
+                          columns should be headed with these fields (replace quotes and semicolons by tabs!):"
+                           'sequencing_project_id'; 'genus'; 'species'; 'strain'; 'taxid'; 'locus_tag_prefix'
+                         'sequencing_project_id' must match the name of a contig file (e.g. 'seqProjID.fasta')
+                         'locus_tag_prefix' must match the prefix of ids given to CDS, proteins and genome regions (contigs)
+                         in potentially provided annotation files (see below).
+                      _optional_ 
+                       - an 'annotation/' folder, where are stored annotation files: 
+                         - one mandatory in GFF 3.0 file format (with a '.gff' extension);
+                          and optionally, the following files (with consistent ids!!):
+                         - one in GenBank flat file format (with a '.gbk' extension);
+                         - one in Fasta format containing CDS sequences (with a '.ffn' extension).
+                         - one in Fasta format containing matching protein sequences (with a '.faa' extension).
+                         These four files are produced when using Prokka for annotation; if at least one of the .gbk, .ffn or .faa
+                         are missing, all three will be derived from the .gff source. Each genome annotation file set must be stored
+                         in a separate folder, which name must match a contig file (e.g. 'seqProjID/' for 'seqProjID.fasta').
+                      NOTE: to ensure proper parsing, it is strongly advised that any provided annotation was generated with Prokka
+                      NOTE: to ensure uniform annotation of the dataset, it is advised to let Pantagruel annotate the contigs (calling Prokka)
+
+    -s|--pseudocore  integer, float <=1.0 or string. The minimum number or fraction of genomes in which a gene family should be present
+                       to be included in the pseudo-core genome, i.e. the gene set which alignments will be concatenated for reference tree search.
+                       Only relevant when running task 'core'; a non-numeric value will trigger an INTERACTIVE prompt for search of an optimal value.
+                       Defaults to the total number of genomes (strict core genome set).
+
+    -t|--reftree     specify a reference tree for reconciliation and clade-specific gene analyses;
+                       over-rides the computation of tree from the concatenate of (pseudo-)core genome gene during taske 'core'.
+
+    --core_seqtype   {cds|prot} define the type of sequence that will be used to compute the (pseudo-)core genome tree (default to 'cds')
+
+    --pop_lg_thresh  definee the threshold of branch length for delinating populations in the reference tree 
+                       (default: 0.0005 for nucleotide alignemnt-based tree; 0.0002 for protein-based)
+
+    --pop_bs_thresh  definee the threshold of branch support for delinating populations in the reference tree (default: 80)
+    
+    --rooting        string. defines the method to root the reference tree during task 5|core_genome_ref_tree. 
+                       Possible values are 'treebalance', 'MAD' and 'outgroup:SPECIESCODELIST' (default: 'treebalance'),
+                       - 'treebalance' uses the '-f I' algorthm of RAxML to root the tree towards an optimal balance of branch lengths
+                          on either sides of the root;
+                       - 'MAD' uses the minimal ancestor deviation method described in \"Tria, et al. (2017) Nat. Ecol. Evol. 1, 0193\".
+                       - 'outgroup:SPECIESCODELIST' will root according tothe specified outgroup(s), with SPECIESCODELIST a comma-sperated list of species ids:
+                            'outgroup:SPECIESCODE' for rooting with a single species
+                            'outgroup:SPECIESCODE1,SPECIESCODE2,... for mutilple species (in which case their MRCA in  the tree will be the outgroup)
+                          Species ids can be either valid genome assembly ids of the relevant input genomes (typically a NCBI Assembly accession id),
+                          or internal genome identifiers that are specifically in the Pantagruel database but often match the relevant Uniprot organism code.
+                          The mapping between genome accession ids and organism codes is given in the file '03.database/genome_codes.tab' generated during task 3.
+                          To use codes, you may thus want run task 3 first, then run task init again with this option to regenerate the config file with 
+                          the desired outgroup organism codes and only then run task 5.
+    
+    -H|--submit_hpc  full address (hostname:/folder/location) of a folder on a remote high-performance computating (HPC) cluster server
+                       This indicate that computationally intensive tasks, including building the gene tree collection
+                       ('genetrees') and reconciling gene tree with species tree ('reconciliations') will be run
+                       on a HPC server (only Torque/PBS job submission system is supported so far).
+                       [support for core genome tree building ('core') remains to be implemented].
+                       Instead of running the computations, scripts for cluster job submission will be generated automatically.
+                       Data and scripts will be transfered to the specified address (the database folder structure
+                       will be duplicated there, but only relevant files will be synced). Note that job submission
+                       scripts will need to be executed manually on the cluster server.
+                       If set at init stage, this option will be maintained for all tasks. However, the remote address
+                       can be updated when calling a specific task; string 'none' cancels the HPC behaviour.
+
+    -c|--collapse      enable collapsing the rake clades in the gene trees (strongly recomended in datasets of size > 50 genomes).
+
+    -C|--collapse_par  [only for 'genetrees' task] specify parameters for collapsing the rake clades in the gene trees.
+                       A single-quoted, semicolon-delimited string containing variable definitions must be provided.
+                       Default is equivalent to providing the following string:
+                          'cladesupp=70 ; subcladesupp=35 ; criterion=bs ; withinfun=median'
+
+# for any Pantagruel command calls:
+
+    -h|--help          print this help message and exit.
+```  
+
+
 -------------
 
 ## Installing Pantagruel and its dependencies
 
 This bioinformatic pipeline relies on a quite a few other pieces of software.  
 To install them, please follow the indications in the [INSTALL](https://github.com/flass/pantagruel/blob/master/INSTALL.md) page.  
+
+Main options are to use either: 
+- the automated install_dependencies.sh script (for Debian systems; tested on Ubuntu 18.04)
+- (SOON) the Docker instance file containing all dependencies
 
 -------------
 

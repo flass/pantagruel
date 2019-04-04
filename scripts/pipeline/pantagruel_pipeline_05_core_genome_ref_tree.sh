@@ -312,20 +312,46 @@ EOF
     ln -s $(realpath --relative-to=$(dirname ${nrrootedtree}) ${nrbiparts}.${rootingmethod}rooting) ${nrrootedtree}
     else
      if [[ "${rootingmethod:0:8}" == 'outgroup' ]] ; then
-      # outgroup rooting; assume argument was of the shape 'outgroup:SPECIESCODE'
-      # verify the presence of outgroup species in tree
+      # outgroup rooting; assume argument was of the shape 'outgroup:SPECIESCODE' or 'outgroup:SPECIESCODE1,SPECIESCODE2,SPECIESCODE3,...'
       outgroup=$(echo ${rootingmethod} | cut -d':' -f2)
       if [ -z $(grep ${outgroup} ${nrbesttree}) ] ; then
         echo "Error, outgroup species '$outgroup' is absent from tree '${nrbesttree}'"
         exit 1
       fi
-      roottag=${rootingmethod/:/-}rooted
-      R --vanilla --slave << EOF
-      library('ape')
-      tree = read.tree('${nrbiparts}')
-      rtree = root(tree, outgroup='${outgroup}', resolve.root=T)
-      write.tree(rtree, file='${nrbiparts}.${roottag}')
+      roottag=$(echo ${rootingmethod} | tr ':' '-' | tr ',' '-')_rooted
+      
+      python << EOF
+import tree2
+nftree = '${nrbiparts}'
+tree = tree2.read_newick(nftree)
+nfacc2code = '${database}/genome_codes.tab'
+with open(nfacc2code, 'r') as facc2code:
+  dacc2code = dict([tuple(line.rstrip('\n').split('\t')) for line in facc2code])
+
+outg = '${outgroup}'.split(',')
+# verify the presence of specified outgroup species in tree
+knownspe = list(set(outg) & set(tree.get_leaf_labels()))
+unknownspe = list(set(outg) - set(tree.get_leaf_labels()))
+translatedspe = []
+if unknownspe:
+  print "found %d of the specified outgroup species are absent from tree '%s'"%(len(unknownspe), nftree)
+  print "try tointerpret them as genome assembly ids; translate into appropriate genome/species code from '%s'"%nfacc2code
+  for uks in unknownspe:
+    if uks not in dacc2code:
+      raise KeyError: "the outgroup id '%s' is also absent from genome assembly list"
+    else:
+      translatedspe.append(dacc2code[uks])
+
+mrcaoutg = tree.mrca(knownspe+translatedspe)
+tree.newOutgroup(mrcaoutg)
+tree.write_newick('${nrbiparts}.${roottag}', comment=comment)
 EOF
+      #~ R --vanilla --slave << EOF
+      #~ library('ape')
+      #~ tree = read.tree('${nrbiparts}')
+      #~ rtree = root(tree, outgroup='${outgroup}', resolve.root=T)
+      #~ write.tree(rtree, file='${nrbiparts}.${roottag}')
+#~ EOF
       rm -f ${nrrootedtree}
       ln -s $(realpath --relative-to=$(dirname ${nrrootedtree}) ${nrbiparts}.${roottag}) ${nrrootedtree}
      fi
