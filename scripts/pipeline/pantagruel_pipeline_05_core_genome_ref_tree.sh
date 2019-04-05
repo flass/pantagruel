@@ -314,10 +314,6 @@ EOF
      if [[ "${rootingmethod:0:8}" == 'outgroup' ]] ; then
       # outgroup rooting; assume argument was of the shape 'outgroup:SPECIESCODE' or 'outgroup:SPECIESCODE1,SPECIESCODE2,SPECIESCODE3,...'
       outgroup=$(echo ${rootingmethod} | cut -d':' -f2)
-      if [ -z $(grep ${outgroup} ${nrbesttree}) ] ; then
-        echo "Error, outgroup species '$outgroup' is absent from tree '${nrbesttree}'"
-        exit 1
-      fi
       roottag=$(echo ${rootingmethod} | tr ':' '-' | tr ',' '-')_rooted
       
       python << EOF
@@ -346,6 +342,10 @@ mrcaoutg = tree.mrca(knownspe+translatedspe)
 tree.newOutgroup(mrcaoutg)
 tree.write_newick('${nrbiparts}.${roottag}', comment=comment)
 EOF
+      #~ if [ -z $(grep ${outgroup} ${nrbesttree}) ] ; then
+        #~ echo "Error, outgroup species '$outgroup' is absent from tree '${nrbesttree}'"
+        #~ exit 1
+      #~ fi
       #~ R --vanilla --slave << EOF
       #~ library('ape')
       #~ tree = read.tree('${nrbiparts}')
