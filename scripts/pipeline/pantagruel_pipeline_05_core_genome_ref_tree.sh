@@ -340,7 +340,7 @@ if unknownspe:
 
 mrcaoutg = tree.mrca(knownspe+translatedspe)
 tree.newOutgroup(mrcaoutg)
-tree.write_newick('${nrbiparts}.${roottag}', comment=comment)
+tree.write_newick('${nrbiparts}.${roottag}', comment='comment')
 EOF
       #~ if [ -z $(grep ${outgroup} ${nrbesttree}) ] ; then
         #~ echo "Error, outgroup species '$outgroup' is absent from tree '${nrbesttree}'"
