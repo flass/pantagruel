@@ -334,7 +334,7 @@ if unknownspe:
   print "try tointerpret them as genome assembly ids; translate into appropriate genome/species code from '%s'"%nfacc2code
   for uks in unknownspe:
     if uks not in dacc2code:
-      raise KeyError: "the outgroup id '%s' is also absent from genome assembly list"
+      raise KeyError, "the outgroup id '%s' is also absent from genome assembly list"
     else:
       translatedspe.append(dacc2code[uks])
 
