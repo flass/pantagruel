@@ -107,12 +107,13 @@ fi
 
 if [[ "${chaintype}" == 'fullgenetree' ]] ; then
   #### OPTION A1: no collapsing, just convert the alignments from fasta to nexus to directly compute bayesian trees
-  for aln in `ls ${cdsalifastacodedir}` ; do
-    convalign -i fasta -e nex -t dna nexus ${cdsalifastacodedir}/$alnfa 
+  for aln in `ls ${cdsalifastacodedir}/*.aln` ; do
+    bnaln=$(basename $aln)
+    cp -p $aln ${colalinexuscodedir}/ && \
+     convalign -i fasta -e nex -t dna nexus ${colalinexuscodedir}/$bnaln && \
+      rm ${colalinexuscodedir}/$bnaln
   done
-  checkexec "could not convert alignemts from Fasta to Nexus format ; exit now" "succesfully converted alignemts from Fasta to Nexus format"
-  mv ${cdsalifastacodedir}/*nex ${colalinexuscodedir}/
-  checkexec "could not move Nexus alignemts to destination folder ${colalinexuscodedir}/ ; exit now" "succesfully moved Nexus alignemts to destination folder ${colalinexuscodedir}/"
+  checkexec "could not convert alignments from Fasta to Nexus format ; exit now" "succesfully converted alignemts from Fasta to Nexus format"
   export nexusaln4chains=${colalinexuscodedir}
   export mboutputdir=${bayesgenetrees}
   
