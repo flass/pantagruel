@@ -18,6 +18,7 @@ checkptgversion (){
       echo "Please regenerate the config file with  \`pantagruel init\`to ensure compatibility; for the same parameters to be set, just run the same command with same options as previously."
       exit 1
     fi
+  fi
 }
 
 # function for checking that no pre-existing data will be over-writen, unless specified
