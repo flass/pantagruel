@@ -38,11 +38,11 @@ fi
 export reccol="ale_${chaintype}_${rectype}_${reccolid}"
 export recs=${alerec}/${chaintype}_recs
 
-tasklist=${coltreechains}/${collapsecond}/${colmethod}_Gtrees_list
-ls ${coltreechains}/${collapsecond}/${colmethod}/*-Gtrees.nwk > $tasklist
+tasklist=${alerec}/${collapsecond}_${replmethod}_Gtrees_list
+ls ${coltreechains}/${collapsecond}/${replmethod}/*-Gtrees.nwk > $tasklist
 alelogs=${ptgdb}/logs/ALE
 mkdir -p $alelogs/${reccol}
-outrecdir=${recs}/${collapsecond}/${colmethod}/${reccol}
+outrecdir=${recs}/${collapsecond}/${replmethod}/${reccol}
 mkdir -p $outrecdir
 
 Njob=`wc -l $tasklist | cut -f1 -d' '`

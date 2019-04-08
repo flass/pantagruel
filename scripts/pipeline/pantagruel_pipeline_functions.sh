@@ -32,7 +32,7 @@ checkfoldersafe (){
       mkdir ${1}
     else
       echo "Task folder '${1}' already exists; will stop here rather then overwritting data."
-      echo "If you want previous data to be reased, use FORCE mode with -F|--FORCE option."
+      echo "If you want previous data to be erased, use FORCE mode with -F|--FORCE option."
       exit 2
     fi
   else

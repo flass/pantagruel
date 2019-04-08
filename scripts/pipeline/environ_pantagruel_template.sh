@@ -52,7 +52,6 @@ export minevfreqparse=0.1
 export minevfreqmatch=0.5
 export minjoinevfreqmatch=1.0
 export maxreftreeheight=0.25
-export colmethod='replaceCCinGasinS-collapsePOPinSnotinG'
 export ncorebootstrap=200
 export mainresulttag='rootedTree'
 # only relevant if user-defined genomes are provided
@@ -132,7 +131,13 @@ else
 fi
 export treename=${pseudocore}_concat_${coreseqtype}_${ngenomes}-genomes_${ptgdbname}
 export pseudocorealn=${coregenome}/${treename}.aln
-export collapsecond=${criterion}_stem${cladesupp}_within${withinfun}${subcladesupp}
+if [[ "${chaintype}" == 'fullgenetree' ]] ; then
+  export collapsecond='nocollapse'
+  export replmethod='noreplace'
+else
+  export collapsecond=${criterion}_stem${cladesupp}_within${withinfun}${subcladesupp}
+  export replmethod='replaceCCinGasinS-collapsePOPinSnotinG'
+fi
 export IPversion=$(interproscan --version | head -n 1 | sed -e 's/InterProScan version //')
 export interpro=${funcannot}/InterProScan_${IPversion}
 

@@ -81,7 +81,7 @@ else
      bnrun1t=$(basename $nfrun1t)
      bnGtre=${bnrun1t/.mb.run1.t/-Gtrees.nwk}
      bnStre=${bnrun1t/.mb.run1.t/-Stree.nwk}
-     if [[ ! -e ${coltreechains}/${collapsecond}/${colmethod}/${bnGtre} || ! -e ${coltreechains}/${collapsecond}/${colmethod}/${bnStre} ]] ; then
+     if [[ ! -e ${coltreechains}/${collapsecond}/${replmethod}/${bnGtre} || ! -e ${coltreechains}/${collapsecond}/${replmethod}/${bnStre} ]] ; then
        echo ${nfrun1t}
      fi
     done > ${tasklist}_resumetasklist
