@@ -16,6 +16,7 @@
 export ptgroot='REPLACEptgroot'                            # root folder where to build the database
 export ptgdbname='REPLACEptgdbname'                        # name of dataabse
 export ptgrepo='REPLACEptgrepo'                            # location (folder) of Pantagruel software
+export ptgversinit='REPLACEptgversinit'                    # current version of Pantagruel software
 export myemail='REPLACEmyemail'                            # user identity (better use e-amil address)
 export famprefix='REPLACEfamprefix'                        # gene family prefix
 export ncbitax='REPLACEncbitax'                            # folder of up-to-date NCBI Taxonomy database
@@ -135,45 +136,4 @@ export collapsecond=${criterion}_stem${cladesupp}_within${withinfun}${subcladesu
 export IPversion=$(interproscan --version | head -n 1 | sed -e 's/InterProScan version //')
 export interpro=${funcannot}/InterProScan_${IPversion}
 
-
-
-# logging variable and function
-promptdate () {
-  echo $(date +'[%Y-%m-%d %H:%M:%S]') $1
-}
-export -f promptdate
-export datepad="                      "
-
-# function for checking that no pre-existing data will be over-writen, unless specified
-checkfoldersafe (){
-  if [ -d ${1} ] ; then
-    if [ "${resumetask}" == 'true' ] ; then
-      echo "Task folder '${1}' already exists; -R|--resume option was used so Pantagruel will atempt to resume from an interupted previous run"
-    elif [ "${runmode}" == 'force' ] ; then
-      echo "Task folder '${1}' already exists; FORCE mode is on: ERASE and recreate the folder to write new result in its place"
-      rm -r ${1}
-      mkdir ${1}
-    else
-      echo "Task folder '${1}' already exists; will stop here rather then overwritting data."
-      echo "If you want previous data to be reased, use FORCE mode with -F|--FORCE option."
-      exit 2
-    fi
-  else
-    echo "Create new task folder '${1}'"
-    mkdir ${1}
-  fi
-}
-export -f checkfoldersafe
-
-# function for checking the success of every step
-checkexec (){
-  if [ $? != 0 ]; then
-    echo "ERROR: $1" 1>&2
-    exit 1
-  else
-    if [ ! -z "$2" ] ; then
-      echo "$2"
-    fi
-  fi
-}
-export -f checkexec
+source ${ptgscripts}/pipeline/pantagruel_pipeline_functions.sh

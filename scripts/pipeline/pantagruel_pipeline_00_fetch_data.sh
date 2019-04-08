@@ -31,6 +31,7 @@ makeprokkarefgenusdb (){
   fi
 }
 
+checkptgversion
 checkfoldersafe ${indata}
 
 #################################

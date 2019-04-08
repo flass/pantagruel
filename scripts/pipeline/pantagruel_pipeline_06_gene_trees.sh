@@ -17,6 +17,7 @@ if [ ! -z "$2" ] ; then
   export genefamlist="$2"
 fi
 
+checkptgversion
 checkfoldersafe ${genetrees}
 
 

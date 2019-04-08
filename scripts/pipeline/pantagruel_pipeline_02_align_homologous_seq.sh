@@ -13,6 +13,7 @@ if [ -z "$1" ] ; then echo "missing mandatory parameter: pantagruel config file"
 envsourcescript="$1"
 source ${envsourcescript}
 
+checkptgversion
 checkfoldersafe ${protali}
 
 

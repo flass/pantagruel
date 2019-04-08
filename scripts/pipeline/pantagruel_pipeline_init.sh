@@ -61,12 +61,11 @@ envsourcescript=${ptgdb}/environ_pantagruel_${ptgdbname}.sh
 echo "## Pantagruel database '${ptgdbname}'" > ${envsourcescript}
 echo "## built with Pantagruel version '${ptgversion}'; source code available at 'https://github.com/flass/pantagruel'" >> ${envsourcescript}
 
-
-
+ptgversinit=${ptgversion}
 
 rm -f ${ptgtmp}/sedenvvar.sh
 echo -n "cat ${templateenv}" > ${ptgtmp}/sedenvvar.sh
-for var in 'ptgdbname' 'ptgroot' 'ptgrepo' 'myemail' 'famprefix' \
+for var in 'ptgdbname' 'ptgroot' 'ptgrepo' 'ptgversinit' 'myemail' 'famprefix' \
      'ncbitax' 'ncbiass' 'listncbiass' 'customassemb' 'refass' 'listrefass' \
      'pseudocoremingenomes' 'userreftree' 'coreseqtype' 'poplgthresh' 'poplgleafmul' 'popbsthresh' 'rootingmethod' \
      'chaintype' 'cladesupp' 'subcladesupp' 'criterion' 'withinfun' 'hpcremoteptgroot' ; do
