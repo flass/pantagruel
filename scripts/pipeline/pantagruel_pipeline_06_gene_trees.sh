@@ -34,6 +34,12 @@ basequery="select gene_family_id, size from gene_family_sizes where gene_family_
 ### prepare HPC version
 if [[ ! -z "$hpcremoteptgroot" && "$hpcremoteptgroot" != 'none' ]] ; then
 
+  if [[ "${chaintype}" == 'fullgenetree' ]] ; then
+    echo "Error: HPC support not implemented yet for non-collapsed gene trees"
+    echo "the computation shuld be fairly light though (only bayesian gene trees to compute) so this can be run locally"
+    exit 1
+  fi
+  
   export hpcremotehost=$(echo "$hpcremoteptgroot" | cut -d':' -f1)
   export hpcremotefolder=$(echo "$hpcremoteptgroot" | cut -d':' -f2)
   
@@ -107,14 +113,16 @@ fi
 
 if [[ "${chaintype}" == 'fullgenetree' ]] ; then
   #### OPTION A1: no collapsing, just convert the alignments from fasta to nexus to directly compute bayesian trees
-  for aln in `ls ${cdsalifastacodedir}/*.aln` ; do
+  cdsalifastacodealnlist=${genetrees}/cdsalifastacode_aln_list
+  ${ptgscripts}/lsfullpath.py "${cdsalifastacodedir}/*.aln" > ${cdsalifastacodealnlist}
+  for aln in $(cat ${cdsalifastacodealnlist}) ; do
     bnaln=$(basename $aln)
-    cp -p $aln ${colalinexuscodedir}/ && \
-     convalign -i fasta -e nex -t dna nexus ${colalinexuscodedir}/$bnaln && \
-      rm ${colalinexuscodedir}/$bnaln
+    cp -p $aln ${colalinexuscodedir}/${collapsecond}/ && \
+     convalign -i fasta -e nex -t dna nexus ${colalinexuscodedir}/${collapsecond}/$bnaln && \
+      rm ${colalinexuscodedir}/${collapsecond}/$bnaln
   done
   checkexec "could not convert alignments from Fasta to Nexus format ; exit now" "succesfully converted alignemts from Fasta to Nexus format"
-  export nexusaln4chains=${colalinexuscodedir}
+  export nexusaln4chains=${colalinexuscodedir}/${collapsecond}
   export mboutputdir=${bayesgenetrees}
   
   #### end OPTION A1
