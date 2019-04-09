@@ -61,7 +61,7 @@ envsourcescript=${ptgdb}/environ_pantagruel_${ptgdbname}.sh
 echo "## Pantagruel database '${ptgdbname}'" > ${envsourcescript}
 echo "## built with Pantagruel version '${ptgversion}'; source code available at 'https://github.com/flass/pantagruel'" >> ${envsourcescript}
 
-ptgversinit=${ptgversion}
+ptgversinit="${ptgversion}"
 
 rm -f ${ptgtmp}/sedenvvar.sh
 echo -n "cat ${templateenv}" > ${ptgtmp}/sedenvvar.sh

@@ -15,7 +15,7 @@ checkptgversion (){
       echo "WARNING: $vmsg"
     else
       echo "ERROR: $vmsg"
-      echo "Please regenerate the config file with  \`pantagruel init\`to ensure compatibility; for the same parameters to be set, just run the same command with same options as previously."
+      echo "Please regenerate the config file with \`pantagruel init\` to ensure compatibility; for the same parameters to be set, just run the same command with same options as previously."
       exit 1
     fi
   fi
