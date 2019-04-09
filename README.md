@@ -146,6 +146,11 @@ it is higly recommended to **run the `init` task again (with the same options)**
 to ensure the environment defined by the configuration file is compatible with the software. 
 Regenerating the configuration file *will not erase other data*.
 
+A simple way to regenerate the configuration file under the same parameters is to use the command:"
+```sh
+pantagruel -i previous_config_file --refresh init
+```
+
 ### Input data
 
 Note that for the sake of computing evolutionary analyses that have any meaning at all, Pantagruel requires that you provide a minimum of **four** genomes in input - 

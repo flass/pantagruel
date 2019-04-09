@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# store the init command with which the config file was created
+ptginitcmd='REPLACEptginitcmd'
 ## primary variables
 
 # OPTIONALLY, values of primary variables below can be manually modified here;

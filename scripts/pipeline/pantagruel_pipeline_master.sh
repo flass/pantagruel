@@ -8,6 +8,7 @@
 #########################################################
 # Copyright: Florent Lassalle (f.lassalle@imperial.ac.uk), 01 October 2018.
 
+ptgcmd="$(echo ${@} | sed -e s/'/\'/g)"
 locexec=$(readlink -e $0)
 export ptgrepo=${locexec%%/scripts/pipeline/*}
 cd ${ptgrepo} ; export ptgversion=$(git log | head -n 1 | awk '{ print $2 }') ; cd - > /dev/null
@@ -52,6 +53,13 @@ usagelong (){
   echo "    -i|--initfile     Pantagruel configuration file"
   echo "                        a file can be derived (i.e. manualy curated) from 'environment_pantagruel_template.sh' template."
   echo "                        Parameters values specified in this file will override other options"
+  echo ""
+  echo "    --refresh         to use in combination with the -i option above to simply refresh the configuration file"
+  echo "                       (e.g. after an update of the software) the program will simply recall the \`pantagruel [options] init\` command"
+  echo "                       that has been previously used to generate the config file; hence there is no need to repeat any other option."
+  echo "                       (even -d and - r options can be omitted if -i --refresh is used)"
+  echo "                       Note that when options with quoted string arguments, unpredictable behaviour might occur;"
+  echo "                        please verify the outcomein the regenerated config file."
   echo ""
   echo "    -I|--iam          database creator identity (e-mail address is preferred)"
   echo ""
@@ -293,7 +301,7 @@ promptdate () {
   echo $(date +'[%Y-%m-%d %H:%M:%S]') $1
 }
 
-ARGS=`getopt --options "d:r:i:I:f:a:T:A:L:s:t:RH:chF" --longoptions "dbname:,rootdir:,initfile:,iam:,famprefix:,refseq_ass:,refseq_list:,refseq_ass4annot:,refseq_list4annot:,custom_ass:,taxonomy:,pseudocore:,core_seqtype:,pop_lg_thresh:,pop_bs_thresh:,rooting:,reftree:,resume,submit_hpc:,collapse,collapse_param:,help,FORCE" --name "pantagruel" -- "$@"`
+ARGS=`getopt --options "d:r:i:I:f:a:T:A:L:s:t:RH:chF" --longoptions "dbname:,rootdir:,initfile:,refresh,iam:,famprefix:,refseq_ass:,refseq_list:,refseq_ass4annot:,refseq_list4annot:,custom_ass:,taxonomy:,pseudocore:,core_seqtype:,pop_lg_thresh:,pop_bs_thresh:,rooting:,reftree:,resume,submit_hpc:,collapse,collapse_param:,help,FORCE" --name "pantagruel" -- "$@"`
 
 #Bad arguments
 if [ $? -ne 0 ];
@@ -312,6 +320,10 @@ do
     
     -F|--FORCE) 
       export runmode='force'
+      shift ;;
+    
+    --refresh) 
+      export runmode='refreshconfig'
       shift ;;
       
     -d|--dbname) 
@@ -489,31 +501,46 @@ echo "# will run tasks: $tasks"
 
 for task in ${tasks} ; do
   if [[ "$task" == 'init' ]] ; then
+    ## init task
     promptdate "Pantagrel pipeline task $task: initiate pangenome database."
-    # check presence of mandatory arguments
-    if [ -z "$ptgdbname" ] ; then
-     echo -e "Error: Must specify database name\n"
-     usage
-     exit 1
-    fi
-    if [ -z "$ptgroot" ] ; then
-     echo -e "Error: Must specify root directory location\n"
-     usage
-     exit 1
-    fi
-    if [[ -z "$ncbiass" && -z "$listncbiass" && -z "$customassemb" ]] ; then
-     echo -e "Error: Must specify at least one folder of input assemblies with options '-A', '-L' or '-a', or any combination of them.\n"
-     usage
-     exit 1
-    fi
-    ptgenvsetdefaults
-    ${ptgscripts}/pipeline/pantagruel_pipeline_init.sh
-    checkexectask "$task"
+    if [ "$runmode" == 'refreshconfig' ] ; then
+      if [ -z "$initfile" ] ; then
+        echo "Error: cannot use --refresh option without specifying a source config file with -i option"
+        exit 1
+      fi
+      echo "Will refresh the database settings from the configuration file '${initfile}'"
+      source ${initfile}
+      echo "re-run previous command line:"
+      echo "# ${ptginitcmd}"
+      eval "${ptginitcmd}"
+    else
+      # check presence of mandatory arguments
+      if [ -z "$ptgdbname" ] ; then
+       echo -e "Error: Must specify database name\n"
+        usage
+       exit 1
+      fi
+      if [ -z "$ptgroot" ] ; then
+       echo -e "Error: Must specify root directory location\n"
+       usage
+       exit 1
+      fi
+      if [[ -z "$ncbiass" && -z "$listncbiass" && -z "$customassemb" ]] ; then
+       echo -e "Error: Must specify at least one folder of input assemblies with options '-A', '-L' or '-a', or any combination of them.\n"
+       usage
+       exit 1
+      fi
+      ptgenvsetdefaults
+      export ptginitcmd="$ptgcmd"
+      ${ptgscripts}/pipeline/pantagruel_pipeline_init.sh
+      checkexectask "$task"
   else
-   if [ -z ${initfile} ] ; then
-     echo "Error: a Pantagruel configuration file must be provided through option -i ; exit now."
-     usage
-     exit 1
+    ## runtime task
+     if [ -z ${initfile} ] ; then
+       echo "Error: a Pantagruel configuration file must be provided through option -i ; exit now."
+       usage
+       exit 1
+     fi
    fi
    case "$task" in
    0)
