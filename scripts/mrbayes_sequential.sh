@@ -138,4 +138,4 @@ echo ""
 
 export -f runmb 
 # choose to run each tree on only one process, and to parallelize by the tasks (avoid relying on MPI interface)
-parallel runmb ::: `cat ${tasklist}`
+parallel runmb :::: ${tasklist}
