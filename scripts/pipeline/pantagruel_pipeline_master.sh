@@ -8,7 +8,7 @@
 #########################################################
 # Copyright: Florent Lassalle (f.lassalle@imperial.ac.uk), 01 October 2018.
 
-ptgcmd=$(echo ${@} | sed -e "s/'/\'/g")
+ptgcmdargs=$(echo ${@} | sed -e "s/'/\'/g")
 locexec=$(readlink -e $0)
 export ptgrepo=${locexec%%/scripts/pipeline/*}
 cd ${ptgrepo} ; export ptgversion=$(git log | head -n 1 | awk '{ print $2 }') ; cd - > /dev/null
@@ -533,7 +533,7 @@ for task in ${tasks} ; do
        exit 1
       fi
       ptgenvsetdefaults
-      export ptginitcmd="$ptgcmd"
+      export ptginitcmd="pantagruel $ptgcmdargs"
       ${ptgscripts}/pipeline/pantagruel_pipeline_init.sh
       checkexectask "$task"
     fi
