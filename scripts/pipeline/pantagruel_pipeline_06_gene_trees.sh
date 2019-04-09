@@ -117,7 +117,7 @@ if [[ "${chaintype}" == 'fullgenetree' ]] ; then
   ${ptgscripts}/lsfullpath.py "${cdsalifastacodedir}/*.aln" > ${cdsalifastacodealnlist}
   
   if [[ "${resumetask}" == "true" && -d ${colalinexuscodedir}/${collapsecond} ]] ; then
-    rm -f ${cdsalifastacodealnlist}_resume
+    rm -f ${cdsalifastacodealnlist}_resume && touch ${cdsalifastacodealnlist}_resume
     for aln in $(cat ${cdsalifastacodealnlist}) ; do
       bnaln=$(basename $aln)
       if [[ ! -s ${colalinexuscodedir}/${collapsecond}/${bnaln/.codes.aln/.codes.nex} ]] ; then
@@ -201,6 +201,9 @@ nruns=2
 ncpus=$(( $nchains * $nruns ))
 mbtasklist=${nexusaln4chains}_ali_list
 ${ptgscripts}/lsfullpath.py "${nexusaln4chains}/*" > $mbtasklist
+
+echo "Will now run MrBayes in parallel (i.e. sequentiall for each gene alignement, with several alignement processed in parallel"
+echo ""
 
 ${ptgscripts}/mrbayes_sequential.sh ${mbtasklist} ${mboutputdir} "Nruns=${nruns} Ngen=2000000 Nchains=${nchains}"
 checkexec "MrBayes tree estimation was interupted ; exit now" "MrBayes tree estimation complete"
