@@ -539,53 +539,52 @@ for task in ${tasks} ; do
     fi
   else
     ## runtime task
-     if [ -z ${initfile} ] ; then
-       echo "Error: a Pantagruel configuration file must be provided through option -i ; exit now."
-       usage
-       exit 1
-     fi
-   fi
-   case "$task" in
-   0)
-    promptdate "Pantagrel pipeline task $task: fetch public genome data from NCBI sequence databases and annotate private genomes."
-    ${ptgscripts}/pipeline/pantagruel_pipeline_00_fetch_data.sh ${initfile}
-    checkexectask "$task" ;;
-   1)
-    promptdate "Pantagrel pipeline task $task: classify protein sequences into homologous families."
-    ${ptgscripts}/pipeline/pantagruel_pipeline_01_homologous_seq_families.sh ${initfile}
-    checkexectask "$task"  ;;
-   2)
-    promptdate "Pantagrel pipeline task $task: align homologous protein sequences and translate alignemnts into coding sequences."
-    ${ptgscripts}/pipeline/pantagruel_pipeline_02_align_homologous_seq.sh ${initfile}
-    checkexectask "$task"  ;;
-   3)
-    promptdate "Pantagrel pipeline task $task: initiate SQL database and load genomic object relationships."
-    ${ptgscripts}/pipeline/pantagruel_pipeline_03_create_sqlite_db.sh ${initfile}
-    checkexectask "$task"  ;;
-   4)
-    promptdate "Pantagrel pipeline task $task: use InterProScan to functionally annotate proteins in the database."
-    ${ptgscripts}/pipeline/pantagruel_pipeline_04_functional_annotation.sh ${initfile}
-    checkexectask "$task"  ;;
-   5)
-    promptdate "Pantagrel pipeline task $task: select core-genome markers and compute reference tree."
-    ${ptgscripts}/pipeline/pantagruel_pipeline_05_core_genome_ref_tree.sh ${initfile}
-    checkexectask "$task"  ;;
-   6)
-    promptdate "Pantagrel pipeline task $task: compute gene trees."
-    ${ptgscripts}/pipeline/pantagruel_pipeline_06_gene_trees.sh ${initfile}
-    checkexectask "$task"  ;;
-   7)
-    promptdate "Pantagrel pipeline task $task: compute species tree/gene tree reconciliations."
-    ${ptgscripts}/pipeline/pantagruel_pipeline_07_reconciliations.sh ${initfile}
-    checkexectask "$task"  ;;
-   8)
-    promptdate "Pantagrel pipeline task $task: classify genes into orthologous groups (OGs) and search clade-specific OGs."
-    ${ptgscripts}/pipeline/pantagruel_pipeline_08_clade_specific_genes.sh ${initfile}
-    checkexectask "$task"  ;;
-   9)
-    promptdate "Pantagrel pipeline task $task: evaluate gene co-evolution and build gene association network."
-    ${ptgscripts}/pipeline/pantagruel_pipeline_09_coevolution.sh ${initfile}
-    checkexectask "$task"  ;;
-    esac
+    if [ -z ${initfile} ] ; then
+      echo "Error: a Pantagruel configuration file must be provided through option -i ; exit now."
+      usage
+      exit 1
+    fi
+    case "$task" in
+    0)
+     promptdate "Pantagrel pipeline task $task: fetch public genome data from NCBI sequence databases and annotate private genomes."
+     ${ptgscripts}/pipeline/pantagruel_pipeline_00_fetch_data.sh ${initfile}
+     checkexectask "$task" ;;
+    1)
+     promptdate "Pantagrel pipeline task $task: classify protein sequences into homologous families."
+     ${ptgscripts}/pipeline/pantagruel_pipeline_01_homologous_seq_families.sh ${initfile}
+     checkexectask "$task"  ;;
+    2)
+     promptdate "Pantagrel pipeline task $task: align homologous protein sequences and translate alignemnts into coding sequences."
+     ${ptgscripts}/pipeline/pantagruel_pipeline_02_align_homologous_seq.sh ${initfile}
+     checkexectask "$task"  ;;
+    3)
+     promptdate "Pantagrel pipeline task $task: initiate SQL database and load genomic object relationships."
+     ${ptgscripts}/pipeline/pantagruel_pipeline_03_create_sqlite_db.sh ${initfile}
+     checkexectask "$task"  ;;
+    4)
+     promptdate "Pantagrel pipeline task $task: use InterProScan to functionally annotate proteins in the database."
+     ${ptgscripts}/pipeline/pantagruel_pipeline_04_functional_annotation.sh ${initfile}
+     checkexectask "$task"  ;;
+    5)
+     promptdate "Pantagrel pipeline task $task: select core-genome markers and compute reference tree."
+     ${ptgscripts}/pipeline/pantagruel_pipeline_05_core_genome_ref_tree.sh ${initfile}
+     checkexectask "$task"  ;;
+    6)
+     promptdate "Pantagrel pipeline task $task: compute gene trees."
+     ${ptgscripts}/pipeline/pantagruel_pipeline_06_gene_trees.sh ${initfile}
+     checkexectask "$task"  ;;
+    7)
+     promptdate "Pantagrel pipeline task $task: compute species tree/gene tree reconciliations."
+     ${ptgscripts}/pipeline/pantagruel_pipeline_07_reconciliations.sh ${initfile}
+     checkexectask "$task"  ;;
+    8)
+     promptdate "Pantagrel pipeline task $task: classify genes into orthologous groups (OGs) and search clade-specific OGs."
+     ${ptgscripts}/pipeline/pantagruel_pipeline_08_clade_specific_genes.sh ${initfile}
+     checkexectask "$task"  ;;
+    9)
+     promptdate "Pantagrel pipeline task $task: evaluate gene co-evolution and build gene association network."
+     ${ptgscripts}/pipeline/pantagruel_pipeline_09_coevolution.sh ${initfile}
+     checkexectask "$task"  ;;
+     esac
   fi
 done
