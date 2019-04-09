@@ -204,6 +204,8 @@ usagelong (){
   echo "     run the init task again (with the same options) before proceeding to the next steps, to ensure the environment "
   echo "     defined by the configuration file is compatible with the software. "
   echo "     (Note that regenerating the configuration file will not erase other data.)"
+  echo "     A simple way to regenerate the configuration file under the same parameters is to use the command:"
+  echo "        pantagruel -i previous_config_file --refresh init "
   echo "_________________________________________________________________________________________________________________"
   echo ""
 }
@@ -534,6 +536,7 @@ for task in ${tasks} ; do
       export ptginitcmd="$ptgcmd"
       ${ptgscripts}/pipeline/pantagruel_pipeline_init.sh
       checkexectask "$task"
+    fi
   else
     ## runtime task
      if [ -z ${initfile} ] ; then
