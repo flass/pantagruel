@@ -115,6 +115,23 @@ if [[ "${chaintype}" == 'fullgenetree' ]] ; then
   #### OPTION A1: no collapsing, just convert the alignments from fasta to nexus to directly compute bayesian trees
   cdsalifastacodealnlist=${genetrees}/cdsalifastacode_aln_list
   ${ptgscripts}/lsfullpath.py "${cdsalifastacodedir}/*.aln" > ${cdsalifastacodealnlist}
+  
+  if [[ "${resumetask}" == "true" && -d ${colalinexuscodedir}/${collapsecond} ]] ; then
+    rm -f ${cdsalifastacodealnlist}_resume
+    for aln in $(cat ${cdsalifastacodealnlist}) ; do
+      bnaln=$(basename $aln)
+      if [[ ! -s ${colalinexuscodedir}/${collapsecond}/${bnaln/.codes.aln/.codes.nex} ]] ; then
+        echo $aln >> ${cdsalifastacodealnlist}_resume
+      fi
+    done
+    if [[ -s ${cdsalifastacodealnlist}_resume ]] ; then
+      echo "Resume task 6: $(wc -l ${cdsalifastacodealnlist}_resume | cut -d' ' -f1) alignments left to convert"
+    else
+      echo "Resume task 6: skip converting alignments"
+    fi
+    cdsalifastacodealnlist=${cdsalifastacodealnlist}_resume
+  fi
+  
   for aln in $(cat ${cdsalifastacodealnlist}) ; do
     bnaln=$(basename $aln)
     cp -p $aln ${colalinexuscodedir}/${collapsecond}/ && \
