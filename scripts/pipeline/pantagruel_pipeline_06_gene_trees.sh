@@ -216,10 +216,7 @@ checkexec "MrBayes tree estimation was interupted ; exit now" "MrBayes tree esti
 
 if [[ "${chaintype}" == 'fullgenetree' ]] ; then
   #### OPTION A2: 
-  echo "Error: not implemented yet:"
-  echo "must generalize the script replace_species_by_pop_in_gene_trees.py so to only convert the format of gene tree chains, not replacing anything in them"
   python ${ptgscripts}/replace_species_by_pop_in_gene_trees.py -G ${tasklist} --no_replace -o ${coltreechains} --threads=${ncpus} --reuse=0 --verbose=0 --logfile=${repllogs}_${replrun}.log &
-  exit 1
   
   #### end OPTION A2: 
 else
