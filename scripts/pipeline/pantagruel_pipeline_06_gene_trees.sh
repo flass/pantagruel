@@ -114,8 +114,10 @@ fi
 if [[ "${chaintype}" == 'fullgenetree' ]] ; then
   #### OPTION A1: no collapsing, just convert the alignments from fasta to nexus to directly compute bayesian trees
   cdsalifastacodealnlist=${genetrees}/cdsalifastacode_aln_list
-  ${ptgscripts}/lsfullpath.py "${cdsalifastacodedir}/*.aln" > ${cdsalifastacodealnlist}
-  
+  rm -f ${cdsalifastacodealnlist}
+  for fam in $(cut -f1 ${famlist}) ; do
+   ls ${cdsalifastacodedir}/${fam}.codes.aln >> ${cdsalifastacodealnlist}
+  done
   if [[ "${resumetask}" == "true" && -d ${colalinexuscodedir}/${collapsecond} ]] ; then
     rm -f ${cdsalifastacodealnlist}_resume && touch ${cdsalifastacodealnlist}_resume
     for aln in $(cat ${cdsalifastacodealnlist}) ; do
@@ -200,9 +202,9 @@ nchains=4
 nruns=2
 ncpus=$(( $nchains * $nruns ))
 mbtasklist=${nexusaln4chains}_ali_list
-${ptgscripts}/lsfullpath.py "${nexusaln4chains}/*" > $mbtasklist
+${ptgscripts}/lsfullpath.py "${nexusaln4chains}/*" > ${mbtasklist}
 
-echo "Will now run MrBayes in parallel (i.e. sequentiall for each gene alignement, with several alignement processed in parallel"
+echo "Will now run MrBayes in parallel (i.e. sequentially for each gene alignement, with several alignments processed in parallel"
 echo ""
 
 ${ptgscripts}/mrbayes_sequential.sh ${mbtasklist} ${mboutputdir} "Nruns=${nruns} Ngen=2000000 Nchains=${nchains}"
