@@ -217,7 +217,8 @@ checkexec "MrBayes tree estimation was interupted ; exit now" "MrBayes tree esti
 if [[ "${chaintype}" == 'fullgenetree' ]] ; then
   #### OPTION A2: 
   python ${ptgscripts}/replace_species_by_pop_in_gene_trees.py -G ${tasklist} --no_replace -o ${coltreechains} --threads=${ncpus} --reuse=0 --verbose=0 --logfile=${repllogs}_${replrun}.log &
-  
+  checkexec "conversion of gene tree chains was interupted ; exit now" "conversion of gene tree chains complete"
+ 
   #### end OPTION A2: 
 else
   #### OPTION B2: collapsed rake clades in gene trees need to be replaced by mock population leaves
