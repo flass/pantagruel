@@ -202,7 +202,10 @@ nchains=4
 nruns=2
 ncpus=$(( $nchains * $nruns ))
 mbtasklist=${nexusaln4chains}_ali_list
-${ptgscripts}/lsfullpath.py "${nexusaln4chains}/*" > ${mbtasklist}
+rm -f ${mbtasklist}
+for fam in $(cut -f1 ${famlist}) ; do
+ ls ${nexusaln4chains}/${fam}.codes.nex >> ${mbtasklist}
+done
 
 echo "Will now run MrBayes in parallel (i.e. sequentially for each gene alignement, with several alignments processed in parallel"
 echo ""
