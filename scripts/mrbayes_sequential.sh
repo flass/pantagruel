@@ -122,7 +122,7 @@ echo ""
 # run the progrram
 echo "running MrBayes:"
 echo "mb < ${nfrad2}.mbparam.txt"
-mb < ${nfrad2}.mbparam.txt
+mb < ${nfrad2}.mbparam.txt >  ${nfrad2}.mb.log
 
 
 echo "output of MrBayes phylogenetic reconstruction is :"
