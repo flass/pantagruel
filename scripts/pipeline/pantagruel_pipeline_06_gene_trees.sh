@@ -206,6 +206,7 @@ ncpus=$(( $nchains * $nruns ))
 ntreeperchain=$(( $ngen / $samplef ))
 mbtasklist=${nexusaln4chains}_ali_list
 rm -f ${mbtasklist}
+rm -f ${mbtasklist}_alreadydone
 for fam in $(cut -f1 ${famlist}) ; do
   chaindone=''
   if [[ "${resumetask}" == "true" ]] ; then
@@ -216,11 +217,16 @@ for fam in $(cut -f1 ${famlist}) ; do
       fi
     fi
   fi
-  if [ -z ${chaindone} ]
+  if [ -z "${chaindone}" ] ; then
     ls ${nexusaln4chains}/${fam}.codes.nex >> ${mbtasklist}
+  else
+    ls ${nexusaln4chains}/${fam}.codes.nex >> ${mbtasklist}_alreadydone
   fi
 done
 
+if [[ "${resumetask}" == "true" && -e ${mbtasklist}_alreadydone ]] ; then
+  echo "(wc -l ${mbtasklist}_alreadydone | cut -d' ' -f1) bayesian tree chains already complete; skip their computation"
+fi
 mbopts="Nruns=${nruns} Ngen=${ngen} Nchains=${nchains} Samplefreq=${samplef}"
 echo "Will now run MrBayes in parallel (i.e. sequentially for each gene alignment, with several alignments processed in parallel"
 echo "with options: ${mbopts}"
