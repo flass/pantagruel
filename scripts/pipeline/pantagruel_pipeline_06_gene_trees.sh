@@ -200,17 +200,32 @@ fi
 mkdir -p ${mboutputdir}
 nchains=4
 nruns=2
+ngen=2000000
+samplef=500
 ncpus=$(( $nchains * $nruns ))
+ntreeperchain=$(( $ngen / $samplef ))
 mbtasklist=${nexusaln4chains}_ali_list
 rm -f ${mbtasklist}
 for fam in $(cut -f1 ${famlist}) ; do
- ls ${nexusaln4chains}/${fam}.codes.nex >> ${mbtasklist}
+  chaindone=''
+  if [[ "${resumetask}" == "true" ]] ; then
+    gtchain1=${mboutputdir}/${fam}.codes.mb.nex.run1.t
+    if [[ -s ${gtchain1} ]] ; then
+      if [[ $(wc -l ${gtchain1} | cut -d' ' -f1) -gt ${ntreeperchain} && ! -z "$(tail -n 1 ${gtchain1} | grep 'end')" ]] ; then
+        chaindone='yes'
+      fi
+    fi
+  fi
+  if [ -z ${chaindone} ]
+    ls ${nexusaln4chains}/${fam}.codes.nex >> ${mbtasklist}
+  fi
 done
 
-echo "Will now run MrBayes in parallel (i.e. sequentially for each gene alignement, with several alignments processed in parallel"
+mbopts="Nruns=${nruns} Ngen=${ngen} Nchains=${nchains} Samplefreq=${samplef}"
+echo "Will now run MrBayes in parallel (i.e. sequentially for each gene alignment, with several alignments processed in parallel"
+echo "with options: ${mbopts}"
 echo ""
-
-${ptgscripts}/mrbayes_sequential.sh ${mbtasklist} ${mboutputdir} "Nruns=${nruns} Ngen=2000000 Nchains=${nchains}"
+${ptgscripts}/mrbayes_sequential.sh ${mbtasklist} ${mboutputdir} "${mbopts}"
 checkexec "MrBayes tree estimation was interupted ; exit now" "MrBayes tree estimation complete"
 
 ################################################################################
