@@ -225,7 +225,7 @@ for fam in $(cut -f1 ${famlist}) ; do
 done
 
 if [[ "${resumetask}" == "true" && -e ${mbtasklist}_alreadydone ]] ; then
-  echo "(wc -l ${mbtasklist}_alreadydone | cut -d' ' -f1) bayesian tree chains already complete; skip their computation"
+  echo "$(wc -l ${mbtasklist}_alreadydone | cut -d' ' -f1) bayesian tree chains already complete; skip their computation"
 fi
 mbopts="Nruns=${nruns} Ngen=${ngen} Nchains=${nchains} Samplefreq=${samplef}"
 echo "Will now run MrBayes in parallel (i.e. sequentially for each gene alignment, with several alignments processed in parallel"

@@ -415,6 +415,7 @@ def inferPopfromSpeTree(nfspetree, \
 	
 	nfpoptreeout = "" if nfpopulationtree else "%s_collapsedPopulations.nwk"%(bnst)
 	poptree = getsavepoptree(nfpoptreeout, poptree=poptree, spetree=spetree, lnamepops2collapse=lnamepops, collapseAllPops=True, verbose=verbose)
+	poptree.prepare_fast_lookup()
 	
 	## annotate ancestor nodes of populations on S
 	annotatePopulationInSpeciesTree(spetree, lnamepops)
