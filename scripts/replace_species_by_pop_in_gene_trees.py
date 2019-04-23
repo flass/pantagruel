@@ -6,6 +6,7 @@ from ptg_utils import *
 from mark_unresolved_clades import select_clades_on_conditions
 from scipy import stats
 import copy
+import igraph
 
 import multiprocessing as mp
 from Bio import AlignIO
@@ -220,38 +221,69 @@ def combineMonophyleticPopulations(dpopcount, poptree, dnamepops, dpopnd={}, max
 	and lost in popA.
 	"""
 	verbose = kw.get('verbose', False)
+	if maxpopnodedist < 2:
+		if verbose: print "will not attempt to aggregate populations into monophyletic groups"
+		return dpopcount 
+	elif maxpopnodedist == 2:
+		grouptype = 'monophyletic'
+	else:
+		grouptype = 'closely related'
 	if len(dpopcount) > 1:
-		pnames = dpopcount.keys()
+		pnames = [pname for pname in dpopcount if median(dpopcount[pname]) >= 0.5]
+		# use a graph approach to cluster nodes in the tree that are under a threshold inter-node distance
+		p2p = igraph.Graph()
+		p2p.add_vertices(len(pnames))
+		p2p.vs['name'] = pnames
+		edges = []
 		for i, popnamei in enumerate(pnames):
-			indcountsi = dpopcount[popnamei]
-			if median(indcountsi) >= 0.5:
-				jointpopcount = indcountsi
-				ancpopi = poptree[popnamei]
-				jointpopnames = addStrtoTuple(popnamei, ())
-				for j, popnamej in enumerate(pnames[i+1:]):
-					indcountsj = dpopcount[popnamej]
-					if median(indcountsj) >= 0.5:
-						# at least hlaf of the joint sample has per-strain occurence greater than 0
-						ancpopj = poptree[popnamej]
-						jpn = addStrtoTuple(jointpopnames, popnamej)
-						# based on full species tree
-						#~ jointleaves = reduce(lambda x,y: x+y, (dnamepops[pn] for pn in jpn))
-						#~ if ancpopj.is_child(ancpopi) or ancpopi.is_child(ancpopj): mono = True
-						#~ elif maxpopnodedist>2: mono = (dpopnd.get(popnamei, {}).get(popnamej, ancpopi.node_distance(ancpopj)) <= maxpopnodedist)
-						#~ elif spetree.is_monophyletic(jointleaves): mono = True
-						# more efficiently based on collapsed species tree = population tree
-						if maxpopnodedist>2: mono = (dpopnd.get(popnamei, {}).get(popnamej, ancpopi.node_distance(ancpopj)) <= maxpopnodedist)
-						else: mono = False
-						if mono:
-							jointpopnames = jpn
-							del dpopcount[popnamei]
-							del dpopcount[popnamej]
-							jointpopcount += indcountsj
-							dpopcount[jointpopnames] = jointpopcount
-							if verbose: print "combine populations %s"%repr(jointpopnames)
-							# reccursive call allow to iteratively join monophyletic group
-							dpopcount = combineMonophyleticPopulations(dpopcount, poptree, dnamepops, dpopnd=dpopnd, maxpopnodedist=maxpopnodedist, **kw)
-							return dpopcount
+			ancpopi = poptree[popnamei]
+			for j, popnamej in enumerate(pnames[i+1:]):
+				pnd = dpopnd.get(popnamei, {}).get(popnamej)
+				if pnd is None:
+					ancpopj = poptree[popnamej]
+					pnd = ancpopi.node_distance(ancpopj)
+				if pnd <= maxpopnodedist:
+					edges.append((popnamei, popnamej)))
+		p2p.add_edges(edges)
+		compsp2p = p2p.components()
+		for comp in compsp2p:
+			if len(comp) > 1:
+				if verbose: print "combine %s populations %s, repesented by a total of %f sequences"%(grouptype, repr(jointpopnames), float(jointpopcount))
+				cpnames = tuple(p2p.vs[p]['name'] for p in comp)
+				jointpopcount = sum([dpopcount[cpname] for cpname in cpnames])
+				dpopcount[cpnames] = jointpopcount
+				for cpname in cpnames
+					del dpopcount[cpname]		
+		#~ for i, popnamei in enumerate(pnames):
+			#~ indcountsi = dpopcount[popnamei]
+			#~ if median(indcountsi) >= 0.5:
+				#~ jointpopcount = indcountsi
+				#~ ancpopi = poptree[popnamei]
+				#~ jointpopnames = addStrtoTuple(popnamei, ())
+				#~ for j, popnamej in enumerate(pnames[i+1:]):
+					#~ indcountsj = dpopcount[popnamej]
+					#~ if median(indcountsj) >= 0.5:
+						#~ # at least hlaf of the joint sample has per-strain occurence greater than 0
+						#~ ancpopj = poptree[popnamej]
+						#~ jpn = addStrtoTuple(popnamej, jointpopnames)
+						#~ # based on full species tree
+						#~ # jointleaves = reduce(lambda x,y: x+y, (dnamepops[pn] for pn in jpn))
+						#~ # if ancpopj.is_child(ancpopi) or ancpopi.is_child(ancpopj): mono = True
+						#~ # elif maxpopnodedist>2: mono = (dpopnd.get(popnamei, {}).get(popnamej, ancpopi.node_distance(ancpopj)) <= maxpopnodedist)
+						#~ # elif spetree.is_monophyletic(jointleaves): mono = True
+						#~ # more efficiently based on collapsed species tree = population tree
+						#~ if maxpopnodedist>2: mono = (dpopnd.get(popnamei, {}).get(popnamej, ancpopi.node_distance(ancpopj)) <= maxpopnodedist)
+						#~ else: mono = False
+						#~ if mono:
+							#~ jointpopnames = jpn
+							#~ del dpopcount[popnamei]
+							#~ del dpopcount[popnamej]
+							#~ jointpopcount += indcountsj
+							#~ dpopcount[jointpopnames] = jointpopcount
+							#~ if verbose: print "combine populations %s"%repr(jointpopnames)
+							#~ # reccursive call allow to iteratively join monophyletic group
+							#~ dpopcount = combineMonophyleticPopulations(dpopcount, poptree, dnamepops, dpopnd=dpopnd, maxpopnodedist=maxpopnodedist, **kw)
+							#~ return dpopcount
 	return dpopcount
 
 def getCladeAncestor(dpopcount, dnamepops, spetree, dspe2pop, medpopcountthresh=0.5, **kw):
