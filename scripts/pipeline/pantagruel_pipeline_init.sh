@@ -30,6 +30,9 @@ export ptglogs=${ptgdb}/logs
 export ptgtmp=${ptgdb}/tmp
 mkdir -p ${ptgdb}/ ${ptglogs}/ ${ptgtmp}/
 
+echo 'here'
+echo $cladesuppdef
+echo $collapseCladeParams
 
 # evaluate 'freely specified' collapsing parameters; expect some define paatern though
 # e.g.:  eval 'cladesupp=70 ; subcladesupp=35 ; criterion=bs ; withinfun=median'
