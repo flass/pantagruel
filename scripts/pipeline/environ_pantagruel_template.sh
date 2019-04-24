@@ -41,25 +41,27 @@ export subcladesupp=REPLACEsubcladesupp                    # - wihtin-clade crit
 export criterion='REPLACEcriterion'                        # - criterion (branch support: 'bs', branch length 'lg')
 export withinfun='REPLACEwithinfun'                        # - aggregate function for testing within the clade ('min', 'max', 'mean', 'median')
 export hpcremoteptgroot='REPLACEhpcremoteptgroot'          # if not empty nor 'none', will use this server address to send data and scripts to run heavy computions there 
-# the rest have fixed values that can be modified here or overriden with certain task-specific options
+# other parameters have default values defined in the source file below
+source ${ptgscripts}/pipeline/pantagruel_environ_defaults.sh
+# these defalts can be overriden by uncommenting the relevant line below and editing the variable's value
 # default values are:
-export cladesuppdef=70
-export subcladesuppdef=35
-export criteriondef='bs'
-export withinfundef='median'
-export ALEalgo='ALEml_undated'
-export recsamplesize=1000
-export evtypeparse='ST'
-export minevfreqparse=0.1
-export minevfreqmatch=0.5
-export minjoinevfreqmatch=1.0
-export maxreftreeheight=0.25
-export ncorebootstrap=200
-export mainresulttag='rootedTree'
-# only relevant if user-defined genomes are provided
-export assembler="somesoftware"
-export seqcentre="somewhere"
-export refgenus="Reference"
+#~ export cladesuppdef=70
+#~ export subcladesuppdef=35
+#~ export criteriondef='bs'
+#~ export withinfundef='median'
+#~ export ALEalgo='ALEml_undated'
+#~ export recsamplesize=1000
+#~ export evtypeparse='ST'
+#~ export minevfreqparse=0.1
+#~ export minevfreqmatch=0.5
+#~ export minjoinevfreqmatch=1.0
+#~ export maxreftreeheight=0.25
+#~ export ncorebootstrap=200
+#~ export mainresulttag='rootedTree'
+#~ # only relevant if user-defined genomes are provided
+#~ export assembler="somesoftware"
+#~ export seqcentre="somewhere"
+#~ export refgenus="Reference"
 
 ### BEWARE!!! value of variables below is unsafe to modify
 
