@@ -258,13 +258,13 @@ if [[ -z "$(grep 'alias ALEml=' ${HOME}/.bashrc)" ]] ; then
   editedrc=true
 fi
 
-# add Python modules to PYTHONPATH
-if [[ -z "$(grep 'export PYTHONPATH=' ${HOME}/.bashrc | grep ${SOFTWARE}/pantagruel/python_libs )" ]] ; then
-  echo "export PYTHONPATH=\${PYTHONPATH}:${SOFTWARE}/pantagruel/python_libs" >> ${HOME}/.bashrc
-  checkexec "Could not store PYTHONPATH in .bashrc"
-  editedrc=true
-fi
-echo ""
+#~ # add Python modules to PYTHONPATH
+#~ if [[ -z "$(grep 'export PYTHONPATH=' ${HOME}/.bashrc | grep ${SOFTWARE}/pantagruel/python_libs )" ]] ; then
+  #~ echo "export PYTHONPATH=\${PYTHONPATH}:${SOFTWARE}/pantagruel/python_libs" >> ${HOME}/.bashrc
+  #~ checkexec "Could not store PYTHONPATH in .bashrc"
+  #~ editedrc=true
+#~ fi
+#~ echo ""
 
 # install Interproscan
 iphost="ftp://ftp.ebi.ac.uk"

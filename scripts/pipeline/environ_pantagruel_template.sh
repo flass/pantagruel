@@ -66,7 +66,7 @@ export refgenus="Reference"
 ## secondary variables
 # lib/module path
 export ptgscripts=${ptgrepo}/scripts
-export PYTHONPATH=$PYTHONPATH:${ptgrepo}/python_libs
+export PYTHONPATH=${ptgrepo}/python_libs
 # head folders
 export ptgdb=${ptgroot}/${ptgdbname}
 export ptglogs=${ptgdb}/logs
