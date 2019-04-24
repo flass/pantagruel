@@ -1,4 +1,7 @@
 #!/bin/bash
+# lib/module path
+export ptgscripts=${ptgrepo}/scripts
+export PYTHONPATH=${ptgrepo}/python_libs
 
 # store the init command with which the config file was created
 ptginitcmd='REPLACEptginitcmd'
@@ -66,9 +69,6 @@ source ${ptgscripts}/pipeline/environ_pantagruel_defaults.sh
 ### BEWARE!!! value of variables below is unsafe to modify
 
 ## secondary variables
-# lib/module path
-export ptgscripts=${ptgrepo}/scripts
-export PYTHONPATH=${ptgrepo}/python_libs
 # head folders
 export ptgdb=${ptgroot}/${ptgdbname}
 export ptglogs=${ptgdb}/logs

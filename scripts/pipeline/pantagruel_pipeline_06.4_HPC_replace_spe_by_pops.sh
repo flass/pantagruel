@@ -106,6 +106,7 @@ else
   else
     arrayspec=""
   fi
+  echo "qsub${arrayspec} -N replSpePopinGs -l select=1:ncpus=${ncpus}:mem=${mem}${parallelflags},walltime=${wth}:00:00 -o ${repllogd} -j oe -V ${ptgscripts}/replSpePopinGs_array_PBS.qsub"
   qsub${arrayspec} -N replSpePopinGs -l select=1:ncpus=${ncpus}:mem=${mem}${parallelflags},walltime=${wth}:00:00 -o ${repllogd} -j oe -V ${ptgscripts}/replSpePopinGs_array_PBS.qsub
  
 fi
