@@ -243,7 +243,7 @@ def combineMonophyleticPopulations(dpopcount, poptree, dnamepops, dpopnd={}, max
 					ancpopj = poptree[popnamej]
 					pnd = ancpopi.node_distance(ancpopj)
 				if pnd <= maxpopnodedist:
-					edges.append((popnamei, popnamej)))
+					edges.append((popnamei, popnamej))
 		p2p.add_edges(edges)
 		compsp2p = p2p.components()
 		for comp in compsp2p:
