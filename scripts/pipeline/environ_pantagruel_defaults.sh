@@ -1,3 +1,4 @@
+#!/bin/bash
 export cladesuppdef=70
 export subcladesuppdef=35
 export criteriondef='bs'
