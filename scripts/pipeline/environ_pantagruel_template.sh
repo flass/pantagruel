@@ -42,7 +42,7 @@ export criterion='REPLACEcriterion'                        # - criterion (branch
 export withinfun='REPLACEwithinfun'                        # - aggregate function for testing within the clade ('min', 'max', 'mean', 'median')
 export hpcremoteptgroot='REPLACEhpcremoteptgroot'          # if not empty nor 'none', will use this server address to send data and scripts to run heavy computions there 
 # other parameters have default values defined in the source file below
-source ${ptgscripts}/pipeline/pantagruel_environ_defaults.sh
+source ${ptgscripts}/pipeline/environ_pantagruel_defaults.sh
 # these defalts can be overriden by uncommenting the relevant line below and editing the variable's value
 # default values are:
 #~ export cladesuppdef=70

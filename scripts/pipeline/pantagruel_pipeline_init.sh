@@ -13,7 +13,7 @@
 
 # derive other important environmnet variables
 export ptgscripts="${ptgrepo}/scripts"
-source ${ptgscripts}/pipeline/pantagruel_environ_defaults.sh
+source ${ptgscripts}/pipeline/environ_pantagruel_defaults.sh
 
 if [ -z ${initfile} ] ; then 
   templateenv=${ptgscripts}/pipeline/environ_pantagruel_template.sh
@@ -29,10 +29,6 @@ export ptgdb=${ptgroot}/${ptgdbname}
 export ptglogs=${ptgdb}/logs
 export ptgtmp=${ptgdb}/tmp
 mkdir -p ${ptgdb}/ ${ptglogs}/ ${ptgtmp}/
-
-echo 'here'
-echo $cladesuppdef
-echo $collapseCladeParams
 
 # evaluate 'freely specified' collapsing parameters; expect some define paatern though
 # e.g.:  eval 'cladesupp=70 ; subcladesupp=35 ; criterion=bs ; withinfun=median'
