@@ -2,7 +2,7 @@
 
 import sys
 import tree2
-from Bio import File, SeqIO
+from Bio import SeqIO
 from BCBio import GFF
 from Bio.Alphabet import generic_dna
 from Bio.Phylo import BaseTree, NewickIO, NexusIO, _io as PhyloIO
@@ -273,7 +273,7 @@ def treeappend(trees, filepath, treeformat, maskchars=None, **kwargs):
 	"""alias function for treewrite(..., mode='a+', ...)"""
 	return treewrite(trees, filepath, treeformat, mode='a+', maskchars=maskchars, **kwargs)
 	
-def treeparse(trees, filepath, treeformat, maskchars=None, **kwargs):
+def treeparse(filepath, treeformat, maskchars=None, **kwargs):
     """extended version of Phylo._io.parse() allowing to translate characters
     
     only does not support file handles (i.e. already opened files) as input, only file paths.
@@ -300,7 +300,7 @@ def parseChain(lnfchains, dold2newname={}, nfchainout=None, inchainfmt='nexus', 
 	A character filter is added as a file pipe when parsing the file, replacing any character of maskchars[0] with the counterpart in maskchars[1].
 	The filter is reverted when writing the file. 
 	With the default filter maskchars=('-', '@'), dash characters '-' are translated into at symbols '@' on input, and '@'s are translated into '-'s on output; 
-	this is to handle the fact that Bio.Nexus tree parser does not support dashes in the taxon labels.
+	this is to handle the fact that Bio.Nexus tree parser does not support dashes in the taxon labels (see https://github.com/biopython/biopython/issues/1022).
 	!!! CAUTION: any '@' in the original label will thus be turned into a '-' in the final file output. Please avoid '@'s in tree taxon labels. !!!
 	"""
 	invmaskchars = (maskchars[1], maskchars[0]) if maskchars else None
