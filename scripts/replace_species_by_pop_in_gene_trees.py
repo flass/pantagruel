@@ -250,7 +250,7 @@ def combineMonophyleticPopulations(dpopcount, poptree, dnamepops, dpopnd={}, max
 			if len(comp) > 1:
 				if verbose: print "combine %s populations %s, repesented by a total of %f sequences"%(grouptype, repr(jointpopnames), float(jointpopcount))
 				cpnames = tuple(p2p.vs[p]['name'] for p in comp)
-				jointpopcount = sum([dpopcount[cpname] for cpname in cpnames])
+				jointpopcount = reduce(lambda x,y: x+y, (dpopcount[cpname] for cpname in cpnames), [])
 				dpopcount[cpnames] = jointpopcount
 				for cpname in cpnames:
 					del dpopcount[cpname]		
