@@ -249,38 +249,45 @@ def findSeqRecordIndexesFromSeqNames(aln, seqnames):
 			if seq.id in seqnames: return k
 
 def openwithfilterpipe(filepath, maskchars, mode):
+	"""opens file trough a character translating pipe.
+	
+	Due to limitation in file opening mode using pipes.Templates.open() 
+	(only 'r' or 'w' allowed), this function emulates the append mode using file.seek(0,2). 
+	Specifying write-and-read modes ('w+' and 'a+') will result in the corresponding write-only mode.
+	"""
 	if maskchars:
 		filterpipe = pipes.Template()
 		filterpipe.append('tr %s %s'%maskchars, '--')
-		f = filterpipe.open(filepath, mode)
+		f = filterpipe.open(filepath, mode.replace('a', 'w').rstrip('+'))
+		if mode[0]=='a': f.seek(0,2)
 	else:
 		f = open(filepath, mode)
 	return f
 
 def treewrite(trees, filepath, treeformat, mode='w+', maskchars=None, **kwargs):
-    """extended version of Phylo._io.write() allowing to tweak file opening mode and to translate of characters
-    
-    only does not support file handles (i.e. already opened files) as input, only file paths.
-    """
-    if isinstance(trees, (BaseTree.Tree, BaseTree.Clade)):
-        # Passed a single tree instead of an iterable -- that's OK
-        trees = [trees]
-    with openwithfilterpipe(filepath, maskchars, mode) as fp:
+	"""extended version of Phylo._io.write() allowing to tweak file opening mode and to translate of characters
+	
+	only does not support file handles (i.e. already opened files) as input, only file paths.
+	"""
+	if isinstance(trees, (BaseTree.Tree, BaseTree.Clade)):
+		# Passed a single tree instead of an iterable -- that's OK
+		trees = [trees]
+	with openwithfilterpipe(filepath, maskchars, mode) as fp:
 		n = getattr(supported_formats[treeformat], 'write')(trees, fp, **kwargs)
-    return n
+	return n
 
 def treeappend(trees, filepath, treeformat, maskchars=None, **kwargs):
 	"""alias function for treewrite(..., mode='a+', ...)"""
 	return treewrite(trees, filepath, treeformat, mode='a+', maskchars=maskchars, **kwargs)
 	
 def treeparse(filepath, treeformat, maskchars=None, **kwargs):
-    """extended version of Phylo._io.parse() allowing to translate characters
-    
-    only does not support file handles (i.e. already opened files) as input, only file paths.
-    """
-    with openwithfilterpipe(filepath, maskchars, 'r') as fp:
-        for tree in getattr(supported_formats[treeformat], 'parse')(fp, **kwargs):
-            yield tree
+	"""extended version of Phylo._io.parse() allowing to translate characters
+	
+	only does not support file handles (i.e. already opened files) as input, only file paths.
+	"""
+	with openwithfilterpipe(filepath, maskchars, 'r') as fp:
+		for tree in getattr(supported_formats[treeformat], 'parse')(fp, **kwargs):
+			yield tree
 
 def in2outChainFileName(nfchain, dirout, inchainfmt='nexus', outchainfmt='newick', **kw):
 	dfmtext = {'nexus':'nex', 'newick':'nwk'}
@@ -360,11 +367,11 @@ def parseChain(lnfchains, dold2newname={}, nfchainout=None, inchainfmt='nexus', 
 				if verbose:
 					sys.stdout.write('\r'+str(ntree)) ; sys.stdout.flush()
 				if ntree <= buffsize:
-					treewrite(treebuffer, fout, outchainfmt, maskchars=invmaskchars)
+					treewrite(treebuffer, nfout, outchainfmt, maskchars=invmaskchars)
 				else:
-					treeappend(treebuffer, fout, outchainfmt, maskchars=invmaskchars)
+					treeappend(treebuffer, nfout, outchainfmt, maskchars=invmaskchars)
 				treebuffer = []
-	if treebuffer: treeappend(treebuffer, fout, outchainfmt, maskchars=invmaskchars)
+	if treebuffer: treeappend(treebuffer, nfout, outchainfmt, maskchars=invmaskchars)
 	print '%s%s ...done (%d trees)'%(('\n' if verbose else ''), nfout, ntree)
 	return None
 
