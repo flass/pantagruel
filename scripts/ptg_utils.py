@@ -2,13 +2,14 @@
 
 import sys
 import tree2
-from Bio import File,  SeqIO
+from Bio import File, SeqIO
 from BCBio import GFF
 from Bio.Alphabet import generic_dna
 from Bio.Phylo import BaseTree, NewickIO, NexusIO, _io as PhyloIO
 from StringIO import StringIO
 from random import randint
 import gzip
+import pipes
 
 supported_formats = {'newick': NewickIO, 'nexus': NexusIO}
 
@@ -247,14 +248,39 @@ def findSeqRecordIndexesFromSeqNames(aln, seqnames):
 		for k,seq in enumerate(aln):
 			if seq.id in seqnames: return k
 
-def treeappend(trees, file, format, **kwargs):
-    """appending version of Phylo._io.write()"""
+def openwithfilterpipe(filepath, maskchars, mode):
+	if maskchars:
+		filterpipe = pipes.Template()
+		filterpipe.append('tr %s %s'%maskchars, '--')
+		f = filterpipe.open(filepath, mode)
+	else:
+		f = open(filepath, mode)
+	return f
+
+def treewrite(trees, filepath, treeformat, mode='w+', maskchars=None, **kwargs):
+    """extended version of Phylo._io.write() allowing to tweak file opening mode and to translate of characters
+    
+    only does not support file handles (i.e. already opened files) as input, only file paths.
+    """
     if isinstance(trees, (BaseTree.Tree, BaseTree.Clade)):
         # Passed a single tree instead of an iterable -- that's OK
         trees = [trees]
-    with File.as_handle(file, 'a+') as fp:
-        n = getattr(supported_formats[format], 'write')(trees, fp, **kwargs)
+    with openwithfilterpipe(filepath, maskchars, mode) as fp:
+		n = getattr(supported_formats[treeformat], 'write')(trees, fp, **kwargs)
     return n
+
+def treeappend(trees, filepath, treeformat, maskchars=None, **kwargs):
+	"""alias function for treewrite(..., mode='a+', ...)"""
+	return treewrite(trees, filepath, treeformat, mode='a+', maskchars=maskchars, **kwargs)
+	
+def treeparse(trees, filepath, treeformat, maskchars=None, **kwargs):
+    """extended version of Phylo._io.parse() allowing to translate characters
+    
+    only does not support file handles (i.e. already opened files) as input, only file paths.
+    """
+    with openwithfilterpipe(filepath, maskchars, 'r') as fp:
+        for tree in getattr(supported_formats[treeformat], 'parse')(fp, **kwargs):
+            yield tree
 
 def in2outChainFileName(nfchain, dirout, inchainfmt='nexus', outchainfmt='newick', **kw):
 	dfmtext = {'nexus':'nex', 'newick':'nwk'}
@@ -268,17 +294,30 @@ def tree2toBioPhylo(node):
 	"""perform tree2.Node -> Newick -> Bio.Phylo.Newick.Tree conversion"""
 	return PhyloIO.read(StringIO(node.newick()), 'newick', rooted=True)
 
-def parseChain(lnfchains, dold2newname={}, nfchainout=None, inchainfmt='nexus', outchainfmt='newick', verbose=False):
-	"""parse a Nexus-format tree chain and re-write it in a Newick format; edit the tree on the fly, substituting tip labels or grafting trees on tips"""
-	if verbose: print "parseChain('%s')"%repr(lnfchains)
+def parseChain(lnfchains, dold2newname={}, nfchainout=None, inchainfmt='nexus', outchainfmt='newick', maskchars=('-', '@'), verbose=False):
+	"""parse a Nexus-format tree chain and re-write it in a Newick format; edit the tree on the fly, substituting tip labels or grafting trees on tips
+	
+	A character filter is added as a file pipe when parsing the file, replacing any character of maskchars[0] with the counterpart in maskchars[1].
+	The filter is reverted when writing the file. 
+	With the default filter maskchars=('-', '@'), dash characters '-' are translated into at symbols '@' on input, and '@'s are translated into '-'s on output; 
+	this is to handle the fact that Bio.Nexus tree parser does not support dashes in the taxon labels.
+	!!! CAUTION: any '@' in the original label will thus be turned into a '-' in the final file output. Please avoid '@'s in tree taxon labels. !!!
+	"""
+	invmaskchars = (maskchars[1], maskchars[0]) if maskchars else None
+	if verbose:
+		print "parseChain('%s')"%repr(lnfchains)
+		if maskchars: print "'%s' character set will be substituted with '%s' on input and back on output"%maskchars
 	ntree = 0
 	buffsize = 50
 	treebuffer = []
+	dhandles = {}
+	# prepare handles for multiple input files
+	for k, nfchain in enumerate(lnfchains):
+		# by default add a pipe filter to deal with lack of support for dash characters in taxon labels in BioPython Nexus tree parser
+		dhandles[k] = treeparse(nfchain, inchainfmt, maskchars=maskchars, **kwargs)
+	# pepare output file
 	if nfchainout: nfout = nfchainout
 	else: nfout = n2outChainFileName(lnfchains[0], dirout, inchainfmt, outchainfmt)
-	dhandles = {}
-	for k, nfchain in enumerate(lnfchains):
-		dhandles[k] = PhyloIO.parse(nfchain, inchainfmt)
 	# intertwines the trees from separate chains, respecting their sequence
 	# so that the burn-in can still be defined as the first portion of trees in the sample.
 	sometreeleft = True
@@ -321,11 +360,11 @@ def parseChain(lnfchains, dold2newname={}, nfchainout=None, inchainfmt='nexus', 
 				if verbose:
 					sys.stdout.write('\r'+str(ntree)) ; sys.stdout.flush()
 				if ntree <= buffsize:
-					PhyloIO.write(treebuffer, nfout, outchainfmt)
+					treewrite(treebuffer, fout, outchainfmt, maskchars=invmaskchars)
 				else:
-					treeappend(treebuffer, nfout, outchainfmt)
+					treeappend(treebuffer, fout, outchainfmt, maskchars=invmaskchars)
 				treebuffer = []
-	if treebuffer: treeappend(treebuffer, nfout, outchainfmt)
+	if treebuffer: treeappend(treebuffer, fout, outchainfmt, maskchars=invmaskchars)
 	print '%s%s ...done (%d trees)'%(('\n' if verbose else ''), nfout, ntree)
 	return None
 
