@@ -336,7 +336,7 @@ def parseChain(lnfchains, dold2newname={}, nfchainout=None, inchainfmt='nexus', 
 	# prepare handles for multiple input files
 	for k, nfchain in enumerate(lnfchains):
 		# by default add a pipe filter to deal with lack of support for dash characters in taxon labels in BioPython Nexus tree parser
-		dhandles[k] = treeparse(nfchain, inchainfmt, maskchars=maskchars, **kwargs)
+		dhandles[k] = treeparse(nfchain, inchainfmt, maskchars=maskchars)
 	# pepare output file
 	if nfchainout: nfout = nfchainout
 	else: nfout = n2outChainFileName(lnfchains[0], dirout, inchainfmt, outchainfmt)
