@@ -252,7 +252,7 @@ def combineMonophyleticPopulations(dpopcount, poptree, dnamepops, dpopnd={}, max
 				cpnames = tuple(p2p.vs[p]['name'] for p in comp)
 				jointpopcount = sum([dpopcount[cpname] for cpname in cpnames])
 				dpopcount[cpnames] = jointpopcount
-				for cpname in cpnames
+				for cpname in cpnames:
 					del dpopcount[cpname]		
 		#~ for i, popnamei in enumerate(pnames):
 			#~ indcountsi = dpopcount[popnamei]
