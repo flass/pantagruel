@@ -31,10 +31,9 @@ mkdir -p ${ptgdb}/ ${ptglogs}/ ${ptgtmp}/
 
 # evaluate 'freely specified' collapsing parameters; expect some define paatern though
 # e.g.:  eval 'cladesupp=70 ; subcladesupp=35 ; criterion=bs ; withinfun=median'
-if [ ! -z "$collapseCladeParams" ] ; then
-  for param in 'cladesupp' 'subcladesupp' 'criterion' 'withinfun' ; do
-    # parse free text to only evaluate code defining 
-    parameqval=$(python << EOF
+for param in 'cladesupp' 'subcladesupp' 'criterion' 'withinfun' ; do
+  # parse free text to only evaluate code defining 
+  parameqval=$(python << EOF
 parameqvals="$collapseCladeParams".lower().split()
 for parameqval in parameqvals:
   pareqval = parameqval.strip(';,\t\n ')
@@ -45,16 +44,15 @@ for parameqval in parameqvals:
     break
 EOF
 )
-    if [ ! -z "${parameqval}" ] ; then
-      echo "export ${parameqval}"
-      eval "export ${parameqval}"
-    else
-      eval "paramdef=\${${param}def}"
-      echo "export ${param}=${paramdef}"
-      eval "export ${param}=${paramdef}"
-    fi
-  done
-fi
+  if [ ! -z "${parameqval}" ] ; then
+    echo "export ${parameqval}"
+    eval "export ${parameqval}"
+  else
+    eval "paramdef=\${${param}def}"
+    echo "export ${param}=${paramdef}"
+    eval "export ${param}=${paramdef}"
+  fi
+done
 
 #### Set facultative environment variables / parameters
 envsourcescript=${ptgdb}/environ_pantagruel_${ptgdbname}.sh

@@ -50,10 +50,11 @@ if [[ "${chaintype}" == 'fullgenetree' ]] ; then
   echo "Error: not implemented yet:"
   echo "must generalize the script replace_species_by_pop_in_gene_trees.py so to only convert the format of gene tree chains, not replacing anything in them"
   # PBS-submitted parallel job
-  #~ qsub -N replSpePopinGs -l select=1:ncpus=${ncpus}:mem=64gb,walltime=24:00:00 -o $repllogd -j oe -V << EOF
-  #~ module load python
-  #~ python ${ptgscripts}/replace_species_by_pop_in_gene_trees.py -G ${tasklist} -o ${coltreechains} --threads=${ncpus} --reuse=0 --verbose=0 --logfile=${repllogs}_${replrun}.log &
-  #~ EOF
+  qsub -N replSpePopinGs -l select=1:ncpus=${ncpus}:mem=64gb,walltime=24:00:00 -o ${repllogd} -j oe -V << EOF
+  module load python
+  python ${ptgscripts}/replace_species_by_pop_in_gene_trees.py -G ${tasklist} --no_replace -o ${coltreechains} --threads=${ncpus} --reuse=0 --verbose=0 --logfile=${repllogs}_${replrun}.log &
+  checkexec "conversion of gene tree chains was interupted ; exit now" "conversion of gene tree chains complete"
+EOF
   exit 1
   
   #### end OPTION A2: 
