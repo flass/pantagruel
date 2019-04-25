@@ -245,9 +245,37 @@ fi
 ## 06.4 Convert format of Bayesian gene trees and replace species by populations
 ################################################################################
 
+mkdir -p ${ptgdb}/logs/replspebypop
+repltasklist=${coltreechains}_${collapsecond}_nexus_list
+${ptgscripts}/lsfullpath.py "${bayesgenetrees}/${collapsecond}/*run1.t" > ${repltasklist}
+repllogd=${ptgdb}/logs/replspebypop
+repllogs=$repllogd/replace_species_by_pop_in_gene_trees
+replrun=$(date +'%d%m%Y')  
+
+export dtag="$(date +'%Y%m%d-%H%M%S')"
+if [ "${resumetask}" == 'true' ] ; then
+  # following lines are for resuming after a stop in batch computing, or to collect those jobs that crashed (and may need to be re-ran with more mem/time allowance)
+  for nfrun1t in $(cat $tasklist) ; do
+    bnrun1t=$(basename $nfrun1t)
+    bnGtre=${bnrun1t/.mb.run1.t/-Gtrees.nwk}
+    if [[ "${chaintype}" == 'fullgenetree' ]] ; then
+      if [ ! -e ${coltreechains}/${collapsecond}/${replmethod}/${bnGtre} ] ; then
+        echo ${nfrun1t}
+      fi
+    else
+      bnStre=${bnrun1t/.mb.run1.t/-Stree.nwk}
+      if [[ ! -e ${coltreechains}/${collapsecond}/${replmethod}/${bnGtre} || ! -e ${coltreechains}/${collapsecond}/${replmethod}/${bnStre} ]] ; then
+        echo ${nfrun1t}
+      fi
+    fi
+  done > ${repltasklist}_resume
+  repltasklist=${repltasklist}_resume
+fi
+  
 if [[ "${chaintype}" == 'fullgenetree' ]] ; then
   #### OPTION A2: 
-  python ${ptgscripts}/replace_species_by_pop_in_gene_trees.py -G ${tasklist} --no_replace -o ${coltreechains} --threads=${ncpus} --reuse=0 --verbose=0 --logfile=${repllogs}_${replrun}.log &
+  ## no need to replace anything in the tree, just convert format from Nexus to Newick treee chains
+  python ${ptgscripts}/replace_species_by_pop_in_gene_trees.py -G ${repltasklist} --no_replace -o ${coltreechains} --threads=${ncpus} --reuse=0 --verbose=0 --logfile=${repllogs}_${replrun}.log &
   checkexec "conversion of gene tree chains was interupted ; exit now" "conversion of gene tree chains complete"
  
   #### end OPTION A2: 
@@ -260,12 +288,6 @@ else
   mkdir -p ${coltreechains}/${collapsecond}
 
   ## edit the gene trees, producing the corresponding (potentially collapsed) species tree based on the 'time'-tree backbone
-  mkdir -p ${ptgdb}/logs/replspebypop
-  repltasklist=${coltreechains}_${collapsecond}_nexus_list
-  ${ptgscripts}/lsfullpath.py "${bayesgenetrees}/${collapsecond}/*run1.t" > $repltasklist
-  repllogd=${ptgdb}/logs/replspebypop
-  repllogs=$repllogd/replace_species_by_pop_in_gene_trees
-  replrun=$(date +'%d%m%Y')
 
   # local parallel run
   python ${ptgscripts}/replace_species_by_pop_in_gene_trees.py -G ${repltasklist} -c ${colalinexuscodedir}/${collapsecond} -S ${speciestree}.lsd.newick -o ${coltreechains}/${collapsecond} \
@@ -280,5 +302,5 @@ else
   ${ptgscripts}/pantagruel_sqlitedb_phylogeny_populate_collapsed_clades.sh "${database}" "${sqldb}" "${colalinexuscodedir}" "${coltreechains}" "${collapsecond}" "${replmethod}" "${collapsecriteriondef}" "${collapsecolid}" "${replacecolid}" "${collapsecoldate}" "${replacecoldate}"
   checkexec "populating the SQL database with collapsed/replaced gene tree clades was interupted ; exit now" "populating the SQL database with collapsed/replaced gene tree clades complete"
 
+  #### end OPTION B2
 fi
-#### end OPTION B2
