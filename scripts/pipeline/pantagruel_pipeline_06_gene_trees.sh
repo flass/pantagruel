@@ -205,8 +205,9 @@ samplef=500
 ncpus=$(( $nchains * $nruns ))
 ntreeperchain=$(( $ngen / $samplef ))
 mbtasklist=${nexusaln4chains}_ali_list
-rm -f ${mbtasklist}
+${ptgscripts}/lsfullpath.py "${nexusaln4chains}/*.codes.nex" > ${mbtasklist}
 rm -f ${mbtasklist}_alreadydone
+rm -f ${mbtasklist}_resume
 for fam in $(cut -f1 ${famlist}) ; do
   chaindone=''
   if [[ "${resumetask}" == "true" ]] ; then
@@ -218,7 +219,7 @@ for fam in $(cut -f1 ${famlist}) ; do
     fi
   fi
   if [ -z "${chaindone}" ] ; then
-    ls ${nexusaln4chains}/${fam}.codes.nex >> ${mbtasklist}
+    ls ${nexusaln4chains}/${fam}.codes.nex >> ${mbtasklist}_resume
   else
     ls ${nexusaln4chains}/${fam}.codes.nex >> ${mbtasklist}_alreadydone
   fi
@@ -226,13 +227,19 @@ done
 
 if [[ "${resumetask}" == "true" && -e ${mbtasklist}_alreadydone ]] ; then
   echo "$(wc -l ${mbtasklist}_alreadydone | cut -d' ' -f1) bayesian tree chains already complete; skip their computation"
+  mbtasklist=${mbtasklist}_resume
 fi
-mbopts="Nruns=${nruns} Ngen=${ngen} Nchains=${nchains} Samplefreq=${samplef}"
-echo "Will now run MrBayes in parallel (i.e. sequentially for each gene alignment, with several alignments processed in parallel"
-echo "with options: ${mbopts}"
-echo ""
-${ptgscripts}/mrbayes_sequential.sh ${mbtasklist} ${mboutputdir} "${mbopts}"
-checkexec "MrBayes tree estimation was interupted ; exit now" "MrBayes tree estimation complete"
+
+if [ -s ${mbtasklist} ] ; then
+  mbopts="Nruns=${nruns} Ngen=${ngen} Nchains=${nchains} Samplefreq=${samplef}"
+  echo "Will now run MrBayes in parallel (i.e. sequentially for each gene alignment, with several alignments processed in parallel"
+  echo "with options: ${mbopts}"
+  echo ""
+  ${ptgscripts}/mrbayes_sequential.sh ${mbtasklist} ${mboutputdir} "${mbopts}"
+  checkexec "MrBayes tree estimation was interupted ; exit now" "MrBayes tree estimation complete"
+else
+  echo "no bayesian gene tree left to compute; skip to next step"
+fi
 
 ################################################################################
 ## 06.4 Convert format of Bayesian gene trees and replace species by populations
