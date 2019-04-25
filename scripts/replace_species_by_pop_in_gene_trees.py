@@ -518,6 +518,9 @@ def mapPop2GeneTree(nfingtchain1, dircons, dirout, method, spetree, poptree, dsp
 	same as above, but in addition collapse all Pi in S that are not 
 	represented in the final form of G (once bush clades are replaced
 	by single leaves or monophyletic species clades)
+	
+	- 'noreplace': do nothing; only to be used when no gene tree clade 
+	has been collapsed in the first place.
 	"""
 	
 	def replaceCCwithLabel(cla, speorpop, fam, dold2newname, tag='CC'):
@@ -572,7 +575,7 @@ def mapPop2GeneTree(nfingtchain1, dircons, dirout, method, spetree, poptree, dsp
 	
 	
 	if verbose: print 'mapPop2GeneTree()'
-	methods = ['collapseCCinG', 'replaceCCinGasinS', 'replaceCCinGasinS-collapsePOPinSnotinG', \
+	methods = ['noreplace', 'collapseCCinG', 'replaceCCinGasinS', 'replaceCCinGasinS-collapsePOPinSnotinG', \
 	           'collapseCCinG-collapsematchingPOPinS', 'collapseALLinSandG', 'collapseCCinG-collapsePOPinSnotinGbutinCC']
 	assert method in methods
 	dnamepops=dict(lnamepops)
