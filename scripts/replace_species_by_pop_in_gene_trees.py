@@ -823,11 +823,13 @@ if __name__=='__main__':
 		print usage()
 		sys.exit(0)
 	
-	nfspetree = dopt['-S']
+	nfspetree = dopt.get('-S')
 	nflnfingtchain = dopt.get('-G')
 	dircons = dopt.get('-c')
 	dirout = dopt.get('-o')
-	methods = dopt.get('--method', 'collapseCCinG,replaceCCinGasinS,replaceCCinGasinS-collapsePOPinSnotinG').split(',')
+	dontReplace = ('--no_replace' in dopt)
+	defmethods = 'replaceCCinGasinS-collapsePOPinSnotinG' if (not dontReplace) else 'noreplace'
+	methods = dopt.get('--method', defmethods).split(',')
 	nfpops = dopt.get('--populations')
 	nfpoptree = dopt.get('--population_tree')
 	nfdpopnd = dopt.get('--population_node_distance')
@@ -840,7 +842,6 @@ if __name__=='__main__':
 	nflog = dopt.get('--logfile')
 	nbthreads = int(dopt.get('--threads', dopt.get('-T', -1)))
 	poptag = dopt.get('--pop_lab_prefix')
-	dontReplace = ('--no_replace' in dopt)
 	if nbthreads < 1: nbthreads = mp.cpu_count()
 	
 	sys.setrecursionlimit(maxreclim)
@@ -849,15 +850,21 @@ if __name__=='__main__':
 		flog = open(nflog, 'w')
 		sys.stdout = sys.stderr = flog
 	
-	### define species populations
-	spetree, poptree, dspe2pop, lnamepops, dpopnd = inferPopfromSpeTree(nfspetree, populations=nfpops, poptag=poptag, \
+	if not dontReplace:
+		if not nfspetree:
+			raise ValueError, "Providing a species tree file is mandatory when replacing clades in gene tree chains"
+		### define species populations
+		spetree, poptree, dspe2pop, lnamepops, dpopnd = inferPopfromSpeTree(nfspetree, populations=nfpops, poptag=poptag, \
                                                                nfpopulationtree=nfpoptree, nfdpopnodedist=nfdpopnd, \
                                                                pop_stem_conds=psc, within_pop_conds=wpc, \
                                                                nbthreads=nbthreads, verbose=verbose)
 	if nflnfingtchain:
-	
-		if not (dircons and dirout): raise ValueError, "must provide value for options -c and -o when passing gene tree samples to -G"
-		ldircreate = [os.path.join(dircons, phyloproftag)]+[os.path.join(dirout, meth) for meth in methods]
+		ldircreate = []
+		if not dirout: raise ValueError, "must provide value for options -o when passing gene tree samples to -G"
+		ldircreate += [os.path.join(dirout, meth) for meth in methods]
+		if not dontReplace:
+			if not dircons: raise ValueError, "must provide value for options -c when passing gene tree samples to -G for label replacement (i.e. without option --no_replace)"
+			ldircreate.append('_'.join(dirout, phyloproftag))
 		for d in ldircreate:
 			if not os.path.isdir(d):
 				os.mkdir(d)

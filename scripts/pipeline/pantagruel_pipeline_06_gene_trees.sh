@@ -213,7 +213,7 @@ for fam in $(cut -f1 ${famlist}) ; do
   if [[ "${resumetask}" == "true" ]] ; then
     gtchain1=${mboutputdir}/${fam}.codes.mb.nex.run1.t
     if [[ -s ${gtchain1} ]] ; then
-      if [[ $(wc -l ${gtchain1} | cut -d' ' -f1) -gt ${ntreeperchain} && ! -z "$(tail -n 1 ${gtchain1} | grep 'end')" ]] ; then
+      if [[ $(grep -F -c "tree gen" ${gtchain1} | cut -d' ' -f1) -ge ${ntreeperchain} && ! -z "$(tail -n 1 ${gtchain1} | grep 'end')" ]] ; then
         chaindone='yes'
       fi
     fi
@@ -275,7 +275,7 @@ fi
 if [[ "${chaintype}" == 'fullgenetree' ]] ; then
   #### OPTION A2: 
   ## no need to replace anything in the tree, just convert format from Nexus to Newick treee chains
-  python ${ptgscripts}/replace_species_by_pop_in_gene_trees.py -G ${repltasklist} --no_replace -o ${coltreechains} --threads=${ncpus} --reuse=0 --verbose=0 --logfile=${repllogs}_${replrun}.log &
+  python ${ptgscripts}/replace_species_by_pop_in_gene_trees.py -G ${repltasklist} --no_replace -o ${coltreechains}/${collapsecond} --threads=${ncpus} --reuse=0 --verbose=0 --logfile=${repllogs}_${replrun}.log &
   checkexec "conversion of gene tree chains was interupted ; exit now" "conversion of gene tree chains complete"
  
   #### end OPTION A2: 
@@ -297,6 +297,10 @@ else
 
   export replacecoldate=$(date +%Y-%m-%d)
   echo -e "${replacecolid}\t${replacecoldate}" > ${genetrees}/replacecol
+
+  #####################################################
+  ## 06.5 Populate database withh all gene tree results
+  #####################################################
   
   ## load these information into the database
   ${ptgscripts}/pantagruel_sqlitedb_phylogeny_populate_collapsed_clades.sh "${database}" "${sqldb}" "${colalinexuscodedir}" "${coltreechains}" "${collapsecond}" "${replmethod}" "${collapsecriteriondef}" "${collapsecolid}" "${replacecolid}" "${collapsecoldate}" "${replacecoldate}"
