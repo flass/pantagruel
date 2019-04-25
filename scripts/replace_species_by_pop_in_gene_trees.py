@@ -578,7 +578,6 @@ def mapPop2GeneTree(nfingtchain1, dircons, dirout, method, spetree, poptree, dsp
 	methods = ['noreplace', 'collapseCCinG', 'replaceCCinGasinS', 'replaceCCinGasinS-collapsePOPinSnotinG', \
 	           'collapseCCinG-collapsematchingPOPinS', 'collapseALLinSandG', 'collapseCCinG-collapsePOPinSnotinGbutinCC']
 	assert method in methods
-	dnamepops=dict(lnamepops)
 	# get file pre/sufix
 	dirgt = os.path.dirname(nfingtchain1)
 	bngt, extgt = os.path.basename(nfingtchain1).split('.', 1)
@@ -594,6 +593,7 @@ def mapPop2GeneTree(nfingtchain1, dircons, dirout, method, spetree, poptree, dsp
 	if dontReplace:
 		dold2newname = None
 	else:
+		dnamepops=dict(lnamepops)
 		nfoutcolStree = "%s/%s-Stree.nwk"%(dirout, outbn)
 		nfphyloprof = "%s_%s/%s.%s"%(dirout, phyloproftag, fam, phyloproftag)
 		nfoutreflab = "%s/%s-leaflabels_Spe2Pop.txt"%(dirout, outbn)
