@@ -11,12 +11,13 @@ echo ""
 
 # this is specific of the environmnt on which the script was developped
 # on other environments, other methods may be applied to make availble the Python igraph package
-#~ module load python
-module load anaconda3/personal
-# make sure igraph is installed
-conda install igraph << EOF
-y
-EOF
+module load anaconda2/personal
+source activate env_python2
+## to emulate this on other systems, it is best to build your own conda environment
+## where you make sure you are using python 2 and have igraph installed with:
+# conda create -n env_python2 python=2.7 python-igraph
+
+
 
 # all environment variables should have been passed on by  qsub -V
 # verify for the most important
