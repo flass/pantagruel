@@ -592,7 +592,7 @@ def mapPop2GeneTree(nfingtchain1, dircons, dirout, method, spetree, poptree, dsp
 		dold2newname = None
 	else:
 		nfoutcolStree = "%s/%s-Stree.nwk"%(dirout, outbn)
-		nfphyloprof = "%s/%s/%s.%s"%(dircons, phyloproftag, fam, phyloproftag)
+		nfphyloprof = "%s_%s/%s.%s"%(dirout, phyloproftag, fam, phyloproftag)
 		nfoutreflab = "%s/%s-leaflabels_Spe2Pop.txt"%(dirout, outbn)
 		nfoutlabpoplab = "%s/%s-replacedlabelsbyPop.txt"%(dirout, outbn)
 		nfoutfreqpopdistr = "%s/%s-PopFreqDistrib.txt"%(dirout, outbn)
@@ -858,6 +858,9 @@ if __name__=='__main__':
                                                                nfpopulationtree=nfpoptree, nfdpopnodedist=nfdpopnd, \
                                                                pop_stem_conds=psc, within_pop_conds=wpc, \
                                                                nbthreads=nbthreads, verbose=verbose)
+    else:
+		spetree = poptree = dspe2pop = lnamepops = dpopnd = None
+	
 	if nflnfingtchain:
 		ldircreate = []
 		if not dirout: raise ValueError, "must provide value for options -o when passing gene tree samples to -G"
@@ -865,6 +868,8 @@ if __name__=='__main__':
 		if not dontReplace:
 			if not dircons: raise ValueError, "must provide value for options -c when passing gene tree samples to -G for label replacement (i.e. without option --no_replace)"
 			ldircreate.append('_'.join(dirout, phyloproftag))
+		else:
+			dircons = None
 		for d in ldircreate:
 			if not os.path.isdir(d):
 				os.mkdir(d)
