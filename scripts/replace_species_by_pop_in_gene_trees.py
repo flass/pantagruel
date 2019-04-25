@@ -892,7 +892,7 @@ if __name__=='__main__':
 				print 'method:', method
 				try:
 					mapPop2GeneTree(nfingtchain, dircons, os.path.join(dirout, method), method, spetree, poptree, dspe2pop, lnamepops, dpopnd, \
-									reuseOutput=reuseOutput, phyloproftag=phyloproftag, dirfullgt=dirfullgt, verbose=verbose)
+									dontReplace=dontReplace, reuseOutput=reuseOutput, phyloproftag=phyloproftag, dirfullgt=dirfullgt, verbose=verbose)
 				except Exception, e:
 					if (type(e) is RuntimeError) and str(e).startswith('maximum recursion depth exceeded'):
 						print "met RuntimeError on file '%s':"%nfingtchain, e
