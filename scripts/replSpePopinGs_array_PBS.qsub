@@ -9,15 +9,14 @@ echo "This is job $PBS_JOBNAME, job_ID $PBS_JOBID (array_task_ID $PBS_ARRAY_INDE
 cat $PBS_NODEFILE
 echo ""
 
-# this is specific of the environmnt on which the script was developped
-# on other environments, other methods may be applied to make availble the Python igraph package
+# The lines below are specific to the HPC system and environmnt on which the script was developped
 module load anaconda2/personal
 source activate env_python2
-## to emulate this on other systems, it is best to build your own conda environment
-## where you make sure you are using python 2 and have igraph installed with:
-# conda create -n env_python2 python=2.7 python-igraph
-
-
+# In other environments, other methods may be used to access the required Python packages
+# to emulate this on other systems, it is best to use anaconda to build your own environment
+# where you make sure you are using python 2.7 and have all required packages installed with it.
+# You can do so using the following command:
+# conda create -n env_python2 python=2.7 python-igraph biopython bcbio-gff scipy
 
 # all environment variables should have been passed on by  qsub -V
 # verify for the most important
