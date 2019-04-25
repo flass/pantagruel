@@ -26,7 +26,7 @@ if [[ "${chaintype}" == 'fullgenetree' ]] ; then
 else
   # In the job submission commands below, some lines are specific to the HPC system 
   # and environmnt on which the script was developped:
-  module load anaconda2/personal
+  module load anaconda3/personal
   source activate env_python2
   # In other environments, other methods may be used to access the required Python packages.
   # To emulate this on other systems, it is best to use anaconda to build your own environment

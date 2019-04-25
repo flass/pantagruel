@@ -55,7 +55,7 @@ parsecollogs=${parsecollogd}/parse_collapsedALE_scenarios.og
 
 # In the job submission commands below, some lines are specific to the HPC system 
 # and environmnt on which the script was developped:
-#   module load anaconda2/personal
+#   module load anaconda3/personal
 #   source activate env_python2
 # In other environments, other methods may be used to access the required Python packages.
 # To emulate this on other systems, it is best to use anaconda to build your own environment
@@ -64,7 +64,7 @@ parsecollogs=${parsecollogd}/parse_collapsedALE_scenarios.og
 # conda create -n env_python2 python=2.7 python-igraph biopython bcbio-gff scipy
 
 qsub -N parseColALE -l select=1:ncpus=${ncpus}:mem=${mem},walltime=${wth}:00:00 -o ${parsecollogs} -j oe -V << EOF
-module load anaconda2/personal
+module load anaconda3/personal
 source activate env_python2
 python ${ptgscripts}/parse_collapsedALE_scenarios.py --rec_sample_list ${reclist} \
  --populations ${speciestree/.full/}_populations --reftree ${speciestree}.lsd.newick \

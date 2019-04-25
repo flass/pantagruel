@@ -69,7 +69,7 @@ else
 
   # In the job submission commands below, some lines are specific to the HPC system 
   # and environmnt on which the script was developped:
-  #   module load anaconda2/personal
+  #   module load anaconda3/personal
   #   source activate env_python2
   # In other environments, other methods may be used to access the required Python packages.
   # To emulate this on other systems, it is best to use anaconda to build your own environment
@@ -81,7 +81,7 @@ else
   beg=`echo $jobrange | cut -d'-' -f1`
   tail -n +${beg} ${mlgenetreelist} | head -n ${chunksize} > ${mlgenetreelist}_${jobrange}
   qsub -N mark_unresolved_clades -l select=1:ncpus=${ncpus}:mem=${mem},walltime=${wth}:00:00 -o ${ptglogs}/mark_unresolved_clades.${collapsecond}_${jobrange}.log -j oe -V -S /usr/bin/bash << EOF
-  module load anaconda2/personal
+  module load anaconda3/personal
   source activate env_python2
   python ${ptgscripts}/mark_unresolved_clades.py --in_gene_tree_list=${mlgenetreelist}_${jobrange} --diraln=${cdsalifastacodedir} --fmt_aln_in='fasta' \
    --threads=${ncpus} --dirout=${colalinexuscodedir}/${collapsecond} --no_constrained_clade_subalns_output --dir_identseq=${mlgenetrees}/identical_sequences \
