@@ -858,7 +858,7 @@ if __name__=='__main__':
                                                                nfpopulationtree=nfpoptree, nfdpopnodedist=nfdpopnd, \
                                                                pop_stem_conds=psc, within_pop_conds=wpc, \
                                                                nbthreads=nbthreads, verbose=verbose)
-    else:
+	else:
 		spetree = poptree = dspe2pop = lnamepops = dpopnd = None
 	
 	if nflnfingtchain:
