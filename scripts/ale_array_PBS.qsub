@@ -102,21 +102,28 @@ if [ -z $relburninfrac ] ; then
 fi
 echo "will discard $relburninfrac fraction of the tree chain as burn-in"
   
-# alebin (facultative location for ALE executables; default to those found in $PATH)
-if [ -z $alebin ] ; then
-  alebin="${alebin}/"
+# alebin (facultative location for ALE executables; default to those found in $PATH, then the Docker container)
+if [ ! -z $alebin ] ; then
+  if [ ! -z $(ls -d "$alebin" 2> /dev/null) ] ; then
+    alebin="${alebin%*/}/"
+  fi
+else
+  if [ -z $(command -v ALEobserve) ] ; then
+    # no ALE program available in the command line environment (i.e. listed in $PATH directories)
+    # define alebin prefix as the Docker container
+    alebin="docker run -v $PWD:$PWD -w $PWD boussau/alesuite "
 fi
 # watchmem
 echo "# watchmem:"
 if [ -z $watchmem ] ; then
-  aleexe="${alebin}/${alealgo}"
+  aleexe="${alebin}${alealgo}"
 else
   if [[ "$watchmem"=="y" || "$watchmem"=="yes" || "$watchmem"=="true" ]] ; then
     memusg="/apps/memusage/memusage"
   else
     memusg="$watchmem"
   fi
-  aleexe="${memusg} ${alebin}/${alealgo}"
+  aleexe="${memusg} ${alebin}${alealgo}"
   echo "will watch memory usage with '${memusg}'"
 fi
 # worklocal
@@ -191,8 +198,8 @@ else
   lenchain=`wc -l ${chain} | cut -d' ' -f1`
   burnin=`echo "$lenchain * $relburninfrac" | bc`
   echo "input tree chain is ${lenchain} long; burnin is set to ${burnin%%.*}"
-  echo "# ${alebin}/ALEobserve ${chain} burnin=${burnin%%.*}"
-  ${alebin}/ALEobserve ${chain} burnin=${burnin%%.*}
+  echo "# ${alebin}ALEobserve ${chain} burnin=${burnin%%.*}"
+  ${alebin}ALEobserve ${chain} burnin=${burnin%%.*}
 fi
 date
 

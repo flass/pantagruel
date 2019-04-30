@@ -89,9 +89,16 @@ if [ -z $relburninfrac ] ; then
 fi
 echo "will discard $relburninfrac fraction of the tree chain as burn-in"
 
-# alebin (facultative location for ALE executables; default to those found in $PATH)
+# alebin (facultative location for ALE executables; default to those found in $PATH, then the Docker container)
 if [ ! -z $alebin ] ; then
-  alebin="${alebin}/"
+  if [ ! -z $(ls -d "$alebin" 2> /dev/null) ] ; then
+    alebin="${alebin%*/}/"
+  fi
+else
+  if [ -z $(command -v ALEobserve) ] ; then
+    # no ALE program available in the command line environment (i.e. listed in $PATH directories)
+    # define alebin prefix as the Docker container
+    alebin="docker run -v $PWD:$PWD -w $PWD boussau/alesuite "
 fi
 # watchmem
 echo "# watchmem:"
@@ -241,21 +248,17 @@ EOF
     savecmd1="$savecmd ./${nfrad}*.ale* $resultdir/"
     echo "# $savecmd1"
     $savecmd1
-    if [ $? != 0 ] ; then
-    echo "ERROR: unable to save result files from $PWD/ to $resultdir/"
-    fi
+    checkexec "unable to transfer result files from $PWD/ to $resultdir/" "succesfuly transferred result files from $PWD/ to $resultdir/"
   else
-  ls ${dnchain}/${nfrad}*.ale.* > /dev/null
-  if [ $? == 0 ] ; then
-    savecmd2="$savecmd ${dnchain}/${nfrad}*.ale.* $resultdir/"
-    echo "# $savecmd2"
-    $savecmd2
-    if [ $? != 0 ] ; then
-    echo "ERROR: unable to save result files from $dnchain to $resultdir/"
+    ls ${dnchain}/${nfrad}*.ale.* > /dev/null
+    if [ $? == 0 ] ; then
+      savecmd2="$savecmd ${dnchain}/${nfrad}*.ale.* $resultdir/"
+      echo "# $savecmd2"
+      $savecmd2
+      checkexec "unable to save result files from $dnchain to $resultdir/" "succesfuly transferred result files from $dnchain to $resultdir/"
+    else
+      echo "ERROR: unable to find the result files"
+      exit 1
     fi
-  else
-    echo "ERROR: unable to find the result files"
   fi
-  fi
-
 done
