@@ -268,4 +268,8 @@ EOF
       exit 1
     fi
   fi
+  if [[ "$worklocal"=="yes" ]] ; then
+    # remove local copies of input/output files
+    rm ./${nfrad}*
+  fi
 done
