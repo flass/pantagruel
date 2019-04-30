@@ -90,7 +90,7 @@ fi
 echo "will discard $relburninfrac fraction of the tree chain as burn-in"
 
 # alebin (facultative location for ALE executables; default to those found in $PATH)
-if [ -z $alebin ] ; then
+if [ ! -z $alebin ] ; then
   alebin="${alebin}/"
 fi
 # watchmem
