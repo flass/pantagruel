@@ -62,6 +62,12 @@ parsecollogs=${parsecollogd}/parse_collapsedALE_scenarios.og
 # where you make sure you are using python 2.7 and have all required packages installed with it.
 # You can do so using the following command:
 # conda create -n env_python2 python=2.7 python-igraph biopython bcbio-gff scipy
+ALEsourcenote=$(cut -f3 ${alerec}/reccol)
+
+#### NOTE
+## here for simplicity only the log variables refering to parsed reconciliations (parsedreccol, parsedreccolid, parsedreccoldate) are recorded in the database
+## but not the log variables refering to the actual reconciliations (reccol, reccolid, reccoldate)
+####
 
 qsub -N parseColALE -l select=1:ncpus=${ncpus}:mem=${mem},walltime=${wth}:00:00 -o ${parsecollogs} -j oe -V << EOF
 module load anaconda3/personal

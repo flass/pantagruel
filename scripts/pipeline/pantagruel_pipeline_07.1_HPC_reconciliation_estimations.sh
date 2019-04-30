@@ -23,9 +23,8 @@ mkdir -p ${alerec}
 
 # parameters to be set: defaults:
 #~ export ALEversion='v0.4'
-#~ export ALEalgo='ALEml_undated'
+#~ export ALEalgo='ALEml'
 #~ export recsamplesize=1000
-#~ export ALEsourcenote='program compiled from source code from of https://github.com/ssolo/ALE/commits/63f0a3c964074a15f61fd45156ab9e10b5dd45ef'
 if [ -z ${reccolid} ] ; then
  reccolid=1
 fi
@@ -57,4 +56,5 @@ qsubvars="tasklist=$tasklist, resultdir=$outrecdir, spetree=${spetree}, nrecs=${
 qsub -J 1-$Njob -N ${reccol} -l select=1:ncpus=1:mem=20gb,walltime=24:00:00 -o $alelogs/${reccol} -j oe -v "$qsubvars" ${ptgscripts}/ale_array_PBS.qsub
 
 export reccoldate=$(date +%Y-%m-%d)
-echo -e "${reccolid}\t${reccoldate}" > ${alerec}/reccol
+export ALEsourcenote="using ALE Docker image $(docker image ls | grep alesuite | awk '{print $1,$3}')"
+echo -e "${reccolid}\t${reccoldate}\t${ALEsourcenote}" > ${alerec}/reccol

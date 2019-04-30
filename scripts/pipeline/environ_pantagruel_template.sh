@@ -52,7 +52,7 @@ source ${ptgscripts}/pipeline/environ_pantagruel_defaults.sh
 #~ export subcladesuppdef=35
 #~ export criteriondef='bs'
 #~ export withinfundef='median'
-#~ export ALEalgo='ALEml_undated'
+#~ export ALEalgo='ALEml'
 #~ export recsamplesize=1000
 #~ export evtypeparse='ST'
 #~ export minevfreqparse=0.1

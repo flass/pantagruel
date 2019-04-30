@@ -20,13 +20,16 @@ checkfoldersafe ${alerec}
 ## 07. Gene tree / Species tree reconciliations
 ###############################################
 
+######################################################
+## 07.1 Infer gene tree / Species tree reconciliations
+######################################################
+
 ### perform reconciliations with ALE
 
 # parameters to be set: defaults:
 #~ export ALEversion='v0.4'
-#~ export ALEalgo='ALEml_undated'
+#~ export ALEalgo='ALEml'
 #~ export recsamplesize=1000
-#~ export ALEsourcenote='program compiled from source code from of https://github.com/ssolo/ALE/commits/63f0a3c964074a15f61fd45156ab9e10b5dd45ef'
 if [ -z ${reccolid} ] ; then
  reccolid=1
 fi
@@ -46,6 +49,8 @@ mkdir -p $alelogs/${reccol}
 outrecdir=${recs}/${collapsecond}/${replmethod}/${reccol}
 mkdir -p $outrecdir
 
+cd ${ptgtmp}
+export worklocal=false
 ## perform receonciliations sequentially (one gene family after another)
 if [[ "${chaintype}" == 'fullgenetree' ]] ; then
   # use the same species tree file for every gene family, with no collapsed populations
@@ -55,7 +60,8 @@ else
   ${ptgscripts}/ale_sequential.sh ${tasklist} ${outrecdir} Stree.nwk ${recsamplesize} ${ALEalgo}
 fi
 export reccoldate=$(date +%Y-%m-%d)
-echo -e "${reccolid}\t${reccoldate}" > ${genetrees}/reccol
+export ALEsourcenote="using ALE Docker image $(docker image ls | grep alesuite | awk '{print $1,$3}')"
+echo -e "${reccolid}\t${reccoldate}\t${ALEsourcenote}" > ${genetrees}/reccol
 
 ### parse the inferred scenarios
 # parameters to be set
@@ -79,6 +85,16 @@ python ${ptgscripts}/parse_collapsedALE_scenarios.py --rec_sample_list ${reclist
 
 export parsedreccoldate=$(date +%Y-%m-%d)
 echo -e "${parsedreccolid}\t${parsedreccoldate}" > ${genetrees}/parsedreccol
+
+
+
+######################################################
+## 07.2 Parse gene tree / Species tree reconciliations
+######################################################
+#### NOTE
+## here for simplicity only the log variables refering to parsed reconciliations (parsedreccol, parsedreccolid, parsedreccoldate) are recorded in the database
+## but not the log variables refering to the actual reconciliations (reccol, reccolid, reccoldate)
+####
 
 ## store reconciliation parameters and load parsed reconciliation data into database
 ${ptgscripts}/pantagruel_sqlitedb_phylogeny_populate_reconciliations.sh ${database} ${sqldb} ${parsedrecs} ${ALEversion} ${ALEalgo} ${ALEsourcenote} ${parsedreccol} ${parsedreccolid} ${parsedreccoldate}

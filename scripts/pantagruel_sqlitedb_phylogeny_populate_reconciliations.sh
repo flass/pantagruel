@@ -21,6 +21,11 @@ fi
 
 cd ${database}
 
+#### NOTE
+## here for simplicity only the log variables refering to parsed reconciliations (parsedreccol, parsedreccolid, parsedreccoldate) are recorded in the database
+## but not the log variables refering to the actual reconciliations (reccol, reccolid, reccoldate)
+####
+
 # load the parsed reconciliation events
 python << EOF 
 import sqlite3, os

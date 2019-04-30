@@ -88,19 +88,22 @@ if [ -z $relburninfrac ] ; then
   relburninfrac=0.25
 fi
 echo "will discard $relburninfrac fraction of the tree chain as burn-in"
-  
-alebin=$HOME/software/ALE/build/bin
+
+# alebin (facultative location for ALE executables; default to those found in $PATH)
+if [ -z $alebin ] ; then
+  alebin="${alebin}/"
+fi
 # watchmem
 echo "# watchmem:"
 if [ -z $watchmem ] ; then
-  aleexe="${alebin}/${alealgo}"
+  aleexe="${alebin}${alealgo}"
 else
   if [[ "$watchmem"=="y" || "$watchmem"=="yes" || "$watchmem"=="true" ]] ; then
     memusg="/apps/memusage/memusage"
   else
     memusg="$watchmem"
   fi
-  aleexe="${memusg} ${alebin}/${alealgo}"
+  aleexe="${memusg} ${alebin}${alealgo}"
   echo "will watch memory usage with '${memusg}'"
 fi
 # worklocal
@@ -191,10 +194,10 @@ EOF
   else
     # prepare ALE index
     lenchain=`wc -l ${chain} | cut -d' ' -f1`
-    burnin=`echo "$lenchain * $relburninfrac" | bc`
+    burnin=`python -c "print int(${lenchain} * ${relburninfrac})"`
     echo "input tree chain is ${lenchain} long; burnin is set to ${burnin%%.*}"
-    echo "# ${alebin}/ALEobserve ${chain} burnin=${burnin%%.*}"
-    ${alebin}/ALEobserve ${chain} burnin=${burnin%%.*}
+    echo "# ${alebin}ALEobserve ${chain} burnin=${burnin%%.*}"
+    ${alebin}ALEobserve ${chain} burnin=${burnin%%.*}
   fi
   date
 
@@ -228,7 +231,7 @@ EOF
 
   # save files
   if [[ "$worklocal"=="yes" ]] ; then
-    # will rapartiate files ot output dir
+    # will rapatriate files ot output dir
     savecmd="rsync -az"
   else
     savecmd="mv -f"
