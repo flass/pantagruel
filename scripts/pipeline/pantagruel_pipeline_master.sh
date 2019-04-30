@@ -513,6 +513,7 @@ for task in ${tasks} ; do
       echo "Will refresh the database settings from the configuration file '${initfile}'"
       source ${initfile}
       echo "re-run previous command line:"
+      unset runmode
       echo "# ${ptginitcmd}"
       eval "${ptginitcmd}"
     else
