@@ -126,9 +126,9 @@ for nfchain in $(cat $tasklist) ; do
   echo "current task"
   echo $nfchain
   python << EOF
-  with open('$nfchain', 'r') as fchain:
-    chainone = fchain.readline()
-    print 'ntaxa:', chainone.count('(') + 2
+with open('$nfchain', 'r') as fchain:
+  chainone = fchain.readline()
+  print 'ntaxa:', chainone.count('(') + 2
 
 EOF
   echo ""
