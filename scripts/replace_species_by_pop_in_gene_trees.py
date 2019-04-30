@@ -870,7 +870,7 @@ if __name__=='__main__':
 		ldircreate += [os.path.join(dirout, meth) for meth in methods]
 		if not dontReplace:
 			if not dircons: raise ValueError, "must provide value for options -c when passing gene tree samples to -G for label replacement (i.e. without option --no_replace)"
-			ldircreate.append('_'.join(dirout, phyloproftag))
+			ldircreate.append('_'.join([dirout, phyloproftag]))
 		else:
 			dircons = None
 		for d in ldircreate:
