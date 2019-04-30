@@ -250,13 +250,13 @@ else
   echo "found ALE suite already installed with Docker:"
   sudo docker images | grep boussau/alesuite
 fi
-if [[ -z "$(grep 'alias ALEml=' ${HOME}/.bashrc)" ]] ; then
-  echo 'alias ALEobserve="docker run -v $PWD:$PWD -w $PWD boussau/alesuite ALEobserve"' >> ${HOME}/.bashrc
-  echo 'alias ALEml="docker run -v $PWD:$PWD -w $PWD boussau/alesuite ALEml"' >> ${HOME}/.bashrc
-  echo 'alias ALEml_undated="docker run -v $PWD:$PWD -w $PWD boussau/alesuite ALEml_undated"' >> ${HOME}/.bashrc
-  checkexec "Could not store command aliases in ~/.bashrc"
-  editedrc=true
-fi
+#~ if [[ -z "$(grep 'alias ALEml=' ${HOME}/.bashrc)" ]] ; then
+  #~ echo 'alias ALEobserve="docker run -v $PWD:$PWD -w $PWD boussau/alesuite ALEobserve"' >> ${HOME}/.bashrc
+  #~ echo 'alias ALEml="docker run -v $PWD:$PWD -w $PWD boussau/alesuite ALEml"' >> ${HOME}/.bashrc
+  #~ echo 'alias ALEml_undated="docker run -v $PWD:$PWD -w $PWD boussau/alesuite ALEml_undated"' >> ${HOME}/.bashrc
+  #~ checkexec "Could not store command aliases in ~/.bashrc"
+  #~ editedrc=true
+#~ fi
 
 #~ # add Python modules to PYTHONPATH
 #~ if [[ -z "$(grep 'export PYTHONPATH=' ${HOME}/.bashrc | grep ${SOFTWARE}/pantagruel/python_libs )" ]] ; then
