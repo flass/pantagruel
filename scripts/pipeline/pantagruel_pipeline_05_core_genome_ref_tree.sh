@@ -390,6 +390,15 @@ fi
 lsd -i ${speciestree} -c -v 1 -s ${alnlen} -o ${speciestree}.lsd
 checkexec "failed ultrametrization of reference tree" "ultrametrization of reference tree complete; ultrametric tree stored in file '${speciestree}.lsd'"
 
+# export this ultrametric tree to Newick format
+python << EOF
+import tree2
+nfin = '${speciestree}.lsd.nexus'
+nfout = '${speciestree}.lsd.nwk'
+t = tree2.read_nexus(nfin, returnDict=False, allLower=False)[0]
+tree2.write_newick(t, nfout, comment=None)
+EOF
+
 ### delineate populations of near-identical strains (based on tree with branch lengths in subs/site) and generate the population tree, i.e. the species tree withs population collapsed
 python ${ptgscripts}/replace_species_by_pop_in_gene_trees.py -S ${speciestree} --threads=8 \
 --pop_stem_conds="${popstemconds}" --within_pop_conds="${withinpopconds}"

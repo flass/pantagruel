@@ -1,7 +1,5 @@
 #!/bin/bash
 # lib/module path
-export ptgscripts=${ptgrepo}/scripts
-export PYTHONPATH=${ptgrepo}/python_libs
 
 # store the init command with which the config file was created
 ptginitcmd='REPLACEptginitcmd'
@@ -44,7 +42,9 @@ export subcladesupp=REPLACEsubcladesupp                    # - wihtin-clade crit
 export criterion='REPLACEcriterion'                        # - criterion (branch support: 'bs', branch length 'lg')
 export withinfun='REPLACEwithinfun'                        # - aggregate function for testing within the clade ('min', 'max', 'mean', 'median')
 export hpcremoteptgroot='REPLACEhpcremoteptgroot'          # if not empty nor 'none', will use this server address to send data and scripts to run heavy computions there 
-# other parameters have default values defined in the source file below
+# other parameters have default values defined in the source file environ_pantagruel_defaults.sh
+export ptgscripts=${ptgrepo}/scripts
+export PYTHONPATH=${ptgrepo}/python_libs
 source ${ptgscripts}/pipeline/environ_pantagruel_defaults.sh
 # these defalts can be overriden by uncommenting the relevant line below and editing the variable's value
 # default values are:

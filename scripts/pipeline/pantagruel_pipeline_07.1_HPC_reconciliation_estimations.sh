@@ -44,9 +44,16 @@ alelogs=${ptgdb}/logs/ALE
 mkdir -p $alelogs/${reccol}
 outrecdir=${recs}/${collapsecond}/${replmethod}/${reccol}
 mkdir -p $outrecdir
+if [[ "${chaintype}" == 'fullgenetree' ]] ; then
+  # use the same species tree file for every gene family, with no collapsed populations
+  spetree=${speciestree}.lsd.nwk ${recsamplesize} ${ALEalgo}
+else
+  # use a dedicated species tree file for each gene family, with population collapsed in accordance to the gene tree
+  spetree=Stree.nwk
+fi
 
 Njob=`wc -l $tasklist | cut -f1 -d' '`
-qsubvars="tasklist=$tasklist, resultdir=$outrecdir, spetree=Stree.nwk, nrecs=${recsamplesize}, alealgo=${ALEalgo}"
+qsubvars="tasklist=$tasklist, resultdir=$outrecdir, spetree=${spetree}, nrecs=${recsamplesize}, alealgo=${ALEalgo}"
 qsub -J 1-$Njob -N ${reccol} -l select=1:ncpus=1:mem=20gb,walltime=24:00:00 -o $alelogs/${reccol} -j oe -v "$qsubvars" ${ptgscripts}/ale_array_PBS.qsub
 
 export reccoldate=$(date +%Y-%m-%d)

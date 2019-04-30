@@ -46,9 +46,14 @@ mkdir -p $alelogs/${reccol}
 outrecdir=${recs}/${collapsecond}/${replmethod}/${reccol}
 mkdir -p $outrecdir
 
-# perform receonciliations sequentially (one gene family after another)
-${ptgscripts}/ale_sequential.sh ${tasklist} ${outrecdir} Stree.nwk ${recsamplesize} ${ALEalgo}
-
+## perform receonciliations sequentially (one gene family after another)
+if [[ "${chaintype}" == 'fullgenetree' ]] ; then
+  # use the same species tree file for every gene family, with no collapsed populations
+  ${ptgscripts}/ale_sequential.sh ${tasklist} ${outrecdir} ${speciestree}.lsd.nwk ${recsamplesize} ${ALEalgo}
+else
+  # use a dedicated species tree file for each gene family, with population collapsed in accordance to the gene tree
+  ${ptgscripts}/ale_sequential.sh ${tasklist} ${outrecdir} Stree.nwk ${recsamplesize} ${ALEalgo}
+fi
 export reccoldate=$(date +%Y-%m-%d)
 echo -e "${reccolid}\t${reccoldate}" > ${genetrees}/reccol
 
