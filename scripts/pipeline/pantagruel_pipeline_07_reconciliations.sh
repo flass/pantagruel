@@ -49,8 +49,8 @@ mkdir -p $alelogs/${reccol}
 outrecdir=${recs}/${collapsecond}/${replmethod}/${reccol}
 mkdir -p $outrecdir
 
-cd ${ptgtmp}
-export worklocal=false
+cd ${ptgtmp} 
+
 ## perform receonciliations sequentially (one gene family after another)
 if [[ "${chaintype}" == 'fullgenetree' ]] ; then
   # use the same species tree file for every gene family, with no collapsed populations

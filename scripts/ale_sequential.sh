@@ -99,6 +99,9 @@ else
     # no ALE program available in the command line environment (i.e. listed in $PATH directories)
     # define alebin prefix as the Docker container
     alebin="docker run -v $PWD:$PWD -w $PWD boussau/alesuite "
+    # when using the Docker cntainer with local mounting, files will need to be available locally
+    echo "using a Docker container withlocal mount, must set worklocal='true'"
+    worklocal='yes'
   fi
 fi
 # watchmem
@@ -146,22 +149,25 @@ EOF
   echo "# # # #"
   dnchain=`dirname $nfchain`
   bnchain=`basename $nfchain`
+  bnstree=`basename $spetree`
   nfrad=${bnchain%%-*}
 
 
   ####
   if [[ "$worklocal"=="yes" ]] ; then
     # copy input files locally
-    rsync -az ${nfchain} ./
-    ls -lh ${bnchain}
+    rsync -az ${nfchain} ${spetree} ./
+    ls -lh ${bnchain} ${bnstree}
     if [ $? != 0 ] ; then
-    echo "ERROR: could not copy input file ${bnchain} locally; exit now"
+    echo "ERROR: could not copy input file ${bnchain} or ${bnstree} locally; exit now"
     exit 2
     else
     chain="./${bnchain}"
+    stree="./${bnstree}"
     fi
   else
     chain=${nfchain}
+    stree=${spetree}
   fi
 
 
@@ -213,10 +219,10 @@ EOF
   SECONDS=0
   # run ALE reconciliation 
   if [ "$alealgo" == 'ALEml' ] ; then
-    alecmd="${aleexe} ${spetree} ${chain}.ale ${nrecs} _"
+    alecmd="${aleexe} ${stree} ${chain}.ale ${nrecs} _"
     if [ "${#DTLrates[@]}" -eq 3 ] ; then alecmd="${alecmd} ${DTLrates[@]}" ; fi
   elif [ "$alealgo" == 'ALEml_undated' ] ; then
-    alecmd="${aleexe} ${spetree} ${chain}.ale sample=${nrecs} separators=_"
+    alecmd="${aleexe} ${stree} ${chain}.ale sample=${nrecs} separators=_"
     if [ "${#DTLrates[@]}" -eq 3 ] ; then alecmd="${alecmd} delta=${DTLrates[0]} tau=${DTLrates[0]} lambda=${DTLrates[0]}" ; fi
   else
     echo "ALE algorithm $alealgo not supported in this script, sorry; exit now"
