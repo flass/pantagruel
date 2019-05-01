@@ -1,23 +1,31 @@
 #!/bin/bash
 
-# store the init command with which the config file was created
-ptginitcmd='REPLACEptginitcmd'
-## primary variables
+# This is the template for generating a Pantagruel database configuration file
 
+# Variables with values starting with REPLACE are to be automaticly set during the pantagruel intit run
+# based on arguments passed as options in call `pantagruel [options] init`,
+# for instance, options `-d TheDatabaseName` and `-r /where/it/is/built`
+# will lead to setting variables ptgdbname='TheDatabaseName' and ptgroot='/where/it/is/built', respectively.
+#
 # OPTIONALLY, values of primary variables below can be manually modified here;
-# once edited, MAKE SURE TO SAVE THE FILE IN ANOTHER LOCATION
+# once edited, MAKE SURE TO SAVE THE FILE IN ANOTHER LOCATION THAN THE PANTAGRUEL SOFTWARE REPOSITORY TEMPLATE FILE
 # and use it as init_file argument for command `pantagruel init init_file`
 # NOTE this will prevent storing the value passed through options of `pantagruel [options] init` call.
 # stored values can however be overridden by specifying the option when calling a specific task
 # (only valid for task-relevant options, e.g. the use of -H option when calling 'genetrees' task will update the $hpcremoteptgrootvariable)
 
-# variables to be automaticly set during the pantagruel run
-# the first lot are derived from arguments passed as options in call `pantagruel [options] init`,
-# for instance, options `-d TheDatabaseName` and `-r /where/it/is/built`
-# will lead to setting variables ptgdbname='TheDatabaseName' and ptgroot='/where/it/is/built', respectively.
+## primary variables
+# store the init command with which the config file was created
+ptginitcmd='REPLACEptginitcmd'
+
+# location (folder) of Pantagruel software that was used
+export ptgrepo='REPLACEptgrepo'                            
+# derive paths to scripts and Python modules
+export ptgscripts=${ptgrepo}/scripts
+export PYTHONPATH=${ptgrepo}/python_libs
+# database parameters
 export ptgroot='REPLACEptgroot'                            # root folder where to build the database
 export ptgdbname='REPLACEptgdbname'                        # name of dataabse
-export ptgrepo='REPLACEptgrepo'                            # location (folder) of Pantagruel software
 export ptgversinit='REPLACEptgversinit'                    # current version of Pantagruel software
 export myemail='REPLACEmyemail'                            # user identity (better use e-amil address)
 export famprefix='REPLACEfamprefix'                        # gene family prefix
@@ -41,9 +49,7 @@ export subcladesupp=REPLACEsubcladesupp                    # - wihtin-clade crit
 export criterion='REPLACEcriterion'                        # - criterion (branch support: 'bs', branch length 'lg')
 export withinfun='REPLACEwithinfun'                        # - aggregate function for testing within the clade ('min', 'max', 'mean', 'median')
 export hpcremoteptgroot='REPLACEhpcremoteptgroot'          # if not empty nor 'none', will use this server address to send data and scripts to run heavy computions there 
-# derive paths to scripts and Python modules
-export ptgscripts=${ptgrepo}/scripts
-export PYTHONPATH=${ptgrepo}/python_libs
+
 # other parameters have default values defined in the generic source file environ_pantagruel_defaults.sh
 source ${ptgscripts}/pipeline/environ_pantagruel_defaults.sh
 # these defalts can be overriden by uncommenting the relevant line below and editing the variable's value
@@ -66,83 +72,7 @@ source ${ptgscripts}/pipeline/environ_pantagruel_defaults.sh
 #~ export seqcentre="somewhere"
 #~ export refgenus="Reference"
 
-### BEWARE!!! value of variables below is unsafe to modify
-
-## secondary variables
-# head folders
-export ptgdb=${ptgroot}/${ptgdbname}
-export ptglogs=${ptgdb}/logs
-export ptgtmp=${ptgdb}/tmp
-export indata=${ptgdb}/00.input_data
-export seqdb=${ptgdb}/01.seqdb
-export protali=${ptgdb}/02.gene_alignments
-export database=${ptgdb}/03.database
-export funcannot=${ptgdb}/04.functional
-export coregenome=${ptgdb}/05.core_genome
-export genetrees=${ptgdb}/06.gene_trees
-export alerec=${ptgdb}/07.ALE_reconciliation
-export orthogenes=${ptgdb}/08.orthologs
-export comparerecs=${entdb}/09.compare_scenarios
-
-# sub folders
-export contigs=${customassemb}/contigs
-export annot=${customassemb}/annotation
-export gblikeass=${customassemb}/genbank-format_assemblies
-export genomeinfo=${indata}/genome_infos
-export assemblies=${indata}/assemblies
-export families=${seqdb}/protein_families
-export nrprotali=$protali/nr_protfam_clustalo_alignments
-export cdsalifastacodedir=${protali}/full_cdsfam_alignments_species_code
-export protalifastacodedir=${protali}/full_protfam_alignments_species_code
-export coretree=${coregenome}/raxml_tree
-export mlgenetrees=${genetrees}/raxml_trees
-# sub folders that depend on the gene tree clade collapsing option
-export colalinexuscodedir=${genetrees}/${chaintype}_cdsfam_alignments_species_code
-export bayesgenetrees=${genetrees}/${chaintype}_mrbayes_trees
-export coltreechains=${genetrees}/${chaintype}_tree_chains
-export recs=${alerec}/${chaintype}_recs
-export goterms=${funcannot}/GeneOntology
-export claderefgodir=${goterms}/clade_go_term_reference_sets
-export dirgotablescladespe=${orthomatrad}_specific_genes.tables_byclade_goterms_pathways
-export dirgoenrichcladespecore=${goterms}/clade_go_term_enriched_cladespecific_vs_coregenome
-export dirgoenrichcladespepan=${goterms}/clade_go_term_enriched_cladespecific_vs_pangenome
-export compoutdir=${comparerecs}/${parsedreccol}
-
-# other secondary variables
-export ngenomes=$(ls -A "${indata}/assemblies/" 2> /dev/null | wc -l)
-export straininfo=${customassemb}/strain_infos_${ptgdbname}.txt
-export sqldbname=${ptgdbname,,}
-export sqldb=${database}/${sqldbname}
-export allfaarad=${seqdb}/all_proteomes
-export mmseqsclout=${families}/$(basename ${allfaarad}.nr).mmseqs_clusterdb_default
-export protfamseqs=${mmseqsclout}_clusters_fasta
-export protorfanclust="${famprefix}P000000"
-export cdsorfanclust="${famprefix}C000000"
-if [ "$userreftree" != "REPLACEuserreftree" ] ; then
-  export coretreerad=${coregenome}/user-defined_reference_tree_${ptgdbname}
-else
-  export coretreerad=${coregenome}/core-genome-based_reference_tree_${ptgdbname}
-fi
-export nrbesttopo=${coretreerad}.topology
-export nrbesttree=${coretreerad}.branlen
-export nrbiparts=${coretreerad}.supports
-export nrrootedtree=${coretreerad}.rooted
-export speciestree=${coretreerad}.full
-if [[ -z "${pseudocoremingenomes}" || "${pseudocoremingenomes}" == "${ngenomes}" ]] ; then
-  export pseudocore='strict-core-unicopy'
-else
-  export pseudocore=pseudo-core-${pseudocoremingenomes}-unicopy
-fi
-export treename=${pseudocore}_concat_${coreseqtype}_${ngenomes}-genomes_${ptgdbname}
-export pseudocorealn=${coregenome}/${treename}.aln
-if [[ "${chaintype}" == 'fullgenetree' ]] ; then
-  export collapsecond='nocollapse'
-  export replmethod='noreplace'
-else
-  export collapsecond=${criterion}_stem${cladesupp}_within${withinfun}${subcladesupp}
-  export replmethod='replaceCCinGasinS-collapsePOPinSnotinG'
-fi
-export IPversion=$(interproscan --version | head -n 1 | sed -e 's/InterProScan version //')
-export interpro=${funcannot}/InterProScan_${IPversion}
-
+# secondary vars are defined based on the above
+source ${ptgscripts}/pipeline/environ_pantagruel_secondaryvars.sh
+# load shared functions
 source ${ptgscripts}/pipeline/pantagruel_pipeline_functions.sh

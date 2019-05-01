@@ -65,7 +65,7 @@ echo "## built with Pantagruel version '${ptgversion}'; source code available at
 ptgversinit="${ptgversion}"
 
 rm -f ${ptgtmp}/sedenvvar.sh
-echo -n "tail -n +2 ${templateenv}" > ${ptgtmp}/sedenvvar.sh
+echo -n "tail -n +16 ${templateenv}" > ${ptgtmp}/sedenvvar.sh
 for var in 'ptginitcmd' 'ptgdbname' 'ptgroot' 'ptgrepo' 'ptgversinit' 'myemail' 'famprefix' \
      'ncbitax' 'ncbiass' 'listncbiass' 'customassemb' 'refass' 'listrefass' \
      'pseudocoremingenomes' 'userreftree' 'coreseqtype' 'poplgthresh' 'poplgleafmul' 'popbsthresh' 'rootingmethod' \
