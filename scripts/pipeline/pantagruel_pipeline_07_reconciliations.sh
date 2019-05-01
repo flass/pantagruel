@@ -68,6 +68,7 @@ if [ ! -z "$alebin" ] ; then
     ALEsourcenote="using ALE software compiled from source; code origin: ${alesrcorig}; version ${alesrcvers}"
   else
     ALEsourcenote="using ALE software binaries found at $(readlink -f ${alebin})"
+  fi
 else
   ALEsourcenote="using ALE Docker image $(docker image ls | grep alesuite | awk '{print $1,$3}')"
 fi
