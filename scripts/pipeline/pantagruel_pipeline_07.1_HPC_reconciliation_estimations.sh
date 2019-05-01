@@ -13,6 +13,32 @@ if [ -z "$1" ] ; then echo "missing mandatory parameter: pantagruel config file"
 envsourcescript="$1"
 source ${envsourcescript}
 
+if [ ! -z "$2" ] ; then
+  export ncpus="$2"
+else
+  export ncpus=1
+fi
+if [ ! -z "$3" ] ; then
+  mem="$3"
+else
+  mem=96gb
+fi
+if [ ! -z "$4" ] ; then
+  wth="$4"
+else
+  wth=72
+fi
+if [ ! -z "$5" ] ; then
+  parallelflags=":$5"
+  # for instance, parallelflags="mpiprocs=1:ompthreads=8"
+  # will force the use of OpenMP multi-threading instead of default MPI parallelism
+  # note this is not standard and might not be the default on your HPC system;
+  # also the flags may be different depending on the HPC system config.
+  # you should get in touch with your system admins to know the right flags
+else
+  parallelflags=""
+fi
+
 ######################################################
 ## 07.1 Infer gene tree / Species tree reconciliations
 ######################################################
@@ -53,7 +79,8 @@ fi
 
 Njob=`wc -l $tasklist | cut -f1 -d' '`
 qsubvars="tasklist=$tasklist, resultdir=$outrecdir, spetree=${spetree}, nrecs=${recsamplesize}, alealgo=${ALEalgo}"
-qsub -J 1-$Njob -N ${reccol} -l select=1:ncpus=1:mem=20gb,walltime=24:00:00 -o $alelogs/${reccol} -j oe -v "$qsubvars" ${ptgscripts}/ale_array_PBS.qsub
+echo "qsub -J 1-$Njob -N ${reccol} -l select=1:ncpus=${ncpus}:mem=${mem}${parallelflags},walltime=${wth}:00:00 -o $alelogs/${reccol} -j oe -v \"$qsubvars\" ${ptgscripts}/ale_array_PBS.qsub"
+qsub -J 1-$Njob -N ${reccol} -l select=1:ncpus=${ncpus}:mem=${mem}${parallelflags},walltime=${wth}:00:00 -o $alelogs/${reccol} -j oe -v "$qsubvars" ${ptgscripts}/ale_array_PBS.qsub
 
 export reccoldate=$(date +%Y-%m-%d)
 
