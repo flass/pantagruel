@@ -397,7 +397,7 @@ sys.setrecursionlimit(20000)
 import tree2
 nfin = '${speciestree}.lsd.nexus'
 nfout = '${speciestree}.lsd.nwk'
-t = tree2.read_nexus(nfin, returnDict=False, allLower=False)[0]
+t = tree2.read_nexus(nfin, returnDict=False, allLower=False, checkNewick=True)[0]
 tree2.write_newick(t, nfout, comment=None)
 EOF
 
