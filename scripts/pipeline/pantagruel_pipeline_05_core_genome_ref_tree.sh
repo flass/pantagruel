@@ -390,8 +390,10 @@ fi
 lsd -i ${speciestree} -c -v 1 -s ${alnlen} -o ${speciestree}.lsd
 checkexec "failed ultrametrization of reference tree" "ultrametrization of reference tree complete; ultrametric tree stored in file '${speciestree}.lsd'"
 
-# export this ultrametric tree to Newick format
+# export this ultrametric tree to Newick format (latest verison of LSD don't do it any more)
 python << EOF
+import sys
+sys.setrecursionlimit(20000)
 import tree2
 nfin = '${speciestree}.lsd.nexus'
 nfout = '${speciestree}.lsd.nwk'
