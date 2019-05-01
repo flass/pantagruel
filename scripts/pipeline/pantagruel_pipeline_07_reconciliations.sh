@@ -79,7 +79,7 @@ ${ptgscripts}/lsfullpath.py "${outrecdir}/ale_collapsed_${rectype}/*ml_rec" > $r
 ## normalise the species tree branch labels across gene families
 ## and look for correlated transfer events across gene families
 python ${ptgscripts}/parse_collapsedALE_scenarios.py --rec_sample_list ${reclist} \
- --populations ${speciestree/.full/}_populations --reftree ${speciestree}.lsd.newick \
+ --populations ${speciestree/.full/}_populations --reftree ${speciestree}.lsd.nwk \
  --dir_table_out ${parsedrecs} --evtype ${evtypeparse} --minfreq ${minevfreqparse} \
  --threads 8  &> $entlogs/parse_collapsedALE_scenarios.log &
 

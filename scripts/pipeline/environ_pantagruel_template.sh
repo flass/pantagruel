@@ -14,16 +14,15 @@
 # stored values can however be overridden by specifying the option when calling a specific task
 # (only valid for task-relevant options, e.g. the use of -H option when calling 'genetrees' task will update the $hpcremoteptgrootvariable)
 
-## primary variables
-# store the init command with which the config file was created
+# the init command with which the config file was created
 ptginitcmd='REPLACEptginitcmd'
 
 # location (folder) of Pantagruel software that was used
 export ptgrepo='REPLACEptgrepo'                            
-# derive paths to scripts and Python modules
+# derive paths to Pantagruel scripts and Python modules
 export ptgscripts=${ptgrepo}/scripts
 export PYTHONPATH=${ptgrepo}/python_libs
-# database parameters
+# database parameters (primary variables)
 export ptgroot='REPLACEptgroot'                            # root folder where to build the database
 export ptgdbname='REPLACEptgdbname'                        # name of dataabse
 export ptgversinit='REPLACEptgversinit'                    # current version of Pantagruel software
@@ -62,7 +61,7 @@ source ${ptgscripts}/pipeline/environ_pantagruel_defaults.sh
 #~ export ncorebootstrap=200
 # gene tree inference parameters
 #~ export mainresulttag='rootedTree'
-# gene trees collapsing DEFAULT values (used when -C option is not present in init call)
+# gene trees collapsing DEFAULT values (used when -C option is NOT present in init call)
 #~ export cladesuppdef=70
 #~ export subcladesuppdef=35
 #~ export criteriondef='bs'

@@ -7,7 +7,7 @@ export refgenus="Reference"
 export ncorebootstrap=200
 # gene tree inference parameters
 export mainresulttag='rootedTree'
-# gene trees collapsing DEFAULT values (used when -C option is not present in init call)
+# gene trees collapsing DEFAULT values (used when -C option is NOT present in init call)
 export cladesuppdef=70
 export subcladesuppdef=35
 export criteriondef='bs'
