@@ -56,5 +56,16 @@ qsubvars="tasklist=$tasklist, resultdir=$outrecdir, spetree=${spetree}, nrecs=${
 qsub -J 1-$Njob -N ${reccol} -l select=1:ncpus=1:mem=20gb,walltime=24:00:00 -o $alelogs/${reccol} -j oe -v "$qsubvars" ${ptgscripts}/ale_array_PBS.qsub
 
 export reccoldate=$(date +%Y-%m-%d)
-export ALEsourcenote="using ALE Docker image $(docker image ls | grep alesuite | awk '{print $1,$3}')"
+
+if [ ! -z "$alebin" ] ; then
+  alerepo=${alebin%%ALE/*}ALE/
+  alesrcvers=$(cd ${alerepo} && git log | head -n 1 | awk '{ print $2 }' 2> /dev/null && cd - > /dev/null)
+  alesrcorig=$(cd ${alerepo} && git remote -v | grep fetch | awk '{ print $2 }' 2> /dev/null && cd - > /dev/null)
+  if [ ! -z "$alesrcvers" ] ; then
+    ALEsourcenote="using ALE software compiled from source; code origin: ${alesrcorig}; version ${alesrcvers}"
+  else
+    ALEsourcenote="using ALE software binaries found at $(readlink -f ${alebin})"
+else
+  ALEsourcenote="using ALE Docker image $(docker image ls | grep alesuite | awk '{print $1,$3}')"
+fi
 echo -e "${reccolid}\t${reccoldate}\t${ALEsourcenote}" > ${alerec}/reccol
