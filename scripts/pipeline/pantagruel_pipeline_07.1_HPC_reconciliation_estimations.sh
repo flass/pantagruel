@@ -93,7 +93,7 @@ if [ "${resumetask}" == 'true' ] ; then
 fi
 
 Njob=`wc -l $tasklist | cut -f1 -d' '`
-qsubvars="tasklist='${tasklist}', resultdir='${outrecdir}', spetree='${spetree}', nrecs='${recsamplesize}', alealgo='${ALEalgo}', alebin='${alebin}', watchmem='${watchmem}"
+qsubvars="tasklist='${tasklist}', resultdir='${outrecdir}', spetree='${spetree}', nrecs='${recsamplesize}', alealgo='${ALEalgo}', alebin='${alebin}', watchmem='${watchmem}'"
 echo "qsub -J 1-$Njob -N ${reccol} -l select=1:ncpus=${ncpus}:mem=${mem}${parallelflags},walltime=${wth}:00:00 -o $alelogs/${reccol} -j oe -v \"$qsubvars\" ${ptgscripts}/ale_array_PBS.qsub"
 qsub -J 1-$Njob -N ${reccol} -l select=1:ncpus=${ncpus}:mem=${mem}${parallelflags},walltime=${wth}:00:00 -o $alelogs/${reccol} -j oe -v "$qsubvars" ${ptgscripts}/ale_array_PBS.qsub
 
