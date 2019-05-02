@@ -102,6 +102,8 @@ usagelong (){
   echo "                         'sequencing_project_id' must match the name of a contig file (e.g. 'seqProjID.fasta')"
   echo "                         'locus_tag_prefix' must match the prefix of ids given to CDS, proteins and genome regions (contigs)"
   echo "                         in potentially provided annotation files (see below)."
+  echo "                         Note that for ensuring compatibility with dependencies (namely BioPython Nexus alignment parser"
+  echo "                         and ALE reconciliation program), the characters '-' and '_' are forbiden in the 'locus_tag_prefix' field."
   echo "                      _optional_ "
   echo "                       - an 'annotation/' folder, where are stored annotation files: "
   echo "                         - one mandatory in GFF 3.0 file format (with a '.gff' extension);"

@@ -135,6 +135,28 @@ if [ ! -z "${customassemb}" ] ; then
      fi
      echo " exit now"
      exit 1
+    else
+      # check that proposed locus-tag prefix are free from characters '-' and '_'
+      python << EOF
+nfin = '${straininfo}'
+errprefix = "Error in format of strain info file '%s':"%nfin
+errsuffix = " Please edit the file accordingly."
+dstrains = {}
+expectedfields = set(['assembly_id','genus','species','strain','taxid','locus_tag_prefix'])
+with open(nfin, 'r') as fin:
+  header = fin.readline().rstrip('\n').split('\t')
+  missingfields = set(header) - expectedfields
+  if missingfields:
+    raise ValueError, "%s the fields %s are missing from the header"%(errprefix, repr(list(missingfields)), errsuffix)
+  ltpi = header.index('locus_tag_prefix')
+  for line in fin:
+    lsp = line.rstrip('\n').split('\t')
+    ltp = lsp[ltpi]
+    if ('-' in ltp) or ('_' in ltp):
+      raise ValueError, "%s the characters '-' and '_' are forbiden in the 'locus_tag_prefix' field."%(errprefix, errsuffix)
+
+EOF
+    checkexec "Custom strain info file detected; Error in format" "Custom strain info file detected; format validated"
     fi
   fi
   if [ -d "${customassemb}/annotations" ] ; then

@@ -214,34 +214,39 @@ ls -AF user_genomes/contigs/
 # D03_1.fasta
 # F03_1.fasta
 # ... 
-# as many separate genomic FASTA files as there are genomes to study
+```
+There should be as many separate genomic FASTA files in `user_genomes/contigs/` as there are genomes to study.
 
+```sh
 ls -AF user_genomes/annotation/
 # B03_1/
 # C03_1/
 # D03_1/
 # ... 
-# arbitrary number of annotation folders, only those which names
-# match a genomic FASTA files in contigs/ will be considered
-#
+```
+There can be an arbitrary number of annotation folders, only those which names match a genomic FASTA files in contigs/ will be considered
 
+```sh
 ls -AF user_genomes/annotation/B03_1/
 # Rhizobium_endolithicum_Q54.fna
 # Rhizobium_endolithicum_Q54.ffn
 # Rhizobium_endolithicum_Q54.faa
 # Rhizobium_endolithicum_Q54.gff
-# the file names within ech annotation folder do not matter, only their extensions.
+```
+The file names within each annotation folder do not matter, only their extensions.
 
+```sh
 cat user_genomes/strain_infos_databasename.txt
 # assembly_id	genus	species	strain	taxid	locus_tag_prefix
 # B03_1	Rhizobium	endolithicum	Q54	1335060	REQ54
 # ...
-# as many rows as FASTA files in the contigs/ folder + onea header row
-# tab-separated fields; header with these field names mandatory; order does not matter.
-# the values in 'assembly_id' and 'locus_tag_prefix' fields must be unique;
-# the 'assembly_id' field value must match the begin of contig file name
-# and match exactly the annotation folder name.
 ```
+There should be as many rows as FASTA files in the `contigs/` folder, plus one header row.
+Fields should be tab-separated; the header must contain these field names: `assembly_id`, `genus`, `species`, `strain`, `taxid`, `locus_tag_prefix`; their order does not matter.
+The values in `assembly_id` and `locus_tag_prefix` fields must be unique per row.
+The `assembly_id` field value must match the begin of contig file name and match exactly the annotation folder name.
+The characters `'-'` and `'_'` are forbiden in the `locus_tag_prefix` field.
+
 
 ### Options
 
@@ -317,6 +322,8 @@ Options are detailed here:
                          'sequencing_project_id' must match the name of a contig file (e.g. 'seqProjID.fasta')
                          'locus_tag_prefix' must match the prefix of ids given to CDS, proteins and genome regions (contigs)
                          in potentially provided annotation files (see below).
+                         Note that for ensuring compatibility with dependencies (namely BioPython Nexus alignment parser
+                         and ALE reconciliation program), the characters '-' and '_' are forbiden in the 'locus_tag_prefix' field.
                       _optional_ 
                        - an 'annotation/' folder, where are stored annotation files: 
                          - one mandatory in GFF 3.0 file format (with a '.gff' extension);
