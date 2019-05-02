@@ -254,6 +254,7 @@ replrun=$(date +'%d%m%Y')
 
 export dtag="$(date +'%Y%m%d-%H%M%S')"
 if [ "${resumetask}" == 'true' ] ; then
+  rm -f ${tasklist}_resume
   # following lines are for resuming after a stop in batch computing, or to collect those jobs that crashed (and may need to be re-ran with more mem/time allowance)
   for nfrun1t in $(cat $tasklist) ; do
     bnrun1t=$(basename $nfrun1t)

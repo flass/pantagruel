@@ -80,7 +80,7 @@ else
 fi
 
 if [ "${resumetask}" == 'true' ] ; then
-  rm ${tasklist}_resumetasklist
+  rm -f ${tasklist}_resume
   # resuming after a stop in batch computing, or to collect those jobs that crashed (and may need to be re-ran with more mem/time allowance)
   for nfgs in $(cat $tasklist) ; do
     bng=$(basename $nfgs)
@@ -88,8 +88,8 @@ if [ "${resumetask}" == 'true' ] ; then
     if [[ ! -e ${recs}/${collapsecond}/${replmethod}/${reccol}/${bnalerec} ]] ; then
      echo ${nfgs}
    fi
-  done > ${tasklist}_resumetasklist
-  export tasklist=${tasklist}_resumetasklist
+  done > ${tasklist}_resume
+  export tasklist=${tasklist}_resume
 fi
 
 Njob=`wc -l $tasklist | cut -f1 -d' '`

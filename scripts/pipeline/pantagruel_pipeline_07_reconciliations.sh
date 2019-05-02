@@ -52,7 +52,7 @@ mkdir -p $outrecdir
 cd ${ptgtmp} 
 
 if [ "${resumetask}" == 'true' ] ; then
-  rm ${tasklist}_resumetasklist
+  rm -f ${tasklist}_resumetasklist
   # resuming after a stop in batch computing, or to collect those jobs that crashed (and may need to be re-ran with more mem/time allowance)
   for nfgs in $(cat $tasklist) ; do
     bng=$(basename $nfgs)

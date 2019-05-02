@@ -77,7 +77,7 @@ else
   
   export dtag="$(date +'%Y%m%d-%H%M%S')"
   if [ "${resumetask}" == 'true' ] ; then
-    rm ${tasklist}_resumetasklist*
+    rm -f ${tasklist}_resume*
     # resuming after a stop in batch computing, or to collect those jobs that crashed (and may need to be re-ran with more mem/time allowance)
     for nfrun1t in $(cat $tasklist) ; do
      bnrun1t=$(basename $nfrun1t)
@@ -86,8 +86,8 @@ else
      if [[ ! -e ${coltreechains}/${collapsecond}/${replmethod}/${bnGtre} || ! -e ${coltreechains}/${collapsecond}/${replmethod}/${bnStre} ]] ; then
        echo ${nfrun1t}
      fi
-    done > ${tasklist}_resumetasklist
-    export tasklist=${tasklist}_resumetasklist
+    done > ${tasklist}_resume
+    export tasklist=${tasklist}_resume
   fi
   # PBS-submitted parallel job
   # divide run in small chunks o be run in different jobs
