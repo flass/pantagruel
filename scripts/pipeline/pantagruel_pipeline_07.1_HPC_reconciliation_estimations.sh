@@ -57,8 +57,10 @@ fi
 # derived parameters
 if [ ${ALEalgo} == 'ALEml_undated' ] ; then
   export rectype='undat'
+  tag='u'
 else
   export rectype='dated'
+  tag=''
 fi
 export reccol="ale_${chaintype}_${rectype}_${reccolid}"
 export recs=${alerec}/${chaintype}_recs
@@ -75,6 +77,19 @@ if [[ "${chaintype}" == 'fullgenetree' ]] ; then
 else
   # use a dedicated species tree file for each gene family, with population collapsed in accordance to the gene tree
   spetree=Stree.nwk
+fi
+
+if [ "${resumetask}" == 'true' ] ; then
+  rm ${tasklist}_resumetasklist
+  # resuming after a stop in batch computing, or to collect those jobs that crashed (and may need to be re-ran with more mem/time allowance)
+  for nfgs in $(cat $tasklist) ; do
+    bng=$(basename $nfgs)
+    bnalerec=${bng}.ale.${tag}ml_rec
+    if [[ ! -e ${recs}/${collapsecond}/${replmethod}/${reccol}/${bnalerec} ]] ; then
+     echo ${nfgs}
+   fi
+  done > ${tasklist}_resumetasklist
+  export tasklist=${tasklist}_resumetasklist
 fi
 
 Njob=`wc -l $tasklist | cut -f1 -d' '`

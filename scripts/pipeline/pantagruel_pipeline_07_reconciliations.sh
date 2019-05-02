@@ -51,6 +51,19 @@ mkdir -p $outrecdir
 
 cd ${ptgtmp} 
 
+if [ "${resumetask}" == 'true' ] ; then
+  rm ${tasklist}_resumetasklist
+  # resuming after a stop in batch computing, or to collect those jobs that crashed (and may need to be re-ran with more mem/time allowance)
+  for nfgs in $(cat $tasklist) ; do
+    bng=$(basename $nfgs)
+    bnalerec=${bng}.ale.${tag}ml_rec
+    if [[ ! -e ${recs}/${collapsecond}/${replmethod}/${reccol}/${bnalerec} ]] ; then
+     echo ${nfgs}
+   fi
+  done > ${tasklist}_resumetasklist
+  tasklist=${tasklist}_resumetasklist
+fi
+
 ## perform receonciliations sequentially (one gene family after another)
 if [[ "${chaintype}" == 'fullgenetree' ]] ; then
   # use the same species tree file for every gene family, with no collapsed populations
