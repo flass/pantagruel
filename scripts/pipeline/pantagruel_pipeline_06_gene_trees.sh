@@ -247,7 +247,7 @@ fi
 
 mkdir -p ${ptgdb}/logs/replspebypop
 repltasklist=${coltreechains}_${collapsecond}_nexus_list
-${ptgscripts}/lsfullpath.py "${bayesgenetrees}/${collapsecond}/*run1.t" > ${repltasklist}
+${ptgscripts}/lsfullpath.py "${bayesgenetrees}/${collapsecond}/*.mb.run1.t" > ${repltasklist}
 repllogd=${ptgdb}/logs/replspebypop
 repllogs=$repllogd/replace_species_by_pop_in_gene_trees
 replrun=$(date +'%d%m%Y')  

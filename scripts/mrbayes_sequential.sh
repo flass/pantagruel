@@ -101,9 +101,9 @@ fi
 echo "showmodel" >> ${nfrad2}.mbparam.txt
 if [ "${mbversion%.*}" == '3.2' ] ; then
 # following line WORKED with MrBayes v3.2.2, but DID NOT WORK with v3.1.2 as the checkpoint option is new to v3.2
-  echo "mcmcp $mbmcmcopt file=${nfrad2}.mb.nex checkpoint=yes checkfreq=100000" >> ${nfrad2}.mbparam.txt
+  echo "mcmcp $mbmcmcopt file=${nfrad2}.mb checkpoint=yes checkfreq=100000" >> ${nfrad2}.mbparam.txt
 else
-  echo "mcmcp $mbmcmcopt file=${nfrad2}.mb.nex" >> ${nfrad2}.mbparam.txt
+  echo "mcmcp $mbmcmcopt file=${nfrad2}.mb" >> ${nfrad2}.mbparam.txt
 fi
 echo "mcmc" >> ${nfrad2}.mbparam.txt
 if [ "${mbversion%.*}" == '3.2' ] ; then
