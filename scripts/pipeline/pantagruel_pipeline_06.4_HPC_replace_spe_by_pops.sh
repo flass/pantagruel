@@ -38,6 +38,11 @@ if [ ! -z "$5" ] ; then
 else
   parallelflags=""
 fi
+if [ ! -z "$6" ] ; then
+  chunksize="$6"
+else
+  chunksize=100
+fi
 
 
 
@@ -91,7 +96,6 @@ else
   fi
   # PBS-submitted parallel job
   # divide run in small chunks o be run in different jobs
-  chunksize=100
   Njob=`wc -l ${tasklist} | cut -f1 -d' '`
   jobranges=($(${ptgscripts}/get_jobranges.py $chunksize $Njob))
   rm -f ${tasklist}_${dtag}_taskchunks
