@@ -124,6 +124,7 @@ if [ -z "$watchmem" ] ; then
   aleexe="${alebin}${alealgo}"
 else
   if [[ "$watchmem"=="y" || "$watchmem"=="yes" || "$watchmem"=="true" ]] ; then
+    watchmem="yes"
     memusg="/apps/memusage/memusage"
   else
     memusg="$watchmem"
@@ -231,10 +232,10 @@ echo "# # # #"
 
 ALETIME=$SECONDS
 if [ ! -z "$prevcomputetime" ] ; then ALETIME=$(( $ALETIME + $prevcomputetime )) ; fi
-echo -e "$nfrad\t$alealgo\t$ALETIME" > $nfrad.ale.computetime
+echo -e "$nfrad\t$alealgo\t$ALETIME" > ${nfrad}.ale.computetime
 echo "reconciliation estimation took" $(date -u -d @${ALETIME} +"%Hh%Mm%Ss") "total time"
 if [ ! -z "$prevcomputetime" ] ; then echo "(including ${prevcomputetime} in previous run)" ; fi
-
+if [[ "$watchmem"=="yes" ]] ; then mv memusage.*.out ${nfrad}.ale.memusage ; fi
 echo "# ls"
 ls
 
