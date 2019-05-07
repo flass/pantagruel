@@ -52,7 +52,8 @@ export mmseqsclout=${families}/$(basename ${allfaarad}.nr).mmseqs_clusterdb_defa
 export protfamseqs=${mmseqsclout}_clusters_fasta
 export protorfanclust="${famprefix}P000000"
 export cdsorfanclust="${famprefix}C000000"
-if [ "$userreftree" != "REPLACEuserreftree" ] ; then
+#~ if [ "$userreftree" != "REPLACEuserreftree" ] ; then
+if [ -z "$userreftree" ] ; then
   export coretreerad=${coregenome}/user-defined_reference_tree_${ptgdbname}
 else
   export coretreerad=${coregenome}/core-genome-based_reference_tree_${ptgdbname}
