@@ -158,10 +158,26 @@ else
   
   ## compute first pass of gene trees with RAxML, using rapid bootstrap to estimate branch supports
   tasklist=${famlist}_aln_list
-  rm -f ${tasklist}
+  rm -f ${tasklist}*
   for fam in $(cut -f1 ${famlist}) ; do
-   ls ${cdsalifastacodedir}/${fam}.codes.aln >> ${tasklist}
+    aln=${cdsalifastacodedir}/${fam}.codes.aln
+    if [[ "${resumetask}" == "true" ]] ; then
+      if [[ -s ${mlgenetrees}/${mainresulttag}/RAxML_rootedTree.${fam}.codes ]] ; then
+        ls ${aln} >> ${tasklist}_resume
+      fi
+    fi
+    ls ${aln} >> ${tasklist}
   done
+  if [[ "${resumetask}" == "true" ]] ; then
+    if [[ -s ${tasklist}_resume ]] ; then
+      echo "Resume task 6: $(wc -l ${cdsalifastacodealnlist}_resume | cut -d' ' -f1) ML trees left to infer"
+    else
+      echo "Resume task 6: all ML tree built; skip ML tree building"
+    fi
+    tasklist=${tasklist}_resume
+  fi
+  
+  
   ${ptgscripts}/raxml_sequential.sh ${tasklist} ${mlgenetrees} 'GTRCATX' 'bipartitions rootedTree identical_sequences' 'x' $(nproc) 'true'
   checkexec "RAxML tree estimation was interupted ; exit now" "RAxML tree estimation complete"
   
