@@ -161,9 +161,12 @@ if [[ "$worklocal"=="yes" ]] ; then
     chain="./${bnchain}"
     stree="./${bnstree}"
   fi
+  # will rapartiate files to output dir
+  savecmd="rsync -az"
 else
   chain=${nfchain}
   stree=${spetree}
+  savecmd="mv -f"
 fi
 
 
@@ -225,8 +228,18 @@ else
   exit 2
 fi
 echo "# ${alecmd}"
-${alecmd}
-  
+if [[ "$watchmem"=="yes" ]] ; then 
+  # run it in bg with a daemon checking
+  ${alecmd} &
+  alepid=$!
+  while [ ! -z $(ps -q $alepid -o comm=) ] ; do
+    tail -n 1 memusage.*.out > ${nfrad}.ale.memusage
+    $savecmd ./${nfrad}.ale.memusage $resultdir/
+    sleep 60s
+  done
+else
+  ${alecmd}
+fi
 echo ""
 echo "# # # #"
 
@@ -235,17 +248,10 @@ if [ ! -z "$prevcomputetime" ] ; then ALETIME=$(( $ALETIME + $prevcomputetime ))
 echo -e "$nfrad\t$alealgo\t$ALETIME" > ${nfrad}.ale.computetime
 echo "reconciliation estimation took" $(date -u -d @${ALETIME} +"%Hh%Mm%Ss") "total time"
 if [ ! -z "$prevcomputetime" ] ; then echo "(including ${prevcomputetime} in previous run)" ; fi
-if [[ "$watchmem"=="yes" ]] ; then tail -n 1 memusage.*.out > ${nfrad}.ale.memusage ; fi
 echo "# ls"
 ls
 
 # save files
-if [[ "$worklocal"=="yes" ]] ; then
-  # will rapartiate files ot output dir
-  savecmd="rsync -az"
-else
-  savecmd="mv -f"
-fi
 ls ./${nfrad}*.ale.* > /dev/null
 if [ $? == 0 ] ; then
   savecmd1="$savecmd ./${nfrad}*.ale* $resultdir/"
