@@ -168,9 +168,12 @@ else
   ############################
   ## 06.2 Gene tree collapsing
   ############################
-
   if [ -z ${collapsecolid} ] ; then
-    collapsecolid=1
+    if [ -e ${genetrees}/replacecol
+      collapsecolid=$(cut -f1 ${genetrees}/replacecol)
+      collapsecolid=$(( $collapsecolid + 1 ))
+    else
+      collapsecolid=1
   fi
   
   ## detect clades to be collapsed in gene trees
@@ -219,9 +222,9 @@ for fam in $(cut -f1 ${famlist}) ; do
     fi
   fi
   if [ -z "${chaindone}" ] ; then
-    ls ${nexusaln4chains}/${fam}.codes.nex >> ${mbtasklist}_resume
+    ls ${nexusaln4chains}/${fam}*.nex >> ${mbtasklist}_resume
   else
-    ls ${nexusaln4chains}/${fam}.codes.nex >> ${mbtasklist}_alreadydone
+    ls ${nexusaln4chains}/${fam}*.nex >> ${mbtasklist}_alreadydone
   fi
 done
 

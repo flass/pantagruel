@@ -27,7 +27,7 @@ ncpus=$(( $nchains * $nruns ))
 wth=24
 tasklist=${nexusaln4chains}_ali_list
 rm -f $tasklist
-${ptgscripts}/lsfullpath.py "${nexusaln4chains}/*" > $tasklist
+${ptgscripts}/lsfullpath.py "${nexusaln4chains}/*nex" > $tasklist
 dtag=$(date +"%Y-%m-%d-%H-%M-%S")
 
 if [ "${resumetask}" == 'true' ] ; then
