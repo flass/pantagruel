@@ -162,7 +162,7 @@ else
   for fam in $(cut -f1 ${famlist}) ; do
     aln=${cdsalifastacodedir}/${fam}.codes.aln
     if [[ "${resumetask}" == "true" ]] ; then
-      if [[ ! -s ${mlgenetrees}/${mainresulttag}/RAxML_rootedTree.${fam}.codes ]] ; then
+      if [[ ! -s ${mlgenetrees}/${mainresulttag}/RAxML_${mainresulttag}.${fam}.codes ]] ; then
         ls ${aln} >> ${tasklist}_resume
       fi
     fi
@@ -177,7 +177,6 @@ else
     tasklist=${tasklist}_resume
   fi
   
-  
   ${ptgscripts}/raxml_sequential.sh ${tasklist} ${mlgenetrees} 'GTRCATX' 'bipartitions rootedTree identical_sequences' 'x' $(nproc) 'true'
   checkexec "RAxML tree estimation was interupted ; exit now" "RAxML tree estimation complete"
   
@@ -187,7 +186,9 @@ else
   if [ -z ${collapsecolid} ] ; then
     if [ -e ${genetrees}/replacecol ] ; then
       collapsecolid=$(cut -f1 ${genetrees}/replacecol)
-      collapsecolid=$(( $collapsecolid + 1 ))
+      if [[ "${resumetask}" != "true" ]] ; then
+        collapsecolid=$(( $collapsecolid + 1 ))
+      fi
     else
       collapsecolid=1
     fi
@@ -197,8 +198,25 @@ else
   export collapsecriteriondef="--clade_stem_conds=[('$criterion','>=',$cladesupp)] --within_clade_conds=[('$withinfun','$criterion','<=',$subcladesupp,-1),('max','$criterion','<',$cladesupp,-1)]"
   mkdir -p ${colalinexuscodedir}/${collapsecond}
   mlgenetreelist=${mlgenetrees%*s}_list
+  rm -f ${mlgenetreelist}
   ${ptgscripts}/lsfullpath.py "${mlgenetrees}/${mainresulttag}/*" | sort > ${mlgenetreelist}
-  
+  if [[ "${resumetask}" == "true" ]] ; then
+    for gt in $(cat ${mlgenetreelist}) ; do
+      bngt=$(basename $gt)
+      fam=$( echo ${gt} | cut -d'.' -f2 )
+      colaln=${colalinexuscodedir}/${collapsecond}/collapsed_alns/${fam}-collapsed.nex
+      if [[ ! -s ${colaln} ]] ; then
+        echo ${gt} >> ${mlgenetreelist}_resume
+      fi
+    done
+    if [[ -s ${mlgenetreelist}_resume ]] ; then
+      echo "Resume task 6: $(wc -l ${mlgenetreelist}_resume | cut -d' ' -f1) ML trees left to collapse"
+    else
+      echo "Resume task 6: all ML tree collapsed; skip ML tree collapsing"
+    fi
+    mlgenetreelist=${mlgenetreelist}_resume
+  fi
+
   python ${ptgscripts}/mark_unresolved_clades.py --in_gene_tree_list=${mlgenetreelist} --diraln=${cdsalifastacodedir} --fmt_aln_in='fasta' \
    --threads=$(nproc) --dirout=${colalinexuscodedir}/${collapsecond} --no_constrained_clade_subalns_output --dir_identseq=${mlgenetrees}/identical_sequences \
    ${collapsecriteriondef} 
