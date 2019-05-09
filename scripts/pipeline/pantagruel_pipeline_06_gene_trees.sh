@@ -174,6 +174,7 @@ else
       collapsecolid=$(( $collapsecolid + 1 ))
     else
       collapsecolid=1
+    fi
   fi
   
   ## detect clades to be collapsed in gene trees
