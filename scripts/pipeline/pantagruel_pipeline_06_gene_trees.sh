@@ -208,29 +208,30 @@ samplef=500
 ncpus=$(( $nchains * $nruns ))
 ntreeperchain=$(( $ngen / $samplef ))
 mbtasklist=${nexusaln4chains}_ali_list
-${ptgscripts}/lsfullpath.py "${nexusaln4chains}/*.codes.nex" > ${mbtasklist}
-rm -f ${mbtasklist}_alreadydone
-rm -f ${mbtasklist}_resume
-for fam in $(cut -f1 ${famlist}) ; do
-  chaindone=''
-  if [[ "${resumetask}" == "true" ]] ; then
+if [[ "${resumetask}" == "true" ]] ; then
+  rm -f ${mbtasklist}_alreadydone
+  rm -f ${mbtasklist}_resume
+  for fam in $(cut -f1 ${famlist}) ; do
+    chaindone=''
     gtchain1=${mboutputdir}/${fam}.codes.mb.nex.run1.t
     if [[ -s ${gtchain1} ]] ; then
       if [[ $(grep -F -c "tree gen" ${gtchain1} | cut -d' ' -f1) -ge ${ntreeperchain} && ! -z "$(tail -n 1 ${gtchain1} | grep 'end')" ]] ; then
         chaindone='yes'
       fi
     fi
-  fi
-  if [ -z "${chaindone}" ] ; then
-    ls ${nexusaln4chains}/${fam}*.nex >> ${mbtasklist}_resume
-  else
-    ls ${nexusaln4chains}/${fam}*.nex >> ${mbtasklist}_alreadydone
-  fi
-done
+    if [ -z "${chaindone}" ] ; then
+      ls ${nexusaln4chains}/${fam}*.nex >> ${mbtasklist}_resume
+    else
+      ls ${nexusaln4chains}/${fam}*.nex >> ${mbtasklist}_alreadydone
+    fi
+  done
+fi
 
 if [[ "${resumetask}" == "true" && -e ${mbtasklist}_alreadydone ]] ; then
   echo "$(wc -l ${mbtasklist}_alreadydone | cut -d' ' -f1) bayesian tree chains already complete; skip their computation"
   mbtasklist=${mbtasklist}_resume
+else
+  ${ptgscripts}/lsfullpath.py "${nexusaln4chains}/*.nex" > ${mbtasklist}
 fi
 
 if [ -s ${mbtasklist} ] ; then
