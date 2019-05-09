@@ -162,7 +162,7 @@ else
   for fam in $(cut -f1 ${famlist}) ; do
     aln=${cdsalifastacodedir}/${fam}.codes.aln
     if [[ "${resumetask}" == "true" ]] ; then
-      if [[ -s ${mlgenetrees}/${mainresulttag}/RAxML_rootedTree.${fam}.codes ]] ; then
+      if [[ ! -s ${mlgenetrees}/${mainresulttag}/RAxML_rootedTree.${fam}.codes ]] ; then
         ls ${aln} >> ${tasklist}_resume
       fi
     fi
@@ -170,7 +170,7 @@ else
   done
   if [[ "${resumetask}" == "true" ]] ; then
     if [[ -s ${tasklist}_resume ]] ; then
-      echo "Resume task 6: $(wc -l ${cdsalifastacodealnlist}_resume | cut -d' ' -f1) ML trees left to infer"
+      echo "Resume task 6: $(wc -l ${tasklist}_resume | cut -d' ' -f1) ML trees left to infer"
     else
       echo "Resume task 6: all ML tree built; skip ML tree building"
     fi
