@@ -169,7 +169,7 @@ else
   ## 06.2 Gene tree collapsing
   ############################
   if [ -z ${collapsecolid} ] ; then
-    if [ -e ${genetrees}/replacecol
+    if [ -e ${genetrees}/replacecol ] ; then
       collapsecolid=$(cut -f1 ${genetrees}/replacecol)
       collapsecolid=$(( $collapsecolid + 1 ))
     else
