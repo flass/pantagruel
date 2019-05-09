@@ -235,7 +235,7 @@ if [ ! -z "$prevcomputetime" ] ; then ALETIME=$(( $ALETIME + $prevcomputetime ))
 echo -e "$nfrad\t$alealgo\t$ALETIME" > ${nfrad}.ale.computetime
 echo "reconciliation estimation took" $(date -u -d @${ALETIME} +"%Hh%Mm%Ss") "total time"
 if [ ! -z "$prevcomputetime" ] ; then echo "(including ${prevcomputetime} in previous run)" ; fi
-if [[ "$watchmem"=="yes" ]] ; then mv memusage.*.out ${nfrad}.ale.memusage ; fi
+if [[ "$watchmem"=="yes" ]] ; then tail -n 1 memusage.*.out > ${nfrad}.ale.memusage ; fi
 echo "# ls"
 ls
 
