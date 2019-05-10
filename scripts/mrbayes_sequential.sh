@@ -5,8 +5,8 @@ outputdir="${2}"
 export mbmcmcopt="${3}"
 
 if [ -z $mbversion ] ; then
-# assumes use of most recent version
-mbversion='3.2.6'
+  # assumes use of most recent version
+  mbversion='3.2.6'
 fi
 
 ## I/O file path (lists)
@@ -17,7 +17,7 @@ fi
 ## the MCMCMC run options, notably the flag for resuming from a checkpoint
 # mbmcmcopt
 
-### e.g. qsub -v tasklist=/path/list outputdir=/path/dir mbmcmcopt="params string"
+### e.g. tasklist=/path/list  ; outputdir=/path/dir ; mbmcmcopt="params string"
 
 # test key variables have been provided
 if [ -z "$tasklist" ] ; then

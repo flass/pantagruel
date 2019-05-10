@@ -29,6 +29,7 @@ tasklist=${nexusaln4chains}_ali_list
 rm -f $tasklist
 ${ptgscripts}/lsfullpath.py "${nexusaln4chains}/*nex" > $tasklist
 dtag=$(date +"%Y-%m-%d-%H-%M-%S")
+append=''
 
 if [ "${resumetask}" == 'true' ] ; then
   #~ # following lines are for resuming after a stop in batch computing, or to collect those jobs that crashed (and may need to be re-ran with more mem/time allowance)
@@ -40,12 +41,13 @@ if [ "${resumetask}" == 'true' ] ; then
    fi
   done > ${tasklist}_resumetask_${dtag}
   tasklist=${tasklist}_resumetask_${dtag}
+  append='append=yes'
 fi
+qsubvar="tasklist=${tasklist}, outputdir=${mboutputdir}, mbmcmcpopt='Nruns=${nruns} Ngen=2000000 Nchains=${nchains}', mbmcmcopt='${append}'"
 
 Njob=`wc -l ${tasklist} | cut -f1 -d' '`
 chunksize=1000
 jobranges=($(${ptgscripts}/get_jobranges.py $chunksize $Njob))
-qsubvar="mbversion=3.2.6, tasklist=${tasklist}, outputdir=${mboutputdir}, mbmcmcpopt='Nruns=${nruns} Ngen=2000000 Nchains=${nchains}'"
 for jobrange in ${jobranges[@]} ; do
  echo $jobrange $qsubvar
  dlogs=${ptglogs}/mrbayes/${chaintype}_mrbayes_trees_${collapsecond}_${dtag}_${jobrange}
