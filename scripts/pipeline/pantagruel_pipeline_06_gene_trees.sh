@@ -243,6 +243,7 @@ samplef=500
 ncpus=$(( $nchains * $nruns ))
 ntreeperchain=$(( $ngen / $samplef ))
 mbtasklist=${nexusaln4chains}_ali_list
+${ptgscripts}/lsfullpath.py "${nexusaln4chains}/*.nex" > ${mbtasklist}
 if [[ "${resumetask}" == "true" ]] ; then
   rm -f ${mbtasklist}_alreadydone
   rm -f ${mbtasklist}_resume
@@ -269,10 +270,6 @@ if [[ "${resumetask}" == "true" && -e ${mbtasklist}_alreadydone ]] ; then
   echo "$(wc -l ${mbtasklist}_alreadydone | cut -d' ' -f1) bayesian tree chains already complete; skip their computation"
   mbtasklist=${mbtasklist}_resume
   export mbmcmcopt='append=yes'
-fi
-
-else
-  ${ptgscripts}/lsfullpath.py "${nexusaln4chains}/*.nex" > ${mbtasklist}
 fi
 
 if [ -s ${mbtasklist} ] ; then
