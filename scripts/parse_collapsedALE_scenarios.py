@@ -290,11 +290,11 @@ def loadRefPopTree(nfrefspetree, nfpop=None):
 		refspetree.complete_internal_labels(order=0, ffel=True)
 		refspetree.complete_node_ids(force=True)
 		annotatePopulationInSpeciesTree(refspetree, lnamepops, returnCopy=False, returnAncNodes=False)
+		nfrefspetreeout = nfrefspetree.rsplit('.', 1)[0]+'_internalPopulations.nwk'
+		refspetree.write_newick(nfrefspetreeout, ignoreBS=True)
 	else:
 		lnamepops += [(leaflab, [leaflab]) for leaflab in refspetree.get_leaf_labels()]
 	dspe2pop = getdspe2pop(lnamepops)
-	nfrefspetreeout = nfrefspetree.rsplit('.', 1)[0]+'_internalPopulations.nwk'
-	refspetree.write_newick(nfrefspetreeout, ignoreBS=True)
 	return (refspetree, dspe2pop)
 	
 def generateEventRefDB(refspetree, ALEmodel='undated', refTreeTableOutDir=None, TfromOutside=True):
