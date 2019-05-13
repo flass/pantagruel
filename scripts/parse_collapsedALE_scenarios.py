@@ -280,6 +280,8 @@ def loadRecGeneTreeLabelAliasesAndListRecFiles(nflnfrec, nfgenefamlist=None, dir
 def loadRefPopTree(nfrefspetree, nfpop=None):
 	# annotate reference species tree with ancestral population node labels
 	refspetree = tree2.AnnotatedNode(file=nfrefspetree)
+	refspetree.complete_internal_labels(order=0, ffel=True)
+	refspetree.complete_node_ids(force=True)
 	lnamepops = []
 	if nfpop:
 		with open(nfpop, 'r') as fpop:
@@ -287,8 +289,6 @@ def loadRefPopTree(nfrefspetree, nfpop=None):
 				if line.startswith('#'): continue
 				lsp = line.rstrip('\n').split('\t')
 				lnamepops.append((lsp[0], tuple(lsp[1].split())))
-		refspetree.complete_internal_labels(order=0, ffel=True)
-		refspetree.complete_node_ids(force=True)
 		annotatePopulationInSpeciesTree(refspetree, lnamepops, returnCopy=False, returnAncNodes=False)
 		nfrefspetreeout = nfrefspetree.rsplit('.', 1)[0]+'_internalPopulations.nwk'
 		refspetree.write_newick(nfrefspetreeout, ignoreBS=True)
