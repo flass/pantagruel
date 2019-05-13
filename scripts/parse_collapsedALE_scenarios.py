@@ -277,18 +277,21 @@ def loadRecGeneTreeLabelAliasesAndListRecFiles(nflnfrec, nfgenefamlist=None, dir
 	genefamlist = loadRecGeneTreeLabelAliases(nfgenefamlist, dircons=dircons, dirrepl=dirrepl, nbthreads=nbthreads, verbose=verbose)
 	return (lnfrec, genefamlist)
 	
-def loadRefPopTree(nfrefspetree, nfpop):
+def loadRefPopTree(nfrefspetree, nfpop=None):
 	# annotate reference species tree with ancestral population node labels
-	lnamepops = []
-	with open(nfpop, 'r') as fpop:
-		for line in fpop:
-			if line.startswith('#'): continue
-			lsp = line.rstrip('\n').split('\t')
-			lnamepops.append((lsp[0], tuple(lsp[1].split())))
 	refspetree = tree2.AnnotatedNode(file=nfrefspetree)
-	refspetree.complete_internal_labels(order=0, ffel=True)
-	refspetree.complete_node_ids(force=True)
-	annotatePopulationInSpeciesTree(refspetree, lnamepops, returnCopy=False, returnAncNodes=False)
+	lnamepops = []
+	if nfpop:
+		with open(nfpop, 'r') as fpop:
+			for line in fpop:
+				if line.startswith('#'): continue
+				lsp = line.rstrip('\n').split('\t')
+				lnamepops.append((lsp[0], tuple(lsp[1].split())))
+		refspetree.complete_internal_labels(order=0, ffel=True)
+		refspetree.complete_node_ids(force=True)
+		annotatePopulationInSpeciesTree(refspetree, lnamepops, returnCopy=False, returnAncNodes=False)
+	else:
+		lnamepops += [(leaflab, [leaflab]) for leaflab in refspetree.get_leaf_labels()]
 	dspe2pop = getdspe2pop(lnamepops)
 	nfrefspetreeout = nfrefspetree.rsplit('.', 1)[0]+'_internalPopulations.nwk'
 	refspetree.write_newick(nfrefspetreeout, ignoreBS=True)

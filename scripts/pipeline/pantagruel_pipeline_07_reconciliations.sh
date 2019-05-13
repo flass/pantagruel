@@ -99,11 +99,16 @@ export parsedrecs=${alerec}/parsed_recs/${parsedreccol}
 mkdir -p ${parsedrecs}
 reclist=$outrecdir/ale_collapsed_${rectype}_uml_rec_list
 ${ptgscripts}/lsfullpath.py "${outrecdir}/ale_collapsed_${rectype}/*ml_rec" > $reclist
- 
+
+if [ "$chaintype" == 'fullgenetree' ] ; then
+  pops=""
+else
+  pops=" --populations ${speciestree/.full/}_populations"
+fi
 ## normalise the species tree branch labels across gene families
 ## and look for correlated transfer events across gene families
 python ${ptgscripts}/parse_collapsedALE_scenarios.py --rec_sample_list ${reclist} \
- --populations ${speciestree/.full/}_populations --reftree ${speciestree}.lsd.nwk \
+ ${pops} --reftree ${speciestree}.lsd.nwk \
  --dir_table_out ${parsedrecs} --evtype ${evtypeparse} --minfreq ${minevfreqparse} \
  --threads 8  &> $entlogs/parse_collapsedALE_scenarios.log &
 

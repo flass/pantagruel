@@ -4,7 +4,7 @@ tasklist="${1}"
 outputdir="${2}"
 export mbmcmcopt="${3}"
 
-if [ -z $mbversion ] ; then
+if [ -z $q ] ; then
   # assumes use of most recent version
   mbversion='3.2.6'
 fi
@@ -54,7 +54,7 @@ echo ""
 
 echo "current directory (output directory) is $HOSTNAME:$PWD"
 
-echo 'mbmcmcopt="$mbmcmcopt"'
+echo "mbmcmcopt=$mbmcmcopt"
 
 mbresume=$(python << EOF
 mbmcmcopts="$mbmcmcopt".lower().split()
