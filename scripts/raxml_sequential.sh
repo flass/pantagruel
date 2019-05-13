@@ -112,6 +112,7 @@ raxmlcallz=""
 ### pipeline
 raxmlcalls=(raxmlcall0 raxmlcall1 raxmlcall2 raxmlcall3 raxmlcall4 raxmlcallz)
 
+smallfam=''
 status=$?
 for i in {0..5} ; do
   let j=$i-1
@@ -135,6 +136,7 @@ for i in {0..5} ; do
         if [[ $nbnrseq -lt 4 ]] ; then
           echo "WARNING: Reduced alignment is too small to pass further steps ; copy the identical_sequences file to '${outputdir}/identical_sequences/' and stops here"
           mv -f ${outputdir}/bulk/RAxML_identical_sequences.${nfrad2} ${outputdir}/identical_sequences/
+          smallfam='true'
           break
         else
           echo "# Found $(wc -l RAxML_identical_sequences.${nfrad2} | cut -d':' -f2) redundant sequences; replace input alignment '${localn}' by '${localn}.reduced'."
@@ -147,9 +149,11 @@ for i in {0..5} ; do
   fi
 done
 
-for resulttag in ${resulttags[@]} ; do
-  mv -f ${outputdir}/bulk/RAxML_${resulttag}.${nfrad2} ${outputdir}/${resulttag}/
-done
+if [ -z $smallfam ] ; then
+  for resulttag in ${resulttags[@]} ; do
+    mv -f ${outputdir}/bulk/RAxML_${resulttag}.${nfrad2} ${outputdir}/${resulttag}/
+  done
+fi
 
 ### end loop over alignments
 done
