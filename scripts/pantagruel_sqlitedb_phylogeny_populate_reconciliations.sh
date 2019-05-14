@@ -10,13 +10,14 @@ parsedreccol=$7
 parsedreccolid=$8
 parsedreccoldate=$9
 
+currsetvar="currently set variable:\ndatabase=$1 dbfile=$2 parsedrecs=$3 ALEversion=$4 ALEalgo=$5 ALEsourcenote=$6 parsedreccol=$7 parsedreccolid=$8 parsedreccoldate=$9"
 
 if [ -z $parsedreccolid ] ; then
  echo "Error: incomplete argument list. Usage:"
  echo "${thisscript} db_table_dump_folder sqlitedb_file parsed_recs_folder ALE_software_version ALE_bin_name ALE_source_description parsed_recs_collection parsed_recs_collection_id [parsed_recs_collection_date]"
- echo "currently set variable:"
- echo "database=$1 dbfile=$2 parsedrecs=$3 ALEversion=$4 ALEalgo=$5 ALEsourcenote=$6 parsedreccol=$7 parsedreccolid=$8 parsedreccoldate=$9"
+ echo -e ${currsetvar} 
  exit 1
+else
 fi
 
 cd ${database}
@@ -30,7 +31,7 @@ cd ${database}
 python << EOF 
 import sqlite3, os
 dbname = '${dbfile}'
-dbcon = sqlite3.connect(dbname=dbname)
+dbcon = sqlite3.connect(dbname)
 dbcur = dbcon.cursor()
 dbcur.execute('alter table gene_lineage_events alter reconciliation_id set default ${parsedreccolid};')
 dirgtevt = '${parsedrecs}/gene_tree_lineages'
@@ -54,7 +55,7 @@ EOF
 #~ df.to_sql(table_name, conn, if_exists='append', index=False)
 
 sqlite3 ${dbfile} << EOF 
-
+BEGIN;
 INSERT INTO reconciliation_collections (reconciliation_id, reconciliation_name, software, version, algorithm, reconciliation_date, notes)
  VALUES (${parsedreccolid}, '${parsedreccol}', 'ALE', '${ALEversion}', '${ALEalgo}', '${parsedreccoldate}', '${ALEsourcenote}') ;
 
@@ -108,5 +109,6 @@ INNER JOIN (SELECT DISTINCT replacement_label_or_cds_code FROM gene_lineage_even
 CREATE INDEX ON gene_tree_label2cds_code (replacement_label_or_cds_code);
 ALTER TABLE gene_tree_label2cds_code ADD PRIMARY KEY (cds_code);
 
-VACUUM ;
+COMMIT;
+VACUUM;
 EOF
