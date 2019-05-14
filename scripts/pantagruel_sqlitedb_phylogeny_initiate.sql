@@ -65,11 +65,16 @@ CREATE TABLE replaced_gene_tree_clades (
   replace_criterion_id SMALLINT DEFAULT NULL
 );
 
-CREATE VIEW replacement_label_or_cds_code2gene_families AS 
-SELECT cds_code as replacement_label_or_cds_code, gene_family_id FROM coding_sequences
-UNION
-SELECT replacement_label as replacement_label_or_cds_code, gene_family_id FROM replaced_gene_tree_clades;
+CREATE TABLE replacement_label_or_cds_code2gene_families (
+  rlocds_id INTEGER PRIMARY KEY AUTOINCREMENT,
+  replacement_label_or_cds_code VARCHAR(20) NOT NULL,
+  gene_family_id VARCHAR(20) NOT NULL
+);
 
+CREATE TABLE gene_tree_label2cds_code (
+  replacement_label_or_cds_code VARCHAR(60) NOT NULL, 
+  cds_code VARCHAR(20) NOT NULL
+);
 
 CREATE TABLE ortholog_collections (
   ortholog_col_id SMALLINT PRIMARY KEY,

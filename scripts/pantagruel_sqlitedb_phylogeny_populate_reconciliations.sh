@@ -1,16 +1,16 @@
 #!/bin/bash
-thisscript=$0
-database=$1
-dbfile=$2
-parsedrecs=$3
-ALEversion=$4
-ALEalgo=$5
-ALEsourcenote=$6
-parsedreccol=$7
-parsedreccolid=$8
-parsedreccoldate=$9
+thisscript="${0}"
+database="${1}"
+dbfile="${2}"
+parsedrecs="${3}"
+ALEversion="${4}"
+ALEalgo="${5}"
+ALEsourcenote="${6}"
+parsedreccol="${7}"
+parsedreccolid="${8}"
+parsedreccoldate="${9}"
 
-currsetvar="currently set variable:\ndatabase=$1 dbfile=$2 parsedrecs=$3 ALEversion=$4 ALEalgo=$5 ALEsourcenote=$6 parsedreccol=$7 parsedreccolid=$8 parsedreccoldate=$9"
+currsetvar="currently set variable:\ndatabase='${1}' dbfile='${2}' parsedrecs='${3}' ALEversion='${4}' ALEalgo='${5}' ALEsourcenote='${6}' parsedreccol='${7}' parsedreccolid='${8}' parsedreccoldate='${9}'"
 
 if [ -z $parsedreccolid ] ; then
  echo "Error: incomplete argument list. Usage:"
@@ -44,8 +44,9 @@ dbcon.commit()
 dirspet = '${parsedrecs}/ref_species_tree'
 with open(os.path.join(dirspet, 'phylogeny_species_tree.tab')) as fspet:
     dbcur.executemany('insert into species_tree (branch_id, parent_branch_id, branch_name, is_tip) values (?,?,?,?);', (line.rstrip('\n').split('\t') for line in fspet))
+
 with open(os.path.join(dirspet, 'phylogeny_species_tree_events.tab')) as fspetevt:
-    dbcur.executemany('insert into species_tree (event_id, event_type, don_branch_id, rec_branch_id) values (?,?,?,?);', (line.rstrip('\n').split('\t') for line in fspetevt))
+    dbcur.executemany('insert into species_tree_events (event_id, event_type, don_branch_id, rec_branch_id) values (?,?,?,?);', (line.rstrip('\n').split('\t') for line in fspetevt))
 
 dbcon.commit()
 EOF
@@ -58,25 +59,25 @@ BEGIN;
 INSERT INTO reconciliation_collections (reconciliation_id, reconciliation_name, software, version, algorithm, reconciliation_date, notes)
  VALUES (${parsedreccolid}, '${parsedreccol}', 'ALE', '${ALEversion}', '${ALEalgo}', '${parsedreccoldate}', '${ALEsourcenote}') ;
 
-CREATE INDEX ON gene_lineage_events (reconciliation_id);
-CREATE INDEX ON gene_lineage_events (replacement_label_or_cds_code);
-CREATE INDEX ON gene_lineage_events USING HASH (replacement_label_or_cds_code);
-CREATE INDEX ON gene_lineage_events (event_id);
-CREATE INDEX ON gene_lineage_events USING HASH (event_id);
-CREATE INDEX ON gene_lineage_events (freq);
-CREATE INDEX ON gene_lineage_events (replacement_label_or_cds_code, event_id);
-ALTER TABLE gene_lineage_events ADD PRIMARY KEY (reconciliation_id, replacement_label_or_cds_code, event_id);
+CREATE INDEX gene_lineage_events_recid ON gene_lineage_events (reconciliation_id);
+CREATE INDEX gene_lineage_events_rlocds ON gene_lineage_events (replacement_label_or_cds_code);
+CREATE INDEX gene_lineage_events_evtid ON gene_lineage_events (event_id);
+CREATE INDEX gene_lineage_events_freq ON gene_lineage_events (freq);
+CREATE INDEX gene_lineage_events_rlocds_evtid ON gene_lineage_events (replacement_label_or_cds_code, event_id);
+CREATE UNIQUE INDEX gene_lineage_events_recid_rlocds_evtid ON gene_lineage_events (reconciliation_id, replacement_label_or_cds_code, event_id);
 
-CREATE INDEX ON collapsed_gene_tree_clades (gene_family_id);
-CREATE INDEX ON collapsed_gene_tree_clades (gene_family_id, col_clade);
-CREATE INDEX ON collapsed_gene_tree_clades (cds_code);
-ALTER TABLE collapsed_gene_tree_clades ADD PRIMARY KEY (cds_code, collapse_criterion_id);
+CREATE UNIQUE INDEX collapsed_gene_tree_clades_colcritid ON collapsed_gene_tree_clades (collapse_criterion_id);
+CREATE INDEX collapsed_gene_tree_clades_genefamid ON collapsed_gene_tree_clades (gene_family_id);
+CREATE INDEX collapsed_gene_tree_clades_cc ON collapsed_gene_tree_clades (gene_family_id, col_clade);
+CREATE INDEX collapsed_gene_tree_clades_cdscode ON collapsed_gene_tree_clades (cds_code);
+CREATE UNIQUE INDEX collapsed_gene_tree_clades_cdscode_colcritid ON collapsed_gene_tree_clades (cds_code, collapse_criterion_id);
 
-CREATE INDEX ON replaced_gene_tree_clades (gene_family_id, col_clade_or_cds_code);
-CREATE INDEX ON replaced_gene_tree_clades (replacement_label);
-ALTER TABLE replaced_gene_tree_clades ADD PRIMARY KEY (replacement_label, replace_criterion_id);
+CREATE UNIQUE INDEX replaced_gene_tree_clades_replcritid ON replaced_gene_tree_clades (replace_criterion_id);
+CREATE INDEX replaced_gene_tree_clades_genefamid_ccocds ON replaced_gene_tree_clades (gene_family_id, col_clade_or_cds_code);
+CREATE INDEX replaced_gene_tree_clades_replab ON replaced_gene_tree_clades (replacement_label);
+CREATE UNIQUE INDEX replaced_gene_tree_clades_replab_replcritid ON replaced_gene_tree_clades (replacement_label, replace_criterion_id);
 
-CREATE TABLE replacement_label_or_cds_code2gene_families AS 
+INSERT INTO replacement_label_or_cds_code2gene_families (replacement_label_or_cds_code, gene_family_id) 
 SELECT replacement_label_or_cds_code, gene_family_id FROM (
  SELECT cds_code as replacement_label_or_cds_code, gene_family_id FROM coding_sequences
 UNION
@@ -84,12 +85,10 @@ UNION
 ) q1 
 INNER JOIN (SELECT DISTINCT replacement_label_or_cds_code FROM gene_lineage_events) q2 USING (replacement_label_or_cds_code);
 
-CREATE UNIQUE INDEX ON replacement_label_or_cds_code2gene_families (replacement_label_or_cds_code);
-CREATE INDEX ON replacement_label_or_cds_code2gene_families (gene_family_id);
-ALTER TABLE replacement_label_or_cds_code2gene_families ADD COLUMN rlocds_id SERIAL PRIMARY KEY;
--- could use OIDs instead
+CREATE UNIQUE INDEX rlocds2genefam_rlocds ON replacement_label_or_cds_code2gene_families (replacement_label_or_cds_code);
+CREATE INDEX rlocds2genefam_genefam ON replacement_label_or_cds_code2gene_families (gene_family_id);
 
-CREATE TABLE gene_tree_label2cds_code (replacement_label_or_cds_code, cds_code) AS
+INSERT INTO gene_tree_label2cds_code (replacement_label_or_cds_code, cds_code) 
 SELECT replacement_label_or_cds_code, cds_code FROM (
   SELECT cds_code as replacement_label_or_cds_code, cds_code 
    FROM coding_sequences
@@ -105,8 +104,8 @@ SELECT replacement_label_or_cds_code, cds_code FROM (
 INNER JOIN (SELECT DISTINCT replacement_label_or_cds_code FROM gene_lineage_events) q2 USING (replacement_label_or_cds_code)
 ;
 
-CREATE INDEX ON gene_tree_label2cds_code (replacement_label_or_cds_code);
-ALTER TABLE gene_tree_label2cds_code ADD PRIMARY KEY (cds_code);
+CREATE INDEX gtlab2cds_rlocds ON gene_tree_label2cds_code (replacement_label_or_cds_code);
+CREATE UNIQUE INDEX gtlab2cds_cdscode ON gene_tree_label2cds_code (cds_code);
 
 COMMIT;
 VACUUM;
