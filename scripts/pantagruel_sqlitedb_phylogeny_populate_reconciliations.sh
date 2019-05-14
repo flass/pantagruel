@@ -18,6 +18,7 @@ if [ -z $parsedreccolid ] ; then
  echo -e ${currsetvar} 
  exit 1
 else
+ echo -e ${currsetvar} 
 fi
 
 cd ${database}
