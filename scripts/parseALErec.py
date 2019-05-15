@@ -114,12 +114,13 @@ def parseDatedRecGeneTree(recgt, spet, dexactevt={}, recgtsample=None, nsample=1
 							print recgt
 							raise IndexError, "transfer event reception (Tr) is the first event on gene tree branch,\nbut could not find transfer emission (Td) event before it;\nlast event on previous branch: %s"%repr(pevent)
 			else:
-				dnodeallevt.setdefault(nodeid, []).append((evtype, evloc))
 				if evtype[-1]=='L':
 					dnodeallevt.setdefault(nodeid, []).append((evtype[:-1], evloc))
 					if ('L' in recordEvTypes):
 						sisspe = spet[evloc].go_brother()
 						dnodeallevt.setdefault(nodeid, []).append(('L', sisspe.label()))
+				else:
+					dnodeallevt.setdefault(nodeid, []).append((evtype, evloc))
 		if ('O' in recordEvTypes) and not node.go_father():
 			# record origination = gene creation or transfer from outside the dataset
 			if lineage:
