@@ -177,8 +177,8 @@ def parseRec(nfrec, refspetree=None, ALEmodel='undated', drefspeeventTup2Ids=Non
 		if refspetree:
 			assert refspetree.hasSameTopology(tcolspetree, checkInternalLabels=True)
 	if verbose:
-		print 'refspetree:', refspetree
-		print 'colspetree:', colspetree
+		print 'refspetree:', refspetree.newick(ignoreBS=True)
+		print 'colspetree:', colspetree.newick(ignoreBS=True)
 		print 'dcol2fullspenames:', dcol2fullspenames
 	if ALEmodel=='dated':
 		# add reference for '#OUTSIDE#' taxon
@@ -192,7 +192,7 @@ def parseRec(nfrec, refspetree=None, ALEmodel='undated', drefspeeventTup2Ids=Non
 		# gather scenario-scpecific events (i.e. dependent on reconciled gene tree topology, which varies among the sample)
 		dlevt, dnodeallevt = pAr.parseRecGeneTree(recgt, colspetree, ALEmodel=ALEmodel, dexactevt=dexactevt, recgtsample=recgtsample, \
 		                                          nsample=nsample, fillDTLSdict=False, recordEvTypes=recordEvTypes, \
-		                                          excludeTaggedLeaves=collapsedcladetag, excludeTaggedSubtrees=replacementcladetag)
+		                                          excludeTaggedLeaves=collapsedcladetag, excludeTaggedSubtrees=replacementcladetag, verbose=verbose)
 		# here events involving a replcement clade (RC) or leaf (CC) are excluded
 		# * 'dexactevt' is used as cache to store frequencies of event s as inferred from regex searches of the event pattern
 		# these frequencies are not specific to gene lineages, but aggregate the counts over the whole gene family

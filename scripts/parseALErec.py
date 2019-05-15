@@ -63,9 +63,10 @@ def parseALERecFile(nfrec, reftreelen=None, restrictclade=None, skipEventFreq=Fa
 		return [spetree, subspetree, lrecgt, recgtlines, restrictlabs, dnodeevt]
 
 def parseDatedRecGeneTree(recgt, spet, dexactevt={}, recgtsample=None, nsample=1, sgsep='_', restrictlabs=[], \
-                          fillDTLSdict=True, recordEvTypes='ODTL', excludeTaggedLeaves=None, excludeTaggedSubtrees=None, joinTdonrec=True):
+                          fillDTLSdict=True, recordEvTypes='ODTL', excludeTaggedLeaves=None, excludeTaggedSubtrees=None, joinTdonrec=True, verbose=False):
 	def parseDatedRecGTNode(node, dlevt, dnodeallevt):
 		nodelab = node.label()
+		if verbose: print '#', nodeid, ':', nodelab
 		if not nodelab: raise ValueError, "unannotated node:\n%s"%str(node)
 		if node.is_leaf() and (excludeTaggedLeaves in nodelab):
 			# the species assignment of this leaf is not certain (inferred)
@@ -75,7 +76,7 @@ def parseDatedRecGeneTree(recgt, spet, dexactevt={}, recgtsample=None, nsample=1
 		# line of events to be read left-to-right backward in time
 		lineage, leaflab = splitEventChain(nodelab, isleaf=node.is_leaf(), ALEmodel='dated', sgsep='_')
 		# list of events goes BACKWARD in time when read left-to-right
-		#~ print '#', nodeid, ':', nodelab
+		if verbose: print 'lineage:', lineage
 		for i, event in enumerate(lineage):
 			evtype, evloc, evdate = event
 			#~ print evtype, evloc, evdate
@@ -141,7 +142,7 @@ def parseDatedRecGeneTree(recgt, spet, dexactevt={}, recgtsample=None, nsample=1
 	return dlevt, dnodeallevt
 	
 def parseUndatedRecGeneTree(recgt, spet, dexactevt={}, recgtsample=None, nsample=1, sgsep='_', restrictlabs=[], \
-                            fillDTLSdict=True, recordEvTypes='DTL', excludeTaggedLeaves=None, excludeTaggedSubtrees=None):
+                            fillDTLSdict=True, recordEvTypes='DTL', excludeTaggedLeaves=None, excludeTaggedSubtrees=None, verbose=False):
 	def parseUndatedRecGTNode(node, dlevt, dnodeallevt):
 		nodelab = node.label()
 		if not nodelab: raise ValueError, "unannotated node:\n%s"%str(node)
