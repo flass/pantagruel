@@ -116,7 +116,7 @@ def parseDatedRecGeneTree(recgt, spet, dexactevt={}, recgtsample=None, nsample=1
 			else:
 				if evtype[-1]=='L':
 					dnodeallevt.setdefault(nodeid, []).append((evtype[:-1], evloc))
-					if ('L' in recordEvTypes):
+					if ('L' in recordEvTypes) and (not spet[evloc].is_root()):
 						sisspe = spet[evloc].go_brother()
 						dnodeallevt.setdefault(nodeid, []).append(('L', sisspe.label()))
 				else:
@@ -294,7 +294,7 @@ def splitSingleDatedEvent(nodelab, isleaf=False, verbose=False, sgsep='_', **kw)
 	def process_event(s, happenslast=False):
 		# process possible event separators in order
 		if s.startswith('.T@'):
-			# immeadiate transfer-loss (should be only present on the beginning of the event chain)
+			# immediate transfer-loss (should be only present on the beginning of the event chain)
 			# emission of transfer by donor followed by loss of resident copy; just changes species identity of the gene tree branch (from donor to recipient species)
 			# will be followed by transfer reception event
 			thisev = 3
@@ -356,10 +356,7 @@ def splitSingleDatedEvent(nodelab, isleaf=False, verbose=False, sgsep='_', **kw)
 		s, evtype, evloc, evdate = process_event(s, happenslast=first)
 		yield (evtype, evloc, evdate)
 		if verbose>1: print (evtype, evloc, evdate),
-		if not (first and evtype=='Tr'):
-			# if the first event was a transfer reception, 
-			# still count the next event as the first (so it does not infer a loss in the sister lineage)
-			first=False
+		first=False
 	if isleaf:
 		#~ # add the final speciation
 		#~ evtype = 'S'
