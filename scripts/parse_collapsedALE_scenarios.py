@@ -482,7 +482,7 @@ def main():
 	drefspeeventTup2Ids, drefspeeventId2Tups = generateEventRefDB(refspetree, ALEmodel, refTreeTableOutDir=(os.path.join(dirTableOut, 'ref_species_tree') if dirTableOut else None))
 	
 	dfamevents = parse_events(lnfrec, genefamlist, refspetree, ALEmodel, drefspeeventTup2Ids, recordEvTypes, minFreqReport, \
-								  nfpickleEventsOut, nfshelveEventsOut, dirTableOut, nbthreads)
+								  nfpickleEventsOut, nfshelveEventsOut, dirTableOut, nbthreads, verbose)
 
 
 def usage():
