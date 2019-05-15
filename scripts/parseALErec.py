@@ -356,7 +356,10 @@ def splitSingleDatedEvent(nodelab, isleaf=False, verbose=False, sgsep='_', **kw)
 		s, evtype, evloc, evdate = process_event(s, happenslast=first)
 		yield (evtype, evloc, evdate)
 		if verbose>1: print (evtype, evloc, evdate),
-		first=False
+		if not (first and evtype=='Tr'):
+			# if the first event was a transfer reception, 
+			# still count the next event as the first (so it does not infer a loss in the sister lineage)
+			first=False
 	if isleaf:
 		#~ # add the final speciation
 		#~ evtype = 'S'
