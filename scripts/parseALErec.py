@@ -66,13 +66,13 @@ def parseDatedRecGeneTree(recgt, spet, dexactevt={}, recgtsample=None, nsample=1
                           fillDTLSdict=True, recordEvTypes='ODTL', excludeTaggedLeaves=None, excludeTaggedSubtrees=None, joinTdonrec=True, verbose=False):
 	def parseDatedRecGTNode(node, dlevt, dnodeallevt):
 		nodelab = node.label()
+		nodeid = node.nodeid()
 		if verbose: print '#', nodeid, ':', nodelab
 		if not nodelab: raise ValueError, "unannotated node:\n%s"%str(node)
 		if node.is_leaf() and (excludeTaggedLeaves in nodelab):
 			# the species assignment of this leaf is not certain (inferred)
 			# and thus events leading directly to this leaf are not to be trusted and should be skipped
 			return
-		nodeid = node.nodeid()
 		# line of events to be read left-to-right backward in time
 		lineage, leaflab = splitEventChain(nodelab, isleaf=node.is_leaf(), ALEmodel='dated', sgsep='_')
 		# list of events goes BACKWARD in time when read left-to-right
