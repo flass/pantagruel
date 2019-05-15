@@ -126,7 +126,7 @@ echo -e "${parsedreccolid}\t${parsedreccoldate}" > ${genetrees}/parsedreccol
 ####
 
 ## store reconciliation parameters and load parsed reconciliation data into database
-${ptgscripts}/pantagruel_sqlitedb_phylogeny_populate_reconciliations.sh ${database} ${sqldb} ${parsedrecs} ${ALEversion} ${ALEalgo} ${ALEsourcenote} ${parsedreccol} ${parsedreccolid} ${parsedreccoldate}
+${ptgscripts}/pantagruel_sqlitedb_phylogeny_populate_reconciliations.sh "${database}" "${sqldb}" "${parsedrecs}" "${ALEversion}" "${ALEalgo}" "${ALEsourcenote}" "${parsedreccol}" "${parsedreccolid}" "${parsedreccoldate}"
 
 # rapid survey of event density over the reference tree
 for freqthresh in 0.1 0.25 0.5 ; do

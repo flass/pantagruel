@@ -81,5 +81,5 @@ export parsedreccoldate=$(date +%Y-%m-%d)
 echo -e "${parsedreccolid}\t${parsedreccoldate}" > ${alerec}/parsedreccol
 
 ## store reconciliation parameters and load parsed reconciliation data into database
-${ptgscripts}/pantagruel_sqlitedb_phylogeny_populate_reconciliations.sh ${database} ${sqldb} ${parsedrecs} ${ALEversion} ${ALEalgo} ${ALEsourcenote} ${parsedreccol} ${parsedreccolid} ${parsedreccoldate}
+${ptgscripts}/pantagruel_sqlitedb_phylogeny_populate_reconciliations.sh "${database}" "${sqldb}" "${parsedrecs}" "${ALEversion}" "${ALEalgo}" "${ALEsourcenote}" "${parsedreccol}" "${parsedreccolid}" "${parsedreccoldate}"
 EOF

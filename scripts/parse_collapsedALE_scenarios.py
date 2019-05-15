@@ -151,7 +151,8 @@ def translateEventLineage(deventlineages, dcol2fullspenames, drefspeeventTup2Ids
 		# lighter version encoding events just by an integer referring to species tree events reference table
 		return {nodelab:[drefspeeventTup2Ids[evtup] for evtup in levtup] for nodelab, levtup in trline.iteritems()}
 
-def parseRec(nfrec, refspetree=None, ALEmodel='undated', drefspeeventTup2Ids=None, onlyLineages=[], recordEvTypes='DTS', minFreqReport=0, returnDict=True, lineageTableOutDir=None, noTranslateSpeTree=False, allEventByLineageByGenetree=False):
+def parseRec(nfrec, refspetree=None, ALEmodel='undated', drefspeeventTup2Ids=None, onlyLineages=[], recordEvTypes='DTS', minFreqReport=0, returnDict=True, \
+             lineageTableOutDir=None, noTranslateSpeTree=False, allEventByLineageByGenetree=False, verbose=False):
 	"""parse reconciled gene tree sample, returning sampled events by gene lineage
 	
 	if allEventByLineageByGenetree is True, return more detailed data, stored in a dict with the following elements: 
@@ -175,6 +176,10 @@ def parseRec(nfrec, refspetree=None, ALEmodel='undated', drefspeeventTup2Ids=Non
 		tcolspetree, dcol2fullspenames = colspetree, {}
 		if refspetree:
 			assert refspetree.hasSameTopology(tcolspetree, checkInternalLabels=True)
+	if verbose:
+		print 'refspetree:', refspetree
+		print 'colspetree:', colspetree
+		print 'dcol2fullspenames:', dcol2fullspenames
 	if ALEmodel=='dated':
 		# add reference for '#OUTSIDE#' taxon
 		dcol2fullspenames[outtaxlab] = outtaxlab
@@ -260,8 +265,10 @@ def parseRec(nfrec, refspetree=None, ALEmodel='undated', drefspeeventTup2Ids=Non
 # 
 def parseRecTupArgs(args):
 	"""wrapper function with arguments passed as a tuple"""
-	nfrec, refspetree, ALEmodel, drefspeeventTup2Ids, onlyLineages, recordEvTypes, minFreqReport, returnDict, lineageTableOutDir = args
-	return parseRec(nfrec, refspetree, ALEmodel, drefspeeventTup2Ids, onlyLineages, recordEvTypes, minFreqReport, returnDict, lineageTableOutDir)
+	nfrec, refspetree, ALEmodel, drefspeeventTup2Ids, onlyLineages, recordEvTypes, minFreqReport, returnDict, lineageTableOutDir, verbose = args
+	return parseRec(nfrec=nfrec, refspetree=refspetree, ALEmodel=ALEmodel, drefspeeventTup2Ids=drefspeeventTup2Ids, \
+	                onlyLineages=onlyLineages, recordEvTypes=recordEvTypes, minFreqReport=minFreqReport, returnDict=returnDict, \
+	                lineageTableOutDir=lineageTableOutDir, verbose=verbose)
 
 def loadRecGeneTreeLabelAliasesAndListRecFiles(nflnfrec, nfgenefamlist=None, dircons=None, dirrepl=None, nbthreads=1, verbose=False):
 	"""parse data relating to the genes and gene families to process.
@@ -290,10 +297,10 @@ def loadRefPopTree(nfrefspetree, nfpop=None):
 				lsp = line.rstrip('\n').split('\t')
 				lnamepops.append((lsp[0], tuple(lsp[1].split())))
 		annotatePopulationInSpeciesTree(refspetree, lnamepops, returnCopy=False, returnAncNodes=False)
-		nfrefspetreeout = nfrefspetree.rsplit('.', 1)[0]+'_internalPopulations.nwk'
-		refspetree.write_newick(nfrefspetreeout, ignoreBS=True)
 	else:
 		lnamepops += [(leaflab, [leaflab]) for leaflab in refspetree.get_leaf_labels()]
+	nfrefspetreeout = nfrefspetree.rsplit('.', 1)[0]+'_internalPopulations.nwk'
+	refspetree.write_newick(nfrefspetreeout, ignoreBS=True)
 	dspe2pop = getdspe2pop(lnamepops)
 	return (refspetree, dspe2pop)
 	
@@ -369,7 +376,8 @@ def generateEventRefDB(refspetree, ALEmodel='undated', refTreeTableOutDir=None, 
 
 def parse_events(lnfrec, genefamlist=None, refspetree=None, ALEmodel='undated', \
                  drefspeeventTup2Ids={}, recordEvTypes='ODTS', minFreqReport=0, \
-                 nfpickleEventsOut=None, nfshelveEventsOut=None, dirTableOut=None, nbthreads=1):
+                 nfpickleEventsOut=None, nfshelveEventsOut=None, dirTableOut=None, \
+                 nbthreads=1, verbose=False):
 	"""from list of reconciliation files, families and genes to consider, return dictionary of reported events, by family and gene lineage"""
 	lfams = [os.path.basename(nfrec).split('-')[0] for nfrec in lnfrec]
 	if genefamlist: ingenes = [genefam.get('replaced_cds_code', genefam['cds_code']) for genefam in genefamlist if (genefam['gene_family_id'] in lfams)]
@@ -381,7 +389,7 @@ def parse_events(lnfrec, genefamlist=None, refspetree=None, ALEmodel='undated', 
 						#~ lineageTableOutDir=(os.path.join(dirTableOut, 'gene_tree_lineages') if dirTableOut else None))
 	diroutab = (os.path.join(dirTableOut, 'gene_tree_lineages') if dirTableOut else None)
 	returndict = bool(nfpickleEventsOut)
-	iterargs = ((nfrec, refspetree, ALEmodel, drefspeeventTup2Ids, ingenes, recordEvTypes, minFreqReport, returndict, diroutab) for nfrec in lnfrec)
+	iterargs = ((nfrec, refspetree, ALEmodel, drefspeeventTup2Ids, ingenes, recordEvTypes, minFreqReport, returndict, diroutab, verbose) for nfrec in lnfrec)
 	
 	# prepare output
 	if nfshelveEventsOut:
