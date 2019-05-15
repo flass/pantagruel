@@ -303,8 +303,8 @@ def splitSingleDatedEvent(nodelab, isleaf=False, verbose=False, sgsep='_', **kw)
 			evtype = 'S'
 			thisev = 1
 			# if event is not last it is followed by a loss: loss in one of the daughter lineage for speciation; loss of resident copy for transfer
-			# no reation of gene lineage, just changes species identity of the gene tree branch (from parent to daughter species)
-			if happenslast: evtype += 'L'
+			# no creation of gene lineage, just changes species identity of the gene tree branch (from parent to daughter species)
+			if not happenslast: evtype += 'L'
 		elif s.startswith('@'):
 			# reception of transfer by recipient = gain
 			thisev = 1
