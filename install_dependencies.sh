@@ -59,6 +59,8 @@ while [[ ! -z "${@}" ]] ; do
   shift
 done
 
+echo $installinterpro $installdebian $BINS
+
 PATH=${PATH}:${BINS}
 
 echo "Installation of Pantagruel and dependencies: ..."
