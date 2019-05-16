@@ -132,7 +132,6 @@ EOF
   echo "# # # #"
   dnchain=`dirname $nfchain`
   bnchain=`basename $nfchain`
-  bnstree=`basename $spetree`
   nfrad=${bnchain%%-*}
 
   ls $spetree
@@ -148,6 +147,7 @@ EOF
       echo "will use spetree=${spetree[0]}"
     fi
   fi
+  bnstree=`basename $spetree`
 
   ####
   if [[ "$worklocal"=="yes" ]] ; then
