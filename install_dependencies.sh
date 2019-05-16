@@ -41,15 +41,17 @@ else
     SOFTWARE=$(readlink -f "$1")
   fi
 fi
-if [ -z "$2" ] ; then
+
+shift
+
+if [ -z "$1" ] ; then
   BINS=${HOME}/bin
 else
-  BINS=$(readlink -f "$2")
+  BINS=$(readlink -f "$1")
   PATH=${PATH}:${BINS}
 fi
 
-shift 3
-echo  ${@}
+shift
 installinterpro='true'
 installdebian='true'
 for option in ${@} ; do
