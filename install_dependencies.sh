@@ -47,18 +47,16 @@ installinterpro='true'
 installdebian='true'
 BINS=${HOME}/bin
 
-while [ ! -z $1 ] ; do
+while [ ! -z "${@}" ] ; do
   case "$1" in 
     --no-interpro)
-      installinterpro='false'
-      shift ;;
+      installinterpro='false' ;;
     --no-debian)
-      installdebian='false'
-      shift ;;
+      installdebian='false' ;;
     *)
-      BINS=$(readlink -f "$1")
-      shift ;;
+      BINS=$(readlink -f "$1") ;;
   esac
+  shift
 done
 
 PATH=${PATH}:${BINS}
