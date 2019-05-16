@@ -49,6 +49,7 @@ else
 fi
 
 shift 3
+echo  ${@}
 installinterpro='true'
 installdebian='true'
 for option in ${@} ; do
