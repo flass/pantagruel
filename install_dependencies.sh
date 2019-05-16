@@ -26,6 +26,7 @@ usage (){
 	echo "  software_dir: target installation folder for pantagruel and other software"
 	echo "  bin_dir: folder where to link relevant executable files, including the main `pantagruel` excutable (defaults to ~/bin/); the path to this folder will be permatnently added to your path (via editing your ~/.bashrc)"
 	echo "  --no-interpro: this flag will skip installation of interproscan, which uses a significant space on disk"
+	echo "  --no-debian: this flag will skip installation of Debian packages"
 }
 
 if [ -z "$1" ] ; then
@@ -47,11 +48,16 @@ else
   PATH=${PATH}:${BINS}
 fi
 
-if [ "$3"=='--no-interpro' ] ; then
-  installinterpro='false'
-else
-  installinterpro='true'
-fi
+shift 3
+installinterpro='true'
+for option in ${@} ; do
+  if [ "$option"=='--no-interpro' ] ; then
+    installinterpro='false'
+  fi
+  if [ "$option"=='--no-debian' ] ; then
+    installdebian='false'
+  fi
+done
 
 echo "Installation of Pantagruel and dependencies: ..."
 echo ""
