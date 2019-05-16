@@ -74,7 +74,7 @@ else
   ${ptgscripts}/ale_sequential.sh ${tasklist} ${outrecdir} Stree.nwk ${recsamplesize} ${ALEalgo}
 fi
 export reccoldate=$(date +%Y-%m-%d)
-if [ ! -z "$alebin" ] ; then
+if [[ ! -z "$alebin" && -z $(echo $alebin | grep docker) ]] ; then
   alerepo=${alebin%%ALE/*}ALE/
   alesrcvers=$(cd ${alerepo} && git log | head -n 1 | awk '{ print $2 }' 2> /dev/null && cd - > /dev/null)
   alesrcorig=$(cd ${alerepo} && git remote -v | grep fetch | awk '{ print $2 }' 2> /dev/null && cd - > /dev/null)
