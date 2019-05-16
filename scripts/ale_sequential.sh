@@ -135,8 +135,6 @@ EOF
   bnstree=`basename $spetree`
   nfrad=${bnchain%%-*}
 
-
-
   ls $spetree
   if [ $? != 0 ] ; then
     echo "look for $spetree species tree file in $dnchain/ folder"

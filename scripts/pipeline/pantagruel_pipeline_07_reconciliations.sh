@@ -12,6 +12,7 @@
 if [ -z "$1" ] ; then echo "missing mandatory parameter: pantagruel config file" ; echo "Usage: $0 ptg_env_file" ; exit 1 ; fi
 envsourcescript="$1"
 source ${envsourcescript}
+ 
 
 checkptgversion
 checkfoldersafe ${alerec}
@@ -110,7 +111,7 @@ fi
 python ${ptgscripts}/parse_collapsedALE_scenarios.py --rec_sample_list ${reclist} \
  ${pops} --reftree ${speciestree}.lsd.nwk \
  --dir_table_out ${parsedrecs} --evtype ${evtypeparse} --minfreq ${minevfreqparse} \
- --threads 8  &> $entlogs/parse_collapsedALE_scenarios.log &
+ --threads 8  &> ${ptglogs}/parse_collapsedALE_scenarios.log &
 
 export parsedreccoldate=$(date +%Y-%m-%d)
 echo -e "${parsedreccolid}\t${parsedreccoldate}" > ${genetrees}/parsedreccol
