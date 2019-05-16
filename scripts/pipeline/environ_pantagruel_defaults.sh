@@ -16,8 +16,9 @@ export withinfundef='median'
 export ALEalgo='ALEml'
 export recsamplesize=1000
 # gene tree/species tree reconciliation parsing parameters for co-evolution analysis
-export evtypeparse='ST'
+export evtypeparse='ODTSL'
 export minevfreqparse=0.1
+export evtypematch='ODTS'
 export minevfreqmatch=0.5
-export minjoinevfreqmatch=1.0
+export minjointevfreqmatch=1.0
 export maxreftreeheight=0.25

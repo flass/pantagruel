@@ -24,6 +24,11 @@ Optionally, you can also specify the folder where relevant executable files, inc
 ```sh
 pantagruel_pipeline/pantagruel/install_dependencies.sh pantagruel_pipeline/ pantagruel_pipeline/bin/
 ```
+
+Finally, you may want not to install automatically all Debian packages (some could mess up with your local install), Brew and all its packages (same reason), Docker and all its packages (you may have a special deamon installed you don't want to be replaced) or InterProScan (it takes a lot of disk space). For this, you can use the options `--no-debian` `--no-brew` `--no-docker` and `--no-interpro`, respectively (anywhere after the first argument).  
+```sh
+pantagruel_pipeline/pantagruel/install_dependencies.sh pantagruel_pipeline/ --no-debian --no-interpro --no-brew --no-docker
+```
 ________
 
 ## The details if you are picky

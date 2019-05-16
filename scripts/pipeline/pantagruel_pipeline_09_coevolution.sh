@@ -24,8 +24,6 @@ mkdir -p ${compoutdir}/
 
 
 ## analyse of co-evolution!!
-export minevfreqmatch=0.5
-export minjoinevfreqmatch=1.0
 if [ -z $parsedreccolid ] ; then
   parsedreccolid=1
 fi
@@ -65,10 +63,10 @@ fi
 
 # collect data
 # BEWARE: GENERATES AN AWFUL LOT OF DATA, PREPARE DISK SPACE ACCORDINGLY
-# indication: with defaults settings evtypeparse='ST'; minevfreqmatch=0.5; minjoinevfreqmatch=1.0; maxreftreeheight=0.25
+# indication: with defaults settings evtypematch='ST'; minevfreqmatch=0.5; minjoinevfreqmatch=1.0; maxreftreeheight=0.25
 # on a 880 Enterobacteriaceae dataset, results in ~300 GB output (made to be split into ~1GB files)
 python $ptgscripts/compare_collapsedALE_scenarios.py --events_from_postgresql_db ${sqldbname} \
- --event_type ${evtypeparse} --min_freq ${minevfreqmatch} --min_joint_freq ${minjointevfreqmatch} --threads 8 \
+ --event_type ${evtypematch} --min_freq ${minevfreqmatch} --min_joint_freq ${minjointevfreqmatch} --threads 8 \
  --dir_table_out ${compoutdir} &> $entlogs/compare_collapsedALE_scenarios.${parsedreccol}.log &
 
 #### NOT IMPLEMENTED YET IN SQLite
