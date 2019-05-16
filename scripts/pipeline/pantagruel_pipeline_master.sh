@@ -337,12 +337,12 @@ do
     
     -r|--rootdir)
       testmandatoryarg "$1" "$2"
-      export ptgroot=$(realpath $2)
+      export ptgroot=$(readlink -f $2)
       shift 2;;
     
     -i|--initfile)
       testmandatoryarg "$1" "$2"
-      export initfile=$(realpath $2)
+      export initfile=$(readlink -f $2)
       shift 2;;
     
     -I|--iam)
@@ -359,31 +359,31 @@ do
 
     -a|--custom_ass)
       testmandatoryarg "$1" "$2"
-      export customassemb=$(realpath $2)
+      export customassemb=$(readlink -f $2)
       echo "set custom (raw) genome assembly source folder to '$customassemb'"
       shift 2;;
 
     -A|--refseq_ass)
       testmandatoryarg "$1" "$2"
-      export ncbiass=$(realpath $2)
+      export ncbiass=$(readlink -f $2)
       echo "set NCBI RefSeq(-like) genome assembly source folder to '$ncbiass'"
       shift 2;;
 
     -L|--refseq_list)
       testmandatoryarg "$1" "$2"
-      export listncbiass=$(realpath $2)
+      export listncbiass=$(readlink -f $2)
       echo "set NCBI RefSeq(-like) genome assembly id list to '$listncbiass'"
       shift 2;;
 
     --refseq_ass4annot)
       testmandatoryarg "$1" "$2"
-      export refass=$(realpath $2)
+      export refass=$(readlink -f $2)
       echo "set NCBI RefSeq(-like) genome assembly source folder for reference in user genome annotation to '$refass'"
       shift 2;;
 
     --refseq_list4annot)
       testmandatoryarg "$1" "$2"
-      export listrefass=$(realpath $2)
+      export listrefass=$(readlink -f $2)
       echo "set NCBI RefSeq(-like) genome assembly id list for reference in user genome annotation to '$listrefass'"
       shift 2;;
 
@@ -395,7 +395,7 @@ do
 
     -t|--reftree)
       testmandatoryarg "$1" "$2"
-      export userreftree=$(realpath $2)
+      export userreftree=$(readlink -f $2)
       echo "set reference tree as $userreftree"
       shift 2;;
 
@@ -437,7 +437,7 @@ do
 
     -T|--taxonomy)
       testmandatoryarg "$1" "$2"
-      export ncbitax=$(realpath $2)
+      export ncbitax=$(readlink -f $2)
       echo "set NCBI Taxonomy source folder to '$ncbitax'"
       shift 2;;
 
