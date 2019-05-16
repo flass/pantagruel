@@ -5,12 +5,13 @@ resultdir=${2}
 spetree=${3}
 nrecs=${4}
 alealgo=${5}
+maxpcmem=${6}
 
 echo "ale_sequential.sh call was: ${@}"
-echo "with variables set as: tasklist=${tasklist}, resultdir=${resultdir}, spetree=${spetree}, nrecs=${nrecs}, alealgo=${alealgo}"
+echo "with variables set as: tasklist=${tasklist}, resultdir=${resultdir}, spetree=${spetree}, nrecs=${nrecs}, alealgo=${alealgo}, maxpcmem=${maxpcmem}"
 
 usage() {
-	echo "Usage: ale_sequential.sh tasklist resultdir spetree [nrecs; default=1000] [alealgo; default='ALEml_undated']"
+	echo "Usage: ale_sequential.sh tasklist resultdir spetree [nrecs; default=1000] [alealgo; default='ALEml_undated'] [max %mem; default=90]"
 }
 
 ## verify key variable definition
@@ -104,19 +105,12 @@ else
     worklocal='yes'
   fi
 fi
-# watchmem
-echo "# watchmem:"
-if [ -z "$watchmem" ] ; then
-  aleexe="${alebin}${alealgo}"
-else
-  if [[ "$watchmem"=="y" || "$watchmem"=="yes" || "$watchmem"=="true" ]] ; then
-    memusg="/apps/memusage/memusage"
-  else
-    memusg="$watchmem"
-  fi
-  aleexe="${memusg} ${alebin}${alealgo}"
-  echo "will watch memory usage with '${memusg}'"
+# maxpcmem
+echo "# maxpcmem:"
+if [ -z "$maxpcmem" ] ; then
+  maxpcmem=90
 fi
+
 # worklocal
 echo "# worklocal:"
 if [ -z "$worklocal" ] ; then
@@ -229,8 +223,25 @@ EOF
     exit 2
   fi
   echo "# ${alecmd}"
-  ${alecmd}
-    
+  # run it in bg with a daemon checking
+  ${alecmd} &
+  alepid=$!
+  while [ ! -z $(ps -q ${alepid} -o comm=) ] ; do
+    ## check memory use is not going off the charts
+    ALEMEM=$(pmap ${alepid} | tail -n1 | awk '{print $NF}')
+    echo "$nfrad\t$alealgo\t$ALEMEM\tkB" > ${nfrad}.ale.memusage
+    ALETIME=$SECONDS
+    echo -e "$nfrad\t$alealgo\t$ALETIME\ts" > ${nfrad}.ale.computetime
+    pcmem=$(ps -o pid,%mem | grep ${alepid} | awk '{print $NF}')
+    if [ ${pcmem} -ge ${maxpcmem} ] ; then
+      # stop immediately
+      echo "Memory use is beyond ${maxpcmem}% the server capacity; stop the job now"
+      kill -9 ${alepid}
+    fi
+    $savecmd ./${nfrad}.ale.* $resultdir/
+    sleep 60s
+  done
+  
   echo ""
   echo "# # # #"
 
