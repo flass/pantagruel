@@ -22,9 +22,10 @@ checkexec (){
 }
 
 usage (){
-	echo "Usage: $0 software_dir [bin_dir]"
+	echo "Usage: $0 software_dir [bin_dir] [--no-interpro]"
 	echo "  software_dir: target installation folder for pantagruel and other software"
 	echo "  bin_dir: folder where to link relevant executable files, including the main `pantagruel` excutable (defaults to ~/bin/); the path to this folder will be permatnently added to your path (via editing your ~/.bashrc)"
+	echo "  --no-interpro: this flag will skip installation of interproscan, which uses a significant space on disk"
 }
 
 if [ -z "$1" ] ; then
@@ -46,6 +47,11 @@ else
   PATH=${PATH}:${BINS}
 fi
 
+if [ "$3"=='--no-interpro' ] ; then
+  installinterpro='false'
+else
+  installinterpro='true'
+fi
 
 echo "Installation of Pantagruel and dependencies: ..."
 echo ""
@@ -266,97 +272,99 @@ fi
 #~ fi
 #~ echo ""
 
-# install Interproscan
-iphost="ftp://ftp.ebi.ac.uk"
-iploc="pub/software/unix/iprscan/5/"
-
-currIPversion=$(interproscan --version 2> /dev/null | head -n 1 | sed -e 's/InterProScan version //')
-lastIPversion=$(lftp -c "open ${iphost} ; ls -tr ${iploc}/[0-9].[0-9][0-9]*-[0-9][0-9]*.[0-9] ; quit" | tail -n 1 | awk '{print $NF}')
-if [[ -z "${currIPversion}" || "${currIPversion}" != "${lastIPversion}" ]] ; then
- echo "get Interproscan ${lastIPversion}"
- if [[ ! -x ${SOFTWARE}/interproscan-${lastIPversion}/interproscan.sh ]] ; then
-   ipsourceftprep="${iphost}/${iploc}/${lastIPversion}/"
-   ipsourcefile="interproscan-${lastIPversion}-64-bit.tar.gz"
-   if [[ ! -e ${SOFTWARE}/${ipsourcefile} ]] ; then
-     wget ${ipsourceftprep}/${ipsourcefile}
-   fi
-   if [[ ! -e ${SOFTWARE}/${ipsourcefile}.md5 ]] ; then
-     wget ${ipsourceftprep}/${ipsourcefile}.md5
-   fi
-   dlok=$(md5sum -c ${ipsourcefile}.md5 | grep -o 'OK')
-   ip=3
-   # allow 3 attempts to downlaod the package, given its large size
-   while [[ "$dlok" != 'OK' && $ip -gt 0 ]] ; do 
-     ip=$(( $ip - 1 ))
-     echo "dowload of ${ipsourcefile} failed; will retry ($ip times left)"
-     wget ${ipsourceftprep}/${ipsourcefile}
-     wget ${ipsourceftprep}/${ipsourcefile}.md5
-     dlok=$(md5sum -c ${ipsourcefile}.md5 | grep -o 'OK')done
-   done
-   if [[ "$dlok" != 'OK' ]] ; then
-     echo "ERROR: Could not dowload ${ipsourcefile}"
-     exit 1
-   fi
-   tar -pxvzf ${SOFTWARE}/${ipsourcefile}
-   checkexec "Could not uncompress Interproscan successfully"
- else
-   echo "found InterProScan executable:"
-   ls ${SOFTWARE}/interproscan-${lastIPversion}/interproscan.sh
- fi
- currIPversion=${lastIPversion}
- # make sure InterProscan uses the correct version of Java (1.8)
- wrongjava=$(${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh | grep -o 'Java version .* is required to run InterProScan.')
- if [ ! -z "${wrongjava}" ] ; then
-   needjava=$(echo ${wrongjava} | sed -e 's/Java version \(.*\) is required to run InterProScan./\1/')
-   currjava=$(readlink -f `which java`)
-   goodjava=$(echo ${currjava} | sed -e "s/java-[0-9]\+-/java-${needjava}-/")
-   echo "default version of Java is wrong: ${currjava}"
-   echo "will find executable for desired version: ${needjava}"
-   if [ ! -e ${goodjava} ] ; then
-     goodjava=$(echo ${currjava} | sed -e "s/java-[0-9]\+-/java-${needjava}.0-/")
-   fi
-   if [ ! -e ${goodjava} ] ; then
-     goodjava=$(ls -d $(dirname $(dirname $(dirname ${currjava})))/*${needjava}*/bin/java)
-   fi
-   if [ -z ${goodjava} ] ; then
-     echo "ERROR: Could not find the required version of java for InterProScan:"
-     ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh
-     exit 1
+if [ "$installinterpro"=='true' ] ; then
+  # install Interproscan
+  iphost="ftp://ftp.ebi.ac.uk"
+  iploc="pub/software/unix/iprscan/5/"
+  
+  currIPversion=$(interproscan --version 2> /dev/null | head -n 1 | sed -e 's/InterProScan version //')
+  lastIPversion=$(lftp -c "open ${iphost} ; ls -tr ${iploc}/[0-9].[0-9][0-9]*-[0-9][0-9]*.[0-9] ; quit" | tail -n 1 | awk '{print $NF}')
+  if [[ -z "${currIPversion}" || "${currIPversion}" != "${lastIPversion}" ]] ; then
+   echo "get Interproscan ${lastIPversion}"
+   if [[ ! -x ${SOFTWARE}/interproscan-${lastIPversion}/interproscan.sh ]] ; then
+     ipsourceftprep="${iphost}/${iploc}/${lastIPversion}/"
+     ipsourcefile="interproscan-${lastIPversion}-64-bit.tar.gz"
+     if [[ ! -e ${SOFTWARE}/${ipsourcefile} ]] ; then
+       wget ${ipsourceftprep}/${ipsourcefile}
+     fi
+     if [[ ! -e ${SOFTWARE}/${ipsourcefile}.md5 ]] ; then
+       wget ${ipsourceftprep}/${ipsourcefile}.md5
+     fi
+     dlok=$(md5sum -c ${ipsourcefile}.md5 | grep -o 'OK')
+     ip=3
+     # allow 3 attempts to downlaod the package, given its large size
+     while [[ "$dlok" != 'OK' && $ip -gt 0 ]] ; do 
+       ip=$(( $ip - 1 ))
+       echo "dowload of ${ipsourcefile} failed; will retry ($ip times left)"
+       wget ${ipsourceftprep}/${ipsourcefile}
+       wget ${ipsourceftprep}/${ipsourcefile}.md5
+       dlok=$(md5sum -c ${ipsourcefile}.md5 | grep -o 'OK')done
+     done
+     if [[ "$dlok" != 'OK' ]] ; then
+       echo "ERROR: Could not dowload ${ipsourcefile}"
+       exit 1
+     fi
+     tar -pxvzf ${SOFTWARE}/${ipsourcefile}
+     checkexec "Could not uncompress Interproscan successfully"
    else
-     echo "found version of java suitable for InterProScan: ${goodjava}"
+     echo "found InterProScan executable:"
+     ls ${SOFTWARE}/interproscan-${lastIPversion}/interproscan.sh
    fi
-    #~ export PATH=$(dirname ${goodjava}):$PATH
-    #~ ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh
-   #~ checkexec "Interproscan test was not successful"
-   #~ if [[ -z "$(grep JAVA4INTERPROSCAN ${HOME}/.bashrc )" ]] ; then
-     #~ echo "export JAVA4INTERPROSCAN=${goodjava}" >> ${HOME}/.bashrc
-     #~ checkexec "Could not store JAVA4INTERPROSCAN in .bashrc"
-     #~ editedrc=true
-   #~ fi
-   echo "will edit definition of JAVA in ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh"
-   if [ ! -z "$(grep 'JAVA=\$(type -p java)' ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh)" ] ; then
-     mv ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh.original && \
-      sed -e "s#^JAVA=\$(type -p java)#JAVA=${goodjava}#g" ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh.original > ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh && \
-      chmod +x ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh && \
-      echo "fixed definition of JAVA in ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh (original script saved as '${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh.original')"
-     checkexec "Could not edit definition of JAVA in ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh"
-   else
-     # the file was already modified, be more agressive with sed substitution
-     mv ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh0 && \
-      sed -e "s#^JAVA=.\+#JAVA=${goodjava}#g" ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh0 > ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh && \
-      chmod +x ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh && rm ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh0 && \
-      echo "fixed definition of JAVA in ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh"
-     checkexec "Could not edit definition of JAVA in ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh"
-   fi     
- fi
- ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh -i ${SOFTWARE}/interproscan-${currIPversion}/test_proteins.fasta -f tsv
- checkexec "Interproscan test was not successful"
- # link the exec file
- rm -f ${BINS}/interproscan
- ln -s ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh ${BINS}/interproscan
- checkexec "Failed to link Interproscan executable to ${BINS}/" "Succesfully linked Interproscan executable to ${BINS}/"
-else
- echo "found up-to-date version of Interproscan at $(ls -l `which interproscan` | awk '{print $NF}')"
+   currIPversion=${lastIPversion}
+   # make sure InterProscan uses the correct version of Java (1.8)
+   wrongjava=$(${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh | grep -o 'Java version .* is required to run InterProScan.')
+   if [ ! -z "${wrongjava}" ] ; then
+     needjava=$(echo ${wrongjava} | sed -e 's/Java version \(.*\) is required to run InterProScan./\1/')
+     currjava=$(readlink -f `which java`)
+     goodjava=$(echo ${currjava} | sed -e "s/java-[0-9]\+-/java-${needjava}-/")
+     echo "default version of Java is wrong: ${currjava}"
+     echo "will find executable for desired version: ${needjava}"
+     if [ ! -e ${goodjava} ] ; then
+       goodjava=$(echo ${currjava} | sed -e "s/java-[0-9]\+-/java-${needjava}.0-/")
+     fi
+     if [ ! -e ${goodjava} ] ; then
+       goodjava=$(ls -d $(dirname $(dirname $(dirname ${currjava})))/*${needjava}*/bin/java)
+     fi
+     if [ -z ${goodjava} ] ; then
+       echo "ERROR: Could not find the required version of java for InterProScan:"
+       ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh
+       exit 1
+     else
+       echo "found version of java suitable for InterProScan: ${goodjava}"
+     fi
+      #~ export PATH=$(dirname ${goodjava}):$PATH
+      #~ ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh
+     #~ checkexec "Interproscan test was not successful"
+     #~ if [[ -z "$(grep JAVA4INTERPROSCAN ${HOME}/.bashrc )" ]] ; then
+       #~ echo "export JAVA4INTERPROSCAN=${goodjava}" >> ${HOME}/.bashrc
+       #~ checkexec "Could not store JAVA4INTERPROSCAN in .bashrc"
+       #~ editedrc=true
+     #~ fi
+     echo "will edit definition of JAVA in ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh"
+     if [ ! -z "$(grep 'JAVA=\$(type -p java)' ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh)" ] ; then
+       mv ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh.original && \
+        sed -e "s#^JAVA=\$(type -p java)#JAVA=${goodjava}#g" ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh.original > ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh && \
+        chmod +x ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh && \
+        echo "fixed definition of JAVA in ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh (original script saved as '${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh.original')"
+       checkexec "Could not edit definition of JAVA in ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh"
+     else
+       # the file was already modified, be more agressive with sed substitution
+       mv ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh0 && \
+        sed -e "s#^JAVA=.\+#JAVA=${goodjava}#g" ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh0 > ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh && \
+        chmod +x ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh && rm ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh0 && \
+        echo "fixed definition of JAVA in ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh"
+       checkexec "Could not edit definition of JAVA in ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh"
+     fi     
+   fi
+   ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh -i ${SOFTWARE}/interproscan-${currIPversion}/test_proteins.fasta -f tsv
+   checkexec "Interproscan test was not successful"
+   # link the exec file
+   rm -f ${BINS}/interproscan
+   ln -s ${SOFTWARE}/interproscan-${currIPversion}/interproscan.sh ${BINS}/interproscan
+   checkexec "Failed to link Interproscan executable to ${BINS}/" "Succesfully linked Interproscan executable to ${BINS}/"
+  else
+   echo "found up-to-date version of Interproscan at $(ls -l `which interproscan` | awk '{print $NF}')"
+  fi
 fi
 
 if [[ -z "$(grep 'export PATH=' ${HOME}/.bashrc | grep ${BINS})" ]] ; then
