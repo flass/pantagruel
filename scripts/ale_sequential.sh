@@ -14,6 +14,8 @@ usage() {
 	echo "Usage: ale_sequential.sh tasklist resultdir spetree [nrecs; default=1000] [alealgo; default='ALEml_undated'] [max %mem; default=90]"
 }
 
+cd ${ptgtmp}
+
 ## verify key variable definition
 # tasklist
 echo "tasklist:"
