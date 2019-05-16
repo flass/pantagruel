@@ -27,7 +27,8 @@ usage (){
 	echo "  bin_dir: folder where to link relevant executable files, including the main `pantagruel` excutable (defaults to ~/bin/); the path to this folder will be permatnently added to your path (via editing your ~/.bashrc)"
 	echo "  --no-interpro: this flag will skip installation of interproscan, which uses a significant space on disk"
 	echo "  --no-debian:   this flag will skip installation of Debian packages"
-	echo "  --no-brew:     this flag will skip installation of Brew packages"
+	echo "  --no-brew:     this flag will skip installation of Brew and its packages"
+	echo "  --no-docker:   this flag will skip installation of Docker and its packages"
 }
 
 if [ -z "$1" ] ; then
@@ -46,7 +47,8 @@ shift
 
 installinterpro='true'
 installdebian='true'
-installbrews='true'
+installbrew='true'
+installdocker='true'
 BINS=${HOME}/bin
 
 while [[ ! -z "${@}" ]] ; do
@@ -56,7 +58,9 @@ while [[ ! -z "${@}" ]] ; do
     --no-debian)
       installdebian='false' ;;
     --no-brew)
-      installbrews='false' ;;
+      installbrew='false' ;;
+    --no-docker)
+      installdocker='false' ;;
     *)
       BINS=$(readlink -f "$1") ;;
   esac
@@ -106,7 +110,9 @@ echo ""
 if [ "$installdebian" == 'true' ] ; then
   # basic dependencies, libs and standalone software, R and packages, Python and packages
   echo "get/update required Debian packages"
-  deppackages="git build-essential cmake gcc g++ linuxbrew-wrapper lftp clustalo raxml libhmsbeagle1v5 mrbayes r-base-core r-recommended r-cran-ape r-cran-ade4 r-cran-vegan r-cran-dbi r-cran-rsqlite r-cran-igraph r-cran-getopt sqlite3 sqlite3-doc libmagick++-dev python python-scipy python-numpy python-biopython python-biopython-sql python-igraph cython bioperl mpi-default-bin mpi-default-dev mrbayes-mpi docker.io python-pip openjdk-8-jdk openjdk-8-jre cd-hit"
+  deppackages="git build-essential cmake gcc g++ lftp clustalo raxml libhmsbeagle1v5 mrbayes r-base-core r-recommended r-cran-ape r-cran-ade4 r-cran-vegan r-cran-dbi r-cran-rsqlite r-cran-igraph r-cran-getopt sqlite3 sqlite3-doc libmagick++-dev python python-scipy python-numpy python-biopython python-biopython-sql python-igraph cython bioperl mpi-default-bin mpi-default-dev mrbayes-mpi python-pip openjdk-8-jdk openjdk-8-jre cd-hit"
+  if [ "$installbrew" == 'true' ] ; then deppackages="$deppackages linuxbrew-wrapper" ; fi
+  if [ "$installdocker" == 'true' ] ; then deppackages="$deppackages docker.io" ; fi
   sudo apt install $deppackages
   if [ $? != 0 ] ; then
     echo "ERROR: could not install all required Debian packages:"
@@ -150,7 +156,7 @@ if [ $? != 0 ] ; then
 fi
 echo ""
 
-if [ "$installbrews" == 'true' ] ; then
+if [ "$installbrew" == 'true' ] ; then
   # Configure Linuxbrew
   if [ ! -e ${HOME}/.bash_profile ] ; then
     # because when .bash_profile exists, it superseeds .profile, which won't be loaded automatically
@@ -251,42 +257,29 @@ else
 fi
 echo ""
 
-# set up Docker group (with root-equivalent permissions) and add main user to it
-# !!! makes the system less secure: OK within a dedicated virtual machine but to avoid on a server or desktop (or VM with other use)
-if [[ -z "$(grep docker /etc/group)" ]] ; then
-  sudo groupadd docker
-fi
-if [[ -z "$(grep docker /etc/group | grep ${USER})" ]] ; then
-  sudo usermod -aG docker $USER
-  newgrp docker << EOF
+if [ "$installdocker" == 'true' ] ; then
+  # set up Docker group (with root-equivalent permissions) and add main user to it
+  # !!! makes the system less secure: OK within a dedicated virtual machine but to avoid on a server or desktop (or VM with other use)
+  if [[ -z "$(grep docker /etc/group)" ]] ; then
+    sudo groupadd docker
+  fi
+  if [[ -z "$(grep docker /etc/group | grep ${USER})" ]] ; then
+    sudo usermod -aG docker $USER
+    newgrp docker << EOF
 EOF
+  fi
+  checkexec "Could not set group 'docker' or let user '$USER' join it"
+  
+  
+  # install ALE using Docker --- OK within a virtual machine
+  if [[ -z "$(sudo docker images | grep boussau/alesuite)" ]] ; then
+    sudo docker pull boussau/alesuite
+    checkexec "Could not install ALE suite using Docker"
+  else
+    echo "found ALE suite already installed with Docker:"
+    sudo docker images | grep boussau/alesuite
+  fi
 fi
-checkexec "Could not set group 'docker' or let user '$USER' join it"
-
-
-# install ALE using Docker --- OK within a virtual machine
-if [[ -z "$(sudo docker images | grep boussau/alesuite)" ]] ; then
-  sudo docker pull boussau/alesuite
-  checkexec "Could not install ALE suite using Docker"
-else
-  echo "found ALE suite already installed with Docker:"
-  sudo docker images | grep boussau/alesuite
-fi
-#~ if [[ -z "$(grep 'alias ALEml=' ${HOME}/.bashrc)" ]] ; then
-  #~ echo 'alias ALEobserve="docker run -v $PWD:$PWD -w $PWD boussau/alesuite ALEobserve"' >> ${HOME}/.bashrc
-  #~ echo 'alias ALEml="docker run -v $PWD:$PWD -w $PWD boussau/alesuite ALEml"' >> ${HOME}/.bashrc
-  #~ echo 'alias ALEml_undated="docker run -v $PWD:$PWD -w $PWD boussau/alesuite ALEml_undated"' >> ${HOME}/.bashrc
-  #~ checkexec "Could not store command aliases in ~/.bashrc"
-  #~ editedrc=true
-#~ fi
-
-#~ # add Python modules to PYTHONPATH
-#~ if [[ -z "$(grep 'export PYTHONPATH=' ${HOME}/.bashrc | grep ${SOFTWARE}/pantagruel/python_libs )" ]] ; then
-  #~ echo "export PYTHONPATH=\${PYTHONPATH}:${SOFTWARE}/pantagruel/python_libs" >> ${HOME}/.bashrc
-  #~ checkexec "Could not store PYTHONPATH in .bashrc"
-  #~ editedrc=true
-#~ fi
-#~ echo ""
 
 if [ "$installinterpro" == 'true' ] ; then
   # install Interproscan
