@@ -41,27 +41,27 @@ else
     SOFTWARE=$(readlink -f "$1")
   fi
 fi
-
 shift
 
-if [ -z "$1" ] ; then
-  BINS=${HOME}/bin
-else
-  BINS=$(readlink -f "$1")
-  PATH=${PATH}:${BINS}
-fi
-
-shift
 installinterpro='true'
 installdebian='true'
-for option in ${@} ; do
-  if [ "$option"=='--no-interpro' ] ; then
-    installinterpro='false'
-  fi
-  if [ "$option"=='--no-debian' ] ; then
-    installdebian='false'
-  fi
+BINS=${HOME}/bin
+
+while [ ! -z $1 ] ; do
+  case "$1" in 
+    --no-interpro)
+      installinterpro='false'
+      shift ;;
+    --no-debian)
+      installdebian='false'
+      shift ;;
+    *)
+      BINS=$(readlink -f "$1")
+      shift ;;
+  esac
 done
+
+PATH=${PATH}:${BINS}
 
 echo "Installation of Pantagruel and dependencies: ..."
 echo ""
