@@ -26,7 +26,8 @@ usage (){
 	echo "  software_dir: target installation folder for pantagruel and other software"
 	echo "  bin_dir: folder where to link relevant executable files, including the main `pantagruel` excutable (defaults to ~/bin/); the path to this folder will be permatnently added to your path (via editing your ~/.bashrc)"
 	echo "  --no-interpro: this flag will skip installation of interproscan, which uses a significant space on disk"
-	echo "  --no-debian: this flag will skip installation of Debian packages"
+	echo "  --no-debian:   this flag will skip installation of Debian packages"
+	echo "  --no-brew:     this flag will skip installation of Brew packages"
 }
 
 if [ -z "$1" ] ; then
@@ -45,6 +46,7 @@ shift
 
 installinterpro='true'
 installdebian='true'
+installbrews='true'
 BINS=${HOME}/bin
 
 while [[ ! -z "${@}" ]] ; do
@@ -53,6 +55,8 @@ while [[ ! -z "${@}" ]] ; do
       installinterpro='false' ;;
     --no-debian)
       installdebian='false' ;;
+    --no-brew)
+      installbrews='false' ;;
     *)
       BINS=$(readlink -f "$1") ;;
   esac
@@ -146,48 +150,50 @@ if [ $? != 0 ] ; then
 fi
 echo ""
 
-# Configure Linuxbrew
-if [ ! -e ${HOME}/.bash_profile ] ; then
-  # because when .bash_profile exists, it superseeds .profile, which won't be loaded automatically
-  # thus if creating .bash_profile, restaure the loading of .profile
-  echo '. "$HOME/.profile"' > ${HOME}/.bash_profile
+if [ "$installbrews" == 'true' ] ; then
+  # Configure Linuxbrew
+  if [ ! -e ${HOME}/.bash_profile ] ; then
+    # because when .bash_profile exists, it superseeds .profile, which won't be loaded automatically
+    # thus if creating .bash_profile, restaure the loading of .profile
+    echo '. "$HOME/.profile"' > ${HOME}/.bash_profile
+  fi
+  if [[ -z "$(grep PATH ${HOME}/.bash_profile | grep linuxbrew)" ]] ; then
+    echo 'export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"' >> ${HOME}/.bash_profile
+    editedprofile=true
+  fi
+  if [[ -z "$(grep MANPATH ${HOME}/.bash_profile | grep linuxbrew)" ]] ; then
+    echo 'export MANPATH="/home/linuxbrew/.linuxbrew/share/man:$MANPATH"' >> ${HOME}/.bash_profile
+    editedprofile=true
+  fi
+  if [[ -z "$(grep INFOPATH ${HOME}/.bash_profile | grep linuxbrew)" ]] ; then
+    echo 'export INFOPATH="/home/linuxbrew/.linuxbrew/share/info:$INFOPATH"' >> ${HOME}/.bash_profile
+    editedprofile=true
+  fi
+  source ${HOME}/.bash_profile
+  
+  # install Prokka using brew
+  if [[ -z "$(brew search prokka | grep prokka)" ]] ; then
+    brew update
+    brew doctor
+    brew install brewsci/bio/prokka
+    checkexec "Could not install Prokka using Brew"
+  else
+    echo "found Prokka already installed with Brew:"
+    brew search prokka
+  fi
+  echo ""
+  
+  # install MMSeqs using brew
+  if [[ -z "$(brew search mmseqs2 | grep mmseqs2)" ]] ; then
+    brew doctor
+    brew install mmseqs2
+    checkexec "Could not install MMSeqs using Brew"
+  else
+    echo "found mmseqs2 already installed with Brew:"
+    brew search mmseqs2
+  fi
+  echo ""
 fi
-if [[ -z "$(grep PATH ${HOME}/.bash_profile | grep linuxbrew)" ]] ; then
-  echo 'export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"' >> ${HOME}/.bash_profile
-  editedprofile=true
-fi
-if [[ -z "$(grep MANPATH ${HOME}/.bash_profile | grep linuxbrew)" ]] ; then
-  echo 'export MANPATH="/home/linuxbrew/.linuxbrew/share/man:$MANPATH"' >> ${HOME}/.bash_profile
-  editedprofile=true
-fi
-if [[ -z "$(grep INFOPATH ${HOME}/.bash_profile | grep linuxbrew)" ]] ; then
-  echo 'export INFOPATH="/home/linuxbrew/.linuxbrew/share/info:$INFOPATH"' >> ${HOME}/.bash_profile
-  editedprofile=true
-fi
-source ${HOME}/.bash_profile
-
-# install Prokka using brew
-if [[ -z "$(brew search prokka | grep prokka)" ]] ; then
-  brew update
-  brew doctor
-  brew install brewsci/bio/prokka
-  checkexec "Could not install Prokka using Brew"
-else
-  echo "found Prokka already installed with Brew:"
-  brew search prokka
-fi
-echo ""
-
-# install MMSeqs using brew
-if [[ -z "$(brew search mmseqs2 | grep mmseqs2)" ]] ; then
-  brew doctor
-  brew install mmseqs2
-  checkexec "Could not install MMSeqs using Brew"
-else
-  echo "found mmseqs2 already installed with Brew:"
-  brew search mmseqs2
-fi
-echo ""
 
 # fetch Pal2Nal script
 if [ ! -x ${BINS}/pal2nal.pl ] ; then
@@ -282,7 +288,7 @@ fi
 #~ fi
 #~ echo ""
 
-if [ "$installinterpro"=='true' ] ; then
+if [ "$installinterpro" == 'true' ] ; then
   # install Interproscan
   iphost="ftp://ftp.ebi.ac.uk"
   iploc="pub/software/unix/iprscan/5/"
