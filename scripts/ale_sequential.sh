@@ -47,27 +47,15 @@ else
     fi
   fi
 fi
+
 # spetree
 echo "spetree:"
 if [ -z "$spetree" ] ; then
   echo "ERROR: need to define variable spetree ; exit now"
   usage
   exit 2
-else
-  ls $spetree
-  if [ $? != 0 ] ; then
-    echo "look for $spetree species tree file in $dnchain/ folder"
-    ls ${dnchain}/${nfrad}*${spetree}*
-    if [ $? != 0 ] ; then
-      echo "ERROR: file '$spetree' is missing ; exit now"
-      exit 2
-    else
-      echo "found it!" 
-      spetree=(`ls ${dnchain}/${nfrad}*${spetree}*`)
-      echo "will use spetree=${spetree[0]}"
-    fi
-  fi
 fi
+
 # nrecs
 echo "nrecs:"
 if [ -z "$nrecs" ] ; then
@@ -75,11 +63,12 @@ if [ -z "$nrecs" ] ; then
   nrecs=1000
 fi
 echo "will sample $nrecs reconciliations"
+
 # alealgo
 echo "alealgo:"
 if [ -z "$alealgo" ] ; then
   echo -n "Default: "
-  alealgo='ALEml_undated'
+  alealgo='ALEml'
 fi
 echo "will use $alealgo algorithm for reconciliation estimation"
 # relburninfrac
@@ -146,6 +135,21 @@ EOF
   bnstree=`basename $spetree`
   nfrad=${bnchain%%-*}
 
+
+
+  ls $spetree
+  if [ $? != 0 ] ; then
+    echo "look for $spetree species tree file in $dnchain/ folder"
+    ls ${dnchain}/${nfrad}*${spetree}*
+    if [ $? != 0 ] ; then
+      echo "ERROR: file '$spetree' is missing ; exit now"
+      exit 2
+    else
+      echo "found it!" 
+      spetree=(`ls ${dnchain}/${nfrad}*${spetree}*`)
+      echo "will use spetree=${spetree[0]}"
+    fi
+  fi
 
   ####
   if [[ "$worklocal"=="yes" ]] ; then
