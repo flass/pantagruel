@@ -104,7 +104,7 @@ fi
 echo "# worklocal:"
 if [ -z "$worklocal" ] ; then
   echo "(Use default)"
-  worklocal="yes"
+  worklocal="no"
 else
   if [[ "$worklocal"=="n" || "$worklocal"=="false" ]] ; then
     worklocal="no"
