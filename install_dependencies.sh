@@ -47,7 +47,7 @@ installinterpro='true'
 installdebian='true'
 BINS=${HOME}/bin
 
-while [ ! -z "${@}" ] ; do
+while [[ ! -z "${@}" ]] ; do
   case "$1" in 
     --no-interpro)
       installinterpro='false' ;;
