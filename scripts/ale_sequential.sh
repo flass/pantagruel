@@ -145,29 +145,34 @@ EOF
       exit 2
     else
       echo "found it!" 
-      spetree=(`ls ${dnchain}/${nfrad}*${spetree}*`)
-      echo "will use spetree=${spetree[0]}"
+      stree=(`ls ${dnchain}/${nfrad}*${spetree}*`)
+      echo "will use stree=${spetree[0]}"
     fi
+  else
+    nfstree=${spetree}
   fi
-  bnstree=`basename $spetree`
+  bnstree=`basename $nfstree`
 
   ####
   if [[ "$worklocal"=="yes" ]] ; then
     # copy input files locally
-    rsync -az ${nfchain} ${spetree} ./
+    rsync -az ${nfchain} ${nfstree} ./
     ls -lh ${bnchain} ${bnstree}
     if [ $? != 0 ] ; then
-    echo "ERROR: could not copy input file ${bnchain} or ${bnstree} locally; exit now"
-    exit 2
+      echo "ERROR: could not copy input file ${bnchain} or ${bnstree} locally; exit now"
+      exit 2
     else
-    chain="./${bnchain}"
-    stree="./${bnstree}"
+      chain="./${bnchain}"
+      stree="./${bnstree}"
     fi
+    # will copy output files into output dir
+    savecmd="rsync -az"
   else
     chain=${nfchain}
-    stree=${spetree}
+    stree=${nfstree}
+    # will rapatriate output files into output dir
+    savecmd="mv -f"
   fi
-
 
   # resume from run with already estimated parameters,
   # to perform further reconciliation sampling
@@ -238,7 +243,7 @@ EOF
     ALETIME=$SECONDS
     echo -e "$nfrad\t$alealgo\t$ALETIME\ts" > ${nfrad}.ale.computetime
     pcmem=$(ps -o pid,%mem | grep ${alepid} | awk '{print $NF}')
-    if [ ${pcmem} -ge ${maxpcmem} ] ; then
+    if [ ${pcmem%.*} -ge ${maxpcmem} ] ; then
       # stop immediately
       echo "Memory use is beyond ${maxpcmem}% the server capacity; stop the job now"
       kill -9 ${alepid}
@@ -260,12 +265,6 @@ EOF
   ls ./${nfrad}*
 
   # save files
-  if [[ "$worklocal"=="yes" ]] ; then
-    # will rapatriate files ot output dir
-    savecmd="rsync -az"
-  else
-    savecmd="mv -f"
-  fi
   ls ./${nfrad}*.ale.* > /dev/null
   if [ $? == 0 ] ; then
     savecmd1="$savecmd ./${nfrad}*.ale* $resultdir/"
@@ -288,4 +287,8 @@ EOF
     # remove local copies of input/output files
     rm -f ./${nfrad}*
   fi
+  
+  echo ""
+  echo "# # # # #"
+  echo " # # # #"
 done

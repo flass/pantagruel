@@ -75,12 +75,14 @@ else
       exit 2
     else
       echo "found it!" 
-      spetree=(`ls ${dnchain}/${nfrad}*${spetree}*`)
-      echo "will use spetree=${spetree[0]}"
+      nfstree=(`ls ${dnchain}/${nfrad}*${spetree}*`)
+      echo "will use stree=${spetree[0]}"
     fi
+  else
+    nfstree=${spetree}
   fi
 fi
-bnstree=`basename $spetree`
+bnstree=`basename $nfstree`
 # nrecs
 echo "nrecs:"
 if [ -z "$nrecs" ] ; then
@@ -152,7 +154,7 @@ echo ""
 ####
 if [[ "$worklocal"=="yes" ]] ; then
   # copy input files locally
-  rsync -az ${nfchain} ${spetree} ./
+  rsync -az ${nfchain} ${nfstree} ./
   ls -lh ${bnchain} ${bnstree}
   if [ $? != 0 ] ; then
     echo "ERROR: could not copy input file ${bnchain} or ${bnstree} locally; exit now"
@@ -165,7 +167,7 @@ if [[ "$worklocal"=="yes" ]] ; then
   savecmd="rsync -az"
 else
   chain=${nfchain}
-  stree=${spetree}
+  stree=${nfstree}
   savecmd="mv -f"
 fi
 
