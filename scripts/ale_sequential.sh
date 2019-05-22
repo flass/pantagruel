@@ -145,8 +145,9 @@ EOF
       exit 2
     else
       echo "found it!" 
-      stree=(`ls ${dnchain}/${nfrad}*${spetree}*`)
-      echo "will use stree=${spetree[0]}"
+      lnfstree=(`ls ${dnchain}/${nfrad}*${spetree}*`)
+      nfstree=${lnfstree[0]}
+      echo "will use nfstree=${nfstree}"
     fi
   else
     nfstree=${spetree}
