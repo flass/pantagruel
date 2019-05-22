@@ -9,10 +9,13 @@
 
 # Copyright: Florent Lassalle (f.lassalle@imperial.ac.uk), 30 July 2018
 
-if [ -z "$1" ] ; then echo "missing mandatory parameter: pantagruel config file" ; echo "Usage: $0 ptg_env_file" ; exit 1 ; fi
+if [ -z "$1" ] ; then echo "missing mandatory parameter: pantagruel config file" ; echo "Usage: $0 ptg_env_file [gene_fam_list]" ; exit 1 ; fi
 envsourcescript="$1"
 source ${envsourcescript}
- 
+
+if [ ! -z "$2" ] ; then
+  export genefamlist="$2"
+fi
 
 checkptgversion
 checkfoldersafe ${alerec}
@@ -44,7 +47,14 @@ export reccol="ale_${chaintype}_${rectype}_${reccolid}"
 export recs=${alerec}/${chaintype}_recs
 
 tasklist=${alerec}/${collapsecond}_${replmethod}_Gtrees_list
-ls ${coltreechains}/${collapsecond}/${replmethod}/*-Gtrees.nwk > $tasklist
+if [ -z ${genefamlist} ] ; then
+  ${ptgscripts}/lsfullpath.py "${coltreechains}/${collapsecond}/${replmethod}/*-Gtrees.nwk" > ${tasklist}
+else
+  rm -f ${tasklist}
+  for fam in $(cut -f1 ${genefamlist}) ; do
+    ls ${coltreechains}/${collapsecond}/${replmethod}/${fam}*-Gtrees.nwk >> ${tasklist}
+  done
+fi
 alelogs=${ptgdb}/logs/ALE
 mkdir -p $alelogs/${reccol}
 outrecdir=${recs}/${collapsecond}/${replmethod}/${reccol}
@@ -88,6 +98,14 @@ else
 fi
 echo -e "${reccolid}\t${reccoldate}\t${ALEsourcenote}" > ${genetrees}/reccol
 
+######################################################
+## 07.2 Parse gene tree / Species tree reconciliations
+######################################################
+#### NOTE
+## here for simplicity only the log variables refering to parsed reconciliations (parsedreccol, parsedreccolid, parsedreccoldate) are recorded in the database
+## but not the log variables refering to the actual reconciliations (reccol, reccolid, reccoldate)
+####
+
 ### parse the inferred scenarios
 # parameters to be set
 if [ -z $parsedreccolid ] ; then
@@ -117,14 +135,6 @@ export parsedreccoldate=$(date +%Y-%m-%d)
 echo -e "${parsedreccolid}\t${parsedreccoldate}" > ${genetrees}/parsedreccol
 
 
-
-######################################################
-## 07.2 Parse gene tree / Species tree reconciliations
-######################################################
-#### NOTE
-## here for simplicity only the log variables refering to parsed reconciliations (parsedreccol, parsedreccolid, parsedreccoldate) are recorded in the database
-## but not the log variables refering to the actual reconciliations (reccol, reccolid, reccoldate)
-####
 
 ## store reconciliation parameters and load parsed reconciliation data into database
 ${ptgscripts}/pantagruel_sqlitedb_phylogeny_populate_reconciliations.sh "${database}" "${sqldb}" "${parsedrecs}" "${ALEversion}" "${ALEalgo}" "${ALEsourcenote}" "${parsedreccol}" "${parsedreccolid}" "${parsedreccoldate}"

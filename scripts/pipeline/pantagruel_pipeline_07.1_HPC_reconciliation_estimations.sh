@@ -9,7 +9,7 @@
 
 # Copyright: Florent Lassalle (f.lassalle@imperial.ac.uk), 30 July 2018
 
-if [ -z "$1" ] ; then echo "missing mandatory parameter: pantagruel config file" ; echo "Usage: $0 ptg_env_file" ; exit 1 ; fi
+if [ -z "$1" ] ; then echo "missing mandatory parameter: pantagruel config file" ; echo "Usage: $0 ptg_env_file [[[[ncpus] mem(gb)] maxwalltime(h)] paralleflags(\"str:str:...\")]" ; exit 1 ; fi
 envsourcescript="$1"
 source ${envsourcescript}
 
@@ -66,7 +66,8 @@ export reccol="ale_${chaintype}_${rectype}_${reccolid}"
 export recs=${alerec}/${chaintype}_recs
 
 tasklist=${alerec}/${collapsecond}_${replmethod}_Gtrees_list
-ls ${coltreechains}/${collapsecond}/${replmethod}/*-Gtrees.nwk > $tasklist
+
+${ptgscripts}/lsfullpath.py "${coltreechains}/${collapsecond}/${replmethod}/*-Gtrees.nwk" > $tasklist
 alelogs=${ptgdb}/logs/ALE
 mkdir -p $alelogs/${reccol}
 outrecdir=${recs}/${collapsecond}/${replmethod}/${reccol}
