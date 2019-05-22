@@ -247,10 +247,12 @@ ${ptgscripts}/lsfullpath.py "${nexusaln4chains}/*.nex" > ${mbtasklist}
 if [[ "${resumetask}" == "true" ]] ; then
   rm -f ${mbtasklist}_alreadydone
   rm -f ${mbtasklist}_resume
-  for fam in $(cut -f1 ${famlist}) ; do
+  for nfaln in $(cat ${mbtasklist}) ; do
     chaindone=''
     chainstarted=''
-    gtchain1=${mboutputdir}/${fam}.codes.mb.nex.run1.t
+    nfrad1=$(basename ${nfaln})
+    nfrad2=${nfrad1%.*}
+    gtchain1=${mboutputdir}/${nfrad2}.mb.run1.t
     if [[ -s ${gtchain1} ]] ; then
       if [[ $(grep -F -c "tree gen" ${gtchain1} | cut -d' ' -f1) -ge ${ntreeperchain} && ! -z "$(tail -n 1 ${gtchain1} | grep 'end')" ]] ; then
         chaindone='yes'
@@ -259,9 +261,9 @@ if [[ "${resumetask}" == "true" ]] ; then
       fi
     fi
     if [ -z "${chaindone}" ] ; then
-      ls ${nexusaln4chains}/${fam}*.nex >> ${mbtasklist}_resume
+      echo ${nfaln} >> ${mbtasklist}_resume
     else
-      ls ${nexusaln4chains}/${fam}*.nex >> ${mbtasklist}_alreadydone
+      echo ${nfaln} >> ${mbtasklist}_alreadydone
     fi
   done
 fi
@@ -269,11 +271,11 @@ fi
 if [[ "${resumetask}" == "true" && -e ${mbtasklist}_alreadydone ]] ; then
   echo "$(wc -l ${mbtasklist}_alreadydone | cut -d' ' -f1) bayesian tree chains already complete; skip their computation"
   mbtasklist=${mbtasklist}_resume
-  export mbmcmcopt='append=yes'
+  apyes='append=yes'
 fi
 
 if [ -s ${mbtasklist} ] ; then
-  mbopts="Nruns=${nruns} Ngen=${ngen} Nchains=${nchains} Samplefreq=${samplef}"
+  mbopts="Nruns=${nruns} Ngen=${ngen} Nchains=${nchains} Samplefreq=${samplef} ${apyes}"
   echo "Will now run MrBayes in parallel (i.e. sequentially for each gene alignment, with several alignments processed in parallel"
   echo "with options: ${mbopts}"
   echo ""

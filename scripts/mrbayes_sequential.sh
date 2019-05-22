@@ -80,8 +80,8 @@ else
   rsync -avz ${nfaln} ./
 fi
 echo "copied input files with exit status $?"
-echo "ls ./"
-ls ./
+echo "ls ./*${nfrad2}*"
+ls ./*${nfrad2}*
 echo ""
 
 # give a glimpse of data complexity
