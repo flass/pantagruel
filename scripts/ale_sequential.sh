@@ -92,7 +92,7 @@ else
     # define alebin prefix as the Docker container
     alebin="docker run -v $PWD:$PWD -w $PWD boussau/alesuite "
     # when using the Docker cntainer with local mounting, files will need to be available locally
-    echo "using a Docker container withlocal mount, must set worklocal='true'"
+    echo "using a Docker container with local mount, must set worklocal='true'"
     worklocal='yes'
   fi
 fi
@@ -215,6 +215,7 @@ EOF
 
   # start timing in seconds
   SECONDS=0
+  aleexe="${alebin}${alealgo}"
   # run ALE reconciliation 
   if [ "$alealgo" == 'ALEml' ] ; then
     alecmd="${aleexe} ${stree} ${chain}.ale ${nrecs} _"
@@ -255,8 +256,8 @@ EOF
   echo "reconciliation estimation took" $(date -u -d @${ALETIME} +"%Hh%Mm%Ss") "total time"
   if [ ! -z "$prevcomputetime" ] ; then echo "(including ${prevcomputetime} in previous run)" ; fi
 
-  echo "# ls"
-  ls
+  echo "# ls ./${nfrad}*"
+  ls ./${nfrad}*
 
   # save files
   if [[ "$worklocal"=="yes" ]] ; then
@@ -285,6 +286,6 @@ EOF
   fi
   if [[ "$worklocal"=="yes" ]] ; then
     # remove local copies of input/output files
-    rm ./${nfrad}*
+    rm -f ./${nfrad}*
   fi
 done

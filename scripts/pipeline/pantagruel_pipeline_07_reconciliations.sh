@@ -76,6 +76,7 @@ if [ "${resumetask}" == 'true' ] ; then
 fi
 
 ## perform receonciliations sequentially (one gene family after another)
+export worklocal='false'
 if [[ "${chaintype}" == 'fullgenetree' ]] ; then
   # use the same species tree file for every gene family, with no collapsed populations
   ${ptgscripts}/ale_sequential.sh ${tasklist} ${outrecdir} ${speciestree}.lsd.nwk ${recsamplesize} ${ALEalgo}

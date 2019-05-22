@@ -249,8 +249,8 @@ if [ ! -z "$prevcomputetime" ] ; then ALETIME=$(( $ALETIME + $prevcomputetime ))
 echo -e "$nfrad\t$alealgo\t$ALETIME\ts" > ${nfrad}.ale.computetime
 echo "reconciliation estimation took" $(date -u -d @${ALETIME} +"%Hh%Mm%Ss") "total time"
 if [ ! -z "$prevcomputetime" ] ; then echo "(including ${prevcomputetime} in previous run)" ; fi
-echo "# ls"
-ls
+echo "# ls ${nfrad}*"
+ls ${nfrad}*
 
 # save files
 ls ./${nfrad}*.ale.* > /dev/null
