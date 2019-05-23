@@ -76,6 +76,10 @@ echo -n " >> ${envsourcescript}" >> ${ptgtmp}/sedenvvar.sh
 bash < ${ptgtmp}/sedenvvar.sh
 ## load generic environment variables derived from the above
 source ${envsourcescript}
+if [ "$runmode" == 'wasrefresh' ] ; then
+  echo "updated init file save at '${envsourcescript}' ; refresh mode: skip input folder checks."
+  exit 0
+fi
 if [ -z ${initfile} ] ; then 
   echo "created init file at '${envsourcescript}'"
 else

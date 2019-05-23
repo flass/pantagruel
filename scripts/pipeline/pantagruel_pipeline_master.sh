@@ -516,7 +516,7 @@ for task in ${tasks} ; do
       source ${initfile}
       echo "re-run previous command line:"
       unset initfile
-      unset runmode
+      export runmode='wasrefresh'
       echo "# ${ptginitcmd}"
       eval "${ptginitcmd}"
     else
