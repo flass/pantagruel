@@ -325,8 +325,8 @@ def parseChain(lnfchains, dold2newname={}, nfchainout=None, inchainfmt='nexus', 
 	
 	A character filter is added as a file pipe when parsing the file, replacing any character of maskchars[0] with the counterpart in maskchars[1].
 	The filter is reverted when writing the file. 
-	With the filter maskchars=[('\([A-Z]\)-', '\\1@'), ('\([A-Z]\)@', '\\1-')] (using sed command), dash characters '-' preceded by a capital letter are translated into at symbols '@' on input, 
-	and '@'s are translated into '-'s on output; 
+	With the filter maskchars=[('\([A-Z0-9]\)-', '\\1@'), ('\([A-Z0-9]\)@', '\\1-')] (using sed command), dash characters '-' PRECEDED BY A CAPITAL LETTER OR DIGIT 
+	are translated into at symbols '@' on input, and '@'s are translated into '-'s on output; 
 	this is to handle the fact that Bio.Nexus tree parser does not support dashes in the taxon labels (see https://github.com/biopython/biopython/issues/1022).
 	!!! CAUTION: any '@' in the original label will thus be turned into a '-' in the final file output. Please avoid '@'s in tree taxon labels. !!!
 	!!! CAUTION 2: maskchars=('-', '@') leads to wrong behaviour if hyphen float numbers noted Xe-XXX are substituted as leads to branch lengths to be read as names.
