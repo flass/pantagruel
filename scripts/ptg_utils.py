@@ -271,7 +271,7 @@ def treewrite(trees, filepath, treeformat, maskchars=None, branch_length_only=Tr
 		# Passed a single tree instead of an iterable -- that's OK
 		trees = [trees]
 	with openwithfilterpipe(filepath, 'w+', maskchars) as fp:
-		n = getattr(supported_formats[treeformat], 'write')(trees, fp, branch_length_only=branch_length_only **kwargs)
+		n = getattr(supported_formats[treeformat], 'write')(trees, fp, branch_length_only=branch_length_only, **kwargs)
 	return n
 
 def treeappend(trees, filepath, treeformat, maskchars=None, branch_length_only=True, **kwargs):
