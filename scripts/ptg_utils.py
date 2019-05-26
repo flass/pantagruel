@@ -262,7 +262,7 @@ def openwithfilterpipe(filepath, mode, maskchars=None):
 		f = open(filepath, mode)
 	return f
 
-def treewrite(trees, filepath, treeformat, maskchars=None, **kwargs):
+def treewrite(trees, filepath, treeformat, maskchars=None, branch_length_only=True, **kwargs):
 	"""extended version of Phylo._io.write() allowing to translate of characters
 	
 	only does not support file handles (i.e. already opened files) as input, only file paths.
@@ -271,10 +271,10 @@ def treewrite(trees, filepath, treeformat, maskchars=None, **kwargs):
 		# Passed a single tree instead of an iterable -- that's OK
 		trees = [trees]
 	with openwithfilterpipe(filepath, 'w+', maskchars) as fp:
-		n = getattr(supported_formats[treeformat], 'write')(trees, fp, **kwargs)
+		n = getattr(supported_formats[treeformat], 'write')(trees, fp, branch_length_only=branch_length_only **kwargs)
 	return n
 
-def treeappend(trees, filepath, treeformat, maskchars=None, **kwargs):
+def treeappend(trees, filepath, treeformat, maskchars=None, branch_length_only=True, **kwargs):
 	"""extended version of Phylo._io.write() allowing to use append file opening mode and to translate of characters
 	
 	only does not support file handles (i.e. already opened files) as input, only file paths.
@@ -289,7 +289,7 @@ def treeappend(trees, filepath, treeformat, maskchars=None, **kwargs):
 		with open(filepath, 'a+') as fp:
 			with tempfile.NamedTemporaryFile('w+') as t:
 				with openwithfilterpipe(t.name, 'w', maskchars) as tfp:
-					n = getattr(supported_formats[treeformat], 'write')(trees, tfp, **kwargs)
+					n = getattr(supported_formats[treeformat], 'write')(trees, tfp, branch_length_only=branch_length_only, **kwargs)
 					tfp.flush()
 				t.seek(0, 0)
 				fp.write(t.read())
