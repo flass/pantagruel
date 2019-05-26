@@ -820,7 +820,7 @@ def usage():
 if __name__=='__main__':	
 	opts, args = getopt.getopt(sys.argv[1:], 'G:c:S:o:T:hv', ['dir_out=', 'method=', 'no_replace', \
 															'populations=', 'population_tree=', 'population_node_distance=', 'dir_full_gene_trees=', \
-															'pop_stem_conds=', 'within_pop_conds=', 'pop_lab_prefix=', \
+															'pop_stem_conds=', 'within_pop_conds=', 'pop_lab_prefix=', 'filter_dashes', \
 															'threads=', 'reuse=', 'verbose=', 'max.recursion.limit=', 'logfile=', 'help'])
 	dopt = dict(opts)
 	if ('-h' in dopt) or ('--help' in dopt):
