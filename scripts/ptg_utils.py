@@ -329,7 +329,7 @@ def parseChain(lnfchains, dold2newname={}, nfchainout=None, inchainfmt='nexus', 
 	and '@'s are translated into '-'s on output; 
 	this is to handle the fact that Bio.Nexus tree parser does not support dashes in the taxon labels (see https://github.com/biopython/biopython/issues/1022).
 	!!! CAUTION: any '@' in the original label will thus be turned into a '-' in the final file output. Please avoid '@'s in tree taxon labels. !!!
-	!!! CAUTION 2: maskchars=('-', '@') LEADS TO WRONG BEHAVIOUR IF HYPHEN FLOAT NUMBERS NOTED Xe-XXX ARE SUBSTITUTED AS LEADS TO BRANCH LENGTHS TO BE READ AS NAMES.
+	!!! CAUTION 2: maskchars=('-', '@') leads to wrong behaviour if hyphen float numbers noted Xe-XXX are substituted as leads to branch lengths to be read as names.
 	"""
 	invmaskchars = (maskchars[1], maskchars[0]) if maskchars else None
 	if verbose:

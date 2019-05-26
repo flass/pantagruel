@@ -846,7 +846,7 @@ if __name__=='__main__':
 	nflog = dopt.get('--logfile')
 	nbthreads = int(dopt.get('--threads', dopt.get('-T', -1)))
 	poptag = dopt.get('--pop_lab_prefix')
-	if ('--filter_dashes' in dopt)
+	if ('--filter_dashes' in dopt):
 		charfilter = ('([A-Z])-', '\\1@')
 	else:
 		charfilter = None
