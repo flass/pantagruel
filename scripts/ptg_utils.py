@@ -256,7 +256,7 @@ def openwithfilterpipe(filepath, mode, maskchars=None):
 	"""
 	if maskchars:
 		filterpipe = pipes.Template()
-		if len(maskchars[0]==1) and len(maskchars[1]==1):
+		if len(maskchars[0])==1 and len(maskchars[1])==1:
 			charfilter = "tr '%s' '%s'"%maskchars
 		else:
 			charfilter = "sed -e 's/%s/%s/g'"%maskchars
