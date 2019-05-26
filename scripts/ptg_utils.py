@@ -259,7 +259,7 @@ def openwithfilterpipe(filepath, mode, maskchars=None):
 		if len(maskchars[0]==1) and len(maskchars[1]==1):
 			charfilter = "tr '%s' '%s'"%maskchars
 		else:
-			charfilter = "sed 's/%s/%s/g'"%maskchars
+			charfilter = "sed -e 's/%s/%s/g'"%maskchars
 		filterpipe.append(charfilter, '--')
 		f = filterpipe.open(filepath, mode.rstrip('+'))
 	else:
@@ -325,13 +325,20 @@ def parseChain(lnfchains, dold2newname={}, nfchainout=None, inchainfmt='nexus', 
 	
 	A character filter is added as a file pipe when parsing the file, replacing any character of maskchars[0] with the counterpart in maskchars[1].
 	The filter is reverted when writing the file. 
-	With the filter maskchars=('([A-Z])-', '\\1@'), dash characters '-' preceded by a capital letter are translated into at symbols '@' on input, 
+	With the filter maskchars=[('\([A-Z]\)-', '\\1@'), ('\([A-Z]\)@', '\\1-')] (using sed command), dash characters '-' preceded by a capital letter are translated into at symbols '@' on input, 
 	and '@'s are translated into '-'s on output; 
 	this is to handle the fact that Bio.Nexus tree parser does not support dashes in the taxon labels (see https://github.com/biopython/biopython/issues/1022).
 	!!! CAUTION: any '@' in the original label will thus be turned into a '-' in the final file output. Please avoid '@'s in tree taxon labels. !!!
 	!!! CAUTION 2: maskchars=('-', '@') leads to wrong behaviour if hyphen float numbers noted Xe-XXX are substituted as leads to branch lengths to be read as names.
 	"""
-	invmaskchars = (maskchars[1], maskchars[0]) if maskchars else None
+	if maskchars:
+		if isinstance(maskchars, list):
+			invmaskchars = maskchars[1]
+			maskchars = maskchars[0]
+		else:
+			invmaskchars = (maskchars[1], maskchars[0])
+	else:
+		invmaskchars = None
 	if verbose:
 		print "parseChain('%s')"%repr(lnfchains)
 		if maskchars: print "'%s' character set will be substituted with '%s' on input and back on output"%maskchars

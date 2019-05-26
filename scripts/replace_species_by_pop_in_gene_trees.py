@@ -847,7 +847,7 @@ if __name__=='__main__':
 	nbthreads = int(dopt.get('--threads', dopt.get('-T', -1)))
 	poptag = dopt.get('--pop_lab_prefix')
 	if ('--filter_dashes' in dopt):
-		charfilter = ('([A-Z])-', '\\1@')
+		charfilter = [('\([A-Z]\)-', '\\1@'), ('\([A-Z]\)@', '\\1-')]
 	else:
 		charfilter = None
 	if nbthreads < 1: nbthreads = mp.cpu_count()
