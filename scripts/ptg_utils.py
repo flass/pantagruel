@@ -256,7 +256,11 @@ def openwithfilterpipe(filepath, mode, maskchars=None):
 	"""
 	if maskchars:
 		filterpipe = pipes.Template()
-		filterpipe.append("tr '%s' '%s'"%maskchars, '--')
+		if len(maskchars[0]==1) and len(maskchars[1]==1):
+			charfilter = "tr '%s' '%s'"%maskchars
+		else:
+			charfilter = "sed 's/%s/%s/g'"%maskchars
+		filterpipe.append(charfilter, '--')
 		f = filterpipe.open(filepath, mode.rstrip('+'))
 	else:
 		f = open(filepath, mode)
@@ -316,14 +320,16 @@ def tree2toBioPhylo(node):
 	"""perform tree2.Node -> Newick -> Bio.Phylo.Newick.Tree conversion"""
 	return PhyloIO.read(StringIO(node.newick()), 'newick', rooted=True)
 
-def parseChain(lnfchains, dold2newname={}, nfchainout=None, inchainfmt='nexus', outchainfmt='newick', maskchars=('-', '@'), verbose=False):
+def parseChain(lnfchains, dold2newname={}, nfchainout=None, inchainfmt='nexus', outchainfmt='newick', maskchars=None, verbose=False):
 	"""parse a Nexus-format tree chain and re-write it in a Newick format; edit the tree on the fly, substituting tip labels or grafting trees on tips
 	
 	A character filter is added as a file pipe when parsing the file, replacing any character of maskchars[0] with the counterpart in maskchars[1].
 	The filter is reverted when writing the file. 
-	With the default filter maskchars=('-', '@'), dash characters '-' are translated into at symbols '@' on input, and '@'s are translated into '-'s on output; 
+	With the filter maskchars=('([A-Z])-', '\\1@'), dash characters '-' preceded by a capital letter are translated into at symbols '@' on input, 
+	and '@'s are translated into '-'s on output; 
 	this is to handle the fact that Bio.Nexus tree parser does not support dashes in the taxon labels (see https://github.com/biopython/biopython/issues/1022).
 	!!! CAUTION: any '@' in the original label will thus be turned into a '-' in the final file output. Please avoid '@'s in tree taxon labels. !!!
+	!!! CAUTION 2: maskchars=('-', '@') LEADS TO WRONG BEHAVIOUR IF HYPHEN FLOAT NUMBERS NOTED Xe-XXX ARE SUBSTITUTED AS LEADS TO BRANCH LENGTHS TO BE READ AS NAMES.
 	"""
 	invmaskchars = (maskchars[1], maskchars[0]) if maskchars else None
 	if verbose:

@@ -479,7 +479,7 @@ def mapPop2GeneTree(nfingtchain1, dircons, dirout, method, spetree, poptree, dsp
                     chain1ext='mb.run1.t', nbchains=2, aliext='nex', contreext='mb.con.tre', \
                     constrainttag='mbconstraints', collapsalntag='collapsed_alns', \
                     phyloproftag='phyloprofile', ccmaxlentag='max_subtree_lengths', dirfullgt=None, \
-                    species_sep='_', dontReplace=False, verbose=False, **kw):
+                    species_sep='_', charfilter=None, dontReplace=False, verbose=False, **kw):
 	"""take as main input a name of Nexus tree chain file (from which is inferred 
 	the list of all parallel chain files for the same family) and ouput a single 
 	Newick tree chain file combining these parallel chains, having replaced the 
@@ -779,7 +779,7 @@ def mapPop2GeneTree(nfingtchain1, dircons, dirout, method, spetree, poptree, dsp
 	# load gene tree sample from Newick concatenate tree file
 	if ((not os.path.exists(nfoutcolGtrees)) or (not reuseOutput)):
 		nfingtchains = [nfingtchain1.replace(chain1ext, chain1ext.replace('1', str(k))) for k in range(1, nbchains+1)]
-		parseChain(nfingtchains, dold2newname, nfchainout=nfoutcolGtrees, verbose=verbose)
+		parseChain(nfingtchains, dold2newname, nfchainout=nfoutcolGtrees, verbose=verbose, maskchars=charfilter)
 	else:
 		print "# (reused) %s"%nfoutcolGtrees
 		
@@ -811,6 +811,7 @@ def usage():
 	s += '  --max.recursion.limit\t(int)Set maximum recursion limit of Python, may be required for processing big trees  (default 4000).\n'
 	s += '  --no_replace won\'t touch the tree structure, just reformat them from several Nexus tree chain files into a single Newick chain tree file.\n'
 	s += '  --logfile\t\t\tpath to file where combined stdout and stderr are redirected (if multiple threads, several files with this basename and a pid suffix will be created in addition to the master process\' one).\n'
+	s += '  --filter_dashes\t\t\tenables filtering of dashes PRECEDED BY A CAPITAL LETTER when parsing the Nexus trees; dash are restored when written to Newick.\n'
 	s += '  --verbose {0,1,2}\tverbose mode, from none to plenty.\n'
 	s += '  -v\t\t\tequivalent to --verbose=1.\n'
 	return s
@@ -845,6 +846,10 @@ if __name__=='__main__':
 	nflog = dopt.get('--logfile')
 	nbthreads = int(dopt.get('--threads', dopt.get('-T', -1)))
 	poptag = dopt.get('--pop_lab_prefix')
+	if ('--filter_dashes' in dopt)
+		charfilter = ('([A-Z])-', '\\1@')
+	else:
+		charfilter = None
 	if nbthreads < 1: nbthreads = mp.cpu_count()
 	
 	sys.setrecursionlimit(maxreclim)
@@ -892,7 +897,7 @@ if __name__=='__main__':
 				print 'method:', method
 				try:
 					mapPop2GeneTree(nfingtchain, dircons, os.path.join(dirout, method), method, spetree, poptree, dspe2pop, lnamepops, dpopnd, \
-									dontReplace=dontReplace, reuseOutput=reuseOutput, phyloproftag=phyloproftag, dirfullgt=dirfullgt, verbose=verbose)
+									dontReplace=dontReplace, reuseOutput=reuseOutput, phyloproftag=phyloproftag, dirfullgt=dirfullgt, charfilter=charfilter, verbose=verbose)
 				except Exception, e:
 					if (type(e) is RuntimeError) and str(e).startswith('maximum recursion depth exceeded'):
 						print "met RuntimeError on file '%s':"%nfingtchain, e
