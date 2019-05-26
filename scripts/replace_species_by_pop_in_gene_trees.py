@@ -811,7 +811,7 @@ def usage():
 	s += '  --max.recursion.limit\t(int)Set maximum recursion limit of Python, may be required for processing big trees  (default 4000).\n'
 	s += '  --no_replace won\'t touch the tree structure, just reformat them from several Nexus tree chain files into a single Newick chain tree file.\n'
 	s += '  --logfile\t\t\tpath to file where combined stdout and stderr are redirected (if multiple threads, several files with this basename and a pid suffix will be created in addition to the master process\' one).\n'
-	s += '  --filter_dashes\t\t\tenables filtering of dashes PRECEDED BY A CAPITAL LETTER when parsing the Nexus trees; dash are restored when written to Newick.\n'
+	s += '  --filter_dashes\t\t\tenables filtering of dashes PRECEDED BY A CAPITAL LETTER OR DIGIT when parsing the Nexus trees; dash are restored when written to Newick.\n'
 	s += '  --verbose {0,1,2}\tverbose mode, from none to plenty.\n'
 	s += '  -v\t\t\tequivalent to --verbose=1.\n'
 	return s
@@ -847,7 +847,7 @@ if __name__=='__main__':
 	nbthreads = int(dopt.get('--threads', dopt.get('-T', -1)))
 	poptag = dopt.get('--pop_lab_prefix')
 	if ('--filter_dashes' in dopt):
-		charfilter = [('\([A-Z]\)-', '\\1@'), ('\([A-Z]\)@', '\\1-')]
+		charfilter = [('\([A-Z0-9]\)-', '\\1@'), ('\([A-Z0-9]\)@', '\\1-')]
 	else:
 		charfilter = None
 	if nbthreads < 1: nbthreads = mp.cpu_count()
