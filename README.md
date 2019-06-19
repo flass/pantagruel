@@ -12,25 +12,26 @@ Lassalle F, Veber P, Jauneikaite E, Didelot X. Automated Reconstruction of All G
 *Pantagruel* provides an all-in-one software solution to reconstruct the complex evolutionary process of diversification of bacterial genomes.  
 
 From a dataset of bacterial genomes, builds a database that describes the homology structure of all genes in the dataset -- the pangenome. With that, *Pantagruel* will first generate two key outputs:  
-- a **reference (species) tree**, depicting the main signal of evolutionary relationships between input *genomes*;  
+- a **reference (species) tree**, depicting the main signal of evolutionary relationships between **input genomes**;  
 - **gene trees**, depicting the evolutionary relationships between gene sequences within a family of homologous genes.   
 
 ![pipeline1]
 
-A **scenario of gene evolution** is inferred for each gene family in the dataset by reconciling the topology of gene trees with the reference species tree in a probabilistic framework.  
+A **scenario of gene evolution** is then inferred for each gene family in the dataset by reconciling the topology of gene trees with the reference species tree in a probabilistic framework.  
 
 Such scenario describes the likely events of gene **duplication, horizontal transfer and loss** (DTL model) that marked the gene family history. These events are annotated on the branch of the gene tree and the of the reference tree, and make their history consistent.
-From these annotations, one can derive the history of gain and loss of this gene over the reference tree of species, and follow the diversification of *gene lineages* within and across *genome lineages*.  
+From these annotations, one can derive the **history of gain and loss** of this gene family over the reference tree of species, and follow the diversification of *gene lineages* within and across *genome lineages*.  
 
 Gene tree/species tree reconciliation methods rely on the best available information to infer such scenarios, as they account for the phylogeny of genes; a probablilistic method is chosen to quantify the statistical support for inferences, in face of the large space of possible scenario and of the uncertainty in the input gene phylogeny.  
-While probablilistic reconciliation methods are computationally costly, this pipeline uses innovative phylogenetic apporoaches based on the reduction of gene trees to their informative backbone that allow their use in a resonable time on **datasets of 1,000+ bacterial genome** and covering **multiple species**.
+
+While probablilistic reconciliation methods are computationally costly, this pipeline uses innovative phylogenetic apporoaches based on the reduction of gene trees to their informative backbone, allowing their use in a resonable time on **datasets of 1,000+ bacterial genome** and covering **multiple species**.
 
 ![pipeline2]
 
 
-These historical data are then gathered in the database, which provides a way to:  
-- quantify gene-to-gene association on the basis of their *co-evolution* signal at the gene lineage level;  
-- classify genes into *orthologous clusters* based on the gain/loss scenarios, from which one can define *clade-specific gene sets*.  
+Gene history data are then gathered in the database, which provides a way to:  
+- quantify gene-to-gene **co-evolution**, i.e. a gene association score based on the evolutionary events (notably HGT) they shared (quantified at the gene lineage level rather than the whole gene family);  
+- classify genes into **orthologous clusters** based on the gain/loss scenarios, from which one can define **clade-specific gene sets**.  
 
 Two version of the pipeline are distributed:  
 
