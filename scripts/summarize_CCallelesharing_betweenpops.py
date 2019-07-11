@@ -1,7 +1,4 @@
-python
-
 import sys, os
-
 
 nflnfpopref = sys.argv[1]
 nfpops = sys.argv[2]
@@ -25,7 +22,6 @@ for nfpopref in lnfpopref:
 		for line in fpopref:
 			colclade, spopfreqs = line.rstrip('\n').split('\t', 1)
 			famcc = fam+'-'+colclade
-			lfamcc.append(famcc)
 			dpopfreqs = {p:float(f) for p, f in [pf.split(':') for pf in spopfreqs.split('\t')]}
 			fout.write('\t'.join([famcc]+[str(dpopfreqs.get(pop, '0.0')) for pop in lpops])+'\n')
 
