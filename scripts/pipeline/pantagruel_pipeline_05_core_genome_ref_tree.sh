@@ -193,7 +193,10 @@ else
     # work on the full alignment as the user-provided tree is expected to bear all leaves
     coretreealn=${pseudocorealn}
   elif [ -e ${pseudocorealn}.reduced ] ; then
+    # in priority work on the reduced alignment (if there is one)
     coretreealn=${pseudocorealn}.reduced
+  else
+    coretreealn=${pseudocorealn}
   fi
 
   # search ML tree topology on (reduced) alignment nuder CAT-based model and with -F option
