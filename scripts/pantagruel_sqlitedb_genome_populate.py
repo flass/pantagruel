@@ -208,8 +208,8 @@ def main(dbname, protorfanclust, cdsorfanclust, nfspeclist, nfusergenomeinfo, us
 		with open(nfusergenomeinfo, 'r') as fusergenomeinfo:
 			uginfheader = fusergenomeinfo.readline().rstrip('\n').split('\t')
 			if not ('assembly_id' in uginfheader):
-				if usergenomefinalassdir and ('sequencing_project_id' in uginfheader):
-					print "fetching assembly ids from matching values of 'sequencing_project_id' field to folder names in GenBank-like assembly folder: '%s'" %usergenomefinalassdir
+				if usergenomefinalassdir and ('assembly_id' in uginfheader):
+					print "fetching assembly ids from matching values of 'assembly_id' field to folder names in GenBank-like assembly folder: '%s'" %usergenomefinalassdir
 					for assidname in os.listdir(usergenomefinalassdir):
 						seqproj = seqprojpat.search(assidname).groups()[0]
 						assid = assidpat.search(assidname).groups()[0]
@@ -217,14 +217,14 @@ def main(dbname, protorfanclust, cdsorfanclust, nfspeclist, nfusergenomeinfo, us
 				else:
 					raise ValueError, "the 'assembly_id' field is missing in file '%s';\n"%nfusergenomeinfo+ \
 					                  "instead you can provide in last argument the path to a GenBank-like assembly folder "+ \
-					                  "where assembly names will be matched to folder names from the 'sequencing_project_id' field"
+					                  "where assembly names will be matched to folder names from the 'assembly_id' field"
 			for line in fusergenomeinfo:
 				lsp = line.rstrip('\n').split('\t')
 				duginfo = {field:lsp[f] for f, field in enumerate(uginfheader)}
 				code, taxid = (duginfo['locus_tag_prefix'], duginfo['taxid'])
 				fout.write("%s\t%s\n"%(code, taxid))
 				codetaxids.append((code, taxid))
-				assid = duginfo.get('assembly_id', dseqproj2assid[duginfo['sequencing_project_id']])
+				assid = duginfo.get('assembly_id', dseqproj2assid[duginfo['assembly_id']])
 				code = duginfo['locus_tag_prefix']
 				print assid, ':', code
 				dcustomasscode[assid] = code

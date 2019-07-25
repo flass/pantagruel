@@ -67,7 +67,7 @@ downloadass (){
   dldestass=${3}
   echo "fetch assembly data from NCBI FTP accordng to list '${srclist}'"
   # fetch genome assemblies from NCBI FTP based on list prvided with -L option
-  if [ ! -z ${dldestass} ] ; then
+  if [ ! -z "${dldestass}" ] ; then
     srcassftpdest=${dldestass}/$(basename ${srclist})_assemblies_from_ftp
   else
     srcassftpdest=${srclist}_assemblies_from_ftp
