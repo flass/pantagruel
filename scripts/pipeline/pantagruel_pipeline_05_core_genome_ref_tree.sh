@@ -182,9 +182,9 @@ else
    $raxmlbin -s ${pseudocorealn} ${raxmloptions} -f c &>> ${ptglogs}/raxml/${treename}.check.log
    checkexec "failed to remove identical sequence in core alignment" 
    if [ -e "${pseudocorealn}.reduced" ] ; then
-     "removed identical sequence in core alignment; reduced alignemnt stored in file '${pseudocorealn}.reduced'"
+     echo "removed identical sequence in core alignment; reduced alignemnt stored in file '${pseudocorealn}.reduced'"
    else
-     "no identical sequence was found in the core alignment"
+     echo "no identical sequence was found in the core alignment"
    fi
    grep 'exactly identical$' ${coretree}/RAxML_info.${treename} | sed -e 's/IMPORTANT WARNING: Sequences \(.\+\) and \(.\+\) are exactly identical/\1\t\2/g' > ${pseudocorealn}.identical_sequences
    mv ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_identical_sequences.${treename}
