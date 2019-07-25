@@ -4,8 +4,8 @@ import os, sys
 import sqlite3
 
 CODepat = re.compile("([A-Z0-9]{3,5}) +[ABEVO] +([0-9]{1,7}): ")
-seqprojpat = re.compile("([^\.]+)\.[1-9]_.+?$")
-assidpat = re.compile("([^\.]+\.[1-9])_.+?$")
+seqprojpat = re.compile("([^\.]+)\.[1-9]_.+?$") # exclude the trailing .[1-9]
+assidpat = re.compile("([^\.]+\.[1-9])_.+?$") # include the trailing .[1-9]
 
 def getTableInfos(table, cursor, ommitserial=False):
 	cursor.execute("PRAGMA table_info(%s);"%table)
@@ -207,24 +207,25 @@ def main(dbname, protorfanclust, cdsorfanclust, nfspeclist, nfusergenomeinfo, us
 	if nfusergenomeinfo and os.path.exists(nfusergenomeinfo):
 		with open(nfusergenomeinfo, 'r') as fusergenomeinfo:
 			uginfheader = fusergenomeinfo.readline().rstrip('\n').split('\t')
-			if not ('assembly_id' in uginfheader):
-				if usergenomefinalassdir and ('assembly_id' in uginfheader):
-					print "fetching assembly ids from matching values of 'assembly_id' field to folder names in GenBank-like assembly folder: '%s'" %usergenomefinalassdir
-					for assidname in os.listdir(usergenomefinalassdir):
-						seqproj = seqprojpat.search(assidname).groups()[0]
-						assid = assidpat.search(assidname).groups()[0]
-						dseqproj2assid[seqproj] = assid
-				else:
-					raise ValueError, "the 'assembly_id' field is missing in file '%s';\n"%nfusergenomeinfo+ \
-					                  "instead you can provide in last argument the path to a GenBank-like assembly folder "+ \
-					                  "where assembly names will be matched to folder names from the 'assembly_id' field"
+			#~ if not ('assembly_id' in uginfheader):
+				#~ if usergenomefinalassdir and ('sequencing_project_id' in uginfheader):
+					#~ print "fetching assembly ids from matching values of 'sequencing_project_id' field to folder names in GenBank-like assembly folder: '%s'" %usergenomefinalassdir
+					#~ for assidname in os.listdir(usergenomefinalassdir):
+						#~ seqproj = seqprojpat.search(assidname).groups()[0]
+						#~ assid = assidpat.search(assidname).groups()[0]
+						#~ dseqproj2assid[seqproj] = assid
+				#~ else:
+					#~ raise ValueError, "the 'assembly_id' field is missing in file '%s';\n"%nfusergenomeinfo+ \
+					                  #~ "instead you can provide in last argument the path to a GenBank-like assembly folder "+ \
+					                  #~ "where assembly names will be matched to folder names from the 'sequencing_project_id' field"
 			for line in fusergenomeinfo:
 				lsp = line.rstrip('\n').split('\t')
 				duginfo = {field:lsp[f] for f, field in enumerate(uginfheader)}
 				code, taxid = (duginfo['locus_tag_prefix'], duginfo['taxid'])
 				fout.write("%s\t%s\n"%(code, taxid))
 				codetaxids.append((code, taxid))
-				assid = duginfo.get('assembly_id', dseqproj2assid[duginfo['assembly_id']])
+				#~ assid = duginfo.get('assembly_id', dseqproj2assid[duginfo['sequencing_project_id']])
+				assid = duginfo['assembly_id']
 				code = duginfo['locus_tag_prefix']
 				print assid, ':', code
 				dcustomasscode[assid] = code
