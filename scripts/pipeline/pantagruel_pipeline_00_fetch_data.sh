@@ -49,13 +49,13 @@ extractass (){
   fi
   grep "# Organism name" ${srcass}/*/*_assembly_stats.txt > ${srcass}/all_assemblies_organism_names
   
-  mkdir -p ${lndestass}/
   # record links in centralised folder of assemblies
+  mkdir -p ${lndestass}/
   #~ relpathass2srcass=$(realpath --relative-to=${lndestass} ${srcass})
   #~ for ass in `cat ${srcass}/genome_assemblies*_list` ; do
     #~ ln -s ${relpathass2srcass}/${ass} ${lndestass}/
   #~ done
-  # better preserve actual path as input data are external to the Pantagruel database
+  # better preserve actual path as input data are supposed to be located outside the Pantagruel database
   for ass in `cat ${srcass}/genome_assemblies*_list` ; do
     ln -s ${srcass}/${ass} ${lndestass}/
   done
@@ -76,15 +76,12 @@ downloadass (){
   ${ptgscripts}/fetch_refseq_assemblies_from_list.sh ${srclist} ${srcassftpdest}
   checkexec "could not fetch all the genomes ; exit now"
   
-  mkdir -p ${lndestass}/
   # record links in centralised folder of assemblies
-  #~ relpathass2srcass=$(realpath --relative-to=${lndestass} ${srcassftpdest})
-  #~ for ass in `ls ${srcassftpdest}/` ; do
-    #~ ln -s ${relpathass2srcass}/${ass} ${lndestass}/
-  #~ done
-  # better preserve actual path as input data are external to the Pantagruel database
+  mkdir -p ${lndestass}/
+  # better link with relative path as input data are suposed to be dowloaded inside the Pantagruel database
+  relpathass2srcass=$(realpath --relative-to=${lndestass} ${srcassftpdest})
   for ass in `ls ${srcassftpdest}/` ; do
-    ln -s ${srcassftpdest}/${ass} ${lndestass}/
+    ln -s ${relpathass2srcass}/${ass} ${lndestass}/
   done
 }
 
