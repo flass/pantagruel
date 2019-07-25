@@ -23,6 +23,9 @@ fi
 mkdir -p ${outdir}
 if [ -e ${prokkablastdb}/genus/${genus} ] ; then
  usegenus="--usegenus"
+elif [ -e ${prokkablastdb}/genus/${refgenus} ] ; then
+ ln -s ./${refgenus} ${prokkablastdb}/genus/${genus}
+ usegenus="--usegenus"
 fi
 prokkaopts="
 --outdir $outdir --prefix ${genus}_${species}_${strain} --force 
