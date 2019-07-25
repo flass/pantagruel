@@ -88,7 +88,7 @@ usagelong (){
   echo "                          for instance, \`-L /path/to/assemblist\` will save assembly folders in /path/to/assemblist_assemblies_from_ftp/."
   echo ""
   echo "    --refseq_list4annot same principle as -L, but WILL NOT be used in the study, only as a reference to annotate user genomes"
-  echo "                        (defaults to combined value of -A and -L options)"
+  echo "                        (defaults to the combined value of -A and -L options)"
   echo ""
   echo "    -a|--custom_ass  path to folder of user-provided genomes (no default value). The specified folder must contain:"
   echo "                      _mandatory_ "
@@ -226,10 +226,6 @@ ptgenvsetdefaults (){
     if [ -z "$famprefix" ] ; then
       export famprefix="PANTAG"
       echo "Default: set gene family prefix to '$famprefix'"
-    fi
-    if [ -z "$refass" ] ; then
-      export refass=${ncbiass}
-      echo "Default: set NCBI RefSeq(-like) genome assembly source folder for reference in user genome annotation to '$refass'"
     fi
     if [ -z "$ncbitax" ] ; then
      export ncbitax=${ptgroot}/NCBI/Taxonomy_$(date +'%Y-%m-%d')

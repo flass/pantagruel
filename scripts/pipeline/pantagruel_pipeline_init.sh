@@ -87,34 +87,44 @@ else
 fi
 
 ## check genome input
-if [ ! -z "${ncbiass}" ] ; then
+for srcass in "${ncbiass}" "${refass}" ; do
+if [ ! -z "${srcass}" ] ; then
+  inass="$(ls -A "${srcass}/" 2>/dev/null)"
+  if [ -z "${inass}" ] ; then
+    echo "Error: the folder '${srcass}' provided for custom reference genome assembly set (through option '--refseq_ass4annot') is empty; pease provide "
+  fi
   # detected input RefSeq genome folder
-    for dass in $(ls -A ${ncbiass}/) ; do
+    for dass in ${inass} ; do
     # check validity of the folder file structure
-      if [ ! -d ${ncbiass}/${dass} ] ; then
+      if [ ! -d ${srcass}/${dass} ] ; then
         echo "Error: RefSeq assemblies must be provided as folders including sequence and annotation files;"
-        echo " '${ncbiass}/${dass}' is not a directory; exit now"
+        echo " '${srcass}/${dass}' is not a directory; exit now"
         exit 1
       fi
       for ext in genomic.fna genomic.gbff genomic.gff cds_from_genomic protein.faa ; do
-       if [ -z "$(ls -A ${ncbiass}/${dass}/${dass}_${ext}* 2> /dev/null)" ] ; then
-        echo "Error: could not detect file named like '${dass}_${ext}*' extension in custom assembly folder '${ncbiass}/${dass}/';"
+       if [ -z "$(ls -A ${srcass}/${dass}/${dass}_${ext}* 2> /dev/null)" ] ; then
+        echo "Error: could not detect file named like '${dass}_${ext}*' extension in custom assembly folder '${srcass}/${dass}/';"
         echo " Input RefSeq assemblies must include a file with extension *_${ext}[.gz] ; exit now"
         exit 1
        fi
       done
     done
 fi
-if [ ! -z "${listncbiass}" ] ; then
-  rm -f ${listncbiass}_wrongFormatAssIds
-  grep -v "GC[AF]_[0-9]\{9,\}" ${listncbiass} > ${listncbiass}_wrongFormatAssIds
-  if [ -s ${listncbiass}_wrongFormatAssIds ] ; then
+done
+
+for listsrcass in "${listncbiass}" "${listrefass}" ; do
+if [ ! -z "${listsrcass}" ] ; then
+  rm -f ${listsrcass}_wrongFormatAssIds
+  grep -v "GC[AF]_[0-9]\{9,\}" ${listsrcass} > ${listsrcass}_wrongFormatAssIds
+  if [ -s ${listsrcass}_wrongFormatAssIds ] ; then
     echo "the list of NCBI Assembly accession ids provided through option -L has uncorrectly formatted entries:"
-    cat ${listncbiass}_wrongFormatAssIds
+    cat ${listsrcass}_wrongFormatAssIds
     echo "will not be able to download these from NCBI FTP site; exit now"
     exit 1
   fi
 fi
+done
+
 if [ ! -z "${customassemb}" ] ; then
   # detected input custom genome folder
   # check validity of the folder file structure
@@ -163,15 +173,15 @@ EOF
     checkexec "Custom strain info file detected; Error in format" "Custom strain info file detected; format validated"
     fi
   fi
-  if [ -d "${customassemb}/annotations" ] ; then
-    for dass in $(ls -A ${customassemb}/annotations/) ; do
-      if [ ! -d ${customassemb}/annotations/${dass} ] ; then
+  if [ -d "${custannot}" ] ; then
+    for dass in $(ls -A ${custannot}/) ; do
+      if [ ! -d ${custannot}/${dass} ] ; then
         echo "Annotations for custom assemblies must be provided as folders of annotation files;"
-        echo " '${customassemb}/annotations/${dass}' is not a directory; exit now"
+        echo " '${custannot}/${dass}' is not a directory; exit now"
         exit 1
       fi
-      if [ -z "$(ls -A ${customassemb}/annotations/${dass}/*.gff 2> /dev/null)" ] ; then
-        echo "Error: could not detect GFF file (with .gff extension) in custom assembly folder '${customassemb}/annotations/${dass}/';"
+      if [ -z "$(ls -A ${custannot}/${dass}/*.gff 2> /dev/null)" ] ; then
+        echo "Error: could not detect GFF file (with .gff extension) in custom assembly folder '${custannot}/${dass}/';"
         echo " Annotations for custom assemblies must include at least a GFF file ; exit now"
         exit 1
       fi

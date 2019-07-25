@@ -22,7 +22,7 @@ A **scenario of gene evolution** is then inferred for each gene family in the da
 Such scenario describes the likely events of gene **duplication, horizontal transfer and loss** (DTL model) that marked the gene family history. These events are annotated on the branch of the gene tree and the of the reference tree, and make their history consistent.
 From these annotations, one can derive the **history of gain and loss** of this gene family over the reference tree of species, and follow the diversification of *gene lineages* within and across *genome lineages*.  
 
-Gene tree/species tree reconciliation methods rely on the best available information to infer such scenarios, as they account for the phylogeny of genes; a probablilistic method is chosen to quantify the statistical support for inferences, in face of the large space of possible scenario and of the uncertainty in the input gene phylogeny.  
+Gene tree/species tree reconciliation methods rely on the best available information to infer such scenarios, as they account for the phylogeny of genes; a probablilistic method is chosen to quantify the statistical support for inferences, in face of the large space of possible scenario and to account for the uncertainty in the input gene phylogeny.  
 
 While probablilistic reconciliation methods are computationally costly, this pipeline uses innovative phylogenetic apporoaches based on the reduction of gene trees to their informative backbone, allowing their use in a resonable time on **datasets of 1,000+ bacterial genome** and covering **multiple species**.
 

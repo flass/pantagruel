@@ -13,13 +13,91 @@ if [ -z "$1" ] ; then echo "missing mandatory parameter: pantagruel config file"
 envsourcescript="$1"
 source ${envsourcescript}
 
+extractass (){
+  srcass=${1}
+  destass=${2}
+  ## extract content of a folder of assemblies as those obtained using NCBI web interface:
+  # Search Assembly database using a query defined as convenient:  
+  # e.g.: 'txid543[Organism:exp] AND ("latest refseq"[filter] AND all[filter] NOT anomalous[filter]) AND ("complete genome"[filter])'
+  # save assemblies (Download Assemblies > Source Database: RefSeq; File type: All file type (including assembly-structure directory))
+  # as ${srcass}/genome_assemblies.tar or as ${srcass}/genome_assemblies_DATASETTAG.tar if several datasets have to be merged
+  echo "extract assembly data from folder '${srcass}'"
+  cd ${srcass}/
+  # look for assembly folders
+  ls -A ${srcass}/ | grep -v 'assemblies' > ${srcass}/genome_assemblies_list
+  # look for archives containing many assembly folders (datasets downloaded from NCBI Assembly website)
+  assarch=$(ls genome_assemblies*.tar 2> /dev/null)
+  if [ "$assarch" ] ; then
+    echo "detected archive(s) of genome assemblies (presumably downloaded from NCBI Assembly website):"
+    echo "$assarch"
+    # extract assembly folders from the archives
+    for tarf in `ls genome_assemblies*.tar` ; do 
+      tartag=${tarf#genome_assemblies*}
+      datasettag=${tartag%.*}
+      tar -tf genome_assemblies${datasettag}.tar | cut -d'/' -f2 | sort -u | grep -v "README\|report" > ${srcass}/genome_assemblies${datasettag}_list
+      tar -xf genome_assemblies${datasettag}.tar 
+      mv report.txt report${datasettag}.txt
+      assd=(`ls ncbi-genomes-* -d`)
+      for dass in `ls ${assd[0]}/ | grep -v README` ; do
+       if [ ! -z $dass ] ; then
+      rm -rf ${srcass}/$dass
+      mv ${assd[0]}/$dass ${srcass}/
+       fi
+      done
+      rm -r ${assd[0]}/ 
+    done
+  fi
+  grep "# Organism name" ${srcass}/*/*_assembly_stats.txt > ${srcass}/all_assemblies_organism_names
+  
+  mkdir -p ${destass}/
+  # record links in centralised folder of assemblies
+  #~ relpathass2srcass=$(realpath --relative-to=${destass} ${srcass})
+  #~ for ass in `cat ${srcass}/genome_assemblies*_list` ; do
+    #~ ln -s ${relpathass2srcass}/${ass} ${destass}/
+  #~ done
+  # better preserve actual path as input data are external to the Pantagruel database
+  for ass in `cat ${srcass}/genome_assemblies*_list` ; do
+    ln -s ${srcass}/${ass} ${destass}/
+  done
+}
+
+downloadass (){
+  srclist=${1}
+  destass=${2}
+  echo "fetch assembly data from NCBI FTP accordng to list '${srclist}'"
+  # fetch genome assemblies from NCBI FTP based on list prvided with -L option
+  srcassftpdest=${srclist}_assemblies_from_ftp
+  mkdir -p ${srclist}_assemblies_from_ftp/
+  ${ptgscripts}/fetch_refseq_assemblies_from_list.sh ${srclist} ${srcassftpdest}
+  checkexec "could not fetch all the genomes ; exit now"
+  
+  mkdir -p ${destass}/
+  # record links in centralised folder of assemblies
+  #~ relpathass2srcass=$(realpath --relative-to=${destass} ${srcassftpdest})
+  #~ for ass in `ls ${srcassftpdest}/` ; do
+    #~ ln -s ${relpathass2srcass}/${ass} ${destass}/
+  #~ done
+  # better preserve actual path as input data are external to the Pantagruel database
+  for ass in `ls ${srcassftpdest}/` ; do
+    ln -s ${srcassftpdest}/${ass} ${destass}/
+  done
+}
+
 makeprokkarefgenusdb (){
+  inrefass=${1}
+  prokkabin=$(which prokka)
+  prokkablastdb=$(dirname $(dirname $(readlink -f $prokkabin)))/db/genus
+  if [ -e ${prokkablastdb}/${refgenus} ] ; then
+    datetime=$(date +%Y-%m-%d_%H-%M-%S)
+    echo "Warning: found a previous Prokka reference database for the genus '${refgenus}; save it to '${prokkablastdb}/${refgenus}.backup_${datetime}'"
+    mv -f ${prokkablastdb}/${refgenus} ${prokkablastdb}/${refgenus}.backup_${datetime}
+  fi
   # add all the (representative) proteins in the dataset to the custom reference prot database for Prokka to search for similarities
-  ls ${refass}/*/*_genomic.gbff.gz > ${indata}/assemblies_genomic_gbffgz_list
-  if [ ! -s ${refass}/assemblies_genomic_gbffgz_list ] ; then
-    parallel -a ${refass}/assemblies_genomic_gbffgz_list 'gunzip -k'
+  ls ${inrefass}/*/*_genomic.gbff.gz > ${indata}/assemblies_genomic_gbffgz_list
+  if [ ! -s ${inrefass}/assemblies_genomic_gbffgz_list ] ; then
+    parallel -a ${inrefass}/assemblies_genomic_gbffgz_list 'gunzip -k'
     # extract protein sequences
-    prokka-genbank_to_fasta_db ${refass}/*/*_genomic.gbff > ${ptgtmp}/${refgenus}.faa 2> ${ptglogs}/prokka-genbank_to_fasta_db.log
+    prokka-genbank_to_fasta_db ${inrefass}/*/*_genomic.gbff > ${ptgtmp}/${refgenus}.faa 2> ${ptglogs}/prokka-genbank_to_fasta_db.log
     # cluster similar sequences
     cdhit -i ${ptgtmp}/${refgenus}.faa -o ${ptgtmp}/${refgenus}_representative.faa -T 0 -M 0 -G 1 -s 0.8 -c 0.9 &> ${ptglogs}/cdhit.log
     rm -fv ${ptgtmp}/${refgenus}.faa ${ptgtmp}/${refgenus}_representative.faa.clstr
@@ -59,81 +137,47 @@ fi
 mkdir -p ${assemblies}/
 
 if [ ! -z "${ncbiass}" ] ; then
-  ## content of this folder can be obtained using NCBI web interface:
-  # Search Assembly database using a query defined as convenient:  
-  # e.g.: 'txid543[Organism:exp] AND ("latest refseq"[filter] AND all[filter] NOT anomalous[filter]) AND ("complete genome"[filter])'
-  # save assemblies (Download Assemblies > Source Database: RefSeq; File type: All file type (including assembly-structure directory))
-  # as ${ncbiass}/genome_assemblies.tar or as ${ncbiass}/genome_assemblies_DATASETTAG.tar if several datasets have to be merged
-  echo "extract assembly data from folder '${ncbiass}'"
-  cd ${ncbiass}/
-  # look for assembly folders
-  ls -A ${ncbiass}/ | grep -v 'assemblies' > ${ncbiass}/genome_assemblies_list
-  # look for archives containing many assembly folders (datasets downloaded from NCBI Assembly website)
-  assarch=$(ls genome_assemblies*.tar 2> /dev/null)
-  if [ "$assarch" ] ; then
-    echo "detected archive(s) of genome assemblies (presumably downloaded from NCBI Assembly website):"
-    echo "$assarch"
-    # extract assembly folders from the archives
-    for tarf in `ls genome_assemblies*.tar` ; do 
-      tartag=${tarf#genome_assemblies*}
-      datasettag=${tartag%.*}
-      tar -tf genome_assemblies${datasettag}.tar | cut -d'/' -f2 | sort -u | grep -v "README\|report" > ${ncbiass}/genome_assemblies${datasettag}_list
-      tar -xf genome_assemblies${datasettag}.tar 
-      mv report.txt report${datasettag}.txt
-      assd=(`ls ncbi-genomes-* -d`)
-      for dass in `ls ${assd[0]}/ | grep -v README` ; do
-       if [ ! -z $dass ] ; then
-      rm -rf ${ncbiass}/$dass
-      mv ${assd[0]}/$dass ${ncbiass}/
-       fi
-      done
-      rm -r ${assd[0]}/ 
-    done
-  fi
-  grep "# Organism name" ${ncbiass}/*/*_assembly_stats.txt > ${ncbiass}/all_assemblies_organism_names
-  
-  # record links in centralised folder of assemblies
-  relpathass2ncbiass=$(realpath --relative-to=${assemblies} ${ncbiass})
-  for ass in `cat ${ncbiass}/genome_assemblies*_list` ; do
-    ln -s ${relpathass2ncbiass}/${ass} ${assemblies}/
-  done
+  extractass ${ncbiass} ${assemblies}
 fi
 
 if [ ! -z "${listncbiass}" ] ; then
-  echo "fetch assembly data from NCBI FTP accordng to list '${listncbiass}'"
-  # fetch genome assemblies from NCBI FTP based on list prvided with -L option
-  ncbiassftpdest=${listncbiass}_assemblies_from_ftp
-  mkdir -p ${listncbiass}_assemblies_from_ftp/
-  ${ptgscripts}/fetch_refseq_assemblies_from_list.sh ${listncbiass} ${ncbiassftpdest}
-  checkexec "could not fetch all the genomes ; exit now"
-  
-  # record links in centralised folder of assemblies
-  relpathass2ncbiass=$(realpath --relative-to=${assemblies} ${ncbiassftpdest})
-  for ass in `ls ${ncbiassftpdest}/` ; do
-    ln -s ${relpathass2ncbiass}/${ass} ${assemblies}/
-  done
+  downloadass ${listncbiass} ${assemblies}
+fi
+
+if [ ! -z "${refass}" ] ; then
+  downloadass ${refass} ${prokkaref}
+fi
+
+if [ ! -z "${listrefass}" ] ; then
+  downloadass ${listrefass} ${prokkaref}
 fi
 
 
 if [ ! -z "${customassemb}" ] ; then
   echo "extract assembly data from folder '${customassemb}'"
-    
-  ## if the folder of custom/user-provided set of genomes is not empty
-  if [[ "$(ls -A "${contigs}/" 2>/dev/null)" ]] ; then
   
-    prokkabin=$(which prokka)
-    prokkablastdb=$(dirname $(dirname $(readlink -f $prokkabin)))/db/genus
-    if [ ! -s ${prokkablastdb}/${refgenus} ] ; then
-      # first add all the (representative) proteins in the dataset to the custom reference prot database for Prokka to search for similarities
-      makeprokkarefgenusdb
+  contigsets="$(ls -A "${contigs}/" 2>/dev/null)"
+  echo "found $(echo $contigsets | wc -w) contig files (raw genome assemblies) in ${contigs}/"
+  ## if the folder of custom/user-provided set of genomes is not empty
+  if [[ ! -z "${contigsets}" ]] ; then
+    
+    # gather representative proteins from the custom reference genome set to make a prot database for Prokka to search for similarities
+    if [ ! -z "$(ls -A "${prokkaref}/" 2>/dev/null)" ] ; then
+      echo "generate Prokka reference database for annotation of genomes from the genus '${refgenus} based on assemblies found in '${prokkaref}' (specified through options --refseq_ass4annot or --refseq_list4annot)"
+      makeprokkarefgenusdb ${prokkaref}
+    elif [ ! -z "$(ls -A "${assemblies}/" 2>/dev/null)" ] ; then
+      echo "generate Prokka reference database for annotation of genomes from the genus '${refgenus} based on assemblies found in '${assemblies}' (specified through options -A or -L)"
+      makeprokkarefgenusdb ${assemblies}
     fi
   
     # run Prokka 
     mkdir -p ${annot}
-    for allcontigs in `ls ${contigs}/` ; do
+    for allcontigs in ${contigsets} ; do
       gproject=${allcontigs%%.fa*}
-      if [ -d ${annot}/${gproject} ] ; then
-        echo "found annotation folder '${annot}/${gproject}' ; skip annotation of contigs in '${contigs}/${allcontigs}'"
+      if [ -d ${custannot}/${gproject} ] ; then
+        echo "found annotation folder '${custannot}/${gproject}' ; skip annotation of contigs in '${contigs}/${allcontigs}'"
+        # better preserve actual path as input data are external to the Pantagruel database 
+        ln -s ${cust2annot}/${ass} ${annot}/
       else
         echo "will annotate contigs in '${contigs}/${allcontigs}'"
         promptdate
@@ -214,8 +258,7 @@ EOF
   
     # create assembly directory and link/create relevant files
     echo "will create GenBank-like assembly folders for user-provided genomes"
-    #~ export gblikeass=${customassemb}/genbank-format_assemblies
-    mkdir -p $gblikeass/
+    mkdir -p ${gblikeass}/
     for gproject in `ls ${annot}` ; do
       gff=$(ls ${annot}/${gproject}/ | grep 'ptg.gff')
       assemb=${gproject}.1_${gff[0]%*.ptg.gff}

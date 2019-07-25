@@ -20,12 +20,14 @@ export comparerecs=${entdb}/09.compare_scenarios
 
 # sub folders
 export contigs=${customassemb}/contigs
-export annot=${customassemb}/annotation
-export gblikeass=${customassemb}/genbank-format_assemblies
+export custannot=${customassemb}/annotation
+export annot=${indata}/annotation
+export prokkaref=${indata}/reference_assemblies4annotation
+export gblikeass=${indata}/genbank-format_assemblies
 export genomeinfo=${indata}/genome_infos
 export assemblies=${indata}/assemblies
 export families=${seqdb}/protein_families
-export nrprotali=$protali/nr_protfam_clustalo_alignments
+export nrprotali=${protali}/nr_protfam_clustalo_alignments
 export cdsalifastacodedir=${protali}/full_cdsfam_alignments_species_code
 export protalifastacodedir=${protali}/full_protfam_alignments_species_code
 export coretree=${coregenome}/raxml_tree
