@@ -1,2 +1,2 @@
-sequencing_project_id	genus	species	strain	taxid	locus_tag_prefix
+assembly_id	genus	species	strain	taxid	locus_tag_prefix
 FOQJ01	Bradyrhizobium	sp.	cf659	1761771	BRAD659
