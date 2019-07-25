@@ -15,7 +15,7 @@ source ${envsourcescript}
 
 extractass (){
   srcass=${1}
-  destass=${2}
+  lndestass=${2}
   ## extract content of a folder of assemblies as those obtained using NCBI web interface:
   # Search Assembly database using a query defined as convenient:  
   # e.g.: 'txid543[Organism:exp] AND ("latest refseq"[filter] AND all[filter] NOT anomalous[filter]) AND ("complete genome"[filter])'
@@ -49,37 +49,42 @@ extractass (){
   fi
   grep "# Organism name" ${srcass}/*/*_assembly_stats.txt > ${srcass}/all_assemblies_organism_names
   
-  mkdir -p ${destass}/
+  mkdir -p ${lndestass}/
   # record links in centralised folder of assemblies
-  #~ relpathass2srcass=$(realpath --relative-to=${destass} ${srcass})
+  #~ relpathass2srcass=$(realpath --relative-to=${lndestass} ${srcass})
   #~ for ass in `cat ${srcass}/genome_assemblies*_list` ; do
-    #~ ln -s ${relpathass2srcass}/${ass} ${destass}/
+    #~ ln -s ${relpathass2srcass}/${ass} ${lndestass}/
   #~ done
   # better preserve actual path as input data are external to the Pantagruel database
   for ass in `cat ${srcass}/genome_assemblies*_list` ; do
-    ln -s ${srcass}/${ass} ${destass}/
+    ln -s ${srcass}/${ass} ${lndestass}/
   done
 }
 
 downloadass (){
   srclist=${1}
-  destass=${2}
+  lndestass=${2}
+  dldestass=${3}
   echo "fetch assembly data from NCBI FTP accordng to list '${srclist}'"
   # fetch genome assemblies from NCBI FTP based on list prvided with -L option
-  srcassftpdest=${srclist}_assemblies_from_ftp
-  mkdir -p ${srclist}_assemblies_from_ftp/
+  if [ ! -z ${dldestass} ] ; then
+    srcassftpdest=${dldestass}/$(basename ${srclist})_assemblies_from_ftp
+  else
+    srcassftpdest=${srclist}_assemblies_from_ftp
+  fi
+  mkdir -p ${srcassftpdest}/
   ${ptgscripts}/fetch_refseq_assemblies_from_list.sh ${srclist} ${srcassftpdest}
   checkexec "could not fetch all the genomes ; exit now"
   
-  mkdir -p ${destass}/
+  mkdir -p ${lndestass}/
   # record links in centralised folder of assemblies
-  #~ relpathass2srcass=$(realpath --relative-to=${destass} ${srcassftpdest})
+  #~ relpathass2srcass=$(realpath --relative-to=${lndestass} ${srcassftpdest})
   #~ for ass in `ls ${srcassftpdest}/` ; do
-    #~ ln -s ${relpathass2srcass}/${ass} ${destass}/
+    #~ ln -s ${relpathass2srcass}/${ass} ${lndestass}/
   #~ done
   # better preserve actual path as input data are external to the Pantagruel database
   for ass in `ls ${srcassftpdest}/` ; do
-    ln -s ${srcassftpdest}/${ass} ${destass}/
+    ln -s ${srcassftpdest}/${ass} ${lndestass}/
   done
 }
 
@@ -141,7 +146,7 @@ if [ ! -z "${ncbiass}" ] ; then
 fi
 
 if [ ! -z "${listncbiass}" ] ; then
-  downloadass ${listncbiass} ${assemblies}
+  downloadass ${listncbiass} ${assemblies} ${indata}
 fi
 
 if [ ! -z "${refass}" ] ; then
@@ -149,7 +154,7 @@ if [ ! -z "${refass}" ] ; then
 fi
 
 if [ ! -z "${listrefass}" ] ; then
-  downloadass ${listrefass} ${prokkaref}
+  downloadass ${listrefass} ${prokkaref} ${indata}
 fi
 
 
