@@ -391,7 +391,8 @@ checkexec "failed name translation in reference tree" "reference tree name trans
 if [ -e "${pseudocorealn}.reduced" ] ; then
   alnlen=$(head -n1 ${pseudocorealn}.reduced | cut -d' ' -f2 )
 elif [ -e "${pseudocorealn}" ] ; then
-  alnlen=$(head -n1 ${pseudocorealn} | cut -d' ' -f2 )
+  #~ alnlen=$(head -n1 ${pseudocorealn} | cut -d' ' -f2 )
+  alnlen=$(grep -c '^>' ${pseudocorealn})
 else
   alnlen=500000 # arbitrary length similar to a 500 CDS concatenate
 fi
