@@ -180,18 +180,23 @@ else
   else
    echo "# call: $raxmlbin -s ${pseudocorealn} ${raxmloptions} -f c" > ${ptglogs}/raxml/${treename}.check.log
    $raxmlbin -s ${pseudocorealn} ${raxmloptions} -f c &>> ${ptglogs}/raxml/${treename}.check.log
-   checkexec "failed to remove identical sequence in core alignment" "removed identical sequence in core alignment; reduced alignemnt stored in file '${pseudocorealn}.reduced'"
+   checkexec "failed to remove identical sequence in core alignment" 
+   if [ -e "${pseudocorealn}.reduced" ] ; then
+     "removed identical sequence in core alignment; reduced alignemnt stored in file '${pseudocorealn}.reduced'"
+   else
+     "no identical sequence was found in the core alignment"
+   fi
    grep 'exactly identical$' ${coretree}/RAxML_info.${treename} | sed -e 's/IMPORTANT WARNING: Sequences \(.\+\) and \(.\+\) are exactly identical/\1\t\2/g' > ${pseudocorealn}.identical_sequences
    mv ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_identical_sequences.${treename}
   fi
   if [[ ! -z "${userreftree}" ]] ; then 
     # work on the full alignment as the user-provided tree is expected to bear all leaves
     coretreealn=${pseudocorealn}
-  else
+  elif [ -e ${pseudocorealn}.reduced ] ; then
     coretreealn=${pseudocorealn}.reduced
   fi
 
-  # search ML tree topology on reduced alignment nuder CAT-based model and with -F option
+  # search ML tree topology on (reduced) alignment nuder CAT-based model and with -F option
   # this means no final thorough tree optimization is conducted under GAMMA-based model
   # and the output file is thus RAxML_result.* (not RAxML_bestTree.*) ; to avoid overwriting by next step, it is automatically renamed as RAxML_resultTopo.* 
   if [[ "${resumetask}" == "true" && -s ${nrbesttopo} ]] ; then
@@ -380,9 +385,9 @@ checkexec "failed name translation in reference tree" "reference tree name trans
 
 ### generate ultrametric 'dated' species tree for more meaningfulgptghical representation of reconciliation AND to use the dated (original) version of ALE
 ## use LSD (v 0.3 beta; To et al. Syst. Biol. 2015) to generate an ultrametric tree from the rooted ML tree (only assumin different, uncorrelated clocks for each branch)
-if [ -e ${pseudocorealn}.reduced ] ; then
+if [ -e "${pseudocorealn}.reduced" ] ; then
   alnlen=$(head -n1 ${pseudocorealn}.reduced | cut -d' ' -f2 )
-elif [ -e ${pseudocorealn} ] ; then
+elif [ -e "${pseudocorealn}" ] ; then
   alnlen=$(head -n1 ${pseudocorealn} | cut -d' ' -f2 )
 else
   alnlen=500000 # arbitrary length similar to a 500 CDS concatenate
