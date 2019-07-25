@@ -94,7 +94,7 @@ makeprokkarefgenusdb (){
   fi
   # add all the (representative) proteins in the dataset to the custom reference prot database for Prokka to search for similarities
   ls ${inrefass}/*/*_genomic.gbff.gz > ${inrefass}_genomic_gbffgz_list
-  if [ ! -s ${inrefass}_genomic_gbffgz_list ] ; then
+  if [ -s ${inrefass}_genomic_gbffgz_list ] ; then
     parallel -a ${inrefass}_genomic_gbffgz_list 'gunzip -k'
     # extract protein sequences
     prokka-genbank_to_fasta_db ${inrefass}/*/*_genomic.gbff > ${ptgtmp}/${refgenus}.faa 2> ${ptglogs}/prokka-genbank_to_fasta_db.log
@@ -163,10 +163,10 @@ if [ ! -z "${customassemb}" ] ; then
     
     # gather representative proteins from the custom reference genome set to make a prot database for Prokka to search for similarities
     if [ ! -z "$(ls -A "${prokkaref}/" 2>/dev/null)" ] ; then
-      echo "generate Prokka reference database for annotation of genomes from the genus '${refgenus} based on assemblies found in '${prokkaref}' (specified through options --refseq_ass4annot or --refseq_list4annot)"
+      echo "generate Prokka reference database for annotation of genomes from the genus '${refgenus}' based on assemblies found in '${prokkaref}' (specified through options --refseq_ass4annot or --refseq_list4annot)"
       makeprokkarefgenusdb ${prokkaref}
     elif [ ! -z "$(ls -A "${assemblies}/" 2>/dev/null)" ] ; then
-      echo "generate Prokka reference database for annotation of genomes from the genus '${refgenus} based on assemblies found in '${assemblies}' (specified through options -A or -L)"
+      echo "generate Prokka reference database for annotation of genomes from the genus '${refgenus}' based on assemblies found in '${assemblies}' (specified through options -A or -L)"
       makeprokkarefgenusdb ${assemblies}
     fi
   
