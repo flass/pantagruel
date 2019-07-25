@@ -93,9 +93,9 @@ makeprokkarefgenusdb (){
     mv -f ${prokkablastdb}/${refgenus} ${prokkablastdb}/${refgenus}.backup_${datetime}
   fi
   # add all the (representative) proteins in the dataset to the custom reference prot database for Prokka to search for similarities
-  ls ${inrefass}/*/*_genomic.gbff.gz > ${indata}/assemblies_genomic_gbffgz_list
-  if [ ! -s ${inrefass}/assemblies_genomic_gbffgz_list ] ; then
-    parallel -a ${inrefass}/assemblies_genomic_gbffgz_list 'gunzip -k'
+  ls ${inrefass}/*/*_genomic.gbff.gz > ${inrefass}_genomic_gbffgz_list
+  if [ ! -s ${inrefass}_genomic_gbffgz_list ] ; then
+    parallel -a ${inrefass}_genomic_gbffgz_list 'gunzip -k'
     # extract protein sequences
     prokka-genbank_to_fasta_db ${inrefass}/*/*_genomic.gbff > ${ptgtmp}/${refgenus}.faa 2> ${ptglogs}/prokka-genbank_to_fasta_db.log
     # cluster similar sequences
