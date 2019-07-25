@@ -21,12 +21,19 @@ if [[ -z $genus || -z $species || -z $strain || -z $taxid || -z $loctagprefix ]]
   exit 1
 fi
 mkdir -p ${outdir}
-if [ -e ${prokkablastdb}/genus/${genus} ] ; then
+if [ -e ${prokkablastdb}/genus/${refgenus} ] ; then
  usegenus="--usegenus"
-elif [ -e ${prokkablastdb}/genus/${refgenus} ] ; then
- ln -s ./${refgenus} ${prokkablastdb}/genus/${genus}
+ if [ -e ${prokkablastdb}/genus/${genus} ] ; then
+   # substitute the 'Reference' files to the 'Genus' files for the time of this annotation
+   for dbfile in $(ls ${prokkablastdb}/genus/${genus} ${prokkablastdb}/genus/${genus}.*) ; do
+     mv -f ${dbfile} ${dbfile/${genus}/${genus}_bak}
+     ln -s ./$(basename ${dbfile/${genus}/${refgenus}}) ${dbfile}
+   done
+ fi
+elif [ -e ${prokkablastdb}/genus/${genus} ] ; then
  usegenus="--usegenus"
 fi
+
 prokkaopts="
 --outdir $outdir --prefix ${genus}_${species}_${strain} --force 
 --addgenes --locustag ${loctagprefix} --compliant --centre ${seqcentre} ${usegenus}
@@ -35,3 +42,13 @@ prokkaopts="
 echo "#call: prokka $prokkaopts ${allcontigs}"
 prokka $prokkaopts ${allcontigs}
 date
+
+# revert to the original 'Genus' database
+for dbfile in $(ls ${prokkablastdb}/genus/${genus} ${prokkablastdb}/genus/${genus}.*) ; do
+  if [ -e ${dbfile/${genus}/${genus}_bak} ] ; then
+   if [ -L ${dbfile} ] ; then
+     rm ${dbfile}
+   fi
+   mv -f ${dbfile/${genus}/${genus}_bak} ${dbfile}
+  fi
+done
