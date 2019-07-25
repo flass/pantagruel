@@ -2,7 +2,7 @@
 
 asslist="$1"
 outdir="$2"
-if [ !-z "$3" ] ; then
+if [ ! -z "$3" ] ; then
   para="--parallel=$3"
 elif [ $(nproc) -gt 1 ] ; then
   if [ $(nproc) -le 4 ] ; then
