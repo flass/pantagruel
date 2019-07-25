@@ -62,7 +62,7 @@ head -n 1 ${templateenv} > ${envsourcescript}
 echo "## Pantagruel database '${ptgdbname}'" >> ${envsourcescript}
 echo "## built with Pantagruel version '${ptgversion}'; source code available at 'https://github.com/flass/pantagruel'" >> ${envsourcescript}
 
-ptgversinit="${ptgversion}"
+export ptgversinit="${ptgversion}"
 
 rm -f ${ptgtmp}/sedenvvar.sh
 echo -n "tail -n +16 ${templateenv}" > ${ptgtmp}/sedenvvar.sh
