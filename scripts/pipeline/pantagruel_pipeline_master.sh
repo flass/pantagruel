@@ -96,7 +96,7 @@ usagelong (){
   echo "                          with extension '.fa', '.fasta' or '.fas' ...). Fasta file names will be truncated by removing"
   echo "                          the '.fa' string and everything occuring after) and will be retained as the assembly_id (beware "
   echo "                          of names redundant with RefSeq assemblies)."
-  echo "                       - a 'strain_infos_\$\{databasename\}.txt' file describing the organism, with \$\{databasename\} the value of option -d"
+  echo "                       - a 'strain_infos_\$\{databasename\}.txt' TAB-delimited file describing the organism, with \$\{databasename\} the value of option -d"
   echo "                          columns should be headed with these fields (replace quotes and semicolons by tabs!):"
   echo "                           'sequencing_project_id'; 'genus'; 'species'; 'strain'; 'taxid'; 'locus_tag_prefix'"
   echo "                         'sequencing_project_id' must match the name of a contig file (e.g. 'seqProjID.fasta')"

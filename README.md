@@ -243,7 +243,7 @@ cat user_genomes/strain_infos_databasename.txt
 # ...
 ```
 There should be as many rows as FASTA files in the `contigs/` folder, plus one header row.
-Fields should be tab-separated; the header must contain these field names: `assembly_id`, `genus`, `species`, `strain`, `taxid`, `locus_tag_prefix`; their order does not matter.
+Fields should be **tab**-separated; the header must contain these field names: `assembly_id`, `genus`, `species`, `strain`, `taxid`, `locus_tag_prefix`; their order does not matter.
 The values in `assembly_id` and `locus_tag_prefix` fields must be unique per row.
 The `assembly_id` field value must match the begin of contig file name and match exactly the annotation folder name.
 The characters `'-'` and `'_'` are forbiden in the `locus_tag_prefix` field.
@@ -317,7 +317,7 @@ Options are detailed here:
                           with extension '.fa', '.fasta' or '.fas' ...). Fasta file names will be truncated by removing
                           the '.fa' string and everything occuring after) and will be retained as the assembly_id (beware 
                           of names redundant with RefSeq assemblies).
-                       - a 'strain_infos_${databasename}.txt' file describing the organism, with ${databasename} the value of option -d"
+                       - a 'strain_infos_${databasename}.txt' TAB-delimited file describing the organism, with ${databasename} the value of option -d"
                           columns should be headed with these fields (replace quotes and semicolons by tabs!):"
                            'sequencing_project_id'; 'genus'; 'species'; 'strain'; 'taxid'; 'locus_tag_prefix'
                          'sequencing_project_id' must match the name of a contig file (e.g. 'seqProjID.fasta')
