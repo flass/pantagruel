@@ -14,7 +14,7 @@ export database=${ptgdb}/03.database
 export funcannot=${ptgdb}/04.functional
 export coregenome=${ptgdb}/05.core_genome
 export genetrees=${ptgdb}/06.gene_trees
-export alerec=${ptgdb}/07.ALE_reconciliation
+export alerec=${ptgdb}/07.reconciliations
 export orthogenes=${ptgdb}/08.orthologs
 export comparerecs=${entdb}/09.compare_scenarios
 

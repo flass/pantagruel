@@ -44,7 +44,7 @@ else
   export rectype='dated'
 fi
 export reccol="ale_${chaintype}_${rectype}_${reccolid}"
-export recs=${alerec}/${chaintype}_recs
+export recs=${alerec}/${chaintype}_ALE_recs
 
 tasklist=${alerec}/${collapsecond}_${replmethod}_Gtrees_list
 if [ -z ${genefamlist} ] ; then

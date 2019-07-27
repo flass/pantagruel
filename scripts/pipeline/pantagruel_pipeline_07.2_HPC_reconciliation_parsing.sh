@@ -13,18 +13,26 @@ if [ -z "$1" ] ; then echo "missing mandatory parameter: pantagruel config file"
 envsourcescript="$1"
 source ${envsourcescript}
 
+# safer specifying the reconciliation collaction to parse; e.g.: 'ale_collapsed_dated_1'
 if [ ! -z "$2" ] ; then
-  ncpus="$2"
+  reccol="$2"
+else
+  # if not inferred from the record of the last reconciliation computation
+  reccol=$(cut -f4 ${alerec}/reccol)
+fi
+
+if [ ! -z "$3" ] ; then
+  ncpus="$3"
 else
   ncpus=8
 fi
-if [ ! -z "$3" ] ; then
-  mem="$3"
+if [ ! -z "$4" ] ; then
+  mem="$"
 else
   mem=124gb
 fi
-if [ ! -z "$4" ] ; then
-  wth="$4"
+if [ ! -z "$5" ] ; then
+  wth="$5"
 else
   wth=24
 fi
@@ -42,9 +50,11 @@ fi
 export parsedreccol=${reccol}_parsed_${parsedreccolid}
 export parsedrecs=${alerec}/parsed_recs/${parsedreccol}
 
+outrecdir=${recs}/${collapsecond}/${replmethod}/${reccol}
+
 mkdir -p ${parsedrecs}
-reclist=$outrecdir/ale_collapsed_${rectype}_uml_rec_list
-${ptgscripts}/lsfullpath.py "${outrecdir}/ale_collapsed_${rectype}/*ml_rec" > $reclist
+reclist=$outrecdir/${reccol}_${rectype}_uml_rec_list
+${ptgscripts}/lsfullpath.py "${outrecdir}/${reccol}_${rectype}/*ml_rec" > $reclist
  
 ## normalise the species tree branch labels across gene families
 ## and look for correlated transfer events across gene families

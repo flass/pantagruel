@@ -63,7 +63,7 @@ else
   tag=''
 fi
 export reccol="ale_${chaintype}_${rectype}_${reccolid}"
-export recs=${alerec}/${chaintype}_recs
+export recs=${alerec}/${chaintype}_ALE_recs
 
 tasklist=${alerec}/${collapsecond}_${replmethod}_Gtrees_list
 
@@ -112,4 +112,4 @@ if [ ! -z "$alebin" ] ; then
 else
   ALEsourcenote="using ALE Docker image $(docker image ls | grep alesuite | awk '{print $1,$3}')"
 fi
-echo -e "${reccolid}\t${reccoldate}\t${ALEsourcenote}" > ${alerec}/reccol
+echo -e "${reccolid}\t${reccoldate}\t${ALEsourcenote}\t${reccol}" > ${alerec}/reccol
