@@ -110,7 +110,18 @@ echo ""
 if [ "$installdebian" == 'true' ] ; then
   # basic dependencies, libs and standalone software, R and packages, Python and packages
   echo "get/update required Debian packages"
-  deppackages="git build-essential cmake gcc g++ lftp clustalo raxml libhmsbeagle1v5 mrbayes r-base-core r-recommended r-cran-ape r-cran-ade4 r-cran-vegan r-cran-dbi r-cran-rsqlite r-cran-igraph r-cran-getopt sqlite3 sqlite3-doc libmagick++-dev python python-scipy python-numpy python-biopython python-biopython-sql python-igraph cython bioperl mpi-default-bin mpi-default-dev mrbayes-mpi python-pip openjdk-8-jdk openjdk-8-jre cd-hit"
+  #~ deppackages="git build-essential cmake gcc g++ lftp clustalo raxml libhmsbeagle1v5 mrbayes \
+  #~ r-base-core r-recommended r-cran-ape r-cran-ade4 r-cran-vegan r-cran-dbi r-cran-rsqlite r-cran-igraph r-cran-getopt \
+  #~ sqlite3 sqlite3-doc libmagick++-dev python python-scipy python-numpy python-biopython python-biopython-sql python-igraph cython \
+  #~ mpi-default-bin mpi-default-dev mrbayes-mpi python-pip openjdk-8-jdk openjdk-8-jre cd-hit \
+  #~ bioperl"
+  # 'bioperl' should not be needed as only required for prokka and included in the Homebrew distribution; better not install it otherwise to avoid conflicts
+  # 'libdw*' are required for Interproscan to work properly on a Ubuntu 18.04.1 LTS system - however that should ideally come with the Interproscan java executable
+  deppackages="git build-essential cmake gcc g++ lftp clustalo raxml libhmsbeagle1v5 mrbayes \
+  r-base-core r-recommended r-cran-ape r-cran-ade4 r-cran-vegan r-cran-dbi r-cran-rsqlite r-cran-igraph r-cran-getopt \
+  sqlite3 sqlite3-doc libmagick++-dev python python-scipy python-numpy python-biopython python-biopython-sql python-igraph cython \
+  mpi-default-bin mpi-default-dev mrbayes-mpi python-pip openjdk-8-jdk openjdk-8-jre cd-hit \
+  libdw1 libdw-dev"
   if [ "$installbrew" == 'true' ] ; then deppackages="$deppackages linuxbrew-wrapper" ; fi
   if [ "$installdocker" == 'true' ] ; then deppackages="$deppackages docker.io" ; fi
   sudo apt install $deppackages
