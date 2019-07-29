@@ -13,6 +13,7 @@ CRANmirror="https://cran.ma.imperial.ac.uk/" # should be edited to match nearest
 checkexec (){
   if [ $? != 0 ]; then
     echo "ERROR: $1" 1>&2
+    echo "ERROR: abort installation of Pantagruel"
     exit 1
   else
     if [ ! -z "$2" ] ; then
@@ -128,6 +129,7 @@ if [ "$installdebian" == 'true' ] ; then
   if [ $? != 0 ] ; then
     echo "ERROR: could not install all required Debian packages:"
     apt list $deppackages
+    echo "ERROR: abort installation of Pantagruel"
     exit 1
   fi
   echo ""
@@ -193,7 +195,7 @@ if [ "$installbrew" == 'true' ] ; then
     brew update
     brew doctor
     brew install brewsci/bio/prokka
-    checkexec "Could not install Prokka using Brew"
+    checkexec "Could not install Prokka using Brew" "Succesfully installed Prokka using Brew"
   else
     echo "found Prokka already installed with Brew:"
     brew search prokka
@@ -204,7 +206,7 @@ if [ "$installbrew" == 'true' ] ; then
   if [[ -z "$(brew search mmseqs2 | grep mmseqs2)" ]] ; then
     brew doctor
     brew install mmseqs2
-    checkexec "Could not install MMSeqs using Brew"
+    checkexec "Could not install MMSeqs using Brew" "Succesfully installed MMSeqs using Brew"
   else
     echo "found mmseqs2 already installed with Brew:"
     brew search mmseqs2
