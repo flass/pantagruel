@@ -247,9 +247,14 @@ EOF
         fi
         annotfna=($(ls ${annot}/${gproject}/*.fna))
         annotgbk=($(ls ${annot}/${gproject}/*.gbk))
+        annotrad=${annotgbk[0]%*.gbk}
+        if [ -z "${annotgbk[0]}" ] ; then
+          annotgbk=($(ls ${annot}/${gproject}/*.gbf))
+          annotrad=${annotgbk[0]%*.gbf}
+        fi
         annotfaa=($(ls ${annot}/${gproject}/*.faa))
         annotffn=($(ls ${annot}/${gproject}/*.ffn))
-        python ${ptgscripts}/add_taxid_feature2prokkaGBK.py ${annotgbk[0]} ${annotgbk[0]%*.gbk}.ptg.gbk ${straininfo}
+        python ${ptgscripts}/add_taxid_feature2prokkaGBK.py ${annotgbk[0]} ${annotrad}.ptg.gbk ${straininfo}
         checkexec "something went wrong when modifying the GenBank flat file ${annotgbk[0]}"
         echo "done."
       else
