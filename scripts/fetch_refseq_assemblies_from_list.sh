@@ -39,10 +39,6 @@ for ass in $(cat ${asslist}) ; do
     echo "assembly ${fullass} already present in ${outdir}/"
   fi
   cd ${outdir}/${fullass}/
-  if [ -d ${fullass}_assembly_structure ] ; then
-    sudo chown -R $USER:$USER ${fullass}_assembly_structure
-    chmod -R +rX ${fullass}_assembly_structure
-  fi
   md5sum -c md5checksums.txt
   if [ $? -gt 0 ] ; then
     if [ ! -z "$(md5sum --quiet -c md5checksums.txt 2> /dev/null | grep -v 'assembly_structure')" ] ; then
