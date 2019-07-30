@@ -28,7 +28,7 @@ checkfoldersafe (){
       echo "Task folder '${1}' already exists; -R|--resume option was used so Pantagruel will atempt to resume from an interupted previous run"
     elif [ "${runmode}" == 'force' ] ; then
       echo "Task folder '${1}' already exists; FORCE mode is on: ERASE and recreate the folder to write new result in its place"
-      rm -r ${1}
+      rm -rf ${1}
       mkdir ${1}
     else
       echo "Task folder '${1}' already exists; will stop here rather then overwritting data."
