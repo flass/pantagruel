@@ -65,7 +65,7 @@ downloadass (){
   srclist=${1}
   lndestass=${2}
   dldestass=${3}
-  echo "fetch assembly data from NCBI FTP accordng to list '${srclist}'"
+  echo "$(promptdate) fetch assembly data from NCBI FTP accordng to list '${srclist}'"
   # fetch genome assemblies from NCBI FTP based on list prvided with -L option
   if [ ! -z "${dldestass}" ] ; then
     srcassftpdest=${dldestass}/$(basename ${srclist})_assemblies_from_ftp
@@ -119,7 +119,7 @@ checkfoldersafe ${indata}
 #################################
 
 if [ ! -e ${ncbitax}/names.dmp ] ; then
-echo "did not find the relevant taxonomy flat files in '${ncbitax}/'; download the from NCBI Taxonomy FTP"
+echo "$(promptdate) did not find the relevant taxonomy flat files in '${ncbitax}/'; download the from NCBI Taxonomy FTP"
   ### Download data
   ## using FTP
   # downloading relevant tables from NCBI Taxonomy database 
@@ -156,7 +156,7 @@ fi
 
 
 if [ ! -z "${customassemb}" ] ; then
-  echo "extract assembly data from folder '${customassemb}'"
+  echo "$(promptdate) extract assembly data from folder '${customassemb}'"
   
   contigsets="$(ls -A "${contigs}/" 2>/dev/null)"
   echo "found $(echo $contigsets | wc -w) contig files (raw genome assemblies) in ${contigs}/"
@@ -165,10 +165,10 @@ if [ ! -z "${customassemb}" ] ; then
     
     # gather representative proteins from the custom reference genome set to make a prot database for Prokka to search for similarities
     if [ ! -z "$(ls -A "${prokkaref}/" 2>/dev/null)" ] ; then
-      echo "generate Prokka reference database for annotation of genomes from the genus '${refgenus}' based on assemblies found in '${prokkaref}' (specified through options --refseq_ass4annot or --refseq_list4annot)"
+      echo "$(promptdate) generate Prokka reference database for annotation of genomes from the genus '${refgenus}' based on assemblies found in '${prokkaref}' (specified through options --refseq_ass4annot or --refseq_list4annot)"
       makeprokkarefgenusdb ${prokkaref}
     elif [ ! -z "$(ls -A "${assemblies}/" 2>/dev/null)" ] ; then
-      echo "generate Prokka reference database for annotation of genomes from the genus '${refgenus}' based on assemblies found in '${assemblies}' (specified through options -A or -L)"
+      echo "$(promptdate) generate Prokka reference database for annotation of genomes from the genus '${refgenus}' based on assemblies found in '${assemblies}' (specified through options -A or -L)"
       makeprokkarefgenusdb ${assemblies}
     fi
   
@@ -176,6 +176,7 @@ if [ ! -z "${customassemb}" ] ; then
     mkdir -p ${annot}
     for allcontigs in ${contigsets} ; do
       gproject=${allcontigs%%.fa*}
+      echo "$(promptdate) ${gproject}"
       if [ -d ${custannot}/${gproject} ] ; then
         echo "found annotation folder '${custannot}/${gproject}' ; skip annotation of contigs in '${contigs}/${allcontigs}'"
         # better preserve actual path as input data are external to the Pantagruel database 
@@ -229,11 +230,11 @@ EOF
         python ${ptgscripts}/add_region_feature2prokkaGFF.py ${annotgff[0]} ${annotgff[0]/.gff/.ptg.gff} ${straininfo} ${contigs}/${allcontigs} ${assembler}
         echo "fix annotation to integrate taxid information into GBK files"
         annotfna=($(ls ${annot}/${gproject}/*.fna))
-        annotgbk=($(ls ${annot}/${gproject}/*.gbk))
+        annotgbk=($(ls ${annot}/${gproject}/*.gbk ${annot}/${gproject}/*.gbf))
         annotfaa=($(ls ${annot}/${gproject}/*.faa))
         annotffn=($(ls ${annot}/${gproject}/*.ffn))
         if [[ -z "${annotfna[0]}" || -z "${annotgbk[0]}" || -z "${annotffn[0]}" || -z "${annotfaa[0]}" ]] ; then
-          echo "At least one of these files is missing in ${annot}/${gproject}/ folder: contig fasta file (.fna), GenBank flat file (gbk), CDS Fasta (ffn) or protein Fasta (faa)."
+          echo "At least one of these files is missing in ${annot}/${gproject}/ folder: contig fasta file (.fna), GenBank flat file (gbk/gbf), CDS Fasta (ffn) or protein Fasta (faa)."
           echo "Will (re)generate them from the GFF anotation and genomic Fasta sequence; files already present are kept with an added prefix '.original'"
           for annotf in ${annotfna[@]} ${annotgbk[@]} ${annotffn[@]} ${annotfaa[@]}; do
             if [[ ! -z "${annotf}" ]] ; then
@@ -333,3 +334,5 @@ mkdir -p ${genomeinfo}/assembly_metadata
 python ${ptgscripts}/extract_metadata_from_gbff.py --assembly_folder_list=${genomeinfo}/assemblies_list --add_raw_metadata=${manuin}/manual_metadata_dictionary.tab \
 --add_curated_metadata=${manuin}/manual_curated_metadata_dictionary.tab --add_dbxref=${manuin}/manual_dbxrefs.tab --add_assembly_info_dir=${indata}/assembly_stats \
 --default_species_name="unclassified organism" --output=${genomeinfo}/assembly_metadata
+
+promptdate
