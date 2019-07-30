@@ -197,7 +197,7 @@ if [ ! -z "${customassemb}" ] ; then
           echo "Error: missing mandatory GFF file in ${annot}/${gproject}/ folder"
           exit 1
         fi
-        if [ -z $(grep '##sequence-region' ${annotgff[0]}) ] ; then
+        if [ -z "$(grep '##sequence-region' ${annotgff[0]})" ] ; then
         mv -f ${annotgff[0]} ${annotgff[0]}.original
           # make GFF source file look more like the output of Prokka
           head -n1 ${annotgff[0]}.original > ${annotgff[0]}
