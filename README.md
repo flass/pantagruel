@@ -257,32 +257,40 @@ Options are detailed here:
 
   _only one mandatory option_
 
-    -i|--initfile     Pantagruel configuration file
+    -i|--initfile      path to Pantagruel configuration file.
                         this file is generated at init stage, from the specified options.
   _facultative options_
 
-    -F|--FORCE        FORCE mode: will erase any pre-existing main folder for the task
-                        (default: off, pre-exisitance of a folder will result in an early error)
+    -F|--FORCE         (no value) FORCE mode: will erase any pre-existing main folder for the task
+                         (default: off, pre-exisitance of a folder will result in an early error)
 
-    -R|--resume      try and resume the task from previous run that was interupted
-                        (for the moment only available for tasks 'core', 'genetrees' and 'reconciliations')
+    -R|--resume        (no value) try and resume the task from previous run that was interupted
+                         (for the moment only available for tasks 'core', 'genetrees' and 'reconciliations')
 
 # for Pantagruel task init:
 
   _mandatory options_
 
-    -d|--dbname       database name
+    -d|--dbname        string. database name
 
-    -r|--rootdir      root directory where to create the database; defaults to current folder
+    -r|--rootdir       path to root directory where to create the database; defaults to current folder
   
     It is also necessary to specify an input genome dataset! 
     This is possible via -a, -A or -L options, or a mixture of them.
   
   _facultative options_
 
-    -i|--initfile      Pantagruel configuration file
+    -i|--initfile      path to Pantagruel configuration file.
                          a file can be derived (i.e. manualy curated) from 'environment_pantagruel_template.sh' template.
-                         Parameters values specified in this file will override other options
+                         Parameters values specified in this file will override other options.
+                         Can also be combined alone with --refresh to update the software version used for an existing database.
+
+    --refresh         (no value) to use in combination with the -i option above to simply refresh the configuration file
+                       (e.g. after an update of the software) the program will simply re-run the `pantagruel [options] init` command
+                       that has been previously used to generate the config file; hence there is no need to repeat any other option.
+                       (even -d and - r options can be omitted if -i --refresh is used)
+                       Note that when options had quoted string arguments, unpredictable behaviour might occur;
+                        please verify the outcome in the regenerated config file.
 
     -I|--iam           database creator identity (e-mail address is preferred)
 
