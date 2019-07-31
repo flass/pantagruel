@@ -285,12 +285,12 @@ Options are detailed here:
                          Parameters values specified in this file will override other options.
                          Can also be combined alone with --refresh to update the software version used for an existing database.
 
-    --refresh         (no value) to use in combination with the -i option above to simply refresh the configuration file
-                       (e.g. after an update of the software) the program will simply re-run the `pantagruel [options] init` command
-                       that has been previously used to generate the config file; hence there is no need to repeat any other option.
-                       (even -d and - r options can be omitted if -i --refresh is used)
-                       Note that when options had quoted string arguments, unpredictable behaviour might occur;
-                        please verify the outcome in the regenerated config file.
+    --refresh          (no value) Use in combination with the -i option above to simply refresh the configuration file.
+                         (e.g. after an update of the software) the program will simply re-run the `pantagruel [options] init` command
+                         that has been previously used to generate the config file; hence there is no need to repeat any other option.
+                         (even -d and - r options can be omitted if -i --refresh is used)
+                         Note that when options had quoted string arguments, unpredictable behaviour might occur;
+                         please verify the outcome in the regenerated config file.
 
     -I|--iam           database creator identity (e-mail address is preferred)
 
