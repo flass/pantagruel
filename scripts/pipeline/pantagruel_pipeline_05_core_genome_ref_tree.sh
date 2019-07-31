@@ -155,7 +155,7 @@ else
     ls ${alifastacodedir}/$fam.codes.aln >> ${coregenome}/pseudo-coregenome_sets/${pseudocore}_${coreseqtype}_aln_list
    done
    # concatenate pseudo-core prot/CDS alignments
-   python ${ptgscripts}/concat.py ${coregenome}/pseudo-coregenome_sets/${pseudocore}_${coreseqtype}_aln_list ${pseudocorealn}
+   python ${ptgscripts}/concat.py ${coregenome}/pseudo-coregenome_sets/${pseudocore}_${coreseqtype}_aln_list ${pseudocorealn} > ${ptglogs}/concat_core_genome.log
    checkexec "failed to produce concatenated (pseudo)core-genome alignment" "created concatenated (pseudo)core-genome alignment in file '${pseudocorealn}'"
    rm ${alifastacodedir}/*_all_sp_new
   fi
@@ -163,11 +163,11 @@ else
   ## compute species tree using RAxML
   mkdir -p ${ptglogs}/raxml ${coretree}/
   # define RAxML binary and options; uses options -T (threads) -j (checkpoints) 
-  if [ ! -z $(grep -o avx2 /proc/cpuinfo | head -n 1) ] ; then
+  if [[ ! -z "$(grep -o avx2 /proc/cpuinfo | head -n 1)" && ! -z "$(which raxmlHPC-PTHREADS-AVX2)" ]] ; then
     raxmlflav='-AVX2 -U'
-  elif [ ! -z $(grep -o avx /proc/cpuinfo | head -n 1) ] ; then
+  elif [[ ! -z "$(grep -o avx /proc/cpuinfo | head -n 1)" && ! -z "$(which raxmlHPC-PTHREADS-AVX)" ]] ; then
     raxmlflav='-AVX -U'
-  elif [ ! -z $(grep -o sse3 /proc/cpuinfo | head -n 1) ] ; then
+  elif [[ ! -z "$(grep -o sse3 /proc/cpuinfo | head -n 1)" && ! -z "$(which raxmlHPC-PTHREADS-SSE3)" ]] ; then
     raxmlflav='-SSE3 -U'
   else
     raxmlflav=''
