@@ -16,7 +16,10 @@ source ${envsourcescript}
 checkptgversion
 checkfoldersafe ${funcannot}
 
-cd ${ptgrepo} ; export ptgversion=$(git log | grep commit | cut -d' ' -f2) ; cd -
+if [ -z "${interpro}" ] ; then
+  echo "InterproScan was not found on this machine: cannot run this (facultative) task of Pantagruel pipeline; exit now"
+  exit 1
+fi
 
 # make sure to use the correct Java version (incompatibility should have been detected during install of Pantagruel)
 if [ ! -z ${JAVA4INTERPROSCAN} ] ; then

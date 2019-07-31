@@ -78,5 +78,9 @@ else
   export collapsecond=${criterion}_stem${cladesupp}_within${withinfun}${subcladesupp}
   export replmethod='replaceCCinGasinS-collapsePOPinSnotinG'
 fi
-export IPversion=$(interproscan --version | head -n 1 | sed -e 's/InterProScan version //')
-export interpro=${funcannot}/InterProScan_${IPversion}
+export IPversion=$(interproscan --version 2> /dev/null | head -n 1 | sed -e 's/InterProScan version //')
+if [ ! -z "${IPversion}" ] ; then
+  export interpro=${funcannot}/InterProScan_${IPversion}
+else
+  export interpro=''
+fi
