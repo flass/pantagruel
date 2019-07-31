@@ -280,36 +280,36 @@ Options are detailed here:
   
   _facultative options_
 
-    -i|--initfile     Pantagruel configuration file
-                        a file can be derived (i.e. manualy curated) from 'environment_pantagruel_template.sh' template.
-                        Parameters values specified in this file will override other options
+    -i|--initfile      Pantagruel configuration file
+                         a file can be derived (i.e. manualy curated) from 'environment_pantagruel_template.sh' template.
+                         Parameters values specified in this file will override other options
 
-    -I|--iam          database creator identity (e-mail address is preferred)
+    -I|--iam           database creator identity (e-mail address is preferred)
 
-    -f|--famprefix    alphanumerical prefix (no number first) of the names for homologous protein/gene family clusters; defaults to 'PANTAG'
-                       the chosen prefix will be appended with a 'P' for protein families and a 'C' for CDS families.
+    -f|--famprefix     alphanumerical prefix (no number first) of the names for homologous protein/gene family clusters; defaults to 'PANTAG'
+                         the chosen prefix will be appended with a 'P' for protein families and a 'C' for CDS families.
 
-    -T|--taxonomy      path to folder of taxonomy database flat files; defaults to $rootdir/NCBI/Taxonomy_YYYY-MM-DD (suffix is today's date)
-                        if this is not containing the expected file, triggers downloading the daily dump from NCBI Taxonomy at task 00
+    -T|--taxonomy      path to folder of taxonomy database flat files. Defaults to $rootdir/NCBI/Taxonomy_YYYY-MM-DD (suffix is today's date)
+                         if this is not containing the expected file, triggers downloading the daily dump from NCBI Taxonomy at task 00
 
-    -A|--refseq_ass  path to folder of source genome assembly __folders__ containing flat files formated like NCBI Assembly RefSeq (no default value).
-                       The assembly folders (one per genome) can be obtained on https://www.ncbi.nlm.nih.gov/assembly,
-                       by making a keyword search to select a set of assemblies and downloading results with options:
-                         Source Database = 'RefSeq' and File type = 'All file types (including assembly-structure directory)'.
-                       A simple archive 'genome_assemblies.tar' (as obtained from the NCBI website) can be placed in that folder.
-                       If user genomes are also provided, these RefSeq assemblies will be used as reference for their annotation.
+    -A|--refseq_ass    path to folder of source genome assembly __folders__ containing flat files formated like NCBI Assembly RefSeq (no default value).
+                         The assembly folders (one per genome) can be obtained on https://www.ncbi.nlm.nih.gov/assembly,
+                         by making a keyword search to select a set of assemblies and downloading results with options:
+                           Source Database = 'RefSeq' and File type = 'All file types (including assembly-structure directory)'.
+                         A simple archive 'genome_assemblies.tar' (as obtained from the NCBI website) can be placed in that folder.
+                         If user genomes are also provided, these RefSeq assemblies will be used as reference for their annotation.
 
-    --refseq_ass4annot same principle as -A, but WILL NOT be used in the study, only as a reference to annotate user genomes
-                        (defaults to combined value of -A and -L options)
+    --refseq_ass4annot folder path. Same principle as -A, but WILL NOT be used in the study, only as a reference to annotate user genomes
+                         (defaults to combined value of -A and -L options)
 
-    -L|--refseq_list  Same as -A|--refseq_ass, but just provide a list of NCBI Assembly accession ids (file with one accession id per row)
-                        Accession ids are of the form GCx_yyyyyyyyy.z with x = {A|F} for GenBank and RefSeq, respectively, and y an z are any digit.
-                        These accessions will be fetched from the NCBI FTP site using lftp.
-                        Note the LAST version of the accession will be returned, i.e. the trailing '.z' part of the accession id is ignored.
-                        These assemblies saved into a folder named after the value of the option:
-                          for instance, \`-L /path/to/assemblist\` will save assembly folders in /path/to/assemblist_assemblies_from_ftp/.
+    -L|--refseq_list   file path. Same as -A|--refseq_ass, but just provide a list of NCBI Assembly accession ids (file with one accession id per row)
+                         Accession ids are of the form GCx_yyyyyyyyy.z with x = {A|F} for GenBank and RefSeq, respectively, and y an z are any digit.
+                         These accessions will be fetched from the NCBI FTP site using lftp.
+                         Note the LAST version of the accession will be returned, i.e. the trailing '.z' part of the accession id is ignored.
+                         These assemblies saved into a folder named after the value of the option:
+                           for instance, \`-L /path/to/assemblist\` will save assembly folders in /path/to/assemblist_assemblies_from_ftp/.
 
-    --refseq_list4annot same principle as -L, but WILL NOT be used in the study, only as a reference to annotate user genomes
+    --refseq_list4annot file path. Same principle as -L, but WILL NOT be used in the study, only as a reference to annotate user genomes
                         (defaults to combined value of -A and -L options)
  
     -a|--custom_ass  path to folder of user-provided genomes (no default value). The specified folder must contain:
@@ -341,20 +341,20 @@ Options are detailed here:
 
     -s|--pseudocore  integer, float <=1.0 or string. The minimum number or fraction of genomes in which a gene family should be present
                        to be included in the pseudo-core genome, i.e. the gene set which alignments will be concatenated for reference tree search.
-                       Only relevant when running task 'core'; a non-numeric value will trigger an INTERACTIVE prompt for search of an optimal value.
+                       A non-numeric value will trigger an INTERACTIVE prompt for search of an optimal value at the begining of task 'core'.
                        Defaults to the total number of genomes (strict core genome set).
 
-    -t|--reftree     specify a reference tree for reconciliation and clade-specific gene analyses;
-                       over-rides the computation of tree from the concatenate of (pseudo-)core genome gene during taske 'core'.
+    -t|--reftree     Newick format tree file path. Specifies a reference tree for reconciliation and clade-specific gene analyses;
+                       cancels the computation of tree from the concatenate of (pseudo-)core genome gene during task 'core'.
 
-    --core_seqtype   {cds|prot} define the type of sequence that will be used to compute the (pseudo-)core genome tree (default to 'cds')
+    --core_seqtype   {cds|prot} defines the type of sequence that will be used to compute the (pseudo-)core genome tree (default to 'cds')
 
-    --pop_lg_thresh  definee the threshold of branch length for delinating populations in the reference tree 
-                       (default: 0.0005 for nucleotide alignemnt-based tree; 0.0002 for protein-based)
+    --pop_lg_thresh  real. Defines the threshold of branch length for delinating populations in the reference tree 
+                       (default: 0.0005 for nucleotide alignment-based tree; 0.0002 for protein-based)
 
-    --pop_bs_thresh  definee the threshold of branch support for delinating populations in the reference tree (default: 80)
+    --pop_bs_thresh  real. Defines the threshold of branch support for delinating populations in the reference tree (default: 80)
     
-    --rooting        string. defines the method to root the reference tree during task 5|core_genome_ref_tree. 
+    --rooting        string. Defines the method to root the reference tree during task 5|core_genome_ref_tree. 
                        Possible values are 'treebalance', 'MAD' and 'outgroup:SPECIESCODELIST' (default: 'treebalance'),
                        - 'treebalance' uses the '-f I' algorthm of RAxML to root the tree towards an optimal balance of branch lengths
                           on either sides of the root;
@@ -368,7 +368,7 @@ Options are detailed here:
                           To use codes, you may thus want run task 3 first, then run task init again with this option to regenerate the config file with 
                           the desired outgroup organism codes and only then run task 5.
     
-    -H|--submit_hpc  full address (hostname:/folder/location) of a folder on a remote high-performance computating (HPC) cluster server
+    -H|--submit_hpc  full address (hostname:/folder/location) of a folder on a remote high-performance computating (HPC) cluster server.
                        This indicate that computationally intensive tasks, including building the gene tree collection
                        ('genetrees') and reconciling gene tree with species tree ('reconciliations') will be run
                        on a HPC server (only Torque/PBS job submission system is supported so far).
@@ -380,9 +380,9 @@ Options are detailed here:
                        If set at init stage, this option will be maintained for all tasks. However, the remote address
                        can be updated when calling a specific task; string 'none' cancels the HPC behaviour.
 
-    -c|--collapse      enable collapsing the rake clades in the gene trees (strongly recomended in datasets of size > 50 genomes).
+    -c|--collapse    (no value) Enable collapsing the rake clades in the gene trees (strongly recomended in datasets of size > 50 genomes).
 
-    -C|--collapse_par  [only for 'genetrees' task] specify parameters for collapsing the rake clades in the gene trees.
+    -C|--collapse_par  quoted string. Specifies parameters for collapsing the rake clades in the gene trees.
                        A single-quoted, semicolon-delimited string containing variable definitions must be provided.
                        Default is equivalent to providing the following string:
                           'cladesupp=70 ; subcladesupp=35 ; criterion=bs ; withinfun=median'
