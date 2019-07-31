@@ -264,7 +264,8 @@ Options are detailed here:
     -F|--FORCE        FORCE mode: will erase any pre-existing main folder for the task
                         (default: off, pre-exisitance of a folder will result in an early error)
 
-    -R|--resume      try and resume the task from previous run that was interupted (for the moment only available for task 'core')
+    -R|--resume      try and resume the task from previous run that was interupted
+                        (for the moment only available for tasks 'core', 'genetrees' and 'reconciliations')
 
 # for Pantagruel task init:
 
