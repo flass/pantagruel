@@ -30,7 +30,7 @@ usagelong (){
   echo "    -i|--initfile     Pantagruel configuration file"
   echo "                        this file is generated at init stage, from the specified options."
   echo ""
-  echo "  _facultative options_"
+  echo "  _facultative runtime options_"
   echo ""
   echo "    -F|--FORCE        FORCE mode: will erase any pre-existing main folder for the task"
   echo "                        (default: off, pre-exisitance of a folder will result in an early error)"
@@ -63,10 +63,14 @@ usagelong (){
   echo "                        Note that when options had quoted string arguments, unpredictable behaviour might occur;"
   echo "                        please verify the outcome in the regenerated config file."
   echo ""
+  echo " General configuration options:"
+  echo ""
   echo "    -I|--iam          database creator identity (e-mail address is preferred)"
   echo ""
   echo "    -f|--famprefix    alphanumerical prefix (no number first) of the names for homologous protein/gene family clusters; defaults to 'PANTAG'"
   echo "                        the chosen prefix will be appended with a 'P' for protein families and a 'C' for CDS families."
+  echo ""
+  echo " Input options:"
   echo ""
   echo "    -T|--taxonomy     path to folder of taxonomy database flat files; defaults to \$rootdir/NCBI/Taxonomy_YYYY-MM-DD (suffix is today's date)"
   echo "                        if this is not containing the expected file, triggers downloading the daily dump from NCBI Taxonomy at task 00"
@@ -119,6 +123,8 @@ usagelong (){
   echo "                       NOTE: to ensure proper parsing, it is strongly advised that any provided annotation was generated with Prokka"
   echo "                       NOTE: to ensure uniform annotation of the dataset, it is advised to let Pantagruel annotate the contigs (calling Prokka)"
   echo ""
+  echo " Output: core genome / reference phylogeny options:"
+  echo ""
   echo "    -s|--pseudocore   integer, float <=1.0 or string. The minimum number or fraction of genomes in which a gene family should be present"
   echo "                        to be included in the pseudo-core genome, i.e. the gene set which alignments will be concatenated for reference tree search."
   echo "                        A non-numeric value will trigger an INTERACTIVE prompt for search of an optimal value at the begining of task 'core'."
@@ -148,6 +154,8 @@ usagelong (){
   echo "                           To use codes, you may thus want run task 3 first, then run task init again with this option to regenerate the config file with "
   echo "                           the desired outgroup organism codes and only then run task 5."
   echo ""
+  echo " Output: gene trees / reconciliations options:"
+  echo ""
   echo "    -H|--submit_hpc   full address (hostname:/folder/location) of a folder on a remote high-performance computating (HPC) cluster server"
   echo "                        This indicate that computationally intensive tasks, including building the gene tree collection"
   echo "                        ('genetrees') and reconciling gene tree with species tree ('reconciliations') will be run"
@@ -166,6 +174,16 @@ usagelong (){
   echo "                        A single-quoted, semicolon-delimited string containing variable definitions must be provided."
   echo "                        Default is equivalent to providing the following string:"
   echo "                           'cladesupp=70 ; subcladesupp=35 ; criterion=bs ; withinfun=median'"
+  echo ""
+  echo "    -g|--genefam_list Path to gene family list file. Resticts the computation of gene trees and all subsequent analyses to a list of gene families."
+  echo "                        This impacts all task from 06 and forward. The list has to be one gene family identifier per line."
+  echo "                        Gene family ids have to refer to existing ones in the database, and therefore can only be defined after the running of task 02."
+  echo "                        It is therefore advised to first run the pipeline up to task 02 (or equally up to 05) without this option,"
+  echo "                        and then to to set this paramter for the downstream computations."
+  echo "                        This can be done by editing the value of 'genefamlist' variable in the configuration file or by using:"
+  echo "                          pantagruel --refresh -g genelist init  (note it is important that -g option be placed after the --refresh option)"
+  echo "                        Reverting to the exhaustive computation behavior can be done similarly by setting 'genefamlist' variable to an empty value or by using:"
+  echo "                          pantagruel --refresh -g '' init"
   echo ""
   echo "# for any Pantagruel command calls:"
   echo ""
@@ -303,7 +321,7 @@ promptdate () {
   echo $(date +'[%Y-%m-%d %H:%M:%S]') $1
 }
 
-ARGS=`getopt --options "d:r:i:I:f:a:T:A:L:s:t:RH:chF" --longoptions "dbname:,rootdir:,initfile:,refresh,iam:,famprefix:,refseq_ass:,refseq_list:,refseq_ass4annot:,refseq_list4annot:,custom_ass:,taxonomy:,pseudocore:,core_seqtype:,pop_lg_thresh:,pop_bs_thresh:,rooting:,reftree:,resume,submit_hpc:,collapse,collapse_param:,help,FORCE" --name "pantagruel" -- "$@"`
+ARGS=`getopt --options "d:r:i:I:f:a:T:A:L:s:t:RH:cg:hF" --longoptions "dbname:,rootdir:,initfile:,refresh,iam:,famprefix:,refseq_ass:,refseq_list:,refseq_ass4annot:,refseq_list4annot:,custom_ass:,taxonomy:,pseudocore:,core_seqtype:,pop_lg_thresh:,pop_bs_thresh:,rooting:,reftree:,resume,submit_hpc:,collapse,collapse_param:,genefam_list:,help,FORCE" --name "pantagruel" -- "$@"`
 
 #Bad arguments
 if [ $? -ne 0 ];
@@ -326,6 +344,7 @@ do
     
     --refresh) 
       export runmode='refreshconfig'
+      export postrefreshargs="${*/--/}"
       shift ;;
       
     -d|--dbname) 
@@ -456,6 +475,12 @@ do
       echo "set parameters for rake clade collapsing in gene trees"
       shift 2;;
 
+    -g|--genefam_list)
+      testmandatoryarg "$1" "$2"
+      export genefamlist="$2"
+      echo "set resticted list for computation of gene trees"
+      shift 2;;
+
     --)
       shift
       break;;
@@ -515,6 +540,9 @@ for task in ${tasks} ; do
       echo "re-run previous command line:"
       unset initfile
       export runmode='wasrefresh'
+      if [ ! -z "${postrefreshargs}" ] ; then
+        ptginitcmd=${ptginitcmd/init/${postrefreshargs}}
+      fi
       echo "# ${ptginitcmd}"
       eval "${ptginitcmd}"
     else

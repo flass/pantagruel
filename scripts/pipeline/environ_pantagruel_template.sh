@@ -42,6 +42,7 @@ export poplgleafmul='REPLACEpoplgleafmul'                  # parameter to define
 export popbsthresh='REPLACEpopbsthresh'                    # parameter to define populations of genomes in the reference tree (stem branch support threshold, default 80)
 export rootingmethod='REPLACErootingmethod'
 export chaintype='REPLACEchaintype'                        # whether gene trees will be collapsed ('collapsed', if -c option enabled) or not ('fullgenetree', default)
+export genefamlist='REPLACEgenefamlist'                    # list of gene families for which computation of gene trees and all subsequent analyses will be restricted (default: no restriction)
 # non-default parameters for gene trees collapsing derived from -C option value (passed to init script via ${collapseCladeParams}): 
 export cladesupp=REPLACEcladesupp                          # - clade criterion trheshold (int)
 export subcladesupp=REPLACEsubcladesupp                    # - wihtin-clade criterion trheshold (int)
