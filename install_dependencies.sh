@@ -246,7 +246,7 @@ if [ ! -x ${BINS}/mad ] ; then
   checkexec "Could not link MAD executable to ${BINS}/" "Succesfully linked MAD executable to ${BINS}/"
 else
   echo "found MAD executable: ${BINS}/mad"
-  if [ -L ${BINS}/lsd ] ; then
+  if [ -L ${BINS}/mad ] ; then
     echo " linking to $(readlink -f ${BINS}/mad)"
   fi
 fi
