@@ -163,7 +163,7 @@ with open(nfin, 'r') as fin:
   extrafields = set(header) - expectedfields
   if missingfields:
     sextra = "\nExtra fields were detected: %s. Maybe the header was misspelled?"%repr(list(extrafields)) if extrafields else ''
-    raise ValueError, "%s the fields %s are missing from the header. %s %s"%(errprefix, repr(list(missingfields)), sextra, errsuffix)
+    raise ValueError, "%s\nthe fields %s are missing from the header.%s%s"%(errprefix, repr(list(missingfields)), sextra, errsuffix)
   ltpi = header.index('locus_tag_prefix')
   for line in fin:
     lsp = line.rstrip('\n').split('\t')
