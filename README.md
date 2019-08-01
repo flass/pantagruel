@@ -259,7 +259,7 @@ Options are detailed here:
 
     -i|--initfile      path to Pantagruel configuration file.
                         this file is generated at init stage, from the specified options.
-  _facultative options_
+  _facultative runtime options_
 
     -F|--FORCE         (no value) FORCE mode: will erase any pre-existing main folder for the task
                          (default: off, pre-exisitance of a folder will result in an early error)
@@ -291,6 +291,8 @@ Options are detailed here:
                          (even -d and - r options can be omitted if -i --refresh is used)
                          Note that when options had quoted string arguments, unpredictable behaviour might occur;
                          please verify the outcome in the regenerated config file.
+                         
+ General configuration options:
 
     -I|--iam           database creator identity (e-mail address is preferred)
 
@@ -347,6 +349,8 @@ Options are detailed here:
                       NOTE: to ensure proper parsing, it is strongly advised that any provided annotation was generated with Prokka
                       NOTE: to ensure uniform annotation of the dataset, it is advised to let Pantagruel annotate the contigs (calling Prokka)
 
+ Output: core genome / reference phylogeny options:
+  
     -s|--pseudocore  integer, float <=1.0 or string. The minimum number or fraction of genomes in which a gene family should be present
                        to be included in the pseudo-core genome, i.e. the gene set which alignments will be concatenated for reference tree search.
                        A non-numeric value will trigger an INTERACTIVE prompt for search of an optimal value at the begining of task 'core'.
@@ -375,7 +379,9 @@ Options are detailed here:
                           The mapping between genome accession ids and organism codes is given in the file '03.database/genome_codes.tab' generated during task 3.
                           To use codes, you may thus want run task 3 first, then run task init again with this option to regenerate the config file with 
                           the desired outgroup organism codes and only then run task 5.
-    
+                          
+   Output: gene trees / reconciliations options:
+     
     -H|--submit_hpc  full address (hostname:/folder/location) of a folder on a remote high-performance computating (HPC) cluster server.
                        This indicate that computationally intensive tasks, including building the gene tree collection
                        ('genetrees') and reconciling gene tree with species tree ('reconciliations') will be run
@@ -394,6 +400,16 @@ Options are detailed here:
                        A single-quoted, semicolon-delimited string containing variable definitions must be provided.
                        Default is equivalent to providing the following string:
                           'cladesupp=70 ; subcladesupp=35 ; criterion=bs ; withinfun=median'
+
+    -g|--genefam_list Path to gene family list file. Resticts the computation of gene trees and all subsequent analyses to a list of gene families.
+                        This impacts all task from 06 and forward. The list has to be one gene family identifier per line.
+                        Gene family ids have to refer to existing ones in the database, and therefore can only be defined after the running of task 02.
+                        It is therefore advised to first run the pipeline up to task 02 (or equally up to 05) without this option,
+                        and then to to set this paramter for the downstream computations.
+                        This can be done by editing the value of 'genefamlist' variable in the configuration file or by using:
+                          pantagruel --refresh -g genelist init  (note it is important that -g option be placed after the --refresh option)
+                        Reverting to the exhaustive computation behavior can be done similarly by setting 'genefamlist' variable to an empty value or by using:
+                          pantagruel --refresh -g '' init
 
 # for any Pantagruel command calls:
 
