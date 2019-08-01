@@ -170,25 +170,48 @@ fi
 echo ""
 
 if [ "$installbrew" == 'true' ] ; then
-  # Configure Linuxbrew
-  if [ ! -e ${HOME}/.bash_profile ] ; then
-    # because when .bash_profile exists, it superseeds .profile, which won't be loaded automatically
-    # thus if creating .bash_profile, restaure the loading of .profile
-    echo '. "$HOME/.profile"' > ${HOME}/.bash_profile
+  brewdir='/home/linuxbrew/.linuxbrew'
+  if [ -d ${brewdir} ] ; then
+    echo "Found that Homebrew recipes are installed at: ${brewdir}"
+  else
+    brewdir='${HOME}/.linuxbrew'
+    if [ -d ${brewdir} ] ; then
+      echo "Found that Homebrew recipes are installed at: ${brewdir}"
+    else
+      echo "Could not find the folder where Homebrew recipes are installed (not in the usual location /home/linuxbrew/.linuxbrew/ or ${HOME}/.linuxbrew/)"
+      echo "  This may be all right, as long as this folder exists and that the locations of its relevant subfolders are documented in the environment variables \${PATH}, \${MANPATH} and \${INFOPATH}."
+      brewdir=''
+    fi
   fi
-  if [[ -z "$(grep PATH ${HOME}/.bash_profile | grep linuxbrew)" ]] ; then
-    echo 'export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"' >> ${HOME}/.bash_profile
-    editedprofile=true
+  if [ ! -z "${brewdir}" ] ; then
+    # Configure Linuxbrew
+    if [ ! -e ${HOME}/.bash_profile ] ; then
+      # because when .bash_profile exists, it superseeds .profile, which won't be loaded automatically
+      # thus if creating .bash_profile, restaure the loading of .profile
+      echo '. "$HOME/.profile"' > ${HOME}/.bash_profile
+    fi
+    if [[ -z "$(grep PATH ${HOME}/.bash_profile | grep '\.linuxbrew')" ]] ; then
+      echo 'export PATH="{brewdir}/bin:$PATH"' >> ${HOME}/.bash_profile
+      editedprofile=true
+    fi
+    if [[ -z "$(grep MANPATH ${HOME}/.bash_profile | grep '\.linuxbrew')" ]] ; then
+      echo 'export MANPATH="{brewdir}/share/man:$MANPATH"' >> ${HOME}/.bash_profile
+      editedprofile=true
+    fi
+    if [[ -z "$(grep INFOPATH ${HOME}/.bash_profile | grep '\.linuxbrew')" ]] ; then
+      echo 'export INFOPATH="{brewdir}/share/info:$INFOPATH"' >> ${HOME}/.bash_profile
+      editedprofile=true
+    fi
+    source ${HOME}/.bash_profile
   fi
-  if [[ -z "$(grep MANPATH ${HOME}/.bash_profile | grep linuxbrew)" ]] ; then
-    echo 'export MANPATH="/home/linuxbrew/.linuxbrew/share/man:$MANPATH"' >> ${HOME}/.bash_profile
-    editedprofile=true
-  fi
-  if [[ -z "$(grep INFOPATH ${HOME}/.bash_profile | grep linuxbrew)" ]] ; then
-    echo 'export INFOPATH="/home/linuxbrew/.linuxbrew/share/info:$INFOPATH"' >> ${HOME}/.bash_profile
-    editedprofile=true
-  fi
-  source ${HOME}/.bash_profile
+  if [[ -z "$(echo ${PATH} | grep '\.linuxbrew')" || -z "$(echo ${MANPATH} | grep '\.linuxbrew')" || -z "$(echo ${INFOPATH} | grep '\.linuxbrew')" ]] ; then
+    echo "Error: the environment variables \${PATH}, \${MANPATH} and \${INFOPATH} do not contain the path to the Homebrew installation"
+    if [ -z "${brewdir}" ] ; then
+      echo "definition of these variables could not be modified (by editing and sourcing the file ~/.bash_profile because the location of the Homebrew installation is not known"
+    fi
+    echo "exit now"
+    exit 1
+  fi 
   
   # install Prokka using brew
   if [[ -z "$(brew search prokka | grep prokka)" ]] ; then
