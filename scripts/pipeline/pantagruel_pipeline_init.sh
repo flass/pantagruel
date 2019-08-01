@@ -154,7 +154,7 @@ if [ ! -z "${customassemb}" ] ; then
       python << EOF
 nfin = '${straininfo}'
 errprefix = "Error in format of strain info file '%s': "%nfin
-errsuffix = " Please edit the file accordingly."
+errsuffix = "\nPlease edit the file accordingly."
 dstrains = {}
 expectedfields = set(['assembly_id','genus','species','strain','taxid','locus_tag_prefix'])
 with open(nfin, 'r') as fin:
@@ -162,7 +162,7 @@ with open(nfin, 'r') as fin:
   missingfields = expectedfields - set(header)
   extrafields = set(header) - expectedfields
   if missingfields:
-    sextra = "Extra fields were detected: %s. Maybe the header was misspelled?"%repr(list(extrafields)) if extrafields else ''
+    sextra = "\nExtra fields were detected: %s. Maybe the header was misspelled?"%repr(list(extrafields)) if extrafields else ''
     raise ValueError, "%s the fields %s are missing from the header. %s %s"%(errprefix, repr(list(missingfields)), sextra, errsuffix)
   ltpi = header.index('locus_tag_prefix')
   for line in fin:
