@@ -87,16 +87,18 @@ else
   localn=${nfrad1}
 fi
 
-# test presence of AVX/AVX2 instruction support
-if [ ! -z $(grep -o avx2 /proc/cpuinfo | head -n 1) ] ; then
-  raxmlflav='AVX2'
-elif [ ! -z $(grep -o avx /proc/cpuinfo | head -n 1) ] ; then
-  raxmlflav='AVX'
+# test presence of SSE3/AVX/AVX2 instruction support
+if [[ ! -z "$(grep -o avx2 /proc/cpuinfo | head -n 1)" && ! -z "$(which raxmlHPC-PTHREADS-AVX2)" ]] ; then
+  raxmlflav='-AVX2 -U'
+elif [[ ! -z "$(grep -o avx /proc/cpuinfo | head -n 1)" && ! -z "$(which raxmlHPC-PTHREADS-AVX)" ]] ; then
+  raxmlflav='-AVX -U'
+elif [[ ! -z "$(grep -o sse3 /proc/cpuinfo | head -n 1)" && ! -z "$(which raxmlHPC-PTHREADS-SSE3)" ]] ; then
+  raxmlflav='-SSE3 -U'
 else
-  raxmlflav='SSE3'
+  raxmlflav=''
 fi
 
-raxmlbin="raxmlHPC-PTHREADS-$raxmlflav -T $nbthreads"
+raxmlbin="raxmlHPC-PTHREADS${raxmlflav} -T $nbthreads"
 
 raxmloptions="-n $nfrad2 -m $model -p 1753"
 
