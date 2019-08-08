@@ -1,5 +1,7 @@
 #!/usr/bin/python
 import sys, os
+import glob
+
 nfin = sys.argv[1]
 famprefix = sys.argv[2]
 dirout = sys.argv[3]
@@ -55,16 +57,18 @@ nfam = 0
 lseqinfam = []
 seqbuffer = ''
 
-with open(nfin, 'r') as fin:
-	for line in fin:
-		if line.startswith('\0'):
-			# write buffer for previous family and reset it
-			nfam, lseqinfam, seqbuffer = incrementfam(nfam, lseqinfam, seqbuffer)
-			l = line.lstrip('\0')
-		else:
-			l = line
-		if l.startswith('>'):
-			seqname = l.split(' ', 1)[0].lstrip('>')
-			lseqinfam.append(seqname)
-		seqbuffer += l
+lnfinn = glog.glob(nfin)+glog.glob(nfin+'.[0-9]*')
+for nfinn in lnfinn:
+	with open(nfinn, 'r') as finn:
+		for line in finn:
+			if line.startswith('\0'):
+				# write buffer for previous family and reset it
+				nfam, lseqinfam, seqbuffer = incrementfam(nfam, lseqinfam, seqbuffer)
+				l = line.lstrip('\0')
+			else:
+				l = line
+			if l.startswith('>'):
+				seqname = l.split(' ', 1)[0].lstrip('>')
+				lseqinfam.append(seqname)
+			seqbuffer += l
 		
