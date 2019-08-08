@@ -85,17 +85,26 @@ else
   ${ptgscripts}/ale_sequential.sh ${tasklist} ${outrecdir} Stree.nwk ${recsamplesize} ${ALEalgo}
 fi
 export reccoldate=$(date +%Y-%m-%d)
-if [[ ! -z "$alebin" && -z $(echo $alebin | grep docker) ]] ; then
-  alerepo=${alebin%%ALE/*}ALE/
+if [[ -z "$alebin" ]] ; then
+  alebin=$(command -v $ALEalgo)
+fi
+
+if [[ ! -z "$(echo ${alebin} | grep docker)" ]] ; then
+  ALEsourcenote="using ALE Docker image $(docker image ls | grep alesuite | awk '{print $1,$3}')"
+else
+  pathalebin=$(readlink -f ${alebin})
+  alerepo=${pathalebin%%ALE/*}ALE/
   alesrcvers=$(cd ${alerepo} && git log | head -n 1 | awk '{ print $2 }' 2> /dev/null && cd - > /dev/null)
   alesrcorig=$(cd ${alerepo} && git remote -v | grep fetch | awk '{ print $2 }' 2> /dev/null && cd - > /dev/null)
   if [ ! -z "$alesrcvers" ] ; then
     ALEsourcenote="using ALE software compiled from source; code origin: ${alesrcorig}; version ${alesrcvers}"
   else
-    ALEsourcenote="using ALE software binaries found at $(readlink -f ${alebin})"
+    ALEheader="$(${ALEalgo} -h | head -n 1)"
+    if [ -z "${ALEheader}" ] ; then
+      ALEheader="using ALE software"
+    fi
+    ALEsourcenote="${ALEheader#*${ALEalgo} } binaries found at ${pathalebin}"
   fi
-else
-  ALEsourcenote="using ALE Docker image $(docker image ls | grep alesuite | awk '{print $1,$3}')"
 fi
 echo -e "${reccolid}\t${reccoldate}\t${ALEsourcenote}" > ${genetrees}/reccol
 
