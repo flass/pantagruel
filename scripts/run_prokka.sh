@@ -8,7 +8,7 @@ if [ -z $seqcentre ] ; then
   $seqcentre='XXX' 
 fi
 
-prokkablastdb=$(dirname $(dirname $(ls -l `which prokka` | awk '{ print $NF }')))/db
+prokkablastdb=$(dirname $(dirname $(readlink -f `which prokka` | awk '{ print $NF }')))/db/genus
 
 echo "### assembly: $gproject; contig files from: ${allcontigs}/"
 head -n1 $refstrains
@@ -21,16 +21,16 @@ if [[ -z $genus || -z $species || -z $strain || -z $taxid || -z $loctagprefix ]]
   exit 1
 fi
 mkdir -p ${outdir}
-if [ -e ${prokkablastdb}/genus/${refgenus} ] ; then
+if [ -e ${prokkablastdb}/${refgenus} ] ; then
  usegenus="--usegenus"
- if [ -e ${prokkablastdb}/genus/${genus} ] ; then
+ if [ -e ${prokkablastdb}/${genus} ] ; then
    # substitute the 'Reference' files to the 'Genus' files for the time of this annotation
-   for dbfile in $(ls ${prokkablastdb}/genus/${genus} ${prokkablastdb}/genus/${genus}.*) ; do
+   for dbfile in $(ls ${prokkablastdb}/${genus} ${prokkablastdb}/${genus}.*) ; do
      mv -f ${dbfile} ${dbfile/${genus}/${genus}_bak}
-     ln -s ./$(basename ${dbfile/${genus}/${refgenus}}) ${dbfile}
+     ln -s ${prokkablastdb}/$(basename ${dbfile/${genus}/${refgenus}}) ${dbfile}
    done
  fi
-elif [ -e ${prokkablastdb}/genus/${genus} ] ; then
+elif [ -e ${prokkablastdb}/${genus} ] ; then
  usegenus="--usegenus"
 fi
 
@@ -44,7 +44,7 @@ prokka $prokkaopts ${allcontigs}
 date
 
 # revert to the original 'Genus' database
-for dbfile in $(ls ${prokkablastdb}/genus/${genus} ${prokkablastdb}/genus/${genus}.*) ; do
+for dbfile in $(ls ${prokkablastdb}/${genus} ${prokkablastdb}/${genus}.*) ; do
   if [ -e ${dbfile/${genus}/${genus}_bak} ] ; then
    if [ -L ${dbfile} ] ; then
      rm ${dbfile}
