@@ -57,7 +57,7 @@ nfam = 0
 lseqinfam = []
 seqbuffer = ''
 
-lnfinn = glog.glob(nfin)+glog.glob(nfin+'.[0-9]*')
+lnfinn = glob.glob(nfin) + glob.glob(nfin+'.[0-9]*') # left glob search looks for output from MMseqs v7 and prior version; right glob search lloks for output from  MMseqs v8 and later
 for nfinn in lnfinn:
 	with open(nfinn, 'r') as finn:
 		for line in finn:
