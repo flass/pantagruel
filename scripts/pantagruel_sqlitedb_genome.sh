@@ -29,11 +29,7 @@ cd ${database}
 if [ ! -e speclist ] ; then
  wget http://www.uniprot.org/docs/speclist
 fi
- 
-### if no set db name env variable, INTERACTIVE prompt asks for database name and password
-while [ -z ${dbname} ] ; do
-  read -p 'Set PostgreSQL database name: ' dbname ; echo ''
-done
+
 
 ## create database and load database schema
 sqlite3 ${dbname} < $initiatescript
