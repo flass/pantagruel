@@ -21,8 +21,6 @@ checkfoldersafe ${protali}
 ## 02. Homologous Sequence Alignemnt
 ####################################
 
-export protfamseqs=${mmseqsclout}_clusters_fasta
-export protali=${ptgdb}/02.gene_alignments
 ## prepare protein families for alignment
 mkdir -p ${nrprotali}/ ${ptglogs}/clustalo/
 tasklist=$protali/$(basename ${protfamseqs})_tasklist
@@ -73,20 +71,23 @@ nseqin1=`grep -c '>' $protali/full_cdsfam_fasta/$fam.fasta`
 nseqin2=`grep -c '>' $protali/full_protfam_alignments/$fam.aln`
 nseqout=`grep -c '>' $protali/full_cdsfam_alignments/$fam.aln`
 if [[ "$nseqin1" != "$nseqout" || "$nseqin2" != "$nseqout" ]] ; then 
-  >&2 echo "$fam - full_cdsfam_fasta: ${nseqin1}; full_protfam_alignments: ${nseqin2}; full_cdsfam_alignments: $nseqout"
+  echo "$fam\tfull_cdsfam_fasta: ${nseqin1}; full_protfam_alignments: ${nseqin2}; full_cdsfam_alignments: $nseqout"
   ok=0
-  echo $fam
 fi
-done > $ptgtmp/pal2nal_missed_fams
+done > ${protali}/pal2nal_missed_fams
 if [ $ok -lt 1 ] ; then
   >&2 promptdate 
-  >&2 echo "WARNING: failure of pal2nal.pl reverse translation step for families: $(cat $ptgtmp/pal2nal_missed_fams | xargs)"
-  >&2 echo "will use tranposeAlignmentProt2CDS.py instead, a less safe, but more permissive method for generating CDS alignment"
+  >&2 echo "WARNING: failure of pal2nal.pl reverse translation step for families: $(cut -f1 ${protali}/pal2nal_missed_fams | xargs)"
+  >&2 echo "  (See list in ${protali}/pal2nal_missed_fams)"
+  >&2 echo "  Will use tranposeAlignmentProt2CDS.py instead, a less safe, but more permissive method for generating CDS alignment"
   # some protein alignments do not match the CDS sequences
   # transpose the CDS into the positions of the aligned protein; assumes no indels, only mismatches and possibly shortenned sequences
+  rm -f ${ptglogs}/tranposeAlignmentProt2CDS.log && touch ${ptglogs}/tranposeAlignmentProt2CDS.log
   for fam in `cat $ptgtmp/pal2nal_missed_fams` ; do
-    ${ptgscripts}/tranposeAlignmentProt2CDS.py $protali/full_cdsfam_fasta/$fam.fasta $protali/full_protfam_alignments/$fam.aln $protali/full_cdsfam_alignments/$fam.aln
+    ${ptgscripts}/tranposeAlignmentProt2CDS.py $protali/full_cdsfam_fasta/$fam.fasta $protali/full_protfam_alignments/$fam.aln $protali/full_cdsfam_alignments/$fam.aln > ${ptglogs}/tranposeAlignmentProt2CDS.log
   done
+  >&2 promptdate 
+  >&2 echo "See '${ptglogs}/tranposeAlignmentProt2CDS.log' for the list of alignments that were reverse-translated using the coarse algorithm implemented in tranposeAlignmentProt2CDS.py"
 fi
 
 # join non-ORFan and ORFan family count matrices
