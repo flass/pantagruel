@@ -36,7 +36,7 @@ usagelong (){
   echo "                        (default: off, pre-exisitance of a folder will result in an early error)"
   echo ""
   echo "    -R|--resume       try and resume the task from previous run that was interupted"
-  echo "                        (for the moment only available for tasks 'core', 'genetrees' and 'reconciliations')"
+  echo "                        (for the moment only available for tasks 04-07, i.e. 'functional', 'core', 'genetrees' and 'reconciliations')"
   echo ""
   echo "# for Pantagruel task init:"
   echo ""

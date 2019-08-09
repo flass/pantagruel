@@ -265,7 +265,7 @@ Options are detailed here:
                          (default: off, pre-exisitance of a folder will result in an early error)
 
     -R|--resume        (no value) try and resume the task from previous run that was interupted
-                         (for the moment only available for tasks 'core', 'genetrees' and 'reconciliations')
+                         (for the moment only available for tasks 04-07, i.e. 'functional', 'core', 'genetrees' and 'reconciliations')
 
 # for Pantagruel task init:
 

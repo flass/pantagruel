@@ -78,8 +78,12 @@ for line in finfaa:
 fout.close()
 EOF
 
-for nrfaa in `ls ${interpro}/all_complete_proteomes/*.faa*` ; do
- interproscan -T ${ptgtmp}/interpro -i ${nrfaa} -b ${nrfaa} --formats TSV --iprlookup --goterms --pathways &> ${ptglogs}/interpro/$(basename ${nrfaa})_interpro.log
+for nrfaa in $(ls ${interpro}/all_complete_proteomes/*.faa* | grep -v 'tsv') ; do
+ if [[ "${resumetask}" == 'true' && -s "${nrfaa}.tsv" ]] ; then
+   echo "Found the output of a previous InterProScan run for protein flat file ${nrfaa}: ${nrfaa}.tsv ; skip computation."
+ else
+   interproscan -T ${ptgtmp}/interpro -i ${nrfaa} -b ${nrfaa} --formats TSV --iprlookup --goterms --pathways &> ${ptglogs}/interpro/$(basename ${nrfaa})_interpro.log
+ fi
 done
 
 
