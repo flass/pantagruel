@@ -17,7 +17,10 @@ with open(nflnfgt,'r') as flnfgt:
 dspe2genes = {}
 ngenes = 0
 for nfgt in lnfgt:
-	gt = tree2.read_newick(nfgt)
+	try:
+		gt = tree2.read_newick(nfgt)
+	except ValueError:
+		gt = tree2.read_multiple_newick(nfgt)[0]
 	genes = gt.get_leaf_labels()
 	for g in genes:
 		# assume gene labels to follow the syntax SPECIES_1234
@@ -27,7 +30,7 @@ for nfgt in lnfgt:
 
 lspe = dspe2genes.keys()
 lspe.sort()
-print "%d species: %s, ...; %d genes."%(len(lspe), ', '.join(lspe[:5]), ngenes)
+print "%d species: %s, ...; %d gene families; %d genes."%(len(lspe), ', '.join(lspe[:5]), len(lnfgt), ngenes)
 
 # make adjacency file 
 with open(nfout, 'w') as fout:
