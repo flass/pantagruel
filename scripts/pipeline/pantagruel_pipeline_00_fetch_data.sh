@@ -88,7 +88,8 @@ downloadass (){
 makeprokkarefgenusdb (){
   inrefass=${1}
   prokkabin=$(which prokka)
-  prokkablastdb=$(dirname $(dirname $(readlink -f $prokkabin)))/db/genus
+  prokkadir=$(dirname $(dirname $(readlink -f $prokkabin)))
+  prokkablastdb=${prokkadir}/db/genus
   if [ -e ${prokkablastdb}/${refgenus} ] ; then
     datetime=$(date +%Y-%m-%d_%H-%M-%S)
     echo "Warning: found a previous Prokka reference database for the genus '${refgenus}; save it to '${prokkablastdb}/${refgenus}.backup_${datetime}'"
@@ -99,15 +100,24 @@ makeprokkarefgenusdb (){
   if [ -s ${inrefass}_genomic_gbffgz_list ] ; then
     parallel -a ${inrefass}_genomic_gbffgz_list 'gunzip -k'
     # extract protein sequences
-    prokka-genbank_to_fasta_db ${inrefass}/*/*_genomic.gbff > ${ptgtmp}/${refgenus}.faa 2> ${ptglogs}/prokka-genbank_to_fasta_db.log
-    # cluster similar sequences
-    cdhit -i ${ptgtmp}/${refgenus}.faa -o ${ptgtmp}/${refgenus}_representative.faa -T 0 -M 0 -G 1 -s 0.8 -c 0.9 &> ${ptglogs}/cdhit.log
-    rm -fv ${ptgtmp}/${refgenus}.faa ${ptgtmp}/${refgenus}_representative.faa.clstr
-    # replace database name for genus detection by Prokka 
-    cp -p ${ptgtmp}/${refgenus}_representative.faa ${prokkablastdb}/${refgenus}
-    cd ${prokkablastdb}/
-    makeblastdb -dbtype prot -in ${refgenus}
-    cd -
+    pgb2fdb="prokka-genbank_to_fasta_db ${inrefass}/*/*_genomic.gbff 1> ${ptgtmp}/${refgenus}.faa 2> ${ptglogs}/prokka-genbank_to_fasta_db.log"
+    eval "${pgb2fdb}"
+    if [ ${?} -gt 0 ] ; then
+      # try using the native perl
+      /usr/bin/perl $prokkadir/bin/${pgb2fdb}
+    fi
+    if [ ${?} -gt 0 ] ; then
+      >&2 echo "WARNING: could not build custom genus-specific BLAST db from files ${inrefass}/*/*_genomic.gbff ; Prokka will have to use default databases."
+    else
+      # cluster similar sequences
+      cdhit -i ${ptgtmp}/${refgenus}.faa -o ${ptgtmp}/${refgenus}_representative.faa -T 0 -M 0 -G 1 -s 0.8 -c 0.9 &> ${ptglogs}/cdhit.log
+      rm -fv ${ptgtmp}/${refgenus}.faa ${ptgtmp}/${refgenus}_representative.faa.clstr
+      # replace database name for genus detection by Prokka 
+      cp -p ${ptgtmp}/${refgenus}_representative.faa ${prokkablastdb}/${refgenus}
+      cd ${prokkablastdb}/
+      makeblastdb -dbtype prot -in ${refgenus}
+      cd -
+    fi
   fi
 }
 
