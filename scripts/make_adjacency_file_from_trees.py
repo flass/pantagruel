@@ -20,7 +20,8 @@ for nfgt in lnfgt:
 	try:
 		gt = tree2.read_newick(nfgt)
 	except ValueError:
-		gt = tree2.read_multiple_newick(nfgt)[0]
+		# assume bootstrap/bayesian samples don't have branch lengths
+		gt = tree2.read_multiple_newick(nfgt, branch_lengths=False)[0]
 	genes = gt.get_leaf_labels()
 	for g in genes:
 		# assume gene labels to follow the syntax SPECIES_1234
