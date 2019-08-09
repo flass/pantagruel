@@ -407,9 +407,9 @@ Options are detailed here:
                         It is therefore advised to first run the pipeline up to task 02 (or equally up to 05) without this option,
                         and then to to set this paramter for the downstream computations.
                         This can be done by editing the value of 'genefamlist' variable in the configuration file or by using:
-                          pantagruel --refresh -g genelist init  (note it is important that -g option be placed after the --refresh option)
+                          pantagruel -i configfile --refresh -g genelist init  (note it is important that -g option be placed after the --refresh option)
                         Reverting to the exhaustive computation behavior can be done similarly by setting 'genefamlist' variable to an empty value or by using:
-                          pantagruel --refresh -g '' init
+                          pantagruel -i configfile --refresh -g '' init
 
 # for any Pantagruel command calls:
 
