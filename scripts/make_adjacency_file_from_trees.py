@@ -15,6 +15,7 @@ with open(nflnfgt,'r') as flnfgt:
 
 # store gene labels
 dspe2genes = {}
+ngenes = 0
 for nfgt in lnfgt:
 	gt = tree2.read_newick(nfgt)
 	genes = gt.get_leaf_labels()
@@ -22,10 +23,11 @@ for nfgt in lnfgt:
 		# assume gene labels to follow the syntax SPECIES_1234
 		s, n = g.split('_')
 		dspe2genes.setdefault(s, []).append(int(n))
+	ngenes += len(genes)
 
 lspe = dspe2genes.keys()
 lspe.sort()
-print "%d species: %s, ..."%(len(lspe), ', '.join(lspe[:5]))
+print "%d species: %s, ...; %d genes."%(len(lspe), ', '.join(lspe[:5]), ngenes)
 
 # make adjacency file 
 with open(nfout, 'w') as fout:
@@ -35,7 +37,7 @@ with open(nfout, 'w') as fout:
 		for k in range(len(lg)-1):
 			a = lg[k]
 			b = lg[k+1]
-			if b - a >= maxggdist:
+			if (b - a) <= maxggdist:
 				# only consider single-replicon, linear topology genome
 				# have to query db to take into account multi-replicon and possible circular topology
 				fout.write("%s_%d %s_%d\n"%(s, a, s, b))
