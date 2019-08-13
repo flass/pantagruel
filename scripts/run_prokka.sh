@@ -25,11 +25,19 @@ if [ -e ${prokkablastdb}/${refgenus} ] ; then
  usegenus="--usegenus"
  if [ -e ${prokkablastdb}/${genus} ] ; then
    # substitute the 'Reference' files to the 'Genus' files for the time of this annotation
-   for dbfile in $(ls ${prokkablastdb}/${genus} ${prokkablastdb}/${genus}.*) ; do
-     mv -f ${dbfile} ${dbfile/${genus}/${genus}_bak}
-     ln -s ${prokkablastdb}/$(basename ${dbfile/${genus}/${refgenus}}) ${dbfile}
+   echo "temporarily move the resident genus database '${prokkablastdb}/${genus}' to '${prokkablastdb}/${genus}_bak' to substitute '${prokkablastdb}/${refgenus}' to it"
+   for gdbfile in $(ls ${prokkablastdb}/${genus} ${prokkablastdb}/${genus}.*) ; do
+     mv -f ${gdbfile} ${gdbfile/${genus}/${genus}_bak}
+     ln -s ${prokkablastdb}/$(basename ${gdbfile/${genus}/${refgenus}}) ${gdbfile}
+   done
+ else
+   # substitute the 'Reference' files to the 'Genus' files for the time of this annotation
+   for refdbfile in $(ls ${prokkablastdb}/${refgenus} ${prokkablastdb}/${refgenus}.*) ; do
+     ln -s ${refdbfile} ${prokkablastdb}/$(basename ${refdbfile/${refgenus}/${genus}})
    done
  fi
+ echo "made links:"
+ ls -l ${gdbfile} ${gdbfile}.*
 elif [ -e ${prokkablastdb}/${genus} ] ; then
  usegenus="--usegenus"
 fi
@@ -45,10 +53,12 @@ date
 
 # revert to the original 'Genus' database
 for dbfile in $(ls ${prokkablastdb}/${genus} ${prokkablastdb}/${genus}.*) ; do
+  if [ -L ${dbfile} ] ; then
+    rm ${dbfile}
+    echo "removed link: ${dbfile}"
+  fi
   if [ -e ${dbfile/${genus}/${genus}_bak} ] ; then
-   if [ -L ${dbfile} ] ; then
-     rm ${dbfile}
-   fi
-   mv -f ${dbfile/${genus}/${genus}_bak} ${dbfile}
+    echo "restore the resident genus database file '${dbfile}' from '${dbfile/${genus}/${genus}_bak}'"
+    mv -f ${dbfile/${genus}/${genus}_bak} ${dbfile}
   fi
 done
