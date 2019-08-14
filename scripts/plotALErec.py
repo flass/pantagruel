@@ -32,7 +32,7 @@ def main(nfrec, reftreelen=None, maxrecgt=1, sgsep='_', restrictclade=None):
 		 treetype='species', transfers=dlevt['T'], duplications=dlevt['D'], losses=dlevt['L'], counts=lcopynum, \
 		 modstyle="stroke-width:1; ", padstyle="stroke:red; stroke-width:0.5; stroke-dasharray:1,1; ")
 		print os.path.basename(nfoutspe)
-		# write SVG species tree
+		# write SVG gene tree
 		nfoutrec = '%s_%d_recgenetree.svg'%(nfrec, i)
 		#~ if restrictlabs: gt = recgt.map_to_node(restrictlabs, force=True, useSpeDict=True)
 		#~ else: gt = recgt
