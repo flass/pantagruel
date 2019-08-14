@@ -84,7 +84,7 @@ if [ $ok -lt 1 ] ; then
   # some protein alignments do not match the CDS sequences
   # transpose the CDS into the positions of the aligned protein; assumes no indels, only mismatches and possibly shortenned sequences
   rm -f ${ptglogs}/tranposeAlignmentProt2CDS.log && touch ${ptglogs}/tranposeAlignmentProt2CDS.log
-  for fam in `cat ${protali}/pal2nal_missed_fams` ; do
+  for fam in `cut -f1 ${protali}/pal2nal_missed_fams` ; do
     ${ptgscripts}/tranposeAlignmentProt2CDS.py $protali/full_cdsfam_fasta/$fam.fasta $protali/full_protfam_alignments/$fam.aln $protali/full_cdsfam_alignments/$fam.aln > ${ptglogs}/tranposeAlignmentProt2CDS.log
   done
   checkexec "${datepad}-- failed to generate the reverse translated aligments missed by pal2nal" "${datepad}-- Complete generating the reverse translated aligments missed by pal2nal"
