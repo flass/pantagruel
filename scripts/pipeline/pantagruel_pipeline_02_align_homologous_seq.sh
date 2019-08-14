@@ -63,6 +63,7 @@ mkdir -p ${ptglogs}/extract_full_prot_and_cds_family_alignments/
 python ${ptgscripts}/extract_full_prot_and_cds_family_alignments.py --nrprot_fam_alns ${nrprotali} --singletons ${protfamseqs}/${protorfanclust}.fasta \
  --prot_info ${genomeinfo}/assembly_info/allproteins_info.tab --repli_info ${genomeinfo}/assembly_info/allreplicons_info.tab --assemblies ${assemblies} \
  --dirout ${protali} --famprefix ${famprefix} --logs ${ptglogs}/extract_full_prot_and_cds_family_alignments --identical_prots ${allfaarad}.identicals.list
+checkexec "${datepad}-- Critical error during the production of full CDS alignments from the nr protein alignments" "${datepad}-- complete generation of full CDS alignments without critical errors"
 
 ## check consistency of full reverse translated alignment set
 ok=1
@@ -71,7 +72,7 @@ nseqin1=`grep -c '>' $protali/full_cdsfam_fasta/$fam.fasta`
 nseqin2=`grep -c '>' $protali/full_protfam_alignments/$fam.aln`
 nseqout=`grep -c '>' $protali/full_cdsfam_alignments/$fam.aln`
 if [[ "$nseqin1" != "$nseqout" || "$nseqin2" != "$nseqout" ]] ; then 
-  echo "$fam\tfull_cdsfam_fasta: ${nseqin1}; full_protfam_alignments: ${nseqin2}; full_cdsfam_alignments: $nseqout"
+  echo -e "$fam\tfull_cdsfam_fasta: ${nseqin1}; full_protfam_alignments: ${nseqin2}; full_cdsfam_alignments: $nseqout"
   ok=0
 fi
 done > ${protali}/pal2nal_missed_fams
@@ -83,9 +84,10 @@ if [ $ok -lt 1 ] ; then
   # some protein alignments do not match the CDS sequences
   # transpose the CDS into the positions of the aligned protein; assumes no indels, only mismatches and possibly shortenned sequences
   rm -f ${ptglogs}/tranposeAlignmentProt2CDS.log && touch ${ptglogs}/tranposeAlignmentProt2CDS.log
-  for fam in `cat $ptgtmp/pal2nal_missed_fams` ; do
+  for fam in `cat ${protali}/pal2nal_missed_fams` ; do
     ${ptgscripts}/tranposeAlignmentProt2CDS.py $protali/full_cdsfam_fasta/$fam.fasta $protali/full_protfam_alignments/$fam.aln $protali/full_cdsfam_alignments/$fam.aln > ${ptglogs}/tranposeAlignmentProt2CDS.log
   done
+  checkexec "${datepad}-- failed to generate the reverse translated aligments missed by pal2nal" "${datepad}-- Complete generating the reverse translated aligments missed by pal2nal"
   >&2 promptdate 
   >&2 echo "See '${ptglogs}/tranposeAlignmentProt2CDS.log' for the list of alignments that were reverse-translated using the coarse algorithm implemented in tranposeAlignmentProt2CDS.py"
 fi
@@ -94,4 +96,6 @@ fi
 rm -f ${protali}/all_families_genome_counts.mat*
 cat ${protali}/full_families_genome_counts-noORFans.mat > ${protali}/all_families_genome_counts.mat
 tail -n +2 ${protali}/${famprefix}C000000_genome_counts-ORFans.mat >> ${protali}/all_families_genome_counts.mat
-gzip ${protali}/all_families_genome_counts.mat
+gzip ${protali}/all_families_genome_counts.mat  checkexec
+"${datepad}-- failed to generate the gene family count matrices" "${datepad}-- Complete generating the gene family count matrices"
+
