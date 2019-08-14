@@ -240,7 +240,7 @@ EOF
         python ${ptgscripts}/add_region_feature2prokkaGFF.py ${annotgff[0]} ${annotgff[0]/.gff/.ptg.gff} ${straininfo} ${contigs}/${allcontigs} ${assembler}
         echo "fix annotation to integrate taxid information into GBK files"
         annotfna=($(ls ${annot}/${gproject}/*.fna))
-        annotgbk=($(ls ${annot}/${gproject}/*.gbk ${annot}/${gproject}/*.gbf))
+        annotgbk=($(ls ${annot}/${gproject}/*.gbf 2> /dev/null || ls ${annot}/${gproject}/*.gbk))
         annotfaa=($(ls ${annot}/${gproject}/*.faa))
         annotffn=($(ls ${annot}/${gproject}/*.ffn))
         if [[ -z "${annotfna[0]}" || -z "${annotgbk[0]}" || -z "${annotffn[0]}" || -z "${annotfaa[0]}" ]] ; then
