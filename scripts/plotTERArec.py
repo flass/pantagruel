@@ -3,18 +3,19 @@ import tree2
 import sys, os, getopt
 from parseTERArec import *
 
-def main(nfrec, nfreftree, maxrecgt=1, recformat='tera', sgsep='_', restrictclade=None):
+def main(nfrec, nfreftree, maxrecgt=1, recformat='tera', sgsep='_', phylofact=1000.0, restrictclade=None):
 	reftree = tree2.AnnotatedNode(file=nfreftree, namesAsNum=True)
 	i = -1	
-	for dnodefreq, dlevt in parseTERARecFile(nfrec, recformat=recformat):
+	for dnodefreq, dlevt in parseTERARecFile(nfrec, recformat=recformat, sgsep=sgsep):
 		i += 1
 		# write SVG species tree
 		nfoutspe = '%s_%d_maprec2spetree.svg'%(nfrec, i)
-		if restrictclade: st = subspetree
-		else: st = spetree
-		st.writeSvgTree(nfoutspe, padleaves=True, supports=False, phylofact=(10000 if reftreelen else 10), branchwidths=dnodefreq, textorbit=5, \
-		 treetype='species', transfers=dlevt['T'], duplications=dlevt['D'], losses=dlevt['L'], counts=dnodefreq.items(), \
-		 modstyle="stroke-width:1; ", padstyle="stroke:red; stroke-width:0.5; stroke-dasharray:1,1; ")
+		if restrictclade: st = reftree.restrictToLeaves(restrictclade)
+		else: st = reftree
+		lleaffreq = [(lab, f) for lab, f in dnodefreq.items() if st[lab].is_leaf()]
+		st.writeSvgTree(nfoutspe, padleaves=True, supports=False, phylofact=phylofact, branchwidths=dnodefreq, textorbit=5, \
+		 treetype='species', transfers=dlevt['T'], duplications=dlevt['D'], losses=dlevt['L'], counts=lleaffreq, \
+		 transfercolor='green', modstyle="stroke-width:1; ", padstyle="stroke:red; stroke-width:0.5; stroke-dasharray:1,1; ")
 		print os.path.basename(nfoutspe)
 
 def usage():
@@ -27,14 +28,17 @@ def usage():
 	s += '\t\t defaults to 1.\n'
 	s += '\t--species-gene-separator str\tstring separator used on gene tree leaves to separate species tag from gene id; default: \'_\'.\n'
 	#~ s += '\t--restrict-to-clade str\tstring[,string[,...]] label(s) of node(s) of the species tree to which the plots will be restricted; default: none.\n'
-	s += '\t-h | --help print this help message and exits.\n'
+	s += '\t---magnify scaling factor for the tree graphics\n'
+	s += '\t---format the reconcilaition file format: either \'mowgli\' or \'tera\'; files are normally coming out of ecceTERA\n'
+	s += '\t          with .mr and .txt extensions, respectively; default: guess form file extension, or raise an error if not possible.\n'
+	s += '\t-h | --help print this help message and exit.\n'
 	return s
 
 ## execute script
 if __name__ == "__main__":
 	## arg parsing
 	try:
-		opts, args = getopt.getopt(sys.argv[1:], "h", ['reftree=', 'maxrecgt=', 'species-gene-separator=', 'help']) #, 'restrict-to-clade='
+		opts, args = getopt.getopt(sys.argv[1:], "h", ['reftree=', 'maxrecgt=', 'species-gene-separator=', 'magnify=', 'format=', 'help']) #, 'restrict-to-clade='
 	except getopt.GetoptError as err:
 		# print help information and exit:
 		print str(err)  # will print something like "option -a not recognized"
@@ -48,14 +52,19 @@ if __name__ == "__main__":
 
 	nfreftree = dopt['--reftree']
 	
-	if '--maxrecgt' in dopt: maxrecgt = int(dopt['--maxrecgt'])
-	else: maxrecgt = 1
+	maxrecgt = int(dopt.get('--maxrecgt', 1))
+	recformat = dopt.get('--format')
+		
 	sgsep = dopt.get('--species-gene-separator', '_')
-
-	#~ restrictclade = dopt.get('--restrict-to-clade')
+	phylofact = float(dopt.get('--magnify', 1000))
+	restrictclade = dopt.get('--restrict-to-clade')
 		
 	lnfrec = args
 	if len(lnfrec)<1: raise ValueError, "need at least one argument (file path[s])"
 	
 	for nfrec in lnfrec:
-		main(nfrec, nfreftree, maxrecgt, sgsep, restrictclade)
+		if not recformat:
+			if nfrec.endswith('.mr'): recformat = 'mowgli'
+			elif nfrec.endswith('.txt'): recformat = 'tera'
+			else: raise ValueError, "could not guess the format of the file from its extension; please specify either 'mowgli' or 'tera'."
+		main(nfrec, nfreftree, maxrecgt, recformat, sgsep, phylofact, restrictclade)
