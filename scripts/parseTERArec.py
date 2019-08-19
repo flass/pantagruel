@@ -8,6 +8,33 @@ deadlabnum = '-1'
 
 realscinumpat = re.compile('[1-9]\.[0-9]{1,5}e-[0-9]{2}|0\.[0-9]{1,9}|0')
 
+def cmpSegIds(x, y):
+	"""cmp function for strings where abcABC is smaller than 123"""
+	xnum = x[0].isdigit()
+	ynum = y[0].isdigit()
+	if xnum:
+		# x = 123
+		if ynum:
+			# y = 123
+			if x < y: return -1
+			elif x == y: return 0
+			elif x > y: return 1
+		else:
+			# y = abcABC
+			return 1
+	else:
+		# x = abcABC
+		if not ynum:
+			# y = abcABC
+			if x < y: return -1
+			elif x == y: return 0
+			elif x > y: return 1
+		else:
+			# y = 123
+			# abcABC smaller than 123
+			return -1
+			
+	
 def _parseTERARecEvent(event, dnodefreq, dlevt, deadlab='-1'):
 	"""utiulity fonction toparse just one event string and store it in the dictionaries provided in input $2 and $3"""
 	print event
@@ -113,7 +140,7 @@ class TERAReconciliation(object):
 			self.dsegments[rs.segid] = rs
 		self.lsegids = self.dsegments.keys()
 		# order segments following their numbering in input file, which should be ordered in a root-to-tip pre-order traversal
-		self.lsegids.sort(reverse=True) # older segments have smaller ids, so reverse id order to get parent-to-child order 
+		self.lsegids.sort(reverse=True, cmp=lambda x,y: cmpSegIds(x, y)) # older segments have smaller ids, so reverse id order to get parent-to-child order 
 		
 		# build the tree of segments = the reconciled gene tree
 		for segid, segment in self.dsegments.items():
@@ -144,6 +171,7 @@ class TERAReconciliation(object):
 		self.dnodefreq = {}
 		damongdead = {}
 		for segid in self.lsegids:
+			print segid
 			segment = self.dsegments[segid]
 			for n, event in enumerate(segment.levents):
 				# include the first event (excluded from final record)
