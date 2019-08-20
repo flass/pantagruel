@@ -32,6 +32,34 @@ host='ftp.ncbi.nlm.nih.gov'
 openparam=" -u $user,$pswd $host"
 cd ${outdir}/
 
+fetchass (){
+  echo -e "fetch ${assdir}\n"
+  # then download
+  if [ -z "${fpat}" ] ; then
+	# the target folder
+    lftp ${openparam} -e "set ftp:use-feat false ; mirror -X *_assembly_structure ${para} ${assdir} ; quit"
+  else
+	# the specific target files
+	mkdir -p ${outdir}/${fullass}/
+	lftp ${openparam} -e "set ftp:use-feat false ; mget -O ${fullass} ${assdir}/${fpat} ; get -O ${fullass} ${assdir}/md5checksums.txt ; quit"
+  fi
+  ls -l ${outdir}/${fullass}/
+  cd ${outdir}/${fullass}/
+  md5sum -c md5checksums.txt
+  if [ $? -gt 0 ] ; then
+#    if [ ! -z "$(md5sum --quiet -c md5checksums.txt 2> /dev/null | grep -v 'assembly_structure')" ] ; then
+#      echo "Error: files in ${ncbiass}/${fullass}/ seem corrupted (not only about missing *assembly_structure/ files) ; exit now"
+      echo "Error: files in ${ncbiass}/${fullass}/ seem corrupted ; exit now"
+      exit 1
+#    else
+#      echo "Warning: some files are corrupted or missing in the *assembly_structure/ ; this is not important for Pantagruel though."
+#    fi
+  fi
+  cd ${outdir}/
+}
+
+
+
 for ass in $(cat ${asslist}) ; do
   assloc="/genomes/all/${ass:0:3}/${ass:4:3}/${ass:7:3}/${ass:10:3}"
   # first fetch the complete name of target assembly folder
@@ -41,31 +69,19 @@ for ass in $(cat ${asslist}) ; do
     exit 1
   fi
   fullass=$(basename ${assdir})
-  if [ ! -e ${outdir}/${fullass}/md5checksums.txt ] ; then
-    echo -e "fetch ${assdir}\n"
-    # then download
-	if [ -z "${fpat}" ] ; then
-	  # the target folder
-	  lftp ${openparam} -e "set ftp:use-feat false ; mirror -X *_assembly_structure ${para} ${assdir} ; quit"
-	else
-	  # the specific target files
-	  mkdir -p ${outdir}/${fullass}/
-	  lftp ${openparam} -e "set ftp:use-feat false ; mget -O ${fullass} ${assdir}/${fpat} ; quit"
-	fi
-	ls -l ${outdir}/${fullass}/
+  if [ -e ${outdir}/${fullass}/md5checksums.txt ] ; then
+    cd ${outdir}/${fullass}/
+    md5sum -c md5checksums.txt
+	md5stat=${?}
+    cd ${outdir}/
+    if [ ${md5stat} -gt 0 ] ; then
+	  echo "the folder of accession '${ass}' already exists locally, but the file set is not complete; try and repeat the transfer"
+	  fetchass ${assdir}
+    else
+      echo "assembly ${fullass} already present in ${outdir}/"
+    fi
   else
-    echo "assembly ${fullass} already present in ${outdir}/"
+    fetchass ${assdir}
   fi
-  cd ${outdir}/${fullass}/
-  md5sum -c md5checksums.txt
-  if [ $? -gt 0 ] ; then
-#    if [ ! -z "$(md5sum --quiet -c md5checksums.txt 2> /dev/null | grep -v 'assembly_structure')" ] ; then
-      echo "Error: files in ${ncbiass}/${fullass}/ seem corrupted (not only about missing *assembly_structure/ files) ; exit now"
-      exit 1
-#    else
-#      echo "Warning: some files are corrupted or missing in the *assembly_structure/ ; this is not important for Pantagruel though."
-#    fi
-  fi
-  cd ${outdir}/
   echo -e "${ass}: done\n"
 done
