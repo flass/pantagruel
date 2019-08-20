@@ -1,7 +1,13 @@
 #! /bin/bash
 
 if [ -z ${2} ] ; then
-  echo "Usage: ${0} assembly_list ouput_dir [nb_threads, default=min(\`nproc\`,4)] [specific_assembly_file_glob_pattern]"
+  echo "Usage: ${0} assembly_list ouput_dir [nb_threads, default=min(\`nproc\`,4)] [specific_assembly_file_suffix]"
+  echo "   'specific_assembly_file_suffix' will be appended to the expected assembly file prefix, i.e. ASSEMBACESSION_ASSEMBNAME."
+  echo "   The suffix can be a globable pattern."
+  echo "   For instance, for the assembly with prefix 'GCA_000006745.1_ASM674v1':"
+  echo "    - specifying the suffix '_genomic.fna.gz' will fetch only the file 'GCA_000006745.1_ASM674v1_genomic.fna.gz'."
+  echo "    - specifying the suffix '*_genomic.fna.gz' will fetch several files: 'GCA_000006745.1_ASM674v1_genomic.fna.gz',"
+  echo "      but also 'GCA_000006745.1_ASM674v1_cds_from_genomic.fna.gz' and 'GCA_000006745.1_ASM674v1_rna_from_genomic.fna.gz'."
   exit 1
 fi
 
@@ -41,7 +47,7 @@ fetchass (){
   else
 	# the specific target files
 	mkdir -p ${outdir}/${fullass}/
-	lftp ${openparam} -e "set ftp:use-feat false ; mget -O ${fullass} ${assdir}/${fpat} ; get -O ${fullass} ${assdir}/md5checksums.txt ; quit"
+	lftp ${openparam} -e "set ftp:use-feat false ; mget -O ${fullass} ${assdir}/${fullass}${fpat} ; get -O ${fullass} ${assdir}/md5checksums.txt ; quit"
   fi
   ls -l ${outdir}/${fullass}/
   cd ${outdir}/${fullass}/
