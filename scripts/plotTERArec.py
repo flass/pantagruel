@@ -3,19 +3,20 @@ import tree2
 import sys, os, getopt
 from parseTERArec import *
 
-def main(nfrec, nfreftree, maxrecgt=1, recformat='tera', sgsep='_', phylofact=1000.0, restrictclade=None):
+def main(nfrec, nfreftree, maxrecgt=1, recformat='tera', sgsep='_', phylofact=1000.0, restrictclade=None, verbose=False):
 	reftree = tree2.AnnotatedNode(file=nfreftree, namesAsNum=True)
 	i = -1	
-	for dnodefreq, dlevt in parseTERARecFile(nfrec, recformat=recformat, sgsep=sgsep):
+	for dnodefreq, dlevt in parseTERARecFile(nfrec, recformat=recformat, sgsep=sgsep, verbose=verbose):
 		i += 1
 		# write SVG species tree
 		nfoutspe = '%s_%d_maprec2spetree.svg'%(nfrec, i)
 		if restrictclade: st = reftree.restrictToLeaves(restrictclade)
 		else: st = reftree
+		print dnodefreq
 		lleaffreq = [(lab, f) for lab, f in dnodefreq.items() if st[lab].is_leaf()]
 		st.writeSvgTree(nfoutspe, padleaves=True, supports=False, phylofact=phylofact, branchwidths=dnodefreq, textorbit=5, \
 		 treetype='species', transfers=dlevt['T'], duplications=dlevt['D'], losses=dlevt['L'], counts=lleaffreq, \
-		 transfercolor='green', modstyle="stroke-width:1; ", padstyle="stroke:red; stroke-width:0.5; stroke-dasharray:1,1; ")
+		 transfercolor='green', transferwidth='freq', modstyle="stroke-width:1; ", padstyle="stroke:red; stroke-width:0.5; stroke-dasharray:1,1; ")
 		print os.path.basename(nfoutspe)
 
 def usage():
@@ -38,7 +39,7 @@ def usage():
 if __name__ == "__main__":
 	## arg parsing
 	try:
-		opts, args = getopt.getopt(sys.argv[1:], "h", ['reftree=', 'maxrecgt=', 'species-gene-separator=', 'magnify=', 'format=', 'help']) #, 'restrict-to-clade='
+		opts, args = getopt.getopt(sys.argv[1:], "hv", ['reftree=', 'maxrecgt=', 'species-gene-separator=', 'magnify=', 'format=', 'help', 'verbose']) #, 'restrict-to-clade='
 	except getopt.GetoptError as err:
 		# print help information and exit:
 		print str(err)  # will print something like "option -a not recognized"
@@ -51,6 +52,7 @@ if __name__ == "__main__":
 		sys.exit(0)
 
 	nfreftree = dopt['--reftree']
+	verbose = ('-v' in dopt) or ('--verbose' in dopt)
 	
 	maxrecgt = int(dopt.get('--maxrecgt', 1))
 	recformat = dopt.get('--format')
@@ -67,4 +69,4 @@ if __name__ == "__main__":
 			if nfrec.endswith('.mr'): recformat = 'mowgli'
 			elif nfrec.endswith('.txt'): recformat = 'tera'
 			else: raise ValueError, "could not guess the format of the file from its extension; please specify either 'mowgli' or 'tera'."
-		main(nfrec, nfreftree, maxrecgt, recformat, sgsep, phylofact, restrictclade)
+		main(nfrec, nfreftree, maxrecgt, recformat, sgsep, phylofact, restrictclade, verbose=verbose)

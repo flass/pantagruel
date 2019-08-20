@@ -36,7 +36,7 @@ def cmpSegIds(x, y):
 			
 	
 def _parseTERARecEvent(event, dnodefreq, dlevt, deadlab='-1'):
-	"""utiulity fonction toparse just one event string and store it in the dictionaries provided in input $2 and $3"""
+	"""utility fonction toparse just one event string and store it in the dictionaries provided in input $2 and $3"""
 	print event
 	evori, evtype, evdest1, evdest2, freq = event
 	if evtype=='S':
@@ -89,7 +89,7 @@ def _parseTERARecLine(recline, sgsep='_'):
 	
 class TERARecSegment(object):
 	"""store the string of reconciliation events carried by a reconciled gene tree branch, as modelled in TERA output file format"""	
-	def __init__(self, recline, sgsep='_', segid=None, forcefreq=None, **kw):
+	def __init__(self, recline=None, sgsep='_', segid=None, forcefreq=None, **kw):
 		self.segid = None
 		self.chsegids = []
 		self.sevents = ''
@@ -109,7 +109,13 @@ class TERARecSegment(object):
 		self.deadlab = kw.get('deadlab', '-1')
 		if self.sevents:
 			self._parseSegmentString(forcefreq=forcefreq)
-		
+	
+	def __repr__(self):
+		return "<TERARecSegment '%s': \"%s\">"%(self.segid, self.sevents)
+	
+#	def __repr__(self):
+#		return "<%s: %s>"%(str(self).strip('<>'), self.sevents)
+	
 	def set_child_segments(self, children):
 		for c in children:
 			if not (c is None):
@@ -144,11 +150,11 @@ class TERAReconciliation(object):
 		
 		# build the tree of segments = the reconciled gene tree
 		for segid, segment in self.dsegments.items():
-			segment.set_child_segments([self.dsegments.get(cid) for cid in segment.chsegids])
+			segment.set_child_segments([self.dsegments.get(cid, TERARecSegment(segid=cid)) for cid in segment.chsegids])
 		
 		# assemble event set from segments
 		if kw.get('noDeadStories'):
-			self.shuntEventsToFromDead()
+			self.shuntEventsToFromDead(**kw)
 		else:
 			for segid in self.lsegids:
 				segment = self.dsegments[segid] # segments should be in a root-to-tip pre-order traversal
@@ -159,7 +165,7 @@ class TERAReconciliation(object):
 		"""get and [] methods return reconciliation segment with given segment id"""
 		return self.dsegments[segid]
 	
-	def shuntEventsToFromDead(self):
+	def shuntEventsToFromDead(self, verbose=False, **kw):
 		"""assemble event set from segments but ommit the string of events that come and go from/to the Dead/Outgroup branch (e.g. for clearer representation purposes)
 		
 		reset the event disctionary for the reconciliation before proceeeding.
@@ -184,30 +190,31 @@ class TERAReconciliation(object):
 					# store the origin of the lineage among the dead
 					# record the event type without the loss (L) or from/to the Dead (TD/FD) qualifiers (irrelevant to the simplified scenario)
 					damongdead[segid] = (evori, evtype[0])
-				elif evtype.endswith('FD'):
-					# 'endpoint' of the journey among the dead for this lineage
-					# recover origins of the event before it went among the Dead
-					evoritd, evtypetd = damongdead[segid]
-					if evdest1==self.deadlab:
-						# first 'recipient' is the dead; the the second is the 'live' recipient
-						evdest1fd = evoritd
-						evdest2fd = evdest2
-					else:
-						# second 'recipient' is the dead; the the first is the 'live' recipient
-						evdest2fd = evoritd
-						evdest1fd = evdest1
-					# creat a new synthetic event that connects origin and endpoint among the living
-					# make it the type of the original event
-					eventfd = evoritd, evtypetd, evdest1fd, evdest2fd, freq
-					_parseTERARecEvent(eventfd, self.dnodefreq, self.dlevt, deadlab=self.deadlab)
-				elif evtype=='DD':
-					# duplication among the Dead
-					# not interested in recording (representing graphically) that
-					pass
 				elif n > 0:
-					# bona fide event, register it 
-					# always skip the first event as a repeat from the last event of branch/segment above
-					_parseTERARecEvent(event, self.dnodefreq, self.dlevt, deadlab=self.deadlab)
+					if evtype.endswith('FD'):
+						# 'endpoint' of the journey among the dead for this lineage
+						# recover origins of the event before it went among the Dead
+						evoritd, evtypetd = damongdead[segid]
+						if evdest1==self.deadlab:
+							# first 'recipient' is the dead; the the second is the 'live' recipient
+							evdest1fd = evoritd
+							evdest2fd = evdest2
+						else:
+							# second 'recipient' is the dead; the the first is the 'live' recipient
+							evdest2fd = evoritd
+							evdest1fd = evdest1
+						# creat a new synthetic event that connects origin and endpoint among the living
+						# make it the type of the original event
+						eventfd = evoritd, evtypetd, evdest1fd, evdest2fd, freq
+						_parseTERARecEvent(eventfd, self.dnodefreq, self.dlevt, deadlab=self.deadlab)
+					elif evtype=='DD':
+						# duplication among the Dead
+						# not interested in recording (representing graphically) that
+						pass
+					else:
+						# bona fide event, register it 
+						# always skip the first event as a repeat from the last event of branch/segment above
+						_parseTERARecEvent(event, self.dnodefreq, self.dlevt, deadlab=self.deadlab)
 			else:
 				if (not self.sgsep in segment.segid):
 					# end of the segment and not a leaf: split event
@@ -216,14 +223,15 @@ class TERAReconciliation(object):
 						if evdest==self.deadlab:
 							# a new lineage emerges among the Dead
 							# will try and link following events where the lineage will return into the Live branches
-							csid = segment.children[c]
+							if verbose: print evdest, c, segment, segment.children
+							csid = segment.children[c].segid
 							# store the origin of the lineage before it went among the Dead
 							try:
 								damongdead[csid] = damongdead[segid] 
 							except KeyError, e:
 								raise KeyError, "no record of origin for segment %s; the origin of this lineage among the Dead should already be known for this segment from a prior event in the same segment or from a parent segment"%(str(e))
 
-def parseTERARec(frec, forcefreq=None, deadlab=outtaxlab, sgsep='_', noDeadStories=True):
+def parseTERARec(frec, forcefreq=None, deadlab=outtaxlab, sgsep='_', noDeadStories=True, **kw):
 	"""generator function that only parses the information related to the species tree
 	
 	NB: does not account for the change  of state (number of gene copies) over a species tree branch.
@@ -233,7 +241,7 @@ def parseTERARec(frec, forcefreq=None, deadlab=outtaxlab, sgsep='_', noDeadStori
 	while losses (L) do not lead to decrement the count of gene copies (just no increment).
 	"""
 	dl = deadlabnum if noDeadStories else outtaxlab
-	rec = TERAReconciliation(frec, sgsep=sgsep, forcefreq=forcefreq, noDeadStories=noDeadStories, deadlab=dl)
+	rec = TERAReconciliation(frec, sgsep=sgsep, forcefreq=forcefreq, noDeadStories=noDeadStories, deadlab=dl, **kw)
 	# only support single-reconciliation input files at the moment,
 	# but return a sequence for consistency with analog functions
 	return [(rec.dnodefreq, rec.dlevt)]	
