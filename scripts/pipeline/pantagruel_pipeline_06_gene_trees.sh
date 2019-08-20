@@ -46,7 +46,7 @@ if [[ ! -z "$hpcremoteptgroot" && "$hpcremoteptgroot" != 'none' ]] ; then
   # try and size the job regarding to the gene tree sizes: do separate lists by gene family size
   python ${ptgscripts}/pantagruel_sqlitedb_query_gene_fam_sets.py --db=${sqldb} --outprefix='cdsfams' --dirout=${genetrees} --base.query="${basequery}" \
    --famsets.min.sizes="4,500,2000,10000" --famsets.max.sizes="499,1999,9999,"
-  allfamlists=$(ls ${genetrees}/cdsfams_*)
+  allfamlists="$(ls ${genetrees}/cdsfams_*)"
   checkexec "could not generate gene family lists ; exit now" "succesfully generated gene family lists : $allfamlists"
   
   if [ -z "$genefamlist" ] ; then
@@ -61,11 +61,14 @@ if [[ ! -z "$hpcremoteptgroot" && "$hpcremoteptgroot" != 'none' ]] ; then
     bngenefamlist=$(basename ${genefamlist})
     rm -f ${genetrees}/${bngenefamlist}_*
     for fam in $(cut -f1 ${genefamlist}) ; do
+	  echo $fam
       for cdsfamlist in ${allfamlists} ; do
-        grep ${fam} ${cdsfamlist} >>  ${genetrees}/${bngenefamlist}_${cdsfamlist}
+	    echo $cdsfamlist
+        grep ${fam} ${cdsfamlist} >> ${genetrees}/${bngenefamlist}_${cdsfamlist}
       done
     done
-    famlists=$(ls ${genetrees}/${bngenefamlist}_cdsfams_*)
+	ls ${genetrees}/${bngenefamlist}_cdsfams_*
+    famlists="$(ls ${genetrees}/${bngenefamlist}_cdsfams_*)"
     checkexec "could not generate restricted gene family lists ; exit now" "succesfully generated restricted gene family lists : $famlists"
   fi
   

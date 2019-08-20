@@ -44,7 +44,7 @@ export -f checkfoldersafe
 
 # function for checking the success of every step
 checkexec (){
-  if [ $? != 0 ]; then
+  if [ ${?} != 0 ]; then
     echo "ERROR: $1" 1>&2
     exit 1
   else
