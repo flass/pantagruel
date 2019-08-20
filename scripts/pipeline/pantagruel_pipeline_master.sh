@@ -477,7 +477,7 @@ do
 
     -g|--genefam_list)
       testmandatoryarg "$1" "$2"
-      export genefamlist="$2"
+      export genefamlist=$(readlink -f $2)
       echo "set resticted list for computation of gene trees"
       shift 2;;
 
