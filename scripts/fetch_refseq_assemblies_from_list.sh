@@ -28,7 +28,7 @@ fi
 if [ ! -z "${4}" ] ; then
   suf="${4}"
   # make a grep-freindly regexp out of pottential glob pattern
-  sufpat="echo $suf | sed -e 's/*/.*/g'"
+  sufpat="$(echo $suf | sed -e 's/*/.*/g')"
 else
   suf=""
   sufpat=""
