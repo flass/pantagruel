@@ -26,9 +26,12 @@ else
   para=""
 fi
 if [ ! -z "${4}" ] ; then
-  fpat="${4}"
+  suf="${4}"
+  # make a grep-freindly regexp out of pottential glob pattern
+  sufpat="echo $suf | sed -e 's/*/.*/g'"
 else
-  fpat=""
+  suf=""
+  sufpat=""
 fi
 
 ### fetch genome assembly data from the NCBI Assembly database
@@ -41,25 +44,26 @@ cd ${outdir}/
 fetchass (){
   echo -e "fetch ${assdir}\n"
   # then download
-  if [ -z "${fpat}" ] ; then
+  if [ -z "${suf}" ] ; then
 	# the target folder
     lftp ${openparam} -e "set ftp:use-feat false ; mirror -X *_assembly_structure ${para} ${assdir} ; quit"
   else
 	# the specific target files
 	mkdir -p ${outdir}/${fullass}/
-	lftp ${openparam} -e "set ftp:use-feat false ; mget -O ${fullass} ${assdir}/${fullass}${fpat} ; get -O ${fullass} ${assdir}/md5checksums.txt ; quit"
+	lftp ${openparam} -e "set ftp:use-feat false ; mget -O ${fullass} ${assdir}/${fullass}${suf} ; get -O ${fullass} ${assdir}/md5checksums.txt ; quit"
+	mv ${outdir}/${fullass}/md5checksums.txt ${outdir}/${fullass}/md5checksums.txt.full
+	grep ${sufpat} ${outdir}/${fullass}/md5checksums.txt.full > ${outdir}/${fullass}/md5checksums.txt
   fi
   ls -l ${outdir}/${fullass}/
   cd ${outdir}/${fullass}/
   md5sum -c md5checksums.txt
   if [ $? -gt 0 ] ; then
-#    if [ ! -z "$(md5sum --quiet -c md5checksums.txt 2> /dev/null | grep -v 'assembly_structure')" ] ; then
-#      echo "Error: files in ${ncbiass}/${fullass}/ seem corrupted (not only about missing *assembly_structure/ files) ; exit now"
-      echo "Error: files in ${ncbiass}/${fullass}/ seem corrupted ; exit now"
+    if [ ! -z "$(md5sum --quiet -c md5checksums.txt 2> /dev/null | grep -v 'assembly_structure')" ] ; then
+      echo "Error: files in ${ncbiass}/${fullass}/ seem corrupted (not only about missing *assembly_structure/ files) ; exit now"
       exit 1
-#    else
-#      echo "Warning: some files are corrupted or missing in the *assembly_structure/ ; this is not important for Pantagruel though."
-#    fi
+    else
+      echo "Warning: some files are corrupted or missing in the *assembly_structure/ ; this is not important for Pantagruel though."
+    fi
   fi
   cd ${outdir}/
 }
