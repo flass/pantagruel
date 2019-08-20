@@ -49,7 +49,7 @@ checkexec (){
     exit 1
   else
     if [ ! -z "$2" ] ; then
-      echo "$2"
+      echo -e "$2"
     fi
   fi
 }

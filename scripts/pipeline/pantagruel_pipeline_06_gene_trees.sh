@@ -61,13 +61,10 @@ if [[ ! -z "$hpcremoteptgroot" && "$hpcremoteptgroot" != 'none' ]] ; then
     bngenefamlist=$(basename ${genefamlist})
     rm -f ${genetrees}/${bngenefamlist}_*
     for fam in $(cut -f1 ${genefamlist}) ; do
-	  echo $fam
       for cdsfamlist in ${allfamlists} ; do
-	    echo $cdsfamlist
         grep ${fam} ${cdsfamlist} >> ${genetrees}/${bngenefamlist}_${cdsfamlist}
       done
     done
-	ls ${genetrees}/${bngenefamlist}_cdsfams_*
     famlists="$(ls ${genetrees}/${bngenefamlist}_cdsfams_*)"
     checkexec "could not generate restricted gene family lists ; exit now" "succesfully generated restricted gene family lists : $famlists"
   fi
@@ -111,7 +108,8 @@ else
   for fam in $(cut -f1 ${genefamlist}) ; do
     grep ${fam} ${allfamlist} >> ${famlist}
   done
-  checkexec "could not generate restricted gene family list ; exit now" "succesfully generated restricted gene family lists : $famlist"
+  nrestrfam=$(wc -l $famlist)
+  checkexec "could not generate restricted gene family list ; exit now" "succesfully generated restricted gene family lists :\n$famlist (containing $(echo $nrestrfam | cut -d' ' -f1) gene families)"
 fi
 
 if [[ "${chaintype}" == 'fullgenetree' ]] ; then
