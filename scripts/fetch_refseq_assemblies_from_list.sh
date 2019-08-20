@@ -52,7 +52,7 @@ fetchass (){
 	mkdir -p ${outdir}/${fullass}/
 	lftp ${openparam} -e "set ftp:use-feat false ; mget -O ${fullass} ${assdir}/${fullass}${suf} ; get -O ${fullass} ${assdir}/md5checksums.txt ; quit"
 	mv ${outdir}/${fullass}/md5checksums.txt ${outdir}/${fullass}/md5checksums.txt.full
-	grep ${sufpat} ${outdir}/${fullass}/md5checksums.txt.full > ${outdir}/${fullass}/md5checksums.txt
+	grep ${fullass}${sufpat} ${outdir}/${fullass}/md5checksums.txt.full > ${outdir}/${fullass}/md5checksums.txt
   fi
   ls -l ${outdir}/${fullass}/
   cd ${outdir}/${fullass}/
