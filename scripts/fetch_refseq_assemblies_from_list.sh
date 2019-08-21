@@ -29,6 +29,7 @@ if [ ! -z "${4}" ] ; then
   suf="${4}"
   # make a grep-freindly regexp out of pottential glob pattern
   sufpat="$(echo $suf | sed -e 's/*/.*/g')"
+  suftxt="$(echo $suf | sed -e 's/*/_all/g')"
 else
   suf=""
   sufpat=""
@@ -51,14 +52,13 @@ fetchass (){
 	# the specific target files
 	mkdir -p ${outdir}/${fullass}/
 	lftp ${openparam} -e "set ftp:use-feat false ; mget -O ${fullass} ${assdir}/${fullass}${suf} ; get -O ${fullass} ${assdir}/md5checksums.txt ; quit"
-	mv ${outdir}/${fullass}/md5checksums.txt ${outdir}/${fullass}/md5checksums.txt.full
-	grep ${fullass}${sufpat} ${outdir}/${fullass}/md5checksums.txt.full > ${outdir}/${fullass}/md5checksums.txt
+	grep ${fullass}${sufpat} ${outdir}/${fullass}/md5checksums.txt > ${outdir}/${fullass}/md5checksums${suftxt}.txt
   fi
   ls -l ${outdir}/${fullass}/
   cd ${outdir}/${fullass}/
-  md5sum -c md5checksums.txt
+  md5sum -c md5checksums${suftxt}.txt
   if [ $? -gt 0 ] ; then
-    if [ ! -z "$(md5sum --quiet -c md5checksums.txt 2> /dev/null | grep -v 'assembly_structure')" ] ; then
+    if [ ! -z "$(md5sum --quiet -c md5checksums${suftxt}.txt 2> /dev/null | grep -v 'assembly_structure')" ] ; then
       echo "Error: files in ${ncbiass}/${fullass}/ seem corrupted (not only about missing *assembly_structure/ files) ; exit now"
       exit 1
     else
