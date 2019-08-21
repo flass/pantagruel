@@ -94,8 +94,10 @@ if [[ ! -z "$(echo ${alebin} | grep docker)" ]] ; then
 else
   pathalebin=$(readlink -f ${alebin})
   alerepo=${pathalebin%%ALE/*}ALE/
-  alesrcvers=$(cd ${alerepo} && git log | head -n 1 | awk '{ print $2 }' 2> /dev/null && cd - > /dev/null)
-  alesrcorig=$(cd ${alerepo} && git remote -v | grep fetch | awk '{ print $2 }' 2> /dev/null && cd - > /dev/null)
+  if [ -d ${alerepo} ] ; then
+	alesrcvers=$(cd ${alerepo} && git log | head -n 1 | awk '{ print $2 }' 2> /dev/null && cd - > /dev/null)
+	alesrcorig=$(cd ${alerepo} && git remote -v | grep fetch | awk '{ print $2 }' 2> /dev/null && cd - > /dev/null)
+  fi
   if [ ! -z "$alesrcvers" ] ; then
     ALEsourcenote="using ALE software compiled from source; code origin: ${alesrcorig}; version ${alesrcvers}"
   else
@@ -139,7 +141,9 @@ fi
 python ${ptgscripts}/parse_collapsedALE_scenarios.py --rec_sample_list ${reclist} \
  ${pops} --reftree ${speciestree}.lsd.nwk \
  --dir_table_out ${parsedrecs} --evtype ${evtypeparse} --minfreq ${minevfreqparse} \
- --threads 8  &> ${ptglogs}/parse_collapsedALE_scenarios.log &
+ --threads 8  &> ${ptglogs}/parse_collapsedALE_scenarios.log
+
+checkexec "Could not coplete parsing ALE scenarios" "Successfully parsed ALE scenarios"
 
 export parsedreccoldate=$(date +%Y-%m-%d)
 echo -e "${parsedreccolid}\t${parsedreccoldate}" > ${genetrees}/parsedreccol
