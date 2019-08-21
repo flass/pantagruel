@@ -392,7 +392,21 @@ if [ -e "${pseudocorealn}.reduced" ] ; then
   alnlen=$(head -n1 ${pseudocorealn}.reduced | cut -d' ' -f2 )
 elif [ -e "${pseudocorealn}" ] ; then
   #~ alnlen=$(head -n1 ${pseudocorealn} | cut -d' ' -f2 )
-  alnlen=$(grep -c '^>' ${pseudocorealn})
+  alnlen=$(python << EOF
+nfaln = '${pseudocorealn}'
+alnlen = 0
+nseq = 0
+with open(nfaln, 'r') as faln:
+  for line in faln:
+    if line.startswith('>'):
+      if nseq==0: nseq += 1
+      else: break
+    else:
+      alnlen += (len(line) - 1)
+
+print alnlen
+EOF
+)
 else
   alnlen=500000 # arbitrary length similar to a 500 CDS concatenate
 fi
