@@ -66,15 +66,16 @@ def _parseTERARecEvent(event, dnodefreq, dlevt, deadlab='-1'):
 				dlevt['L'].append((evdon, freq))
 		elif evtype=='TLTD':
 			dlevt['L'].append((evdon, freq))
+		elif evdon != deadlab:
+			# 'gain' in the donor species = maintenance of the lineage; ignore in the dead/outgroup
+			dnodefreq[evdon] = dnodefreq.setdefault(evdon, 0.0) + 1.0
+			print 'here', evdon
 		# transfer event
 		dlevt['T'].append((evdon, evrec, freq))
 		# register gene occurence
 		if evrec != deadlab:
 			# gain in the recipient species; ignore in the dead/outgroup
 			dnodefreq[evrec] = dnodefreq.setdefault(evrec, 0.0) + 1.0
-		if evdon != deadlab:
-			# 'gain' in the donor species = maintenance of the lineage; ignore in the dead/outgroup
-			dnodefreq[evdon] = dnodefreq.setdefault(evdon, 0.0) + 1.0
 	
 def _parseTERARecLine(recline, sgsep='_'):
 	segid, seventschsegids = recline.strip('\n').split(':', 1)
@@ -179,22 +180,35 @@ class TERAReconciliation(object):
 		for segid in self.lsegids:
 			print segid
 			segment = self.dsegments[segid]
+			seglen = len(segment.levents)
 			for n, event in enumerate(segment.levents):
-				# include the first event (excluded from final record)
-				# as it may provide context for the following events of this segment
-				# i.e. the 1st event may be 'to the dead' and the following be the return 'from the dead'
-				evori, evtype, evdest1, evdest2, freq = event
-				if evtype.endswith('TD'):
-					evoritd, evtypetd, evdest1td, evdest2td, freqtd = event
-					# event goes 'among the Dead' / to the species tree Outgroup branch
-					# store the origin of the lineage among the dead
-					# record the event type without the loss (L) or from/to the Dead (TD/FD) qualifiers (irrelevant to the simplified scenario)
-					damongdead[segid] = (evori, evtype[0])
-				elif n > 0:
-					if evtype.endswith('FD'):
+				# do not include the first event (unless it is the only one, as found at the root)
+				# as it is a repeat from the parent branch
+				if (n > 0) or (N==1):
+					evori, evtype, evdest1, evdest2, freq = event
+					if evtype.endswith('TD'):
+						evoritd, evtypetd, evdest1td, evdest2td, freqtd = event
+						# event goes 'among the Dead' / to the species tree Outgroup branch
+						# store the origin of the lineage among the dead
+						# record the event type without the from/to the Dead (TD/FD) qualifiers (irrelevant to the simplified scenario)
+						damongdead[segid] = (evori, evtype.replace('TF', '').replace('TD', ''))
+					elif evtype.endswith('FD'):
 						# 'endpoint' of the journey among the dead for this lineage
 						# recover origins of the event before it went among the Dead
-						evoritd, evtypetd = damongdead[segid]
+						orisegid = segid
+						evoritypetd = damongdead[orisegid]
+						while not isinstance(evoritypetd, tuple):
+							# just another segid to trace back up the lineage
+							orisegid = evoritypetd
+							evoritypetd = damongdead[evoritypetd]
+						else:
+							evoritd, evtypetd = evoritypetd
+						if not 'L' in evtypetd:
+							# add a loss to the event for its next use when returning from the dead
+							# to avoid artificially incrementing the gene presence in the original donor lineage
+							print orisegid, ':', evoritd, evtypetd, '+L'
+							damongdead[orisegid] = evoritd, evtypetd+'L'
+							print damongdead[orisegid]
 						if evdest1==self.deadlab:
 							# first 'recipient' is the dead; the the second is the 'live' recipient
 							evdest1fd = evoritd
@@ -226,10 +240,7 @@ class TERAReconciliation(object):
 							if verbose: print evdest, c, segment, segment.children
 							csid = segment.children[c].segid
 							# store the origin of the lineage before it went among the Dead
-							try:
-								damongdead[csid] = damongdead[segid] 
-							except KeyError, e:
-								raise KeyError, "no record of origin for segment %s; the origin of this lineage among the Dead should already be known for this segment from a prior event in the same segment or from a parent segment"%(str(e))
+							damongdead[csid] = segid
 
 def parseTERARec(frec, forcefreq=None, deadlab=outtaxlab, sgsep='_', noDeadStories=True, **kw):
 	"""generator function that only parses the information related to the species tree

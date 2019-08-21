@@ -16,7 +16,8 @@ def main(nfrec, nfreftree, maxrecgt=1, recformat='tera', sgsep='_', phylofact=10
 		lleaffreq = [(lab, f) for lab, f in dnodefreq.items() if st[lab].is_leaf()]
 		st.writeSvgTree(nfoutspe, padleaves=True, supports=False, phylofact=phylofact, branchwidths=dnodefreq, textorbit=5, \
 		 treetype='species', transfers=dlevt['T'], duplications=dlevt['D'], losses=dlevt['L'], counts=lleaffreq, \
-		 transfercolor='green', transferwidth='freq', modstyle="stroke-width:1; ", padstyle="stroke:red; stroke-width:0.5; stroke-dasharray:1,1; ")
+		 transferwidth='freq', modstyle="stroke-width:1; ", padstyle="stroke:red; stroke-width:0.5; stroke-dasharray:1,1; ")
+		# transfercolor='green', 
 		print os.path.basename(nfoutspe)
 
 def usage():
