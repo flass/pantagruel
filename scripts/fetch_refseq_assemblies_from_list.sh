@@ -79,9 +79,9 @@ for ass in $(cat ${asslist}) ; do
     exit 1
   fi
   fullass=$(basename ${assdir})
-  if [ -e ${outdir}/${fullass}/md5checksums.txt ] ; then
+  if [ -e ${outdir}/${fullass}/md5checksums${suftxt}.txt ] ; then
     cd ${outdir}/${fullass}/
-    md5sum -c md5checksums.txt
+    md5sum -c md5checksums${suftxt}.txt
 	md5stat=${?}
     cd ${outdir}/
     if [ ${md5stat} -gt 0 ] ; then
