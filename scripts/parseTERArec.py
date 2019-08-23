@@ -8,35 +8,37 @@ deadlabnum = '-1'
 
 realscinumpat = re.compile('[1-9]\.[0-9]{1,5}e-[0-9]{2}|0\.[0-9]{1,9}|0')
 
-def cmpSegIds(x, y):
-	"""cmp function for strings where abcABC is smaller than 123"""
-	xnum = x[0].isdigit()
-	ynum = y[0].isdigit()
-	if xnum:
-		# x = 123
-		if ynum:
-			# y = 123
-			if x < y: return -1
-			elif x == y: return 0
-			elif x > y: return 1
-		else:
-			# y = abcABC
-			return 1
-	else:
-		# x = abcABC
-		if not ynum:
-			# y = abcABC
-			if x < y: return -1
-			elif x == y: return 0
-			elif x > y: return 1
-		else:
-			# y = 123
-			# abcABC smaller than 123
-			return -1
+#def cmpSegIds(x, y):
+#	"""cmp function for strings where abcABC is smaller than 123"""
+#	xnum = x[0].isdigit()
+#	ynum = y[0].isdigit()
+#	if xnum:
+#		# x = 123
+#		if ynum:
+#			# y = 123
+#			a = int(x) ; b = int(y)
+#			if a < b: return -1
+#			elif a == b: return 0
+#			elif a > b: return 1
+#		else:
+#			# y = abcABC
+#			return 1
+#	else:
+#		# x = abcABC
+#		if not ynum:
+#			# y = abcABC
+#			if x < y: return -1
+#			elif x == y: return 0
+#			elif x > y: return 1
+#		else:
+#			# y = 123
+#			# abcABC smaller than 123
+#			return -1
 			
 	
-def _parseTERARecEvent(event, dnodefreq, dlevt, deadlab='-1'):
+def _parseTERARecEvent(event, dnodefreq, dlevt, atroot=False, deadlab='-1'):
 	"""utility fonction toparse just one event string and store it in the dictionaries provided in input $2 and $3"""
+#	ignoredead = ('noDeadStories' in kw)
 	print event
 	evori, evtype, evdest1, evdest2, freq = event
 	if evtype=='S':
@@ -51,7 +53,7 @@ def _parseTERARecEvent(event, dnodefreq, dlevt, deadlab='-1'):
 		dlevt['D'].append((evori, freq))
 		dnodefreq[evdest1] = dnodefreq.setdefault(evdest1, 0.0) + 1.0
 	elif evtype=='DD':	
-		pass
+		dlevt['D'].append((deadlab, freq))
 	elif evtype.startswith('T'):
 		if evdest1==evori: evdon, evrec = (evdest1, evdest2)
 		elif evdest2==evori: evdon, evrec = (evdest2, evdest1)
@@ -64,12 +66,9 @@ def _parseTERARecEvent(event, dnodefreq, dlevt, deadlab='-1'):
 			if evdon != deadlab:
 				# loss event in the donor species; ignore in the dead/outgroup
 				dlevt['L'].append((evdon, freq))
-		elif evtype=='TLTD':
-			dlevt['L'].append((evdon, freq))
-		elif evdon != deadlab:
-			# 'gain' in the donor species = maintenance of the lineage; ignore in the dead/outgroup
+		elif (atroot) and (evdon != deadlab):
+			# 'gain' in the donor species only if this is the origin of the tree
 			dnodefreq[evdon] = dnodefreq.setdefault(evdon, 0.0) + 1.0
-			print 'here', evdon
 		# transfer event
 		dlevt['T'].append((evdon, evrec, freq))
 		# register gene occurence
@@ -103,6 +102,7 @@ class TERARecSegment(object):
 			self.segid = segid
 		else:
 			raise ValueError, "missing arguments: 'recline' ($1 postional arg) or 'segid' (**kw arg)"
+		self.parentevent = None
 		self.levents = []
 		self.children = [] # links to child branches
 		#~ self.dlevt = {et:[] for et in eventypes}
@@ -125,6 +125,9 @@ class TERARecSegment(object):
 		
 	def _parseSegmentString(self, forcefreq=None):
 		lsevents = self.sevents.split(';')
+		if len(lsevents)>1:
+			self.parentevent = lsevents[0]
+			lsevents = lsevents[1:]
 		for evtsup in lsevents:
 			evt, sup = evtsup.split('@')
 			freq = float(sup) if (not forcefreq) else float(forcefreq)
@@ -136,18 +139,21 @@ class TERAReconciliation(object):
 		
 	def __init__(self, recfile, **kw):
 		self.dsegments = {}
+		self.lsegids = [] # list of segments ids; they are also the corresponding gene tree branch labels
 		self.devents = {}
 		self.dlevt = {et:[] for et in eventypes}
 		self.dnodefreq = {}
 		self.sgsep = kw.get('sgsep', '_')
 		self.deadlab = kw.get('deadlab', '-1')
+		self.genetree = kw.get('genetree')
 		# parse the file, line per pile (each line a reconciliation segment corresponding to a reconciled gene tree branch)
 		for line in recfile:
 			rs = TERARecSegment(line, **kw)
 			self.dsegments[rs.segid] = rs
-		self.lsegids = self.dsegments.keys()
-		# order segments following their numbering in input file, which should be ordered in a root-to-tip pre-order traversal
-		self.lsegids.sort(reverse=True, cmp=lambda x,y: cmpSegIds(x, y)) # older segments have smaller ids, so reverse id order to get parent-to-child order 
+			self.lsegids.append(rs.segid)
+		if self.genetree:
+			# reorder segments : their initial order in input file is a root-to-tip pre-order traversal; change for a gradual depth traversal i.e. by order of increasing distance from the root
+			self.lsegids = [node.label() for node in self.genetree.get_sorted_children(order=0) if (node.label() in self.dsegments)]
 		
 		# build the tree of segments = the reconciled gene tree
 		for segid, segment in self.dsegments.items():
@@ -157,10 +163,13 @@ class TERAReconciliation(object):
 		if kw.get('noDeadStories'):
 			self.shuntEventsToFromDead(**kw)
 		else:
-			for segid in self.lsegids:
+			for s, segid in enumerate(self.lsegids):
 				segment = self.dsegments[segid] # segments should be in a root-to-tip pre-order traversal
-				for event in segment.levents:
-					_parseTERARecEvent(event, self.dnodefreq, self.dlevt)
+				for n, event in enumerate(segment.levents):
+					if ((n > 0) and segment.levents[n-1]==event):
+						# filter events that are just repeats of the previous
+						continue
+					_parseTERARecEvent(event, self.dnodefreq, self.dlevt, atroot=(not bool(s)))
 	
 	def __getitem__(self, segid):
 		"""get and [] methods return reconciliation segment with given segment id"""
@@ -177,58 +186,53 @@ class TERAReconciliation(object):
 		self.dlevt = {et:[] for et in eventypes}
 		self.dnodefreq = {}
 		damongdead = {}
-		for segid in self.lsegids:
-			print segid
+		for s, segid in enumerate(self.lsegids):
+			#print segid
 			segment = self.dsegments[segid]
-			seglen = len(segment.levents)
 			for n, event in enumerate(segment.levents):
-				# do not include the first event (unless it is the only one, as found at the root)
-				# as it is a repeat from the parent branch
-				if (n > 0) or (N==1):
-					evori, evtype, evdest1, evdest2, freq = event
-					if evtype.endswith('TD'):
-						evoritd, evtypetd, evdest1td, evdest2td, freqtd = event
-						# event goes 'among the Dead' / to the species tree Outgroup branch
-						# store the origin of the lineage among the dead
-						# record the event type without the from/to the Dead (TD/FD) qualifiers (irrelevant to the simplified scenario)
-						damongdead[segid] = (evori, evtype.replace('TF', '').replace('TD', ''))
-					elif evtype.endswith('FD'):
-						# 'endpoint' of the journey among the dead for this lineage
-						# recover origins of the event before it went among the Dead
-						orisegid = segid
+				if ((n > 0) and segment.levents[n-1]==event):
+					# filter events that are just repeats of the previous
+					continue
+				evori, evtype, evdest1, evdest2, freq = event
+				if evtype.endswith('TD'):
+					evoritd, evtypetd, evdest1td, evdest2td, freqtd = event
+					# event goes 'among the Dead' / to the species tree Outgroup branch
+					# store the origin of the lineage among the dead
+					# record the event type without the from/to the Dead (TD/FD) qualifiers (irrelevant to the simplified scenario)
+					damongdead[segid] = (evori, evtype.replace('TF', '').replace('TD', ''))
+					#print segid, ": %s was the origin into the dead"%evori
+				elif evtype.endswith('FD'):
+					# 'endpoint' of the journey among the dead for this lineage
+					# recover origins of the event before it went among the Dead
+					orisegid = segid
+					evoritypetd = damongdead[orisegid]
+					while not isinstance(evoritypetd, tuple):
+						# just another segid to trace back up the lineage
+						orisegid = evoritypetd
 						evoritypetd = damongdead[orisegid]
-						while not isinstance(evoritypetd, tuple):
-							# just another segid to trace back up the lineage
-							orisegid = evoritypetd
-							evoritypetd = damongdead[evoritypetd]
-						else:
-							evoritd, evtypetd = evoritypetd
-						if not 'L' in evtypetd:
-							# add a loss to the event for its next use when returning from the dead
-							# to avoid artificially incrementing the gene presence in the original donor lineage
-							print orisegid, ':', evoritd, evtypetd, '+L'
-							damongdead[orisegid] = evoritd, evtypetd+'L'
-							print damongdead[orisegid]
-						if evdest1==self.deadlab:
-							# first 'recipient' is the dead; the the second is the 'live' recipient
-							evdest1fd = evoritd
-							evdest2fd = evdest2
-						else:
-							# second 'recipient' is the dead; the the first is the 'live' recipient
-							evdest2fd = evoritd
-							evdest1fd = evdest1
-						# creat a new synthetic event that connects origin and endpoint among the living
-						# make it the type of the original event
-						eventfd = evoritd, evtypetd, evdest1fd, evdest2fd, freq
-						_parseTERARecEvent(eventfd, self.dnodefreq, self.dlevt, deadlab=self.deadlab)
-					elif evtype=='DD':
-						# duplication among the Dead
-						# not interested in recording (representing graphically) that
-						pass
 					else:
-						# bona fide event, register it 
-						# always skip the first event as a repeat from the last event of branch/segment above
-						_parseTERARecEvent(event, self.dnodefreq, self.dlevt, deadlab=self.deadlab)
+						evoritd, evtypetd = evoritypetd
+						#print orisegid, ": was the original segment (%s was the origin) into the dead"%evoritd
+					if evdest1==self.deadlab:
+						# first 'recipient' is the dead; the the second is the 'live' recipient
+						evdest1fd = evoritd
+						evdest2fd = evdest2
+					else:
+						# second 'recipient' is the dead; the the first is the 'live' recipient
+						evdest2fd = evoritd
+						evdest1fd = evdest1
+					# creat a new synthetic event that connects origin and endpoint among the living
+					# make it the type of the original event
+					eventfd = evoritd, evtypetd, evdest1fd, evdest2fd, freq
+					_parseTERARecEvent(eventfd, self.dnodefreq, self.dlevt, deadlab=self.deadlab, atroot=(not bool(s)))
+				elif evtype=='DD':
+					# duplication among the Dead
+					# not interested in recording (representing graphically) that
+					pass
+				else:
+					# bona fide event, register it 
+					# always skip the first event as a repeat from the last event of branch/segment above
+					_parseTERARecEvent(event, self.dnodefreq, self.dlevt, deadlab=self.deadlab, atroot=(not bool(s)))
 			else:
 				if (not self.sgsep in segment.segid):
 					# end of the segment and not a leaf: split event
@@ -299,8 +303,9 @@ def parseMowgliRec(frec):
 				dlevt['T'].append((don, rec, 1.0))
 		yield (dnodefreq, dlevt)
 
-def parseTERARecFile(nfrec, recformat='mowgli', **kw):
+def parseTERARecFile(nfrec, **kw):
 	'''wrapper to parse reconciliations from ecceTERA, either in 'mowgli' (.mr) or 'tera' (.txt) format'''
+	recformat = kw['recformat']
 	with open(nfrec, 'r') as frec:
 		if recformat=='mowgli':
 			return parseMowgliRec(frec, **kw)
