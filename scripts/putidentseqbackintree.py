@@ -36,10 +36,22 @@ if nfrefroottree:
 		if not mc.is_root(): break
 	outgroup = mappedclades[i]
 	# branch length under the root such as: [bl(outgroup), bl(other clade)]
-	subrootbrlens = [subrootchildren[t].lg() for  t in (i, 1-i)]
+#	subrootbrlens = [subrootchildren[t].lg() for  t in (i, 1-i)]
 	# re-root the input tree as in the reference
-	intree.newOutgroup(outgroup, branch_lengths=subrootbrlens)
-
+#	intree.newOutgroup(outgroup, branch_lengths=subrootbrlens)
+	intree.resolveNode([outgroup])
+	intree = intree.go_root()
+	assert intree.is_bifurcated()
+	if subrootchildren[0].lg() > 0:
+		# correct the branch lengths
+		for srnode in intree.get_children():
+			for src in subrootchildren:
+				# find the matching reference node
+				if set(src.get_leaf_labels()) ==  set(srnode.get_leaf_labels()):
+					srnode.set_lg(src.lg())
+					break
+			else:
+				raise IndexError, "could not mnatch the reference in input tree nodes"
 
 for nrseq in dseq:
 	leaf = intree[nrseq]
