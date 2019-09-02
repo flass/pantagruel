@@ -27,13 +27,15 @@ if nfidentseqs:
 			dseq.setdefault(lsp[0], []).append(lsp[1])
 
 if nfrefroottree:
-	refroottree = tree2.read_check_newick(nfrefroottree, maxNoBS=-1)
+	refroottree = tree2.read_check_newick(nfrefroottree, maxNoBS=-1, verbose=False)
 	subrootchildren = refroottree.get_children()
 	# map sub-root clades in reference tree to the input tree
 	mappedclades = [intree.map_to_node(src.get_leaf_labels()) for src in subrootchildren]
 	# find outgroup index as the one not being root
 	for i, mc in enumerate(mappedclades):
 		if not mc.is_root(): break
+	else:
+		raise IndexError, "Could not find in '%s' the basal clade forming an outgroup in '%s'"%(nfintree, nfrefroottree)
 	outgroup = mappedclades[i]
 	# branch length under the root such as: [bl(outgroup), bl(other clade)]
 #	subrootbrlens = [subrootchildren[t].lg() for  t in (i, 1-i)]
