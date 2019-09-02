@@ -39,7 +39,7 @@ realscinumpat = re.compile('[1-9]\.[0-9]{1,5}e-[0-9]{2}|0\.[0-9]{1,9}|0')
 def _parseTERARecEvent(event, dnodefreq, dlevt, atroot=False, deadlab='-1'):
 	"""utility fonction toparse just one event string and store it in the dictionaries provided in input $2 and $3"""
 #	ignoredead = ('noDeadStories' in kw)
-	print event
+#	print event
 	evori, evtype, evdest1, evdest2, freq = event
 	if evtype=='S':
 		dlevt['S'].append((evori, freq))

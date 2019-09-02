@@ -18,7 +18,6 @@ def main(nfrec, nfreftree, nfgenetree, maxrecgt=1, recformat='tera', sgsep='_', 
 				# must adapt mowgli-compliant species tree
 				st[outtaxlab].edit_label(deadlabnum)
 			else:
-				print 'here'
 				maxd = reftree.max_leaf_distance()
 				outgroup = tree2.AnnotatedNode(lleaves=[deadlabnum])
 				outgroup.get_children()[0].set_lg(maxd*3)
@@ -33,7 +32,6 @@ def main(nfrec, nfreftree, nfgenetree, maxrecgt=1, recformat='tera', sgsep='_', 
 				# must adapt mowgli-compliant species tree
 				st[deadlabnum].edit_label(outtaxlab)
 			else:
-				print 'there'
 				outgroup = tree2.AnnotatedNode(lleaves=[outtaxlab])
 				outgroup.get_children()[0].set_lg(maxd*3)
 				outgroup.link_child(reftree, newlen=maxd*2)
@@ -46,7 +44,6 @@ def main(nfrec, nfreftree, nfgenetree, maxrecgt=1, recformat='tera', sgsep='_', 
 		# write SVG species tree
 		tag = '_no_dead' if kw.get('noDeadStories') else ''
 		nfoutspe = '%s_%d_maprec2spetree%s.svg'%(nfrec, i, tag)
-		print dnodefreq
 		lleaffreq = [(lab, f) for lab, f in dnodefreq.items() if st[lab].is_leaf()]
 		st.writeSvgTree(nfoutspe, padleaves=True, supports=False, phylofact=phylofact, branchwidths=dnodefreq, textorbit=5, \
 		 treetype='species', transfers=dlevt['T'], duplications=dlevt['D'], losses=dlevt['L'], counts=lleaffreq, \
