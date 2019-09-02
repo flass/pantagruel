@@ -28,32 +28,32 @@ DELETE FROM gene_lineage_events WHERE reconciliation_id=${parsedreccolid};
 DELETE FROM reconciliation_collections WHERE reconciliation_id=${parsedreccolid};
 
 
-DROP INDEX gene_lineage_events_recid;
-DROP INDEX gene_lineage_events_rlocds;
-DROP INDEX gene_lineage_events_evtid;
-DROP INDEX gene_lineage_events_freq;
-DROP INDEX gene_lineage_events_rlocds_evtid;
-DROP INDEX ;
+DROP INDEX IF EXISTS gene_lineage_events_recid;
+DROP INDEX IF EXISTS gene_lineage_events_rlocds;
+DROP INDEX IF EXISTS gene_lineage_events_evtid;
+DROP INDEX IF EXISTS gene_lineage_events_freq;
+DROP INDEX IF EXISTS gene_lineage_events_rlocds_evtid;
+DROP INDEX IF EXISTS ;
 
-DROP INDEX collapsed_gene_tree_clades_colcritid;
-DROP INDEX collapsed_gene_tree_clades_genefamid;
-DROP INDEX collapsed_gene_tree_clades_cc;
-DROP INDEX collapsed_gene_tree_clades_cdscode;
-DROP INDEX collapsed_gene_tree_clades_cdscode_colcritid;
+DROP INDEX IF EXISTS collapsed_gene_tree_clades_colcritid;
+DROP INDEX IF EXISTS collapsed_gene_tree_clades_genefamid;
+DROP INDEX IF EXISTS collapsed_gene_tree_clades_cc;
+DROP INDEX IF EXISTS collapsed_gene_tree_clades_cdscode;
+DROP INDEX IF EXISTS collapsed_gene_tree_clades_cdscode_colcritid;
 
-DROP INDEX replaced_gene_tree_clades_replcritid;
-DROP INDEX replaced_gene_tree_clades_genefamid_ccocds;
-DROP INDEX replaced_gene_tree_clades_replab;
-DROP INDEX replaced_gene_tree_clades_replab_replcritid;
+DROP INDEX IF EXISTS replaced_gene_tree_clades_replcritid;
+DROP INDEX IF EXISTS replaced_gene_tree_clades_genefamid_ccocds;
+DROP INDEX IF EXISTS replaced_gene_tree_clades_replab;
+DROP INDEX IF EXISTS replaced_gene_tree_clades_replab_replcritid;
 
 DELETE FROM replacement_label_or_cds_code2gene_families ;
 
 DROP UNIQUE INDEX rlocds2genefam_rlocds;
-DROP INDEX rlocds2genefam_genefam;
+DROP INDEX IF EXISTS rlocds2genefam_genefam;
 
 DELETE FROM gene_tree_label2cds_code;
 
-DROP INDEX gtlab2cds_rlocds;
+DROP INDEX IF EXISTS gtlab2cds_rlocds;
 DROP UNIQUE INDEX gtlab2cds_cdscode;
 
 COMMIT;
