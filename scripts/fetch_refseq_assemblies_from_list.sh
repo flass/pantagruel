@@ -8,7 +8,7 @@ if [ -z ${2} ] ; then
   echo "    - specifying the suffix '_genomic.fna.gz' will fetch only the file 'GCA_000006745.1_ASM674v1_genomic.fna.gz'."
   echo "    - specifying the suffix '*_genomic.fna.gz' will fetch several files: 'GCA_000006745.1_ASM674v1_genomic.fna.gz',"
   echo "      but also 'GCA_000006745.1_ASM674v1_cds_from_genomic.fna.gz' and 'GCA_000006745.1_ASM674v1_rna_from_genomic.fna.gz'."
-  echo "   'force' as trailing argument will make the script not to quit if it fais to find the reqested assembly;"
+  echo "   'force' as trailing argument will make the script not to quit if it fails to find the reqested assembly;"
   echo "     default behaviour in this event is to exit with status 1."
   exit 1
 fi
@@ -65,7 +65,7 @@ fetchass (){
   md5sum -c md5checksums${suftxt}.txt
   if [ $? -gt 0 ] ; then
     if [ ! -z "$(md5sum --quiet -c md5checksums${suftxt}.txt 2> /dev/null | grep -v 'assembly_structure')" ] ; then
-      echo "Error: files in ${ncbiass}/${fullass}/ seem corrupted (not only about missing *assembly_structure/ files) ; exit now"
+      echo "Error: files in ${ncbiass}/${fullass}/ seem corrupted (not only about missing *assembly_structure/ files) ; exit now" >&2
       if [ -z ${forcemode} ] ; then exit 1 ; fi
     else
       echo "Warning: some files are corrupted or missing in the *assembly_structure/ ; this is not important for Pantagruel though."
@@ -81,7 +81,7 @@ for ass in $(cat ${asslist}) ; do
   # first fetch the complete name of target assembly folder
   assdir=$(lftp $openparam -e "ls ${assloc}/${ass}* ; quit" | awk '{print $NF}')
   if [ -z ${assdir} ] ; then
-    echo "could not find folder of accession '${ass}' on NCBI FTP when looking for folder matching '${assloc}/${ass}*' ; exit now"
+    echo "could not find folder of accession '${ass}' on NCBI FTP when looking for folder matching '${assloc}/${ass}*' ; exit now" >&2
     if [ -z ${forcemode} ] ; then exit 1 ; fi
   fi
   fullass=$(basename ${assdir})
