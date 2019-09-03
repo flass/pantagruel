@@ -1,13 +1,15 @@
 #! /bin/bash
 
 if [ -z ${2} ] ; then
-  echo "Usage: ${0} assembly_list ouput_dir [nb_threads, default=min(\`nproc\`,4)] [specific_assembly_file_suffix]"
+  echo "Usage: ${0} assembly_list ouput_dir [nb_threads, default=min(\`nproc\`,4)] [specific_assembly_file_suffix] [force]"
   echo "   'specific_assembly_file_suffix' will be appended to the expected assembly file prefix, i.e. ASSEMBACESSION_ASSEMBNAME."
-  echo "   The suffix can be a globable pattern."
-  echo "   For instance, for the assembly with prefix 'GCA_000006745.1_ASM674v1':"
+  echo "    The suffix can be a globable pattern."
+  echo "    For instance, for the assembly with prefix 'GCA_000006745.1_ASM674v1':"
   echo "    - specifying the suffix '_genomic.fna.gz' will fetch only the file 'GCA_000006745.1_ASM674v1_genomic.fna.gz'."
   echo "    - specifying the suffix '*_genomic.fna.gz' will fetch several files: 'GCA_000006745.1_ASM674v1_genomic.fna.gz',"
   echo "      but also 'GCA_000006745.1_ASM674v1_cds_from_genomic.fna.gz' and 'GCA_000006745.1_ASM674v1_rna_from_genomic.fna.gz'."
+  echo "   'force' as trailing argument will make the script not to quit if it fais to find the reqested assembly;"
+  echo "     default behaviour in this event is to exit with status 1."
   exit 1
 fi
 
@@ -35,6 +37,10 @@ else
   sufpat=""
 fi
 
+if [ ${!#} == 'force' ] ; then
+  forcemode='true'
+fi
+
 ### fetch genome assembly data from the NCBI Assembly database
 user='anonymous'
 pswd=${myemail}
@@ -60,7 +66,7 @@ fetchass (){
   if [ $? -gt 0 ] ; then
     if [ ! -z "$(md5sum --quiet -c md5checksums${suftxt}.txt 2> /dev/null | grep -v 'assembly_structure')" ] ; then
       echo "Error: files in ${ncbiass}/${fullass}/ seem corrupted (not only about missing *assembly_structure/ files) ; exit now"
-      exit 1
+      if [ -z ${forcemode} ] ; then exit 1 ; fi
     else
       echo "Warning: some files are corrupted or missing in the *assembly_structure/ ; this is not important for Pantagruel though."
     fi
@@ -76,7 +82,7 @@ for ass in $(cat ${asslist}) ; do
   assdir=$(lftp $openparam -e "ls ${assloc}/${ass}* ; quit" | awk '{print $NF}')
   if [ -z ${assdir} ] ; then
     echo "could not find folder of accession '${ass}' on NCBI FTP when looking for folder matching '${assloc}/${ass}*' ; exit now"
-    exit 1
+    if [ -z ${forcemode} ] ; then exit 1 ; fi
   fi
   fullass=$(basename ${assdir})
   if [ -e ${outdir}/${fullass}/md5checksums${suftxt}.txt ] ; then
