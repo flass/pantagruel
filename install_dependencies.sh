@@ -124,7 +124,8 @@ if [ "$installdebian" == 'true' ] ; then
   mpi-default-bin mpi-default-dev mrbayes-mpi python-pip openjdk-8-jdk openjdk-8-jre cd-hit \
   libdw1 libdw-dev"
   if [ "$installbrew" == 'true' ] ; then deppackages="$deppackages linuxbrew-wrapper" ; fi
-  if [ "$installdocker" == 'true' ] ; then deppackages="$deppackages docker.io" ; fi
+  if [ "$installdocker" == 'true' ] ; then deppackages="$deppackages docker\.io" ; fi
+  sudo apt update
   sudo apt install $deppackages
   if [ $? != 0 ] ; then
     echo "ERROR: could not install all required Debian packages:"
@@ -170,11 +171,13 @@ fi
 echo ""
 
 if [ "$installbrew" == 'true' ] ; then
+  # first try running brew - if never used before, this will lead to INTERACTIVE setup
+  brew
   brewdir='/home/linuxbrew/.linuxbrew'
   if [ -d ${brewdir} ] ; then
     echo "Found that Homebrew recipes are installed at: ${brewdir}"
   else
-    brewdir='${HOME}/.linuxbrew'
+    brewdir="${HOME}/.linuxbrew"
     if [ -d ${brewdir} ] ; then
       echo "Found that Homebrew recipes are installed at: ${brewdir}"
     else
