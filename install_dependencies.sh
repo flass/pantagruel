@@ -190,19 +190,19 @@ if [ "$installbrew" == 'true' ] ; then
     # Configure Linuxbrew
     if [ ! -e ${HOME}/.bash_profile ] ; then
       # because when .bash_profile exists, it superseeds .profile, which won't be loaded automatically
-      # thus if creating .bash_profile, restaure the loading of .profile
-      echo '. "$HOME/.profile"' > ${HOME}/.bash_profile
+      # thus if creating .bash_profile, restore the loading of .profile
+      echo ". \"\$HOME/.profile\"" > ${HOME}/.bash_profile
     fi
     if [[ -z "$(grep PATH ${HOME}/.bash_profile | grep '\.linuxbrew')" ]] ; then
-      echo 'export PATH="{brewdir}/bin:$PATH"' >> ${HOME}/.bash_profile
+      echo "export PATH=\"${brewdir}/bin:\$PATH\"" >> ${HOME}/.bash_profile
       editedprofile=true
     fi
     if [[ -z "$(grep MANPATH ${HOME}/.bash_profile | grep '\.linuxbrew')" ]] ; then
-      echo 'export MANPATH="{brewdir}/share/man:$MANPATH"' >> ${HOME}/.bash_profile
+      echo "export MANPATH=\"${brewdir}/share/man:\$MANPATH\"" >> ${HOME}/.bash_profile
       editedprofile=true
     fi
     if [[ -z "$(grep INFOPATH ${HOME}/.bash_profile | grep '\.linuxbrew')" ]] ; then
-      echo 'export INFOPATH="{brewdir}/share/info:$INFOPATH"' >> ${HOME}/.bash_profile
+      echo "export INFOPATH=\"${brewdir}/share/info:\$INFOPATH\"" >> ${HOME}/.bash_profile
       editedprofile=true
     fi
     source ${HOME}/.bash_profile
