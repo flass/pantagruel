@@ -54,3 +54,5 @@ checkexec (){
   fi
 }
 export -f checkexec
+
+alias panup="cd ${ptgrepo} && git pull && git submodule update && cd -"

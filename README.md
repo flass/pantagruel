@@ -140,7 +140,8 @@ pantagruel -i /root/folder/for/database/databasename/environ_pantagruel_database
 Note that this config file can be edited in-between tasks, for instance to change the location of key input files that you moved, or to tweak paramters - however this may cause issues in task dependencies (see above).
 
 Please note that Pantagruel is still under active development and may evolve rapidly to fix bugs and solve issues. 
-It is thus strongly recomended to update this software regularly using `git pull` in the `pantagruel/` git repository folder.
+It is thus strongly recomended to update this software regularly using `git pull && git submodule update` in the `pantagruel/` git repository folder.
+- TIP!!: once the database environment is loaded (by doing `source environ_pantagruel_databasename.sh`), you can use the alias `panup` for easy software updates.
      
 **If Pantagruel is updated** in-between the running of tasks of a database project, 
 it is higly recommended to **run the `init` task again (with the same options)** before proceeding to the next steps, 
