@@ -65,8 +65,8 @@ fetchass (){
   md5sum -c md5checksums${suftxt}.txt
   if [ $? -gt 0 ] ; then
     if [ ! -z "$(md5sum --quiet -c md5checksums${suftxt}.txt 2> /dev/null | grep -v 'assembly_structure')" ] ; then
-      echo "Error: files in ${ncbiass}/${fullass}/ seem corrupted (not only about missing *assembly_structure/ files) ; exit now" >&2
-      if [ -z ${forcemode} ] ; then exit 1 ; fi
+      echo "Error: files in ${ncbiass}/${fullass}/ seem corrupted (not only about missing *assembly_structure/ files)" >&2
+      if [ -z ${forcemode} ] ; then echo "exit now" ; exit 1 ; fi
     else
       echo "Warning: some files are corrupted or missing in the *assembly_structure/ ; this is not important for Pantagruel though."
     fi
@@ -81,8 +81,8 @@ for ass in $(cat ${asslist}) ; do
   # first fetch the complete name of target assembly folder
   assdir=$(lftp $openparam -e "ls ${assloc}/${ass}* ; quit" | awk '{print $NF}')
   if [ -z ${assdir} ] ; then
-    echo "could not find folder of accession '${ass}' on NCBI FTP when looking for folder matching '${assloc}/${ass}*' ; exit now" >&2
-    if [ -z ${forcemode} ] ; then exit 1 ; fi
+    echo "could not find folder of accession '${ass}' on NCBI FTP when looking for folder matching '${assloc}/${ass}*'" >&2
+    if [ -z ${forcemode} ] ; then echo "exit now" ; exit 1 ; fi
   else
       fullass=$(basename ${assdir})
       if [ -e ${outdir}/${fullass}/md5checksums${suftxt}.txt ] ; then
