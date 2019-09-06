@@ -85,42 +85,6 @@ downloadass (){
   done
 }
 
-makeprokkarefgenusdb (){
-  inrefass=${1}
-  prokkabin=$(which prokka)
-  prokkadir=$(dirname $(dirname $(readlink -f $prokkabin)))
-  prokkablastdb=${prokkadir}/db/genus
-  if [ -e ${prokkablastdb}/${refgenus} ] ; then
-    datetime=$(date +%Y-%m-%d_%H-%M-%S)
-    echo "Warning: found a previous Prokka reference database for the genus '${refgenus}; save it to '${prokkablastdb}/${refgenus}.backup_${datetime}'"
-    mv -f ${prokkablastdb}/${refgenus} ${prokkablastdb}/${refgenus}.backup_${datetime}
-  fi
-  # add all the (representative) proteins in the dataset to the custom reference prot database for Prokka to search for similarities
-  ls ${inrefass}/*/*_genomic.gbff.gz > ${inrefass}_genomic_gbffgz_list
-  if [ -s ${inrefass}_genomic_gbffgz_list ] ; then
-    parallel -a ${inrefass}_genomic_gbffgz_list 'gunzip -k'
-    # extract protein sequences
-    pgb2fdb="prokka-genbank_to_fasta_db ${inrefass}/*/*_genomic.gbff 1> ${ptgtmp}/${refgenus}.faa 2> ${ptglogs}/prokka-genbank_to_fasta_db.log"
-    eval "${pgb2fdb}"
-    if [ ${?} -gt 0 ] ; then
-      # try using the native perl
-      /usr/bin/perl $prokkadir/bin/${pgb2fdb}
-    fi
-    if [ ${?} -gt 0 ] ; then
-      >&2 echo "WARNING: could not build custom genus-specific BLAST db from files ${inrefass}/*/*_genomic.gbff ; Prokka will have to use default databases."
-    else
-      # cluster similar sequences
-      cdhit -i ${ptgtmp}/${refgenus}.faa -o ${ptgtmp}/${refgenus}_representative.faa -T 0 -M 0 -G 1 -s 0.8 -c 0.9 &> ${ptglogs}/cdhit.log
-      rm -fv ${ptgtmp}/${refgenus}.faa ${ptgtmp}/${refgenus}_representative.faa.clstr
-      # replace database name for genus detection by Prokka 
-      cp -p ${ptgtmp}/${refgenus}_representative.faa ${prokkablastdb}/${refgenus}
-      cd ${prokkablastdb}/
-      makeblastdb -dbtype prot -in ${refgenus}
-      cd -
-    fi
-  fi
-}
-
 checkptgversion
 checkfoldersafe ${indata}
 
@@ -175,11 +139,11 @@ if [ ! -z "${customassemb}" ] ; then
     
     # gather representative proteins from the custom reference genome set to make a prot database for Prokka to search for similarities
     if [ ! -z "$(ls -A "${prokkaref}/" 2>/dev/null)" ] ; then
-      echo "$(promptdate) generate Prokka reference database for annotation of genomes from the genus '${refgenus}' based on assemblies found in '${prokkaref}' (specified through options --refseq_ass4annot or --refseq_list4annot)"
-      makeprokkarefgenusdb ${prokkaref}
+      echo "$(promptdate) generate Prokka reference database for annotation of genomes from the genus '${ptgscripts}/make_prokka_ref_genus_db.sh ${prokkaref} ${refgenus} ${ptgtmp} ${ptglogs}' based on assemblies found in '${prokkaref}' (specified through options --refseq_ass4annot or --refseq_list4annot)"
+      ${ptgscripts}/make_prokka_ref_genus_db.sh ${prokkaref} ${refgenus} ${ptgtmp} ${ptglogs}
     elif [ ! -z "$(ls -A "${assemblies}/" 2>/dev/null)" ] ; then
       echo "$(promptdate) generate Prokka reference database for annotation of genomes from the genus '${refgenus}' based on assemblies found in '${assemblies}' (specified through options -A or -L)"
-      makeprokkarefgenusdb ${assemblies}
+      ${ptgscripts}/make_prokka_ref_genus_db.sh ${assemblies} ${refgenus} ${ptgtmp} ${ptglogs}
     fi
   
     # run Prokka 
