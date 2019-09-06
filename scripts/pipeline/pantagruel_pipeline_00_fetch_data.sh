@@ -59,6 +59,7 @@ extractass (){
   for ass in `cat ${srcass}/genome_assemblies*_list` ; do
     ln -s ${srcass}/${ass} ${lndestass}/
   done
+  cd -
 }
 
 downloadass (){

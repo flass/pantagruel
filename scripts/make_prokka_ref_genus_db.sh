@@ -7,7 +7,8 @@ if [ -z ${3} ] ; then
   tmpdir=${3}
 else
   tmpdir=$PWD
-fiif [ -z ${4} ] ; then
+fi
+if [ -z ${4} ] ; then
   logdir=${4}
 else
   logdir=$PWD
