@@ -86,6 +86,11 @@ else
   echo "updated init file save at '${envsourcescript}'"
 fi
 
+if [[ runmode=='force' ]] ; then
+  echo "FORCE mode: pantagruel init will skip the checks on dataset integrity; the following tasks may fail if these tests are not clear."
+  exit 0
+fi
+
 ## check genome input
 for srcass in "${ncbiass}" "${refass}" ; do
 if [ ! -z "${srcass}" ] ; then
