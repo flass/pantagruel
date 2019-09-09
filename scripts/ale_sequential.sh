@@ -14,6 +14,15 @@ usage() {
 	echo "Usage: ale_sequential.sh tasklist resultdir spetree [nrecs; default=1000] [alealgo; default='ALEml_undated'] [max %mem; default=90]"
 }
 
+nbtaxafromtree () {
+python << EOF
+with open('${1}', 'r') as fchain:
+  chainone = fchain.readline()
+  print 'ntaxa:', chainone.count('(') + 2
+
+EOF
+}
+
 cd ${ptgtmp}
 
 ## verify key variable definition
@@ -122,14 +131,9 @@ echo ""
 
 
 for nfchain in $(cat $tasklist) ; do
-  echo "current task"
+  echo "current task:"
   echo $nfchain
-  python << EOF
-with open('$nfchain', 'r') as fchain:
-  chainone = fchain.readline()
-  print 'ntaxa:', chainone.count('(') + 2
-
-EOF
+  nbtaxafromtree $nfchain 
   echo ""
   echo "# # # #"
   dnchain=`dirname $nfchain`
