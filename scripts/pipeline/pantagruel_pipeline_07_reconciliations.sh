@@ -143,14 +143,14 @@ python ${ptgscripts}/parse_collapsedALE_scenarios.py --rec_sample_list ${reclist
  --dir_table_out ${parsedrecs} --evtype ${evtypeparse} --minfreq ${minevfreqparse} \
  --threads 8  &> ${ptglogs}/parse_collapsedALE_scenarios.log
 
-checkexec "Could not coplete parsing ALE scenarios" "Successfully parsed ALE scenarios"
+checkexec "Could not complete parsing ALE scenarios" "Successfully parsed ALE scenarios"
 
 export parsedreccoldate=$(date +%Y-%m-%d)
 echo -e "${parsedreccolid}\t${parsedreccoldate}" > ${genetrees}/parsedreccol
 
 if [ "${resumetask}" == 'true' ] ; then
   echo "resume mode: first clean the database from previous inserts and indexes"
-  ${ptgscripts}/pantagruel_sqlitedb_phylogeny_populate_reconciliations.sh "${database}" "${sqldb}" "${parsedreccolid}"
+  ${ptgscripts}/pantagruel_sqlitedb_phylogeny_clean_reconciliations.sh "${database}" "${sqldb}" "${parsedreccolid}"
 fi
 ## store reconciliation parameters and load parsed reconciliation data into database
 ${ptgscripts}/pantagruel_sqlitedb_phylogeny_populate_reconciliations.sh "${database}" "${sqldb}" "${parsedrecs}" "${ALEversion}" "${ALEalgo}" "${ALEsourcenote}" "${parsedreccol}" "${parsedreccolid}" "${parsedreccoldate}"
