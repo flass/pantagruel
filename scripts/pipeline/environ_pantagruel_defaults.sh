@@ -14,6 +14,7 @@ export criteriondef='bs'
 export withinfundef='median'
 # gene tree/species tree reconciliation inference parameters
 export ALEalgo='ALEml'
+export ecceTERAalgo='amalgamate'
 export recsamplesize=1000
 # gene tree/species tree reconciliation parsing parameters for co-evolution analysis
 export evtypeparse='ODTSL'
