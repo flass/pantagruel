@@ -15,7 +15,7 @@ head -n1 $refstrains
 taxo=(`grep -P "^${gproject}\t"  ${refstrains}`)
 echo ${taxo[@]}
 genus=${taxo[1]} ; species=${taxo[2]%*.} ; strain=${taxo[3]} ; taxid=${taxo[4]} ; loctagprefix=${taxo[5]}
-if [[ -z $genus || -z $species || -z $strain || -z $taxid || -z $loctagprefix ]] ; then
+if [[ -z "${genus}" || -z "${species}" || -z "${strain}" || -z "${taxid}" || -z "${loctagprefix}" ]] ; then
   echo "missing value in genus='$genus', species='$species', strain='$strain', taxid='$taxid', loctagprefix='$loctagprefix'"
   echo "cannot run Prokka, exit now."
   exit 1
@@ -23,18 +23,23 @@ fi
 mkdir -p ${outdir}
 if [ -e ${prokkablastdb}/${refgenus} ] ; then
  usegenus="--usegenus"
- if [ -e ${prokkablastdb}/${genus} ] ; then
-   # substitute the 'Reference' files to the 'Genus' files for the time of this annotation
-   echo "temporarily move the resident genus database '${prokkablastdb}/${genus}' to '${prokkablastdb}/${genus}_bak' to substitute '${prokkablastdb}/${refgenus}' to it"
-   for gdbfile in $(ls ${prokkablastdb}/${genus} ${prokkablastdb}/${genus}.*) ; do
-     mv -f ${gdbfile} ${gdbfile/${genus}/${genus}_bak}
-     ln -s ${prokkablastdb}/$(basename ${gdbfile/${genus}/${refgenus}}) ${gdbfile}
-   done
- else
-   # substitute the 'Reference' files to the 'Genus' files for the time of this annotation
-   for refdbfile in $(ls ${prokkablastdb}/${refgenus} ${prokkablastdb}/${refgenus}.*) ; do
-     ln -s ${refdbfile} ${prokkablastdb}/$(basename ${refdbfile/${refgenus}/${genus}})
-   done
+ echo "will use ${prokkablastdb}/${refgenus} protein database for BLAST-based annotation"
+ if [[ "${refgenus}" != "${genus}" ]] ; then
+   # refgenus value is 'Reference', or different genus than that of the focal genome (hereafter 'Genus')
+   if [[ -e ${prokkablastdb}/${genus} ]] ; then
+     # substitute the 'Reference' files to the 'Genus' files for the time of this annotation
+     echo "temporarily move the resident genus database '${prokkablastdb}/${genus}' to '${prokkablastdb}/${genus}_bak' to substitute it with '${prokkablastdb}/${refgenus}'"
+     for gdbfile in $(ls ${prokkablastdb}/${genus} ${prokkablastdb}/${genus}.*) ; do
+       mv -f ${gdbfile} ${gdbfile/${genus}/${genus}_bak}
+       ln -s ${prokkablastdb}/$(basename ${gdbfile/${genus}/${refgenus}}) ${gdbfile}
+     done
+   else
+     # substitute the 'Reference' files to the 'Genus' files for the time of this annotation
+     echo "temporarily link the reference database '${prokkablastdb}/${refgenus}' to '${prokkablastdb}/${refgenus}' for detection by Prokka"
+     for refdbfile in $(ls ${prokkablastdb}/${refgenus} ${prokkablastdb}/${refgenus}.*) ; do
+       ln -s ${refdbfile} ${prokkablastdb}/$(basename ${refdbfile/${refgenus}/${genus}})
+     done
+   fi
  fi
  echo "made links:"
  ls -l ${gdbfile} ${gdbfile}.*
