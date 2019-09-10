@@ -3,12 +3,12 @@
 
 inrefass=${1}
 refgenus=${2}
-if [ -z ${3} ] ; then
+if [ ! -z ${3} ] ; then
   tmpdir=${3}
 else
   tmpdir=$PWD
 fi
-if [ -z ${4} ] ; then
+if [ ! -z ${4} ] ; then
   logdir=${4}
 else
   logdir=$PWD

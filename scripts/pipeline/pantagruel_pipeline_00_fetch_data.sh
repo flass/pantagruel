@@ -24,7 +24,7 @@ extractass (){
   echo "extract assembly data from folder '${srcass}'"
   cd ${srcass}/
   # look for assembly folders
-  ls -A ${srcass}/ | grep -v 'assemblies' > ${srcass}/genome_assemblies_list
+  ls -A ${srcass}/ | grep -v 'assemblies' | grep -v 'md5sum' > ${srcass}/genome_assemblies_list
   # look for archives containing many assembly folders (datasets downloaded from NCBI Assembly website)
   assarch=$(ls genome_assemblies*.tar 2> /dev/null)
   if [ "$assarch" ] ; then
