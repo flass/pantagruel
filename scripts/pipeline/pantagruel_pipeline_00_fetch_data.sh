@@ -139,12 +139,19 @@ if [ ! -z "${customassemb}" ] ; then
   if [[ ! -z "${contigsets}" ]] ; then
     
     # gather representative proteins from the custom reference genome set to make a prot database for Prokka to search for similarities
-    if [ ! -z "$(ls -A "${prokkaref}/" 2>/dev/null)" ] ; then
-      echo "$(promptdate) generate Prokka reference database for annotation of genomes from the genus '${ptgscripts}/make_prokka_ref_genus_db.sh ${prokkaref} ${refgenus} ${ptgtmp} ${ptglogs}' based on assemblies found in '${prokkaref}' (specified through options --refseq_ass4annot or --refseq_list4annot)"
-      ${ptgscripts}/make_prokka_ref_genus_db.sh ${prokkaref} ${refgenus} ${ptgtmp} ${ptglogs}
-    elif [ ! -z "$(ls -A "${assemblies}/" 2>/dev/null)" ] ; then
-      echo "$(promptdate) generate Prokka reference database for annotation of genomes from the genus '${refgenus}' based on assemblies found in '${assemblies}' (specified through options -A or -L)"
-      ${ptgscripts}/make_prokka_ref_genus_db.sh ${assemblies} ${refgenus} ${ptgtmp} ${ptglogs}
+    prevrefdb="$(${ptgscripts}/make_prokka_ref_genus_db.sh 'check' ${refgenus})"
+    if [[ "${resumetask}" == 'true' && ! -z "${prevrefdb}" ]] ; then
+      echo "Resume mode: the reference database for ${refgenus} already exsists:"
+      ls ${prevrefdb}
+      echo "skip the reference db building"
+    else
+      if [ ! -z "$(ls -A "${prokkaref}/" 2>/dev/null)" ] ; then
+        echo "$(promptdate) generate Prokka reference database for annotation of genomes from the genus '${ptgscripts}/make_prokka_ref_genus_db.sh ${prokkaref} ${refgenus} ${ptgtmp} ${ptglogs}' based on assemblies found in '${prokkaref}' (specified through options --refseq_ass4annot or --refseq_list4annot)"
+        ${ptgscripts}/make_prokka_ref_genus_db.sh ${prokkaref} ${refgenus} ${ptgtmp} ${ptglogs}
+      elif [ ! -z "$(ls -A "${assemblies}/" 2>/dev/null)" ] ; then
+        echo "$(promptdate) generate Prokka reference database for annotation of genomes from the genus '${refgenus}' based on assemblies found in '${assemblies}' (specified through options -A or -L)"
+        ${ptgscripts}/make_prokka_ref_genus_db.sh ${assemblies} ${refgenus} ${ptgtmp} ${ptglogs}
+      fi
     fi
   
     # run Prokka 

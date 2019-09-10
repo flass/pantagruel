@@ -19,8 +19,12 @@ prokkadir=$(dirname $(dirname $(readlink -f $prokkabin)))
 prokkablastdb=${prokkadir}/db/genus
 
 if [[ "${inrefass}" == 'check' ]] ; then
-  # just check the pre-existence of the database and exit with code 0 (db file exists with non-null size) or 1 (db file absent or empty)
-  [[ -s ${prokkablastdb}/${refgenus} ]] && exit 0 || exit 1
+  # just check the pre-existence of the database and exit with code 0
+  # print the path of the db file exists with non-null size ; nothing if the db file is absent or empty
+  if [[ -s ${prokkablastdb}/${refgenus} ]] ; then
+    echo ${prokkablastdb}/${refgenus}
+  fi
+  exit 0
 fi
 
 testpgb2fdb () {
