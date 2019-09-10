@@ -234,5 +234,4 @@ If you feel like installing the depedencies your own way without following the a
 - [(linux)brew](http://linuxbrew.sh/) (available as a Debian package *linuxbrew-wrapper*)
 - [docker](https://www.docker.com/) (available as a Debian package *docker.io*)
 - [JAVA Runtime (JDK 8.0)](https://openjdk.java.net) (available as Debian packages *openjdk-8-jdk* and *openjdk-8-jre*)
-- [CD-HIT](https://cd-hit.org) (available as a Debian package *cd-hit*)
 - [bioperl](https://bioperl.org) (available as a Debian package *bioperl*)
