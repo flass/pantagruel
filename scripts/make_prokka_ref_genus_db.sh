@@ -85,19 +85,33 @@ fi
 # add all the (representative) proteins in the dataset to the custom reference prot database for Prokka to search for similarities
 ls ${inrefass}/*/*_genomic.gbff.gz > ${inrefass}_genomic_gbffgz_list
 pgb2fdb=$(testpgb2fdb `head -n1 ${inrefass}_genomic_gbffgz_list`)
-rm -f ${tmpdir}/${refgenus}.faa.*  ${logdir}/prokka-genbank_to_fasta_db.log.*
+tmpd=${tmpdir}/mkprokkarefgendb
+mkdir -p ${tmpd}
+rm -f ${tmpd}/${refgenus}.faa.*  ${logdir}/prokka-genbank_to_fasta_db.log.*
 if [ -s ${inrefass}_genomic_gbffgz_list ] ; then
   # extract protein sequences
-  parallel --halt now,fail=1 -a ${inrefass}_genomic_gbffgz_list gzpgb2fdb "${pgb2fdb} {} ${tmpdir}/${refgenus}.faa.{%} ${logdir}/prokka-genbank_to_fasta_db.log.{%}"
+  parallel --halt now,fail=1 -a ${inrefass}_genomic_gbffgz_list gzpgb2fdb "${pgb2fdb} {} ${tmpd}/${refgenus}.faa.{%} ${logdir}/prokka-genbank_to_fasta_db.log.{%}"
   if [ ${?} -gt 0 ] ; then
     >&2 echo "WARNING: could not build custom genus-specific BLAST db from files ${inrefass}/*/*_genomic.gbff ; Prokka will have to use default databases."
   else
-    cat ${tmpdir}/${refgenus}.faa.* > ${tmpdir}/${refgenus}.faa && rm -f ${tmpdir}/${refgenus}.faa.*
-    # cluster similar sequences
-    cdhit -i ${tmpdir}/${refgenus}.faa -o ${tmpdir}/${refgenus}_representative.faa -T 0 -M 0 -G 1 -s 0.8 -c 0.9 &> ${logdir}/cdhit.log
-    rm -fv ${tmpdir}/${refgenus}.faa ${tmpdir}/${refgenus}_representative.faa.clstr
+    cat ${tmpd}/${refgenus}.faa.* > ${tmpd}/${refgenus}.faa && rm -f ${tmpd}/${refgenus}.faa.*
+    ## cluster similar sequences
+#    # use CD-HIT, 
+#    # with thresholds: 90% seq id (-c 0.9), with seq identity defined as global (-G 1)
+#	 # a mininum (unaligned!) length ratio of 80% (-s 0.8)
+#	 # uses multiple threads (-T 0 <=> `nproc` threads), unlimited memory use (-M 0)
+#    cdhit -i ${tmpd}/${refgenus}.faa -o ${tmpd}/${refgenus}_representative.faa -T 0 -M 0 -G 1 -s 0.8 -c 0.9 &> ${logdir}/make_prokka_ref_cdhit.log
+#	 ndiscarded=$(grep -c 'Discarding invalid sequence' ${logdir}/cdhit.log)
+#	 [[ ${ndiscarded} -gt 0 ]] && echo "Discarded ${ndiscarded} invalid sequence or sequence without identifier and description:" && grep -A2 'Discarding invalid sequence' | grep '>'
+#    rm -fv ${tmpd}/${refgenus}.faa ${tmpd}/${refgenus}_representative.faa.clstr
+#    cp -p ${tmpd}/${refgenus}_representative.faa ${prokkablastdb}/${refgenus}
+
+    # use MMSeqs/Linclust,
+    # with thresholds: 90% seq id (--min-seq-id 0.9), with seq identity defined over the (global) alignment length (--seq-id-mode 0)
+    # a mininum (aligned!) length ratio of 80% (-c 0.8 --cov-mode 0)
+	mmseqs easy-linclust ${tmpd}/${refgenus}.faa ${refgenus}AnnotRef ${tmpd} &> ${logdir}/make_prokka_ref_mmseqs.log
     # replace database name for genus detection by Prokka 
-    cp -p ${tmpdir}/${refgenus}_representative.faa ${prokkablastdb}/${refgenus}
+    mv -f ${tmpd}/${refgenus}AnnotRef_rep_seq.fasta ${prokkablastdb}/${refgenus} && rm -rfv ${tmpd}/
     cd ${prokkablastdb}/
     makeblastdb -dbtype prot -in ${refgenus}
     cd -
