@@ -218,7 +218,7 @@ if [ "$installbrew" == 'true' ] ; then
   fi 
   
   # install Prokka using brew
-  if [[ -z "$(brew search prokka | grep prokka)" ]] ; then
+  if [[ -z "$(brew list prokka | grep -v Error)" ]] ; then
     brew update
     brew doctor
     brew install brewsci/bio/prokka
@@ -230,7 +230,7 @@ if [ "$installbrew" == 'true' ] ; then
   echo ""
   
   # install MMSeqs using brew
-  if [[ -z "$(brew search mmseqs2 | grep mmseqs2)" ]] ; then
+  if [[ -z "$(brew list mmseqs2 | grep  -v Error)" ]] ; then
     brew doctor
     brew install mmseqs2
     checkexec "Could not install MMSeqs using Brew" "Succesfully installed MMSeqs using Brew"
