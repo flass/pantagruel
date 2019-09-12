@@ -128,7 +128,7 @@ usagelong (){
   echo ""
   echo "    -V|--env_var    (preferably double-quoted) string of the form: \"variable1=value1[,variable2=value2[,...]]'.\""
   echo "                     Will add these variables to the configuration file so they can be exported to the environment during tasks."
-  echo "                     Can be useful to define custom values of generic variables, e.g. \"refgenus=Escherichia,seqcentre='Sanger Institute'\""
+  echo "                     Can be useful to define custom values of generic variables, e.g. \"refgenus=Escherichia,seqcentre=Sanger_Institute\""
   echo ""
   echo " Output: core genome / reference phylogeny options:"
   echo ""
@@ -461,7 +461,7 @@ do
 
     -V|--env_var)
       testmandatoryarg "$1" "$2"
-      export extravars="$(echo ${2} | sed 's/ /\ /g')"
+      export extravars="${2}"
       echo "will add the following environment variable definition to the configuration file: ${extravars}"
       shift ;;
 	  

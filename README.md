@@ -354,7 +354,7 @@ Options are detailed here:
 
     -V|--env_var    quoted string of the form: 'variable1=value1[,variable2=value2[,...]]'.
                      Will add these variables to the configuration file so they can be exported to the environment during tasks.
-                     Can be useful to define custom values of generic variables, e.g. "refgenus=Escherichia,seqcentre='Sanger Institute'"
+                     Can be useful to define custom values of generic variables, e.g. "refgenus=Escherichia,seqcentre=Sanger_Institute"
 
  Output: core genome / reference phylogeny options:
   
