@@ -75,7 +75,7 @@ echo -n " | sed -e \"s#REPLACE${var}#\${${var}}#\"" >> ${ptgtmp}/sedenvvar.sh
 done
 echo -n " >> ${envsourcescript}" >> ${ptgtmp}/sedenvvar.sh
 bash < ${ptgtmp}/sedenvvar.sh
-
+echo 'here'
 if [ ! -z ${extravars} ] ; then
   # add custom env variables
   echo "${extravars}" | tr ',' '\n' | while read exp ; do
