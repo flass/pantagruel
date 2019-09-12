@@ -268,6 +268,8 @@ Options are detailed here:
     -R|--resume        (no value) try and resume the task from previous run that was interupted
                          (for the moment only available for tasks 04-07, i.e. 'functional', 'core', 'genetrees' and 'reconciliations')
 
+    -N|--threads      set the number of threads to use for (some) parrallelizable tasks (defaults to the maximum available)
+
 # for Pantagruel task init:
 
   _mandatory options_
@@ -349,6 +351,10 @@ Options are detailed here:
                          in a separate folder, which name must match a contig file (e.g. 'seqProjID/' for 'seqProjID.fasta').
                       NOTE: to ensure proper parsing, it is strongly advised that any provided annotation was generated with Prokka
                       NOTE: to ensure uniform annotation of the dataset, it is advised to let Pantagruel annotate the contigs (calling Prokka)
+
+    -V|--env_var    quoted string of the form: 'variable1=value1[,variable2=value2[,...]]'.
+                     Will add these variables to the configuration file so they can be exported to the environment during tasks.
+                     Can be useful to define custom values of generic variables, e.g. "refgenus=Escherichia,seqcentre='Sanger Institute'"
 
  Output: core genome / reference phylogeny options:
   

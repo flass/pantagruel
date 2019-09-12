@@ -38,6 +38,9 @@ usagelong (){
   echo "    -R|--resume       try and resume the task from previous run that was interupted"
   echo "                        (for the moment only available for tasks 04-07, i.e. 'functional', 'core', 'genetrees' and 'reconciliations')"
   echo ""
+  echo "    -N|--threads      set the number of threads to use for (some) parrallelizable tasks (defaults to the maximum available: $(nproc))"
+  echo "                        (for the moment only available for tasks ...)"
+  echo ""
   echo "# for Pantagruel task init:"
   echo ""
   echo "  _mandatory options_"
@@ -122,6 +125,10 @@ usagelong (){
   echo "                          in a separate folder, which name must match a contig file (e.g. 'seqProjID/' for 'seqProjID.fasta')."
   echo "                       NOTE: to ensure proper parsing, it is strongly advised that any provided annotation was generated with Prokka"
   echo "                       NOTE: to ensure uniform annotation of the dataset, it is advised to let Pantagruel annotate the contigs (calling Prokka)"
+  echo ""
+  echo "    -V|--env_var    (preferably double-quoted) string of the form: \"variable1=value1[,variable2=value2[,...]]'.\""
+  echo "                     Will add these variables to the configuration file so they can be exported to the environment during tasks."
+  echo "                     Can be useful to define custom values of generic variables, e.g. \"refgenus=Escherichia,seqcentre='Sanger Institute'\""
   echo ""
   echo " Output: core genome / reference phylogeny options:"
   echo ""
@@ -321,7 +328,7 @@ promptdate () {
   echo $(date +'[%Y-%m-%d %H:%M:%S]') $1
 }
 
-ARGS=`getopt --options "d:r:i:I:f:a:T:A:L:s:t:RH:cg:hF" --longoptions "dbname:,rootdir:,initfile:,refresh,iam:,famprefix:,refseq_ass:,refseq_list:,refseq_ass4annot:,refseq_list4annot:,custom_ass:,taxonomy:,pseudocore:,core_seqtype:,pop_lg_thresh:,pop_bs_thresh:,rooting:,reftree:,resume,submit_hpc:,collapse,collapse_param:,genefam_list:,help,FORCE" --name "pantagruel" -- "$@"`
+ARGS=`getopt --options "d:r:i:I:f:a:T:A:L:s:t:RV:N:H:cg:hF" --longoptions "dbname:,rootdir:,initfile:,refresh,iam:,famprefix:,refseq_ass:,refseq_list:,refseq_ass4annot:,refseq_list4annot:,custom_ass:,taxonomy:,pseudocore:,core_seqtype:,pop_lg_thresh:,pop_bs_thresh:,rooting:,reftree:,resume,env_var:,threads:,submit_hpc:,collapse,collapse_param:,genefam_list:,help,FORCE" --name "pantagruel" -- "$@"`
 
 #Bad arguments
 if [ $? -ne 0 ];
@@ -452,6 +459,17 @@ do
       echo "will try and resume computation of task where it was last stopped"
       shift ;;
 
+    -V|--env_var)
+      testmandatoryarg "$1" "$2"
+      export extravars="${2}"
+      echo "will add the following environment variable definition to the configuration file: ${extravars}"
+      shift ;;
+	  
+	-N|--threads)
+      testmandatoryarg "$1" "$2"
+	  export ptgthreads=${2}
+      echo "will try and execute processes in parallel with the following number of threads: ${ptgthreads}"
+	  
     -T|--taxonomy)
       testmandatoryarg "$1" "$2"
       export ncbitax=$(readlink -f $2)

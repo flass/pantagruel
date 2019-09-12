@@ -75,6 +75,18 @@ echo -n " | sed -e \"s#REPLACE${var}#\${${var}}#\"" >> ${ptgtmp}/sedenvvar.sh
 done
 echo -n " >> ${envsourcescript}" >> ${ptgtmp}/sedenvvar.sh
 bash < ${ptgtmp}/sedenvvar.sh
+
+if [ ! -z ${extravars} ] ; then
+  # add custom env variables
+  echo "${extravars}" | tr ',' '\n' | while read exp ; do
+    if [[ -z "$(grep '=' ${exp})" || ! -z "$(grep '^export ' ${exp})" ]] ; then 
+	  echo "Error: '${exp}' is not a properly formatted variable assignment expression; also please discard any 'export' statement at the begining. Exit now."
+	  exit 1
+	fi
+    echo "export ${exp}" >> ${envsourcescript}
+  done
+fi
+
 ## load generic environment variables derived from the above
 source ${envsourcescript}
 if [ "$runmode" == 'wasrefresh' ] ; then
