@@ -47,11 +47,14 @@ elif [ -e ${prokkablastdb}/${genus} ] ; then
  usegenus="--usegenus"
 fi
 
+if [ ! -z "${ptgthreads}" ] ; then
+  paraopt="--cpus ${ptgthreads}"
+fi
 prokkaopts="
 --outdir $outdir --prefix ${genus}_${species}_${strain} --force 
 --addgenes --locustag ${loctagprefix} --compliant --centre ${seqcentre} ${usegenus}
 --genus ${genus} --species ${species} --strain '${strain}'
- --kingdom Bacteria --gcode 11"
+ --kingdom Bacteria --gcode 11 ${paraopt}"
 echo "#call: prokka $prokkaopts ${allcontigs}"
 prokka $prokkaopts ${allcontigs}
 date
