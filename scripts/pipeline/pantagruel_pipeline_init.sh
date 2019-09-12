@@ -83,7 +83,7 @@ if [ ! -z ${extravars} ] ; then
   # add custom env variables
   echo "custom environment variables:"
   echo "${extravars}" | tr ',' '\n' | while read exp ; do
-    if [[ -z "$(grep '=' ${exp})" || ! -z "$(grep '^export ' ${exp})" ]] ; then 
+    if [[ -z "$(echo ${exp} | grep '=')" || ! -z "$(echo ${exp} | grep '^export ')" ]] ; then 
 	  echo "Error: '${exp}' is not a properly formatted variable assignment expression; also please discard any 'export' statement at the begining. Exit now."
 	  exit 1
 	fi
