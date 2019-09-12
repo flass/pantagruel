@@ -461,7 +461,7 @@ do
 
     -V|--env_var)
       testmandatoryarg "$1" "$2"
-      export extravars="${2}"
+      export extravars="echo ${2} | sed 's/ /\ /g'"
       echo "will add the following environment variable definition to the configuration file: ${extravars}"
       shift ;;
 	  
