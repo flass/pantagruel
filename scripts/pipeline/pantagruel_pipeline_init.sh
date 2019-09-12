@@ -83,6 +83,7 @@ if [ ! -z ${extravars} ] ; then
 	  echo "Error: '${exp}' is not a properly formatted variable assignment expression; also please discard any 'export' statement at the begining. Exit now."
 	  exit 1
 	fi
+    echo "export ${exp}" >&2
     echo "export ${exp}" >> ${envsourcescript}
   done
 fi
