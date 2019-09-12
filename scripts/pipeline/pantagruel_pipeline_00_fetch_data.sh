@@ -122,7 +122,7 @@ if [ ! -z "${listncbiass}" ] ; then
 fi
 
 if [ ! -z "${refass}" ] ; then
-  downloadass ${refass} ${prokkaref}
+  extractass ${refass} ${prokkaref}
 fi
 
 if [ ! -z "${listrefass}" ] ; then
