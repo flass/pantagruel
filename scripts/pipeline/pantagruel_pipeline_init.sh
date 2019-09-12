@@ -21,6 +21,7 @@ else
   templateenv=${initfile}
 fi
 
+checkfoldersafe ${ptgdb}
 
 #~ export PYTHONPATH=$PYTHONPATH:"${ptgrepo}/python_libs"
 #~ cd ${ptgrepo} ; export ptgversion=$(git log | grep commit) ; cd - > /dev/null # ptgversion variable should be inherited from master script
