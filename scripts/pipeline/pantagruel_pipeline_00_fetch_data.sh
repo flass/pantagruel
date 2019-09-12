@@ -164,28 +164,33 @@ if [ ! -z "${customassemb}" ] ; then
         # better preserve actual path as input data are external to the Pantagruel database 
         ln -s ${cust2annot}/${ass} ${annot}/
       else
-        echo "will annotate contigs in '${contigs}/${allcontigs}'"
-        promptdate
-        echo "### assembly: $gproject; contig files from: ${contigs}/${allcontigs}"
-        echo "running Prokka..."
-        ${ptgscripts}/run_prokka.sh ${gproject} ${contigs}/${allcontigs} ${straininfo} ${annot}/${gproject} ${seqcentre} &> ${ptglogs}/${ptgdbname}_customassembly_annot_prokka.${gproject}.log
-        checkexec "something went wrong when annotating genome ${gproject}; check log at '${ptglogs}/${ptgdbname}_customassembly_annot_prokka.${gproject}.log'"
-        echo "done."
-        promptdate
-      fi
-      if [[ $(grep ${gproject} ${straininfo} | cut -f2- | grep -P '[^\t]' | wc -l) -gt 0 ]] ; then
-        echo "fix annotation to integrate region information into GFF files"
-        annotgff=($(ls ${annot}/${gproject}/*.gff))
-        if [ -z ${annotgff[0]} ] ; then
-          echo "Error: missing mandatory GFF file in ${annot}/${gproject}/ folder"
-          exit 1
+	    if [[ "${resumetask}" == 'true' && -d ${annot}/${gproject} && ! -z $(ls ${annot}/${gproject}/*.ptg.gff) && ! -z $(ls ${annot}/${gproject}/*.ptg.gbk) ]] ; then
+		  echo "found already computed annotation in ${annot}/${gproject}/:"
+		  ls -ltr ${annot}/${gproject}/
+		  echo "skip running Prokka"
+		else  
+          echo "will annotate contigs in '${contigs}/${allcontigs}'"
+          promptdate
+          echo "### assembly: $gproject; contig files from: ${contigs}/${allcontigs}"
+          echo "running Prokka..."
+          ${ptgscripts}/run_prokka.sh ${gproject} ${contigs}/${allcontigs} ${straininfo} ${annot}/${gproject} ${seqcentre} &> ${ptglogs}/${ptgdbname}_customassembly_annot_prokka.${gproject}.log
+          checkexec "something went wrong when annotating genome ${gproject}; check log at '${ptglogs}/${ptgdbname}_customassembly_annot_prokka.${gproject}.log'"
+          echo "done."
+          promptdate
         fi
-        if [ -z "$(grep '##sequence-region' ${annotgff[0]})" ] ; then
-        mv -f ${annotgff[0]} ${annotgff[0]}.original
-          # make GFF source file look more like the output of Prokka
-          head -n1 ${annotgff[0]}.original > ${annotgff[0]}
-          # add region annotation features
-        python << EOF
+        if [[ $(grep ${gproject} ${straininfo} | cut -f2- | grep -P '[^\t]' | wc -l) -gt 0 ]] ; then
+          echo "fix annotation to integrate region information into GFF files"
+          annotgff=($(ls ${annot}/${gproject}/*.gff))
+          if [ -z ${annotgff[0]} ] ; then
+            echo "Error: missing mandatory GFF file in ${annot}/${gproject}/ folder"
+            exit 1
+          fi
+          if [ -z "$(grep '##sequence-region' ${annotgff[0]})" ] ; then
+          mv -f ${annotgff[0]} ${annotgff[0]}.original
+            # make GFF source file look more like the output of Prokka
+            head -n1 ${annotgff[0]}.original > ${annotgff[0]}
+            # add region annotation features
+          python << EOF
 fcontig = open('${contigs}/${allcontigs}', 'r')
 outgff = open('${annotgff[0]}', 'a')
 inseq = False
@@ -206,44 +211,45 @@ outgff.write("##sequence-region %s 1 %d\n"%(seqid, seqlen))
 fcontig.close()
 outgff.close()
 EOF
-          # add the rest of the file, in order of contig names!
-          tail -n +2 ${annotgff[0]}.original | sort >> ${annotgff[0]}
+            # add the rest of the file, in order of contig names!
+            tail -n +2 ${annotgff[0]}.original | sort >> ${annotgff[0]}
+          fi
+          python ${ptgscripts}/add_region_feature2prokkaGFF.py ${annotgff[0]} ${annotgff[0]/.gff/.ptg.gff} ${straininfo} ${contigs}/${allcontigs} ${assembler}
+          echo "fix annotation to integrate taxid information into GBK files"
+          annotfna=($(ls ${annot}/${gproject}/*.fna))
+          annotgbk=($(ls ${annot}/${gproject}/*.gbf 2> /dev/null || ls ${annot}/${gproject}/*.gbk))
+          annotfaa=($(ls ${annot}/${gproject}/*.faa))
+          annotffn=($(ls ${annot}/${gproject}/*.ffn))
+          if [[ -z "${annotfna[0]}" || -z "${annotgbk[0]}" || -z "${annotffn[0]}" || -z "${annotfaa[0]}" ]] ; then
+            echo "At least one of these files is missing in ${annot}/${gproject}/ folder: contig fasta file (.fna), GenBank flat file (gbk/gbf), CDS Fasta (ffn) or protein Fasta (faa)."
+            echo "Will (re)generate them from the GFF anotation and genomic Fasta sequence; files already present are kept with an added prefix '.original'"
+            for annotf in ${annotfna[@]} ${annotgbk[@]} ${annotffn[@]} ${annotfaa[@]}; do
+                if [[ ! -z "${annotf}" ]] ; then
+                  mv ${annotf} ${annotf}.original
+                fi
+            done
+            cp ${contigs}/${allcontigs} ${annotgff[0]/gff/fna}
+            python ${ptgscripts}/GFFGenomeFasta2GenBankCDSProtFasta.py ${annotgff[0]/.gff/.ptg.gff} ${annotgff[0]/gff/fna}
+          checkexec "something went wrong when generating the GenBank flat file from GFF file ${annotgff[0]/.gff/.ptg.gff}"
+          fi
+          annotfna=($(ls ${annot}/${gproject}/*.fna))
+          annotgbk=($(ls ${annot}/${gproject}/*.gbk))
+          annotrad=${annotgbk[0]%*.gbk}
+          if [ -z "${annotgbk[0]}" ] ; then
+            annotgbk=($(ls ${annot}/${gproject}/*.gbf))
+            annotrad=${annotgbk[0]%*.gbf}
+          fi
+          annotfaa=($(ls ${annot}/${gproject}/*.faa))
+          annotffn=($(ls ${annot}/${gproject}/*.ffn))
+          python ${ptgscripts}/add_taxid_feature2prokkaGBK.py ${annotgbk[0]} ${annotrad}.ptg.gbk ${straininfo}
+          checkexec "something went wrong when modifying the GenBank flat file ${annotgbk[0]}"
+          echo "done."
+        else
+          echo "Error: missing mandatory information about custom genomes"
+          echo "Please fill information in '${straininfo}' file before running this step again."
+          exit 1
         fi
-        python ${ptgscripts}/add_region_feature2prokkaGFF.py ${annotgff[0]} ${annotgff[0]/.gff/.ptg.gff} ${straininfo} ${contigs}/${allcontigs} ${assembler}
-        echo "fix annotation to integrate taxid information into GBK files"
-        annotfna=($(ls ${annot}/${gproject}/*.fna))
-        annotgbk=($(ls ${annot}/${gproject}/*.gbf 2> /dev/null || ls ${annot}/${gproject}/*.gbk))
-        annotfaa=($(ls ${annot}/${gproject}/*.faa))
-        annotffn=($(ls ${annot}/${gproject}/*.ffn))
-        if [[ -z "${annotfna[0]}" || -z "${annotgbk[0]}" || -z "${annotffn[0]}" || -z "${annotfaa[0]}" ]] ; then
-          echo "At least one of these files is missing in ${annot}/${gproject}/ folder: contig fasta file (.fna), GenBank flat file (gbk/gbf), CDS Fasta (ffn) or protein Fasta (faa)."
-          echo "Will (re)generate them from the GFF anotation and genomic Fasta sequence; files already present are kept with an added prefix '.original'"
-          for annotf in ${annotfna[@]} ${annotgbk[@]} ${annotffn[@]} ${annotfaa[@]}; do
-            if [[ ! -z "${annotf}" ]] ; then
-              mv ${annotf} ${annotf}.original
-            fi
-          done
-          cp ${contigs}/${allcontigs} ${annotgff[0]/gff/fna}
-          python ${ptgscripts}/GFFGenomeFasta2GenBankCDSProtFasta.py ${annotgff[0]/.gff/.ptg.gff} ${annotgff[0]/gff/fna}
-        checkexec "something went wrong when generating the GenBank flat file from GFF file ${annotgff[0]/.gff/.ptg.gff}"
-        fi
-        annotfna=($(ls ${annot}/${gproject}/*.fna))
-        annotgbk=($(ls ${annot}/${gproject}/*.gbk))
-        annotrad=${annotgbk[0]%*.gbk}
-        if [ -z "${annotgbk[0]}" ] ; then
-          annotgbk=($(ls ${annot}/${gproject}/*.gbf))
-          annotrad=${annotgbk[0]%*.gbf}
-        fi
-        annotfaa=($(ls ${annot}/${gproject}/*.faa))
-        annotffn=($(ls ${annot}/${gproject}/*.ffn))
-        python ${ptgscripts}/add_taxid_feature2prokkaGBK.py ${annotgbk[0]} ${annotrad}.ptg.gbk ${straininfo}
-        checkexec "something went wrong when modifying the GenBank flat file ${annotgbk[0]}"
-        echo "done."
-      else
-        echo "Error: missing mandatory information about custom genomes"
-        echo "Please fill information in '${straininfo}' file before running this step again."
-        exit 1
-      fi
+	  fi
     done
   
     # create assembly directory and link/create relevant files
