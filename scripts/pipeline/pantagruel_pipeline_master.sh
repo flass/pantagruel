@@ -463,7 +463,7 @@ do
       testmandatoryarg "$1" "$2"
       export extravars="${2}"
       echo "will add the following environment variable definition to the configuration file: ${extravars}"
-      shift ;;
+      shift 2;;
 	  
 	-N|--threads)
       testmandatoryarg "$1" "$2"

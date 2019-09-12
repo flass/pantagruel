@@ -21,6 +21,9 @@ else
   templateenv=${initfile}
 fi
 
+if [ "${runmode}" == 'wasrefresh' ] ; then
+  export resumetask=true
+fi
 checkfoldersafe ${ptgdb}
 
 #~ export PYTHONPATH=$PYTHONPATH:"${ptgrepo}/python_libs"
@@ -75,15 +78,16 @@ echo -n " | sed -e \"s#REPLACE${var}#\${${var}}#\"" >> ${ptgtmp}/sedenvvar.sh
 done
 echo -n " >> ${envsourcescript}" >> ${ptgtmp}/sedenvvar.sh
 bash < ${ptgtmp}/sedenvvar.sh
-echo 'here'
+
 if [ ! -z ${extravars} ] ; then
   # add custom env variables
+  echo "custom environment variables:"
   echo "${extravars}" | tr ',' '\n' | while read exp ; do
     if [[ -z "$(grep '=' ${exp})" || ! -z "$(grep '^export ' ${exp})" ]] ; then 
 	  echo "Error: '${exp}' is not a properly formatted variable assignment expression; also please discard any 'export' statement at the begining. Exit now."
 	  exit 1
 	fi
-    echo "export ${exp}" >&2
+    echo "export ${exp}"
     echo "export ${exp}" >> ${envsourcescript}
   done
 fi
