@@ -469,7 +469,7 @@ do
       testmandatoryarg "$1" "$2"
 	  export ptgthreads=${2}
       echo "will try and execute processes in parallel with the following number of threads: ${ptgthreads}"
-      shift ;;
+      shift 2;;
 	  
     -T|--taxonomy)
       testmandatoryarg "$1" "$2"
