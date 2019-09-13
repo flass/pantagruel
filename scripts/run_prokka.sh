@@ -12,7 +12,7 @@ prokkablastdb=$(dirname $(dirname $(readlink -f `which prokka` | awk '{ print $N
 
 echo "### assembly: $gproject; contig files from: ${allcontigs}/"
 head -n1 $refstrains
-taxo=($(grep -P "^${gproject}\t" ${refstrains} | sed -e 's/@#=/ /g')) # escapes the whitespaces
+taxo=($(grep -P "^${gproject}\t" ${refstrains} | sed -e 's/ /@#=/g')) # escapes the whitespaces
 # restores the whitespaces
 genus="$(echo ${taxo[1]} | sed -e 's/@#=/ /g')"
 species="$(echo ${taxo[2]%*.} | sed -e 's/@#=/ /g')"
