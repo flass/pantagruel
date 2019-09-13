@@ -12,9 +12,15 @@ prokkablastdb=$(dirname $(dirname $(readlink -f `which prokka` | awk '{ print $N
 
 echo "### assembly: $gproject; contig files from: ${allcontigs}/"
 head -n1 $refstrains
-taxo=(`grep -P "^${gproject}\t"  ${refstrains}`)
-echo ${taxo[@]}
-genus=${taxo[1]} ; species=${taxo[2]%*.} ; strain=${taxo[3]} ; taxid=${taxo[4]} ; loctagprefix=${taxo[5]}
+taxo=($(grep -P "^${gproject}\t" ${refstrains} |  |  sed -e 's/@#=/ /g)) # escapes the whitespaces
+# restores the whitespaces
+genus="$(echo ${taxo[1]} | sed -e 's/@#=/ /g)"
+species="$(echo ${taxo[2]%*.} | sed -e 's/@#=/ /g)"
+strain="$(echo ${taxo[3]} | sed -e 's/@#=/ /g)"
+taxid="$(echo ${taxo[4]} | sed -e 's/@#=/ /g)"
+loctagprefix="$(echo ${taxo[5]} | sed -e 's/@#=/ /g)"
+echo "'${genus}' '${species}' '${strain}' '${taxid}' '${loctagprefix}'"
+
 if [[ -z "${genus}" || -z "${species}" || -z "${strain}" || -z "${taxid}" || -z "${loctagprefix}" ]] ; then
   echo "missing value in genus='$genus', species='$species', strain='$strain', taxid='$taxid', loctagprefix='$loctagprefix'"
   echo "cannot run Prokka, exit now."
@@ -52,8 +58,8 @@ if [ ! -z "${ptgthreads}" ] ; then
 fi
 prokkaopts="
 --outdir $outdir --prefix ${genus}_${species}_${strain} --force 
---addgenes --locustag ${loctagprefix} --compliant --centre ${seqcentre} ${usegenus}
---genus ${genus} --species ${species} --strain '${strain}'
+--addgenes --locustag '${loctagprefix}' --compliant --centre '${seqcentre}' ${usegenus}
+--genus '${genus}' --species '${species}' --strain '${strain}'
  --kingdom Bacteria --gcode 11 ${paraopt}"
 echo "#call: prokka $prokkaopts ${allcontigs}"
 prokka $prokkaopts ${allcontigs}
