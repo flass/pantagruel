@@ -86,6 +86,20 @@ downloadass (){
   done
 }
 
+parsefastaext (){
+python << EOF
+allcontigs = '${1}'
+for ext in ['.fa', '.fna', '.fasta', '.fsa']:
+  if allcontigs.endswith(ext):
+    print allcontigs.rsplit(ext, 1)[0]
+    break
+else:
+  print allcontigs
+
+EOF
+
+}
+
 checkptgversion
 checkfoldersafe ${indata}
 
@@ -157,7 +171,8 @@ if [ ! -z "${customassemb}" ] ; then
     # run Prokka 
     mkdir -p ${annot}
     for allcontigs in ${contigsets} ; do
-      gproject=${allcontigs%%.fa*}
+#      gproject=${allcontigs%%.fa*}
+	  gproject=$(parsefastaext ${allcontigs})
       echo "$(promptdate) ${gproject}"
       if [ -d ${custannot}/${gproject} ] ; then
         echo "found annotation folder '${custannot}/${gproject}' ; skip annotation of contigs in '${contigs}/${allcontigs}'"
