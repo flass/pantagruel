@@ -20,6 +20,7 @@ strain="$(echo ${taxo[3]} | sed -e 's/@#=/ /g')"
 safestrain="$(echo ${taxo[3]} | sed -e 's/@#=/_/g')"
 if [ "${strain}" != "${safestrain}" ] ; then
   echo -e "it is not safe to have a strain name with a whitespace in it: '${strain}'.\nPlease edit your strain information file '${refstrains}' and re-run this step. Will exit now"
+fi
 taxid="$(echo ${taxo[4]} | sed -e 's/@#=/_/g')"
 loctagprefix="$(echo ${taxo[5]} | sed -e 's/@#=/_/g')"
 echo "'${genus}' '${species}' '${strain}' '${taxid}' '${loctagprefix}'"
