@@ -13,12 +13,13 @@ prokkablastdb=$(dirname $(dirname $(readlink -f `which prokka` | awk '{ print $N
 echo "### assembly: $gproject; contig files from: ${allcontigs}/"
 head -n1 $refstrains
 taxo=($(grep -P "^${gproject}\t" ${refstrains} | sed -e 's/ /@#=/g')) # escapes the whitespaces
-# restores the whitespaces
+# restores the whitespaces or replace them with underscores when deemsd unsafe
 genus="$(echo ${taxo[1]} | sed -e 's/@#=/ /g')"
 species="$(echo ${taxo[2]%*.} | sed -e 's/@#=/ /g')"
 strain="$(echo ${taxo[3]} | sed -e 's/@#=/ /g')"
-taxid="$(echo ${taxo[4]} | sed -e 's/@#=/ /g')"
-loctagprefix="$(echo ${taxo[5]} | sed -e 's/@#=/ /g')"
+safestrain="$(echo ${taxo[3]} | sed -e 's/@#=/_/g')"
+taxid="$(echo ${taxo[4]} | sed -e 's/@#=/_/g')"
+loctagprefix="$(echo ${taxo[5]} | sed -e 's/@#=/_/g')"
 echo "'${genus}' '${species}' '${strain}' '${taxid}' '${loctagprefix}'"
 
 if [[ -z "${genus}" || -z "${species}" || -z "${strain}" || -z "${taxid}" || -z "${loctagprefix}" ]] ; then
@@ -57,7 +58,7 @@ if [ ! -z "${ptgthreads}" ] ; then
   paraopt="--cpus ${ptgthreads}"
 fi
 prokkaopts="
---outdir $outdir --prefix ${genus}_${species}_${strain} --force 
+--outdir ${outdir} --prefix '${genus}_${species}_${safestrain}' --force 
 --addgenes --locustag '${loctagprefix}' --compliant --centre '${seqcentre}' ${usegenus}
 --genus '${genus}' --species '${species}' --strain '${strain}'
  --kingdom Bacteria --gcode 11 ${paraopt}"
