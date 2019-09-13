@@ -61,7 +61,7 @@ if [ ! -z "${ptgthreads}" ] ; then
   paraopt="--cpus ${ptgthreads}"
 fi
 prokkaopts="
---outdir ${outdir} --prefix '${genus}_${species}_${safestrain}' --force 
+--outdir ${outdir} --prefix ${genus}_${species}_${safestrain} --force 
 --addgenes --locustag '${loctagprefix}' --compliant --centre '${seqcentre}' ${usegenus}
 --genus '${genus}' --species '${species}' --strain '${strain}'
  --kingdom Bacteria --gcode 11 ${paraopt}"
