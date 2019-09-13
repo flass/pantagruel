@@ -100,6 +100,31 @@ EOF
 
 }
 
+addregionannotfeat (){
+python << EOF
+fcontig = open('${1}', 'r')
+outgff = open('${2}', 'a')
+inseq = False
+seqlen = 0
+seqid = None
+for line in fcontig:
+ if line.startswith('>'):
+   if inseq:
+   # write out previous
+   outgff.write("##sequence-region %s 1 %d\n"%(seqid, seqlen))
+   seqid = line.strip('>\n')
+   seqlen = 0
+ else:
+   inseq = True
+   seqlen += len(line.strip(' \n'))
+
+outgff.write("##sequence-region %s 1 %d\n"%(seqid, seqlen))
+fcontig.close()
+outgff.close()
+EOF
+
+}
+
 checkptgversion
 checkfoldersafe ${indata}
 
@@ -206,31 +231,12 @@ if [ ! -z "${customassemb}" ] ; then
           # make GFF source file look more like the output of Prokka
           head -n1 ${annotgff[0]}.original > ${annotgff[0]}
           # add region annotation features
-        python << EOF
-fcontig = open('${contigs}/${allcontigs}', 'r')
-outgff = open('${annotgff[0]}', 'a')
-inseq = False
-seqlen = 0
-seqid = None
-for line in fcontig:
- if line.startswith('>'):
-   if inseq:
-   # write out previous
-   outgff.write("##sequence-region %s 1 %d\n"%(seqid, seqlen))
-   seqid = line.strip('>\n')
-   seqlen = 0
- else:
-   inseq = True
-   seqlen += len(line.strip(' \n'))
-
-outgff.write("##sequence-region %s 1 %d\n"%(seqid, seqlen))
-fcontig.close()
-outgff.close()
-EOF
+          addregionannotfeat ${contigs}/${allcontigs} ${annotgff[0]}
           # add the rest of the file, in order of contig names!
           tail -n +2 ${annotgff[0]}.original | sort >> ${annotgff[0]}
         fi
-        python ${ptgscripts}/add_region_feature2prokkaGFF.py ${annotgff[0]} ${annotgff[0]/.gff/.ptg.gff} ${straininfo} ${contigs}/${allcontigs} ${assembler}
+		mkdir -p ${ptglogs}/add_region_feature2prokkaGFF/
+        python ${ptgscripts}/add_region_feature2prokkaGFF.py ${annotgff[0]} ${annotgff[0]/.gff/.ptg.gff} ${straininfo} ${contigs}/${allcontigs} ${assembler} &> ${ptglogs}/add_region_feature2prokkaGFF/add_region_feature2prokkaGFF.${gproject}.log
         echo "fix annotation to integrate taxid information into GBK files"
         annotfna=($(ls ${annot}/${gproject}/*.fna))
         annotgbk=($(ls ${annot}/${gproject}/*.gbf 2> /dev/null || ls ${annot}/${gproject}/*.gbk))
