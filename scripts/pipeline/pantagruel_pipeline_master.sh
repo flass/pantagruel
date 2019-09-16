@@ -205,6 +205,7 @@ usagelong (){
   echo "       All tasks will be performed using parameters defined at the __init__ step, and default parameters otherwise."
   echo "  0|00|fetch|fetch_data"  
   echo "       fetch public genome data from NCBI sequence databases and annotate private genomes"
+  echo "       also run a quick genome-to-genome distance estimation with MASH"
   echo "  1|01|homologous|homologous_seq_families"
   echo "       classify protein sequences into homologous families"
   echo "  2|02|align|align_homologous_seq"  

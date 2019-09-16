@@ -349,4 +349,10 @@ python ${ptgscripts}/extract_metadata_from_gbff.py --assembly_folder_list=${geno
 --add_curated_metadata=${manuin}/manual_curated_metadata_dictionary.tab --add_dbxref=${manuin}/manual_dbxrefs.tab --add_assembly_info_dir=${indata}/assembly_stats \
 --default_species_name="unclassified organism" --output=${genomeinfo}/assembly_metadata
 
+
+## 
+if [ ! -z "$(command -v mash)" ] ; then 
+  if [ ! -z "${ptgthreads}" ] ; then paramash="-p ${ptgthreads}" ; fi
+  mash triangle ${paramash} $(ls ${assemblies}/*/*_genomic.fna.gz | grep -v '_from_genomic) > ${indata}/all_assemblied_mash.dist
+fi
 promptdate
