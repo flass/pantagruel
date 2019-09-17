@@ -70,7 +70,8 @@ pantagruel -i config_file TASK
 with `TASK` to be picked among the following (equivalent digit/number/keywords are separated by a `|`):
 ```
   0|00|fetch|fetch_data
-       fetch public genome data from NCBI sequence databases and annotate private genomes
+       fetch public genome data from NCBI sequence databases and annotate private genomes;
+	   also run a quick genome-to-genome distance estimation with MASH
   1|01|homologous|homologous_seq_families
        classify protein sequences into homologous families
   2|02|align|align_homologous_seq

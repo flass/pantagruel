@@ -350,9 +350,21 @@ python ${ptgscripts}/extract_metadata_from_gbff.py --assembly_folder_list=${geno
 --default_species_name="unclassified organism" --output=${genomeinfo}/assembly_metadata
 
 
-## 
+## compute genome-to-genome MASH distances and plot them, notably as a heatmap along a distance tree (and possibly along the core-genome reference tree)
 if [ ! -z "$(command -v mash)" ] ; then 
   if [ ! -z "${ptgthreads}" ] ; then paramash="-p ${ptgthreads}" ; fi
-  mash triangle ${paramash} $(ls ${assemblies}/*/*_genomic.fna.gz | grep -v '_from_genomic) > ${indata}/all_assemblied_mash.dist
+  fnalist=${indata}/all_assemblies_genomic_fasta_list
+  rm -f ${fnalist}
+  ls ${assemblies}/*/*_genomic.fna.gz | grep -v '_from_genomic' > ${fnalist}
+  ls ${assemblies}/*/*.fna | grep -v '_from_genomic' >> ${fnalist}
+  mash triangle ${paramash} $(cat ${fnalist}) > ${indata}/all_assemblies_mash.dist
+  
+  if [ -s ${speciestree} && -s ${database}/genome_codes.tab ] ; then
+    # only likely to happen if task 00 is re-run with -R after tasks 03 and 05 are complete
+    ${ptgscripts}/plotmashdistcluster.r ${indata}/all_assemblies_mash.dist ${genomeinfo}/assembly_metadata/metadata.tab ${speciestree} ${database}/genome_codes.tab
+  else
+    ${ptgscripts}/plotmashdistcluster.r ${indata}/all_assemblies_mash.dist ${genomeinfo}/assembly_metadata/metadata.tab
+  fi
+  
 fi
 promptdate
