@@ -33,7 +33,9 @@ DROP INDEX IF EXISTS gene_lineage_events_rlocds;
 DROP INDEX IF EXISTS gene_lineage_events_evtid;
 DROP INDEX IF EXISTS gene_lineage_events_freq;
 DROP INDEX IF EXISTS gene_lineage_events_rlocds_evtid;
-DROP INDEX IF EXISTS ;
+DROP INDEX IF EXISTS gene_lineage_events_recid_rlocds_evtid;
+
+DELETE FROM gene_lineage_events;
 
 DROP INDEX IF EXISTS collapsed_gene_tree_clades_colcritid;
 DROP INDEX IF EXISTS collapsed_gene_tree_clades_genefamid;
@@ -41,20 +43,24 @@ DROP INDEX IF EXISTS collapsed_gene_tree_clades_cc;
 DROP INDEX IF EXISTS collapsed_gene_tree_clades_cdscode;
 DROP INDEX IF EXISTS collapsed_gene_tree_clades_cdscode_colcritid;
 
+DELETE FROM collapsed_gene_tree_clades;
+
 DROP INDEX IF EXISTS replaced_gene_tree_clades_replcritid;
 DROP INDEX IF EXISTS replaced_gene_tree_clades_genefamid_ccocds;
 DROP INDEX IF EXISTS replaced_gene_tree_clades_replab;
 DROP INDEX IF EXISTS replaced_gene_tree_clades_replab_replcritid;
 
-DELETE FROM replacement_label_or_cds_code2gene_families ;
+DELETE FROM replaced_gene_tree_clades;
 
 DROP UNIQUE INDEX rlocds2genefam_rlocds;
 DROP INDEX IF EXISTS rlocds2genefam_genefam;
 
-DELETE FROM gene_tree_label2cds_code;
+DELETE FROM replacement_label_or_cds_code2gene_families;
 
 DROP INDEX IF EXISTS gtlab2cds_rlocds;
 DROP UNIQUE INDEX gtlab2cds_cdscode;
+
+DELETE FROM gene_tree_label2cds_code;
 
 COMMIT;
 VACUUM;
