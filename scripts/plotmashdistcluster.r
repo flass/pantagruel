@@ -20,8 +20,8 @@ i = which(metadata[,1]==ass)
   }}
 }
 
-plottreeheatmap = function(t, smat, nfbase, treetag=''){
-  pdf(sprintf('%s.heatmap%s.pdf', nfbase, treetag), wid=45, hei=30)
+plottreeheatmap = function(t, smat, pdfout){
+  pdf(pdfout, wid=45, hei=30)
   ut = untangle(t, "read.tree")
   ruttl = rev(ut$tip.label)
   print(setdiff(ruttl, rownames(smat)))
@@ -88,7 +88,7 @@ dev.off()
 
 write.tree(pmd, sprintf('%s.nwk', nfmashtriangle))
 
-plottreeheatmap(pmd, sml, nfmashtriangle, treetag='')
+plottreeheatmap(pmd, sml, nfmashtriangle, sprintf('%s.heatmap.pdf', nfmashtriangle))
 if (!is.null(reftree)){
   t = reftree
   if (!is.null(treelab2ass)){
@@ -99,5 +99,5 @@ if (!is.null(reftree)){
     })
     reftree$tip.label = longnames[assacct]
   }
-  plottreeheatmap(reftree, sml, nfmashtriangle, treetag=sprintf('_vs_%s', basename(nftree)))
+  plottreeheatmap(reftree, sml, sprintf('%s_vs_%s.heatmap%s.pdf', reftree, basename(nfmashtriangle)))
 }
