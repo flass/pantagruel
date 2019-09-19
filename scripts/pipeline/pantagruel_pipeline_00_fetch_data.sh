@@ -202,7 +202,7 @@ if [ ! -z "${customassemb}" ] ; then
       if [ -d ${custannot}/${gproject} ] ; then
         echo "found annotation folder '${custannot}/${gproject}' ; skip annotation of contigs in '${contigs}/${allcontigs}'"
         # better preserve actual path as input data are external to the Pantagruel database 
-        ln -s ${cust2annot}/${gproject} ${annot}/
+        ln -s ${custannot}/${gproject} ${annot}/
       else
 	    if [[ "${resumetask}" == 'true' && -d ${annot}/${gproject} && ! -z $(ls ${annot}/${gproject}/*.gff) && ! -z $(ls ${annot}/${gproject}/*.gbk) ]] ; then
 		  echo "found already computed annotation in ${annot}/${gproject}/:"
