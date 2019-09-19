@@ -1,4 +1,4 @@
-#!/usr/local/bin/Rscript
+#!/usr/bin/Rscript
 library(phytools)
 
 combineNames = function(ass, metadata){
@@ -70,7 +70,7 @@ assaccm = sapply(2:(ntaxa+1), function(k){
 colnames(ml) = rownames(ml) = assaccm
 
 
-assmetadata = read.table(nfassmetadata, h=T, sep='\t')
+assmetadata = read.table(nfassmetadata, h=T, sep='\t', comment.char="")
 
 longnames = sapply(assaccm, combineNames, metadata=assmetadata)
 

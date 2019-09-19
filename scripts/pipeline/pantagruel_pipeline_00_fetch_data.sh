@@ -277,26 +277,31 @@ if [ ! -z "${customassemb}" ] ; then
     echo "will create GenBank-like assembly folders for user-provided genomes"
     mkdir -p ${gblikeass}/
     for gproject in `ls ${annot}` ; do
-      gff=$(ls ${annot}/${gproject}/ | grep 'ptg.gff')
+      gff=$(ls ${annot}/${gproject}/ | grep 'ptg.gff' | grep -v '.original')
       assemb=${gproject}.1_${gff[0]%*.ptg.gff}
       assembpathdir=${gblikeass}/${assemb}
       assembpathrad=${assembpathdir}/${assemb}
       mkdir -p ${assembpathdir}/
-      ls ${assembpathdir}/ -d
+      ls -l ${assembpathdir}/ -d
       gffgz=${assembpathrad}_genomic.gff.gz
       gzip -c ${annot}/${gproject}/${gff} > ${gffgz}
-      ls ${gffgz}
+      ls -l ${gffgz}
       gbk=($(ls ${annot}/${gproject}/ | grep 'ptg.gbk' | grep -v '.original'))
       gbkgz=${assembpathrad}_genomic.gbff.gz
       gzip -c ${annot}/${gproject}/${gbk[0]} > ${gbkgz}
-      ls ${gbkgz}
+      ls -l ${gbkgz}
       faa=($(ls ${annot}/${gproject}/ | grep '.faa' | grep -v '.original'))
       faagz=${assembpathrad}_protein.faa.gz
       gzip -c ${annot}/${gproject}/${faa[0]} > ${faagz}
+	  ls -l ${faagz}
+      gfna=($(ls ${annot}/${gproject}/ | grep '.fna' | grep -v '.original'))
+      gfnagz=${assembpathrad}_genomic.fna.gz
+      gzip -c ${annot}/${gproject}/${gfna[0]} > ${gfnagz}
+	  ls -l ${gfnagz}
       ffn=($(ls ${annot}/${gproject}/ | grep '.ffn' | grep -v '.original'))
-      fnagz=${assembpathrad}_cds_from_genomic.fna.gz
-      python ${ptgscripts}/format_prokkaCDS.py ${annot}/${gproject}/${ffn[0]} ${fnagz}
-      ls ${fnagz}
+      cdsfnagz=${assembpathrad}_cds_from_genomic.fna.gz
+      python ${ptgscripts}/format_prokkaCDS.py ${annot}/${gproject}/${ffn[0]} ${cdsfnagz}
+      ls -l ${cdsfnagz}
     done > ${ptglogs}/genbank-format_assemblies.log
     
     relpathass2gblass=$(realpath --relative-to=${assemblies} ${gblikeass})
@@ -355,11 +360,12 @@ if [ ! -z "$(command -v mash)" ] ; then
   if [ ! -z "${ptgthreads}" ] ; then paramash="-p ${ptgthreads}" ; fi
   fnalist=${indata}/all_assemblies_genomic_fasta_list
   rm -f ${fnalist}
-  ls ${assemblies}/*/*_genomic.fna.gz | grep -v '_from_genomic' > ${fnalist}
-  ls ${assemblies}/*/*.fna | grep -v '_from_genomic' >> ${fnalist}
+  for ass in $(ls ${assemblies}) ; do
+    ls ${assemblies}/${ass}/${ass}_genomic.fna.gz 2> /dev/null >> ${fnalist} || ls ${assemblies}/${ass}/${ass}_genomic.fna 2> /dev/null >> ${fnalist} 
+  done
   mash triangle ${paramash} $(cat ${fnalist}) > ${indata}/all_assemblies_mash.dist
   
-  if [ -s ${speciestree} && -s ${database}/genome_codes.tab ] ; then
+  if [[ -s "${speciestree}" && -s "${database}/genome_codes.tab" ]] ; then
     # only likely to happen if task 00 is re-run with -R after tasks 03 and 05 are complete
     ${ptgscripts}/plotmashdistcluster.r ${indata}/all_assemblies_mash.dist ${genomeinfo}/assembly_metadata/metadata.tab ${speciestree} ${database}/genome_codes.tab
   else
