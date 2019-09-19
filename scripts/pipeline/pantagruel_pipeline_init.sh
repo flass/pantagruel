@@ -96,17 +96,17 @@ fi
 
 ## load generic environment variables derived from the above
 source ${envsourcescript}
-if [ "$runmode" == 'wasrefresh' ] ; then
+
+if [ -z "${initfile}" ] ; then 
+  echo "created init file at '${envsourcescript}'"
+elif [ "${runmode}" == 'wasrefresh' ] ; then
   echo "updated init file save at '${envsourcescript}' ; refresh mode: skip input folder checks."
   exit 0
-fi
-if [ -z ${initfile} ] ; then 
-  echo "created init file at '${envsourcescript}'"
 else
   echo "updated init file save at '${envsourcescript}'"
 fi
 
-if [[ runmode=='force' ]] ; then
+if [[ "${runmode}" == 'force' ]] ; then
   echo "FORCE mode: pantagruel init will skip the checks on dataset integrity; the following tasks may fail if these tests are not clear."
   exit 0
 fi
