@@ -14,6 +14,7 @@
 # derive other important environmnet variables
 export ptgscripts="${ptgrepo}/scripts"
 source ${ptgscripts}/pipeline/environ_pantagruel_defaults.sh
+source ${ptgscripts}/pipeline/pantagruel_pipeline_functions.sh
 
 if [ -z ${initfile} ] ; then 
   templateenv=${ptgscripts}/pipeline/environ_pantagruel_template.sh
