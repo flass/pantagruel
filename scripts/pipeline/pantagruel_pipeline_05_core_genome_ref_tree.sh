@@ -459,5 +459,5 @@ checkexec "failed defining contrasting clades in reference tree" "defining contr
 
 if [ -s ${indata}/all_assemblies_mash.dist ] ; then
     # if MASH was run during task 00
-    ${ptgscripts}/plotmashdistcluster.r ${indata}/all_assemblies_mash.dist ${genomeinfo}/assembly_metadata/metadata.tab ${speciestree} ${database}/genome_codes.tab
+    Rscript ${ptgscripts}/plotmashdistcluster.r ${indata}/all_assemblies_mash.dist ${genomeinfo}/assembly_metadata/metadata.tab ${speciestree} ${database}/genome_codes.tab
 fi

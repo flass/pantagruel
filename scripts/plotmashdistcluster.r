@@ -30,12 +30,12 @@ plottreeheatmap = function(t, smat, pdfout){
 }
 
 cargs = commandArgs(trailingOnly=T)
-print(cargs)
 nfmashtriangle = cargs[1]
 nfassmetadata = cargs[2]
 
 if (length(cargs)>2){
   nftree = cargs[3]
+  print(nftree)
   reftree = read.tree(nftree)
 }else{
   reftree = NULL
@@ -43,10 +43,12 @@ if (length(cargs)>2){
 
 if (length(cargs)>3){
   nftreelab2ass = cargs[4]
+  print(nftreelab2ass)
   treelab2ass = read.table(nftreelab2ass, h=F, sep='\t')
 }else{
   treelab2ass = NULL
 }
+print(nfmashtriangle)
 mashdist = readLines(nfmashtriangle)
 
 ntaxa = as.numeric(strsplit(mashdist[[1]], split='\t')[[1]][2])
@@ -70,12 +72,12 @@ assaccm = sapply(2:(ntaxa+1), function(k){
 colnames(ml) = rownames(ml) = assaccm
 
 
+print(nfassmetadata)
 assmetadata = read.table(nfassmetadata, h=T, sep='\t', comment.char="")
 
 longnames = sapply(assaccm, combineNames, metadata=assmetadata)
 
 colnames(ml) = rownames(ml) = longnames
-print(head(longnames))
 write.table(ml, sprintf('%s.tab', nfmashtriangle), col.names=T, row.names=T)
 
 md = as.dist(ml)
@@ -88,7 +90,7 @@ dev.off()
 
 write.tree(pmd, sprintf('%s.nwk', nfmashtriangle))
 
-plottreeheatmap(pmd, sml, nfmashtriangle, sprintf('%s.heatmap.pdf', nfmashtriangle))
+plottreeheatmap(pmd, sml, sprintf('%s.heatmap.pdf', nfmashtriangle))
 if (!is.null(reftree)){
   t = reftree
   if (!is.null(treelab2ass)){

@@ -367,9 +367,9 @@ if [ ! -z "$(command -v mash)" ] ; then
   
   if [[ -s "${speciestree}" && -s "${database}/genome_codes.tab" ]] ; then
     # only likely to happen if task 00 is re-run with -R after tasks 03 and 05 are complete
-    ${ptgscripts}/plotmashdistcluster.r ${indata}/all_assemblies_mash.dist ${genomeinfo}/assembly_metadata/metadata.tab ${speciestree} ${database}/genome_codes.tab
+    Rscript ${ptgscripts}/plotmashdistcluster.r ${indata}/all_assemblies_mash.dist ${genomeinfo}/assembly_metadata/metadata.tab ${speciestree} ${database}/genome_codes.tab
   else
-    ${ptgscripts}/plotmashdistcluster.r ${indata}/all_assemblies_mash.dist ${genomeinfo}/assembly_metadata/metadata.tab
+    Rscript ${ptgscripts}/plotmashdistcluster.r ${indata}/all_assemblies_mash.dist ${genomeinfo}/assembly_metadata/metadata.tab
   fi
   
 fi
