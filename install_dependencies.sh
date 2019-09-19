@@ -121,7 +121,7 @@ if [ "$installdebian" == 'true' ] ; then
   # 'libdw*' are required for Interproscan to work properly on a Ubuntu 18.04.1 LTS system - however that should ideally come with the Interproscan java executable
   # 'libgsl*' are required for proper functioningof MASH, even though it should rely on its brew dependency
   deppackages="git build-essential cmake gcc g++ lftp clustalo raxml libhmsbeagle1v5 mrbayes \
-  r-base-core r-recommended r-cran-ape r-cran-ade4 r-cran-vegan r-cran-dbi r-cran-rsqlite r-cran-igraph r-cran-getopt \
+  r-base-core r-recommended r-cran-ape r-cran-ade4 r-cran-vegan r-cran-dbi r-cran-rsqlite r-cran-igraph r-cran-getopt r-cran-phytools \
   sqlite3 sqlite3-doc libmagick++-dev python python-scipy python-numpy python-biopython python-biopython-sql python-igraph cython \
   mpi-default-bin mpi-default-dev mrbayes-mpi python-pip openjdk-8-jdk openjdk-8-jre \
   libdw1 libdw-dev libgsl23 libgsl-dev"
