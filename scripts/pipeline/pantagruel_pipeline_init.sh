@@ -25,12 +25,13 @@ fi
 if [ "${runmode}" == 'wasrefresh' ] ; then
   export resumetask=true
 fi
-checkfoldersafe ${ptgdb}
 
 #~ export PYTHONPATH=$PYTHONPATH:"${ptgrepo}/python_libs"
 #~ cd ${ptgrepo} ; export ptgversion=$(git log | grep commit) ; cd - > /dev/null # ptgversion variable should be inherited from master script
 # create head folders
 export ptgdb=${ptgroot}/${ptgdbname}
+checkfoldersafe ${ptgdb}
+
 export ptglogs=${ptgdb}/logs
 export ptgtmp=${ptgdb}/tmp
 mkdir -p ${ptgdb}/ ${ptglogs}/ ${ptgtmp}/
