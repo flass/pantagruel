@@ -47,7 +47,9 @@ with open(nfrawassembseq, 'r') as frawassembseq:
 			lcontignames.append(cname)
 
 fgffin = open(nfgffin, 'r')
+if verbose: print "open input GFF: '%s'"%nfgffin
 fgffout = open(nfgffout, 'w')
+if verbose: print "open output GFF: '%s'"%nfgffout
 lregions = []
 #~ lregionlens = []
 dregionlens = {}
