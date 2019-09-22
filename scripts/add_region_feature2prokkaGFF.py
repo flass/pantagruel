@@ -3,12 +3,16 @@
 import sys, os
 
 minchrlen = 2000000
+verbose = False
 
 nfgffin = sys.argv[1]
 nfgffout = sys.argv[2]
 nfstraininfo = sys.argv[3]
 nfrawassembseq = sys.argv[4]
 assemblervers = sys.argv[5]
+if len(sys.argv)>6:
+	if sys.argv[6]=='verbose':
+		verbose=True
 
 dstraininfo = {}
 with open(nfstraininfo, 'r') as fstraininfo:
@@ -58,6 +62,7 @@ for line in fgffin:
 				lregions.append(lsp[1])
 				#~ lregionlens.append(lsp[2:4])
 				dregionlens[lsp[1]] = lsp[2:4]
+		if verbose: print "len(lregions)", len(lregions), "len(lcontignames)", len(lcontignames)
 		if len(lregions) == len(lcontignames):
 			dgffcontigname2rawcontigname = dict(zip(lregions, lcontignames))
 			
