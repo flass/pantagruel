@@ -237,6 +237,7 @@ if [ ! -z "${customassemb}" ] ; then
         fi
 		mkdir -p ${ptglogs}/add_region_feature2prokkaGFF/
         python ${ptgscripts}/add_region_feature2prokkaGFF.py ${annotgff[0]} ${annotgff[0]/.gff/.ptg.gff} ${straininfo} ${contigs}/${allcontigs} ${assembler} &> ${ptglogs}/add_region_feature2prokkaGFF/add_region_feature2prokkaGFF.${gproject}.log
+		checkexec "something went wrong when adding region features to GFF file (In: ${annotgff[0]}; Out:${annotgff[0]/.gff/.ptg.gff})"
         echo "fix annotation to integrate taxid information into GBK files"
         annotfna=($(ls ${annot}/${gproject}/*.fna))
         annotgbk=($(ls ${annot}/${gproject}/*.gbf 2> /dev/null || ls ${annot}/${gproject}/*.gbk))
