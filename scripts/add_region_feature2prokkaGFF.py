@@ -101,6 +101,7 @@ lregions.sort(key=lambda x: dregionlens[x], reverse=True)
 print lregions
 if verbose: print "len(lregions)", len(lregions), "len(lcontignames)", len(lcontignames)
 dgffcontigname2rawcontigname = dict(zip(lregions, lcontignames))
+print dgffcontigname2rawcontigname
 
 for line in fgffin:
 	# resume file exploration
