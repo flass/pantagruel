@@ -89,8 +89,9 @@ for line in fgffin:
 			dregionlens[lsp[1]] = lsp[2:4]
 			dgffcontigname2rawcontigname[lsp[1]] = lcontignames[nregin]
 			# check this is the same lentgh as length-ordered contigs from the original contig file
+			print nregin, repr(lsp), dcontiglenids[lcontignames[nregin]]
 			if not int(lsp[3])==dcontiglenids[lcontignames[nregin]][0]:
-				raise IndexError, "unmatched contig order:\ncing from original file: %s\n#%d 'sequence-region' annotation from Prokka GFF: %s"%(repr(lsp), nregin, dcontiglenids[lcontignames[nregin]])
+				raise IndexError, "unmatched contig order:\nconting from original file: %s\n#%d 'sequence-region' annotation from Prokka GFF: %s"%(dcontiglenids[lcontignames[nregin]], nregin, repr(lsp))
 			nregin += 1
 		
 		if verbose: print "len(lregions)", len(lregions), "len(lcontignames)", len(lcontignames)
