@@ -62,12 +62,14 @@ dgffcontigname2rawcontigname = {}
 for line in fgffin:
 	if line.startswith('##'):
 		if line.startswith('##sequence-region'):
-				lsp = line.rstrip('\n').split()
-				lregions.append(lsp[1])
-				#~ lregionlens.append(lsp[2:4])
-				dregionlens[lsp[1]] = lsp[2:4]
-				nregin += 1
-				dgffcontigname2rawcontigname[lsp[1]] = lcontignames[nregin]
+			lsp = line.rstrip('\n').split()
+			lregions.append(lsp[1])
+			#~ lregionlens.append(lsp[2:4])
+			dregionlens[lsp[1]] = lsp[2:4]
+			nregin += 1
+			print nregin
+			dgffcontigname2rawcontigname[lsp[1]] = lcontignames[nregin]
+		
 		if verbose: print "len(lregions)", len(lregions), "len(lcontignames)", len(lcontignames)
 #		if len(lregions) == len(lcontignames):
 #			dgffcontigname2rawcontigname = dict(zip(lregions, lcontignames))
