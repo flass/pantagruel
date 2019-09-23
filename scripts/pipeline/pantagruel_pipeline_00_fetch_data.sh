@@ -206,6 +206,7 @@ if [ ! -z "${customassemb}" ] ; then
       else
 	    if [[ "${resumetask}" == 'true' && -d ${annot}/${gproject} && ! -z $(ls ${annot}/${gproject}/*.gff) && ! -z $(ls ${annot}/${gproject}/*.gbk) ]] ; then
 		  echo "found already computed annotation in ${annot}/${gproject}/:"
+		  rm -f ${annot}/${gproject}/*.ptg.gbk ${annot}/${gproject}/*.ptg.gff
 		  ls -ltr ${annot}/${gproject}/
 		  echo "skip running Prokka"
 		else  

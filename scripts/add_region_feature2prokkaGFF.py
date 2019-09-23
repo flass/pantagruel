@@ -65,7 +65,7 @@ with open(nfrawassembseq, 'r') as frawassembseq:
 
 # sort on decreasing contig length (and on ex-aequo, on the original order)
 lcontignames.sort(key=lambda x: dcontiglenids[x], reverse=True)
-print lcontignames
+#print lcontignames
 			
 fgffin = open(nfgffin, 'r')
 if verbose: print "open input GFF: '%s'"%nfgffin
@@ -98,10 +98,10 @@ for line in fgffin:
 
 # sort on decreasing contig length
 lregions.sort(key=lambda x: dregionlens[x], reverse=True)
-print lregions
+#print lregions
 if verbose: print "len(lregions)", len(lregions), "len(lcontignames)", len(lcontignames)
 dgffcontigname2rawcontigname = dict(zip(lregions, lcontignames))
-print dgffcontigname2rawcontigname
+#print dgffcontigname2rawcontigname
 
 for line in fgffin:
 	# resume input GFF file exploration
