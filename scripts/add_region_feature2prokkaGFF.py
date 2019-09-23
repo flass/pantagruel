@@ -24,10 +24,20 @@ with open(nfstraininfo, 'r') as fstraininfo:
 		dstraininfo[loctagprefix] = dict(zip(header, lsp))
 
 lcontignames = []
-dcontigs = {}		
+dcontigs = {}
+dcontiglenids = {}
+clen = 0
+cname = ''
+c = 0
 with open(nfrawassembseq, 'r') as frawassembseq:
 	for line in frawassembseq:
 		if line.startswith('>'):
+			if clen>0 and cname:
+				# record the contig length fo sorting them by decreasing length (they should already be)
+				dcontiglenids[cname] = (clen, c)
+				# also record the original position so to break ties by keping the original order
+				c -= 1		# count into negatives to use as a reverse sorting key
+				clen = 0
 			lsp = line.strip('>\n').split()
 			if lsp[0].startswith('NODE'):
 				# velvet/spades type
@@ -45,7 +55,18 @@ with open(nfrawassembseq, 'r') as frawassembseq:
 				except ValueError:
 					dcontigs[cname] = {}
 			lcontignames.append(cname)
+		else:
+			clen += len(line.strip(' \n'))
+	else:
+		if clen>0 and cname:
+			dcontiglenids[cname] = (clen, c)
+			c -= 1		# count into negatives to use as a reverse sorting key
+			clen = 0
 
+# sort on decreasing contig length (and on ex-aequo, on the original order)
+lcontignames.sort(key=lambda x: dcontiglenids[cname], reverse=True)
+			
+			
 fgffin = open(nfgffin, 'r')
 if verbose: print "open input GFF: '%s'"%nfgffin
 fgffout = open(nfgffout, 'w')
@@ -67,6 +88,8 @@ for line in fgffin:
 			#~ lregionlens.append(lsp[2:4])
 			dregionlens[lsp[1]] = lsp[2:4]
 			dgffcontigname2rawcontigname[lsp[1]] = lcontignames[nregin]
+			# check this is the same lentgh as length-ordered contigs from the original contig file
+			assert int(lsp[4])==dcontiglenids[lcontignames[nregin]][0]
 			nregin += 1
 		
 		if verbose: print "len(lregions)", len(lregions), "len(lcontignames)", len(lcontignames)
