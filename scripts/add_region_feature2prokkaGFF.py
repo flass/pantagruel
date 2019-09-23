@@ -89,7 +89,7 @@ for line in fgffin:
 			dregionlens[lsp[1]] = lsp[2:4]
 			dgffcontigname2rawcontigname[lsp[1]] = lcontignames[nregin]
 			# check this is the same lentgh as length-ordered contigs from the original contig file
-			assert int(lsp[4])==dcontiglenids[lcontignames[nregin]][0]
+			assert int(lsp[3])==dcontiglenids[lcontignames[nregin]][0]
 			nregin += 1
 		
 		if verbose: print "len(lregions)", len(lregions), "len(lcontignames)", len(lcontignames)
