@@ -64,7 +64,7 @@ with open(nfrawassembseq, 'r') as frawassembseq:
 			clen = 0
 
 # sort on decreasing contig length (and on ex-aequo, on the original order)
-lcontignames.sort(key=lambda x: dcontiglenids[cname], reverse=True)
+lcontignames.sort(key=lambda x: dcontiglenids[x], reverse=True)
 			
 			
 fgffin = open(nfgffin, 'r')
@@ -85,18 +85,25 @@ for line in fgffin:
 		if line.startswith('##sequence-region'):
 			lsp = line.rstrip('\n').split()
 			lregions.append(lsp[1])
-			#~ lregionlens.append(lsp[2:4])
 			dregionlens[lsp[1]] = lsp[2:4]
-			dgffcontigname2rawcontigname[lsp[1]] = lcontignames[nregin]
-			# check this is the same lentgh as length-ordered contigs from the original contig file
-			print nregin, repr(lsp), dcontiglenids[lcontignames[nregin]]
-			if not int(lsp[3])==dcontiglenids[lcontignames[nregin]][0]:
-				raise IndexError, "unmatched contig order:\nconting from original file: %s\n#%d 'sequence-region' annotation from Prokka GFF: %s"%(dcontiglenids[lcontignames[nregin]], nregin, repr(lsp))
+#			dgffcontigname2rawcontigname[lsp[1]] = lcontignames[nregin]
+#			# check this is the same lentgh as length-ordered contigs from the original contig file
+#			print nregin, repr(lsp), dcontiglenids[lcontignames[nregin]]
+#			if not int(lsp[3])==dcontiglenids[lcontignames[nregin]][0]:
+#				raise IndexError, "unmatched contig order:\nconting from original file: %s\n#%d 'sequence-region' annotation from Prokka GFF: %s"%(dcontiglenids[lcontignames[nregin]], nregin, repr(lsp))
 			nregin += 1
-		
-		if verbose: print "len(lregions)", len(lregions), "len(lcontignames)", len(lcontignames)
-#		if len(lregions) == len(lcontignames):
-#			dgffcontigname2rawcontigname = dict(zip(lregions, lcontignames))
+		else:
+			fgffout.write(line)
+			break
+
+# sort on decreasing contig length
+lregions.sort(key=lambda x: dregionlens[x], reverse=True)
+if verbose: print "len(lregions)", len(lregions), "len(lcontignames)", len(lcontignames)
+dgffcontigname2rawcontigname = dict(zip(lregions, lcontignames))
+
+for line in fgffin:
+	# resume file exploration
+	if line.startswith('##'):
 			
 		if line.startswith('##FASTA'):
 			fastatime = True
