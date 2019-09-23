@@ -64,7 +64,7 @@ with open(nfrawassembseq, 'r') as frawassembseq:
 			clen = 0
 
 # sort on decreasing contig length (and on ex-aequo, on the original order)
-#lcontignames.sort(key=lambda x: dcontiglenids[cname], reverse=True)
+lcontignames.sort(key=lambda x: dcontiglenids[cname], reverse=True)
 			
 			
 fgffin = open(nfgffin, 'r')
@@ -89,7 +89,8 @@ for line in fgffin:
 			dregionlens[lsp[1]] = lsp[2:4]
 			dgffcontigname2rawcontigname[lsp[1]] = lcontignames[nregin]
 			# check this is the same lentgh as length-ordered contigs from the original contig file
-			assert int(lsp[3])==dcontiglenids[lcontignames[nregin]][0]
+			if not int(lsp[3])==dcontiglenids[lcontignames[nregin]][0]:
+				raise IndexError, "unmatched contig order:\ncing from original file: %s\n#%d 'sequence-region' annotation from Prokka GFF: %s"%(repr(lsp), nregin, dcontiglenids[lcontignames[nregin]])
 			nregin += 1
 		
 		if verbose: print "len(lregions)", len(lregions), "len(lcontignames)", len(lcontignames)
