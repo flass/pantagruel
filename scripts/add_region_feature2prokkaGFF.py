@@ -56,8 +56,9 @@ dregionlens = {}
 currseqreg = None
 nreg = 0
 fastatime = False
+dgffcontigname2rawcontigname = {}
 
-for line in fgffin:
+for i, line in enumerate(fgffin):
 	if line.startswith('##'):
 		if line.startswith('##sequence-region'):
 				lsp = line.rstrip('\n').split()
@@ -65,8 +66,9 @@ for line in fgffin:
 				#~ lregionlens.append(lsp[2:4])
 				dregionlens[lsp[1]] = lsp[2:4]
 		if verbose: print "len(lregions)", len(lregions), "len(lcontignames)", len(lcontignames)
-		if len(lregions) == len(lcontignames):
-			dgffcontigname2rawcontigname = dict(zip(lregions, lcontignames))
+#		if len(lregions) == len(lcontignames):
+#			dgffcontigname2rawcontigname = dict(zip(lregions, lcontignames))
+		dgffcontigname2rawcontigname[lsp[1]] = lcontignames[i]
 			
 		if line.startswith('##FASTA'):
 			fastatime = True
