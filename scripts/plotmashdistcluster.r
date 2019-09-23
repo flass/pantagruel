@@ -20,8 +20,8 @@ i = which(metadata[,1]==ass)
   }}
 }
 
-plottreeheatmap = function(t, smat, pdfout){
-  pdf(pdfout, wid=45, hei=30)
+plottreeheatmap = function(t, smat, pdfout, wid=45, hei=30){
+  pdf(pdfout, width=wid, height=hei)
   ut = untangle(t, "read.tree")
   ruttl = rev(ut$tip.label)
   print(setdiff(ruttl, rownames(smat)))
