@@ -64,7 +64,7 @@ with open(nfrawassembseq, 'r') as frawassembseq:
 			clen = 0
 
 # sort on decreasing contig length (and on ex-aequo, on the original order)
-lcontignames.sort(key=lambda x: dcontiglenids[cname], reverse=True)
+#lcontignames.sort(key=lambda x: dcontiglenids[cname], reverse=True)
 			
 			
 fgffin = open(nfgffin, 'r')
