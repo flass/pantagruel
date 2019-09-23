@@ -54,21 +54,23 @@ lregions = []
 #~ lregionlens = []
 dregionlens = {}
 currseqreg = None
-nreg = 0
+nregin = 0
+nregout = 0
 fastatime = False
 dgffcontigname2rawcontigname = {}
 
-for i, line in enumerate(fgffin):
+for line in fgffin:
 	if line.startswith('##'):
 		if line.startswith('##sequence-region'):
 				lsp = line.rstrip('\n').split()
 				lregions.append(lsp[1])
 				#~ lregionlens.append(lsp[2:4])
 				dregionlens[lsp[1]] = lsp[2:4]
+				nregin += 1
+				dgffcontigname2rawcontigname[lsp[1]] = lcontignames[nregin]
 		if verbose: print "len(lregions)", len(lregions), "len(lcontignames)", len(lcontignames)
 #		if len(lregions) == len(lcontignames):
 #			dgffcontigname2rawcontigname = dict(zip(lregions, lcontignames))
-		dgffcontigname2rawcontigname[lsp[1]] = lcontignames[i]
 			
 		if line.startswith('##FASTA'):
 			fastatime = True
@@ -82,22 +84,22 @@ for i, line in enumerate(fgffin):
 			except IndexError, e:
 				raise IndexError, "missing information on genome with locus_tag prefix '%s'; please complete info in file '%s'"%(loctagprefix, nfstraininfo)
 			# add organism info line
-			if nreg==0:
+			if nregout==0:
 				fgffout.write('##species https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id=%s\n'%straininfo['taxid'])
 			currseqreg = seqreg
-			#~ print nreg, seqreg
+			#~ print nregout, seqreg
 			# add region info line
-			#~ iscircular = dcontigs[lcontignames[nreg]].get('circular', 'false')
+			#~ iscircular = dcontigs[lcontignames[nregout]].get('circular', 'false')
 			iscircular = dcontigs[dgffcontigname2rawcontigname[seqreg]].get('circular', 'false')
-			#~ replitype = 'chromosome' if (nreg==0 and int(lregionlens[nreg][1])>minchrlen) else ('plasmid' if iscircular=='true' else 'contig')
-			replitype = 'chromosome' if (nreg==0 and int(dregionlens[seqreg][1])>minchrlen) else ('plasmid' if iscircular=='true' else 'contig')
-			extfeat = ['ID=id%d'%nreg, 'Dbxref=taxon:%s'%straininfo['taxid'], 'Is_circular=%s'%iscircular, 'gbkey=Src', 'genome=%s'%replitype, 'mol_type=genomic DNA', 'strain=%s'%straininfo['strain']]
-			#~ cols = [seqreg, assemblervers, 'region', lregionlens[nreg][0], lregionlens[nreg][1], '.', '+', '.', ';'.join(extfeat)]
+			#~ replitype = 'chromosome' if (nregout==0 and int(lregionlens[nregout][1])>minchrlen) else ('plasmid' if iscircular=='true' else 'contig')
+			replitype = 'chromosome' if (nregout==0 and int(dregionlens[seqreg][1])>minchrlen) else ('plasmid' if iscircular=='true' else 'contig')
+			extfeat = ['ID=id%d'%nregout, 'Dbxref=taxon:%s'%straininfo['taxid'], 'Is_circular=%s'%iscircular, 'gbkey=Src', 'genome=%s'%replitype, 'mol_type=genomic DNA', 'strain=%s'%straininfo['strain']]
+			#~ cols = [seqreg, assemblervers, 'region', lregionlens[nregout][0], lregionlens[nregout][1], '.', '+', '.', ';'.join(extfeat)]
 			cols = [seqreg, assemblervers, 'region', dregionlens[seqreg][0], dregionlens[seqreg][1], '.', '+', '.', ';'.join(extfeat)]
 			regline = '\t'.join(cols)+'\n'
 			fgffout.write(regline)
 			print regline.rstrip('\n')
-			nreg += 1
+			nregout += 1
 	fgffout.write(line)
 
 fgffin.close()
