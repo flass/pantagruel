@@ -92,7 +92,7 @@ for line in fgffin:
 #			if not int(lsp[3])==dcontiglenids[lcontignames[nregin]][0]:
 #				raise IndexError, "unmatched contig order:\nconting from original file: %s\n#%d 'sequence-region' annotation from Prokka GFF: %s"%(dcontiglenids[lcontignames[nregin]], nregin, repr(lsp))
 			nregin += 1
-		else:
+		elif not line.startswith('##gff-version'):
 			fgffout.write(line)
 			break
 
