@@ -81,20 +81,20 @@ fastatime = False
 dgffcontigname2rawcontigname = {}
 
 for line in fgffin:
-	if line.startswith('##'):
-		if line.startswith('##sequence-region'):
-			lsp = line.rstrip('\n').split()
-			lregions.append(lsp[1])
-			dregionlens[lsp[1]] = lsp[2:4]
+	if line.startswith('##sequence-region'):
+		lsp = line.rstrip('\n').split()
+		lregions.append(lsp[1])
+		dregionlens[lsp[1]] = tuple(lsp[2:4])
 #			dgffcontigname2rawcontigname[lsp[1]] = lcontignames[nregin]
 #			# check this is the same lentgh as length-ordered contigs from the original contig file
 #			print nregin, repr(lsp), dcontiglenids[lcontignames[nregin]]
 #			if not int(lsp[3])==dcontiglenids[lcontignames[nregin]][0]:
 #				raise IndexError, "unmatched contig order:\nconting from original file: %s\n#%d 'sequence-region' annotation from Prokka GFF: %s"%(dcontiglenids[lcontignames[nregin]], nregin, repr(lsp))
-			nregin += 1
-		elif not line.startswith('##gff-version'):
-			fgffout.write(line)
-			break
+		nregin += 1
+	else:
+		fgffout.write(line)
+		break
+	fgffout.write(line)
 
 # sort on decreasing contig length
 lregions.sort(key=lambda x: dregionlens[x], reverse=True)
@@ -104,9 +104,8 @@ dgffcontigname2rawcontigname = dict(zip(lregions, lcontignames))
 print dgffcontigname2rawcontigname
 
 for line in fgffin:
-	# resume file exploration
+	# resume input GFF file exploration
 	if line.startswith('##'):
-			
 		if line.startswith('##FASTA'):
 			fastatime = True
 	else:
@@ -125,7 +124,8 @@ for line in fgffin:
 			#~ print nregout, seqreg
 			# add region info line
 			#~ iscircular = dcontigs[lcontignames[nregout]].get('circular', 'false')
-			iscircular = dcontigs[dgffcontigname2rawcontigname[seqreg]].get('circular', 'false')
+			rawcontigname = dgffcontigname2rawcontigname[seqreg]
+			iscircular = dcontigs[rawcontigname].get('circular', 'false')
 			#~ replitype = 'chromosome' if (nregout==0 and int(lregionlens[nregout][1])>minchrlen) else ('plasmid' if iscircular=='true' else 'contig')
 			replitype = 'chromosome' if (nregout==0 and int(dregionlens[seqreg][1])>minchrlen) else ('plasmid' if iscircular=='true' else 'contig')
 			extfeat = ['ID=id%d'%nregout, 'Dbxref=taxon:%s'%straininfo['taxid'], 'Is_circular=%s'%iscircular, 'gbkey=Src', 'genome=%s'%replitype, 'mol_type=genomic DNA', 'strain=%s'%straininfo['strain']]
