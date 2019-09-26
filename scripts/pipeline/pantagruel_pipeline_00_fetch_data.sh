@@ -19,8 +19,10 @@ import re
 gbassdir = '${1}'
 assembpatgenbank = re.compile('(GC[AF]_[^\._]+\.[0-9])_(.+)')
 assembsearch = assembpatgenbank.search(gbassdir)
-assacc, assname = assembsearch.groups()
-print "%s\t%s"%(assacc, assname)
+if assembsearch:
+  assacc, assname = assembsearch.groups()
+  print "%s\t%s"%(assacc, assname)
+
 EOF
 }
 
@@ -55,7 +57,11 @@ extractass (){
           rm -rf ${srcass}/$dass
           mv ${assd[0]}/$dass ${srcass}/
 		  if [ ! -z "${gp2ass}" ] ; then
-	         echo -e "${dass}\t$(parseGBass ${dass})\tNCBI_Assembly_extracted" >> ${gp2ass}
+		     assaccname=$(parseGBass ${dass})
+			 if [ -z ${assaccname} ] ; then 
+			   echo "could not parse '${dass}' assembly name as expected from the NCBI Assembly format pattern (Accession.v_Name => python regex: '(GC[AF]_[0-9]+.[1-9])_(.+)')"
+			 fi
+	         echo -e "${dass}\t${assaccname}\tNCBI_Assembly_extracted" >> ${gp2ass}
 		  fi
         fi
       done
@@ -170,7 +176,7 @@ echo "$(promptdate) did not find the relevant taxonomy flat files in '${ncbitax}
 fi
 
 mkdir -p ${assemblies}/
-rm -f ${gp2ass}
+echo -e "genome_source\tassembly_id\tassembly_name\torigin" > ${gp2ass}
 
 if [ ! -z "${ncbiass}" ] ; then
   extractass ${ncbiass} ${assemblies} ${gp2ass}
@@ -299,9 +305,14 @@ if [ ! -z "${customassemb}" ] ; then
     echo "will create GenBank-like assembly folders for user-provided genomes"
     mkdir -p ${gblikeass}/
     for gproject in `ls ${annot}` ; do
-      gff=$(ls ${annot}/${gproject}/ | grep 'ptg.gff' | grep -v '.original')
+      gff=$(ls ${annot}/${gproject}/ | grep 'ptg.gff' | grep -v '\.original')
       assemb=${gproject}.1_${gff[0]%*.ptg.gff}
-	  echo -e "${gproject}\t${gproject}.1\t${gff[0]%*.ptg.gff}\tcustom_assembly" >> ${gp2ass}
+	  assaccname=$(parseGBass ${gff[0]%*.ptg.gff})
+	  if [ ! -z ${assaccname} ] ; then
+	    echo -e "${gproject}\t${assaccname}\tcustom_assembly" >> ${gp2ass}
+      else
+	    echo -e "${gproject}\t${gproject}.1\t${gff[0]%*.ptg.gff}\tcustom_assembly" >> ${gp2ass}
+	  fi
       assembpathdir=${gblikeass}/${assemb}
       assembpathrad=${assembpathdir}/${assemb}
       mkdir -p ${assembpathdir}/
