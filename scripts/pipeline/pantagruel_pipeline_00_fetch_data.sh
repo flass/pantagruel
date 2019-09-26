@@ -59,7 +59,7 @@ extractass (){
 		  if [ ! -z "${gp2ass}" ] ; then
 		     assaccname=$(parseGBass ${dass})
 			 if [ -z ${assaccname} ] ; then 
-			   echo "could not parse '${dass}' assembly name as expected from the NCBI Assembly format pattern (Accession.v_Name => python regex: '(GC[AF]_[0-9]+.[1-9])_(.+)')"
+			   echo "could not parse '${dass}' assembly name as expected from the NCBI Assembly format pattern (Accession.v_Name => python regex: '(GC[AF]_[^\._]+\.[1-9])_(.+)')"
 			 fi
 	         echo -e "${dass}\t${assaccname}\tNCBI_Assembly_extracted" >> ${gp2ass}
 		  fi
@@ -106,7 +106,11 @@ downloadass (){
   for ass in `ls ${srcassftpdest}/` ; do
     ln -s ${relpathass2srcass}/${ass} ${lndestass}/
     if [ ! -z "${gp2ass}" ] ; then
-      echo -e "${ass}\t$(parseGBass ${ass})\tNCBI_Assembly_downloaded" >> ${gp2ass}
+		 assaccname=$(parseGBass ${dass})
+		 if [ -z ${assaccname} ] ; then 
+		   echo "could not parse '${dass}' assembly name as expected from the NCBI Assembly format pattern (Accession.v_Name => python regex: '(GC[AF]_[^\._]+\.[1-9])_(.+)')"
+		 fi
+		 echo -e "${ass}\t${assaccname}\tNCBI_Assembly_downloaded" >> ${gp2ass}
     fi
   done
 }
