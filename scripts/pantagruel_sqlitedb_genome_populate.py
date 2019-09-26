@@ -229,6 +229,7 @@ def main(dbname, protorfanclust, cdsorfanclust, nfspeclist, nfusergenomeinfo, us
 				code = duginfo['locus_tag_prefix']
 				print assid, ':', code
 				dcustomasscode[assid] = code
+				
 
 	fout.close()
 
@@ -246,7 +247,7 @@ def main(dbname, protorfanclust, cdsorfanclust, nfspeclist, nfusergenomeinfo, us
 	dcodeass = {}
 	for ass, code, spe in lasscode:
 		print ass, code, spe
-		code = dcustomasscode.get(ass, code)
+		code = dcustomasscode.get(ass, dcustomasscode.get(ass.rsplit('.', 1)[0], code))
 		if code:
 			c = str(code)
 		else:
