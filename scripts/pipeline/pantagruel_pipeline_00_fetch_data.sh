@@ -310,13 +310,12 @@ if [ ! -z "${customassemb}" ] ; then
     mkdir -p ${gblikeass}/
     for gproject in `ls ${annot}` ; do
       gff=$(ls ${annot}/${gproject}/ | grep 'ptg.gff' | grep -v '\.original')
+      assemb=${gproject}.1_${gff[0]%*.ptg.gff}
 	  assaccname=$(parseGBass ${gproject})
 	  if [ ! -z "${assaccname}" ] ; then
-	    echo -e "${gproject}\t${assaccname}_${gff[0]%*.ptg.gff}\tcustom_assembly" >> ${gp2ass}
-		assemb=${gproject}_${gff[0]%*.ptg.gff}
+	    echo -e "${gproject}\t${assaccname}.1_${gff[0]%*.ptg.gff}\tcustom_assembly" >> ${gp2ass}
       else
 	    echo -e "${gproject}\t${gproject}.1\t${gff[0]%*.ptg.gff}\tcustom_assembly" >> ${gp2ass}
-		assemb=${gproject}.1_${gff[0]%*.ptg.gff}
 	  fi
       assembpathdir=${gblikeass}/${assemb}
       assembpathrad=${assembpathdir}/${assemb}
