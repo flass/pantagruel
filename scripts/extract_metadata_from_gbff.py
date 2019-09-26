@@ -56,9 +56,13 @@ def match_std_str(s, llsstdstr, default="other", rule='sin'):
 	else:
 		return default
 
-def parse_assembly_name(assembname, reass=reass, group=0):
+def parse_assembly_name(assembname, reass=reassgenbank, secreass=reass, group=0):
 	seass = reass.match(assembname)
-	geass = seass.groups()
+	try:
+		geass = seass.groups()
+	except AttributeError:
+		seass = secreass.match(assembname)
+		geass = seass.groups()
 	if group=='all': return geass
 	else: return geass[group]
 
@@ -70,7 +74,7 @@ def main(nfldirassemb, dirassemblyinfo, output, defspename, nfdhandmetaraw, nfdh
 
 	dmetadata = {}
 	lassembname = [os.path.basename(dirassemb) for dirassemb in ldirassemb]
-	lassemb = [parse_assembly_name(assembname, reass=reass) for assembname in lassembname]
+	lassemb = [parse_assembly_name(assembname) for assembname in lassembname]
 	lqualif = []
 
 	headerdbstart = "DBLINK      "
@@ -83,7 +87,7 @@ def main(nfldirassemb, dirassemblyinfo, output, defspename, nfdhandmetaraw, nfdh
 
 	print "parsing genome annotation from genBank flat files..."
 	for i, assembname in enumerate(lassembname):
-		assemb = parse_assembly_name(assembname, reass=reass)
+		assemb = parse_assembly_name(assembname)
 		print assemb,
 		qualif = None
 		val = None
@@ -154,7 +158,7 @@ def main(nfldirassemb, dirassemblyinfo, output, defspename, nfdhandmetaraw, nfdh
 				with open("%s/%s"%(dirassemblyinfo, nfinfo), 'r') as finfo:
 					for line in finfo:
 						assembname, val = line.rstrip('\n').split('\t')
-						assemb = parse_assembly_name(assembname, reass=reass)
+						assemb = parse_assembly_name(assembname)
 						dmetadata.setdefault(infotag, {})[assemb] = val.strip('" \r')
 
 	if os.path.exists(output):
@@ -347,7 +351,7 @@ def main(nfldirassemb, dirassemblyinfo, output, defspename, nfdhandmetaraw, nfdh
 	with open(nfoutcur, 'w') as foutcur:
 		foutcur.write('\t'.join(['assembly_id', 'assembly_name']+lcurqualif)+'\n')
 		for assembname in lassembname:
-			geass = parse_assembly_name(assembname, reass=reass, group='all')
+			geass = parse_assembly_name(assembname, group='all')
 			assemb = geass[0]
 			foutcur.write('\t'.join(list(geass)+[dcurated[qualif].get(assemb, '').strip('" ') for qualif in lcurqualif])+'\n')
 
