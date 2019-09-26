@@ -120,15 +120,17 @@ if [ "$installdebian" == 'true' ] ; then
   # 'cd-hit' no longer required in the pre-annotation step (prior to Prokka; uses mmseqs instead
   # 'libdw*' are required for Interproscan to work properly on a Ubuntu 18.04.1 LTS system - however that should ideally come with the Interproscan java executable
   # 'libgsl*' are required for proper functioningof MASH, even though it should rely on its brew dependency
+  # 'openjdk-11*' are required for Interproscan since release 5.37-76.0; this package has to be obtained from PPA ppa:openjdk-r/ppa (otherwise the default repository will provide an java-11-openjdk packageg that installs JDK 10 [as of 26/09/2019])
   deppackages="git build-essential cmake gcc g++ lftp clustalo raxml libhmsbeagle1v5 mrbayes \
   r-base-core r-recommended r-cran-ape r-cran-ade4 r-cran-vegan r-cran-dbi r-cran-rsqlite r-cran-igraph r-cran-getopt r-cran-phytools \
   sqlite3 sqlite3-doc libmagick++-dev python python-scipy python-numpy python-biopython python-biopython-sql python-igraph cython \
-  mpi-default-bin mpi-default-dev mrbayes-mpi python-pip openjdk-8-jdk openjdk-8-jre \
+  mpi-default-bin mpi-default-dev mrbayes-mpi python-pip openjdk-11-jdk openjdk-11-jre \
   libdw1 libdw-dev libgsl23 libgsl-dev"
   if [ "$installbrew" == 'true' ] ; then deppackages="$deppackages linuxbrew-wrapper" ; fi
   if [ "$installdocker" == 'true' ] ; then deppackages="$deppackages docker\.io" ; fi
+  sudo add-apt-repository -y ppa:openjdk-r/ppa
   sudo apt update
-  sudo apt install $deppackages
+  sudo apt install -y $deppackages
   if [ $? != 0 ] ; then
     echo "ERROR: could not install all required Debian packages:"
     apt list $deppackages
