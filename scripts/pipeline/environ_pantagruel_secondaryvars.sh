@@ -26,6 +26,7 @@ export prokkaref=${indata}/reference_assemblies4annotation
 export gblikeass=${indata}/genbank-format_assemblies
 export genomeinfo=${indata}/genome_infos
 export assemblies=${indata}/assemblies
+export gp2ass=${indata}/genomesource_assemblyid_assemblyname.txt
 export families=${seqdb}/protein_families
 export nrprotali=${protali}/nr_protfam_clustalo_alignments
 export cdsalifastacodedir=${protali}/full_cdsfam_alignments_species_code

@@ -55,7 +55,7 @@ extractass (){
           rm -rf ${srcass}/$dass
           mv ${assd[0]}/$dass ${srcass}/
 		  if [ ! -z "${gp2ass}" ] ; then
-	         echo -e "${dass}\t$(parseGBass ${dass})" >> ${gp2ass}
+	         echo -e "${dass}\t$(parseGBass ${dass})\tNCBI_Assembly_extracted" >> ${gp2ass}
 		  fi
         fi
       done
@@ -100,7 +100,7 @@ downloadass (){
   for ass in `ls ${srcassftpdest}/` ; do
     ln -s ${relpathass2srcass}/${ass} ${lndestass}/
     if [ ! -z "${gp2ass}" ] ; then
-      echo -e "${ass}\t$(parseGBass ${ass})" >> ${gp2ass}
+      echo -e "${ass}\t$(parseGBass ${ass})\tNCBI_Assembly_downloaded" >> ${gp2ass}
     fi
   done
 }
@@ -170,7 +170,6 @@ echo "$(promptdate) did not find the relevant taxonomy flat files in '${ncbitax}
 fi
 
 mkdir -p ${assemblies}/
-gp2ass=${indata}/genomesource_assemblyid_assemblyname.txt
 rm -f ${gp2ass}
 
 if [ ! -z "${ncbiass}" ] ; then
@@ -302,7 +301,7 @@ if [ ! -z "${customassemb}" ] ; then
     for gproject in `ls ${annot}` ; do
       gff=$(ls ${annot}/${gproject}/ | grep 'ptg.gff' | grep -v '.original')
       assemb=${gproject}.1_${gff[0]%*.ptg.gff}
-	  echo -e "${gproject}\t${gproject}.1\t${gff[0]%*.ptg.gff}" >> ${gp2ass}
+	  echo -e "${gproject}\t${gproject}.1\t${gff[0]%*.ptg.gff}\tcustom_assembly" >> ${gp2ass}
       assembpathdir=${gblikeass}/${assemb}
       assembpathrad=${assembpathdir}/${assemb}
       mkdir -p ${assembpathdir}/
