@@ -77,7 +77,7 @@ def main(dbname, protorfanclust, cdsorfanclust, nfspeclist, nfgsrc2assidname, nf
 	with open(nfgsrc2assidname) as fgsrc2assidname:
 		for line in fgsrc2assidname:
 			lsp = line.rstrip('\n').split('\t')
-			dgsrc2assidname[lsp[0]] = lsp[1]
+			dgsrc2assidname[lsp[1]] = lsp[0]
 		
 	
 	conn = sqlite3.connect(database=dbname)
