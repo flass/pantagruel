@@ -246,8 +246,9 @@ def main(dbname, protorfanclust, cdsorfanclust, nfspeclist, nfusergenomeinfo, us
 	dcodesn = {}
 	dcodeass = {}
 	for ass, code, spe in lasscode:
-		print ass, code, spe
+		print ass, code, spe, '->',
 		code = dcustomasscode.get(ass, dcustomasscode.get(ass.rsplit('.', 1)[0], code))
+		print ass, code, spe
 		if code:
 			c = str(code)
 		else:
