@@ -10,13 +10,14 @@ protorfanclust=${7}
 cdsorfanclust=${8}
 usergenomeinfo=${9}
 usergenomefinalassdir=${10}
+gp2ass=${11}
+
+echo "currently set variables:"
+echo "database=${1} dbname=${2} metadata=${3} assemblyinfo=${4} protali=${5} protfamseqtab=${6} protorfanclust=${7} cdsorfanclust=${8} usergenomeinfo=$9 usergenomefinalassdir=${10} gp2ass=${11}"
 
 if [ -z $cdsorfanclust ] ; then
  echo "Error: incomplete argument list. Usage:"
- echo "${thisscript} database dbname metadata assemblyinfo protali protfamseqtab protorfanclust cdsorfanclust [usergenomeinfo]"
- echo "currently set variable:"
- echo "database=$1 dbname=$2 metadata=$3 assemblyinfo=$4 protali=$5 protfamseqtab=$6 protorfanclust=$7 cdsorfanclust=$8 usergenomeinfo=$9"
- exit 1
+ echo "${thisscript} database dbname metadata assemblyinfo protali protfamseqtab protorfanclust cdsorfanclust [usergenomeinfo] [usergenomefinalassdir] [gp2ass]" exit 1
 fi
 
 
@@ -78,8 +79,8 @@ tail -n +2 ${assemblyinfo}/allproteins_info.tab | cut -f ${protfieldnums} | grep
 
 ## populate database
 if [ -z  "${customassemb}" ] ; then
-  python ${populatescript} ${dbname} ${protorfanclust} ${cdsorfanclust} ${database}/speclist
+  python ${populatescript} ${dbname} ${protorfanclust} ${cdsorfanclust} ${database}/speclist ${gp2ass}
 else
-  python ${populatescript} ${dbname} ${protorfanclust} ${cdsorfanclust} ${database}/speclist ${usergenomeinfo} ${usergenomefinalassdir}
+  python ${populatescript} ${dbname} ${protorfanclust} ${cdsorfanclust} ${database}/speclist ${gp2ass} ${usergenomeinfo} ${usergenomefinalassdir}
 fi
 cd -

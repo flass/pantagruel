@@ -71,8 +71,15 @@ cdsnumpat = re.compile('.+_([0-9]+)$')
 def make_cds_code(code, genbank_cds_id):
 	return "%s_%s"%(code, cdsnumpat.search(genbank_cds_id).group(1))
 
-def main(dbname, protorfanclust, cdsorfanclust, nfspeclist, nfusergenomeinfo, usergenomefinalassdir):
-
+def main(dbname, protorfanclust, cdsorfanclust, nfspeclist, nfgsrc2assidname, nfusergenomeinfo, usergenomefinalassdir):
+	
+	dgsrc2assidname = {}
+	with open(nfgsrc2assidname) as fgsrc2assidname:
+		for line in fgsrc2assidname:
+			lsp = line.rstrip('\n').split('\t')
+			dgsrc2assidname[lsp[0]] = lsp[1]
+		
+	
 	conn = sqlite3.connect(database=dbname)
 	conn.create_function("make_cds_code", 2, make_cds_code)
 	conn.row_factory = sqlite3.Row
@@ -202,6 +209,7 @@ def main(dbname, protorfanclust, cdsorfanclust, nfspeclist, nfusergenomeinfo, us
 				fout.write("%s\t%s\n"%(code, taxid))
 				codetaxids.append((code, taxid))
 	
+	print "Generating 'uniprotcode_taxid' table:"
 	dcustomasscode = {}
 	dseqproj2assid = {}
 	if nfusergenomeinfo and os.path.exists(nfusergenomeinfo):
@@ -245,10 +253,12 @@ def main(dbname, protorfanclust, cdsorfanclust, nfspeclist, nfusergenomeinfo, us
 
 	dcodesn = {}
 	dcodeass = {}
+	print "Generating 'assemblies.code' column:"
 	for ass, code, spe in lasscode:
 		print ass, code, spe, '->',
-		code = dcustomasscode.get(ass, dcustomasscode.get(ass.rsplit('.', 1)[0], code))
-		print ass, code, spe
+		assid = dgsrc2assidname.get(ass, ass) # to get a match from the source custom contig file instead of assembly accession (which may carry a '.1' suffix, and the prefix be truncated)
+		code = dcustomasscode.get(assid, code)
+		print assid, code, spe
 		if code:
 			c = str(code)
 		else:
@@ -315,13 +325,14 @@ if __name__=='__main__':
 	dbname = sys.argv[1] # os.environ['sqldbname']
 	protorfanclust = sys.argv[2] # os.environ['protorfanclust']
 	cdsorfanclust = sys.argv[3] # os.environ['cdsorfanclust']
-	nfspeclist = sys.argv[4] # 'speclist'
-	if len(sys.argv) > 5:
-		nfusergenomeinfo = sys.argv[5]
+	nfspeclist = sys.argv[4] # os.environ['sqldb']+'/speclist'
+	nfgsrc2assidname = sys.argv[5] # os.environ['gp2ass']
+	if len(sys.argv) > 6:
+		nfusergenomeinfo = sys.argv[6] # os.environ['usergenomeinfo']
 	else:
 		nfusergenomeinfo = None
-	if len(sys.argv) > 6:
-		usergenomefinalassdir = sys.argv[6]
+	if len(sys.argv) > 7:
+		usergenomefinalassdir = sys.argv[7] # os.environ['usergenomefinalassdir']
 	else:
 		usergenomefinalassdir = None
 	
@@ -329,4 +340,4 @@ if __name__=='__main__':
 		if (nf is not None) and not (os.path.exists(nf)):
 			raise ValueError, "specified input file '%s' cannot be found"%nf
 	
-	main(dbname, protorfanclust, cdsorfanclust, nfspeclist, nfusergenomeinfo, usergenomefinalassdir)
+	main(dbname, protorfanclust, cdsorfanclust, nfspeclist, nfgsrc2assidname, nfusergenomeinfo, usergenomefinalassdir)

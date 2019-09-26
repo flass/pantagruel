@@ -13,9 +13,21 @@ if [ -z "$1" ] ; then echo "missing mandatory parameter: pantagruel config file"
 envsourcescript="$1"
 source ${envsourcescript}
 
+parseGBass (){
+python << EOF
+import re
+gbassdir = '${1}'
+assembpatgenbank = re.compile('(GC[AF]_[^\._]+\.[0-9])_(.+)')
+assembsearch = assembpatgenbank.search(gbassdir)
+assacc, assname = assembsearch.groups()
+print "%s\t%s"%(assacc, assname)
+EOF
+}
+
 extractass (){
   srcass=${1}
   lndestass=${2}
+  gp2ass=${3}
   ## extract content of a folder of assemblies as those obtained using NCBI web interface:
   # Search Assembly database using a query defined as convenient:  
   # e.g.: 'txid543[Organism:exp] AND ("latest refseq"[filter] AND all[filter] NOT anomalous[filter]) AND ("complete genome"[filter])'
@@ -39,10 +51,13 @@ extractass (){
       mv report.txt report${datasettag}.txt
       assd=(`ls ncbi-genomes-* -d`)
       for dass in `ls ${assd[0]}/ | grep -v README` ; do
-       if [ ! -z $dass ] ; then
-      rm -rf ${srcass}/$dass
-      mv ${assd[0]}/$dass ${srcass}/
-       fi
+        if [ ! -z "${dass}" ] ; then
+          rm -rf ${srcass}/$dass
+          mv ${assd[0]}/$dass ${srcass}/
+		  if [ ! -z "${gp2ass}" ] ; then
+	         echo -e "${dass}\t$(parseGBass ${dass})" >> ${gp2ass}
+		  fi
+        fi
       done
       rm -r ${assd[0]}/ 
     done
@@ -66,6 +81,7 @@ downloadass (){
   srclist=${1}
   lndestass=${2}
   dldestass=${3}
+  gp2ass=${4}
   echo "$(promptdate) fetch assembly data from NCBI FTP accordng to list '${srclist}'"
   # fetch genome assemblies from NCBI FTP based on list prvided with -L option
   if [ ! -z "${dldestass}" ] ; then
@@ -83,6 +99,9 @@ downloadass (){
   relpathass2srcass=$(realpath --relative-to=${lndestass} ${srcassftpdest})
   for ass in `ls ${srcassftpdest}/` ; do
     ln -s ${relpathass2srcass}/${ass} ${lndestass}/
+    if [ ! -z "${gp2ass}" ] ; then
+      echo -e "${ass}\t$(parseGBass ${ass})" >> ${gp2ass}
+    fi
   done
 }
 
@@ -151,13 +170,15 @@ echo "$(promptdate) did not find the relevant taxonomy flat files in '${ncbitax}
 fi
 
 mkdir -p ${assemblies}/
+gp2ass=${indata}/genomesource_assemblyid_assemblyname.txt
+rm -f ${gp2ass}
 
 if [ ! -z "${ncbiass}" ] ; then
-  extractass ${ncbiass} ${assemblies}
+  extractass ${ncbiass} ${assemblies} ${gp2ass}
 fi
 
 if [ ! -z "${listncbiass}" ] ; then
-  downloadass ${listncbiass} ${assemblies} ${indata}
+  downloadass ${listncbiass} ${assemblies} ${indata} ${gp2ass}
 fi
 
 if [ ! -z "${refass}" ] ; then
@@ -281,6 +302,7 @@ if [ ! -z "${customassemb}" ] ; then
     for gproject in `ls ${annot}` ; do
       gff=$(ls ${annot}/${gproject}/ | grep 'ptg.gff' | grep -v '.original')
       assemb=${gproject}.1_${gff[0]%*.ptg.gff}
+	  echo -e "${gproject}\t${gproject}.1\t${gff[0]%*.ptg.gff}" >> ${gp2ass}
       assembpathdir=${gblikeass}/${assemb}
       assembpathrad=${assembpathdir}/${assemb}
       mkdir -p ${assembpathdir}/
