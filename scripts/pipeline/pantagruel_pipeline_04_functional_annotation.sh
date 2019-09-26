@@ -79,13 +79,16 @@ fout.close()
 EOF
 
 if [ ! -z "${ptgthreads}" ] ; then
-  ipcpu="--cpu ${ptgthreads}"
+  ipcpu=" --cpu ${ptgthreads}"
 fi
 for nrfaa in $(ls ${interpro}/all_complete_proteomes/*.faa* | grep -v 'tsv') ; do
  if [[ "${resumetask}" == 'true' && -s "${nrfaa}.tsv" ]] ; then
    echo "Found the output of a previous InterProScan run for protein flat file ${nrfaa}: ${nrfaa}.tsv ; skip computation."
  else
-   interproscan -T ${ptgtmp}/interpro -i ${nrfaa} -b ${nrfaa} --formats TSV ${ipcpu} --iprlookup --goterms --pathways &> ${ptglogs}/interpro/$(basename ${nrfaa})_interpro.log
+   echo "Run InterProScan annotation of the protein flat file ${nrfaa}"
+   ipcmd="interproscan -T ${ptgtmp}/interpro -i ${nrfaa} -b ${nrfaa} --formats TSV${ipcpu} --iprlookup --goterms --pathways &> ${ptglogs}/interpro/$(basename ${nrfaa})_interpro.log"
+   echo "#call: ${ipcmd}"
+   eval "${ipcmd}"
  fi
 done
 
