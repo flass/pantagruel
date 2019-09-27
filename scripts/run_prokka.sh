@@ -59,6 +59,8 @@ fi
 
 if [ ! -z "${ptgthreads}" ] ; then
   paraopt="--cpus ${ptgthreads}"
+else
+  paraopt="--cpus $(nproc)"
 fi
 prokkaopts="
 --outdir ${outdir} --prefix ${genus}_${species}_${safestrain} --force 

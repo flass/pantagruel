@@ -269,7 +269,13 @@ Options are detailed here:
     -R|--resume        (no value) try and resume the task from previous run that was interupted
                          (for the moment only available for tasks 04-07, i.e. 'functional', 'core', 'genetrees' and 'reconciliations')
 
-    -N|--threads      set the number of threads to use for (some) parrallelizable tasks (defaults to the maximum available)
+    -N|--threads      specify the number of threads to use for (some) parrallelizable tasks (defaults to the maximum available))
+                        (for the moment only available for tasks: 00,04,05 i.e. 'fetch', 'functional', 'core')
+
+    -z|--compress     will try and compress result file on the go (especially bulky files that won't be used much later
+                        This will induce possible extra decompressing/re-generating data computing time
+                        when resuming a task run with -R; avoid using compression when likely to have to resume later
+                        (for the moment only available for tasks: 00 i.e. 'fetch')
 
 # for Pantagruel task init:
 

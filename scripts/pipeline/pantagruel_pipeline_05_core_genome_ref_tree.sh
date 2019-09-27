@@ -172,7 +172,12 @@ else
   else
     raxmlflav=''
   fi
-  raxmlbin="raxmlHPC-PTHREADS${raxmlflav} -T $(nproc)"
+  if [ -z "${ptgthreads}" ] ; then
+    raxmlthreads="-T $(nproc)"
+  else
+    raxmlthreads="-T ${ptgthreads}"
+  fi
+  raxmlbin="raxmlHPC-PTHREADS${raxmlflav} ${raxmlthreads}"
 
   # first check the alignment for duplicate sequences and write a reduced alignment with  will be excluded
   if [[ "${resumetask}" == "true" && -e ${pseudocorealn}.identical_sequences ]] ; then

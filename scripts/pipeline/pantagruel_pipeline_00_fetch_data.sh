@@ -400,7 +400,11 @@ python ${ptgscripts}/extract_metadata_from_gbff.py --assembly_folder_list=${geno
 
 ## compute genome-to-genome MASH distances and plot them, notably as a heatmap along a distance tree (and possibly along the core-genome reference tree)
 if [ ! -z "$(command -v mash)" ] ; then 
-  if [ ! -z "${ptgthreads}" ] ; then paramash="-p ${ptgthreads}" ; fi
+  if [ ! -z "${ptgthreads}" ] ; then 
+    paramash="-p ${ptgthreads}"
+  else
+    paramash="-p $(nproc)"
+  fi
   fnalist=${indata}/all_assemblies_genomic_fasta_list
   rm -f ${fnalist}
   for ass in $(ls ${assemblies}) ; do
