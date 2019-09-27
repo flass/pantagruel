@@ -361,10 +361,10 @@ do
     
     --refresh) 
       export runmode='refreshconfig'
-	  echo "${*}"
-      export postrefreshargs="${*/--refresh/}"
+      shift
+      export postrefreshargs="${*/--/}"
 	  echo "postrefreshargs='${postrefreshargs}'"
-      shift ;;
+	  ;;
       
     -d|--dbname) 
       testmandatoryarg "$1" "$2"
