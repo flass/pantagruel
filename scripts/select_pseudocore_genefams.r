@@ -143,9 +143,11 @@ if (length(cargs) > 6){
 	}
 }
 cat("Loading matrix of gene families counts in genomes...\n")
-genocount = data.matrix(read.table(file=nffamgenomemat, sep='\t', comment.char=''))
+genocount = data.matrix(read.table(file=nffamgenomemat, sep='\t', comment.char='', check.names=T))
 cat("Loading correspondence table of assembly accessions to genome codes...\n")
 lasscode = read.table(nflasscode, row.names=1, stringsAsFactors=F, sep='\t', comment.char='')
+# get names to be consistent
+rownames(lasscode) = make.names(rownames(lasscode))
 colnames(genocount) = lasscode[colnames(genocount),1]
 
 if (!is.null(nfrestrictlist)){
