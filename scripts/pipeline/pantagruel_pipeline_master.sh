@@ -361,7 +361,8 @@ do
     
     --refresh) 
       export runmode='refreshconfig'
-      export postrefreshargs="${*/--/}"
+	  echo "${*}"
+      export postrefreshargs="${*/--refresh/}"
 	  echo "postrefreshargs='${postrefreshargs}'"
       shift ;;
       
