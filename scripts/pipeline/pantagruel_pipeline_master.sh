@@ -363,7 +363,6 @@ do
       export runmode='refreshconfig'
       shift
       export postrefreshargs="${*/--/}"
-	  echo "postrefreshargs='${postrefreshargs}'"
 	  ;;
       
     -d|--dbname) 
@@ -572,6 +571,7 @@ for task in ${tasks} ; do
       unset initfile
       export runmode='wasrefresh'
       if [ ! -z "${postrefreshargs}" ] ; then
+	    echo "(appending the new arguments: ${postrefreshargs})"
         ptginitcmd=${ptginitcmd/init/${postrefreshargs}}
       fi
       echo "# ${ptginitcmd}"
