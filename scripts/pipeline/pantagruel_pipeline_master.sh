@@ -361,7 +361,8 @@ do
     
     --refresh) 
       export runmode='refreshconfig'
-      export postrefreshargs="${*/--refresh/}"
+      export postrefreshargs="${*/--/}"
+	  echo "postrefreshargs='${postrefreshargs}'"
       shift ;;
       
     -d|--dbname) 
