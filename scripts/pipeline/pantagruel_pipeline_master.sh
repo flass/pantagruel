@@ -36,10 +36,15 @@ usagelong (){
   echo "                        (default: off, pre-exisitance of a folder will result in an early error)"
   echo ""
   echo "    -R|--resume       try and resume the task from previous run that was interupted"
-  echo "                        (for the moment only available for tasks 04-07, i.e. 'functional', 'core', 'genetrees' and 'reconciliations')"
+  echo "                        (for the moment only available for tasks: 04-07 i.e. 'functional', 'core', 'genetrees' and 'reconciliations')"
   echo ""
   echo "    -N|--threads      set the number of threads to use for (some) parrallelizable tasks (defaults to the maximum available: $(nproc))"
-  echo "                        (for the moment only available for tasks ...)"
+  echo "                        (for the moment only available for tasks: 00,04 i.e. 'fetch_data', 'functional_annotations')"
+  echo ""
+  echo "    -z|--compress     will try and compress result file on the go (especially bulky files that won't be used much later"
+  echo "                        This will induce possible extra decompressing/re-generating data computing time"
+  echo "                        when resuming a task run with -R; avoid using compression when likely to have to resume later"
+  echo "                        (for the moment only available for tasks: 00 i.e. 'fetch_data')"
   echo ""
   echo "# for Pantagruel task init:"
   echo ""
@@ -329,7 +334,7 @@ promptdate () {
   echo $(date +'[%Y-%m-%d %H:%M:%S]') $1
 }
 
-ARGS=`getopt --options "d:r:i:I:f:a:T:A:L:s:t:RV:N:H:cg:hF" --longoptions "dbname:,rootdir:,initfile:,refresh,iam:,famprefix:,refseq_ass:,refseq_list:,refseq_ass4annot:,refseq_list4annot:,custom_ass:,taxonomy:,pseudocore:,core_seqtype:,pop_lg_thresh:,pop_bs_thresh:,rooting:,reftree:,resume,env_var:,threads:,submit_hpc:,collapse,collapse_param:,genefam_list:,help,FORCE" --name "pantagruel" -- "$@"`
+ARGS=`getopt --options "d:r:i:I:f:a:T:A:L:s:t:RV:N:H:cg:hFz" --longoptions "dbname:,rootdir:,initfile:,refresh,iam:,famprefix:,refseq_ass:,refseq_list:,refseq_ass4annot:,refseq_list4annot:,custom_ass:,taxonomy:,pseudocore:,core_seqtype:,pop_lg_thresh:,pop_bs_thresh:,rooting:,reftree:,resume,env_var:,threads:,submit_hpc:,collapse,collapse_param:,genefam_list:,help,FORCE,compress" --name "pantagruel" -- "$@"`
 
 #Bad arguments
 if [ $? -ne 0 ];
@@ -348,6 +353,10 @@ do
     
     -F|--FORCE) 
       export runmode='force'
+      shift ;;  
+	
+    -z|--compress) 
+      export compress='on'
       shift ;;
     
     --refresh) 

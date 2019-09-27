@@ -340,6 +340,11 @@ if [ ! -z "${customassemb}" ] ; then
       cdsfnagz=${assembpathrad}_cds_from_genomic.fna.gz
       python ${ptgscripts}/format_prokkaCDS.py ${annot}/${gproject}/${ffn[0]} ${cdsfnagz}
       ls -l ${cdsfnagz}
+	  if [[ "${compress}" == 'on' ]] ; then
+	    # compress and only upon success delete the uncompress folder
+		echo "will compress folder '${annot}/${gproject}/':"
+	    tar -czf ${annot}/${gproject}.tar.gz ${annot}/${gproject}/ && rm -rf ${annot}/${gproject}/ && echo -e "successfully compressed into\n:'$(ls -l ${annot}/${gproject}.tar.gz)' and deleted source folder." || "Compression failed; leave source folder '${annot}/${gproject}/' as is"
+	  fi
     done > ${ptglogs}/genbank-format_assemblies.log
     
     relpathass2gblass=$(realpath --relative-to=${assemblies} ${gblikeass})
