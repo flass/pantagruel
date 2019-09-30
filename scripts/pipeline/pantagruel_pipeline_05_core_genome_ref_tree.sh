@@ -275,8 +275,10 @@ else
      mv ${coretree}/RAxML_bootstrap.${treename} ${coretree}/RAxML_bootstrap.${treename}.firstbs${nbs}
      mv ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_bootstrap.${treename}.up_to_bs${nbs}
      mv ${ptglogs}/raxml/${treename}_bs.log ${ptglogs}/raxml/${treename}_bs.log.up_to_bs${nbs}
-     echo "# call: $raxmlbin -s ${coretreealn} ${raxmloptions} -x 198237 -N ${ncorebootstrap}" > ${ptglogs}/raxml/${treename}_bs.log
-     $raxmlbin -s ${coretreealn} ${raxmloptions} -x 198237 -N ${ncorebootstrap} &>> ${ptglogs}/raxml/${treename}_bs.log
+     echo "# call: $raxmlbin -s ${coretreealn} ${raxmloptions} -x $(( 198237 + ${nbs} )) -N ${ncorebootstrap}" > ${ptglogs}/raxml/${treename}_bs.log
+     $raxmlbin -s ${coretreealn} ${raxmloptions} -x $(( 198237 + ${nbs} )) -N ${ncorebootstrap} &>> ${ptglogs}/raxml/${treename}_bs.log
+	 # add in the previous bootstrap trees to the new ones
+	 cat ${coretree}/RAxML_bootstrap.${treename}.firstbs${nbs} >> ${coretree}/RAxML_bootstrap.${treename}
     fi
    else
     # bootstrapping tree search from scratch
