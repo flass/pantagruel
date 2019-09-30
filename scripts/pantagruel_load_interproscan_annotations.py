@@ -139,9 +139,10 @@ def main(dbname, dbengine, interproscanresglobpat, interproscanversion, verbose=
 					 CREATE INDEX IF NOT EXISTS ip2pw_pwid_idx ON interpro2pathways (pathway_id);"""
 					 
 					 
-	if dbengine=='sqlite':
-		dbcur.executescript(indexscript)
-	elif dbengine=='postgres':
+#	if dbengine=='sqlite':
+#		dbcur.executescript(indexscript) # unsafe because leads to making an implicit commit statement at the beginning and end of script
+#	elif dbengine=='postgres':
+	if dbengine=='postgres':
 		indexscript += """
 	                 DROP TABLE IF EXISTS prot2goterms_oneliner;
 	                 
@@ -164,6 +165,8 @@ def main(dbname, dbengine, interproscanresglobpat, interproscanversion, verbose=
 					 GROUP BY nr_protein_id;"""
 		for sqlline in indexscript.split('\n'):
 			dbcur.execute(sqlline)
+	for sqlline in indexscript.split(';'):
+		dbcur.execute(sqlline.replace('\n', ' ').strip(';')+';')
 
 	print "created indexes as follows: %s"%(indexscript.replace('                 ', ''))
 
