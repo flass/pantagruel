@@ -124,8 +124,8 @@ def main(dbname, dbengine, interproscanresglobpat, interproscanversion, verbose=
 					 CREATE INDEX IF NOT EXISTS funcannot_analmeth_idx ON functional_annotations (analysis_method);
 					 CREATE INDEX IF NOT EXISTS funcannot_sigacc_idx ON functional_annotations (signature_accession);
 					 CREATE INDEX IF NOT EXISTS funcannot_method_signacc_idx ON functional_annotations (analysis_method, signature_accession);
-					 CREATE UNIQUE INDEX IF NOT EXISTS funcannot_nrproteinid_method_signacc_location_ipversion_uniq ON functional_annotations
-					  (nr_protein_id, analysis_method, signature_accession, start_location, stop_location, interproscan_version);
+					 CREATE UNIQUE INDEX IF NOT EXISTS funcannot_nrproteinid_method_signacc_location_eval_ipversion_uniq ON functional_annotations
+					  (nr_protein_id, analysis_method, signature_accession, start_location, stop_location, score_or_evalue, interproscan_version);
 					 CREATE INDEX IF NOT EXISTS funcannot_score_idx ON functional_annotations (score_or_evalue);
 					 CREATE INDEX IF NOT EXISTS funcannot_interproid_idx ON functional_annotations (interpro_id);
 					 CREATE UNIQUE INDEX IF NOT EXISTS ipterms_interproid_uniq ON interpro_terms (interpro_id);

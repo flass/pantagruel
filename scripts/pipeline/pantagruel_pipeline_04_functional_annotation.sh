@@ -81,7 +81,7 @@ EOF
 if [ ! -z "${ptgthreads}" ] ; then
   ipcpu=" --cpu ${ptgthreads}"
 fi
-for nrfaa in $(ls ${interpro}/all_complete_proteomes/*.faa* | grep -v 'tsv') ; do
+for nrfaa in $(ls ${interpro}/all_complete_proteomes/*.faa* | grep -v '\.tsv') ; do
  if [[ "${resumetask}" == 'true' && -s "${nrfaa}.tsv" ]] ; then
    echo "Found the output of a previous InterProScan run for protein flat file ${nrfaa}: ${nrfaa}.tsv ; skip computation."
  else
