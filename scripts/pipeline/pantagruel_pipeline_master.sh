@@ -681,12 +681,8 @@ for task in ${tasks} ; do
      ${ptgscripts}/pipeline/pantagruel_pipeline_06_gene_trees.sh ${initfile}
      checkexectask "${task}"  ;;
     7)
-     promptdate "Pantagrel pipeline task ${task}: compute species tree/gene tree reconciliations with ${recmethod}."
-	 if [ "${recmethod}" == 'ALE' ] ; then
-       ${ptgscripts}/pipeline/pantagruel_pipeline_07_ALE_reconciliations.sh ${initfile}
-	 elif [ "${recmethod}" == 'ecceTERA' ] ; then
-       ${ptgscripts}/pipeline/pantagruel_pipeline_07_ecceTERA_reconciliations.sh ${initfile}
-	 fi
+     promptdate "Pantagrel pipeline task ${task}: compute species tree/gene tree reconciliations."
+	 ${ptgscripts}/pipeline/pantagruel_pipeline_07_reconciliations.sh ${initfile}
      checkexectask "${task}"  ;;
     8)
      promptdate "Pantagrel pipeline task ${task}: classify genes into orthologous groups (OGs) and search clade-specific OGs."
