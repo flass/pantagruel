@@ -187,6 +187,17 @@ usagelong (){
   echo "                        Default is equivalent to providing the following string:"
   echo "                           'cladesupp=70 ; subcladesupp=35 ; criterion=bs ; withinfun=median'"
   echo ""
+  echo "    -e|--rec_method   {ALE|ecceTERA} choose the method to reconcile gene trees and the species tree."
+  echo "                       ALE (default): a probabilistic method to sample gene Duplication, Transfer and Loss (DTL) scenarios"
+  echo "                        by amalgamating the likelihood of bayesian samples of trees (doi:10.1093/sysbio/syt003;doi:10.1093/sysbio/syt054)."
+  echo "                        The likelihood-based approach can be heavy in memory use (several 10GB for one gene family scenario) and computation time."
+  echo "                        The option '-c' (to collapse gene trees prior to reconciliation) efficiently mitigates this issue as it generally reduces"
+  echo "                        the compute time to minutes is highly recommmended when the dataset size grows (>30 bacterial genomes)."
+  echo "                       ecceTERA: a parsimony method to sample gene DTL scenarios by amalgamating the likelihood of bayesian samples of trees"
+  echo "                        under a model and procedure similar to ALE (doi:10.1093/bioinformatics/btw105)."
+  echo "                        The parsimony apporach allows the use of this methods on large-scale datasets within a reasonable time and using little memory"
+  echo "                        without having to resort to gene tree collapsing with option '-c' (but using it is possible and would make reconciliation even faster)."
+  echo ""
   echo "    -g|--genefam_list Path to gene family list file. Resticts the computation of gene trees and all subsequent analyses to a list of gene families."
   echo "                        This impacts all task from 06 and forward. The list has to be one gene family identifier per line."
   echo "                        Gene family ids have to refer to existing ones in the database, and therefore can only be defined after the running of task 02."
@@ -248,27 +259,31 @@ usagelong (){
 ptgenvsetdefaults (){
     # Default values:
     export ptgscripts=${ptgrepo}/scripts
-    if [ -z "$runmode" ] ; then
+    if [ -z "${runmode}" ] ; then
       export runmode="normal"
-      echo "Default: set runmode to '$runmode'"
+      echo "Default: set runmode to '${runmode}'"
     fi
-    if [ -z "$myemail" ] ; then
+    if [ -z "${myemail}" ] ; then
       export myemail="undisclosed"
-      echo "Default: set identity to '$myemail'"
+      echo "Default: set identity to '${myemail}'"
     fi
-    if [ -z "$famprefix" ] ; then
+    if [ -z "${famprefix}" ] ; then
       export famprefix="PANTAG"
-      echo "Default: set gene family prefix to '$famprefix'"
+      echo "Default: set gene family prefix to '${famprefix}'"
     fi
-    if [ -z "$ncbitax" ] ; then
+    if [ -z "${ncbitax}" ] ; then
      export ncbitax=${ptgroot}/NCBI/Taxonomy_$(date +'%Y-%m-%d')
-     echo "Default: set NCBI Taxonomy source folder to '$ncbitax'"
+     echo "Default: set NCBI Taxonomy source folder to '${ncbitax}'"
     fi
-    if [ -z "$chaintype" ] ; then
+    if [ -z "${chaintype}" ] ; then
       export chaintype='fullgenetree'
-      echo "Default: set gene tree type to '$chaintype'"
+      echo "Default: set gene tree type to '${chaintype}'"
     fi
-    if [ -z "$pseudocoremingenomes" ] ; then
+    if [ -z "${recmethod}" ] ; then
+      export recmethod='ALE'
+      echo "Default: set gene tree/species tree reconciliation method to '${recmethod}'"
+    fi
+    if [ -z "${pseudocoremingenomes}" ] ; then
      echo "Default: will use a strict core-genome gene set, i.e. genes present in a single copy in all the studied genomes."
      echo ""
      echo "!!! WARNING: strict core-genome definition can be very resctrictive, especially when including draft genome in the study."
@@ -276,77 +291,77 @@ ptgenvsetdefaults (){
      echo "A sensible threshold should avoid that selected genes have an approximately homogeneous distribution,"
      echo "notably that the absent fraction is not restricted to a few genomes. This threshold will thus depend on the dataset."
      echo "To choose a sensible value, AFTER TASK 03, you can run the INTERACTIVE script:"
-     echo "'$ptgscripts/choose_min_genome_occurrence_pseudocore_genes.sh'"
+     echo "'${ptgscripts}/choose_min_genome_occurrence_pseudocore_genes.sh'"
      echo "and then manualy edit the value of variable 'pseudocoremingenomes' in the pantagruel configuration file."
     else
-      if [[ "$pseudocoremingenomes" =~ ^[0-9]+$ ]]; then
+      if [[ "${pseudocoremingenomes}" =~ ^[0-9]+$ ]]; then
       	 echo "'pseudocoremingenomes' variable is set to ${pseudocoremingenomes}; this integer value is interpreted as a number of genomes"
-      elif [[ "$pseudocoremingenomes" =~ ^0*\.[0-9]+$ ]]; then
+      elif [[ "${pseudocoremingenomes}" =~ ^0*\.[0-9]+$ ]]; then
       	 echo "'pseudocoremingenomes' variable is set to ${pseudocoremingenomes}; this float value is interpreted as a fraction of total number of genomes"
       else		
       	 echo "'pseudocoremingenomes' variable is not set to a numeric value: '${pseudocoremingenomes}'; will run INTERACTIVE script to pick an appropriate one"
       fi
     fi
-    if [ -z "$coreseqtype" ] ; then
+    if [ -z "${coreseqtype}" ] ; then
      export coreseqtype='cds'
-     echo "Default (only relevant to 'core' task): core sequence type is set to '$coreseqtype'"
+     echo "Default (only relevant to 'core' task): core sequence type is set to '${coreseqtype}'"
     fi
-    if [ -z "$poplgthresh" ] ; then
+    if [ -z "${poplgthresh}" ] ; then
      export poplgthresh='default'
-     echo "Default (only relevant to 'core' task): set population delination branch support threshold to $poplgthresh"
+     echo "Default (only relevant to 'core' task): set population delination branch support threshold to ${poplgthresh}"
     fi
-    if [ -z "$poplgleafmul" ] ; then
+    if [ -z "${poplgleafmul}" ] ; then
      export poplgleafmul=1.5
-     echo "Default (only relevant to 'core' task): set population delination branch support threshold multiplier for leaf populations to $poplgleafmul"
+     echo "Default (only relevant to 'core' task): set population delination branch support threshold multiplier for leaf populations to ${poplgleafmul}"
     fi
-    if [ -z "$popbsthresh" ] ; then
+    if [ -z "${popbsthresh}" ] ; then
      export popbsthresh=80
-     echo "Default (only relevant to 'core' task): set population delination branch support threshold to $popbsthresh"
+     echo "Default (only relevant to 'core' task): set population delination branch support threshold to ${popbsthresh}"
     fi
-    if [ -z "$rootingmethod" ] ; then
+    if [ -z "${rootingmethod}" ] ; then
      export rootingmethod='treebalance'
-     echo "Default (only relevant to 'core' task): set reference tree rooting method to $rootingmethod"
+     echo "Default (only relevant to 'core' task): set reference tree rooting method to ${rootingmethod}"
     fi
-    if [ -z "$hpcremoteptgroot" ] ; then
+    if [ -z "${hpcremoteptgroot}" ] ; then
      echo "Default: all computations will be run locally"
      export hpcremoteptgroot='none'
     fi
 }
 
 testmandatoryarg (){
-  if [ -z "$2" ]; then
-   echo "ERROR: missing argument for option '$1'" 1>&2
+  if [ -z "${2}" ]; then
+   echo "ERROR: missing argument for option '${1}'" 1>&2
    echo "see pantagruel --help for more details" 1>&2
    exit 1
   fi
 }
 
 checkexectask (){
-  if [ $? != 0 ]; then
-    echo "ERROR: Pantagrel pipeline task $1: failed." 1>&2
+  if [ ${?} != 0 ]; then
+    echo "ERROR: Pantagrel pipeline task ${1}: failed." 1>&2
     exit 1
   else
-    echo "Pantagrel pipeline task $1: complete."
+    echo "Pantagrel pipeline task ${1}: complete."
   fi
 }
 
 promptdate () {
-  echo $(date +'[%Y-%m-%d %H:%M:%S]') $1
+  echo $(date +'[%Y-%m-%d %H:%M:%S]') ${1}
 }
 
-ARGS=`getopt --options "d:r:i:I:f:a:T:A:L:s:t:RV:N:H:cg:hFz" --longoptions "dbname:,rootdir:,initfile:,refresh,iam:,famprefix:,refseq_ass:,refseq_list:,refseq_ass4annot:,refseq_list4annot:,custom_ass:,taxonomy:,pseudocore:,core_seqtype:,pop_lg_thresh:,pop_bs_thresh:,rooting:,reftree:,resume,env_var:,threads:,submit_hpc:,collapse,collapse_param:,genefam_list:,help,FORCE,compress" --name "pantagruel" -- "$@"`
+ARGS=`getopt --options "d:r:i:I:f:a:T:A:L:s:t:RV:N:H:cg:e:hFz" --longoptions "dbname:,rootdir:,initfile:,refresh,iam:,famprefix:,refseq_ass:,refseq_list:,refseq_ass4annot:,refseq_list4annot:,custom_ass:,taxonomy:,pseudocore:,core_seqtype:,pop_lg_thresh:,pop_bs_thresh:,rooting:,reftree:,resume,env_var:,threads:,submit_hpc:,collapse,collapse_param:,genefam_list:,rec_method:,help,FORCE,compress" --name "pantagruel" -- "$@"`
 
 #Bad arguments
-if [ $? -ne 0 ];
+if [ ${?} -ne 0 ];
 then
   usage ; exit 1
 fi
 
-eval set -- "$ARGS"
+eval set -- "${ARGS}"
 
 while true;
 do
-  case "$1" in
+  case "${1}" in
     -h|--help) 
       usagelong
       exit 0;;
@@ -366,103 +381,103 @@ do
 	  ;;
       
     -d|--dbname) 
-      testmandatoryarg "$1" "$2"
-      export ptgdbname="$2"
+      testmandatoryarg "${1}" "${2}"
+      export ptgdbname="${2}"
       shift 2;;
     
     -r|--rootdir)
-      testmandatoryarg "$1" "$2"
-      export ptgroot=$(readlink -f $2)
+      testmandatoryarg "${1}" "${2}"
+      export ptgroot=$(readlink -f ${2})
       shift 2;;
     
     -i|--initfile)
-      testmandatoryarg "$1" "$2"
-      export initfile=$(readlink -f $2)
+      testmandatoryarg "${1}" "${2}"
+      export initfile=$(readlink -f ${2})
       shift 2;;
     
     -I|--iam)
-      testmandatoryarg "$1" "$2"
+      testmandatoryarg "${1}" "${2}"
       export myemail="$2"
-      echo "set identity to '$myemail'"
+      echo "set identity to '${myemail}'"
       shift 2;;
     
     -f|--famprefix)
-      testmandatoryarg "$1" "$2"
+      testmandatoryarg "${1}" "${2}"
       export famprefix="$2"
       echo "set gene family prefix to '$famprefix'"
       shift 2;;
 
     -a|--custom_ass)
-      testmandatoryarg "$1" "$2"
-      export customassemb=$(readlink -f $2)
+      testmandatoryarg "${1}" "${2}"
+      export customassemb=$(readlink -f ${2})
       echo "set custom (raw) genome assembly source folder to '$customassemb'"
       shift 2;;
 
     -A|--refseq_ass)
-      testmandatoryarg "$1" "$2"
-      export ncbiass=$(readlink -f $2)
+      testmandatoryarg "${1}" "${2}"
+      export ncbiass=$(readlink -f ${2})
       echo "set NCBI RefSeq(-like) genome assembly source folder to '$ncbiass'"
       shift 2;;
 
     -L|--refseq_list)
-      testmandatoryarg "$1" "$2"
-      export listncbiass=$(readlink -f $2)
+      testmandatoryarg "${1}" "${2}"
+      export listncbiass=$(readlink -f ${2})
       echo "set NCBI RefSeq(-like) genome assembly id list to '$listncbiass'"
       shift 2;;
 
     --refseq_ass4annot)
-      testmandatoryarg "$1" "$2"
-      export refass=$(readlink -f $2)
+      testmandatoryarg "${1}" "${2}"
+      export refass=$(readlink -f ${2})
       echo "set NCBI RefSeq(-like) genome assembly source folder for reference in user genome annotation to '$refass'"
       shift 2;;
 
     --refseq_list4annot)
-      testmandatoryarg "$1" "$2"
-      export listrefass=$(readlink -f $2)
+      testmandatoryarg "${1}" "${2}"
+      export listrefass=$(readlink -f ${2})
       echo "set NCBI RefSeq(-like) genome assembly id list for reference in user genome annotation to '$listrefass'"
       shift 2;;
 
     -s|--pseudocore)
-      testmandatoryarg "$1" "$2"
-      export pseudocoremingenomes="$2"
+      testmandatoryarg "${1}" "${2}"
+      export pseudocoremingenomes="${2}"
       echo "set min number of genomes for inclusion in pseudo-core gene set as $pseudocoremingenomes"
       shift 2;;
 
     -t|--reftree)
-      testmandatoryarg "$1" "$2"
+      testmandatoryarg "${1}" "${2}"
       export userreftree=$(readlink -f $2)
       echo "set reference tree as $userreftree"
       shift 2;;
 
     --core_seqtype)
-      testmandatoryarg "$1" "$2"
-      export coreseqtype="$2"
-      echo "set core genome seuquence type to $coreseqtype"
+      testmandatoryarg "${1}" "${2}"
+      export coreseqtype="${2}"
+      echo "set core genome seuquence type to ${coreseqtype}"
       case "${coreseqtype}" in
         prot|cds)
-         echo "set core genome sequence type to $coreseqtype" ;;
+         echo "set core genome sequence type to ${coreseqtype}" ;;
         *)
-          echo "ERROR: incorrect core sequence type was specified: ${coreseqtype} (must be 'prot' or 'cds'); exit now"
+          echo "ERROR: incorrect core sequence type was specified: ${coreseqtype} (must be either 'prot' or 'cds'); exit now"
           exit 1 ;;
       esac
       shift 2;;
     
     --pop_lg_thresh)
-      testmandatoryarg "$1" "$2"
-      export poplgthresh="$2"
-      echo "set population delination branch length threshold to $poplgthresh"
+      testmandatoryarg "${1}" "${2}"
+      export poplgthresh="${2}"
+      echo "set population delination branch length threshold to ${poplgthresh}"
       shift 2;;
     
     --pop_bs_thresh)
-      testmandatoryarg "$1" "$2"
-      export popbsthresh="$2"
-      echo "set population delination branch support threshold to $popbsthresh"
+      testmandatoryarg "${1}" "${2}"
+      export popbsthresh="${2}"
+      echo "set population delination branch support threshold to ${popbsthresh}"
       shift 2;;
       
     --rooting)
-      testmandatoryarg "$1" "$2"
-      export rootingmethod="$2"
-      echo "set reference tree rooting method to $rootingmethod"
+      testmandatoryarg "${1}" "${2}"
+      export rootingmethod="${2}"
+      echo "set reference tree rooting method to ${rootingmethod}"
       shift 2;;
 
     -R|--resume)
@@ -471,26 +486,26 @@ do
       shift ;;
 
     -V|--env_var)
-      testmandatoryarg "$1" "$2"
+      testmandatoryarg "${1}" "${2}"
       export extravars="${2}"
       echo "will add the following environment variable definition to the configuration file: ${extravars}"
       shift 2;;
 	  
 	-N|--threads)
-      testmandatoryarg "$1" "$2"
+      testmandatoryarg "${1}" "${2}"
 	  export ptgthreads=${2}
       echo "will try and execute processes in parallel with the following number of threads: ${ptgthreads}"
       shift 2;;
 	  
     -T|--taxonomy)
-      testmandatoryarg "$1" "$2"
-      export ncbitax=$(readlink -f $2)
-      echo "set NCBI Taxonomy source folder to '$ncbitax'"
+      testmandatoryarg "${1}" "${2}"
+      export ncbitax=$(readlink -f ${2})
+      echo "set NCBI Taxonomy source folder to '${ncbitax}'"
       shift 2;;
 
     -H|--submit_hpc)
-      testmandatoryarg "$1" "$2"
-      export hpcremoteptgroot="$2"
+      testmandatoryarg "${1}" "${2}"
+      export hpcremoteptgroot="${2}"
       echo "set address of database root folder on remote HPC cluster server"
       shift 2;;
 
@@ -500,14 +515,27 @@ do
       shift ;;
 
     --collapse_param)
-      testmandatoryarg "$1" "$2"
-      export collapseCladeParams="$2"
+      testmandatoryarg "${1}" "${2}"
+      export collapseCladeParams="${2}"
       echo "set parameters for rake clade collapsing in gene trees"
       shift 2;;
+	  
+	-e|--rec_method)
+      testmandatoryarg "${1}" "${2}"
+	  export recmethod="${2}"
+      case "${recmethod}" in
+        ALE|ecceTERA)
+          echo "set gene tree/species tree reconciliation method to '${recmethod}'" ;;
+        *)
+          echo "ERROR: incorrect gene tree/species tree reconciliation method was specified: ${recmethod} (must be either 'ALE' or 'ecceTERA'); exit now"
+          exit 1 ;;
+      esac
+      shift 2;;
+	  
 
     -g|--genefam_list)
-      testmandatoryarg "$1" "$2"
-      export genefamlist=$(readlink -f $2)
+      testmandatoryarg "${1}" "${2}"
+      export genefamlist=$(readlink -f ${2})
       echo "set resticted list for computation of gene trees"
       shift 2;;
 
@@ -557,11 +585,11 @@ tasks=$(echo "${tasks}" | tr ' ' '\n' | sort -u | xargs)
 echo "# will run tasks: $tasks"
 
 for task in ${tasks} ; do
-  if [[ "$task" == 'init' ]] ; then
+  if [[ "${task}" == 'init' ]] ; then
     ## init task
-    promptdate "Pantagrel pipeline task $task: initiate pangenome database."
-    if [ "$runmode" == 'refreshconfig' ] ; then
-      if [ -z "$initfile" ] ; then
+    promptdate "Pantagrel pipeline task ${task}: initiate pangenome database."
+    if [ "${runmode}" == 'refreshconfig' ] ; then
+      if [ -z "${initfile}" ] ; then
         echo "Error: cannot use --refresh option without specifying a source config file with -i option"
         exit 1
       fi
@@ -578,25 +606,25 @@ for task in ${tasks} ; do
       eval "${ptginitcmd}"
     else
       # check presence of mandatory arguments
-      if [ -z "$ptgdbname" ] ; then
+      if [ -z "${ptgdbname}" ] ; then
        echo -e "Error: Must specify database name\n"
         usage
        exit 1
       fi
-      if [ -z "$ptgroot" ] ; then
+      if [ -z "${ptgroot}" ] ; then
        echo -e "Error: Must specify root directory location\n"
        usage
        exit 1
       fi
-      if [[ -z "$ncbiass" && -z "$listncbiass" && -z "$customassemb" ]] ; then
+      if [[ -z "${ncbiass}" && -z "${listncbiass}" && -z "${customassemb}" ]] ; then
        echo -e "Error: Must specify at least one folder of input assemblies with options '-A', '-L' or '-a', or any combination of them.\n"
        usage
        exit 1
       fi
       ptgenvsetdefaults
-      export ptginitcmd="pantagruel $ptgcmdargs"
+      export ptginitcmd="pantagruel ${ptgcmdargs}"
       ${ptgscripts}/pipeline/pantagruel_pipeline_init.sh
-      checkexectask "$task"
+      checkexectask "${task}"
     fi
   else
     ## runtime task
@@ -605,47 +633,51 @@ for task in ${tasks} ; do
       usage
       exit 1
     fi
-    case "$task" in
+    case "${task}" in
     0)
-     promptdate "Pantagrel pipeline task $task: fetch public genome data from NCBI sequence databases and annotate private genomes."
+     promptdate "Pantagrel pipeline task ${task}: fetch public genome data from NCBI sequence databases and annotate private genomes."
      ${ptgscripts}/pipeline/pantagruel_pipeline_00_fetch_data.sh ${initfile}
      checkexectask "$task" ;;
     1)
-     promptdate "Pantagrel pipeline task $task: classify protein sequences into homologous families."
+     promptdate "Pantagrel pipeline task ${task}: classify protein sequences into homologous families."
      ${ptgscripts}/pipeline/pantagruel_pipeline_01_homologous_seq_families.sh ${initfile}
-     checkexectask "$task"  ;;
+     checkexectask "${task}"  ;;
     2)
-     promptdate "Pantagrel pipeline task $task: align homologous protein sequences and translate alignemnts into coding sequences."
+     promptdate "Pantagrel pipeline task ${task}: align homologous protein sequences and translate alignemnts into coding sequences."
      ${ptgscripts}/pipeline/pantagruel_pipeline_02_align_homologous_seq.sh ${initfile}
-     checkexectask "$task"  ;;
+     checkexectask "${task}"  ;;
     3)
-     promptdate "Pantagrel pipeline task $task: initiate SQL database and load genomic object relationships."
+     promptdate "Pantagrel pipeline task ${task}: initiate SQL database and load genomic object relationships."
      ${ptgscripts}/pipeline/pantagruel_pipeline_03_create_sqlite_db.sh ${initfile}
-     checkexectask "$task"  ;;
+     checkexectask "${task}"  ;;
     4)
-     promptdate "Pantagrel pipeline task $task: use InterProScan to functionally annotate proteins in the database."
+     promptdate "Pantagrel pipeline task ${task}: use InterProScan to functionally annotate proteins in the database."
      ${ptgscripts}/pipeline/pantagruel_pipeline_04_functional_annotation.sh ${initfile}
-     checkexectask "$task"  ;;
+     checkexectask "${task}"  ;;
     5)
-     promptdate "Pantagrel pipeline task $task: select core-genome markers and compute reference tree."
+     promptdate "Pantagrel pipeline task ${task}: select core-genome markers and compute reference tree."
      ${ptgscripts}/pipeline/pantagruel_pipeline_05_core_genome_ref_tree.sh ${initfile}
-     checkexectask "$task"  ;;
+     checkexectask "${task}"  ;;
     6)
-     promptdate "Pantagrel pipeline task $task: compute gene trees."
+     promptdate "Pantagrel pipeline task ${task}: compute gene trees."
      ${ptgscripts}/pipeline/pantagruel_pipeline_06_gene_trees.sh ${initfile}
-     checkexectask "$task"  ;;
+     checkexectask "${task}"  ;;
     7)
-     promptdate "Pantagrel pipeline task $task: compute species tree/gene tree reconciliations."
-     ${ptgscripts}/pipeline/pantagruel_pipeline_07_reconciliations.sh ${initfile}
-     checkexectask "$task"  ;;
+     promptdate "Pantagrel pipeline task ${task}: compute species tree/gene tree reconciliations with ${recmethod}."
+	 if [ "${recmethod}" == 'ALE' ] ; then
+       ${ptgscripts}/pipeline/pantagruel_pipeline_07_ALE_reconciliations.sh ${initfile}
+	 elif [ "${recmethod}" == 'ecceTERA' ] ; then
+       ${ptgscripts}/pipeline/pantagruel_pipeline_07_ecceTERA_reconciliations.sh ${initfile}
+	 fi
+     checkexectask "${task}"  ;;
     8)
-     promptdate "Pantagrel pipeline task $task: classify genes into orthologous groups (OGs) and search clade-specific OGs."
+     promptdate "Pantagrel pipeline task ${task}: classify genes into orthologous groups (OGs) and search clade-specific OGs."
      ${ptgscripts}/pipeline/pantagruel_pipeline_08_clade_specific_genes.sh ${initfile}
-     checkexectask "$task"  ;;
+     checkexectask "${task}"  ;;
     9)
-     promptdate "Pantagrel pipeline task $task: evaluate gene co-evolution and build gene association network."
+     promptdate "Pantagrel pipeline task ${task}: evaluate gene co-evolution and build gene association network."
      ${ptgscripts}/pipeline/pantagruel_pipeline_09_coevolution.sh ${initfile}
-     checkexectask "$task"  ;;
+     checkexectask "${task}"  ;;
      esac
   fi
 done

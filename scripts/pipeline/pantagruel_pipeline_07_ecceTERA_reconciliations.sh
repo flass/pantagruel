@@ -38,7 +38,7 @@ if [ -z ${reccolid} ] ; then
  reccolid=1
 fi
 # derived parameters
-if [ ${teraalgo} == 'amalgamate' ] ; then
+if [ ${ecceTERAalgo} == 'amalgamate' ] ; then
   # work on gene tree samples
   export rectype='ecceTERA_amalgamatedGchain'
   inputtrees="${coltreechains}/${collapsecond}/${replmethod}/*-Gtrees.nwk"
@@ -47,9 +47,9 @@ else
   # work on single ML gene tree with branch supports
   inputtrees="${bayesgenetrees}/${collapsecond}/*.con.tre"
   inputtreetag="contre"
-  if [ ${teraalgo:0:8} == 'collapse' ] ; then
+  if [ ${ecceTERAalgo:0:8} == 'collapse' ] ; then
     # ecceTERA uses branch supports to 'collapse' the unresolved clades (collapsing appraoch similar in principle but different from Pantagruel's')
-    export rectype="ecceTERA_collapsedGconstree_${teraalgo##*_}"
+    export rectype="ecceTERA_collapsedGconstree_${ecceTERAalgo##*_}"
   else
     export rectype='ecceTERA'
   fi

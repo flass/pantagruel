@@ -415,6 +415,17 @@ Options are detailed here:
                        Default is equivalent to providing the following string:
                           'cladesupp=70 ; subcladesupp=35 ; criterion=bs ; withinfun=median'
 
+    -e|--rec_method   {ALE|ecceTERA} choose the method to reconcile gene trees and the species tree.
+                       ALE (default): a probabilistic method to sample gene Duplication, Transfer and Loss (DTL) scenarios
+                        by amalgamating the likelihood of bayesian samples of trees (doi:10.1093/sysbio/syt003;doi:10.1093/sysbio/syt054).
+                        The likelihood-based approach can be heavy in memory use (several 10GB for one gene family scenario) and computation time.
+                        The option '-c' (to collapse gene trees prior to reconciliation) efficiently mitigates this issue as it generally reduces
+                        the compute time to minutes is highly recommmended when the dataset size grows (>30 bacterial genomes).
+                       ecceTERA: a parsimony method to sample gene DTL scenarios by amalgamating the likelihood of bayesian samples of trees
+                        under a model and procedure similar to ALE (doi:10.1093/bioinformatics/btw105).
+                        The parsimony apporach allows the use of this methods on large-scale datasets within a reasonable time and using little memory
+                        without having to resort to gene tree collapsing with option '-c' (but using it is possible and would make reconciliation even faster).
+
     -g|--genefam_list Path to gene family list file. Resticts the computation of gene trees and all subsequent analyses to a list of gene families.
                         This impacts all task from 06 and forward. The list has to be one gene family identifier per line.
                         Gene family ids have to refer to existing ones in the database, and therefore can only be defined after the running of task 02.
