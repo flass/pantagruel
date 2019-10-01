@@ -100,7 +100,7 @@ fi
 export reccoldate=$(date +%Y-%m-%d)
 
 if [[ -z "$terabin" ]] ; then
-  terabin=$(command -v ecceTERA)
+  terabin="$(command -v ecceTERA)"
 fi
 terasourcenote=""
 pathterabin=$(readlink -f ${terabin})

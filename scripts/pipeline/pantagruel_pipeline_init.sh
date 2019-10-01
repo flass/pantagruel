@@ -50,11 +50,11 @@ for parameqval in parameqvals:
 EOF
 )
   if [ ! -z "${parameqval}" ] ; then
-    echo "export ${parameqval}"
+    [[ "${runmode}" != 'wasrefresh' && "${chaintype}" == 'collapsed' ]] && echo "${parameqval}"
     eval "export ${parameqval}"
   else
     eval "paramdef=\${${param}def}"
-    echo "export ${param}=${paramdef}"
+    [[ "${runmode}" != 'wasrefresh' && "${chaintype}" == 'collapsed' ]] && echo "${param}=${paramdef}"
     eval "export ${param}=${paramdef}"
   fi
 done

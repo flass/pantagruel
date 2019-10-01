@@ -295,8 +295,8 @@ ptgenvsetdefaults (){
     fi
     if [ -z "${pseudocoremingenomes}" ] ; then
       echo "Default: will use a strict core-genome gene set, i.e. genes present in a single copy in all the studied genomes."
-      echo ""
 	  if [ "${runmode}" != 'wasrefresh' ] ; then
+        echo ""
         echo "!!! WARNING: strict core-genome definition can be very resctrictive, especially when including draft genome in the study."
         echo "You might prefer to use a pseudo-core genome definition instead, i.e. selecting gene present in a minimum fraction of genomes, for instance 98%."
         echo "A sensible threshold should avoid that selected genes have an approximately homogeneous distribution,"
@@ -304,6 +304,7 @@ ptgenvsetdefaults (){
         echo "To choose a sensible value, AFTER TASK 03, you can run the INTERACTIVE script:"
         echo "'${ptgscripts}/choose_min_genome_occurrence_pseudocore_genes.sh'"
         echo "and then manualy edit the value of variable 'pseudocoremingenomes' in the pantagruel configuration file."
+        echo ""
 	  fi
     else
       if [[ "${pseudocoremingenomes}" =~ ^[0-9]+$ ]]; then

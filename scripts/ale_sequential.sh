@@ -112,6 +112,10 @@ if [ -z "$maxpcmem" ] ; then
 fi
 
 # worklocal
+# worklocal='yes' indicates that there will be a specific machine where the 'compute work'
+# is to be done 'locally' (e.g. if using a HPC system, a worker node) 
+# that is different from the machine where the master/submission script is executed (e.g. login node),
+# implying file traficking between them at the begin and end of the job.
 echo "# worklocal:"
 if [ -z "$worklocal" ] ; then
   echo "(Use default)"

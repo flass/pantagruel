@@ -106,6 +106,10 @@ fi
 
 # worklocal
 echo "# worklocal:"
+# worklocal='yes' indicates that there will be a specific machine where the 'compute work'
+# is to be done 'locally' (e.g. if using a HPC system, a worker node) 
+# that is different from the machine where the master/submission script is executed (e.g. login node),
+# implying file traficking between them at the begin and end of the job.
 if [ -z "$worklocal" ] ; then
   echo "(Use default)"
   worklocal="no"
@@ -268,7 +272,7 @@ for nfchain in $(cat $tasklist) ; do
 
   TERATIME=$SECONDS
   if [ ! -z "$prevcomputetime" ] ; then TERATIME=$(( $TERATIME + $prevcomputetime )) ; fi
-  echo -e "$nfrad\t$alealgo\t$ALETIME" > $nfrad.ale.computetime
+  echo -e "$nfrad\t$alealgo\t$ALETIME" > $nfrad.ecceTERA.computetime
   echo "reconciliation estimation took" $(date -u -d @${TERATIME} +"%Hh%Mm%Ss") "total time"
   if [ ! -z "$prevcomputetime" ] ; then echo "(including ${prevcomputetime} in previous run)" ; fi
 
