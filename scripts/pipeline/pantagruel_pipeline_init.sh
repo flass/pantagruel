@@ -19,6 +19,7 @@ source ${ptgscripts}/pipeline/pantagruel_pipeline_functions.sh
 if [ -z ${initfile} ] ; then 
   templateenv=${ptgscripts}/pipeline/environ_pantagruel_template.sh
 else
+  echo "Use user-provided template for config  file: ${initfile}"
   templateenv=${initfile}
 fi
 
@@ -93,18 +94,13 @@ fi
 
 ## load generic environment variables derived from the above
 source ${envsourcescript}
+checkexec "Succesfully created config file at '${envsourcescript}'"
 
-if [ -z "${initfile}" ] ; then 
-  echo "created init file at '${envsourcescript}'"
-elif [ "${runmode}" == 'wasrefresh' ] ; then
-  echo "updated init file save at '${envsourcescript}' ; refresh mode: skip input folder checks."
+if [ "${runmode}" == 'wasrefresh' ] ; then
+  echo "refresh mode: skip input folder checks."
   exit 0
-else
-  echo "updated init file save at '${envsourcescript}'"
-fi
-
-if [[ "${runmode}" == 'force' ]] ; then
-  echo "FORCE mode: pantagruel init will skip the checks on dataset integrity; the following tasks may fail if these tests are not clear."
+elif [[ "${runmode}" == 'force' ]] ; then
+  echo "FORCE mode: pantagruel init will skip the checks on input dataset integrity; the following tasks may fail if these tests are not clear."
   exit 0
 fi
 
