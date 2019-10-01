@@ -682,7 +682,7 @@ for task in ${tasks} ; do
      checkexectask "${task}"  ;;
     7)
      promptdate "Pantagrel pipeline task ${task}: compute species tree/gene tree reconciliations."
-	 ${ptgscripts}/pipeline/pantagruel_pipeline_07_reconciliations.sh ${initfile}
+	 ${ptgscripts}/pipeline/pantagruel_pipeline_07_reconciliations_wrapper.sh ${initfile}
      checkexectask "${task}"  ;;
     8)
      promptdate "Pantagrel pipeline task ${task}: classify genes into orthologous groups (OGs) and search clade-specific OGs."
