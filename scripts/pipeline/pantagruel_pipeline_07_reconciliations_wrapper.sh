@@ -17,17 +17,14 @@ if [ ! -z "$2" ] ; then
   export genefamlist="$2"
 fi
 
-checkptgversion
-checkfoldersafe ${alerec}
-
 ###############################################
 ## 07. Gene tree / Species tree reconciliations
 ###############################################
 
 echo "Will use the reconciliation method: ${recmethod}"
 if [ "${recmethod}" == 'ALE' ] ; then
-  ${ptgscripts}/pipeline/pantagruel_pipeline_07_ALE_reconciliations.sh ${initfile}
+  ${ptgscripts}/pipeline/pantagruel_pipeline_07_ALE_reconciliations.sh ${envsourcescript}
 elif [ "${recmethod}" == 'ecceTERA' ] ; then
-  ${ptgscripts}/pipeline/pantagruel_pipeline_07_ecceTERA_reconciliations.sh ${initfile}
+  ${ptgscripts}/pipeline/pantagruel_pipeline_07_ecceTERA_reconciliations.sh ${envsourcescript}
 fi
 checkexec "Could not complete reconciliations with ${recmethod}" "Successfully reconciled gene trees with ${recmethod}"
