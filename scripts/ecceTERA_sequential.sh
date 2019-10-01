@@ -244,14 +244,12 @@ for nfchain in $(cat $tasklist) ; do
       echo "# ${alebin}ALEobserve ${chain} burnin=${burnin%%.*}"
       ${alebin}ALEobserve ${chain} burnin=${burnin%%.*}
     fi
-    date
-  fi
+    promptdate
   
-  runopt="$(makerunopt ${stree} ${bnchain} ${outputdir})"
-  teracmd="ecceTERA ${runopt} ${commonopt} ale=1 amalgamate=1"
-  echo "# ${teracmd}"
-  ${teracmd}
-  
+    runopt="$(makerunopt ${stree} ${bnchain} ${outputdir})"
+    teracmd="ecceTERA ${runopt} ${commonopt} ale=1 amalgamate=1"
+    echo "# ${teracmd}"
+    ${teracmd}
   
   else
     # take single Newick gene tree as input, e.g. the gene tree chain consensus, or a ML tree
