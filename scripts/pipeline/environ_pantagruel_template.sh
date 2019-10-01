@@ -43,6 +43,7 @@ export popbsthresh='REPLACEpopbsthresh'                    # parameter to define
 export rootingmethod='REPLACErootingmethod'
 export chaintype='REPLACEchaintype'                        # whether gene trees will be collapsed ('collapsed', if -c option enabled) or not ('fullgenetree', default)
 export genefamlist='REPLACEgenefamlist'                    # list of gene families for which computation of gene trees and all subsequent analyses will be restricted (default: no restriction)
+export recmethod='REPLACErecmethod'                        # genetree/species tree reconciliation method: 'ALE' or 'ecceTERA'
 # non-default parameters for gene trees collapsing derived from -C option value (passed to init script via ${collapseCladeParams}): 
 export cladesupp=REPLACEcladesupp                          # - clade criterion trheshold (int)
 export subcladesupp=REPLACEsubcladesupp                    # - wihtin-clade criterion trheshold (int)

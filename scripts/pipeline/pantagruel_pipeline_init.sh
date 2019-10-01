@@ -73,7 +73,7 @@ echo -n "tail -n +16 ${templateenv}" > ${ptgtmp}/sedenvvar.sh
 for var in 'ptginitcmd' 'ptgdbname' 'ptgroot' 'ptgrepo' 'ptgversinit' 'myemail' 'famprefix' \
      'ncbitax' 'ncbiass' 'listncbiass' 'customassemb' 'refass' 'listrefass' \
      'pseudocoremingenomes' 'userreftree' 'coreseqtype' 'poplgthresh' 'poplgleafmul' 'popbsthresh' 'rootingmethod' \
-     'chaintype' 'cladesupp' 'subcladesupp' 'criterion' 'withinfun' 'hpcremoteptgroot' 'genefamlist' ; do
+     'chaintype' 'cladesupp' 'subcladesupp' 'criterion' 'withinfun' 'hpcremoteptgroot' 'genefamlist' 'recmethod' ; do
 echo -n " | sed -e \"s#REPLACE${var}#\${${var}}#\"" >> ${ptgtmp}/sedenvvar.sh
 done
 echo -n " >> ${envsourcescript}" >> ${ptgtmp}/sedenvvar.sh
