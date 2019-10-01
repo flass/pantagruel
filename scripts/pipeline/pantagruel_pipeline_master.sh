@@ -294,15 +294,17 @@ ptgenvsetdefaults (){
       echo "Default: set gene tree/species tree reconciliation method to '${recmethod}'"
     fi
     if [ -z "${pseudocoremingenomes}" ] ; then
-     echo "Default: will use a strict core-genome gene set, i.e. genes present in a single copy in all the studied genomes."
-     echo ""
-     echo "!!! WARNING: strict core-genome definition can be very resctrictive, especially when including draft genome in the study."
-     echo "You might prefer to use a pseudo-core genome definition instead, i.e. selecting gene present in a minimum fraction of genomes, for instance 98%."
-     echo "A sensible threshold should avoid that selected genes have an approximately homogeneous distribution,"
-     echo "notably that the absent fraction is not restricted to a few genomes. This threshold will thus depend on the dataset."
-     echo "To choose a sensible value, AFTER TASK 03, you can run the INTERACTIVE script:"
-     echo "'${ptgscripts}/choose_min_genome_occurrence_pseudocore_genes.sh'"
-     echo "and then manualy edit the value of variable 'pseudocoremingenomes' in the pantagruel configuration file."
+      echo "Default: will use a strict core-genome gene set, i.e. genes present in a single copy in all the studied genomes."
+      echo ""
+	  if [ "${runmode}" != 'wasrefresh' ] ; then
+        echo "!!! WARNING: strict core-genome definition can be very resctrictive, especially when including draft genome in the study."
+        echo "You might prefer to use a pseudo-core genome definition instead, i.e. selecting gene present in a minimum fraction of genomes, for instance 98%."
+        echo "A sensible threshold should avoid that selected genes have an approximately homogeneous distribution,"
+        echo "notably that the absent fraction is not restricted to a few genomes. This threshold will thus depend on the dataset."
+        echo "To choose a sensible value, AFTER TASK 03, you can run the INTERACTIVE script:"
+        echo "'${ptgscripts}/choose_min_genome_occurrence_pseudocore_genes.sh'"
+        echo "and then manualy edit the value of variable 'pseudocoremingenomes' in the pantagruel configuration file."
+	  fi
     else
       if [[ "${pseudocoremingenomes}" =~ ^[0-9]+$ ]]; then
       	 echo "'pseudocoremingenomes' variable is set to ${pseudocoremingenomes}; this integer value is interpreted as a number of genomes"
@@ -602,7 +604,6 @@ echo "# will run tasks: $tasks"
 for task in ${tasks} ; do
   if [[ "${task}" == 'init' ]] ; then
     ## init task
-    promptdate "Pantagrel pipeline task ${task}: initiate pangenome database."
     if [ "${runmode}" == 'refreshconfig' ] ; then
       if [ -z "${initfile}" ] ; then
         echo "Error: cannot use --refresh option without specifying a source config file with -i option"
@@ -638,6 +639,7 @@ for task in ${tasks} ; do
       fi
       ptgenvsetdefaults
       export ptginitcmd="pantagruel ${ptgcmdargs}"
+      promptdate "Pantagrel pipeline task ${task}: initiate pangenome database."
       ${ptgscripts}/pipeline/pantagruel_pipeline_init.sh
       checkexectask "${task}"
     fi
