@@ -67,9 +67,16 @@ usagelong (){
   echo "    --refresh         (no value) Use in combination with the -i option above to simply refresh the configuration file"
   echo "                        (e.g. after an update of the software) the program will simply re-run the \`pantagruel [options] init\` command"
   echo "                        that has been previously used to generate the config file; hence there is no need to repeat any other option."
-  echo "                        (even -d and - r options can be omitted if -i --refresh is used)"
+  echo "                        (even -d and -r options can be omitted if \`pantagruel -i config_file --refresh init\` is used)"
   echo "                        Note that when options had quoted string arguments, unpredictable behaviour might occur;"
   echo "                        please verify the outcome in the regenerated config file."
+  echo "						 New options can be added _after_ the --refresh option to change the value of environment variables in the config file:"
+  echo "						   to set non-default values if not already, e.g. turn on collapsing:"
+  echo "						     \`pantagruel -i config_file --refresh -c init\`"
+  echo "						   to revert to default values, e.g. turn off collapsing:"
+  echo "						     \`pantagruel -i config_file --refresh --no_colapse init\`"
+  echo "					       to do both, e.g. turn off collapsing and switch to use ecceTERA recconciliation method:"
+  echo "						     \`pantagruel -i config_file --refresh --no_colapse -e ecceTERA init\`"                       
   echo ""
   echo " General configuration options:"
   echo ""
@@ -180,7 +187,10 @@ usagelong (){
   echo "                        If set at init stage, this option will be maintained for all tasks. However, the remote address"
   echo "                        can be updated when calling a specific task; string 'none' cancels the HPC behaviour."
   echo ""
-  echo "    -c|--collapse     (no value) enable collapsing the rake clades in the gene trees (strongly recomended in datasets of size > 50 genomes)."
+  echo "    -c|--collapse     (no value) enable collapsing the rake clades in the gene trees (strongly recomended in datasets of size >50 genomes)."
+  echo ""
+  echo "    --no_collapse     (no value) disable collapsing the rake clades in the gene trees"
+  echo "                       (default; use this option in combination with -i --refresh to restore default behaviour when -c was used in previous runs)."
   echo ""
   echo "    --collapse_param  quoted string. specify parameters for collapsing the rake clades in the gene trees."
   echo "                        A single-quoted, semicolon-delimited string containing variable definitions must be provided."
@@ -192,7 +202,7 @@ usagelong (){
   echo "                        by amalgamating the likelihood of bayesian samples of trees (doi:10.1093/sysbio/syt003;doi:10.1093/sysbio/syt054)."
   echo "                        The likelihood-based approach can be heavy in memory use (several 10GB for one gene family scenario) and computation time."
   echo "                        The option '-c' (to collapse gene trees prior to reconciliation) efficiently mitigates this issue as it generally reduces"
-  echo "                        the compute time to minutes is highly recommmended when the dataset size grows (>30 bacterial genomes)."
+  echo "                        the compute time to minutes is highly recommmended when the dataset size grows (>50 bacterial genomes)."
   echo "                       ecceTERA: a parsimony method to sample gene DTL scenarios by amalgamating the likelihood of bayesian samples of trees"
   echo "                        under a model and procedure similar to ALE (doi:10.1093/bioinformatics/btw105)."
   echo "                        The parsimony apporach allows the use of this methods on large-scale datasets within a reasonable time and using little memory"
@@ -349,7 +359,7 @@ promptdate () {
   echo $(date +'[%Y-%m-%d %H:%M:%S]') ${1}
 }
 
-ARGS=`getopt --options "d:r:i:I:f:a:T:A:L:s:t:RV:N:H:cg:e:hFz" --longoptions "dbname:,rootdir:,initfile:,refresh,iam:,famprefix:,refseq_ass:,refseq_list:,refseq_ass4annot:,refseq_list4annot:,custom_ass:,taxonomy:,pseudocore:,core_seqtype:,pop_lg_thresh:,pop_bs_thresh:,rooting:,reftree:,resume,env_var:,threads:,submit_hpc:,collapse,collapse_param:,genefam_list:,rec_method:,help,FORCE,compress" --name "pantagruel" -- "$@"`
+ARGS=`getopt --options "d:r:i:I:f:a:T:A:L:s:t:RV:N:H:cg:e:hFz" --longoptions "dbname:,rootdir:,initfile:,refresh,iam:,famprefix:,refseq_ass:,refseq_list:,refseq_ass4annot:,refseq_list4annot:,custom_ass:,taxonomy:,pseudocore:,core_seqtype:,pop_lg_thresh:,pop_bs_thresh:,rooting:,reftree:,resume,env_var:,threads:,submit_hpc:,collapse,no_collapse,collapse_param:,genefam_list:,rec_method:,help,FORCE,compress" --name "pantagruel" -- "$@"`
 
 #Bad arguments
 if [ ${?} -ne 0 ];
@@ -512,6 +522,11 @@ do
     -c|--collapse)
       export chaintype="collapsed"
       echo "gene tree clade collapsing enabled"
+      shift ;;
+	
+    --no_collapse)
+      export chaintype=""
+      echo "gene tree clade collapsing disabled"
       shift ;;
 
     --collapse_param)

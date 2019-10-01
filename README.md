@@ -298,9 +298,16 @@ Options are detailed here:
     --refresh          (no value) Use in combination with the -i option above to simply refresh the configuration file.
                          (e.g. after an update of the software) the program will simply re-run the `pantagruel [options] init` command
                          that has been previously used to generate the config file; hence there is no need to repeat any other option.
-                         (even -d and - r options can be omitted if -i --refresh is used)
+                         (even -d and -r options can be omitted if `pantagruel -i config_file --refresh init` is used)
                          Note that when options had quoted string arguments, unpredictable behaviour might occur;
                          please verify the outcome in the regenerated config file.
+						 New options can be added _after_ the --refresh option to change the value of environment variables in the config file:
+						   to set non-default values if not already, e.g. turn on collapsing:
+						     `pantagruel -i config_file --refresh -c init`
+						   to revert to default values, e.g. turn off collapsing:
+						     `pantagruel -i config_file --refresh --no_colapse init`
+						   to do both, e.g. turn off collapsing and switch to use ecceTERA recconciliation method:
+						     `pantagruel -i config_file --refresh --no_colapse -e ecceTERA init`
                          
  General configuration options:
 
@@ -408,7 +415,10 @@ Options are detailed here:
                        If set at init stage, this option will be maintained for all tasks. However, the remote address
                        can be updated when calling a specific task; string 'none' cancels the HPC behaviour.
 
-    -c|--collapse    (no value) Enable collapsing the rake clades in the gene trees (strongly recomended in datasets of size > 50 genomes).
+    -c|--collapse    (no value) Enable collapsing the rake clades in the gene trees (strongly recomended in datasets of size >50 genomes).
+
+    --no_collapse    (no value) disable collapsing the rake clades in the gene trees"
+                       (default; use this option in combination with -i --refresh to restore default behaviour when -c was used in previous runs)."
 
     -C|--collapse_par  quoted string. Specifies parameters for collapsing the rake clades in the gene trees.
                        A single-quoted, semicolon-delimited string containing variable definitions must be provided.
@@ -420,7 +430,7 @@ Options are detailed here:
                         by amalgamating the likelihood of bayesian samples of trees (doi:10.1093/sysbio/syt003;doi:10.1093/sysbio/syt054).
                         The likelihood-based approach can be heavy in memory use (several 10GB for one gene family scenario) and computation time.
                         The option '-c' (to collapse gene trees prior to reconciliation) efficiently mitigates this issue as it generally reduces
-                        the compute time to minutes is highly recommmended when the dataset size grows (>30 bacterial genomes).
+                        the compute time to minutes is highly recommmended when the dataset size grows (>50 bacterial genomes).
                        ecceTERA: a parsimony method to sample gene DTL scenarios by amalgamating the likelihood of bayesian samples of trees
                         under a model and procedure similar to ALE (doi:10.1093/bioinformatics/btw105).
                         The parsimony apporach allows the use of this methods on large-scale datasets within a reasonable time and using little memory
