@@ -186,8 +186,8 @@ else
    echo "skip identical sequence removal in core alignment"
   else
    echo "# check alignment and search for identical sequences"
-   mv -f ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_discarded$( date '+%Y-%M-%d-%H-%m-%S').${treename}
-   mv -f ${ptglogs}/raxml/${treename}.ML_brlen.log ${ptglogs}/raxml/${treename}.check.log_discarded$( date '+%Y-%M-%d-%H-%m-%S')
+   [ -e ${coretree}/RAxML_info.${treename} ] && mv -f ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_discarded$( date '+%Y-%M-%d-%H-%m-%S').${treename}
+   [ -e ${ptglogs}/raxml/${treename}.check.log ] && mv -f ${ptglogs}/raxml/${treename}.check.log ${ptglogs}/raxml/${treename}.check.log_discarded$( date '+%Y-%M-%d-%H-%m-%S')
    echo "# call: $raxmlbin -s ${pseudocorealn} ${raxmloptions} -f c" > ${ptglogs}/raxml/${treename}.check.log
    $raxmlbin -s ${pseudocorealn} ${raxmloptions} -f c &>> ${ptglogs}/raxml/${treename}.check.log
    checkexec "failed to remove identical sequence in core alignment" 
@@ -231,8 +231,8 @@ else
    else
     # initial search
     echo "ML tree topology search"
-	mv -f ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_discarded$( date '+%Y-%M-%d-%H-%m-%S').${treename}
-	mv -f ${ptglogs}/raxml/${treename}.ML_brlen.log ${ptglogs}/raxml/${treename}.ML_topo.log_discarded$( date '+%Y-%M-%d-%H-%m-%S')
+	[ -e ${coretree}/RAxML_info.${treename} ] && mv -f ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_discarded$( date '+%Y-%M-%d-%H-%m-%S').${treename}
+	[ -e ${ptglogs}/raxml/${treename}.ML_topo.log ] && mv -f ${ptglogs}/raxml/${treename}.ML_topo.log ${ptglogs}/raxml/${treename}.ML_topo.log_discarded$( date '+%Y-%M-%d-%H-%m-%S')
     echo "# call: $raxmlbin -s ${coretreealn} ${raxmloptions} -F" > ${ptglogs}/raxml/${treename}.ML_topo.log
     $raxmlbin -s ${coretreealn} ${raxmloptions} -F &>> ${ptglogs}/raxml/${treename}.ML_topo.log
    fi
@@ -253,8 +253,8 @@ else
       echo "found best tree parameter & branch length file '${coretree}/RAxML_bestTree.${treename}'"
     else
       echo "ML tree parameter & branch length search under GAMMA-based model"
-	  mv -f ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_discarded$( date '+%Y-%M-%d-%H-%m-%S').${treename}
-	  mv -f ${ptglogs}/raxml/${treename}.ML_brlen.log ${ptglogs}/raxml/${treename}.ML_brlen.log_discarded$( date '+%Y-%M-%d-%H-%m-%S')
+	  [ -e ${coretree}/RAxML_info.${treename} ] && mv -f ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_discarded$( date '+%Y-%M-%d-%H-%m-%S').${treename}
+	  [ -e ${ptglogs}/raxml/${treename}.ML_brlen.log ] && mv -f ${ptglogs}/raxml/${treename}.ML_brlen.log ${ptglogs}/raxml/${treename}.ML_brlen.log_discarded$( date '+%Y-%M-%d-%H-%m-%S')
       echo "# call: $raxmlbin -s ${coretreealn} ${raxmloptionsG} -f e -t ${nrbesttopo}" > ${ptglogs}/raxml/${treename}.ML_brlen.log
       $raxmlbin -s ${coretreealn} ${raxmloptionsG} -f e -t ${nrbesttopo} &>> ${ptglogs}/raxml/${treename}.ML_brlen.log
     fi
