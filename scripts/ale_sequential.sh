@@ -121,9 +121,9 @@ if [ -z "$worklocal" ] ; then
   echo "(Use default)"
   worklocal="no"
 else
-  if [[ "$worklocal"=="n" || "$worklocal"=="false" ]] ; then
+  if [[ "$worklocal" == "n" || "$worklocal" == "false" ]] ; then
     worklocal="no"
-  elif [[ "$worklocal"=="y" || "$worklocal"=="true" ]] ; then
+  elif [[ "$worklocal" == "y" || "$worklocal" == "true" ]] ; then
     worklocal="yes"
   fi
 fi
@@ -163,7 +163,7 @@ for nfchain in $(cat $tasklist) ; do
   bnstree=`basename $nfstree`
 
   ####
-  if [[ "$worklocal"=="yes" ]] ; then
+  if [[ "$worklocal" == "yes" ]] ; then
     # copy input files locally
     rsync -az ${nfchain} ${nfstree} ./
     ls -lh ${bnchain} ${bnstree}
@@ -204,16 +204,18 @@ for nfchain in $(cat $tasklist) ; do
   echo ""
 
   if [[ -e ${nfchain}.ale ]] ; then
-    if [[ "$worklocal"=="yes" ]] ; then
+    if [[ "$worklocal" == "yes" ]] ; then
      # copy input files locally
      rsync -az ${nfchain}.ale ./
     fi
     echo "use pre-existing ALE index file:"
-    ls ${nfchain}.ale
+    ls -lh ${nfchain}.ale
   elif [[ -e ${resultdir}/${bnchain}.ale ]] ; then
-    if [[ "$worklocal"=="yes" ]] ; then
+    if [[ "$worklocal" == "yes" ]] ; then
      # copy input files locally
      rsync -az ${resultdir}/${bnchain}.ale ./
+	else
+	 ln -s ${resultdir}/${bnchain}.ale ${chain}.ale
     fi
     echo "use pre-existing ALE index file:"
     ls -lh ${chain}.ale
@@ -292,7 +294,7 @@ for nfchain in $(cat $tasklist) ; do
       exit 1
     fi
   fi
-  if [[ "$worklocal"=="yes" ]] ; then
+  if [[ "$worklocal" == "yes" ]] ; then
     # remove local copies of input/output files
     rm -f ./${nfrad}*
   fi

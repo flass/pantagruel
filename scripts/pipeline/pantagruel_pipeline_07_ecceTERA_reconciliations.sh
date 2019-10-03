@@ -71,7 +71,7 @@ mkdir -p $alelogs/${reccol}
 outrecdir=${recs}/${collapsecond}/${replmethod}/${reccol}
 mkdir -p $outrecdir
 
-cd ${ptgtmp} 
+cd ${ptgtmp}/
 
 
 if [ "${resumetask}" == 'true' ] ; then

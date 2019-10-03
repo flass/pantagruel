@@ -114,9 +114,9 @@ if [ -z "$worklocal" ] ; then
   echo "(Use default)"
   worklocal="no"
 else
-  if [[ "$worklocal"=="n" || "$worklocal"=="false" ]] ; then
+  if [[ "$worklocal" == "n" || "$worklocal" == "false" ]] ; then
     worklocal="no"
-  elif [[ "$worklocal"=="y" || "$worklocal"=="true" ]] ; then
+  elif [[ "$worklocal" == "y" || "$worklocal" == "true" ]] ; then
     worklocal="yes"
   fi
 fi
@@ -214,7 +214,7 @@ for nfchain in $(cat $tasklist) ; do
   # start timing in seconds
   SECONDS=0
  
-  if [[ "${teraalgo:0:10}"=='amalgamate' ]] ; then
+  if [[ "${teraalgo:0:10}" == 'amalgamate' ]] ; then
     # take multiple Newick gene trees as input, i.e a gene tree chain
 	# this is the recomended option.
 	#
@@ -223,16 +223,18 @@ for nfchain in $(cat $tasklist) ; do
 	
     if [[ -e ${nfchain}.ale ]] ; then
       # will use ALEobserve to produce .ale file of amalgamated gene trees from the input gene tree chain, with defined burn-in fraction
-      if [[ "$worklocal"=="yes" ]] ; then
+      if [[ "$worklocal" == "yes" ]] ; then
         # copy input files locally
         rsync -az ${nfchain}.ale ./
       fi
       echo "use pre-existing ALE index file:"
       ls ${nfchain}.ale
     elif [[ -e ${resultdir}/${bnchain}.ale ]] ; then
-      if [[ "$worklocal"=="yes" ]] ; then
+      if [[ "$worklocal" == "yes" ]] ; then
         # copy input files locally
         rsync -az ${resultdir}/${bnchain}.ale ./
+	  else
+	    ln -s ${resultdir}/${bnchain}.ale ${chain}.ale
       fi
       echo "use pre-existing ALE index file:"
       ls -lh ${chain}.ale
@@ -246,19 +248,19 @@ for nfchain in $(cat $tasklist) ; do
     fi
     promptdate
   
-    runopt="$(makerunopt ${stree} ${bnchain}.ale ${resultdir})"
+    runopt="$(makerunopt ${stree} ${chain}.ale ${resultdir})"
     teracmd="ecceTERA ${runopt} ${commonopt} ale=1 amalgamate=1"
     echo "# ${teracmd}"
     ${teracmd}
   
   else
     # take single Newick gene tree as input, e.g. the gene tree chain consensus, or a ML tree
-	if [ ! -s ${bnchain}.nwk ] ; then
+	if [ ! -s ${chain}.nwk ] ; then
 	  # assume the input gene tree is a Nexus-formated consensus gene tree, as obtained from Mr Bayes (with 2 tree blocks)
 	  # converts it from Nexus to Newick
-	  python ${ptgscripts}/convert_mrbayes_constree_nex2nwk.py ${bnchain}
+	  python ${ptgscripts}/convert_mrbayes_constree_nex2nwk.py ${chain}
 	fi
-	runopt="$(makerunopt ${stree} ${bnchain}.nwk ${resultdir})"
+	runopt="$(makerunopt ${stree} ${chain}.nwk ${resultdir})"
 	teracmd="ecceTERA ${runopt} ${commonopt} ${collapseopts}"
 	echo "# ${teracmd}"
 	${teracmd}
@@ -269,24 +271,24 @@ for nfchain in $(cat $tasklist) ; do
   echo "# # # #"
 
   TERATIME=$SECONDS
-  if [ ! -z "$prevcomputetime" ] ; then TERATIME=$(( $TERATIME + $prevcomputetime )) ; fi
-  echo -e "$nfrad\t$alealgo\t$ALETIME" > $nfrad.ecceTERA.computetime
+  if [ ! -z "${prevcomputetime}" ] ; then TERATIME=$(( ${TERATIME} + ${prevcomputetime} )) ; fi
+  echo -e "${nfrad}\t${alealgo}\t${ALETIME}" > $nfrad.ecceTERA.computetime
   echo "reconciliation estimation took" $(date -u -d @${TERATIME} +"%Hh%Mm%Ss") "total time"
-  if [ ! -z "$prevcomputetime" ] ; then echo "(including ${prevcomputetime} in previous run)" ; fi
+  if [ ! -z "${prevcomputetime}" ] ; then echo "(including ${prevcomputetime} in previous run)" ; fi
 
   echo "# ls ./${nfrad}*"
   ls ./${nfrad}*
 
   # save files
   ls ./${nfrad}* > /dev/null
-  if [ $? == 0 ] ; then
-    savecmd1="$savecmd ./${nfrad}* $resultdir/"
-    echo "# $savecmd1"
-    $savecmd1
-    checkexec "unable to transfer result files from $PWD/ to $resultdir/" "succesfuly transferred result files from $PWD/ to $resultdir/"
+  if [ ${?} == 0 ] ; then
+    savecmd1="${savecmd} ./${nfrad}* ${resultdir}/"
+    echo "# ${savecmd1}"
+    ${savecmd1}
+    checkexec "unable to transfer result files from ${PWD}/ to ${resultdir}/" "succesfuly transferred result files from ${PWD}/ to ${resultdir}/"
   else
     ls ${dnchain}/${nfrad}* > /dev/null
-    if [ $? == 0 ] ; then
+    if [ ${?} == 0 ] ; then
       savecmd2="$savecmd ${dnchain}/${nfrad}* $resultdir/"
       echo "# $savecmd2"
       $savecmd2
@@ -296,7 +298,7 @@ for nfchain in $(cat $tasklist) ; do
       exit 1
     fi
   fi
-  if [[ "$worklocal"=="yes" ]] ; then
+  if [[ "$worklocal" == "yes" ]] ; then
     # remove local copies of input/output files
     rm -f ./${nfrad}*
   fi
