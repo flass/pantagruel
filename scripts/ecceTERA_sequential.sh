@@ -246,7 +246,7 @@ for nfchain in $(cat $tasklist) ; do
     fi
     promptdate
   
-    runopt="$(makerunopt ${stree} ${bnchain} ${resultdir})"
+    runopt="$(makerunopt ${stree} ${bnchain}.ale ${resultdir})"
     teracmd="ecceTERA ${runopt} ${commonopt} ale=1 amalgamate=1"
     echo "# ${teracmd}"
     ${teracmd}
@@ -256,7 +256,7 @@ for nfchain in $(cat $tasklist) ; do
 	if [ ! -s ${bnchain}.nwk ] ; then
 	  # assume the input gene tree is a Nexus-formated consensus gene tree, as obtained from Mr Bayes (with 2 tree blocks)
 	  # converts it from Nexus to Newick
-	  python convert_mrbayes_constree_nex2nwk.py ${bnchain}
+	  python ${ptgscripts}/convert_mrbayes_constree_nex2nwk.py ${bnchain}
 	fi
 	runopt="$(makerunopt ${stree} ${bnchain}.nwk ${resultdir})"
 	teracmd="ecceTERA ${runopt} ${commonopt} ${collapseopts}"
