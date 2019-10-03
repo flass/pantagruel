@@ -143,7 +143,7 @@ else
 	 checkexec "failed to define the pseudo-core genome gene family set" "defined the pseudo-core genome gene family set with success"
 fi
 
-if  [[ "${resumetask}" == "true" && -s ${speciestree} ]] ; then
+if  [[ "${resumetask}" == "true" && -s "$(readlink -f ${speciestree})" ]] ; then
   echo "found reference tree in file '${speciestree}' ; skip reference tree inferrence"
 else
   ### compute reference tree from (pseudo-)core genome
@@ -185,11 +185,14 @@ else
   if [[ "${resumetask}" == "true" && -e ${pseudocorealn}.identical_sequences ]] ; then
    echo "skip identical sequence removal in core alignment"
   else
+   echo "# check alignment and search for identical sequences"
+   mv -f ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_discarded$( date '+%Y-%M-%d-%H-%m-%S').${treename}
+   mv -f ${ptglogs}/raxml/${treename}.ML_brlen.log ${ptglogs}/raxml/${treename}.check.log_discarded$( date '+%Y-%M-%d-%H-%m-%S')
    echo "# call: $raxmlbin -s ${pseudocorealn} ${raxmloptions} -f c" > ${ptglogs}/raxml/${treename}.check.log
    $raxmlbin -s ${pseudocorealn} ${raxmloptions} -f c &>> ${ptglogs}/raxml/${treename}.check.log
    checkexec "failed to remove identical sequence in core alignment" 
    if [ -e "${pseudocorealn}.reduced" ] ; then
-     echo "removed identical sequence in core alignment; reduced alignemnt stored in file '${pseudocorealn}.reduced'"
+     echo "removed identical sequence in core alignment; reduced alignment stored in file '${pseudocorealn}.reduced'"
    else
      echo "no identical sequence was found in the core alignment"
    fi
@@ -209,7 +212,7 @@ else
   # search ML tree topology on (reduced) alignment nuder CAT-based model and with -F option
   # this means no final thorough tree optimization is conducted under GAMMA-based model
   # and the output file is thus RAxML_result.* (not RAxML_bestTree.*) ; to avoid overwriting by next step, it is automatically renamed as RAxML_resultTopo.* 
-  if [[ "${resumetask}" == "true" && -s ${nrbesttopo} ]] ; then
+  if [[ "${resumetask}" == "true" && -s "$(readlink -f ${nrbesttopo})" ]] ; then
    # ML tree search already done
    echo "skip ML tree topology search"
   else
@@ -220,7 +223,7 @@ else
     else
       # resume search from checkpoint
       echo "resume ML tree topology search from checkpoint ${ckps[0]##*.}"
-      mv ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_bestTree.${treename}.up_to_ckp${ckps[0]##*.}
+      mv ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_result.${treename}.up_to_ckp${ckps[0]##*.}
       mv ${ptglogs}/raxml/${treename}.ML_topo.log ${ptglogs}/raxml/${treename}.ML_topo.log.up_to_ckp${ckps[0]##*.}
       echo "# call: $raxmlbin -s ${coretreealn} ${raxmloptions} -F -t ${ckps[0]}" > ${ptglogs}/raxml/${treename}.ML_topo.log
       $raxmlbin -s ${coretreealn} ${raxmloptions} -F -t ${ckps[0]} &>> ${ptglogs}/raxml/${treename}.ML_topo.log
@@ -228,6 +231,8 @@ else
    else
     # initial search
     echo "ML tree topology search"
+	mv -f ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_discarded$( date '+%Y-%M-%d-%H-%m-%S').${treename}
+	mv -f ${ptglogs}/raxml/${treename}.ML_brlen.log ${ptglogs}/raxml/${treename}.ML_topo.log_discarded$( date '+%Y-%M-%d-%H-%m-%S')
     echo "# call: $raxmlbin -s ${coretreealn} ${raxmloptions} -F" > ${ptglogs}/raxml/${treename}.ML_topo.log
     $raxmlbin -s ${coretreealn} ${raxmloptions} -F &>> ${ptglogs}/raxml/${treename}.ML_topo.log
    fi
@@ -240,7 +245,7 @@ else
   
   # now optimize the branch length and model parameters on ML tree topology under GAMMA-based model with -f e option
   # the output file is also RAxML_result.* ; for clarity and backward comaptibility reasons, it is automatically renamed as RAxML_bestTree.*
-  if [[ "${resumetask}" == "true" && -s ${nrbesttree} ]] ; then
+  if [[ "${resumetask}" == "true" && -s "$(readlink -f ${nrbesttree})" ]] ; then
    # ML tree search already done
    echo "skip ML tree parameter & branch length search"
   else
@@ -248,6 +253,8 @@ else
       echo "found best tree parameter & branch length file '${coretree}/RAxML_bestTree.${treename}'"
     else
       echo "ML tree parameter & branch length search under GAMMA-based model"
+	  mv -f ${coretree}/RAxML_info.${treename} ${coretree}/RAxML_info_discarded$( date '+%Y-%M-%d-%H-%m-%S').${treename}
+	  mv -f ${ptglogs}/raxml/${treename}.ML_brlen.log ${ptglogs}/raxml/${treename}.ML_brlen.log_discarded$( date '+%Y-%M-%d-%H-%m-%S')
       echo "# call: $raxmlbin -s ${coretreealn} ${raxmloptionsG} -f e -t ${nrbesttopo}" > ${ptglogs}/raxml/${treename}.ML_brlen.log
       $raxmlbin -s ${coretreealn} ${raxmloptionsG} -f e -t ${nrbesttopo} &>> ${ptglogs}/raxml/${treename}.ML_brlen.log
     fi
@@ -255,7 +262,7 @@ else
     mv ${coretree}/RAxML_result.${treename} ${coretree}/RAxML_bestTree.${treename}
     rm -f ${nrbesttree}
     ln -s $(realpath --relative-to=$(dirname ${nrbesttree}) ${coretree}/RAxML_bestTree.${treename}) ${nrbesttree}
-   checkexec "failed search for ML tree parameter & branch length" "ML tree parameter & branch length search complete; best tree stored in file '${nrbesttree}'"
+    checkexec "failed search for ML tree parameter & branch length" "ML tree parameter & branch length search complete; best tree stored in file '${nrbesttree}'"
   fi
 
   # compute ${ncorebootstrap} rapid bootstraps (you can set variable by editing ${envsourcescript})
@@ -298,7 +305,7 @@ else
   fi
 
   # root ML tree
-  if [[ "${resumetask}" == "true" && -s ${nrrootedtree} ]] ; then
+  if [[ "${resumetask}" == "true" && -s "$(readlink -f ${nrrootedtree})" ]] ; then
    echo "skip tree rooting with '${rootingmethod}' method"
   else
    # variables automoatically defined in ${envsourcescript} :
