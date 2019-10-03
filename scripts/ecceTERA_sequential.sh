@@ -102,6 +102,11 @@ else
     worklocal='yes'
   fi
 fi
+# maxpcmem
+echo "# maxpcmem:"
+if [ -z "$maxpcmem" ] ; then
+  maxpcmem=90
+fi
 
 
 # worklocal
@@ -250,8 +255,7 @@ for nfchain in $(cat $tasklist) ; do
   
     runopt="$(makerunopt ${stree} ${chain}.ale ${resultdir})"
     teracmd="ecceTERA ${runopt} ${commonopt} ale=1 amalgamate=1"
-    echo "# ${teracmd}"
-    ${teracmd}
+
   
   else
     # take single Newick gene tree as input, e.g. the gene tree chain consensus, or a ML tree
@@ -262,17 +266,40 @@ for nfchain in $(cat $tasklist) ; do
 	fi
 	runopt="$(makerunopt ${stree} ${chain}.nwk ${resultdir})"
 	teracmd="ecceTERA ${runopt} ${commonopt} ${collapseopts}"
-	echo "# ${teracmd}"
-	${teracmd}
   
   fi
+  
+  echo "# ${teracmd}"
+  # run it in bg with a daemon checking
+  ${teracmd} &
+  terapid=$!
+  top -b -n 1 -p ${terapid} | tail -n 2 > ${nfrad}.ecceTERA.toplog
+  while [ ! -z $(ps -q ${terapid} -o comm=) ] ; do
+    sleep 60s
+    top -b -n 1 -p ${alepid} | tail -n 1 >> ${nfrad}.ecceTERA.toplog
+    TERAMEM=$(pmap ${terapid} | tail -n1 | awk '{print $NF}')
+    echo "$nfrad\t$teraalgo\t$TERAMEM\tkB" > ${nfrad}.ecceTERA.memusage
+    TERATIME=$SECONDS
+    echo -e "$nfrad\t$teraalgo\t$TERATIME\ts" > ${nfrad}.ecceTERA.computetime
+    pcmem=$(ps -o pid,%mem | grep ${terapid} | awk '{print $NF}')
+    ## check memory use is not going off the charts
+    if [ ${pcmem%.*} -ge ${maxpcmem} ] ; then
+      # stop immediately
+      echo "Memory use is beyond ${maxpcmem}% the server capacity; stop the job now"
+      kill -9 ${terapid}
+    fi
+    ${savecmd} ./${nfrad}* ${resultdir}/
+  done
+  
+ 
+ 
  
   echo ""
   echo "# # # #"
 
   TERATIME=$SECONDS
   if [ ! -z "${prevcomputetime}" ] ; then TERATIME=$(( ${TERATIME} + ${prevcomputetime} )) ; fi
-  echo -e "${nfrad}\t${alealgo}\t${ALETIME}" > $nfrad.ecceTERA.computetime
+  echo -e "${nfrad}\t${alealgo}\t${TERATIME}" > $nfrad.ecceTERA.computetime
   echo "reconciliation estimation took" $(date -u -d @${TERATIME} +"%Hh%Mm%Ss") "total time"
   if [ ! -z "${prevcomputetime}" ] ; then echo "(including ${prevcomputetime} in previous run)" ; fi
 

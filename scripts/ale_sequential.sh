@@ -248,12 +248,12 @@ for nfchain in $(cat $tasklist) ; do
   ${alecmd} &
   alepid=$!
   while [ ! -z $(ps -q ${alepid} -o comm=) ] ; do
-    ## check memory use is not going off the charts
     ALEMEM=$(pmap ${alepid} | tail -n1 | awk '{print $NF}')
     echo "$nfrad\t$alealgo\t$ALEMEM\tkB" > ${nfrad}.ale.memusage
     ALETIME=$SECONDS
     echo -e "$nfrad\t$alealgo\t$ALETIME\ts" > ${nfrad}.ale.computetime
     pcmem=$(ps -o pid,%mem | grep ${alepid} | awk '{print $NF}')
+    ## check memory use is not going off the charts
     if [ ${pcmem%.*} -ge ${maxpcmem} ] ; then
       # stop immediately
       echo "Memory use is beyond ${maxpcmem}% the server capacity; stop the job now"

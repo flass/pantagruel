@@ -240,15 +240,21 @@ echo "# ${alecmd}"
 # run it in bg with a daemon checking
 ${alecmd} &
 alepid=${!}
+top -b -n 1 -p ${alepid} | tail -n 2 > ${nfrad}.ale.toplog
 while [ ! -z $(ps -q $alepid -o comm=) ] ; do
+  sleep 60s
+  top -b -n 1 -p ${alepid} | tail -n 1 >> ${nfrad}.ale.toplog
   if [[ "${watchmem}" == "yes" ]] ; then 
+    # deprecated and nonuniversal way to follow memory use ; replace by top command above and pmap command below
     ALEMEM=$(tail -n 1 memusage.*.out | cut -f1)
+    echo "$nfrad\t$alealgo\t$ALEMEM\tkB" > ${nfrad}.ale.memusage
+  else
+    ALEMEM=$(pmap ${alepid} | tail -n1 | awk '{print $NF}')
     echo "$nfrad\t$alealgo\t$ALEMEM\tkB" > ${nfrad}.ale.memusage
   fi
   ALETIME=${SECONDS}
   echo -e "${nfrad}\t${alealgo}\t${ALETIME}\ts" > ${nfrad}.ale.computetime
   ${savecmd} ./${nfrad}.ale.* ${resultdir}/
-  sleep 60s
 done
 echo ""
 echo "# # # #"
