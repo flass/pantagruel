@@ -256,7 +256,7 @@ for nfchain in $(cat $tasklist) ; do
     ## check memory use is not going off the charts
     if [ ${pcmem%.*} -ge ${maxpcmem} ] ; then
       # stop immediately
-      echo "Memory use is beyond ${maxpcmem}% the server capacity; stop the job now"
+      echo "!!! Memory use is beyond ${maxpcmem}% the server capacity; stop the ${nfrad} job now"
       kill -9 ${alepid}
     fi
     $savecmd ./${nfrad}.ale.* $resultdir/
