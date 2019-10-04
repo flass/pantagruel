@@ -104,9 +104,10 @@ else
 fi
 # maxpcmem
 echo "# maxpcmem:"
-if [ -z "$maxpcmem" ] ; then
+if [ -z "${maxpcmem}" ] ; then
   maxpcmem=90
 fi
+echo "Will interupt reconciliation tasks if over ${maxpcmem} of server memory capacity"
 
 
 # worklocal
@@ -293,7 +294,7 @@ for nfchain in $(cat $tasklist) ; do
     ## check memory use is not going off the charts
     if [ ${pcmem%.*} -ge ${maxpcmem} ] ; then
       # stop immediately
-      echo "!!! Memory use is beyond ${maxpcmem}% the server capacity; stop the ${nfrad} job now"
+      echo "!!! Memory use is > ${pcmem%.*}% the server capacity; stop the ${nfrad} job now"
       kill -9 ${terapid}
     fi
   done

@@ -110,6 +110,7 @@ echo "# maxpcmem:"
 if [ -z "$maxpcmem" ] ; then
   maxpcmem=90
 fi
+echo "Will interupt reconciliation tasks if over ${maxpcmem} of server memory capacity"
 
 # worklocal
 # worklocal='yes' indicates that there will be a specific machine where the 'compute work'
@@ -250,7 +251,6 @@ for nfchain in $(cat $tasklist) ; do
   runmin=0
   top -b -n 1 -p ${terapid} | tail -n 2 > ${nfrad}.ale.toplog
   while [ ! -z $(ps -q ${alepid} -o comm=) ] ; do
-    sleep 2s
 	# fine grained record of what's happening, storing just the last value of time and mem
     ALEMEM=$(pmap ${alepid} | tail -n1 | awk '{print $NF}')
     echo "${nfrad}\t${alealgo}\t${ALEMEM}\tkB" > ${nfrad}.ale.memusage
@@ -267,9 +267,10 @@ for nfchain in $(cat $tasklist) ; do
     ## check memory use is not going off the charts
     if [ ${pcmem%.*} -ge ${maxpcmem} ] ; then
       # stop immediately
-      echo "!!! Memory use is beyond ${maxpcmem}% the server capacity; stop the ${nfrad} job now"
+      echo "!!! Memory use is > ${pcmem%.*}% the server capacity; stop the ${nfrad} job now"
       kill -9 ${alepid}
     fi
+    sleep 2s
   done
   
   echo ""
