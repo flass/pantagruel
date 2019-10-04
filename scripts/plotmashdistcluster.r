@@ -44,7 +44,7 @@ if (length(cargs)>2){
 if (length(cargs)>3){
   nftreelab2ass = cargs[4]
   print(nftreelab2ass)
-  treelab2ass = read.table(nftreelab2ass, h=F, sep='\t')
+  treelab2ass = read.table(nftreelab2ass, h=F, sep='\t', comment.char='')
 }else{
   treelab2ass = NULL
 }
