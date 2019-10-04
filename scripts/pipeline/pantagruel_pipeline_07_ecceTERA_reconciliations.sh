@@ -55,7 +55,6 @@ else
   fi
 fi
 export reccol="${chaintype}_${rectype}_${reccolid}"
-export recs=${alerec}/${chaintype}_ecceTERA_recs
 
 tasklist=${alerec}/${collapsecond}_${replmethod}_${inputtreetag}_list
 if [ -z ${genefamlist} ] ; then
@@ -77,12 +76,12 @@ cd ${ptgtmp}/
 if [ "${resumetask}" == 'true' ] ; then
   rm -f ${tasklist}_resumetasklist
   # resuming after a stop in batch computing, or to collect those jobs that crashed (and may need to be re-ran with more mem/time allowance)
-  for nfgs in $(cat $tasklist) ; do
-    bng=$(basename $nfgs)
-    bnalerec=${bng}.reconciliationsFile_canonical_symmetric.txt
-    if [[ ! -e ${recs}/${collapsecond}/${replmethod}/${reccol}/${bnalerec} ]] ; then
+  for nfgs in $(cat ${tasklist}) ; do
+    bng=$(basename ${nfgs})
+    bnalerec=${bng}*.reconciliationsFile_canonical_symmetric.txt
+    if [ ! -e ${recs}/${collapsecond}/${replmethod}/${reccol}/${bnalerec} ] ; then
      echo ${nfgs}
-   fi
+    fi
   done > ${tasklist}_resumetasklist
   tasklist=${tasklist}_resumetasklist
 fi

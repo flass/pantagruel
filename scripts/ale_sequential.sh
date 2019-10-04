@@ -247,30 +247,39 @@ for nfchain in $(cat $tasklist) ; do
   # run it in bg with a daemon checking
   ${alecmd} &
   alepid=$!
+  runmin=0
+  top -b -n 1 -p ${terapid} | tail -n 2 > ${nfrad}.ale.toplog
   while [ ! -z $(ps -q ${alepid} -o comm=) ] ; do
+    sleep 2s
+	# fine grained record of what's happening, storing just the last value of time and mem
     ALEMEM=$(pmap ${alepid} | tail -n1 | awk '{print $NF}')
-    echo "$nfrad\t$alealgo\t$ALEMEM\tkB" > ${nfrad}.ale.memusage
+    echo "${nfrad}\t${alealgo}\t${ALEMEM}\tkB" > ${nfrad}.ale.memusage
     ALETIME=$SECONDS
-    echo -e "$nfrad\t$alealgo\t$ALETIME\ts" > ${nfrad}.ale.computetime
-    pcmem=$(ps -o pid,%mem | grep ${alepid} | awk '{print $NF}')
+    echo -e "${nfrad}\t${alealgo}\t${ALETIME}\ts" > ${nfrad}.ale.computetime
+	if [ $(( $SECONDS / 60 )) -gt ${runmin} ] ; then
+	  # more thorough report, logged every minute
+      top -b -n 1 -p ${terapid} | tail -n 2 > ${nfrad}.ale.toplog
+	  # and sync of potential results (mostly the .ale.computetime, .ale.memusage and .ale.toplog files, as results are only written aththe end)
+      $savecmd ./${nfrad}.ale.* ${resultdir}/
+	  runmin=$(( $SECONDS / 60 ))
+    fi
+	pcmem=$(ps -o pid,%mem | grep ${alepid} | awk '{print $NF}')
     ## check memory use is not going off the charts
     if [ ${pcmem%.*} -ge ${maxpcmem} ] ; then
       # stop immediately
       echo "!!! Memory use is beyond ${maxpcmem}% the server capacity; stop the ${nfrad} job now"
       kill -9 ${alepid}
     fi
-    $savecmd ./${nfrad}.ale.* $resultdir/
-    sleep 60s
   done
   
   echo ""
   echo "# # # #"
 
   ALETIME=$SECONDS
-  if [ ! -z "$prevcomputetime" ] ; then ALETIME=$(( $ALETIME + $prevcomputetime )) ; fi
-  echo -e "$nfrad\t$alealgo\t$ALETIME" > $nfrad.ale.computetime
+  if [ ! -z "${prevcomputetime}" ] ; then ALETIME=$(( ${ALETIME} + ${prevcomputetime} )) ; fi
+  echo -e "${nfrad}\t${alealgo}\t${ALETIME}" > $nfrad.ale.computetime
   echo "reconciliation estimation took" $(date -u -d @${ALETIME} +"%Hh%Mm%Ss") "total time"
-  if [ ! -z "$prevcomputetime" ] ; then echo "(including ${prevcomputetime} in previous run)" ; fi
+  if [ ! -z "${prevcomputetime}" ] ; then echo "(including ${{prevcomputetime}} in previous run)" ; fi
 
   echo "# ls ./${nfrad}*"
   ls ./${nfrad}*
@@ -278,23 +287,23 @@ for nfchain in $(cat $tasklist) ; do
   # save files
   ls ./${nfrad}*.ale.* > /dev/null
   if [ $? == 0 ] ; then
-    savecmd1="$savecmd ./${nfrad}*.ale* $resultdir/"
-    echo "# $savecmd1"
-    $savecmd1
-    checkexec "unable to transfer result files from $PWD/ to $resultdir/" "succesfuly transferred result files from $PWD/ to $resultdir/"
+    savecmd1="${savecmd} ./${nfrad}*.ale* ${resultdir}/"
+    echo "# ${savecmd1}"
+    ${savecmd1}
+    checkexec "unable to transfer result files from ${PWD}/ to ${resultdir}/" "succesfuly transferred result files from ${PWD}/ to ${resultdir}/"
   else
     ls ${dnchain}/${nfrad}*.ale.* > /dev/null
     if [ $? == 0 ] ; then
-      savecmd2="$savecmd ${dnchain}/${nfrad}*.ale.* $resultdir/"
-      echo "# $savecmd2"
-      $savecmd2
-      checkexec "unable to save result files from $dnchain to $resultdir/" "succesfuly transferred result files from $dnchain to $resultdir/"
+      savecmd2="${savecmd} ${dnchain}/${nfrad}*.ale.* ${resultdir}/"
+      echo "# ${savecmd2}"
+      ${savecmd2}
+      checkexec "unable to save result files from ${dnchain} to ${resultdir}/" "succesfuly transferred result files from ${dnchain} to ${resultdir}/"
     else
       echo "ERROR: unable to find the result files"
       exit 1
     fi
   fi
-  if [[ "$worklocal" == "yes" ]] ; then
+  if [[ "${worklocal}" == "yes" ]] ; then
     # remove local copies of input/output files
     rm -f ./${nfrad}*
   fi
