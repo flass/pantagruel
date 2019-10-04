@@ -101,5 +101,5 @@ if (!is.null(reftree)){
     })
     reftree$tip.label = longnames[assacct]
   }
-  plottreeheatmap(reftree, sml, sprintf('%s_vs_%s.heatmap%s.pdf', reftree, basename(nfmashtriangle)))
+  plottreeheatmap(reftree, sml, sprintf('%s_vs_%s.heatmap.pdf', reftree, basename(nfmashtriangle)))
 }
