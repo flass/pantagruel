@@ -239,6 +239,9 @@ if [ ! -z "${customassemb}" ] ; then
 		  rm -f ${annot}/${gproject}/*.ptg.gbk ${annot}/${gproject}/*.ptg.gff
 		  ls -ltr ${annot}/${gproject}/
 		  echo "skip running Prokka"
+	    elif [[ "${resumetask}" == 'true' && -s ${annot}/${gproject}.tar.gz &&  ]] ; then
+		  echo "found already computed annotation in archive ${annot}/${gproject}.tar.gz"
+		  echo "skip running Prokka"
 		else  
           echo "will annotate contigs in '${contigs}/${allcontigs}'"
           promptdate
@@ -309,41 +312,63 @@ if [ ! -z "${customassemb}" ] ; then
     echo "will create GenBank-like assembly folders for user-provided genomes"
     mkdir -p ${gblikeass}/
     for gproject in `ls ${annot}` ; do
-      gff=$(ls ${annot}/${gproject}/ | grep 'ptg.gff' | grep -v '\.original')
-      assemb=${gproject}.1_${gff[0]%*.ptg.gff}
-	  assaccname=$(parseGBass ${gproject})
-	  if [ ! -z "${assaccname}" ] ; then
-	    echo -e "${gproject}\t${assaccname}.1_${gff[0]%*.ptg.gff}\tcustom_assembly" >> ${gp2ass}
-      else
-	    echo -e "${gproject}\t${gproject}.1\t${gff[0]%*.ptg.gff}\tcustom_assembly" >> ${gp2ass}
+	  doprocess=true
+      gff=$(ls ${annot}/${gproject}/ 2> /dev/null | grep 'ptg.gff' | grep -v '\.original')
+	  if [ ! -z ${gff} ] ; then
+        assemb=${gproject}.1_${gff[0]%*.ptg.gff}
+	    assaccname=$(parseGBass ${gproject})
+	    if [ ! -z "${assaccname}" ] ; then
+	      echo -e "${gproject}\t${assaccname}.1_${gff[0]%*.ptg.gff}\tcustom_assembly" >> ${gp2ass}
+        else
+	      echo -e "${gproject}\t${gproject}.1\t${gff[0]%*.ptg.gff}\tcustom_assembly" >> ${gp2ass}
+	    fi
+        assembpathdir=${gblikeass}/${assemb}
+        assembpathrad=${assembpathdir}/${assemb}
+	  elif [ ! -s ${annot}/${gproject}.tar.gz  ] ; then
+		# annotation was previously processed then compressed; try and see if the final files are present
+		  gblikefilemissing=0
+	      for gbext in '_cds_from_genomic.fna.gz' '_genomic.fna.gz' '_genomic.gbff.gz' '_genomic.gff.gz' '_protein.faa.gz' ; do
+			if [ -z "$(ls -d ${gblikeass}/${gproject}.1_*/${gbext})" ] ; then
+			  gblikefilemissing=$(( ${gblikefilemissing} + 1 ))
+		    fi
+		  done
+		  if [ ${gblikefilemissing} -eq 0 ] ; then
+		    echo "all final GenBank-like files found in folder ${assembpathdir}/ ; skip processing."
+			doprocess=false
+		  else
+		    tar -xzf ${annot}/${gproject}.tar.gz && gff=$(ls ${annot}/${gproject}/ 2> /dev/null | grep 'ptg.gff' | grep -v '\.original')
+	      fi
+	  else
+	    echo "Error: annotation is missing for genome '${gproject}' ;exit now"
+		exit 1
 	  fi
-      assembpathdir=${gblikeass}/${assemb}
-      assembpathrad=${assembpathdir}/${assemb}
-      mkdir -p ${assembpathdir}/
-      ls -l ${assembpathdir}/ -d
-      gffgz=${assembpathrad}_genomic.gff.gz
-      gzip -c ${annot}/${gproject}/${gff} > ${gffgz}
-      ls -l ${gffgz}
-      gbk=($(ls ${annot}/${gproject}/ | grep 'ptg.gbk' | grep -v '.original'))
-      gbkgz=${assembpathrad}_genomic.gbff.gz
-      gzip -c ${annot}/${gproject}/${gbk[0]} > ${gbkgz}
-      ls -l ${gbkgz}
-      faa=($(ls ${annot}/${gproject}/ | grep '.faa' | grep -v '.original'))
-      faagz=${assembpathrad}_protein.faa.gz
-      gzip -c ${annot}/${gproject}/${faa[0]} > ${faagz}
-	  ls -l ${faagz}
-      gfna=($(ls ${annot}/${gproject}/ | grep '.fna' | grep -v '.original'))
-      gfnagz=${assembpathrad}_genomic.fna.gz
-      gzip -c ${annot}/${gproject}/${gfna[0]} > ${gfnagz}
-	  ls -l ${gfnagz}
-      ffn=($(ls ${annot}/${gproject}/ | grep '.ffn' | grep -v '.original'))
-      cdsfnagz=${assembpathrad}_cds_from_genomic.fna.gz
-      python ${ptgscripts}/format_prokkaCDS.py ${annot}/${gproject}/${ffn[0]} ${cdsfnagz}
-      ls -l ${cdsfnagz}
-	  if [[ "${compress}" == 'on' ]] ; then
-	    # compress and only upon success delete the uncompress folder
+	  if [ "${doprocess}" == 'true' ] ; then
+        mkdir -p ${assembpathdir}/
+        ls -l ${assembpathdir}/ -d
+        gffgz=${assembpathrad}_genomic.gff.gz
+        gzip -c ${annot}/${gproject}/${gff} > ${gffgz}
+        ls -l ${gffgz}
+        gbk=($(ls ${annot}/${gproject}/ | grep 'ptg.gbk' | grep -v '.original'))
+        gbkgz=${assembpathrad}_genomic.gbff.gz
+        gzip -c ${annot}/${gproject}/${gbk[0]} > ${gbkgz}
+        ls -l ${gbkgz}
+        faa=($(ls ${annot}/${gproject}/ | grep '.faa' | grep -v '.original'))
+        faagz=${assembpathrad}_protein.faa.gz
+        gzip -c ${annot}/${gproject}/${faa[0]} > ${faagz}
+        ls -l ${faagz}
+        gfna=($(ls ${annot}/${gproject}/ | grep '.fna' | grep -v '.original'))
+        gfnagz=${assembpathrad}_genomic.fna.gz
+        gzip -c ${annot}/${gproject}/${gfna[0]} > ${gfnagz}
+        ls -l ${gfnagz}
+        ffn=($(ls ${annot}/${gproject}/ | grep '.ffn' | grep -v '.original'))
+        cdsfnagz=${assembpathrad}_cds_from_genomic.fna.gz
+        python ${ptgscripts}/format_prokkaCDS.py ${annot}/${gproject}/${ffn[0]} ${cdsfnagz}
+        ls -l ${cdsfnagz}
+	    if [[ "${compress}" == 'on' ]] ; then
+            # compress and only upon success delete the uncompress folder
 		echo "will compress folder '${annot}/${gproject}/':"
-	    tar -czf ${annot}/${gproject}.tar.gz ${annot}/${gproject}/ && rm -rf ${annot}/${gproject}/ && echo -e "successfully compressed into\n:'$(ls -l ${annot}/${gproject}.tar.gz)' and deleted source folder." || "Compression failed; leave source folder '${annot}/${gproject}/' as is"
+          tar -czf ${annot}/${gproject}.tar.gz ${annot}/${gproject}/ && rm -rf ${annot}/${gproject}/ && echo -e "successfully compressed into\n:'$(ls -l ${annot}/${gproject}.tar.gz)' and deleted source folder." || "Compression failed; leave source folder '${annot}/${gproject}/' as is"
+	    fi
 	  fi
     done > ${ptglogs}/genbank-format_assemblies.log
     
