@@ -239,8 +239,8 @@ if [ ! -z "${customassemb}" ] ; then
 		  rm -f ${annot}/${gproject}/*.ptg.gbk ${annot}/${gproject}/*.ptg.gff
 		  ls -ltr ${annot}/${gproject}/
 		  echo "skip running Prokka"
-	    elif [[ "${resumetask}" == 'true' && -s ${annot}/${gproject}.tar.gz ]] ; then
-		  echo "found already computed annotation in archive ${annot}/${gproject}.tar.gz"
+	    elif [[ "${resumetask}" == 'true' && -s ${annot}/${gproject}.tar.gz && "$(tar -tf ${annot}/${gproject}.tar.gz | grep -v '\.ptg\.' | grep -c '\.gff\|\.gbk')" -eq 2 ]] ; then
+		  echo "found already computed annotation in archive ${annot}/${gproject}.tar.gz that already contains .gff and .gbk files"
 		  echo "skip running Prokka"
 		else  
           echo "will annotate contigs in '${contigs}/${allcontigs}'"
@@ -253,7 +253,22 @@ if [ ! -z "${customassemb}" ] ; then
           promptdate
         fi
 	  fi
-      if [[ $(grep ${gproject} ${straininfo} | cut -f2- | grep -P '[^\t]' | wc -l) -gt 0 ]] ; then
+	  doprocess1=true
+      if [[ "${resumetask}" == 'true' && ! -d ${annot}/${gproject} && -s ${annot}/${gproject}.tar.gz ]] ; then
+	    if [ "$(tar -tf ${annot}/${gproject}.tar.gz | grep -c '.ptg.gff\|.ptg.gbk')" -eq 2 ] ; then
+	      echo "annotation in archive ${annot}/${gproject}.tar.gz already contains .ptg.gff and .ptg.gbk files"
+	     doprocess1=false
+		else
+		  echo "annotation in archive ${annot}/${gproject}.tar.gz does not contain .ptg.gff and .ptg.gbk files; extract fill to process the input .gff and .gbk files"
+		  tar -xzf ${annot}/${gproject}.tar.gz
+		fi
+	  fi
+	  if [ "${doprocess1}" == 'true' ] ; then
+        if [[ "$(grep ${gproject} ${straininfo} | cut -f2- | grep -P '[^\t]' | wc -l)" -eq 0 ]] ; then
+          echo "Error: missing mandatory information about custom genomes"
+          echo "Please fill information in '${straininfo}' file before running this step again."
+          exit 1
+        fi
         echo "fix annotation to integrate region information into GFF files"
         annotgff=($(ls ${annot}/${gproject}/*.gff))
         if [ -z ${annotgff[0]} ] ; then
@@ -269,9 +284,9 @@ if [ ! -z "${customassemb}" ] ; then
           # add the rest of the file, in order of contig names!
           tail -n +2 ${annotgff[0]}.original | sort >> ${annotgff[0]}
         fi
-		mkdir -p ${ptglogs}/add_region_feature2prokkaGFF/
+        mkdir -p ${ptglogs}/add_region_feature2prokkaGFF/
         python ${ptgscripts}/add_region_feature2prokkaGFF.py ${annotgff[0]} ${annotgff[0]/.gff/.ptg.gff} ${straininfo} ${contigs}/${allcontigs} ${assembler} &> ${ptglogs}/add_region_feature2prokkaGFF/add_region_feature2prokkaGFF.${gproject}.log
-		checkexec "something went wrong when adding region features to GFF file (In: ${annotgff[0]}; Out:${annotgff[0]/.gff/.ptg.gff})"
+        checkexec "something went wrong when adding region features to GFF file (In: ${annotgff[0]}; Out:${annotgff[0]/.gff/.ptg.gff})"
         echo "fix annotation to integrate taxid information into GBK files"
         annotfna=($(ls ${annot}/${gproject}/*.fna))
         annotgbk=($(ls ${annot}/${gproject}/*.gbf 2> /dev/null || ls ${annot}/${gproject}/*.gbk))
@@ -301,18 +316,14 @@ if [ ! -z "${customassemb}" ] ; then
         python ${ptgscripts}/add_taxid_feature2prokkaGBK.py ${annotgbk[0]} ${annotrad}.ptg.gbk ${straininfo}
         checkexec "something went wrong when modifying the GenBank flat file ${annotgbk[0]}"
         echo "done."
-      else
-        echo "Error: missing mandatory information about custom genomes"
-        echo "Please fill information in '${straininfo}' file before running this step again."
-        exit 1
-      fi
+	  fi
     done
   
     # create assembly directory and link/create relevant files
     echo "will create GenBank-like assembly folders for user-provided genomes"
     mkdir -p ${gblikeass}/
     for gproject in `ls ${annot}` ; do
-	  doprocess=true
+	  doprocess2=true
       gff=$(ls ${annot}/${gproject}/ 2> /dev/null | grep 'ptg.gff' | grep -v '\.original')
 	  if [ ! -z ${gff} ] ; then
         assemb=${gproject}.1_${gff[0]%*.ptg.gff}
@@ -342,7 +353,7 @@ if [ ! -z "${customassemb}" ] ; then
 	    echo "Error: annotation is missing for genome '${gproject}' ;exit now"
 		exit 1
 	  fi
-	  if [ "${doprocess}" == 'true' ] ; then
+	  if [ "${doprocess2}" == 'true' ] ; then
         mkdir -p ${assembpathdir}/
         ls -l ${assembpathdir}/ -d
         gffgz=${assembpathrad}_genomic.gff.gz
