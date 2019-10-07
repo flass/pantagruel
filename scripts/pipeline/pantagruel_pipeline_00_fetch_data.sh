@@ -223,8 +223,9 @@ if [ ! -z "${customassemb}" ] ; then
       fi
     fi
   
-    # run Prokka 
     mkdir -p ${annot}
+	mkdir -p ${gblikeass}/
+	
     for allcontigs in ${contigsets} ; do
 #      gproject=${allcontigs%%.fa*}
 	  gproject=$(parsefastaext ${allcontigs})
@@ -245,6 +246,7 @@ if [ ! -z "${customassemb}" ] ; then
 		else  
           echo "will annotate contigs in '${contigs}/${allcontigs}'"
           promptdate
+          # run Prokka 
           echo "### assembly: $gproject; contig files from: ${contigs}/${allcontigs}"
           echo "running Prokka..."
           ${ptgscripts}/run_prokka.sh ${gproject} ${contigs}/${allcontigs} ${straininfo} ${annot}/${gproject} ${seqcentre} &> ${ptglogs}/${ptgdbname}_customassembly_annot_prokka.${gproject}.log
@@ -317,12 +319,12 @@ if [ ! -z "${customassemb}" ] ; then
         checkexec "something went wrong when modifying the GenBank flat file ${annotgbk[0]}"
         echo "done."
 	  fi
-    done
+#    done
   
-    # create assembly directory and link/create relevant files
-    echo "will create GenBank-like assembly folders for user-provided genomes"
-    mkdir -p ${gblikeass}/
-    for gproject in `ls ${annot}` ; do
+      # create assembly directory and link/create relevant files
+      echo "will create GenBank-like assembly folder for user-provided genomes"
+#    mkdir -p ${gblikeass}/
+#    for gproject in `ls ${annot}` ; do
 	  doprocess2=true
       gff=$(ls ${annot}/${gproject}/ 2> /dev/null | grep 'ptg.gff' | grep -v '\.original')
 	  if [ ! -z ${gff} ] ; then
@@ -345,7 +347,7 @@ if [ ! -z "${customassemb}" ] ; then
 		  done
 		  if [ ${gblikefilemissing} -eq 0 ] ; then
 		    echo "all final GenBank-like files found in folder ${assembpathdir}/ ; skip processing."
-			doprocess=false
+			doprocess2=false
 		  else
 		    tar -xzf ${annot}/${gproject}.tar.gz && gff=$(ls ${annot}/${gproject}/ 2> /dev/null | grep 'ptg.gff' | grep -v '\.original')
 	      fi
