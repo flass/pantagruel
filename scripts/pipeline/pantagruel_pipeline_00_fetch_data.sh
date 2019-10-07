@@ -205,7 +205,10 @@ if [ ! -z "${customassemb}" ] ; then
   contigsets="$(ls -A "${contigs}/" 2>/dev/null)"
   echo "found $(echo $contigsets | wc -w) contig files (raw genome assemblies) in ${contigs}/"
   ## if the folder of custom/user-provided set of genomes is not empty
-  if [[ ! -z "${contigsets}" ]] ; then
+  if [[ -z "${contigsets}" ]] ; then
+    echo "folder ${contigs} is empty! did you intend to provide custom genomeassemblies with -a option? ; exit now"
+    exit 1
+  else
     
     # gather representative proteins from the custom reference genome set to make a prot database for Prokka to search for similarities
     prevrefdb="$(${ptgscripts}/make_prokka_ref_genus_db.sh 'check' ${refgenus})"
@@ -389,9 +392,6 @@ if [ ! -z "${customassemb}" ] ; then
     for gblass in $(ls -A ${gblikeass}/) ; do
       ln -s ${relpathass2gblass}/${gblass} ${assemblies}/
     done
-  else
-    echo "folder ${contigs} is empty! did you intend to provide custom genomeassemblies with -a option? ; exit now"
-    exit 1
   fi
 fi
 
