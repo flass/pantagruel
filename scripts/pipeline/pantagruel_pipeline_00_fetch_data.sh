@@ -344,7 +344,7 @@ if [ ! -z "${customassemb}" ] ; then
 		# annotation was previously processed then compressed; try and see if the final files are present
 		  gblikefilemissing=0
 	      for gbext in '_cds_from_genomic.fna.gz' '_genomic.fna.gz' '_genomic.gbff.gz' '_genomic.gff.gz' '_protein.faa.gz' ; do
-			if [ -z "$(ls -d ${gblikeass}/${gproject}.1_*/${gbext})" ] ; then
+			if [ -z "$(ls -d ${gblikeass}/${gproject}.1_*/*${gbext})" ] ; then
 			  gblikefilemissing=$(( ${gblikefilemissing} + 1 ))
 		    fi
 		  done
