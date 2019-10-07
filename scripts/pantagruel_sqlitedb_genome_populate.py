@@ -200,14 +200,15 @@ def main(dbname, protorfanclust, cdsorfanclust, nfspeclist, nfgsrc2assidname, nf
 	# load UniProt taxon codes for CDS name shortening
 	fout = open("uniprotcode_taxid.tab", 'w')
 	codetaxids = []
-	with open(nfspeclist, 'r') as fspeclist:
-		for line in fspeclist:
-			if line[0] in [' ', '<']: continue # skip comments and HTML content
-			CODEmatch = CODepat.match(line)
-			if CODEmatch:
-				code, taxid = CODEmatch.groups()
-				fout.write("%s\t%s\n"%(code, taxid))
-				codetaxids.append((code, taxid))
+	if os.path.exists(nfspeclist):
+		with open(nfspeclist, 'r') as fspeclist:
+			for line in fspeclist:
+				if line[0] in [' ', '<']: continue # skip comments and HTML content
+				CODEmatch = CODepat.match(line)
+				if CODEmatch:
+					code, taxid = CODEmatch.groups()
+					fout.write("%s\t%s\n"%(code, taxid))
+					codetaxids.append((code, taxid))
 	
 	print "Generating 'uniprotcode_taxid' table:"
 	dcustomasscode = {}
