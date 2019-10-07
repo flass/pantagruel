@@ -239,7 +239,7 @@ if [ ! -z "${customassemb}" ] ; then
 		  rm -f ${annot}/${gproject}/*.ptg.gbk ${annot}/${gproject}/*.ptg.gff
 		  ls -ltr ${annot}/${gproject}/
 		  echo "skip running Prokka"
-	    elif [[ "${resumetask}" == 'true' && -s ${annot}/${gproject}.tar.gz &&  ]] ; then
+	    elif [[ "${resumetask}" == 'true' && -s ${annot}/${gproject}.tar.gz ]] ; then
 		  echo "found already computed annotation in archive ${annot}/${gproject}.tar.gz"
 		  echo "skip running Prokka"
 		else  
