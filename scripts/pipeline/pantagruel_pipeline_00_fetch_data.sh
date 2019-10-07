@@ -268,7 +268,7 @@ if [ ! -z "${customassemb}" ] ; then
 		  tar -xzf ${annot}/${gproject}.tar.gz
 		fi
 	  fi
-	  if [ "${doprocess1}" == 'true' ] ; then
+	  if [[ "${doprocess1}" == 'true' ]] ; then
         if [[ "$(grep ${gproject} ${straininfo} | cut -f2- | grep -P '[^\t]' | wc -l)" -eq 0 ]] ; then
           echo "Error: missing mandatory information about custom genomes"
           echo "Please fill information in '${straininfo}' file before running this step again."
@@ -340,7 +340,7 @@ if [ ! -z "${customassemb}" ] ; then
 	    fi
         assembpathdir=${gblikeass}/${assemb}
         assembpathrad=${assembpathdir}/${assemb}
-	  elif [ ! -s ${annot}/${gproject}.tar.gz  ] ; then
+	  elif [ -s ${annot}/${gproject}.tar.gz  ] ; then
 		# annotation was previously processed then compressed; try and see if the final files are present
 		  gblikefilemissing=0
 	      for gbext in '_cds_from_genomic.fna.gz' '_genomic.fna.gz' '_genomic.gbff.gz' '_genomic.gff.gz' '_protein.faa.gz' ; do
@@ -358,7 +358,7 @@ if [ ! -z "${customassemb}" ] ; then
 	    echo "Error: annotation is missing for genome '${gproject}' ;exit now"
 		exit 1
 	  fi
-	  if [ "${doprocess2}" == 'true' ] ; then
+	  if [[ "${doprocess2}" == 'true' ]] ; then
         mkdir -p ${assembpathdir}/
         ls -l ${assembpathdir}/ -d
         gffgz=${assembpathrad}_genomic.gff.gz
@@ -386,7 +386,8 @@ if [ ! -z "${customassemb}" ] ; then
           tar -czf ${annot}/${gproject}.tar.gz ${annot}/${gproject}/ && rm -rf ${annot}/${gproject}/ && echo -e "successfully compressed into\n:'$(ls -l ${annot}/${gproject}.tar.gz)' and deleted source folder." || "Compression failed; leave source folder '${annot}/${gproject}/' as is"
 	    fi
 	  fi
-    done > ${ptglogs}/genbank-format_assemblies.log
+#    done > ${ptglogs}/genbank-format_assemblies.log
+    done
     
     relpathass2gblass=$(realpath --relative-to=${assemblies} ${gblikeass})
     for gblass in $(ls -A ${gblikeass}/) ; do
