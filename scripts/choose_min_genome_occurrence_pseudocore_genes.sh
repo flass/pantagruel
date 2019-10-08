@@ -50,7 +50,8 @@ else
   # interactive call
   Rscript --vanilla --silent ${ptgscripts}/select_pseudocore_genefams.r \
    ${protali}/full_families_genome_counts-noORFans.mat ${database}/genome_codes.tab ${coregenome}/pseudo-coregenome_sets 2> ${ptgtmp}/set_pseudocoremingenomes
-  eval "$(cat $ptgtmp/set_pseudocoremingenomes)"
+  spcg="$(cat $ptgtmp/set_pseudocoremingenomes)"
+  eval "${spcg}"
   echo "set min number of genomes for inclusion in pseudo-core gene set as $pseudocoremingenomes"
   echo -e "Please MANUALY edit your pantagruel environment file '${envsourcescript}' at line $(grep -n 'export pseudocoremingenomes=' ${envsourcescript} | cut -d ':' -f1) so that it features the command:\n export pseudocoremingenomes=$pseudocoremingenomes"
 fi
