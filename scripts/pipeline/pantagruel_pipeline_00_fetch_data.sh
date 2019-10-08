@@ -330,17 +330,8 @@ if [ ! -z "${customassemb}" ] ; then
 #    for gproject in `ls ${annot}` ; do
 	  doprocess2=true
       gff=$(ls ${annot}/${gproject}/ 2> /dev/null | grep 'ptg.gff' | grep -v '\.original')
-	  if [ ! -z ${gff} ] ; then
-        assemb=${gproject}.1_${gff[0]%*.ptg.gff}
-	    assaccname=$(parseGBass ${gproject})
-	    if [ ! -z "${assaccname}" ] ; then
-	      echo -e "${gproject}\t${assaccname}.1_${gff[0]%*.ptg.gff}\tcustom_assembly" >> ${gp2ass}
-        else
-	      echo -e "${gproject}\t${gproject}.1\t${gff[0]%*.ptg.gff}\tcustom_assembly" >> ${gp2ass}
-	    fi
-        assembpathdir=${gblikeass}/${assemb}
-        assembpathrad=${assembpathdir}/${assemb}
-	  elif [ -s ${annot}/${gproject}.tar.gz  ] ; then
+	  if [ -z "${gff}" ] ; then
+	    if [ -s ${annot}/${gproject}.tar.gz  ] ; then
 		# annotation was previously processed then compressed; try and see if the final files are present
 		  gblikefilemissing=0
 	      for gbext in '_cds_from_genomic.fna.gz' '_genomic.fna.gz' '_genomic.gbff.gz' '_genomic.gff.gz' '_protein.faa.gz' ; do
@@ -354,11 +345,22 @@ if [ ! -z "${customassemb}" ] ; then
 		  else
 		    tar -xzf ${annot}/${gproject}.tar.gz && gff=$(ls ${annot}/${gproject}/ 2> /dev/null | grep 'ptg.gff' | grep -v '\.original')
 	      fi
-	  else
-	    echo "Error: annotation is missing for genome '${gproject}' ;exit now"
-		exit 1
+	    fi
+		if [ -z "${gff}" ] ; then
+	      echo "Error: annotation is missing for genome '${gproject}' ;exit now"
+		  exit 1
+	    fi
+	  fi
+      assemb=${gproject}.1_${gff[0]%*.ptg.gff}
+	  assaccname=$(parseGBass ${gproject})
+	  if [ ! -z "${assaccname}" ] ; then
+	    echo -e "${gproject}\t${assaccname}.1_${gff[0]%*.ptg.gff}\tcustom_assembly" >> ${gp2ass}
+      else
+	    echo -e "${gproject}\t${gproject}.1\t${gff[0]%*.ptg.gff}\tcustom_assembly" >> ${gp2ass}
 	  fi
 	  if [[ "${doprocess2}" == 'true' ]] ; then
+        assembpathdir=${gblikeass}/${assemb}
+        assembpathrad=${assembpathdir}/${assemb}
         mkdir -p ${assembpathdir}/
         ls -l ${assembpathdir}/ -d
         gffgz=${assembpathrad}_genomic.gff.gz
