@@ -332,26 +332,35 @@ if [ ! -z "${customassemb}" ] ; then
       gff=$(ls ${annot}/${gproject}/ 2> /dev/null | grep 'ptg.gff' | grep -v '\.original')
 	  if [ -z "${gff}" ] ; then
 	    if [ -s ${annot}/${gproject}.tar.gz  ] ; then
-		# annotation was previously processed then compressed; try and see if the final files are present
-		  gblikefilemissing=0
-	      for gbext in '_cds_from_genomic.fna.gz' '_genomic.fna.gz' '_genomic.gbff.gz' '_genomic.gff.gz' '_protein.faa.gz' ; do
-			if [ -z "$(ls -d ${gblikeass}/${gproject}.1_*/*${gbext})" ] ; then
-			  gblikefilemissing=$(( ${gblikefilemissing} + 1 ))
-		    fi
-		  done
+		  # annotation was previously processed then compressed; try and see if the final files are present
+		  gblikefilemissing=-1
+		  assembpathdir=$(ls -d ${gblikeass}/${gproject}.1_*)
+		  if [ ! -z "${assembpathdir}" ] ; then
+		    gblikefilemissing=$(( ${gblikefilemissing} + 1 ))
+	        for gbext in '_cds_from_genomic.fna.gz' '_genomic.fna.gz' '_genomic.gbff.gz' '_genomic.gff.gz' '_protein.faa.gz' ; do
+			  if [ -z "$(ls -d ${gblikeass}/${gproject}.1_*/*${gbext})" ] ; then
+			    gblikefilemissing=$(( ${gblikefilemissing} + 1 ))
+		      fi
+		    done
+		  fi
 		  if [ ${gblikefilemissing} -eq 0 ] ; then
 		    echo "all final GenBank-like files found in folder ${assembpathdir}/ ; skip processing."
 			doprocess2=false
+			assemb=$(basename ${assembpathdir})
 		  else
 		    tar -xzf ${annot}/${gproject}.tar.gz && gff=$(ls ${annot}/${gproject}/ 2> /dev/null | grep 'ptg.gff' | grep -v '\.original')
+	        if [ -z "${gff}" ] ; then
+	          echo "Error: annotation is missing for genome '${gproject}'; exit now"
+		      exit 1
+			else
+			  assemb=${gproject}.1_${gff[0]%*.ptg.gff}
+	        fi
 	      fi
 	    fi
-		if [ -z "${gff}" ] ; then
-	      echo "Error: annotation is missing for genome '${gproject}' ;exit now"
-		  exit 1
-	    fi
+	  else
+	    assemb=${gproject}.1_${gff[0]%*.ptg.gff}
 	  fi
-      assemb=${gproject}.1_${gff[0]%*.ptg.gff}
+      
 	  assaccname=$(parseGBass ${gproject})
 	  if [ ! -z "${assaccname}" ] ; then
 	    echo -e "${gproject}\t${assaccname}.1_${gff[0]%*.ptg.gff}\tcustom_assembly" >> ${gp2ass}
