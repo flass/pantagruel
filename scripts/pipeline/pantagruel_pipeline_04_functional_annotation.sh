@@ -91,11 +91,13 @@ for nrfaa in $(ls ${interpro}/all_complete_proteomes/*.faa* | grep -v '\.tsv') ;
    ipcmd="interproscan -T ${ptgtmp}/interpro -i ${nrfaa} -b ${nrfaa} --formats TSV${ipcpu} --iprlookup --goterms --pathways &> ${ptglogs}/interpro/$(basename ${nrfaa})_interpro.log"
    echo "#call: ${ipcmd}"
    eval "${ipcmd}"
+   checkexec "Something went wrong during InterProScan run on '${nrfaa}'"
  fi
 done
 
+rm -rf ${ptgtmp}/interpro
 
 ## load the annotation data into the database
 #~ python ${ptgscripts}/pantagruel_sqlitedb_load_interproscan_annotations.py ${sqldb} ${interpro} ${IPversion}
 python ${ptgscripts}/pantagruel_load_interproscan_annotations.py --sqlite_db ${sqldb} --ipscan_annot_files "${interpro}/all_complete_proteomes/*.tsv" --ipscan_version ${IPversion}
-
+checkexec "Something went wrong when loading InterProScan data into SQLite3 database '${sqldb}'"
