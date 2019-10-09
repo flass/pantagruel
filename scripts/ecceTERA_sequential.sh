@@ -279,7 +279,7 @@ for nfchain in $(cat $tasklist) ; do
   while [ ! -z $(ps -q ${terapid} -o comm=) ] ; do
 	# fine grained record of what's happening, storing just the last value of time and mem
     TERAMEM=$(pmap ${terapid} | tail -n1 | awk '{print $NF}')
-    echo "$nfrad\t$teraalgo\t$TERAMEM\tkB" > ${nfrad}.ecceTERA.memusage
+    echo -e "$nfrad\t$teraalgo\t$TERAMEM\tkB" > ${nfrad}.ecceTERA.memusage
     TERATIME=$SECONDS
     echo -e "$nfrad\t$teraalgo\t$TERATIME\ts" > ${nfrad}.ecceTERA.computetime
 	if [ $(( $SECONDS / 60 )) -gt ${runmin} ] ; then

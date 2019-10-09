@@ -253,12 +253,12 @@ for nfchain in $(cat $tasklist) ; do
   while [ ! -z $(ps -q ${alepid} -o comm=) ] ; do
 	# fine grained record of what's happening, storing just the last value of time and mem
     ALEMEM=$(pmap ${alepid} | tail -n1 | awk '{print $NF}')
-    echo "${nfrad}\t${alealgo}\t${ALEMEM}\tkB" > ${nfrad}.ale.memusage
+    echo -e "${nfrad}\t${alealgo}\t${ALEMEM}\tkB" > ${nfrad}.ale.memusage
     ALETIME=$SECONDS
     echo -e "${nfrad}\t${alealgo}\t${ALETIME}\ts" > ${nfrad}.ale.computetime
 	if [ $(( $SECONDS / 60 )) -gt ${runmin} ] ; then
 	  # more thorough report, logged every minute
-      top -b -n 1 -p ${terapid} | tail -n 2 > ${nfrad}.ale.toplog
+      top -b -n 1 -p ${terapid} | tail -n 1 >> ${nfrad}.ale.toplog
 	  # and sync of potential results (mostly the .ale.computetime, .ale.memusage and .ale.toplog files, as results are only written aththe end)
       $savecmd ./${nfrad}.ale.* ${resultdir}/
 	  runmin=$(( $SECONDS / 60 ))
