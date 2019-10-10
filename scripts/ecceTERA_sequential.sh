@@ -63,14 +63,6 @@ if [ -z "$spetree" ] ; then
   exit 2
 fi
 
-# nrecs
-echo "nrecs:"
-if [ -z "$nrecs" ] ; then
-  echo -n "Default: "
-  nrecs=1000
-fi
-echo "will sample $nrecs reconciliations"
-
 # teraalgo
 echo "teraalgo:"
 if [ -z "$teraalgo" ] ; then

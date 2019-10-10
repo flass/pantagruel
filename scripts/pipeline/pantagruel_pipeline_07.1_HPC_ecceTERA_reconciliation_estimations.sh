@@ -106,16 +106,17 @@ if [ "${resumetask}" == 'true' ] ; then
   tasklist=${tasklist}_resumetasklist
 fi
 
+if [[ -z "${terabin}" ]] ; then
+  export terabin="$(dirname $(readlink -f $(command -v ecceTERA)))"
+fi
+
 Njob=`wc -l $tasklist | cut -f1 -d' '`
 qsubvars="tasklist='${tasklist}', resultdir='${outrecdir}', spetree='${spetree}', nrecs='${recsamplesize}', alealgo='${ALEalgo}', alebin='${alebin}', watchmem='${watchmem}'"
-echo "qsub -J 1-$Njob -N ${reccol} -l select=1:ncpus=${ncpus}:mem=${mem}${parallelflags},walltime=${wth}:00:00 -o ${teralogs}/${reccol} -j oe -v \"$qsubvars\" ${ptgscripts}/ale_array_PBS.qsub"
+echo "qsub -J 1-$Njob -N ${reccol} -l select=1:ncpus=${ncpus}:mem=${mem}${parallelflags},walltime=${wth}:00:00 -o ${teralogs}/${reccol} -j oe -v \"$qsubvars\" ${ptgscripts}/ecceTERA_array_PBS.qsub"
 qsub -J 1-$Njob -N ${reccol} -l select=1:ncpus=${ncpus}:mem=${mem}${parallelflags},walltime=${wth}:00:00 -o ${teralogs}/${reccol} -j oe -v "$qsubvars" ${ptgscripts}/ecceTERA_array_PBS.qsub
 
 export reccoldate=$(date +%Y-%m-%d)
 
-if [[ -z "${terabin}" ]] ; then
-  terabin="$(command -v ecceTERA)"
-fi
 terasourcenote=""
 pathterabin=$(readlink -f ${terabin})
 terasourcenote="using ecceTERA software compiled from source; $(ecceTERA | grep version); binaries found at ${pathalebin}"
