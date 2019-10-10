@@ -217,7 +217,7 @@ else
    echo "skip ML tree topology search"
   else
    ckps=($(ls -t ${coretree}/RAxML_checkpoint.${treename}.* ${coretree}/RAxML_result*.${treename} 2> /dev/null))
-   if [[ "${resumetask}" == "true" && -z "${ckps}" ]] ; then
+   if [[ "${resumetask}" == "true" && ! -z "${ckps}" ]] ; then
     if [[ "${ckps[0]}" == "${coretree}/RAxML_result.${treename}" ]] ; then
       echo "found best topology tree file '${ckps[0]}'"
     else
