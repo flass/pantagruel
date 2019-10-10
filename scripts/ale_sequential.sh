@@ -251,6 +251,13 @@ for nfchain in $(cat $tasklist) ; do
   runmin=0
   top -b -n 1 -p ${terapid} | tail -n 2 > ${nfrad}.ale.toplog
   while [ ! -z $(ps -q ${alepid} -o comm=) ] ; do
+    ## check memory use is not going off the charts
+	pcmem=$(ps -o pid,%mem | grep ${alepid} | awk '{print $NF}')
+    if [ ${pcmem%.*} -ge ${maxpcmem} ] ; then
+      # stop immediately
+      echo "!!! Memory use is > ${pcmem%.*}% the server capacity; stop the ${nfrad} job now"
+      kill -9 ${alepid}
+    fi
 	# fine grained record of what's happening, storing just the last value of time and mem
     ALEMEM=$(pmap ${alepid} | tail -n1 | awk '{print $NF}')
     echo -e "${nfrad}\t${alealgo}\t${ALEMEM}\tkB" > ${nfrad}.ale.memusage
@@ -263,14 +270,7 @@ for nfchain in $(cat $tasklist) ; do
       $savecmd ./${nfrad}.ale.* ${resultdir}/
 	  runmin=$(( $SECONDS / 60 ))
     fi
-	pcmem=$(ps -o pid,%mem | grep ${alepid} | awk '{print $NF}')
-    ## check memory use is not going off the charts
-    if [ ${pcmem%.*} -ge ${maxpcmem} ] ; then
-      # stop immediately
-      echo "!!! Memory use is > ${pcmem%.*}% the server capacity; stop the ${nfrad} job now"
-      kill -9 ${alepid}
-    fi
-    sleep 2s
+    sleep 1s
   done
   
   echo ""

@@ -277,6 +277,13 @@ for nfchain in $(cat $tasklist) ; do
   runmin=0
   top -b -n 1 -p ${terapid} | tail -n 2 > ${nfrad}.ecceTERA.toplog
   while [ ! -z $(ps -q ${terapid} -o comm=) ] ; do
+    ## check memory use is not going off the charts
+	pcmem=$(ps -o pid,%mem | grep ${terapid} | awk '{print $NF}')
+    if [ ${pcmem%.*} -ge ${maxpcmem} ] ; then
+      # stop immediately
+      echo "!!! Memory use is > ${pcmem%.*}% the server capacity; stop the ${nfrad} job now"
+      kill -9 ${terapid}
+    fi
 	# fine grained record of what's happening, storing just the last value of time and mem
     TERAMEM=$(pmap ${terapid} | tail -n1 | awk '{print $NF}')
     echo -e "$nfrad\t$teraalgo\t$TERAMEM\tkB" > ${nfrad}.ecceTERA.memusage
@@ -289,14 +296,7 @@ for nfchain in $(cat $tasklist) ; do
       ${savecmd} ./${nfrad}* ${resultdir}/
 	  runmin=$(( $SECONDS / 60 ))
     fi
-	pcmem=$(ps -o pid,%mem | grep ${terapid} | awk '{print $NF}')
-    ## check memory use is not going off the charts
-    if [ ${pcmem%.*} -ge ${maxpcmem} ] ; then
-      # stop immediately
-      echo "!!! Memory use is > ${pcmem%.*}% the server capacity; stop the ${nfrad} job now"
-      kill -9 ${terapid}
-    fi
-    sleep 2s
+    sleep 1s
   done
   
  
