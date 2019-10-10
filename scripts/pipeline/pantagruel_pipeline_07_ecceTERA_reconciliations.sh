@@ -60,18 +60,14 @@ tasklist=${alerec}/${collapsecond}_${replmethod}_${inputtreetag}_list
 if [ -z ${genefamlist} ] ; then
   ${ptgscripts}/lsfullpath.py "${inputtrees}" > ${tasklist}
 else
-  rm -f ${tasklist}
   for fam in $(cut -f1 ${genefamlist}) ; do
-    ls ${inputtrees} >> ${tasklist}
-  done
+    ls ${inputtrees}
+  done > ${tasklist}
 fi
 alelogs=${ptgdb}/logs/ecceTERA
 mkdir -p $alelogs/${reccol}
 outrecdir=${recs}/${collapsecond}/${replmethod}/${reccol}
 mkdir -p $outrecdir
-
-cd ${ptgtmp}/
-
 
 if [ "${resumetask}" == 'true' ] ; then
   rm -f ${tasklist}_resumetasklist
@@ -86,6 +82,7 @@ if [ "${resumetask}" == 'true' ] ; then
   tasklist=${tasklist}_resumetasklist
 fi
 
+cd ${ptgtmp}/
 
 ## perform receonciliations sequentially (one gene family after another)
 export worklocal='false'
@@ -98,7 +95,7 @@ else
 fi
 export reccoldate=$(date +%Y-%m-%d)
 
-if [[ -z "$terabin" ]] ; then
+if [[ -z "${terabin}" ]] ; then
   terabin="$(command -v ecceTERA)"
 fi
 terasourcenote=""
