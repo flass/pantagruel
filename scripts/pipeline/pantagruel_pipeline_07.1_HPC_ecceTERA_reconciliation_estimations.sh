@@ -99,11 +99,17 @@ if [ "${resumetask}" == 'true' ] ; then
   for nfgs in $(cat ${tasklist}) ; do
     bng=$(basename ${nfgs})
     bnalerec=${bng}*.reconciliationsFile_canonical_symmetric.txt
-    if [ ! -e ${recs}/${collapsecond}/${replmethod}/${reccol}/${bnalerec} ] ; then
-     echo ${nfgs}
+    nGdone=0
+    if [ -e ${recs}/${collapsecond}/${replmethod}/${reccol}/${bnalerec} ] ; then
+      nGdone=$(( ${nGdone} + 1))
+    else
+      echo ${nfgs}
     fi
   done > ${tasklist}_resumetasklist
-  tasklist=${tasklist}_resumetasklist
+  if [ ${nGdone} -gt 0 ] ; then
+    echo "resume from previous computations: ${nGdone} G trees already reconciled"
+    tasklist=${tasklist}_resumetasklist
+  fi
 fi
 
 if [[ -z "${terabin}" ]] ; then
