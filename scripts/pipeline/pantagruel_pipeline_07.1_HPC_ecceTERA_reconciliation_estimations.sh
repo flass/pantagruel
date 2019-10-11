@@ -76,7 +76,7 @@ if [ -z ${genefamlist} ] ; then
   ${ptgscripts}/lsfullpath.py "${inputtrees}" > ${tasklist}
 else
   for fam in $(cut -f1 ${genefamlist}) ; do
-    ls ${inputtrees}
+     ls ${coltreechains}/${collapsecond}/${replmethod}/${fam}*-Gtrees.nwk
   done > ${tasklist}
 fi
 teralogs=${ptgdb}/logs/ecceTERA
@@ -94,7 +94,6 @@ fi
 
 
 if [ "${resumetask}" == 'true' ] ; then
-  rm -f ${tasklist}_resumetasklist
   # resuming after a stop in batch computing, or to collect those jobs that crashed (and may need to be re-ran with more mem/time allowance)
   for nfgs in $(cat ${tasklist}) ; do
     bng=$(basename ${nfgs})
@@ -109,6 +108,8 @@ if [ "${resumetask}" == 'true' ] ; then
   if [ ${nGdone} -gt 0 ] ; then
     echo "resume from previous computations: ${nGdone} G trees already reconciled"
     tasklist=${tasklist}_resumetasklist
+  else
+    rm -f ${tasklist}_resumetasklist
   fi
 fi
 

@@ -159,7 +159,7 @@ fi
 ## loop over gene families
 for nfchain in $(cat $tasklist) ; do
   echo "current task:"
-  echo $nfchain
+  echo ${nfchain}
   nbtaxafromtree $nfchain
   echo ""
   echo "# # # #"

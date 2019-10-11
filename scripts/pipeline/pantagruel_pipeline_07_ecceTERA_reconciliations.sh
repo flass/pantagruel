@@ -61,7 +61,7 @@ if [ -z ${genefamlist} ] ; then
   ${ptgscripts}/lsfullpath.py "${inputtrees}" > ${tasklist}
 else
   for fam in $(cut -f1 ${genefamlist}) ; do
-    ls ${inputtrees}
+    ls ${coltreechains}/${collapsecond}/${replmethod}/${fam}*-Gtrees.nwk
   done > ${tasklist}
 fi
 alelogs=${ptgdb}/logs/ecceTERA
