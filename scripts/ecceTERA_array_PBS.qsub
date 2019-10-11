@@ -5,6 +5,19 @@
 #PBS -j oe 
 #PBS -l walltime=168:00:00 
 
+
+# function for checking the success of every step
+checkexecnoquit (){
+  if [ ${?} != 0 ]; then
+    echo "ERROR: $1" 1>&2
+  else
+    if [ ! -z "$2" ] ; then
+      echo -e "$2"
+    fi
+  fi
+}
+export -f checkexecnoquit
+
 echo "This is job $PBS_JOBNAME, job_ID $PBS_JOBID (array_task_ID $PBS_ARRAY_INDEX) on host $HOSTNAME, running $PBS_NUM_PPN processes on these workers:"
 cat $PBS_NODEFILE
 
@@ -90,7 +103,7 @@ if [ -z "$teraalgo" ] ; then
   teraalgo='amalgamate'
 fi
 echo "will use $teraalgo algorithm for reconciliation estimation"
-  
+
 # alebin (facultative location for ALE executables; default to those found in $PATH, then the Docker container)
 if [ ! -z "$terabin" ] ; then
   if [ ! -z "$(ls -d "$terabin" 2> /dev/null)" ] ; then
@@ -268,13 +281,6 @@ terapid=$!
 runmin=0
 top -b -n 1 -p ${terapid} | tail -n 2 > ${nfrad}.ecceTERA.toplog
 while [ ! -z $(ps -q ${terapid} -o comm=) ] ; do
-  ## check memory use is not going off the charts
-  pcmem=$(ps -o pid,%mem | grep ${terapid} | awk '{print $NF}')
-  if [ ${pcmem%.*} -ge ${maxpcmem} ] ; then
-    # stop immediately
-    echo "!!! Memory use is > ${pcmem%.*}% the server capacity; stop the ${nfrad} job now"
-    kill -9 ${terapid}
-  fi
   # fine grained record of what's happening, storing just the last value of time and mem
   TERAMEM=$(pmap ${terapid} | tail -n1 | awk '{print $NF}')
   echo -e "$nfrad\t$teraalgo\t$TERAMEM\tkB" > ${nfrad}.ecceTERA.memusage
@@ -309,14 +315,14 @@ if [ ${?} == 0 ] ; then
   savecmd1="${savecmd} ./${nfrad}* ${resultdir}/"
   echo "# ${savecmd1}"
   ${savecmd1}
-  checkexec "unable to transfer result files from ${PWD}/ to ${resultdir}/" "succesfuly transferred result files from ${PWD}/ to ${resultdir}/"
+  checkexecnoquit "unable to transfer result files from ${PWD}/ to ${resultdir}/" "succesfuly transferred result files from ${PWD}/ to ${resultdir}/"
 else
   ls ${dnchain}/${nfrad}* > /dev/null
   if [ ${?} == 0 ] ; then
     savecmd2="$savecmd ${dnchain}/${nfrad}* $resultdir/"
     echo "# $savecmd2"
     $savecmd2
-    checkexec "unable to save result files from $dnchain to $resultdir/" "succesfuly transferred result files from $dnchain to $resultdir/"
+    checkexecnoquit "unable to save result files from $dnchain to $resultdir/" "succesfuly transferred result files from $dnchain to $resultdir/"
   else
     echo "ERROR: unable to find the result files"
     exit 1
