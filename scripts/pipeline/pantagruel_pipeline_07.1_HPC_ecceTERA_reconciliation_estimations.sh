@@ -26,7 +26,7 @@ fi
 if [ ! -z "$4" ] ; then
   wth="$4"
 else
-  wth=72
+  wth=24
 fi
 if [ ! -z "$5" ] ; then
   parallelflags=":$5"
