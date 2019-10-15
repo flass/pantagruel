@@ -177,8 +177,12 @@ else
     fi
     tasklist=${tasklist}_resume
   fi
-  
-  ${ptgscripts}/raxml_sequential.sh ${tasklist} ${mlgenetrees} 'GTRCATX' 'bipartitions rootedTree identical_sequences' 'x' $(nproc) 'true'
+  if [ -z "${ptgthreads}" ] ; then
+    raxthreads=${ptgthreads}
+  else
+    raxthreads=$(nproc)
+  fi
+  ${ptgscripts}/raxml_sequential.sh ${tasklist} ${mlgenetrees} 'GTRCATX' 'bipartitions rootedTree identical_sequences' 'x' ${raxthreads} 'true'
   checkexec "RAxML tree estimation was interupted ; exit now" "RAxML tree estimation complete"
   
   ############################
