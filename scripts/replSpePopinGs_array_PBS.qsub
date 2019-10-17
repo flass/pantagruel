@@ -66,6 +66,6 @@ else
   verbosemode=""
 fi
 
-python ${ptgscripts}/replace_species_by_pop_in_gene_trees.py -G ${taskchunklist} -c ${colalinexuscodedir}/${collapsecond} -S ${speciestree}.lsd.nwk -o ${coltreechains}/${collapsecond} \
+python2.7 ${ptgscripts}/replace_species_by_pop_in_gene_trees.py -G ${taskchunklist} -c ${colalinexuscodedir}/${collapsecond} -S ${speciestree}.lsd.nwk -o ${coltreechains}/${collapsecond} \
  --populations=${speciestree%.*}_populations --population_tree=${speciestree%.*}_collapsedPopulations.nwk --population_node_distance=${speciestree%.*}_interNodeDistPopulations \
  --dir_full_gene_trees=${mlgenetrees}/rootedTree --method=${replmethod} --threads=${ncpus} --reuse=0 --max.recursion.limit=12000 --logfile=${repllogs}_${replrun}.log ${verbosemode}

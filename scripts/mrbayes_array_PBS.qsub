@@ -109,7 +109,7 @@ echo "current directory is $HOSTNAME:$PWD"
 #~ echo ""
 # directory is supposed to be clean anyway
 
-mbresume=$(python << EOF
+mbresume=$(python2.7 << EOF
 mbmcmcopts="$mbmcmcopt".lower().split()
 mbresume = 'no'
 for opteqval in mbmcmcopts:
@@ -257,7 +257,7 @@ if [ ! -s $nfrad2.mb.noconv ] ; then
   rm $nfrad2.mb.noconv
 fi
 # and remove it from the list of files not to be synced: if not empty, it will be copied in the end
-excludesync=($(python << EOF
+excludesync=($(python2.7 << EOF
 nosyncmbout="$nosyncmbout".lower().split()
 print ' '.join(['--exclude=*.mb.%s'%ext for ext in nosyncmbout if (not 'noconv' in ext)])
 EOF

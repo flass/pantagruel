@@ -64,7 +64,7 @@ echo "current directory is $PWD"
 
 # convert file format
 if [ "$nfext" == 'nex' ] ; then
-  python -c "from Bio import AlignIO ; AlignIO.convert('$nfaln', 'nexus', '${outputdir}/bulk/${nfrad2}.fasta', 'fasta')"
+  python2.7 -c "from Bio import AlignIO ; AlignIO.convert('$nfaln', 'nexus', '${outputdir}/bulk/${nfrad2}.fasta', 'fasta')"
   if [ $? == 0 ] ; then
     echo "succesfully converted Nexus input file $nfrad1 into FASTA format: ${nfrad2}.fasta"
     localn=${outputdir}/bulk/${nfrad2}.fasta

@@ -29,7 +29,7 @@ cd ${database}
 ####
 
 # load the parsed reconciliation events
-python << EOF 
+python2.7 << EOF 
 import sqlite3, os
 dbname = '${dbfile}'
 dbcon = sqlite3.connect(dbname)

@@ -223,7 +223,7 @@ for nfchain in $(cat $tasklist) ; do
   else
     # prepare ALE index
     lenchain=`wc -l ${chain} | cut -d' ' -f1`
-    burnin=`python -c "print int(${lenchain} * ${relburninfrac})"`
+    burnin=`python2.7 -c "print int(${lenchain} * ${relburninfrac})"`
     echo "input tree chain is ${lenchain} long; burnin is set to ${burnin%%.*}"
     echo "# ${alebin}ALEobserve ${chain} burnin=${burnin%%.*}"
     ${alebin}ALEobserve ${chain} burnin=${burnin%%.*}

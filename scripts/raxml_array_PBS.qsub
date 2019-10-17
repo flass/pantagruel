@@ -75,7 +75,7 @@ ls ./
 # convert file format
 if [ "$nfext" == 'nex' ] ; then
   module load python
-  python -c "from Bio import AlignIO ; AlignIO.convert('$nfrad1', 'nexus', '${nfrad2}.fasta', 'fasta')"
+  python2.7 -c "from Bio import AlignIO ; AlignIO.convert('$nfrad1', 'nexus', '${nfrad2}.fasta', 'fasta')"
   if [ $? == 0 ] ; then
     echo "succesfully converted Nexus input file $nfrad1 into FASTA format: ${nfrad2}.fasta"
     localn=${nfrad2}.fasta

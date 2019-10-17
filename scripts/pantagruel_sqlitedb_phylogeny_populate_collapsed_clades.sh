@@ -36,7 +36,7 @@ INSERT INTO criteria_replace_gene_tree_clades (criterion_id, criterion_name, cri
 EOF
 
 # create big table files for collapsed gene tree clades and replaced clades in reconciled gene trees
-python ${ptgscripts}/generate_collapsed_replaced_clades_tables.py \
+python2.7 ${ptgscripts}/generate_collapsed_replaced_clades_tables.py \
  ${colalinexuscodedir}/${collapsecond}/mbconstraints ${coltreechains}/${collapsecond}/${replmethod} \
  ${collapsecolid} ${replacecolid} \
  ${database}/phylogeny_collapsed_gene_tree_clades.tab ${database}/phylogeny_replaced_gene_tree_clades.tab

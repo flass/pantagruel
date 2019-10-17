@@ -239,7 +239,7 @@ for nfchain in $(cat $tasklist) ; do
     else
       # prepare ALE index
       lenchain=`wc -l ${chain} | cut -d' ' -f1`
-      burnin=`python -c "print int(${lenchain} * ${relburninfrac})"`
+      burnin=`python2.7 -c "print int(${lenchain} * ${relburninfrac})"`
       echo "input tree chain is ${lenchain} long; burnin is set to ${burnin%%.*}"
       echo "# ${alebin}ALEobserve ${chain} burnin=${burnin%%.*}"
       ${alebin}ALEobserve ${chain} burnin=${burnin%%.*}
@@ -255,7 +255,7 @@ for nfchain in $(cat $tasklist) ; do
 	if [ ! -s ${chain}.nwk ] ; then
 	  # assume the input gene tree is a Nexus-formated consensus gene tree, as obtained from Mr Bayes (with 2 tree blocks)
 	  # converts it from Nexus to Newick
-	  python ${ptgscripts}/convert_mrbayes_constree_nex2nwk.py ${chain}
+	  python2.7 ${ptgscripts}/convert_mrbayes_constree_nex2nwk.py ${chain}
 	fi
 	runopt="$(makerunopt ${stree} ${chain}.nwk ${resultdir})"
 	teracmd="ecceTERA ${runopt} ${commonopt} ${collapseopts}"

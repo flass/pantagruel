@@ -79,8 +79,8 @@ tail -n +2 ${assemblyinfo}/allproteins_info.tab | cut -f ${protfieldnums} | grep
 
 ## populate database
 if [ -z  "${customassemb}" ] ; then
-  python ${populatescript} ${dbname} ${protorfanclust} ${cdsorfanclust} ${database}/speclist ${gp2ass}
+  python2.7 ${populatescript} ${dbname} ${protorfanclust} ${cdsorfanclust} ${database}/speclist ${gp2ass}
 else
-  python ${populatescript} ${dbname} ${protorfanclust} ${cdsorfanclust} ${database}/speclist ${gp2ass} ${usergenomeinfo} ${usergenomefinalassdir}
+  python2.7 ${populatescript} ${dbname} ${protorfanclust} ${cdsorfanclust} ${database}/speclist ${gp2ass} ${usergenomeinfo} ${usergenomefinalassdir}
 fi
 cd -

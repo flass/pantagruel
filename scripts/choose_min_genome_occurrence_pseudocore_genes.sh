@@ -28,7 +28,7 @@ if [[ "$pseudocoremingenomes" =~ ^[0-9]+$ ]]; then
 	 echo "'pseudocoremingenomes' variable is set to ${pseudocoremingenomes}; this integer value is interpreted as a number of genomes"
 elif [[ "$pseudocoremingenomes" =~ ^0*\.[0-9]+$ ]]; then
 	 echo "'pseudocoremingenomes' variable is set to ${pseudocoremingenomes}; this float value is interpreted as a fraction of total number of genomes"
-	 export pseudocoremingenomes=$(python -c "p = ${pseudocoremingenomes} * ${ngenomes} ; print int(p)")
+	 export pseudocoremingenomes=$(python2.7 -c "p = ${pseudocoremingenomes} * ${ngenomes} ; print int(p)")
 	 echo "'pseudocoremingenomes' was transformed into a number of genomes:  ${pseudocoremingenomes}."
 else		
 	 echo "'pseudocoremingenomes' variable is not set to a numeric value: '${pseudocoremingenomes}'; will run INTERACTIVE script to pick an appropriate one"

@@ -1,4 +1,5 @@
-#!/usr/bin/python
+#!/usr/bin/python2.7
+# -*- coding: utf-8 -*-
 """remove duplicate sequences from a FASTA file based on a list of identical seqeunces"""
 import sys
 
