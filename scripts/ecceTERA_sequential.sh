@@ -298,10 +298,8 @@ for nfchain in $(cat $tasklist) ; do
   echo "# # # #"
 
   TERATIME=$SECONDS
-  if [ ! -z "${prevcomputetime}" ] ; then TERATIME=$(( ${TERATIME} + ${prevcomputetime} )) ; fi
-  echo -e "${nfrad}\t${alealgo}\t${TERATIME}" > $nfrad.ecceTERA.computetime
+  echo -e "$nfrad\t$teraalgo\t$TERATIME\ts" > ${nfrad}.ecceTERA.computetime
   echo "reconciliation estimation took" $(date -u -d @${TERATIME} +"%Hh%Mm%Ss") "total time"
-  if [ ! -z "${prevcomputetime}" ] ; then echo "(including ${prevcomputetime} in previous run)" ; fi
 
   echo "# ls ./${nfrad}*"
   ls ./${nfrad}*
