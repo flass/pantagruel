@@ -21,7 +21,7 @@ fi
 if [ -z nosyncmbout ] ; then
   nosyncmbout="ckp~ log noconv"
 fi
-excludesync=($(python << EOF
+excludesync=($(python2.7 << EOF
 nosyncmbout="$nosyncmbout".lower().split()
 print ' '.join(['--exclude=*.mb.%s'%ext for ext in nosyncmbout])
 EOF

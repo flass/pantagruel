@@ -1,10 +1,14 @@
-#! /usr/local/bin/python
-'''
-Concatene des alignements quelque soit leur format et leur recouvrement taxonomique. 
+#! /usr/bin/python2.7
+# -*- coding: utf-8 -*-
+"""
+(EN): Concatenate sequence alignments whatever their format and their taxonomic coverage. 
+the list of alignment files to concatenate is passed as an argument.
 
+(FR): Concatene des alignements quelque soit leur format et leur recouvrement taxonomique. 
 La liste des fichiers d'alignements a concatener est passee en argument.
+
 Author: Sophie Abby
-'''
+"""
 
 import lib_util
 import utilitaires

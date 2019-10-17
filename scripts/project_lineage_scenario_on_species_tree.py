@@ -1,4 +1,5 @@
-#!/usr/bin/python
+#!/usr/bin/python2.7
+# -*- coding: utf-8 -*-
 import sys, os
 import tree2
 from parseALErec import parseALERecFile

@@ -157,7 +157,7 @@ else
     ls ${alifastacodedir}/$fam.codes.aln >> ${coregenome}/pseudo-coregenome_sets/${pseudocore}_${coreseqtype}_aln_list
    done
    # concatenate pseudo-core prot/CDS alignments
-   python ${ptgscripts}/concat.py ${coregenome}/pseudo-coregenome_sets/${pseudocore}_${coreseqtype}_aln_list ${pseudocorealn} > ${ptglogs}/concat_core_genome.log
+   python2.7 ${ptgscripts}/concat.py ${coregenome}/pseudo-coregenome_sets/${pseudocore}_${coreseqtype}_aln_list ${pseudocorealn} > ${ptglogs}/concat_core_genome.log
    checkexec "failed to produce concatenated (pseudo)core-genome alignment" "created concatenated (pseudo)core-genome alignment in file '${pseudocorealn}'"
    rm ${alifastacodedir}/*_all_sp_new
   fi
@@ -341,7 +341,7 @@ EOF
       outgroup=$(echo ${rootingmethod} | cut -d':' -f2)
       roottag=$(echo ${rootingmethod} | tr ':' '-' | tr ',' '-')_rooted
       
-      python << EOF
+      python2.7 << EOF
 import tree2
 nftree = '${nrbiparts}'
 tree = tree2.read_newick(nftree)
@@ -388,18 +388,18 @@ EOF
   # from here no skipping in resume mode
   if [ "${coretreealn}" == "${pseudocorealn}.reduced" ] ; then
     # reintroduce excluded species name into the tree
-    python ${ptgscripts}/putidentseqbackintree.py --input.nr.tree=${nrbiparts} --ref.rooted.nr.tree=${nrrootedtree} \
+    python2.7 ${ptgscripts}/putidentseqbackintree.py --input.nr.tree=${nrbiparts} --ref.rooted.nr.tree=${nrrootedtree} \
      --list.identical.seq=${pseudocorealn}.identical_sequences --output.tree=${speciestree}
   else
     # only process tree format 
-    python ${ptgscripts}/putidentseqbackintree.py --input.nr.tree=${nrbiparts} --ref.rooted.nr.tree=${nrrootedtree} \
+    python2.7 ${ptgscripts}/putidentseqbackintree.py --input.nr.tree=${nrbiparts} --ref.rooted.nr.tree=${nrrootedtree} \
      --output.tree=${speciestree}
   fi
   checkexec "failed re-introducing identical sequences into reference tree" "succesfully re-introduced identical sequences into reference tree; full reference tree stored in file '${speciestree}'"
 fi
 
 ### make version of full reference tree with actual organism names
-python ${ptgscripts}/code2orgnames_in_tree.py ${speciestree} $database/organism_codes.tab ${speciestree}.names
+python2.7 ${ptgscripts}/code2orgnames_in_tree.py ${speciestree} $database/organism_codes.tab ${speciestree}.names
 checkexec "failed name translation in reference tree" "reference tree name translation in complete; tree with organism names stored in file '${speciestree}.names'"
 
 ### generate ultrametric 'dated' species tree for more meaningfulgptghical representation of reconciliation AND to use the dated (original) version of ALE
@@ -408,7 +408,7 @@ if [ -e "${pseudocorealn}.reduced" ] ; then
   alnlen=$(head -n1 ${pseudocorealn}.reduced | cut -d' ' -f2 )
 elif [ -e "${pseudocorealn}" ] ; then
   #~ alnlen=$(head -n1 ${pseudocorealn} | cut -d' ' -f2 )
-  alnlen=$(python << EOF
+  alnlen=$(python2.7 << EOF
 nfaln = '${pseudocorealn}'
 alnlen = 0
 nseq = 0
@@ -430,7 +430,7 @@ lsd -i ${speciestree} -c -v 1 -s ${alnlen} -o ${speciestree}.lsd
 checkexec "failed ultrametrization of reference tree" "ultrametrization of reference tree complete; ultrametric tree stored in file '${speciestree}.lsd'"
 
 # export this ultrametric tree to Newick format (latest verison of LSD don't do it any more)
-python << EOF
+python2.7 << EOF
 import sys
 sys.setrecursionlimit(20000)
 import tree2
@@ -441,7 +441,7 @@ tree2.write_newick(t, nfout, comment=None)
 EOF
 
 ### delineate populations of near-identical strains (based on tree with branch lengths in subs/site) and generate the population tree, i.e. the species tree withs population collapsed
-python ${ptgscripts}/replace_species_by_pop_in_gene_trees.py -S ${speciestree} --threads=8 \
+python2.7 ${ptgscripts}/replace_species_by_pop_in_gene_trees.py -S ${speciestree} --threads=8 \
 --pop_stem_conds="${popstemconds}" --within_pop_conds="${withinpopconds}"
 checkexec "failed search of populations in reference tree" "search of populations in reference tree complete; population description stored in file '${speciestree%.*}_populations'"
 nspepop=$(tail -n+3 ${speciestree%.*}_populations | wc -l)
@@ -449,7 +449,7 @@ echo "Found $nspepop disctinct populations in the species tree"
 
 
 ### extract sister clade pairs from the reference species tree for later clade-specific gene search
-python << EOF
+python2.7 << EOF
 import tree2, sys
 sys.setrecursionlimit(20000)
 reftree = tree2.read_check_newick('${speciestree}')

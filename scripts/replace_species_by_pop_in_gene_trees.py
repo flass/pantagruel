@@ -1,4 +1,5 @@
-#!/usr/bin/python
+#!/usr/bin/python2.7
+# -*- coding: utf-8 -*-
 
 import tree2
 import sys, os, getopt, glob
@@ -785,9 +786,9 @@ def mapPop2GeneTree(nfingtchain1, dircons, dirout, method, spetree, poptree, dsp
 		
 def usage():
 	s =  'For population assignation:\n'
-	s += ' python replace_species_by_pop_in_gene_trees.py -S /path/to/species_tree\n'
+	s += ' python2.7 replace_species_by_pop_in_gene_trees.py -S /path/to/species_tree\n'
 	s += 'For replacement of species labels with population labels in gene tree samples:\n'
-	s += ' python replace_species_by_pop_in_gene_trees.py -S /path/to/[TIMED.]species.tree -G /path/to/list.of.gene.tree.sample.chain1.files -c /path/to/folder.of.collapsed.clade.info.files -o /path/to/output.folder \\\n'
+	s += ' python2.7 replace_species_by_pop_in_gene_trees.py -S /path/to/[TIMED.]species.tree -G /path/to/list.of.gene.tree.sample.chain1.files -c /path/to/folder.of.collapsed.clade.info.files -o /path/to/output.folder \\\n'
 	s += ' [--populations=/path/to/species2population_map --population_tree=/path/to/population_annotated_species_tree] [OTHER OPTIONS]\n'
 	s += 'For NO replacement of species labels in gene tree samples (simply reformating):\n'
 	s += ' python replace_species_by_pop_in_gene_trees.py -G /path/to/list.of.gene.tree.sample.chain1.files --no_replace -o /path/to/output.folder\n'

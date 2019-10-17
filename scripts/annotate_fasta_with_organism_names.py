@@ -1,8 +1,13 @@
-fin = open('/home/flassall/AgroRhizo2018/02.gene_alignments/full_cdsfam_alignments_species_code/AGRHIZOC004685.codes.aln', 'r')
-fout = open('/home/flassall/Dropbox/Frontier/ML-tree-Florent_437genomes_AgrobacteriumRhizobium_group/AGRHIZOC004685_telA_CDS.aln', 'w')
+#!/usr/bin/python2.7
+# -*- coding: utf-8 -*-
+"""takes as input a fasta file with pantagruel genome code labels and turn it into an equivalent with organism names"""
+import sys, os
+
+fin = open(sys.argv[1], 'r')
+fout = open(sys.argv[2], 'w')
 
 dcodeorga = {}
-with open('/home/flassall/AgroRhizo2018/03.database/organism_codes.tab') as fcodeorga:
+with open(os.environ['database']+'/organism_codes.tab') as fcodeorga:
     for line in fcodeorga:
         lsp = line.rstrip('\n').split('\t')
         code = lsp[0]

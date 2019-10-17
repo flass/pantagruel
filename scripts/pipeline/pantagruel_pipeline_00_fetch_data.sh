@@ -14,7 +14,7 @@ envsourcescript="$1"
 source ${envsourcescript}
 
 parseGBass (){
-python << EOF
+python2.7 << EOF
 import re
 gbassdir = '${1}'
 assembpatgenbank = re.compile('(GC[AF]_[^\._]+\.[0-9])_(.+)')
@@ -116,7 +116,7 @@ downloadass (){
 }
 
 parsefastaext (){
-python << EOF
+python2.7 << EOF
 allcontigs = '${1}'
 for ext in ['.fa', '.fna', '.fasta', '.fsa']:
   if allcontigs.endswith(ext):
@@ -130,7 +130,7 @@ EOF
 }
 
 addregionannotfeat (){
-python << EOF
+python2.7 << EOF
 fcontig = open('${1}', 'r')
 outgff = open('${2}', 'a')
 inseq = False
@@ -290,7 +290,7 @@ if [ ! -z "${customassemb}" ] ; then
           tail -n +2 ${annotgff[0]}.original | sort >> ${annotgff[0]}
         fi
         mkdir -p ${ptglogs}/add_region_feature2prokkaGFF/
-        python ${ptgscripts}/add_region_feature2prokkaGFF.py ${annotgff[0]} ${annotgff[0]/.gff/.ptg.gff} ${straininfo} ${contigs}/${allcontigs} ${assembler} &> ${ptglogs}/add_region_feature2prokkaGFF/add_region_feature2prokkaGFF.${gproject}.log
+        python2.7 ${ptgscripts}/add_region_feature2prokkaGFF.py ${annotgff[0]} ${annotgff[0]/.gff/.ptg.gff} ${straininfo} ${contigs}/${allcontigs} ${assembler} &> ${ptglogs}/add_region_feature2prokkaGFF/add_region_feature2prokkaGFF.${gproject}.log
         checkexec "something went wrong when adding region features to GFF file (In: ${annotgff[0]}; Out:${annotgff[0]/.gff/.ptg.gff})"
         echo "fix annotation to integrate taxid information into GBK files"
         annotfna=($(ls ${annot}/${gproject}/*.fna))
@@ -306,7 +306,7 @@ if [ ! -z "${customassemb}" ] ; then
             fi
           done
           cp ${contigs}/${allcontigs} ${annotgff[0]/gff/fna}
-          python ${ptgscripts}/GFFGenomeFasta2GenBankCDSProtFasta.py ${annotgff[0]/.gff/.ptg.gff} ${annotgff[0]/gff/fna}
+          python2.7 ${ptgscripts}/GFFGenomeFasta2GenBankCDSProtFasta.py ${annotgff[0]/.gff/.ptg.gff} ${annotgff[0]/gff/fna}
         checkexec "something went wrong when generating the GenBank flat file from GFF file ${annotgff[0]/.gff/.ptg.gff}"
         fi
         annotfna=($(ls ${annot}/${gproject}/*.fna))
@@ -318,7 +318,7 @@ if [ ! -z "${customassemb}" ] ; then
         fi
         annotfaa=($(ls ${annot}/${gproject}/*.faa))
         annotffn=($(ls ${annot}/${gproject}/*.ffn))
-        python ${ptgscripts}/add_taxid_feature2prokkaGBK.py ${annotgbk[0]} ${annotrad}.ptg.gbk ${straininfo}
+        python2.7 ${ptgscripts}/add_taxid_feature2prokkaGBK.py ${annotgbk[0]} ${annotrad}.ptg.gbk ${straininfo}
         checkexec "something went wrong when modifying the GenBank flat file ${annotgbk[0]}"
         echo "done."
 	  fi
@@ -389,7 +389,7 @@ if [ ! -z "${customassemb}" ] ; then
         ls -l ${gfnagz}
         ffn=($(ls ${annot}/${gproject}/ | grep '.ffn' | grep -v '.original'))
         cdsfnagz=${assembpathrad}_cds_from_genomic.fna.gz
-        python ${ptgscripts}/format_prokkaCDS.py ${annot}/${gproject}/${ffn[0]} ${cdsfnagz}
+        python2.7 ${ptgscripts}/format_prokkaCDS.py ${annot}/${gproject}/${ffn[0]} ${cdsfnagz}
         ls -l ${cdsfnagz}
 	    if [[ "${compress}" == 'on' ]] ; then
             # compress and only upon success delete the uncompress folder
@@ -426,7 +426,7 @@ fi
 
 ## verify the presence of '*_cds_from_genomic.fna[.gz]' file, as it is sometimes missing even from a RefSeq-downloaded assembly folder (happens for recently published assemblies)
 mkdir -p ${indata}/extracted_cds_from_genomic_fasta 
-python ${ptgscripts}/check_create_cds_from_genomic.py ${genomeinfo}/assemblies_list ${indata}/extracted_cds_from_genomic_fasta
+python2.7 ${ptgscripts}/check_create_cds_from_genomic.py ${genomeinfo}/assemblies_list ${indata}/extracted_cds_from_genomic_fasta
 for dass in $(ls -A ${indata}/extracted_cds_from_genomic_fasta) ; do
   relpathass2extcds=$(realpath --relative-to=${assemblies}/${dass} ${indata}/extracted_cds_from_genomic_fasta/${dass})
   for nfcds in $(ls -A ${indata}/extracted_cds_from_genomic_fasta/${dass}/${dass}_cds_from_genomic.fna*) ; do
@@ -443,7 +443,7 @@ mkdir -p ${manuin}/
 touch ${manuin}/manual_metadata_dictionary.tab ${manuin}/manual_curated_metadata_dictionary.tab ${manuin}/manual_dbxrefs.tab
 mkdir -p ${genomeinfo}/assembly_metadata
 ## extract assembly/sample metadata from flat files
-python ${ptgscripts}/extract_metadata_from_gbff.py --assembly_folder_list=${genomeinfo}/assemblies_list --add_raw_metadata=${manuin}/manual_metadata_dictionary.tab \
+python2.7 ${ptgscripts}/extract_metadata_from_gbff.py --assembly_folder_list=${genomeinfo}/assemblies_list --add_raw_metadata=${manuin}/manual_metadata_dictionary.tab \
 --add_curated_metadata=${manuin}/manual_curated_metadata_dictionary.tab --add_dbxref=${manuin}/manual_dbxrefs.tab --add_assembly_info_dir=${indata}/assembly_stats \
 --default_species_name="unclassified organism" --output=${genomeinfo}/assembly_metadata
 

@@ -82,7 +82,7 @@ ALEsourcenote=$(cut -f3 ${alerec}/reccol)
 qsub -N parseColALE -l select=1:ncpus=${ncpus}:mem=${mem},walltime=${wth}:00:00 -o ${parsecollogs} -j oe -V << EOF
 module load anaconda3/personal
 source activate env_python2
-python ${ptgscripts}/parse_collapsedALE_scenarios.py --rec_sample_list ${reclist} \
+python2.7 ${ptgscripts}/parse_collapsedALE_scenarios.py --rec_sample_list ${reclist} \
  --populations ${speciestree/.full/}_populations --reftree ${speciestree}.lsd.nwk \
  --dir_table_out ${parsedrecs} --evtype ${evtypeparse} --minfreq ${minevfreqparse} \
  --threads 8

@@ -1,8 +1,8 @@
-
-'''lib_util.py 
-
-Set of utilities for manipulating biological data : alignments and trees.
-'''
+#!/usr/bin/python2.7
+# -*- coding: utf-8 -*-
+"""Set of utilities for manipulating biological data : alignments and trees; to be used by concat.py
+Author: Sophie Abby
+"""
 
 import os.path
 import os

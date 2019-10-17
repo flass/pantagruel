@@ -1,4 +1,5 @@
-#!/usr/bin/python
+#!/usr/bin/python2.7
+# -*- coding: utf-8 -*-
 import os, glob, sys, getopt
 import tree2
 import ptg_utils as ptg

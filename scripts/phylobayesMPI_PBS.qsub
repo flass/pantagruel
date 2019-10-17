@@ -154,7 +154,7 @@ if [ -z "$syncfreq" ] ; then
   syncfreq=30m
   echo "set default syncfreq='$syncfreq'"
 fi
-syncf=`python -c "t = '$syncfreq' ; dmul = {'h':3600, 'm':60, 's':1} ; ts = int(t[:-1])*dmul[t[-1]] ; print ts"`
+syncf=`python2.7 -c "t = '$syncfreq' ; dmul = {'h':3600, 'm':60, 's':1} ; ts = int(t[:-1])*dmul[t[-1]] ; print ts"`
 if [ $? != 0 ] ; then
   echo "!!! ERROR : wrong format for sync frequency: $syncfreq ; expect X{h,m,s} with X any integer ; exit now"
   exit 1
@@ -255,7 +255,7 @@ while [[ ${SECONDS} -lt $(( ${timelimit} - (2 * ${timelimit} / 100) )) ]] ; do
       cat bpcomp.bpdiff | xargs
       maxdiff=$(grep 'maxdiff' bpcomp.bpdiff | awk '{print $NF}')
       if [ -z $maxdiff ] ; then maxdiff=1 ; fi
-      maxdiff10=$(python -c "md=float($maxdiff) ; print int(md*10)")
+      maxdiff10=$(python2.7 -c "md=float($maxdiff) ; print int(md*10)")
       if [ $maxdiff10 -lt 1 ] ; then
         # maxdiff < 0.1
         echo "convergence of topologies between chains detected, will stop the runs now"

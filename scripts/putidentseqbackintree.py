@@ -1,5 +1,5 @@
-#!/usr/bin/python
-#~ import os
+#!/usr/bin/python2.7
+# -*- coding: utf-8 -*-
 import sys, tree2, getopt
 
 sys.setrecursionlimit(20000)

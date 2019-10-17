@@ -139,7 +139,7 @@ exit 2
 
 ## normalise the species tree branch labels across gene families
 ## and look for correlated transfer events across gene families
-python ${ptgscripts}/parse_collapsedTERA_scenarios.py --rec_sample_list ${reclist} \
+python2.7 ${ptgscripts}/parse_collapsedTERA_scenarios.py --rec_sample_list ${reclist} \
  ${pops} --reftree ${speciestree}.lsd.nwk \
  --dir_table_out ${parsedrecs} --evtype ${evtypeparse} --minfreq ${minevfreqparse} \
  --threads 8  &> ${ptglogs}/parse_collapsedTERA_scenarios.log

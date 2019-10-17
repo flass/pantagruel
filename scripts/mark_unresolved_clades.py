@@ -1,4 +1,5 @@
-#!/usr/bin/python
+#!/usr/bin/python2.7
+# -*- coding: utf-8 -*-
 """Select tree clades based on branch/node attributes and define constraint clades for MrBayesfor further bayesian tree inference, 
 or produces alignments with collapsed clades (i.e. replace sets of sequences with a single representative of the clade).
 """

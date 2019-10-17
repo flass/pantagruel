@@ -1,4 +1,5 @@
-#!/usr/bin/python
+#!/usr/bin/python2.7
+# -*- coding: utf-8 -*-
 """transpose a CDS into the positions of the corresponding aligned protein;
    assumes no indels, only mismatches and possibly shortenned sequences.
    THIS PROGRAM DOES NOT VERIFY THAT THE CDS TRANSLATES INTO THE PROTEIN.

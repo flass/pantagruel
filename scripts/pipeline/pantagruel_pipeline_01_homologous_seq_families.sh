@@ -31,7 +31,7 @@ promptdate "-- $(wc -l ${allfaarad}_list | cut -d' ' -f1) proteomes in dataset"
 promptdate "-- $(grep -c '>' ${allfaarad}.faa) proteins in dataset"
 
 # dereplicate proteins in db based on their identifier
-python ${ptgscripts}/dereplicate_fasta.py ${allfaarad}.faa ${allfaarad}.nrprotids.faa
+python2.7 ${ptgscripts}/dereplicate_fasta.py ${allfaarad}.faa ${allfaarad}.nrprotids.faa
 promptdate "-- $(grep -c '>' ${allfaarad}.nrprotids.faa) non-redundant protein ids in dataset"
 
 mmseqslogs=${ptglogs}/mmseqs && mkdir -p $mmseqslogs
@@ -49,13 +49,13 @@ mmseqs createseqfiledb ${allfaarad}.mmseqsdb ${allfaarad}.clusthashdb_minseqid10
 checkexec "First protein clustering step failed; please inestigate error reports in '${mmlog0}'" "${datepad}-- First protein clustering step complete: ${mmsummary0}"
 
 # get table of redundant protein names
-python ${ptgscripts}/split_mmseqs_clustdb_fasta.py ${allfaarad}.clusthashdb_minseqid100_clusters "NRPROT" ${allfaarad}.clusthashdb_minseqid100_families 6 0 0
+python2.7 ${ptgscripts}/split_mmseqs_clustdb_fasta.py ${allfaarad}.clusthashdb_minseqid100_clusters "NRPROT" ${allfaarad}.clusthashdb_minseqid100_families 6 0 0
 grep -v NRPROT000000 ${allfaarad}.clusthashdb_minseqid100_families.tab > ${allfaarad}.identicals.tab
-python ${ptgscripts}/genefam_table_as_list.py ${allfaarad}.identicals.tab ${allfaarad}.identicals.list 0
-python ${ptgscripts}/remove_identical_seqs.py ${allfaarad}.nrprotids.faa ${allfaarad}.identicals.list ${allfaarad}.nr.faa
+python2.7 ${ptgscripts}/genefam_table_as_list.py ${allfaarad}.identicals.tab ${allfaarad}.identicals.list 0
+python2.7 ${ptgscripts}/remove_identical_seqs.py ${allfaarad}.nrprotids.faa ${allfaarad}.identicals.list ${allfaarad}.nr.faa
 
 ## collect data from assemblies, including matching of (nr) protein to CDS sequence ids
-python ${ptgscripts}/allgenome_gff2db.py --assemb_list ${genomeinfo}/assemblies_list --dirout ${genomeinfo}/assembly_info \
+python2.7 ${ptgscripts}/allgenome_gff2db.py --assemb_list ${genomeinfo}/assemblies_list --dirout ${genomeinfo}/assembly_info \
  --ncbi_taxonomy ${ncbitax} --identical_prots ${allfaarad}.identicals.list
 
 ## check consistency of non-redundant protein sets
@@ -100,7 +100,7 @@ mmsummary=$(tail -n 4 ${mmlog1} | head -n 3)
 mmseqs createseqfiledb ${allfaarad}.nr.mmseqsdb $mmseqsclout ${mmseqsclout}_clusters &>> ${mmlog1}
 checkexec "Second protein clustering step failed; please inestigate error reports in '${mmlog1}'" "${datepad}-- Second protein clustering step complete: ${mmsummary1}"
 # generate separate fasta files with family identifiers distinc from representative sequence name
-python ${ptgscripts}/split_mmseqs_clustdb_fasta.py ${mmseqsclout}_clusters "${famprefix}P" ${mmseqsclout}_clusters_fasta 6 1 0
+python2.7 ${ptgscripts}/split_mmseqs_clustdb_fasta.py ${mmseqsclout}_clusters "${famprefix}P" ${mmseqsclout}_clusters_fasta 6 1 0
 checkexec "Fialed to split mmseqs cluster '${mmseqsclout}_clusters'" "${datepad}-- Successfully split mmseqs cluster '${mmseqsclout}_clusters'"
 promptdate "-- $(wc -l ${mmseqsclout}_clusters_fasta.tab | cut -d' ' -f1) non-redundant proteins"
 promptdate "-- classified into $(ls ${mmseqsclout}_clusters_fasta/ | wc -l) clusters"

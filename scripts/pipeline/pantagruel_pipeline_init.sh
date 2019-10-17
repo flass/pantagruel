@@ -38,7 +38,7 @@ mkdir -p ${ptgdb}/ ${ptglogs}/ ${ptgtmp}/
 # e.g.:  eval 'cladesupp=70 ; subcladesupp=35 ; criterion=bs ; withinfun=median'
 for param in 'cladesupp' 'subcladesupp' 'criterion' 'withinfun' ; do
   # parse free text to only evaluate code defining 
-  parameqval=$(python << EOF
+  parameqval=$(python2.7 << EOF
 parameqvals="$collapseCladeParams".lower().split()
 for parameqval in parameqvals:
   pareqval = parameqval.strip(';,\t\n ')
@@ -169,7 +169,7 @@ if [ ! -z "${customassemb}" ] ; then
      exit 1
     else
       # check that proposed locus-tag prefix are free from characters '-' and '_'
-      python << EOF
+      python2.7 << EOF
 nfin = '${straininfo}'
 errprefix = "Error in format of strain info file '%s': "%nfin
 errsuffix = "\nPlease edit the file accordingly."

@@ -57,7 +57,7 @@ if [[ "${chaintype}" == 'fullgenetree' ]] ; then
   # PBS-submitted parallel job
   qsub -N replSpePopinGs -l select=1:ncpus=${ncpus}:mem=64gb,walltime=24:00:00 -o ${repllogd} -j oe -V << EOF
   module load python
-  python ${ptgscripts}/replace_species_by_pop_in_gene_trees.py -G ${tasklist} --no_replace -o ${coltreechains} --threads=${ncpus} --reuse=0 --verbose=0 --logfile=${repllogs}_${replrun}.log &
+  python2.7 ${ptgscripts}/replace_species_by_pop_in_gene_trees.py -G ${tasklist} --no_replace -o ${coltreechains} --threads=${ncpus} --reuse=0 --verbose=0 --logfile=${repllogs}_${replrun}.log &
   checkexec "conversion of gene tree chains was interupted ; exit now" "conversion of gene tree chains complete"
 EOF
   exit 1

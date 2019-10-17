@@ -24,7 +24,7 @@ checkfoldersafe ${protali}
 ## prepare protein families for alignment
 mkdir -p ${nrprotali}/ ${ptglogs}/clustalo/
 tasklist=$protali/$(basename ${protfamseqs})_tasklist
-python ${ptgscripts}/schedule_ali_task.py ${protfamseqs}.tab ${protfamseqs} ${tasklist} 1 "${famprefix}P000000"
+python2.7 ${ptgscripts}/schedule_ali_task.py ${protfamseqs}.tab ${protfamseqs} ${tasklist} 1 "${famprefix}P000000"
 
 ## align non-redundant protein families
 run_clustalo_sequential () {
@@ -60,7 +60,7 @@ for cg in `cat ${genomeinfo}/assemblies_list` ; do ls $cg/*_cds_from_genomic.fna
 
 # generate (full protein alignment, unaligned CDS fasta) file pairs and reverse-translate alignments to get CDS (gene family) alignments
 mkdir -p ${ptglogs}/extract_full_prot_and_cds_family_alignments/
-python ${ptgscripts}/extract_full_prot_and_cds_family_alignments.py --nrprot_fam_alns ${nrprotali} --singletons ${protfamseqs}/${protorfanclust}.fasta \
+python2.7 ${ptgscripts}/extract_full_prot_and_cds_family_alignments.py --nrprot_fam_alns ${nrprotali} --singletons ${protfamseqs}/${protorfanclust}.fasta \
  --prot_info ${genomeinfo}/assembly_info/allproteins_info.tab --repli_info ${genomeinfo}/assembly_info/allreplicons_info.tab --assemblies ${assemblies} \
  --dirout ${protali} --famprefix ${famprefix} --logs ${ptglogs}/extract_full_prot_and_cds_family_alignments --identical_prots ${allfaarad}.identicals.list
 checkexec "$(promptdate)-- Critical error during the production of full CDS alignments from the nr protein alignments" "$(promptdate)-- complete generation of full CDS alignments without critical errors"

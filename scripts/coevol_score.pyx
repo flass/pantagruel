@@ -1,4 +1,5 @@
-#!/usr/bin/python
+#!/usr/bin/python2.7
+# -*- coding: utf-8 -*-
 
 cdef double coevol_score(lineage_matches, unsigned long nsamplesq):
 	cdef int f0, f1

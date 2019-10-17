@@ -56,7 +56,7 @@ echo "current directory (output directory) is $HOSTNAME:$PWD"
 
 echo "mbmcmcopt=$mbmcmcopt"
 
-mbresume=$(python << EOF
+mbresume=$(python2.7 << EOF
 mbmcmcopts="$mbmcmcopt".lower().split()
 mbresume = 'no'
 for opteqval in mbmcmcopts:

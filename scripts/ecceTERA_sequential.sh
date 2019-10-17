@@ -13,7 +13,7 @@ usage() {
 }
 
 nbtaxafromtree () {
-python << EOF
+python2.7 << EOF
 with open('${1}', 'r') as fchain:
   chainone = fchain.readline()
   print 'ntaxa:', chainone.count('(') + 2

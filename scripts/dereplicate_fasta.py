@@ -1,4 +1,5 @@
-#!/usr/bin/python
+#!/usr/bin/python2.7
+# -*- coding: utf-8 -*-
 import sys
 nfin = sys.argv[1]
 nfout = sys.argv[2]

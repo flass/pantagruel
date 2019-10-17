@@ -57,7 +57,7 @@ mkdir -p ${interpro}/ ${ptgtmp}/interpro/ ${ptglogs}/interpro/
 # segment the entire proteome in batches of reasonable size (as all results are kept in memory before being written)
 mkdir -p ${interpro}/all_complete_proteomes/
 ln -s $(realpath --relative-to=${interpro} ${allfaarad}.nr.faa) ${interpro}/
-python << EOF
+python2.7 << EOF
 import os
 nfinfaa = "${allfaarad}.nr.faa"
 outd = "${interpro}/all_complete_proteomes"
@@ -98,6 +98,6 @@ done
 rm -rf ${ptgtmp}/interpro
 
 ## load the annotation data into the database
-#~ python ${ptgscripts}/pantagruel_sqlitedb_load_interproscan_annotations.py ${sqldb} ${interpro} ${IPversion}
-python ${ptgscripts}/pantagruel_load_interproscan_annotations.py --sqlite_db ${sqldb} --ipscan_annot_files "${interpro}/all_complete_proteomes/*.tsv" --ipscan_version ${IPversion}
+#~ python2.7 ${ptgscripts}/pantagruel_sqlitedb_load_interproscan_annotations.py ${sqldb} ${interpro} ${IPversion}
+python2.7 ${ptgscripts}/pantagruel_load_interproscan_annotations.py --sqlite_db ${sqldb} --ipscan_annot_files "${interpro}/all_complete_proteomes/*.tsv" --ipscan_version ${IPversion}
 checkexec "Something went wrong when loading InterProScan data into SQLite3 database '${sqldb}'"

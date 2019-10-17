@@ -1,5 +1,8 @@
-#! /usr/local/bin/python
-# utilitaires.py
+#!/usr/bin/python2.7
+# -*- coding: utf-8 -*-
+"""General and phylogenetic utilities module for use with concta.py
+Author: Sophie Abby
+""" 
 
 import os.path
 import os

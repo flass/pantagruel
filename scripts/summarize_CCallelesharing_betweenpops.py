@@ -1,3 +1,5 @@
+#!/usr/bin/python2.7
+# -*- coding: utf-8 -*-
 import sys, os
 
 nflnfpopref = sys.argv[1]

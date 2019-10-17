@@ -43,7 +43,7 @@ fi
 nfchain=`awk "NR==$PBS_ARRAY_INDEX" $tasklist`
 echo "current task"
 echo $nfchain
-python << EOF
+python2.7 << EOF
 with open('$nfchain', 'r') as fchain:
   chainone = fchain.readline()
   print 'ntaxa:', chainone.count('(') + 2

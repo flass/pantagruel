@@ -53,12 +53,12 @@ sqlite3 ${sqldb} """INSERT INTO ortholog_collections (ortholog_col_id, ortholog_
 'source from https://github.com/flass/pantagruel/commits/${ptgversion}, call: ''scripts/get_orthologues_from_ALE_recs.py ${getOrpthologuesOptions}''')
 ;
 """
-python ${ptgscripts}/pantagruel_sqlitedb_load_orthologous_groups.py ${sqldb} ${orthogenes}/${orthocol} "mixed" "majrule_combined_0.500000" ${orthocolid}
-python ${ptgscripts}/pantagruel_sqlitedb_load_orthologous_groups.py ${sqldb} ${orthogenes}/${orthocol} "unreconciled" "unicopy" ${orthocolid} 1
+python2.7 ${ptgscripts}/pantagruel_sqlitedb_load_orthologous_groups.py ${sqldb} ${orthogenes}/${orthocol} "mixed" "majrule_combined_0.500000" ${orthocolid}
+python2.7 ${ptgscripts}/pantagruel_sqlitedb_load_orthologous_groups.py ${sqldb} ${orthogenes}/${orthocol} "unreconciled" "unicopy" ${orthocolid} 1
 
 ## extract sister clade pairs from the reference species tree for later clade-specific gene search
 export cladedefs="${speciestree}_clade_defs"
-python << EOF
+python2.7 << EOF
 import tree2
 reftree = tree2.Node(file='${speciestree}')
 nfout = '${cladedefs}'
@@ -89,7 +89,7 @@ EOF
 orthocol=ortholog_collection_${orthocolid}
 echo ${orthocol}
 orthomatrad=${orthogenes}/${orthocol}/mixed_majrule_combined_0.5.orthologs
-python ${ptgscripts}/get_ortholog_presenceabsence_matrix_from_sqlitedb.py ${sqldb} ${orthomatrad} ${orthocolid}
+python2.7 ${ptgscripts}/get_ortholog_presenceabsence_matrix_from_sqlitedb.py ${sqldb} ${orthomatrad} ${orthocolid}
 
 # create clsutering based on the abs/pres matrix (using Jaccard Distance)
 ${dbscripts}/pangenome_hclust.r ${orthomatrad} 1000 & 

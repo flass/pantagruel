@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python2.7
 # -*- coding: utf-8 -*-
 import glob, os, sys, getopt
 from ptg_utils import get_dbconnection
