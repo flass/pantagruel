@@ -66,6 +66,8 @@ if [ -z "$spetree" ] ; then
   usage
   exit 2
 fi
+echo "gene trees will be reconciled with this species tree:"
+ls $spetree 2> /dev/null || echo "(will look for a local file contiaing a gene family-specific collapsed species)"
 
 # nrecs
 echo "nrecs:"

@@ -10,8 +10,17 @@
 # Copyright: Florent Lassalle (f.lassalle@imperial.ac.uk), 15 Jan 2019
 
 
-if [ -z "$1" ] ; then echo "missing mandatory parameter: pantagruel config file" ; echo "Usage: $0 ptg_env_file" ; exit 1 ; fi
+if [ -z "$1" ] ; then 
+  echo "missing mandatory parameter: pantagruel config file"
+  echo "Usage: $0 ptg_env_file [hpc_type:{PBS(default)|LSF}]"
+  exit 1
+fi
 envsourcescript="$1"
+if [ -z "$2" ] ; then 
+  hpctype='PBS'
+else
+  hpctype="$2"
+fi
 source ${envsourcescript}
 
 
@@ -44,7 +53,17 @@ chunksize=3000
 jobranges=($(${ptgscripts}/get_jobranges.py $chunksize $Njob))
 for jobrange in ${jobranges[@]} ; do
 echo "jobrange=$jobrange"
-qsub -J $jobrange -l walltime=${wt}:00:00 -l select=1:ncpus=${ncpus}:mem=${mem}gb -N raxml_gene_trees_$(basename $cdsfam2phylo) -o ${ptglogs}/raxml/gene_trees -j oe -v "$qsubvars" ${ptgscripts}/raxml_array_PBS.qsub
+  case "$hpctype" in
+    'PBS') 
+      qsub -J $jobrange -l walltime=${wt}:00:00 -l select=1:ncpus=${ncpus}:mem=${mem}gb -N raxml_gene_trees_$(basename $cdsfam2phylo) -o ${ptglogs}/raxml/gene_trees -j oe -v "$qsubvars" ${ptgscripts}/raxml_array_PBS.qsub
+	  ;;
+	'LSF')
+	  bsub -R walltime=${wt}:00:00 -R select=1:ncpus=${ncpus}:mem=${mem}gb -J raxml_gene_trees_$(basename $cdsfam2phylo) -o ${ptglogs}/raxml/gene_trees/raxml_gene_trees_$(basename $cdsfam2phylo).%J.o -e ${ptglogs}/raxml/gene_trees/raxml_gene_trees_$(basename $cdsfam2phylo).%J.e
+	  ;;
+	*)
+	  echo "Error: high-performance computer system '$hpctype' is not supported; exit now"
+	  exit 1;;
+  esac
 done
 done
 
