@@ -55,10 +55,13 @@ for jobrange in ${jobranges[@]} ; do
 echo "jobrange=$jobrange"
   case "$hpctype" in
     'PBS') 
-      qsub -J $jobrange -l walltime=${wt}:00:00 -l select=1:ncpus=${ncpus}:mem=${mem}gb -N raxml_gene_trees_$(basename $cdsfam2phylo) -o ${ptglogs}/raxml/gene_trees -j oe -v "$qsubvars" ${ptgscripts}/raxml_array_PBS.qsub
+      qsub -J $jobrange -l walltime=${wt}:00:00 -l select=1:ncpus=${ncpus}:mem=${mem}gb -N raxml_gene_trees_$(basename $cdsfam2phylo) \
+	  -o ${ptglogs}/raxml/gene_trees -j oe -v "$qsubvars" ${ptgscripts}/raxml_array_PBS.qsub
 	  ;;
 	'LSF')
-	  bsub -R walltime=${wt}:00:00 -R select=1:ncpus=${ncpus}:mem=${mem}gb -J raxml_gene_trees_$(basename $cdsfam2phylo) -o ${ptglogs}/raxml/gene_trees/raxml_gene_trees_$(basename $cdsfam2phylo).%J.o -e ${ptglogs}/raxml/gene_trees/raxml_gene_trees_$(basename $cdsfam2phylo).%J.e
+	  bsub -J "raxml_gene_trees_$(basename $cdsfam2phylo)[$jobrange]" -R walltime=${wt}:00:00 -R select=1:ncpus=${ncpus}:mem=${mem}gb \
+	  -o ${ptglogs}/raxml/gene_trees/raxml_gene_trees_$(basename $cdsfam2phylo).%J.%I.o \
+	  -e ${ptglogs}/raxml/gene_trees/raxml_gene_trees_$(basename $cdsfam2phylo).%J.%I.e -env "$qsubvars" ${ptgscripts}/raxml_array_PBS.qsub
 	  ;;
 	*)
 	  echo "Error: high-performance computer system '$hpctype' is not supported; exit now"
