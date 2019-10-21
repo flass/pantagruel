@@ -35,7 +35,7 @@ rm -f ${genetrees}/cdsfams_*_aln_list
 sortminsizes=($(for famset in `ls ${genetrees}/*cdsfams_*` ; do echo $famset | sed -e 's/.*cdsfams_minsize\([0-9]\+.*\)/\1/' ; done | sort -n))
 allcdsfam2phylo=($(for famminsize in ${sortminsizes[@]} ; do ls ${genetrees}/*${famminsize} ; done))
 allmems=(4 8 32 64)
-allwalltimes=(24 24 72 72)
+allwalltimes=(12 24 48 72)
 allncpus=(4 4 4 16)
 for i in ${!allcdsfam2phylo[@]} ; do
 cdsfam2phylo=${allcdsfam2phylo[$i]} ; mem=${allmems[$i]} ; wt=${allwalltimes[$i]} ; ncpus=${allncpus[$i]}
@@ -46,10 +46,30 @@ if [ "$(wc -l $cdsfam2phylo | cut -f1 -d' ')" -lt "$(wc -l $tasklist | cut -f1 -
   >&2 echo "ERROR $(dateprompt): missing gene family alignments; please fix the list '$tasklist' or the content of folder '$alifastacodedir/' before continuing."
   exit 1
 fi
+rm -f ${tasklist}* ; for fam in $(cut -f1 ${cdsfam2phylo}) ; do
+  aln=${cdsalifastacodedir}/${fam}.codes.aln
+  if [[ "${resumetask}" == "true" ]] ; then
+    if [[ ! -s ${mlgenetrees}/${mainresulttag}/RAxML_${mainresulttag}.${fam}.codes ]] ; then
+      ls ${aln} >> ${tasklist}_resume
+    fi
+  fi
+  ls ${aln} >> ${tasklist}
+done
+if [[ "${resumetask}" == "true" ]] ; then
+  if [[ -s ${tasklist}_resume ]] ; then
+    echo "Resume task 6: $(wc -l ${tasklist}_resume | cut -d' ' -f1) ML trees left to infer"
+  else
+    echo "Resume task 6: all ML tree built; skip ML tree building"
+  fi
+tasklist=${tasklist}_resume
+fi
+
+
+
 qsubvars="tasklist=$tasklist,outputdir=$mlgenetrees,reducedaln=true,nbthreads=${ncpus}"
 Njob=`wc -l ${tasklist} | cut -f1 -d' '`
 # accomodate with possible upper limit on number of tasks in an array job; assume chunks of 3000 tasks are fine
-chunksize=3000
+chunksize=1000
 jobranges=($(${ptgscripts}/get_jobranges.py $chunksize $Njob))
 for jobrange in ${jobranges[@]} ; do
 echo "jobrange=$jobrange"
@@ -59,8 +79,16 @@ echo "jobrange=$jobrange"
 	  -o ${ptglogs}/raxml/gene_trees -j oe -v "$qsubvars" ${ptgscripts}/raxml_array_PBS.qsub
 	  ;;
 	'LSF')
-	  bsub -J "raxml_gene_trees_$(basename $cdsfam2phylo)[$jobrange]" -R walltime=${wt}:00:00 -R select=1:ncpus=${ncpus}:mem=${mem}gb \
-	  -o ${ptglogs}/raxml/gene_trees/raxml_gene_trees_$(basename $cdsfam2phylo).%J.%I.o \
+	  if [ ${wt} -le 12 ] ; then
+	    bqueue='normal'
+	  elif [ ${wt} -le 48 ] ; then
+	    bqueue='long'
+	  else
+	    bqueue='basement'
+	  fi
+	  memmb=$((${mem} * 1000)) 
+	  bsub -J "raxml_gene_trees_$(basename $cdsfam2phylo)[$jobrange]" -q ${bqueue} -R "select[mem>${memmb}] rusage[mem=${memmb}] span[hosts=1]" \
+	  -n${ncpus} -M${memmb} -o ${ptglogs}/raxml/gene_trees/raxml_gene_trees_$(basename $cdsfam2phylo).%J.%I.o \
 	  -e ${ptglogs}/raxml/gene_trees/raxml_gene_trees_$(basename $cdsfam2phylo).%J.%I.e -env "$qsubvars" ${ptgscripts}/raxml_array_PBS.qsub
 	  ;;
 	*)
