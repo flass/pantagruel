@@ -88,9 +88,17 @@ else
   raxmlflav=''
 fi
 
-raxmlbinloc=$(which raxmlHPC-PTHREADS${raxmlflav})
-echo "wil use ${raxmlbinloc} (linking to $(readlink -f ${raxmlbinloc}))"
-raxmlbin="raxmlHPC-PTHREADS${raxmlflav} -T $nbthreads"
+if [ -z "${raxmlbin}" ] ; then
+  raxmlbin="raxmlHPC-PTHREADS${raxmlflav}"
+  raxmlbinloc=$(which ${raxmlbin})
+  echo "will use ${raxmlbin} executable from '${raxmlbinloc}' (linking to '$(readlink -f ${raxmlbinloc})')"  
+else
+  if [[ ! -z "${raxmlflav}" && -z "$(echo ${raxmlbin} | grep ${raxmlflav})" ]] ; then
+    raxmlbin="${raxmlbin}${raxmlflav}"
+  fi
+  echo "will use user-specified ${raxmlbin} executable"
+fi
+raxmlcmd="${raxmlbin} -T $nbthreads"
 
 raxmloptions="-n $nfrad2 -m $model -p 1753"
 
@@ -98,19 +106,19 @@ idseqgreppat='exactly identical$'
 idseqsedpat='s/IMPORTANT WARNING: Sequences \(.\+\) and \(.\+\) are exactly identical/\1\t\2/g'
 if [[ "$reducedaln" == "true" ]] ; then
   ## reduce the alignement and record which sequences were seen as duplicates
-  raxmlcall0="${raxmlbin} -s $localn ${raxmloptions} -f c && grep '${idseqgreppat}' RAxML_info.${nfrad2} | sed -e '${idseqsedpat}' > RAxML_identical_sequences.${nfrad2}"
+  raxmlcall0="${raxmlcmd} -s $localn ${raxmloptions} -f c && grep '${idseqgreppat}' RAxML_info.${nfrad2} | sed -e '${idseqsedpat}' > RAxML_identical_sequences.${nfrad2}"
 else
   raxmlcall0="# NOT reducing alignment to unique sequences before start"
-  raxmlbin="${raxmlbin} --silent"
+  raxmlcmd="${raxmlcmd} --silent"
 fi
 ## search for global ML tree
-raxmlcall1="${raxmlbin} -s ${localn} ${raxmloptions}"
+raxmlcall1="${raxmlcmd} -s ${localn} ${raxmloptions}"
 # search for {rapid|parametric} bootstrap trees
-raxmlcall2="${raxmlbin} -s ${localn} ${raxmloptions} -${bootstrapalgo} 987987 -N 100"
+raxmlcall2="${raxmlcmd} -s ${localn} ${raxmloptions} -${bootstrapalgo} 987987 -N 100"
 ## map bootstraps on ML tree
-raxmlcall3="${raxmlbin} -s ${localn} ${raxmloptions} -f b -z RAxML_bootstrap.${nfrad2} -t RAxML_bestTree.${nfrad2}"
+raxmlcall3="${raxmlcmd} -s ${localn} ${raxmloptions} -f b -z RAxML_bootstrap.${nfrad2} -t RAxML_bestTree.${nfrad2}"
 ## root ML tree
-raxmlcall4="${raxmlbin} -s ${localn} ${raxmloptions} -f I -t RAxML_bipartitionsBranchLabels.${nfrad2}"
+raxmlcall4="${raxmlcmd} -s ${localn} ${raxmloptions} -f I -t RAxML_bipartitionsBranchLabels.${nfrad2}"
 ## generic end
 raxmlcallz=""
 
