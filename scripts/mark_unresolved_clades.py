@@ -481,7 +481,7 @@ def usage():
 	s += '  --in_gene_tree_list\tpath\tpath to file containing the list of paths for source gene trees (MANDATORY).\n'
 	s += '\t\t\t\t (which must be point estimates [ML, consensus] in Newick format).\n'
 	s += '  --diraln\t\tpath\tpath to source alignment folder; defaults to the same older as each listed gene tree.\n'
-	s += '  --dir_identseq\npath to folder containing lists of identical sequences in the gene family;\n'
+	s += '  --dir_identseq\tpath\tpath to folder containing lists of identical sequences in the gene family;\n'
 	s += '\t\t\t\teach file must be formated as a tab delimited table with two columns, indicating reference and redundant sequences, respectively.\n'
 	s += '\t\t\t\tIf the redundant sequences are present in the input gene tree, they will be removed before processsing.\n'
 	s += '\t\t\t\tIn any case, the reference:(redundant1, redundant2, ...) sequence name map is later integrated with the map of clades to collapse.\n'
