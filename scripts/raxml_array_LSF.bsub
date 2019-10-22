@@ -1,14 +1,4 @@
 #!/bin/bash
-#PBS -S /bin/bash
-#PBS -N raxml
-#PBS -o /work/flassall/logs/mrbayes
-#PBS -j oe 
-#PBS -l walltime=24:00:00 
-#PBS -l select=1:ncpus=4:mem=16gb
-
-module -v load raxml
-module -v load intel-suite
-module list
 
 # parse external variables pased through qsub -v "var1=toto,var2=tutu,..."
 # mandatory variables
@@ -74,7 +64,6 @@ ls ./
 
 # convert file format
 if [ "$nfext" == 'nex' ] ; then
-  module load python
   python2.7 -c "from Bio import AlignIO ; AlignIO.convert('$nfrad1', 'nexus', '${nfrad2}.fasta', 'fasta')"
   if [ $? == 0 ] ; then
     echo "succesfully converted Nexus input file $nfrad1 into FASTA format: ${nfrad2}.fasta"

@@ -1,0 +1,13 @@
+!/bin/bash
+
+# need the BCBio.GFF module to load ptg_utils
+virtualenv -p $(which python2.7) --system-site-packages BCBio
+source BCBio/bin/activate
+virtualenv -p $(which python2.7) --system-site-packages pyximport
+source BCBio/bin/pyximport
+
+python2.7 ${ptgscripts}/compare_collapsedALE_scenarios.py --events_from_postgresql_db ${sqldbname} \
+ --event_type ${evtypematch} --min_freq ${minevfreqmatch} --min_joint_freq ${minjointevfreqmatch} --threads 8 \
+ --dir_table_out ${compoutdir} &> ${ptglogs}/compare_collapsedALE_scenarios.${parsedreccol}.log
+
+deactivate

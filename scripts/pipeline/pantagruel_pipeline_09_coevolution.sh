@@ -31,7 +31,7 @@ fi
 ## look for correlated gene lineage histories through identification of matching speciation and transfer events
 
 ### OPTION: exclude oldest species tree branches to avoid unspecific matches (and speed-up search):
-if [ ! -z maxreftreeheight ]
+if [ ! -z "${maxreftreeheight}" ]
   # e.g.: maxreftreeheight=0.25
   exclbrlist=${coretree}/branches_older_than_${maxreftreeheight}
   python2.7 ${ptgscripts}/list_branches.py --intree ${speciestreeBS}.lsd_internalPopulations.nwk --root_age 1.0 --older_than ${maxreftreeheight} --out ${exclbrlist}
@@ -67,10 +67,10 @@ fi
 # on a 880 Enterobacteriaceae dataset, results in ~300 GB output (made to be split into ~1GB files)
 python2.7 $ptgscripts/compare_collapsedALE_scenarios.py --events_from_postgresql_db ${sqldbname} \
  --event_type ${evtypematch} --min_freq ${minevfreqmatch} --min_joint_freq ${minjointevfreqmatch} --threads 8 \
- --dir_table_out ${compoutdir} &> $entlogs/compare_collapsedALE_scenarios.${parsedreccol}.log &
+ --dir_table_out ${compoutdir} &> ${ptglogs}/compare_collapsedALE_scenarios.${parsedreccol}.log &
 
 #### NOT IMPLEMENTED YET IN SQLite
 # load data in database, adding mention of reconciliation_id to ensure events are not matched across collections
 export assocoutdir=${compoutdir}/gene_lineage_assocations/between_fams_scores
-$ptgscripts/pantagruel_sqlitedb_load_coevolution_scores.py ${sqldb} ${assocoutdir} ${parsedreccolid}
+${ptgscripts}/pantagruel_sqlitedb_load_coevolution_scores.py ${sqldb} ${assocoutdir} ${parsedreccolid}
 ####
