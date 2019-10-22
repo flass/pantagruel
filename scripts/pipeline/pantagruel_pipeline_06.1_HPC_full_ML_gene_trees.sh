@@ -73,6 +73,9 @@ fi
 
 
 qsubvars="tasklist=$tasklist,outputdir=$mlgenetrees,reducedaln=true,nbthreads=${ncpus}"
+if [ ! -z "${raxmlbin}" ] ; then
+  qsubvars="${qsubvars},raxmlbin=${raxmlbin}"
+fi
 Njob=`wc -l ${tasklist} | cut -f1 -d' '`
 # accomodate with possible upper limit on number of tasks in an array job; assume chunks of 3000 tasks are fine
 chunksize=1000
