@@ -31,9 +31,9 @@ source ${envsourcescript}
 mkdir -p ${ptglogs}/raxml/gene_trees/ ${$mlgenetrees}/
 
 ## compute first pass of gene trees with RAxML, using rapid bootstrap to estimate branch supports
-if [[ "${resumetask}" == "true" && ! -z "$(ls ${genetrees}/cdsfams_*_aln_list 2> /dev/null)" ]] ; then
+if [[ "${resumetask}" == "true" && ! -z "$(ls ${genetrees}/*cdsfams_* 2> /dev/null | grep -v 'aln_list')" ]] ; then
   echo "will re-use previously established lists of gene families for which to compute trees" 
-  allcdsfam2phylo=($(ls ${genetrees}/cdsfams_*_aln_list))
+  allcdsfam2phylo=($(ls ${genetrees}/*cdsfams_* | grep -v 'aln_list'))
 else
   rm -f ${genetrees}/cdsfams_*_aln_list
   sortminsizes=($(for famset in `ls ${genetrees}/*cdsfams_*` ; do echo $famset | sed -e 's/.*cdsfams_minsize\([0-9]\+.*\)/\1/' ; done | sort -n))
