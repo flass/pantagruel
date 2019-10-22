@@ -61,7 +61,7 @@ if [[ "${resumetask}" == "true" ]] ; then
   else
     echo "Resume task 6: all ML tree built; skip ML tree building"
   fi
-tasklist=${tasklist}_resume
+  tasklist=${tasklist}_resume
 fi
 
 
