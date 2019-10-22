@@ -50,7 +50,7 @@ echo ${nfrad2}
 
 
 cd /tmp/
-mkdir raxml_tmp.${nfrad2}/ && cd raxml_tmp.${nfrad2}/
+mkdir -p raxml_tmp.${nfrad2}/ && cd raxml_tmp.${nfrad2}/
 echo "current directory is ${PWD}"
 
 rsync -az ${nfaln} ./
@@ -60,8 +60,8 @@ if [ $? != 0 ] ; then
 else
   echo "copied input files ${nfaln} succesfully"
 fi
-echo "ls ./"
-ls ./
+echo "ls ./${nfrad2}*"
+ls ./${nfrad2}*
 
 # convert file format
 if [ "$nfext" == 'nex' ] ; then
@@ -88,6 +88,8 @@ else
   raxmlflav=''
 fi
 
+raxmlbinloc=$(which raxmlHPC-PTHREADS${raxmlflav})
+echo "wil use ${raxmlbinloc} (linking to $(readlink -f ${raxmlbinloc}))"
 raxmlbin="raxmlHPC-PTHREADS${raxmlflav} -T $nbthreads"
 
 raxmloptions="-n $nfrad2 -m $model -p 1753"
