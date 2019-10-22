@@ -28,7 +28,7 @@ source ${envsourcescript}
 ## 06.1 Full ML gene trees on HPC
 #############################################################
 
-mkdir -p ${ptglogs}/raxml/gene_trees/ ${$mlgenetrees}/
+mkdir -p ${ptglogs}/raxml/gene_trees/ ${mlgenetrees}/
 
 ## compute first pass of gene trees with RAxML, using rapid bootstrap to estimate branch supports
 if [[ "${resumetask}" == "true" && ! -z "$(ls ${genetrees}/*cdsfams_* 2> /dev/null | grep -v 'aln_list')" ]] ; then
