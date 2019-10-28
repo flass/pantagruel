@@ -94,7 +94,7 @@ else
   for jobrange in ${jobranges[@]} ; do
     beg=`echo $jobrange | cut -d'-' -f1`
     tail -n +${beg} ${mlgenetreelist} | head -n ${chunksize} > ${mlgenetreelist}_${jobrange}
-    qsubvars="ptgscripts=${ptgscripts},mlgenetreelist=${mlgenetreelist}_${jobrange},${cdsalifastacodedir},${ncpus},colalinexuscodedir=${colalinexuscodedir},collapsecond=${collapsecond},didseq=${mlgenetrees}/identical_sequences"
+    qsubvars="ptgscripts=${ptgscripts},mlgenetreelist=${mlgenetreelist}_${jobrange},cdsalifastacodedir=${cdsalifastacodedir},ncpus=${ncpus},colalinexuscodedir=${colalinexuscodedir},collapsecond=${collapsecond},didseq=${mlgenetrees}/identical_sequences"
     case "$hpctype" in
       'PBS')
          qsub -N 'mark_unresolved_clades' -l select=1:ncpus=${ncpus}:mem=${mem}gb,walltime=${wth}:00:00 \
@@ -102,9 +102,9 @@ else
 		  -v "${qsubvars}" ${ptgscripts}/mark_unresolved_clades.qsub
 		  ;;
       'LSF')
-	    if [ ${wt} -le 12 ] ; then
+	    if [ ${wth} -le 12 ] ; then
 	      bqueue='normal'
-	    elif [ ${wt} -le 48 ] ; then
+	    elif [ ${wth} -le 48 ] ; then
 	      bqueue='long'
 	    else
 	      bqueue='basement'
