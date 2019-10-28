@@ -1,5 +1,9 @@
 #!/bin/bash
 
+echo "This is job $LSB_JOBNAME, job_ID $LSB_JOBID on host $HOSTNAME, running on these workers:"
+cat $LSB_MCPU_HOSTS
+echo ""
+
 cd /tmp/
 jobtmpdir=mark_unresolved_clades.$LSB_JOBID
 mkdir -p ${jobtmpdir}/ && cd ${jobtmpdir}/
@@ -9,11 +13,28 @@ echo "current directory is ${PWD}"
 virtualenv -p $(which python2.7) --system-site-packages BCBio
 source BCBio/bin/activate
 
+echo "\$PYTHONPATH=$PYTHONPATH"
+while [ ! -z "$(python -c "import tree2")" ] ; do
+  echo "tree2 module was not detected."
+  if [ -z "$1" ] ; then
+    echo "try with path given through argument: $1"
+	export PYTHONPATH=$1
+    shift
+  else
+    echo "try to reload $HOME/.bashrc"
+    source $HOME/.bashrc
+	break
+  fi
+done
+
 collapsecriteriondef=$(cat ${colalinexuscodedir}/${collapsecond}.collapse_criterion_def)
 
-python2.7 ${ptgscripts}/mark_unresolved_clades.py --in_gene_tree_list=${mlgenetreelist}_${jobrange} --diraln=${cdsalifastacodedir} --fmt_aln_in='fasta' \
- --threads=${ncpus} --dirout=${colalinexuscodedir}/${collapsecond} --no_constrained_clade_subalns_output --dir_identseq=${mlgenetrees}/identical_sequences \
- ${collapsecriteriondef}
+echo "python2.7 ${ptgscripts}/mark_unresolved_clades.py --in_gene_tree_list=${mlgenetreelist}_${jobrange} \
+--diraln=${cdsalifastacodedir} --fmt_aln_in='fasta' --threads=${ncpus} --dirout=${colalinexuscodedir}/${collapsecond} \
+--no_constrained_clade_subalns_output --dir_identseq=${mlgenetrees}/identical_sequences ${collapsecriteriondef}"
+python2.7 ${ptgscripts}/mark_unresolved_clades.py --in_gene_tree_list=${mlgenetreelist}_${jobrange} \
+--diraln=${cdsalifastacodedir} --fmt_aln_in='fasta' --threads=${ncpus} --dirout=${colalinexuscodedir}/${collapsecond} \
+--no_constrained_clade_subalns_output --dir_identseq=${mlgenetrees}/identical_sequences ${collapsecriteriondef}
 
 deactivate
 
