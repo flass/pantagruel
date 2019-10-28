@@ -97,9 +97,9 @@ else
     qsubvars="ptgscripts=${ptgscripts},mlgenetreelist=${mlgenetreelist}_${jobrange},cdsalifastacodedir=${cdsalifastacodedir},ncpus=${ncpus},colalinexuscodedir=${colalinexuscodedir},collapsecond=${collapsecond},didseq=${mlgenetrees}/identical_sequences"
     case "$hpctype" in
       'PBS')
-         qsub -N 'mark_unresolved_clades' -l select=1:ncpus=${ncpus}:mem=${mem}gb,walltime=${wth}:00:00 \
+         subcmd="qsub -N 'mark_unresolved_clades' -l select=1:ncpus=${ncpus}:mem=${mem}gb,walltime=${wth}:00:00 \
           -o ${ptglogs}/mark_unresolved_clades.${collapsecond}_${jobrange}.log -j oe \
-		  -v "${qsubvars}" ${ptgscripts}/mark_unresolved_clades.qsub
+		  -v \"${qsubvars}\" ${ptgscripts}/mark_unresolved_clades.qsub"
 		  ;;
       'LSF')
 	    if [ ${wth} -le 12 ] ; then
@@ -109,25 +109,20 @@ else
 	    else
 	      bqueue='basement'
 	    fi
-	    memmb=$((${mem} * 1024)) 
-	    bsub -J 'mark_unresolved_clades' -q ${bqueue} \
-	     -R "select[mem>${memmb}] rusage[mem=${memmb}] span[hosts=1]" \
-         -n${ncpus} -M${memmb} -env "$qsubvars" \
-         -o ${ptglogs}/mark_unresolved_clades.${collapsecond}_${jobrange}.%J.o \
-         -e ${ptglogs}/mark_unresolved_clades.${collapsecond}_${jobrange}.%J.e \
-         ${ptgscripts}/mark_unresolved_clades.bsub
+	    memmb=$((${mem} * 1024))
 	    subcmd="bsub -J 'mark_unresolved_clades' -q ${bqueue} \
 	     -R \"select[mem>${memmb}] rusage[mem=${memmb}] span[hosts=1]\" \
          -n${ncpus} -M${memmb} -env \"$qsubvars\" \
          -o ${ptglogs}/mark_unresolved_clades.${collapsecond}_${jobrange}.%J.o \
          -e ${ptglogs}/mark_unresolved_clades.${collapsecond}_${jobrange}.%J.e \
          ${ptgscripts}/mark_unresolved_clades.bsub"
-		 echo ${subcmd}
 	    ;;
 	  *)
 	    echo "Error: high-performance computer system '$hpctype' is not supported; exit now"
 	    exit 1;;
     esac
+	echo "${subcmd}"
+	eval "${subcmd}"
   done
   export collapsecoldate=$(date +%Y-%m-%d)
   echo -e "${collapsecolid}\t${collapsecoldate}" > ${genetrees}/collapsecol
