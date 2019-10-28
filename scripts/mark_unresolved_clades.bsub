@@ -16,7 +16,7 @@ echo "\$PYTHONPATH=$PYTHONPATH"
 python -c "import tree2"
 while [ ${?} -gt 0 ] ; do
   echo "tree2 module was not detected."
-  if [ -z "$1" ] ; then
+  if [ ! -z "$1" ] ; then
     echo "try with path given through argument: $1"
 	export PYTHONPATH=$1
     shift
