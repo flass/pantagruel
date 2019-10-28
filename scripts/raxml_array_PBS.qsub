@@ -147,7 +147,8 @@ for i in {0..5} ; do
         nbnrseq=$(head -n1 ${localn}.reduced | cut -d' ' -f1)
         if [[ $nbnrseq -lt 4 ]] ; then
           echo "WARNING: Reduced alignment is too small to pass further steps ; copy the identical_sequences file to '$outputdir/identical_sequences/' and quit"
-          rsync -avz RAxML_identical_sequences.${nfrad2} $outputdir/identical_sequences/
+          rsync -avz RAxML_identical_sequences.${nfrad2} ${outputdir}/identical_sequences/
+          echo ${nfrad2} > ${outputdir}/bulk/${nfrad2}.smallreducedali
           exit 0
         else
           echo "# Found $(wc -l RAxML_identical_sequences.${nfrad2} | cut -d':' -f2) redundant sequences; replace input alignment '${localn}' by '${localn}.reduced'."

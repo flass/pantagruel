@@ -21,7 +21,7 @@ fi
 if [ ! -z "$3" ] ; then
   mem="$3"
 else
-  mem=32gb
+  mem=32
 fi
 if [ ! -z "$4" ] ; then
   wth="$4"
@@ -38,6 +38,14 @@ fi
 ## 06.2 Gene tree collapsing on HPC
 #############################################################
 
+# first collate the list of families for which no gene tree was computed 
+# due to containing too few non-identical sequences 
+# and will be discarded for the remamining analyses
+smallfams=${genetrees}/reduced_alignment_is_too_small_fams
+touch ${smallfams}
+cat ${genetrees}/bulk/*.smallreducedali > ${smallfams}
+
+echo "$(wc -l ${smallfams}) gene families were found to contain to few non-identical CDSs for a gene tree to be computed"
 
 #### OPTION: edit collapsed gene trees to attribute an (ancestral) species identity to the leafs representing collapsed clades = pre-reconciliation of recent gene history
 if [[ "${chaintype}" == 'fullgenetree' ]] ; then
@@ -89,7 +97,7 @@ else
     qsubvars="ptgscripts=${ptgscripts},mlgenetreelist=${mlgenetreelist}_${jobrange},${cdsalifastacodedir},${ncpus},colalinexuscodedir=${colalinexuscodedir},collapsecond=${collapsecond},didseq=${mlgenetrees}/identical_sequences"
     case "$hpctype" in
       'PBS')
-         qsub -N 'mark_unresolved_clades' -l select=1:ncpus=${ncpus}:mem=${mem},walltime=${wth}:00:00 \
+         qsub -N 'mark_unresolved_clades' -l select=1:ncpus=${ncpus}:mem=${mem}gb,walltime=${wth}:00:00 \
           -o ${ptglogs}/mark_unresolved_clades.${collapsecond}_${jobrange}.log -j oe \
 		  -v "${qsubvars}" ${ptgscripts}/mark_unresolved_clades.qsub
 		  ;;
@@ -108,7 +116,17 @@ else
          -o ${ptglogs}/mark_unresolved_clades.${collapsecond}_${jobrange}.%J.o \
          -e ${ptglogs}/mark_unresolved_clades.${collapsecond}_${jobrange}.%J.e \
          ${ptgscripts}/mark_unresolved_clades.bsub
+	    subcmd="bsub -J 'mark_unresolved_clades' -q ${bqueue} \
+	     -R \"select[mem>${memmb}] rusage[mem=${memmb}] span[hosts=1]\" \
+         -n${ncpus} -M${memmb} -env \"$qsubvars\" \
+         -o ${ptglogs}/mark_unresolved_clades.${collapsecond}_${jobrange}.%J.o \
+         -e ${ptglogs}/mark_unresolved_clades.${collapsecond}_${jobrange}.%J.e \
+         ${ptgscripts}/mark_unresolved_clades.bsub"
+		 echo ${subcmd}
 	    ;;
+	  *)
+	    echo "Error: high-performance computer system '$hpctype' is not supported; exit now"
+	    exit 1;;
     esac
   done
   export collapsecoldate=$(date +%Y-%m-%d)

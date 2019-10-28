@@ -155,6 +155,8 @@ if [ -z $smallfam ] ; then
   for resulttag in ${resulttags[@]} ; do
     mv -f ${outputdir}/bulk/RAxML_${resulttag}.${nfrad2} ${outputdir}/${resulttag}/
   done
+else
+  echo ${nfrad2} >> ${outputdir}/bulk/reduced_alignment_is_too_small_fams
 fi
 
 ### end loop over alignments
