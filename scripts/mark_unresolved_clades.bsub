@@ -1,5 +1,10 @@
 #!/bin/bash
 
+cd /tmp/
+jobtmpdir=mark_unresolved_clades.$LSB_JOBID
+mkdir -p ${jobtmpdir}/ && cd ${jobtmpdir}/
+echo "current directory is ${PWD}"
+
 # need the BCBio.GFF module to load ptg_utils
 virtualenv -p $(which python2.7) --system-site-packages BCBio
 source BCBio/bin/activate
@@ -11,3 +16,8 @@ python2.7 ${ptgscripts}/mark_unresolved_clades.py --in_gene_tree_list=${mlgenetr
  ${collapsecriteriondef}
 
 deactivate
+
+if [[ "$(basename ${PWD})" == "${jobtmpdir}" ]] ; then
+  cd ..
+  rm -r ${jobtmpdir}/
+fi
