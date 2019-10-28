@@ -95,7 +95,7 @@ echo "jobrange=$jobrange"
 	  else
 	    bqueue='basement'
 	  fi
-	  memmb=$((${mem} * 1000)) 
+	  memmb=$((${mem} * 1024)) 
 	  bsub -J "raxml_gene_trees_$(basename $cdsfam2phylo)[$jobrange]" -q ${bqueue} -R "select[mem>${memmb}] rusage[mem=${memmb}] span[hosts=1]" \
 	  -n${ncpus} -M${memmb} -o ${ptglogs}/raxml/gene_trees/raxml_gene_trees_$(basename $cdsfam2phylo).%J.%I.o \
 	  -e ${ptglogs}/raxml/gene_trees/raxml_gene_trees_$(basename $cdsfam2phylo).%J.%I.e -env "$qsubvars" ${ptgscripts}/raxml_array_LSF.bsub

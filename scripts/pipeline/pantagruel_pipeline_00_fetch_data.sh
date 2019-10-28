@@ -50,7 +50,7 @@ extractass (){
       datasettag=${tartag%.*}
       tar -tf genome_assemblies${datasettag}.tar | cut -d'/' -f2 | sort -u | grep -v "README\|report" > ${srcass}/genome_assemblies${datasettag}_list
       tar -xf genome_assemblies${datasettag}.tar 
-      mv report.txt report${datasettag}.txt
+      [ ! -z "${datasettag}" ] && mv -f report.txt report${datasettag}.txt
       assd=(`ls ncbi-genomes-* -d`)
       for dass in `ls ${assd[0]}/ | grep -v README` ; do
         if [ ! -z "${dass}" ] ; then

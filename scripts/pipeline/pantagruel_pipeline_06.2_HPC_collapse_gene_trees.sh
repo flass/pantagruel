@@ -9,7 +9,7 @@
 
 # Copyright: Florent Lassalle (f.lassalle@imperial.ac.uk), 15 Jan 2019
 
-if [ -z "$1" ] ; then echo "missing mandatory parameter: pantagruel config file" ; echo "Usage: $0 ptg_env_file [ncpus=8] [mem=32gb] [walltimehours=4]" ; exit 1 ; fi
+if [ -z "$1" ] ; then echo "missing mandatory parameter: pantagruel config file" ; echo "Usage: $0 ptg_env_file [ncpus=8] [mem=32gb] [walltimehours=4] [hpc_type:{PBS(default)|LSF}]" ; exit 1 ; fi
 envsourcescript="$1"
 source ${envsourcescript}
 
@@ -27,6 +27,11 @@ if [ ! -z "$4" ] ; then
   wth="$4"
 else
   wth=4
+fi
+if [ -z "$5" ] ; then 
+  hpctype='PBS'
+else
+  hpctype="$2"
 fi
 
 #############################################################
@@ -79,17 +84,32 @@ else
   # conda create -n env_python2 python=2.7 python-igraph biopython bcbio-gff scipy
 
   for jobrange in ${jobranges[@]} ; do
-  beg=`echo $jobrange | cut -d'-' -f1`
-  tail -n +${beg} ${mlgenetreelist} | head -n ${chunksize} > ${mlgenetreelist}_${jobrange}
-  qsubvars="ptgscripts=${ptgscripts},mlgenetreelist=${mlgenetreelist}_${jobrange},${cdsalifastacodedir},${ncpus},colalinexuscodedir=${colalinexuscodedir},collapsecond=${collapsecond},didseq=${mlgenetrees}/identical_sequences"
-  qsub -N mark_unresolved_clades -l select=1:ncpus=${ncpus}:mem=${mem},walltime=${wth}:00:00 \
-   -o ${ptglogs}/mark_unresolved_clades.${collapsecond}_${jobrange}.log -j oe -v "${qsubvars}" ${ptgscripts}/mark_unresolved_clades.qsub
-  module load anaconda3/personal
-  source activate env_python2
-  python2.7 ${ptgscripts}/mark_unresolved_clades.py --in_gene_tree_list=${mlgenetreelist}_${jobrange} --diraln=${cdsalifastacodedir} --fmt_aln_in='fasta' \
-   --threads=${ncpus} --dirout=${colalinexuscodedir}/${collapsecond} --no_constrained_clade_subalns_output --dir_identseq=${mlgenetrees}/identical_sequences \
-   (cat ${colalinexuscodedir}/${collapsecond}.collapse_criterion_def)
-EOF
+    beg=`echo $jobrange | cut -d'-' -f1`
+    tail -n +${beg} ${mlgenetreelist} | head -n ${chunksize} > ${mlgenetreelist}_${jobrange}
+    qsubvars="ptgscripts=${ptgscripts},mlgenetreelist=${mlgenetreelist}_${jobrange},${cdsalifastacodedir},${ncpus},colalinexuscodedir=${colalinexuscodedir},collapsecond=${collapsecond},didseq=${mlgenetrees}/identical_sequences"
+    case "$hpctype" in
+      'PBS')
+         qsub -N 'mark_unresolved_clades' -l select=1:ncpus=${ncpus}:mem=${mem},walltime=${wth}:00:00 \
+          -o ${ptglogs}/mark_unresolved_clades.${collapsecond}_${jobrange}.log -j oe \
+		  -v "${qsubvars}" ${ptgscripts}/mark_unresolved_clades.qsub
+		  ;;
+      'LSF')
+	    if [ ${wt} -le 12 ] ; then
+	      bqueue='normal'
+	    elif [ ${wt} -le 48 ] ; then
+	      bqueue='long'
+	    else
+	      bqueue='basement'
+	    fi
+	    memmb=$((${mem} * 1024)) 
+	    bsub -J 'mark_unresolved_clades' -q ${bqueue} \
+	     -R "select[mem>${memmb}] rusage[mem=${memmb}] span[hosts=1]" \
+         -n${ncpus} -M${memmb} -env "$qsubvars" \
+         -o ${ptglogs}/mark_unresolved_clades.${collapsecond}_${jobrange}.%J.o \
+         -e ${ptglogs}/mark_unresolved_clades.${collapsecond}_${jobrange}.%J.e \
+         ${ptgscripts}/mark_unresolved_clades.bsub
+	    ;;
+    esac
   done
   export collapsecoldate=$(date +%Y-%m-%d)
   echo -e "${collapsecolid}\t${collapsecoldate}" > ${genetrees}/collapsecol

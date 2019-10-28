@@ -1,0 +1,283 @@
+#!/bin/bash
+
+echo "This is job $LSB_JOBNAME, job_ID $LSB_JOBID (array_task_ID $LSB_JOBINDEX) on host $HOSTNAME, running on these workers:"
+cat $LSB_MCPU_HOSTS
+echo ""
+
+if [ -z $mbversion ] ; then
+  # assumes use of most recent version
+  mbversion='3.2.6'
+fi
+
+if [ -z $maxrounds ] ; then
+  maxrounds=5
+fi
+
+if [ -z nosyncmbout ] ; then
+  nosyncmbout="ckp~ log noconv"
+fi
+excludesync=($(python2.7 << EOF
+nosyncmbout="$nosyncmbout".lower().split()
+print ' '.join(['--exclude=*.mb.%s'%ext for ext in nosyncmbout])
+EOF
+))
+#~ excludesync="--exclude=*.mb.ckp~ --exclude=*.mb.log --exclude=*.mb.noconv"
+
+
+
+## use installation of mrbayes as a cluster module
+#module load mrbayes/${mbversion}
+## use parallel environment
+#module load intel-suite
+#if [ ${mbversion%.*} == '3.1' ] ; then
+## mpi/intel-5.1 is default MPI lib but old install of mrbayes requires loading both current version AND the deprecated mpi/intel-3.1
+#module load deprecated/mpi/intel-3.1
+#fi
+#module load mpi
+#if [ ${mbversion%.*} == '3.2' ] ; then
+## used by MrBayes v3.2
+#module load beagle-lib
+#fi
+#module list
+
+
+if [ -z "${mbbin}" ] ; then
+  mbbin="mb"
+  mbbinloc=$(which ${mbbin})
+  echo "will use ${mbbin} executable from '${mbbinloc}' (linking to '$(readlink -f ${mbbinloc})')"  
+else
+  echo "will use user-specified ${mbbin} executable"
+fi
+
+### !!! Key variables must be define on qub call using -v option
+## I/O file paths (lists)
+# tasklist
+# outputdir
+## the MCMCMC parameters, including number of parallel runs and number of mixed chains; string to be passed to mcmcp command, e.g. : "Nruns=2 Nchains=6 Ngen=2000000"
+# mbmcmpcopt
+## the MCMCMC run options, notably the flag for resuming from a checkpoint
+# mbmcmcopt
+### e.g. qsub -v tasklist=/path/list outputdir=/path/dir mbmcmcopt="params string"
+
+# test key variables have been provided
+if [ -z $tasklist ] ; then
+  if  [ -z $nfaln ] ; then
+    echo "!!! ERROR : mandatory variable \$tasklist or \$nfaln not declared ; exit now"
+    exit 1
+  fi
+else
+  echo "fetch task from tasklist: $tasklist"
+  nfaln=`awk "NR==$LSB_JOBINDEX" $tasklist`
+  echo "got task: $nfaln"
+fi
+if [ -z $outputdir ] ; then
+  echo "!!! ERROR : mandatory variable \$outputdir not declared ; exit now"
+  exit 1
+fi
+# $mbmcmcopt and $mbmcmcpopt can be empty, which will make MrBayes run defaut parameters
+
+
+mkdir -p $outputdir/
+if [ ! -d $outputdir ] ; then 
+  echo "!!! ERROR : unable to access output directory '$outputdir/' ; exit now"
+  exit 1
+fi
+if [ ! -e $tasklist ] ; then 
+  echo "!!! ERROR : unable to access task list file '$tasklist' ; exit now"
+  exit 1
+fi
+
+diraln=$(dirname $nfaln)
+nfrad1=$(basename $nfaln)
+nfrad2=${nfrad1%%.*}
+echo $nfrad2
+echo ""
+
+if [ ! -z $constraintsuffix ]  ; then
+  nfconstraints=${diraln}/${nfrad2}.${constraintsuffix}
+  constraints=$(basename $nfconstraints)
+fi
+
+
+cd $TMPDIR/
+if [ $? != 0 ] ; then
+  echo "!!! ERROR : unable to access '$HOSTNAME:$TMPDIR/' working directory ; exit now"
+  exit 1
+fi
+echo "current directory is $HOSTNAME:$PWD"
+
+#~ # remove traces from potential previous chains 
+#~ rm ./*$nfrad2*
+#~ echo "removed pre-existing files with name containing '$nfrad2' with exit status $?"
+#~ echo ""
+# directory is supposed to be clean anyway
+
+mbresume=$(python2.7 << EOF
+mbmcmcopts="$mbmcmcopt".lower().split()
+mbresume = 'no'
+for opteqval in mbmcmcopts:
+  opt, val = opteqval.split('=')
+  if opt.strip(' "')=='append': mbresume = val.strip(' "')
+print mbresume
+EOF
+)
+if [ $mbresume == 'yes' ] ; then
+  # import files from previous interupted analysis
+  echo "rsync -avz $outputdir/*${nfrad2}* $TMPDIR/"
+  rsync -avz $outputdir/*${nfrad2}* $TMPDIR/
+else
+  echo "rsync -avz $nfaln $nfconstraints $TMPDIR/"
+  rsync -avz $nfaln $nfconstraints $TMPDIR/
+fi
+echo "copied input files with exit status $?"
+echo "ls ./"
+ls ./
+echo ""
+
+# give a glimpse of data complexity
+echo "data matrix:"
+\grep 'dimensions' $nfrad1
+echo ""
+
+### set MrBayes parameters
+mbprameterize () {
+local mcmcopt=$@
+## general MrBayes parameters
+echo "set autoclose=yes nowarn=yes" > $nfrad2.mbparam.txt
+## load data matrix
+echo "execute $nfrad1" >> $nfrad2.mbparam.txt
+## set phylogenetic model type and metaprameters
+if [ ${mbversion%.*} == '3.2' ] ; then
+  echo "lset nst=6 rates=invgamma ploidy=haploid" >> $nfrad2.mbparam.txt
+else
+# following line WORKED with MrBayes v3.2.2, but DID NOT WORK with v3.1.2 due to a bug not recognizing ploidy option
+  echo "lset nst=6 rates=invgamma" >> $nfrad2.mbparam.txt
+fi
+echo "showmodel" >> $nfrad2.mbparam.txt
+
+## set to record or not ancestral states
+if [ ! -z $constraints ]  ; then
+  cat $constraints >> $nfrad2.mbparam.txt
+  echo "report ancstates=yes" >> $nfrad2.mbparam.txt
+fi
+## set parameters for MCMCMC run
+if [ ${mbversion%.*} == '3.2' ] ; then
+# following line WORKED with MrBayes v3.2.2, but DID NOT WORK with v3.1.2 as the checkpoint option is new to v3.2
+  echo "mcmcp $mbmcmcpopt filename=${nfrad2}.mb checkpoint=yes checkfreq=100000" >> $nfrad2.mbparam.txt
+else
+  echo "mcmcp $mbmcmcpopt filename=${nfrad2}.mb" >> $nfrad2.mbparam.txt
+fi
+## run MCMCMC
+echo "mcmc $mcmcopt" >> $nfrad2.mbparam.txt
+## analyse results of MCMCMC; sumarize model parameter estimates
+echo "sump" >> $nfrad2.mbparam.txt
+## analyse results of MCMCMC; sumarize topology estimates
+#~ sumtopt="minpartfreq=0.001 contype=allcompat calctreeprobs=no"
+sumtopt="minpartfreq=0.1 contype=allcompat calctreeprobs=no"
+if [ ${mbversion%.*} == '3.2' ] ; then
+# following line WORKED with MrBayes v3.2.2, but DID NOT WORK with v3.1.2 as the conformat option is new to v3.2
+  echo "sumt conformat=simple $sumtopt" >> $nfrad2.mbparam.txt
+else
+  echo "sumt $sumtopt" >> $nfrad2.mbparam.txt
+fi
+## exit MrBayes
+echo "quit" >> $nfrad2.mbparam.txt
+
+cat $nfrad2.mbparam.txt
+echo ""
+}
+mbprameterize ${mbmcmcopt}
+
+# define function to run MrBayes in background and incrementally sync results to output dir
+runmbandsync () {
+  let mbround+=1
+  echo "running MrBayes (round #$mbround):"
+  echo "mpiexec mb < $nfrad2.mbparam.txt > $nfrad2.mb.log &"
+  mpiexec mb < $nfrad2.mbparam.txt > $nfrad2.mb.log &
+  mbpid=$!
+  #echo "mbpid=$mbpid"
+  # prepare empty ckp files for the time stamp comparison
+  ckp=$nfrad2.mb.ckp
+  touch $TMPDIR/$ckp
+  touch $outputdir/$ckp
+  file1time=`stat -c %Y $TMPDIR/$ckp`
+  file2time=`stat -c %Y $outputdir/$ckp`
+  # monitor file updates and sync on the way
+  nckp=0
+  while [ ! -z $(ps -q $mbpid -o comm=) ] ; do
+    #~ file1time=`stat -c %Y $TMPDIR/$ckp`
+    #~ file2time=`stat -c %Y $outputdir/$ckp`
+    #~ if [ $file1time -gt $file2time ]; then
+    if [ $TMPDIR/$ckp -nt $outputdir/$ckp ]; then
+      date
+      #echo "rsync -az ${excludesync[@]} ./*$nfrad2* $outputdir/"
+      rsync -az ${excludesync[@]} ./*$nfrad2* $outputdir/
+      let nckp+=1
+    fi
+    sleep 60s
+  done
+  echo "did $nckp incremental sync of the results"
+  echo ""
+  if [[ $nckp -eq 0 && ! -e $nfrad2.mb.con.tre ]] ; then
+    # no sync has happened, it is likely that MrBayes run has gone wrong and no computation has been done (hence no time for sync)
+    rsync -az $nfrad2.mb.log $outputdir/
+  fi
+}
+
+# start timing in secondsand counter of MCMC rounds
+SECONDS=0
+mbround=0
+# execute 1st round of MrBayes+sync
+runmbandsync
+echo ""
+tail -n 50 $nfrad2.mb.log
+
+# convergence diagnostic, may lead to run other round(s) of MrBayes+sync
+grep -B 15 -A 2 "MrBayes suspects that your runs have not converged" $nfrad2.mb.log > $nfrad2.mb.noconv
+while [[ -s $nfrad2.mb.noconv && mbround -lt ${maxrounds} ]] ; do
+  cat $nfrad2.mb.noconv
+  echo ""
+  if [ $mbresume != 'yes' ] ; then
+    mbmcmcopt="${mbmcmcopt} append=yes"
+    mbresume='yes'
+  fi
+  echo "continue the analysis for another round with parameters: ${mbmcmcpopt}"
+  mbprameterize ${mbmcmcopt}
+  runmbandsync
+  grep -B 15 -A 2  "MrBayes suspects that your runs have not converged" $nfrad2.mb.log > $nfrad2.mb.noconv
+done
+echo ""
+echo -e "$nfrad2\t$mbround\t$SECONDS" > $nfrad2.mb.roundtime
+
+# end of inference
+echo "output of MrBayes phylogenetic reconstruction is :"
+echo "ls ./*$nfrad2.mb*"
+ls ./*$nfrad2.mb*
+echo ""
+
+# remove convergence warning file if empty
+if [ ! -s $nfrad2.mb.noconv ] ; then
+  rm $nfrad2.mb.noconv
+fi
+# and remove it from the list of files not to be synced: if not empty, it will be copied in the end
+excludesync=($(python2.7 << EOF
+nosyncmbout="$nosyncmbout".lower().split()
+print ' '.join(['--exclude=*.mb.%s'%ext for ext in nosyncmbout if (not 'noconv' in ext)])
+EOF
+))
+
+# final sync
+rsync -avz ${excludesync[@]} ./*$nfrad2.mb* $outputdir/
+if [ $? != 0 ] ; then
+  echo "!!! ERROR : unable to copy *$nfrad2.mb* output files from $HOSTNAME:$PWD ; exit now"
+  exit 1
+else
+  echo "copied *$nfrad2.mb* output files to $outputdir/ with exit status 0"
+fi
+echo ""
+
+# cleanup
+rm ./*$nfrad2*
+#echo "removed files with name containing '$nfrad2' with exit status $?"
+#echo "ls ./*.$nfrad2*"
+#ls ./*.$nfrad2*
