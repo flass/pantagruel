@@ -1,7 +1,6 @@
 #!/bin/bash
 
-echo "This is job $LSB_JOBNAME, job_ID $LSB_JOBID on host $HOSTNAME, running on these workers:"
-cat $LSB_MCPU_HOSTS
+echo "This is job $LSB_JOBNAME, job_ID $LSB_JOBID on host $HOSTNAME, running on these workers: $LSB_MCPU_HOSTS"
 echo ""
 
 cd /tmp/
@@ -14,7 +13,8 @@ virtualenv -p $(which python2.7) --system-site-packages BCBio
 source BCBio/bin/activate
 
 echo "\$PYTHONPATH=$PYTHONPATH"
-while [ ! -z "$(python -c "import tree2")" ] ; do
+python -c "import tree2"
+while [ ${?} -gt 0 ] ; do
   echo "tree2 module was not detected."
   if [ -z "$1" ] ; then
     echo "try with path given through argument: $1"
@@ -25,6 +25,7 @@ while [ ! -z "$(python -c "import tree2")" ] ; do
     source $HOME/.bashrc
 	break
   fi
+  python -c "import tree2"
 done
 
 collapsecriteriondef=$(cat ${colalinexuscodedir}/${collapsecond}.collapse_criterion_def)

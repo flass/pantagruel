@@ -1,8 +1,7 @@
 #!/bin/bash
 
 
-echo "This is job $LSB_JOBNAME, job_ID $LSB_JOBID (array_task_ID $LSB_JOBINDEX) on host $HOSTNAME, running on these workers:"
-cat $LSB_MCPU_HOSTS
+echo "This is job $LSB_JOBNAME, job_ID $LSB_JOBID (array_task_ID $LSB_JOBINDEX) on host $HOSTNAME, running on these workers: $LSB_MCPU_HOSTS"
 echo ""
 
 # parse external variables pased through qsub -v "var1=toto,var2=tutu,..."
