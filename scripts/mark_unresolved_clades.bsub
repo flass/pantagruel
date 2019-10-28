@@ -8,9 +8,6 @@ jobtmpdir=mark_unresolved_clades.$LSB_JOBID
 mkdir -p ${jobtmpdir}/ && cd ${jobtmpdir}/
 echo "current directory is ${PWD}"
 
-# need the BCBio.GFF module to load ptg_utils
-virtualenv -p $(which python2.7) --system-site-packages BCBio
-source BCBio/bin/activate
 
 echo "\$PYTHONPATH=$PYTHONPATH"
 python -c "import tree2"
@@ -27,6 +24,11 @@ while [ ${?} -gt 0 ] ; do
   fi
   python -c "import tree2"
 done
+echo ""
+
+# need the BCBio.GFF module to load ptg_utils
+virtualenv -p $(which python2.7) --system-site-packages BCBio
+source BCBio/bin/activate
 
 collapsecriteriondef=$(cat ${colalinexuscodedir}/${collapsecond}.collapse_criterion_def)
 
