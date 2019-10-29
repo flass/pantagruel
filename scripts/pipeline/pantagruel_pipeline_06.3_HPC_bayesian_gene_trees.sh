@@ -52,9 +52,10 @@ if [ "${resumetask}" == 'true' ] ; then
    fi
   done > ${tasklist}_resumetask_${dtag}
   tasklist=${tasklist}_resumetask_${dtag}
-  append='append=yes'
+  export mbmcmcopt='append=yes'
 fi
-qsubvars="tasklist=${tasklist},outputdir=${mboutputdir},mbmcmcpopt='Nruns=${nruns} Ngen=2000000 Nchains=${nchains}',mbmcmcopt='${append}'"
+export mbmcmcpopt='Nruns=${nruns} Ngen=2000000 Nchains=${nchains}'
+qsubvars="tasklist=${tasklist}, outputdir=${mboutputdir}"
 
 Njob=`wc -l ${tasklist} | cut -f1 -d' '`
 chunksize=1000
@@ -66,7 +67,7 @@ for jobrange in ${jobranges[@]} ; do
  case "$hpctype" in
     'PBS') 
       subcmd="qsub -J ${jobrange} -N mb_panterodb -l select=1:ncpus=${ncpus}:mem=${mem}gb -l walltime=${wth}:00:00 \
-	  -o ${dlogs} -v \"$qsubvars\" ${ptgscripts}/mrbayes_array_PBS.qsub"
+	  -o ${dlogs} -v \"$qsubvars, mbmcmcopt='${mbmcmcopt}', mbmcmcpopt='${mbmcmcpopt}'\" ${ptgscripts}/mrbayes_array_PBS.qsub"
 	  ;;
 	'LSF')
 	  if [ ${wth} -le 12 ] ; then
@@ -79,7 +80,7 @@ for jobrange in ${jobranges[@]} ; do
 	  memmb=$((${mem} * 1024)) 
 	  subcmd="bsub -J \"mb_panterodb[$jobrange]\" -q ${bqueue} \
 	  -R \"select[mem>${memmb}] rusage[mem=${memmb}] span[hosts=1]\" -n${ncpus} -M${memmb} \
-	  -o ${dlogs}/mrbayes.%J.%I.o -e ${dlogs}/mrbayes.%J.%I.e -env \"$qsubvars\" ${ptgscripts}/mrbayes_array_PBS.bsub"
+	  -o ${dlogs}/mrbayes.%J.%I.o -e ${dlogs}/mrbayes.%J.%I.e -env \"$qsubvars, mbmcmcopt, mbmcmcpopt\" ${ptgscripts}/mrbayes_array_PBS.bsub"
 	  ;;
 	*)
 	  echo "Error: high-performance computer system '$hpctype' is not supported; exit now"
