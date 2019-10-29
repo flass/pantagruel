@@ -9,16 +9,16 @@ echo "This is job $PBS_JOBNAME, job_ID $PBS_JOBID (array_task_ID $PBS_ARRAY_INDE
 cat $PBS_NODEFILE
 echo ""
 
-if [ -z $mbversion ] ; then
+if [ -z ${mbversion} ] ; then
   # assumes use of most recent version
   mbversion='3.2.6'
 fi
 
-if [ -z $maxrounds ] ; then
+if [ -z ${maxrounds} ] ; then
   maxrounds=5
 fi
 
-if [ -z nosyncmbout ] ; then
+if [ -z ${nosyncmbout} ] ; then
   nosyncmbout="ckp~ log noconv"
 fi
 excludesync=($(python2.7 << EOF
@@ -201,7 +201,7 @@ runmbandsync () {
   file2time=`stat -c %Y $outputdir/$ckp`
   # monitor file updates and sync on the way
   nckp=0
-  while [ ! -z $(ps -q $mbpid -o comm=) ] ; do
+  while [ ! -z $(ps -p "${mbpid}" -o comm=) ] ; do
     #~ file1time=`stat -c %Y $TMPDIR/$ckp`
     #~ file2time=`stat -c %Y $outputdir/$ckp`
     #~ if [ $file1time -gt $file2time ]; then

@@ -3,16 +3,19 @@
 echo "This is job $LSB_JOBNAME, job_ID $LSB_JOBID (array_task_ID $LSB_JOBINDEX) on host $HOSTNAME, running on these workers: $LSB_MCPU_HOSTS"
 echo ""
 
-if [ -z $mbversion ] ; then
+echo "using OpenMPI from:"
+ompi_info | head -n 36
+
+if [ -z ${mbversion} ] ; then
   # assumes use of most recent version
   mbversion='3.2.6'
 fi
 
-if [ -z $maxrounds ] ; then
+if [ -z ${maxrounds} ] ; then
   maxrounds=5
 fi
 
-if [ -z nosyncmbout ] ; then
+if [ -z ${nosyncmbout} ] ; then
   nosyncmbout="ckp~ log noconv"
 fi
 excludesync=($(python2.7 << EOF
@@ -189,7 +192,7 @@ mbprameterize ${mbmcmcopt}
 runmbandsync () {
   let mbround+=1
   echo "running MrBayes (round #$mbround):"
-  echo "mpiexec mb < ${nfrad2}.mbparam.txt > ${nfrad2}.mb.log &"
+  echo "mpirun mb < ${nfrad2}.mbparam.txt > ${nfrad2}.mb.log &"
   mpirun ${mbbin} < ${nfrad2}.mbparam.txt > ${nfrad2}.mb.log &
   mbpid=$!
   #echo "mbpid=$mbpid"
@@ -201,7 +204,7 @@ runmbandsync () {
   file2time=`stat -c %Y ${outputdir}/$ckp`
   # monitor file updates and sync on the way
   nckp=0
-  while [ ! -z $(ps -q $mbpid -o comm=) ] ; do
+  while [ ! -z $(ps -p ${mbpid} -o comm=) ] ; do
     #~ file1time=`stat -c %Y ./$ckp`
     #~ file2time=`stat -c %Y ${outputdir}/$ckp`
     #~ if [ $file1time -gt $file2time ]; then
