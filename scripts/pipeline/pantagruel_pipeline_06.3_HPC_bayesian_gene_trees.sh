@@ -34,6 +34,7 @@ mkdir -p ${mboutputdir}
 nchains=4
 nruns=2
 ncpus=$(( $nchains * $nruns ))
+mem=16 # in GB
 wth=24
 tasklist=${nexusaln4chains}_ali_list
 rm -f $tasklist
@@ -65,7 +66,7 @@ for jobrange in ${jobranges[@]} ; do
  
  case "$hpctype" in
     'PBS') 
-      subcmd="qsub -J ${jobrange} -N mb_panterodb -l select=1:ncpus=${ncpus}:mem=16gb -l walltime=${wth}:00:00 \
+      subcmd="qsub -J ${jobrange} -N mb_panterodb -l select=1:ncpus=${ncpus}:mem=${mem}gb -l walltime=${wth}:00:00 \
 	  -o ${dlogs} -v \"$qsubvar\" ${ptgscripts}/mrbayes_array_PBS.qsub"
 	  ;;
 	'LSF')
