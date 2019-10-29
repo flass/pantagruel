@@ -84,7 +84,7 @@ for jobrange in ${jobranges[@]} ; do
 	  fi
 	  memmb=$((${mem} * 1024)) 
 	  subcmd="bsub -J \"mb_panterodb[$jobrange]\" -q ${bqueue} \
-	  -R \"select[mem>${memmb}] rusage[mem=${memmb}] span[hosts=1]\" -n${ncpus} -M${memmb} \
+	  -R \"select[mem>${memmb}] rusage[mem=${memmb}] span[ptile=${ncpus}]\" -n${ncpus} -M${memmb} \
 	  -o ${dlogs}/mrbayes.%J.%I.o -e ${dlogs}/mrbayes.%J.%I.e -env \"$qsubvars, mbmcmcopt, mbmcmcpopt\" \
 	  ${ptgscripts}/mrbayes_array_LSF.bsub"
 	  ;;

@@ -59,30 +59,30 @@ fi
 ### e.g. qsub -v tasklist=/path/list outputdir=/path/dir mbmcmcopt="params string"
 
 # test key variables have been provided
-if [ -z $tasklist ] ; then
-  if  [ -z $nfaln ] ; then
+if [ -z "${tasklist}" ] ; then
+  if  [ -z ${nfaln} ] ; then
     echo "!!! ERROR : mandatory variable \$tasklist or \$nfaln not declared ; exit now"
     exit 1
   fi
 else
-  echo "select task from tasklist: $tasklist"
-  nfaln=`awk "NR==$LSB_JOBINDEX" $tasklist`
-  echo "got task: $nfaln"
+  echo "select task from tasklist: ${tasklist}"
+  nfaln=`awk "NR==${LSB_JOBINDEX}" ${tasklist}`
+  echo "got task: ${nfaln}"
 fi
-if [ -z $outputdir ] ; then
-  echo "!!! ERROR : mandatory variable \$outputdir not declared ; exit now"
+if [ -z ${outputdir} ] ; then
+  echo "!!! ERROR : mandatory variable \${outputdir} not declared ; exit now"
   exit 1
 fi
 # $mbmcmcopt and $mbmcmcpopt can be empty, which will make MrBayes run defaut parameters
 
 
-mkdir -p $outputdir/
-if [ ! -d $outputdir ] ; then 
-  echo "!!! ERROR : unable to access output directory '$outputdir/' ; exit now"
+mkdir -p ${outputdir}/
+if [ ! -d ${outputdir} ] ; then 
+  echo "!!! ERROR : unable to access output directory '${outputdir}/' ; exit now"
   exit 1
 fi
-if [ ! -e $tasklist ] ; then 
-  echo "!!! ERROR : unable to access task list file '$tasklist' ; exit now"
+if [ ! -e ${tasklist} ] ; then 
+  echo "!!! ERROR : unable to access task list file '${tasklist}' ; exit now"
   exit 1
 fi
 
@@ -99,7 +99,7 @@ fi
 
 
 cd /tmp/
-jobtmpdir=raxml_tmp.${nfrad2}
+jobtmpdir=mrbayes_tmp.${nfrad2}
 mkdir -p ${jobtmpdir}/ && cd ${jobtmpdir}/
 echo "current host:directory is ${HOSTNAME}:${PWD}"
 
@@ -110,7 +110,7 @@ echo "current host:directory is ${HOSTNAME}:${PWD}"
 # directory is supposed to be clean anyway
 
 mbresume=$(python2.7 << EOF
-mbmcmcopts="$mbmcmcopt".lower().split()
+mbmcmcopts="${mbmcmcopt}".lower().split()
 mbresume = 'no'
 for opteqval in mbmcmcopts:
   opt, val = opteqval.split('=')
@@ -118,31 +118,31 @@ for opteqval in mbmcmcopts:
 print mbresume
 EOF
 )
-if [ $mbresume == 'yes' ] ; then
+if [ "${mbresume}" == 'yes' ] ; then
   # import files from previous interupted analysis
-  echo "rsync -avz $outputdir/*${nfrad2}* $TMPDIR/"
-  rsync -avz $outputdir/*${nfrad2}* $TMPDIR/
+  echo "rsync -avz ${outputdir}/*${nfrad2}* ./"
+  rsync -avz ${outputdir}/*${nfrad2}* ./
 else
-  echo "rsync -avz $nfaln $nfconstraints $TMPDIR/"
-  rsync -avz $nfaln $nfconstraints $TMPDIR/
+  echo "rsync -avz ${nfaln} ${nfconstraints} ./"
+  rsync -avz ${nfaln} ${nfconstraints} ./
 fi
-echo "copied input files with exit status $?"
+echo "copied input files with exit status ${?}"
 echo "ls ./"
 ls ./
 echo ""
 
 # give a glimpse of data complexity
 echo "data matrix:"
-\grep 'dimensions' $nfrad1
+\grep 'dimensions' ${nfrad1}
 echo ""
 
 ### set MrBayes parameters
 mbprameterize () {
-local mcmcopt=$@
+local mcmcopt=${@}
 ## general MrBayes parameters
 echo "set autoclose=yes nowarn=yes" > ${nfrad2}.mbparam.txt
 ## load data matrix
-echo "execute $nfrad1" >> ${nfrad2}.mbparam.txt
+echo "execute ${nfrad1}" >> ${nfrad2}.mbparam.txt
 ## set phylogenetic model type and metaprameters
 if [ ${mbversion%.*} == '3.2' ] ; then
   echo "lset nst=6 rates=invgamma ploidy=haploid" >> ${nfrad2}.mbparam.txt
@@ -153,19 +153,19 @@ fi
 echo "showmodel" >> ${nfrad2}.mbparam.txt
 
 ## set to record or not ancestral states
-if [ ! -z $constraints ]  ; then
-  cat $constraints >> ${nfrad2}.mbparam.txt
+if [ ! -z "${constraints}" ]  ; then
+  cat ${constraints} >> ${nfrad2}.mbparam.txt
   echo "report ancstates=yes" >> ${nfrad2}.mbparam.txt
 fi
 ## set parameters for MCMCMC run
 if [ ${mbversion%.*} == '3.2' ] ; then
 # following line WORKED with MrBayes v3.2.2, but DID NOT WORK with v3.1.2 as the checkpoint option is new to v3.2
-  echo "mcmcp $mbmcmcpopt filename=${nfrad2}.mb checkpoint=yes checkfreq=100000" >> ${nfrad2}.mbparam.txt
+  echo "mcmcp ${mbmcmcpopt} filename=${nfrad2}.mb checkpoint=yes checkfreq=100000" >> ${nfrad2}.mbparam.txt
 else
-  echo "mcmcp $mbmcmcpopt filename=${nfrad2}.mb" >> ${nfrad2}.mbparam.txt
+  echo "mcmcp ${mbmcmcpopt} filename=${nfrad2}.mb" >> ${nfrad2}.mbparam.txt
 fi
 ## run MCMCMC
-echo "mcmc $mcmcopt" >> ${nfrad2}.mbparam.txt
+echo "mcmc ${mcmcopt}" >> ${nfrad2}.mbparam.txt
 ## analyse results of MCMCMC; sumarize model parameter estimates
 echo "sump" >> ${nfrad2}.mbparam.txt
 ## analyse results of MCMCMC; sumarize topology estimates
@@ -173,9 +173,9 @@ echo "sump" >> ${nfrad2}.mbparam.txt
 sumtopt="minpartfreq=0.1 contype=allcompat calctreeprobs=no"
 if [ ${mbversion%.*} == '3.2' ] ; then
 # following line WORKED with MrBayes v3.2.2, but DID NOT WORK with v3.1.2 as the conformat option is new to v3.2
-  echo "sumt conformat=simple $sumtopt" >> ${nfrad2}.mbparam.txt
+  echo "sumt conformat=simple ${sumtopt}" >> ${nfrad2}.mbparam.txt
 else
-  echo "sumt $sumtopt" >> ${nfrad2}.mbparam.txt
+  echo "sumt ${sumtopt}" >> ${nfrad2}.mbparam.txt
 fi
 ## exit MrBayes
 echo "quit" >> ${nfrad2}.mbparam.txt
@@ -190,25 +190,25 @@ runmbandsync () {
   let mbround+=1
   echo "running MrBayes (round #$mbround):"
   echo "mpiexec mb < ${nfrad2}.mbparam.txt > ${nfrad2}.mb.log &"
-  mpiexec mb < ${nfrad2}.mbparam.txt > ${nfrad2}.mb.log &
+  mpirun ${mbbin} < ${nfrad2}.mbparam.txt > ${nfrad2}.mb.log &
   mbpid=$!
   #echo "mbpid=$mbpid"
   # prepare empty ckp files for the time stamp comparison
   ckp=${nfrad2}.mb.ckp
-  touch $TMPDIR/$ckp
-  touch $outputdir/$ckp
-  file1time=`stat -c %Y $TMPDIR/$ckp`
-  file2time=`stat -c %Y $outputdir/$ckp`
+  touch ./$ckp
+  touch ${outputdir}/$ckp
+  file1time=`stat -c %Y ./$ckp`
+  file2time=`stat -c %Y ${outputdir}/$ckp`
   # monitor file updates and sync on the way
   nckp=0
   while [ ! -z $(ps -q $mbpid -o comm=) ] ; do
-    #~ file1time=`stat -c %Y $TMPDIR/$ckp`
-    #~ file2time=`stat -c %Y $outputdir/$ckp`
+    #~ file1time=`stat -c %Y ./$ckp`
+    #~ file2time=`stat -c %Y ${outputdir}/$ckp`
     #~ if [ $file1time -gt $file2time ]; then
-    if [ $TMPDIR/$ckp -nt $outputdir/$ckp ]; then
+    if [ ./$ckp -nt ${outputdir}/$ckp ]; then
       date
-      #echo "rsync -az ${excludesync[@]} ./*${nfrad2}* $outputdir/"
-      rsync -az ${excludesync[@]} ./*${nfrad2}* $outputdir/
+      #echo "rsync -az ${excludesync[@]} ./*${nfrad2}* ${outputdir}/"
+      rsync -az ${excludesync[@]} ./*${nfrad2}* ${outputdir}/
       let nckp+=1
     fi
     sleep 60s
@@ -217,7 +217,7 @@ runmbandsync () {
   echo ""
   if [[ $nckp -eq 0 && ! -e ${nfrad2}.mb.con.tre ]] ; then
     # no sync has happened, it is likely that MrBayes run has gone wrong and no computation has been done (hence no time for sync)
-    rsync -az ${nfrad2}.mb.log $outputdir/
+    rsync -az ${nfrad2}.mb.log ${outputdir}/
   fi
 }
 
@@ -264,12 +264,12 @@ EOF
 ))
 
 # final sync
-rsync -avz ${excludesync[@]} ./*${nfrad2}.mb* $outputdir/
+rsync -avz ${excludesync[@]} ./*${nfrad2}.mb* ${outputdir}/
 if [ $? != 0 ] ; then
   echo "!!! ERROR : unable to copy *${nfrad2}.mb* output files from $HOSTNAME:$PWD ; exit now"
   exit 1
 else
-  echo "copied *${nfrad2}.mb* output files to $outputdir/ with exit status 0"
+  echo "copied *${nfrad2}.mb* output files to ${outputdir}/ with exit status 0"
 fi
 echo ""
 
