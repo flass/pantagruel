@@ -54,20 +54,19 @@ if [ "${resumetask}" == 'true' ] ; then
   tasklist=${tasklist}_resumetask_${dtag}
   append='append=yes'
 fi
-qsubvar="tasklist=${tasklist}, outputdir=${mboutputdir}, mbmcmcpopt='Nruns=${nruns} Ngen=2000000 Nchains=${nchains}', mbmcmcopt='${append}'"
+qsubvars="tasklist=${tasklist}, outputdir=${mboutputdir}, mbmcmcpopt='Nruns=${nruns} Ngen=2000000 Nchains=${nchains}', mbmcmcopt='${append}'"
 
 Njob=`wc -l ${tasklist} | cut -f1 -d' '`
 chunksize=1000
 jobranges=($(${ptgscripts}/get_jobranges.py $chunksize $Njob))
 for jobrange in ${jobranges[@]} ; do
- echo $jobrange $qsubvar
  dlogs=${ptglogs}/mrbayes/${chaintype}_mrbayes_trees_${collapsecond}_${dtag}_${jobrange}
  mkdir -p ${dlogs}/
  
  case "$hpctype" in
     'PBS') 
       subcmd="qsub -J ${jobrange} -N mb_panterodb -l select=1:ncpus=${ncpus}:mem=${mem}gb -l walltime=${wth}:00:00 \
-	  -o ${dlogs} -v \"$qsubvar\" ${ptgscripts}/mrbayes_array_PBS.qsub"
+	  -o ${dlogs} -v \"$qsubvars\" ${ptgscripts}/mrbayes_array_PBS.qsub"
 	  ;;
 	'LSF')
 	  if [ ${wth} -le 12 ] ; then
@@ -78,7 +77,7 @@ for jobrange in ${jobranges[@]} ; do
 	    bqueue='basement'
 	  fi
 	  memmb=$((${mem} * 1024)) 
-	  subcmd="bsub -J "raxml_gene_trees_$(basename $cdsfam2phylo)[$jobrange]" -q ${bqueue} \
+	  subcmd="bsub -J \"mb_panterodb[$jobrange]\" -q ${bqueue} \
 	  -R \"select[mem>${memmb}] rusage[mem=${memmb}] span[hosts=1]\" -n${ncpus} -M${memmb} \
 	  -o ${dlogs}/mrbayes.%J.%I.o -e ${dlogs}/mrbayes.%J.%I.e -env \"$qsubvars\" ${ptgscripts}/mrbayes_array_PBS.bsub"
 	  ;;
