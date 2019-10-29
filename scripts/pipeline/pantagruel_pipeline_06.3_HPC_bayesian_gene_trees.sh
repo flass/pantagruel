@@ -54,7 +54,7 @@ if [ "${resumetask}" == 'true' ] ; then
   tasklist=${tasklist}_resumetask_${dtag}
   append='append=yes'
 fi
-qsubvars="tasklist=${tasklist}, outputdir=${mboutputdir}, mbmcmcpopt='Nruns=${nruns} Ngen=2000000 Nchains=${nchains}', mbmcmcopt='${append}'"
+qsubvars="tasklist=${tasklist},outputdir=${mboutputdir},mbmcmcpopt='Nruns=${nruns} Ngen=2000000 Nchains=${nchains}',mbmcmcopt='${append}'"
 
 Njob=`wc -l ${tasklist} | cut -f1 -d' '`
 chunksize=1000
