@@ -84,7 +84,7 @@ for jobrange in ${jobranges[@]} ; do
 	*)
 	  echo "Error: high-performance computer system '$hpctype' is not supported; exit now"
 	  exit 1;;
-    echo "${subcmd}"
-    eval "${subcmd}"
   esac
+  echo "${subcmd}"
+  eval "${subcmd}"
 done
