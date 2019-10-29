@@ -44,8 +44,8 @@ allmems=(4 8 32 64)
 allwalltimes=(12 24 48 72)
 allncpus=(4 4 4 16)
 for i in ${!allcdsfam2phylo[@]} ; do
-cdsfam2phylo=${allcdsfam2phylo[$i]} ; mem=${allmems[$i]} ; wt=${allwalltimes[$i]} ; ncpus=${allncpus[$i]}
-echo "cdsfam2phylo=${cdsfam2phylo} ; mem_per_core=${mem}gb ; walltime=${wt}:00:00 ; ncpus=${ncpus}"
+cdsfam2phylo=${allcdsfam2phylo[$i]} ; mem=${allmems[$i]} ; wth=${allwalltimes[$i]} ; ncpus=${allncpus[$i]}
+echo "cdsfam2phylo=${cdsfam2phylo} ; mem_per_core=${mem}gb ; walltime=${wth}:00:00 ; ncpus=${ncpus}"
 tasklist=${cdsfam2phylo}_aln_list
 rm -f $tasklist ; for fam in `cut -f1 $cdsfam2phylo` ; do ls ${cdsalifastacodedir}/${fam}.codes.aln >> $tasklist ; done
 if [ "$(wc -l $cdsfam2phylo | cut -f1 -d' ')" -lt "$(wc -l $tasklist | cut -f1 -d' ')" ] ; then 
@@ -84,13 +84,13 @@ for jobrange in ${jobranges[@]} ; do
 echo "jobrange=$jobrange"
   case "$hpctype" in
     'PBS') 
-      qsub -J $jobrange -l walltime=${wt}:00:00 -l select=1:ncpus=${ncpus}:mem=${mem}gb -N raxml_gene_trees_$(basename $cdsfam2phylo) \
+      qsub -J $jobrange -l walltime=${wth}:00:00 -l select=1:ncpus=${ncpus}:mem=${mem}gb -N raxml_gene_trees_$(basename $cdsfam2phylo) \
 	  -o ${ptglogs}/raxml/gene_trees -j oe -v "$qsubvars" ${ptgscripts}/raxml_array_PBS.qsub
 	  ;;
 	'LSF')
-	  if [ ${wt} -le 12 ] ; then
+	  if [ ${wth} -le 12 ] ; then
 	    bqueue='normal'
-	  elif [ ${wt} -le 48 ] ; then
+	  elif [ ${wth} -le 48 ] ; then
 	    bqueue='long'
 	  else
 	    bqueue='basement'

@@ -9,7 +9,17 @@
 
 # Copyright: Florent Lassalle (f.lassalle@imperial.ac.uk), 15 Jan 2019
 
-if [ -z "$1" ] ; then echo "missing mandatory parameter: pantagruel config file" ; echo "Usage: $0 ptg_env_file" ; exit 1 ; fi
+if [ -z "$1" ] ; then
+  echo "missing mandatory parameter: pantagruel config file"
+  echo "Usage: $0 ptg_env_file [hpc_type:{PBS(default)|LSF}]"
+  exit 1
+fi
+envsourcescript="$1"
+if [ -z "$2" ] ; then 
+  hpctype='PBS'
+else
+  hpctype="$2"
+fi
 envsourcescript="$1"
 source ${envsourcescript}
 
@@ -52,5 +62,29 @@ for jobrange in ${jobranges[@]} ; do
  echo $jobrange $qsubvar
  dlogs=${ptglogs}/mrbayes/${chaintype}_mrbayes_trees_${collapsecond}_${dtag}_${jobrange}
  mkdir -p ${dlogs}/
- qsub -J ${jobrange} -N mb_panterodb -l select=1:ncpus=${ncpus}:mem=16gb -l walltime=${wth}:00:00  -o ${dlogs} -v "$qsubvar" ${ptgscripts}/mrbayes_array_PBS.qsub
+ 
+ case "$hpctype" in
+    'PBS') 
+      subcmd="qsub -J ${jobrange} -N mb_panterodb -l select=1:ncpus=${ncpus}:mem=16gb -l walltime=${wth}:00:00 \
+	  -o ${dlogs} -v \"$qsubvar\" ${ptgscripts}/mrbayes_array_PBS.qsub"
+	  ;;
+	'LSF')
+	  if [ ${wth} -le 12 ] ; then
+	    bqueue='normal'
+	  elif [ ${wth} -le 48 ] ; then
+	    bqueue='long'
+	  else
+	    bqueue='basement'
+	  fi
+	  memmb=$((${mem} * 1024)) 
+	  subcmd="bsub -J "raxml_gene_trees_$(basename $cdsfam2phylo)[$jobrange]" -q ${bqueue} \
+	  -R \"select[mem>${memmb}] rusage[mem=${memmb}] span[hosts=1]\" -n${ncpus} -M${memmb} \
+	  -o ${dlogs}/mrbayes.%J.%I.o -e ${dlogs}/mrbayes.%J.%I.e -env \"$qsubvars\" ${ptgscripts}/mrbayes_array_PBS.bsub"
+	  ;;
+	*)
+	  echo "Error: high-performance computer system '$hpctype' is not supported; exit now"
+	  exit 1;;
+    echo "${subcmd}"
+    eval "${subcmd}"
+  esac
 done
