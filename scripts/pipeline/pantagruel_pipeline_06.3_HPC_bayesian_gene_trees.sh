@@ -58,6 +58,9 @@ else
 fi
 export mbmcmcpopt='Nruns=${nruns} Ngen=2000000 Nchains=${nchains}'
 qsubvars="tasklist=${tasklist}, outputdir=${mboutputdir}"
+if [ ! -z "${mbbin}" ] ; then
+  qsubvars="${qsubvars}, mbbin=${mbbin}"
+fi
 
 Njob=`wc -l ${tasklist} | cut -f1 -d' '`
 chunksize=1000
