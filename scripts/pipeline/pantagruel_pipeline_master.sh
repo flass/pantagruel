@@ -422,30 +422,53 @@ do
 
     -a|--custom_ass)
       testmandatoryarg "${1}" "${2}"
-      export customassemb=$(readlink -f ${2})
+      if [[ ${runmode} == 'force' || ${runmode} == 'refreshconfig' ]] ; then
+        export customassemb=${2}
+      else
+        export customassemb=$(readlink -f ${2})
+      fi
       echo "set custom (raw) genome assembly source folder to '$customassemb'"
       shift 2;;
 
     -A|--refseq_ass)
       testmandatoryarg "${1}" "${2}"
-      export ncbiass=$(readlink -f ${2})
+      if [[ ${runmode} == 'force' || ${runmode} == 'refreshconfig' ]] ; then
+        export ncbiass=${2}
+      else
+        export ncbiass=$(readlink -f ${2})
+      fi
       echo "set NCBI RefSeq(-like) genome assembly source folder to '$ncbiass'"
       shift 2;;
 
     -L|--refseq_list)
       testmandatoryarg "${1}" "${2}"
+      if [[ ${runmode} == 'force' || ${runmode} == 'refreshconfig' ]] ; then
+        export listncbiass=${2}
+      else
+        export listncbiass=$(readlink -f ${2})
+      fi
       export listncbiass=$(readlink -f ${2})
       echo "set NCBI RefSeq(-like) genome assembly id list to '$listncbiass'"
       shift 2;;
 
     --refseq_ass4annot)
       testmandatoryarg "${1}" "${2}"
+      if [[ ${runmode} == 'force' || ${runmode} == 'refreshconfig' ]] ; then
+        export refass=${2}
+      else
+        export refass=$(readlink -f ${2})
+      fi
       export refass=$(readlink -f ${2})
       echo "set NCBI RefSeq(-like) genome assembly source folder for reference in user genome annotation to '$refass'"
       shift 2;;
 
     --refseq_list4annot)
       testmandatoryarg "${1}" "${2}"
+      if [[ ${runmode} == 'force' || ${runmode} == 'refreshconfig' ]] ; then
+        export listrefass=${2}
+      else
+        export listrefass=$(readlink -f ${2})
+      fi
       export listrefass=$(readlink -f ${2})
       echo "set NCBI RefSeq(-like) genome assembly id list for reference in user genome annotation to '$listrefass'"
       shift 2;;
@@ -635,6 +658,8 @@ for task in ${tasks} ; do
       fi
       if [[ -z "${ncbiass}" && -z "${listncbiass}" && -z "${customassemb}" ]] ; then
        echo -e "Error: Must specify at least one folder of input assemblies with options '-A', '-L' or '-a', or any combination of them.\n"
+       if [[ ${runmode} != 'force' && ${runmode} != 'refreshconfig' ]] ; then
+         echo "Note that the absolute path of the input arguments of options '-A', '-L' and '-a' are sought; if the folders do not exist on this machine but are not required now (e.g. because only tasks donwstream of 00 are to be run), please consider using the options -F or --refresh to turn this error off."
        usage
        exit 1
       fi
