@@ -422,7 +422,7 @@ do
 
     -a|--custom_ass)
       testmandatoryarg "${1}" "${2}"
-      if [[ ${runmode} == 'force' || ${runmode} == 'refreshconfig' ]] ; then
+      if [[ ${runmode} == 'force' || ${runmode} == 'refreshconfig' ||  ${runmode} == 'wasrefresh' ]] ; then
         export customassemb=${2}
       else
         export customassemb=$(readlink -f ${2})
@@ -432,7 +432,7 @@ do
 
     -A|--refseq_ass)
       testmandatoryarg "${1}" "${2}"
-      if [[ ${runmode} == 'force' || ${runmode} == 'refreshconfig' ]] ; then
+      if [[ ${runmode} == 'force' || ${runmode} == 'refreshconfig' ||  ${runmode} == 'wasrefresh' ]] ; then
         export ncbiass=${2}
       else
         export ncbiass=$(readlink -f ${2})
@@ -442,7 +442,7 @@ do
 
     -L|--refseq_list)
       testmandatoryarg "${1}" "${2}"
-      if [[ ${runmode} == 'force' || ${runmode} == 'refreshconfig' ]] ; then
+      if [[ ${runmode} == 'force' || ${runmode} == 'refreshconfig' ||  ${runmode} == 'wasrefresh' ]] ; then
         export listncbiass=${2}
       else
         export listncbiass=$(readlink -f ${2})
@@ -453,7 +453,7 @@ do
 
     --refseq_ass4annot)
       testmandatoryarg "${1}" "${2}"
-      if [[ ${runmode} == 'force' || ${runmode} == 'refreshconfig' ]] ; then
+      if [[ ${runmode} == 'force' || ${runmode} == 'refreshconfig' ||  ${runmode} == 'wasrefresh' ]] ; then
         export refass=${2}
       else
         export refass=$(readlink -f ${2})
@@ -464,7 +464,7 @@ do
 
     --refseq_list4annot)
       testmandatoryarg "${1}" "${2}"
-      if [[ ${runmode} == 'force' || ${runmode} == 'refreshconfig' ]] ; then
+      if [[ ${runmode} == 'force' || ${runmode} == 'refreshconfig' ||  ${runmode} == 'wasrefresh' ]] ; then
         export listrefass=${2}
       else
         export listrefass=$(readlink -f ${2})
@@ -658,7 +658,7 @@ for task in ${tasks} ; do
       fi
       if [[ -z "${ncbiass}" && -z "${listncbiass}" && -z "${customassemb}" ]] ; then
        echo -e "Error: Must specify at least one folder of input assemblies with options '-A', '-L' or '-a', or any combination of them.\n"
-       if [[ ${runmode} != 'force' && ${runmode} != 'refreshconfig' ]] ; then
+       if [[ ${runmode} != 'force' && ${runmode} != 'refreshconfig' && ${runmode} != 'wasrefresh' ]] ; then
          echo "Note that the absolute path of the input arguments of options '-A', '-L' and '-a' are sought; if the folders do not exist on this machine but are not required now (e.g. because only tasks donwstream of 00 are to be run), please consider using the options -F or --refresh to turn this error off."
        fi
        usage
