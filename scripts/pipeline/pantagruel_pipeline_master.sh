@@ -660,6 +660,7 @@ for task in ${tasks} ; do
        echo -e "Error: Must specify at least one folder of input assemblies with options '-A', '-L' or '-a', or any combination of them.\n"
        if [[ ${runmode} != 'force' && ${runmode} != 'refreshconfig' ]] ; then
          echo "Note that the absolute path of the input arguments of options '-A', '-L' and '-a' are sought; if the folders do not exist on this machine but are not required now (e.g. because only tasks donwstream of 00 are to be run), please consider using the options -F or --refresh to turn this error off."
+       fi
        usage
        exit 1
       fi
