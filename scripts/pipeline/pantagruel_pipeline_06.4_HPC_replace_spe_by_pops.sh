@@ -74,7 +74,8 @@ else
   ## edit the gene trees, producing the corresponding (potentially collapsed) species tree based on the 'time'-tree backbone
   mkdir -p ${ptgdb}/logs/replspebypop
   export tasklist=${bayesgenetrees}_${collapsecond}_mbrun1t_list
-  ls ${bayesgenetrees}/${collapsecond}/*run1.t > $tasklist
+  #~ ls ${bayesgenetrees}/${collapsecond}/*run1.t > $tasklist
+  ls ${bayesgenetrees}/${collapsecond}/${famprefix}*/*run1.t > $tasklist
   repllogd=${ptgdb}/logs/replspebypop
   export repllogs=${repllogd}/replace_species_by_pop_in_gene_trees
   replacecoldate=$(date +%Y-%m-%d)

@@ -95,6 +95,9 @@ nfrad2=${nfrad1%%.*}
 echo ${nfrad2}
 echo ""
 
+pref=$(echo ${nfrad2} | grep -o "${famprefix}C[0-9]\{${ndiggrpfam}\}")
+mkdir -p ${outputdir}/${pref}/
+
 if [ ! -z "${constraintsuffix}" ]  ; then
   nfconstraints=${diraln}/${nfrad2}.${constraintsuffix}
   constraints=$(basename $nfconstraints)
@@ -106,11 +109,8 @@ jobtmpdir=mrbayes_tmp.${nfrad2}
 mkdir -p ${jobtmpdir}/ && cd ${jobtmpdir}/
 echo "current host:directory is ${HOSTNAME}:${PWD}"
 
-#~ # remove traces from potential previous chains 
-#~ rm ./*${nfrad2}*
-#~ echo "removed pre-existing files with name containing '${nfrad2}' with exit status $?"
-#~ echo ""
-# directory is supposed to be clean anyway
+# remove traces from potential previous chains 
+rm ./*${nfrad2}* && echo -e "removed pre-existing files with name containing '${nfrad2}'\n"
 
 mbresume=$(python2.7 << EOF
 mbmcmcopts="${mbmcmcopt}".lower().split()
@@ -123,8 +123,8 @@ EOF
 )
 if [ "${mbresume}" == 'yes' ] ; then
   # import files from previous interupted analysis
-  echo "rsync -avz ${outputdir}/*${nfrad2}* ./"
-  rsync -avz ${outputdir}/*${nfrad2}* ./
+  echo "rsync -avz ${outputdir}/${pref}/*${nfrad2}* ./"
+  rsync -avz ${outputdir}/${pref}/*${nfrad2}* ./
 else
   echo "rsync -avz ${nfaln} ${nfconstraints} ./"
   rsync -avz ${nfaln} ${nfconstraints} ./
@@ -199,19 +199,19 @@ runmbandsync () {
   # prepare empty ckp files for the time stamp comparison
   ckp=${nfrad2}.mb.ckp
   touch ./$ckp
-  touch ${outputdir}/$ckp
+  touch ${outputdir}/${pref}/$ckp
   file1time=`stat -c %Y ./$ckp`
-  file2time=`stat -c %Y ${outputdir}/$ckp`
+  file2time=`stat -c %Y ${outputdir}/${pref}/$ckp`
   # monitor file updates and sync on the way
   nckp=0
   while [ ! -z $(ps -p ${mbpid} -o comm=) ] ; do
     #~ file1time=`stat -c %Y ./$ckp`
-    #~ file2time=`stat -c %Y ${outputdir}/$ckp`
+    #~ file2time=`stat -c %Y ${outputdir}/${pref}/$ckp`
     #~ if [ $file1time -gt $file2time ]; then
-    if [ ./$ckp -nt ${outputdir}/$ckp ]; then
+    if [ ./$ckp -nt ${outputdir}/${pref}/$ckp ]; then
       date
-      #echo "rsync -az ${excludesync[@]} ./*${nfrad2}* ${outputdir}/"
-      rsync -az ${excludesync[@]} ./*${nfrad2}* ${outputdir}/
+      #echo "rsync -az ${excludesync[@]} ./*${nfrad2}* ${outputdir}/${pref}/"
+      rsync -az ${excludesync[@]} ./*${nfrad2}* ${outputdir}/${pref}/
       let nckp+=1
     fi
     sleep 60s
@@ -220,7 +220,7 @@ runmbandsync () {
   echo ""
   if [[ $nckp -eq 0 && ! -e ${nfrad2}.mb.con.tre ]] ; then
     # no sync has happened, it is likely that MrBayes run has gone wrong and no computation has been done (hence no time for sync)
-    rsync -az ${nfrad2}.mb.log ${outputdir}/
+    rsync -az ${nfrad2}.mb.log ${outputdir}/${pref}/
   fi
 }
 
@@ -267,12 +267,12 @@ EOF
 ))
 
 # final sync
-rsync -avz ${excludesync[@]} ./*${nfrad2}.mb* ${outputdir}/
+rsync -avz ${excludesync[@]} ./*${nfrad2}.mb* ${outputdir}/${pref}/
 if [ $? != 0 ] ; then
   echo "!!! ERROR : unable to copy *${nfrad2}.mb* output files from $HOSTNAME:$PWD ; exit now"
   exit 1
 else
-  echo "copied *${nfrad2}.mb* output files to ${outputdir}/ with exit status 0"
+  echo "copied *${nfrad2}.mb* output files to ${outputdir}/${pref}/ with exit status 0"
 fi
 echo ""
 

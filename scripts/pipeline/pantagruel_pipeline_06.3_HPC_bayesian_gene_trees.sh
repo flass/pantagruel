@@ -33,22 +33,30 @@ export mboutputdir=${bayesgenetrees}/${collapsecond}
 mkdir -p ${mboutputdir}
 nchains=4
 nruns=2
-ncpus=$(( $nchains * $nruns ))
+ncpus=$(( ${nchains} * ${nruns} ))
 mem=16 # in GB
 wth=24
 tasklist=${nexusaln4chains}_ali_list
-rm -f $tasklist
-${ptgscripts}/lsfullpath.py "${nexusaln4chains}/*nex" > $tasklist
+rm -f ${tasklist}
+${ptgscripts}/lsfullpath.py "${nexusaln4chains}/*nex" > ${tasklist}
 dtag=$(date +"%Y-%m-%d-%H-%M-%S")
 append=''
+
+# determine the set of numbered gene family prefixes to make separate folders
+# and breakdown the load of files per folder
+awk -F'/' '{print $NF}' ${mbtasklist} | grep -o "${famprefix}C[0-9]\{${ndiggrpfam}\}" | sort -u > ${nexusaln4chains}_ali_numprefixes
+for pref in  `cat ${nexusaln4chains}_ali_numprefixes` ; do
+  mkdir -p ${mboutputdir}/${pref}/
+done
 
 if [ "${resumetask}" == 'true' ] ; then
   #~ # following lines are for resuming after a stop in batch computing, or to collect those jobs that crashed (and may need to be re-ran with more mem/time allowance)
   for nfaln in $(cat $tasklist) ; do
    bnaln=$(basename $nfaln)
    bncontre=${bnaln/nex/mb.con.tre}
-   if [ ! -e ${mboutputdir}/${bncontre} ] ; then
-    echo $nfaln
+   pref=$(echo ${bncontre} | grep -o "${famprefix}C[0-9]\{${ndiggrpfam}\}")
+   if [ ! -e ${mboutputdir}/${pref}/${bncontre} ] ; then
+    echo ${nfaln}
    fi
   done > ${tasklist}_resumetask_${dtag}
   tasklist=${tasklist}_resumetask_${dtag}

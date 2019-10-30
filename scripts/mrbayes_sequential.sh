@@ -20,25 +20,26 @@ fi
 ### e.g. tasklist=/path/list  ; outputdir=/path/dir ; mbmcmcopt="params string"
 
 # test key variables have been provided
-if [ -z "$tasklist" ] ; then
-  echo "!!! ERROR : mandatory variable \$tasklist not declared ; exit now"
+if [ -z "${tasklist}" ] ; then
+  echo "!!! ERROR : mandatory variable \${tasklist} not declared ; exit now"
   exit 1
 fi
-if [ -z "$outputdir" ] ; then
-  echo "!!! ERROR : mandatory variable \$outputdir not declared ; exit now"
+if [ -z "${outputdir}" ] ; then
+  echo "!!! ERROR : mandatory variable \${outputdir} not declared ; exit now"
   exit 1
 fi
 # $mbmcmcopt and $mbmcmcpopt can be empty, which will make MrBayes run defaut parameters
 
 
-mkdir -p $outputdir/
-cd $outputdir/
-if [ $? != 0 ] ; then 
-  echo "!!! ERROR : unable to access output directory '$outputdir/' ; exit now"
+
+mkdir -p ${outputdir}/
+cd ${outputdir}/
+if [ ${?} != 0 ] ; then 
+  echo "!!! ERROR : unable to access output directory '${outputdir}/' ; exit now"
   exit 1
 fi
-if [ ! -e "$tasklist" ] ; then 
-  echo "!!! ERROR : unable to access task list file '$tasklist' ; exit now"
+if [ ! -e "${tasklist}" ] ; then 
+  echo "!!! ERROR : unable to access task list file '${tasklist}' ; exit now"
   exit 1
 fi
 
@@ -51,6 +52,11 @@ nfrad1=$(basename ${nfaln})
 nfrad2=${nfrad1%.*}
 echo ${nfrad2}
 echo ""
+
+pref=$(echo ${nfrad2} | grep -o "${famprefix}C[0-9]\{${ndiggrpfam}\}")
+mkdir -p ${outputdir}/${pref}/
+cd ${outputdir}/${pref}/
+
 
 echo "current directory (output directory) is $HOSTNAME:$PWD"
 
@@ -65,11 +71,11 @@ for opteqval in mbmcmcopts:
 print mbresume
 EOF
 )
-if [ "$mbresume" == 'yes' ] ; then
-  if [ "$PWD" != "$(realpath ${outputdir})" ] ; then
+if [ "${mbresume}" == 'yes' ] ; then
+  if [ "$PWD" != "$(realpath ${outputdir}/${pref})" ] ; then
     # import files from previous interupted analysis
-    echo "rsync -avz $outputdir/*${nfrad2}* ./"
-    rsync -avz $outputdir/*${nfrad2}* ./
+    echo "rsync -avz ${outputdir}/${pref}/*${nfrad2}* ./"
+    rsync -avz ${outputdir}/${pref}/*${nfrad2}* ./
   fi
 else
   if [ ! -z "$(ls ./${nfrad2}.mb* 2> /dev/null)" ] ; then
@@ -122,7 +128,7 @@ echo ""
 # run the progrram
 echo "running MrBayes:"
 echo "mb < ${nfrad2}.mbparam.txt"
-mb < ${nfrad2}.mbparam.txt >  ${nfrad2}.mb.log
+mb < ${nfrad2}.mbparam.txt > ${nfrad2}.mb.log
 
 
 echo "output of MrBayes phylogenetic reconstruction is :"

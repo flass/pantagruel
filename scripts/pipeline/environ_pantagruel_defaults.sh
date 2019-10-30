@@ -12,6 +12,8 @@ export cladesuppdef=70
 export subcladesuppdef=35
 export criteriondef='bs'
 export withinfundef='median'
+# bayesian gene tree estimation: separation of the many output files into separate folders
+export ndiggrpfam=4
 # gene tree/species tree reconciliation inference parameters
 export ALEalgo='ALEml'
 export ecceTERAalgo='amalgamate'

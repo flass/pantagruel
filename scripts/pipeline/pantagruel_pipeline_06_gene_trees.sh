@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash 
 
 #########################################################
 ## PANTAGRUEL:                                         ##
@@ -142,7 +142,7 @@ if [[ "${chaintype}" == 'fullgenetree' ]] ; then
   done
   checkexec "could not convert alignments from Fasta to Nexus format ; exit now" "succesfully converted alignemts from Fasta to Nexus format"
   export nexusaln4chains=${colalinexuscodedir}/${collapsecond}
-  export mboutputdir=${bayesgenetrees}
+  export mboutputdir=${bayesgenetrees}/${collapsecond}
   
   #### end OPTION A1
 else
@@ -244,10 +244,18 @@ nchains=4
 nruns=2
 ngen=2000000
 samplef=500
-ncpus=$(( $nchains * $nruns ))
-ntreeperchain=$(( $ngen / $samplef ))
+ncpus=$(( ${nchains} * ${nruns} ))
+ntreeperchain=$(( ${ngen} / ${samplef} ))
 mbtasklist=${nexusaln4chains}_ali_list
 ${ptgscripts}/lsfullpath.py "${nexusaln4chains}/*.nex" > ${mbtasklist}
+
+# determine the set of numbered gene family prefixes to make separate folders
+# and breakdown the load of files per folder
+awk -F'/' '{print $NF}' ${mbtasklist} | grep -o "${famprefix}C[0-9]\{${ndiggrpfam}\}" | sort -u > ${nexusaln4chains}_ali_numprefixes
+for pref in  `cat ${nexusaln4chains}_ali_numprefixes` ; do
+  mkdir -p ${mboutputdir}/${pref}/
+done
+
 if [[ "${resumetask}" == "true" ]] ; then
   rm -f ${mbtasklist}_alreadydone
   rm -f ${mbtasklist}_resume
@@ -256,7 +264,8 @@ if [[ "${resumetask}" == "true" ]] ; then
     chainstarted=''
     nfrad1=$(basename ${nfaln})
     nfrad2=${nfrad1%.*}
-    gtchain1=${mboutputdir}/${nfrad2}.mb.run1.t
+    pref=$(echo ${nfrad2} | grep -o "${famprefix}C[0-9]\{${ndiggrpfam}\}")
+    gtchain1=${mboutputdir}/${pref}/${nfrad2}.mb.run1.t
     if [[ -s ${gtchain1} ]] ; then
       if [[ $(grep -F -c "tree gen" ${gtchain1} | cut -d' ' -f1) -ge ${ntreeperchain} && ! -z "$(tail -n 1 ${gtchain1} | grep 'end')" ]] ; then
         chaindone='yes'
@@ -295,7 +304,7 @@ fi
 
 mkdir -p ${ptgdb}/logs/replspebypop
 repltasklist=${coltreechains}_${collapsecond}_nexus_list
-${ptgscripts}/lsfullpath.py "${bayesgenetrees}/${collapsecond}/*.mb.run1.t" > ${repltasklist}
+${ptgscripts}/lsfullpath.py "${bayesgenetrees}/${collapsecond}/${famprefix}*/*.mb.run1.t" > ${repltasklist}
 repllogd=${ptgdb}/logs/replspebypop
 repllogs=$repllogd/replace_species_by_pop_in_gene_trees
 replrun=$(date +'%d%m%Y')  
