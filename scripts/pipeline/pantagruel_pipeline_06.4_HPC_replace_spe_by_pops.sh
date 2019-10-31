@@ -146,7 +146,7 @@ case "${hpctype}" in
             -n${ncpus} -M${memmb} -q ${bqueue} \
             -o ${nflog} -e ${nflog} -env 'all' ${ptgscripts}/replSpePopinGs_array_LSF.bsub"
     ;;
-  esac
-  echo "$subcmd"
-  eval "$subcmd"
-fi
+esac
+echo "$subcmd"
+eval "$subcmd"
+
