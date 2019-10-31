@@ -9,14 +9,42 @@
 
 # Copyright: Florent Lassalle (f.lassalle@imperial.ac.uk), 15 Jan 2019
 
-if [ -z "$1" ] ; then echo "missing mandatory parameter: pantagruel config file" ; echo "Usage: $0 ptg_env_file [ncpus=8] [mem=32gb] [walltimehours=4] [hpc_type:{PBS(default)|LSF}]" ; exit 1 ; fi
+usagemsg="
+Usage:\n
+ For running the script:\n
+\t$0 ptg_config_file [ncpus=12] [mem=124] [wth=24] [hpctype='PBS'] [chunksize=100] [parallelflags='']\n
+or for this help mesage:\n
+\t$0 -h\n
+\n
+\tOption details:\n
+\t ncpus:\tnumber of parallel threads.\n
+\t mem:\tmax memory allowance, in gigabytes (GB) (default: 124).\n
+\t wth:\tmax walltime, in hours (default: 24).\n
+\t hpctype:\t'PBS' for Torque scheduling system (default), or 'LSF' for IBM schedulling system.\n
+\t chunksize:\tnumber of families to be processed in one submitted job (default: 100)\n
+\t parallelflags:\tadditional flags to be specified for worker nodes' resource requests\n
+\t\t\t for instance, specifying parallelflags=\"mpiprocs=1:ompthreads=8\" (with hpctype='PBS')\n
+\t\t\t will force the use of OpenMP multi-threading instead of default MPI parallelism.\n
+\t\t\t Note that parameter declaration syntax is not standard and differ depending on your HPC system;\n
+\t\t\t also the relevant parameter flags may be different depending on the HPC system config.\n
+\t\t\t Get in touch with your system admins to know the relevant flags and syntax.\n
+"
+
+if [ "$1" == '-h' ] ; then
+ echo -e ${usagemsg}
+ exit 0
+elif [ -z "$1" ] ; then
+ echo -e "Error: missing mandatory parameter: pantagruel config file\n"
+ echo -e ${usagemsg}
+ exit 1
+fi
 envsourcescript="$1"
 source ${envsourcescript}
 
 if [ ! -z "$2" ] ; then
-  ncpus="$2"
+  export ncpus="$2"
 else
-  ncpus=8
+  export ncpus=8
 fi
 if [ ! -z "$3" ] ; then
   mem="$3"
@@ -28,10 +56,19 @@ if [ ! -z "$4" ] ; then
 else
   wth=4
 fi
-if [ -z "$5" ] ; then 
-  hpctype='PBS'
-else
+if [ ! -z "$5" ] ; then
   hpctype="$5"
+else
+  hpctype='PBS'
+fi
+if [ ! -z "$6" ] ; then
+  chunksize="$6"
+else
+  chunksize=3000
+fi
+if [ ! -z "$7" ] ; then
+  [ "$hpctype" == 'PBS' ] && parallelflags=":$7"
+  [ "$hpctype" == 'LSF' ] && parallelflags=" span[$7]"
 fi
 
 #############################################################
@@ -78,7 +115,6 @@ else
   
   # accomodate with possible upper limit on number of tasks in an array job; assume chunks of 3000 tasks are fine
   Njob=`wc -l ${mlgenetreelist} | cut -f1 -d' '`
-  chunksize=3000
   jobranges=($(${ptgscripts}/get_jobranges.py $chunksize $Njob))
 
   # In the job submission commands below, some lines are specific to the HPC system 
@@ -110,12 +146,11 @@ else
 	      bqueue='basement'
 	    fi
 	    memmb=$((${mem} * 1024))
+	    nflog="${ptglogs}/mark_unresolved_clades.${collapsecond}_${jobrange}.%J.o"
 	    subcmd="bsub -J 'mark_unresolved_clades' -q ${bqueue} \
 	     -R \"select[mem>${memmb}] rusage[mem=${memmb}] span[hosts=1]\" \
          -n${ncpus} -M${memmb} -env \"$qsubvars\" \
-         -o ${ptglogs}/mark_unresolved_clades.${collapsecond}_${jobrange}.%J.o \
-         -e ${ptglogs}/mark_unresolved_clades.${collapsecond}_${jobrange}.%J.e \
-         ${ptgscripts}/mark_unresolved_clades.bsub"
+         -o ${nflog} -e ${nflog} ${ptgscripts}/mark_unresolved_clades.bsub"
 	    ;;
 	  *)
 	    echo "Error: high-performance computer system '$hpctype' is not supported; exit now"

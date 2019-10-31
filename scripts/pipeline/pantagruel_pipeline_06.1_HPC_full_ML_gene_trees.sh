@@ -96,9 +96,9 @@ echo "jobrange=$jobrange"
 	    bqueue='basement'
 	  fi
 	  memmb=$((${mem} * 1024)) 
+	  nflog="${ptglogs}/raxml/gene_trees/raxml_gene_trees_$(basename $cdsfam2phylo).%J.%I.o"
 	  bsub -J "raxml_gene_trees_$(basename $cdsfam2phylo)[$jobrange]" -q ${bqueue} -R "select[mem>${memmb}] rusage[mem=${memmb}] span[hosts=1]" \
-	  -n${ncpus} -M${memmb} -o ${ptglogs}/raxml/gene_trees/raxml_gene_trees_$(basename $cdsfam2phylo).%J.%I.o \
-	  -e ${ptglogs}/raxml/gene_trees/raxml_gene_trees_$(basename $cdsfam2phylo).%J.%I.e -env "$qsubvars" ${ptgscripts}/raxml_array_LSF.bsub
+	  -n${ncpus} -M${memmb} -o ${nflog} -e ${nflog} -env "$qsubvars" ${ptgscripts}/raxml_array_LSF.bsub
 	  ;;
 	*)
 	  echo "Error: high-performance computer system '$hpctype' is not supported; exit now"

@@ -66,6 +66,26 @@ else
   verbosemode=""
 fi
 
-python2.7 ${ptgscripts}/replace_species_by_pop_in_gene_trees.py -G ${taskchunklist} -c ${colalinexuscodedir}/${collapsecond} -S ${speciestree}.lsd.nwk -o ${coltreechains}/${collapsecond} \
- --populations=${speciestree%.*}_populations --population_tree=${speciestree%.*}_collapsedPopulations.nwk --population_node_distance=${speciestree%.*}_interNodeDistPopulations \
- --dir_full_gene_trees=${mlgenetrees}/rootedTree --method=${replmethod} --threads=${ncpus} --reuse=0 --max.recursion.limit=12000 --logfile=${repllogs}_${replrun}.log ${verbosemode}
+if [[ "${chaintype}" == 'fullgenetree' ]] ; then
+  #### OPTION A2: 
+  ## no need to replace anything in the tree, just convert format from Nexus to Newick tree chains
+  python2.7 ${ptgscripts}/replace_species_by_pop_in_gene_trees.py -G ${taskchunklist} --no_replace \
+  -o ${coltreechains}/${collapsecond} --threads=${ncpus} --reuse=0 --max.recursion.limit=12000 \
+  --logfile=${repllogs}_${replrun}.log ${verbosemode}
+
+elif [[ "${chaintype}" == 'collapsed' ]] ; then
+  #### OPTION B2: collapsed rake clades in gene trees need to be replaced by mock population leaves
+  #### will edit collapsed gene trees to attribute an (ancestral) species identity to the leafs 
+  #### representing collapsed clades = pre-reconciliation of recent gene history.
+  #### In addition, will produce the corresponding (potentially collapsed) species tree based on the 'time'-tree backbone
+
+  python2.7 ${ptgscripts}/replace_species_by_pop_in_gene_trees.py -G ${taskchunklist} -c ${colalinexuscodedir}/${collapsecond} \
+  --dir_full_gene_trees=${mlgenetrees}/rootedTree --method=${replmethod} -S ${speciestree}.lsd.nwk --populations=${speciestree%.*}_populations \
+  --population_tree=${speciestree%.*}_collapsedPopulations.nwk --population_node_distance=${speciestree%.*}_interNodeDistPopulations \
+  -o ${coltreechains}/${collapsecond} --threads=${ncpus} --reuse=0 --max.recursion.limit=12000 \
+  --logfile=${repllogs}_${replrun}.log ${verbosemode}
+  
+else
+  echo "Error: incorrect value for environment variable \$chaintype=$chaintype ; exit now"
+  exit 1
+fi
