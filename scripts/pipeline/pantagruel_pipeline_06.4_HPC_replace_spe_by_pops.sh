@@ -131,6 +131,7 @@ case "${hpctype}" in
     if [ ${Nchunk} -gt 2 ] ; then
       arrayspec="[1-${Nchunk}]"
       arrayjobtag='.%J'
+    fi
     if [ ${wth} -le 12 ] ; then
       bqueue='normal'
     elif [ ${wth} -le 48 ] ; then
