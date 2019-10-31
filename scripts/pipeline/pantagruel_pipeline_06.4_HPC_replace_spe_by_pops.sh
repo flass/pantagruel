@@ -22,7 +22,7 @@ or for this help mesage:\n
 \t hpctype:\t'PBS' for Torque scheduling system (default), or 'LSF' for IBM schedulling system.\n
 \t chunksize:\tnumber of families to be processed in one submitted job (default: 100)\n
 \t parallelflags:\tadditional flags to be specified for worker nodes' resource requests\n
-\t\t\t for instance, specifying parallelflags=\"mpiprocs=1:ompthreads=8\" (with hpctype='PBS')\n
+\t\t\t for instance, specifying parallelflags=\"mpiprocs=1:ompthreads=12\" (with hpctype='PBS')\n
 \t\t\t will force the use of OpenMP multi-threading instead of default MPI parallelism.\n
 \t\t\t Note that parameter declaration syntax is not standard and differ depending on your HPC system;\n
 \t\t\t also the relevant parameter flags may be different depending on the HPC system config.\n
@@ -67,7 +67,7 @@ else
 fi
 if [ ! -z "$7" ] ; then
   [ "$hpctype" == 'PBS' ] && parallelflags=":$7"
-  [ "$hpctype" == 'LSF' ] && parallelflags=" span[$7]"
+  [ "$hpctype" == 'LSF' ] && parallelflags="span[$7]"
 fi
 
 
@@ -140,7 +140,9 @@ case "${hpctype}" in
     fi
     memmb=$((${mem} * 1024)) 
     nflog="${repllogd}/replSpePopinGs.%I${arrayjobtag}.o"
-    subcmd="bsub -J replSpePopinGs${arrayspec} -R \"select[mem=${memmb}]${parallelflags}\" -q ${bqueue} \
+    [ -z "${parallelflags}" ] && parallelflags="span[hosts=1]"
+    subcmd="bsub -J replSpePopinGs${arrayspec} -R \"select[mem=${memmb}] rusage[mem=${memmb}] ${parallelflags}\" \
+            -n${ncpus} -M${memmb} -q ${bqueue} \
             -o ${nflog} -e ${nflog} -env 'all' ${ptgscripts}/replSpePopinGs_array_LSF.bsub"
     ;;
   esac
