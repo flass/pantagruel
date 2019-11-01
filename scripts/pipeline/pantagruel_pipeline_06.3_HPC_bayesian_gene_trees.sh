@@ -80,7 +80,7 @@ for jobrange in ${jobranges[@]} ; do
  case "$hpctype" in
     'PBS') 
       subcmd="qsub -J ${jobrange} -N mb_panterodb -l select=1:ncpus=${ncpus}:mem=${mem}gb -l walltime=${wth}:00:00 \
-	  -o ${dlogs} -v \"$qsubvars, mbmcmcopt='${mbmcmcopt}', mbmcmcpopt='${mbmcmcpopt}'\" ${ptgscripts}/mrbayes_array_PBS.qsub"
+	  -o ${dlogs} -v \"$qsubvars, mbmcmcopt='${mbmcmcopt}', mbmcmcpopt='${mbmcmcpopt}', famprefix='${famprefix}'\" ${ptgscripts}/mrbayes_array_PBS.qsub"
 	  ;;
 	'LSF')
 	  if [ ${wth} -le 12 ] ; then
@@ -94,7 +94,7 @@ for jobrange in ${jobranges[@]} ; do
 	  nflog="${dlogs}/mrbayes.%J.%I.o"
 	  subcmd="bsub -J \"mb_panterodb[$jobrange]\" -q ${bqueue} \
 	  -R \"select[mem>${memmb}] rusage[mem=${memmb}] span[ptile=${ncpus}]\" -n${ncpus} -M${memmb} \
-	  -o ${nflog} -e ${nflog} -env \"$qsubvars, mbmcmcopt, mbmcmcpopt\" \
+	  -o ${nflog} -e ${nflog} -env \"$qsubvars, mbmcmcopt, mbmcmcpopt, famprefix\" \
 	  ${ptgscripts}/mrbayes_array_LSF.bsub"
 	  ;;
 	*)
