@@ -12,22 +12,34 @@
 usagemsg="
 Usage:\n
  For running the script:\n
-\t$0 ptg_config_file [ncpus=12] [mem=124] [wth=24] [hpctype='PBS'] [chunksize=100] [parallelflags='']\n
+\t$0 ptg_config_file [ncpus=8] [mem=32] [wth=24] [hpctype='PBS'] [chunksize=3000] [parallelflags='']\n
 or for this help mesage:\n
 \t$0 -h\n
 \n
 \tOption details:\n
-\t ncpus:\tnumber of parallel threads.\n
-\t mem:\tmax memory allowance, in gigabytes (GB) (default: 124).\n
+\t ncpus:\tnumber of parallel threads (default: 8).\n
+\t mem:\tmax memory allowance, in gigabytes (GB) (default: 32).\n
 \t wth:\tmax walltime, in hours (default: 24).\n
 \t hpctype:\t'PBS' for Torque scheduling system (default), or 'LSF' for IBM schedulling system.\n
-\t chunksize:\tnumber of families to be processed in one submitted job (default: 100)\n
+\t chunksize:\tnumber of families to be processed in one submitted job (default: 3000)\n
 \t parallelflags:\tadditional flags to be specified for worker nodes' resource requests\n
 \t\t\t for instance, specifying parallelflags=\"mpiprocs=1:ompthreads=8\" (with hpctype='PBS')\n
 \t\t\t will force the use of OpenMP multi-threading instead of default MPI parallelism.\n
 \t\t\t Note that parameter declaration syntax is not standard and differ depending on your HPC system;\n
 \t\t\t also the relevant parameter flags may be different depending on the HPC system config.\n
 \t\t\t Get in touch with your system admins to know the relevant flags and syntax.\n
+\n
+Note that the python scripts underlying this task require some non-standard packages.\n
+It is advised to use Ancaonda to set up a stable environment to run these scripts\n
+across the worker nodes of your HPC system. 
+The job-submitted wrapper script will first attempt to load a conda environment\n
+named 'ptgenv', which can be created (just once) using:\n
+\t\`\`\`conda create -n ptgenv python=2.7 pip\n
+\t\ \ \ conda activate ptgenv\n
+\t\ \ \ pip install scipy numpy biopython bcbio-gff Cython igraph psycopg2\`\`\`\n
+\n
+If not found, the script will attempt to load Anaconda and attached python modules
+with the \`module load anaconda3/personal\` command (not standard, likely not available on your cluster).
 "
 
 if [ "$1" == '-h' ] ; then
@@ -91,8 +103,6 @@ if [[ "${chaintype}" == 'fullgenetree' ]] ; then
     convalign -i fasta -e nex -t dna nexus ${alifastacodedir}/$alnfa 
   done
   mv ${alifastacodedir}/*nex ${colalinexuscodedir}/
-  #~ export nexusaln4chains=${colalinexuscodedir}
-  #~ export mboutputdir=${bayesgenetrees}
   
 else
  if [[ "${chaintype}" == 'collapsed' ]] ; then
@@ -105,8 +115,6 @@ else
   fi
   
   ## detect clades to be collapsed in gene trees
-  #~ export colalinexuscodedir=${protali}/${chaintype}_cdsfam_alignments_species_code
-  #~ export collapsecond=${criterion}_stem${cladesupp}_within${withinfun}${subcladesupp}
   collapsecriteriondef="--clade_stem_conds=[('$criterion','>=',$cladesupp)] --within_clade_conds=[('$withinfun','$criterion','<=',$subcladesupp,-1),('max','$criterion','<',$cladesupp,-1)]"
   mkdir -p ${colalinexuscodedir}/${collapsecond}
   echo "${collapsecriteriondef}" > ${colalinexuscodedir}/${collapsecond}.collapse_criterion_def
@@ -161,8 +169,6 @@ else
   done
   export collapsecoldate=$(date +%Y-%m-%d)
   echo -e "${collapsecolid}\t${collapsecoldate}" > ${genetrees}/collapsecol
-  #~ export nexusaln4chains=${colalinexuscodedir}/${collapsecond}/collapsed_alns
-  #~ export mboutputdir=${bayesgenetrees}/${collapsecond}
   
  else
   echo "Error: incorrect value for variable chaintype: '${chaintype}'"

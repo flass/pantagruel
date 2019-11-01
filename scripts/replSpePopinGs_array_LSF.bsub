@@ -1,12 +1,6 @@
 #!/bin/bash
-#PBS -S /bin/bash
-#PBS -N replSpePopinGs
-#PBS -o /work/flassall/logs/mrbayes
-#PBS -j oe 
-#PBS -l walltime=24:00:00 
 
-echo "This is job $PBS_JOBNAME, job_ID $PBS_JOBID (array_task_ID $PBS_ARRAY_INDEX) on host $HOSTNAME, running $PBS_NUM_PPN processes on these workers:"
-cat $PBS_NODEFILE
+echo "This is job $LSB_JOBNAME, job_ID $LSB_JOBID (array_task_ID $LSB_JOBINDEX) on host $HOSTNAME, running on these workers: $LSB_MCPU_HOSTS"
 echo ""
 
 # all environment variables should have been passed on by  qsub -V
@@ -57,7 +51,10 @@ else
   verbosemode=""
 fi
 
-cd ${TMPDIR}
+
+cd /tmp/
+jobtmpdir=replSpePopinGs.$LSB_JOBID
+mkdir -p ${jobtmpdir}/ && cd ${jobtmpdir}/
 echo "current directory is ${PWD}"
 
 source ${ptgscripts}/load_python2.7_env.sh
@@ -84,4 +81,9 @@ elif [[ "${chaintype}" == 'collapsed' ]] ; then
 else
   echo "Error: incorrect value for environment variable \$chaintype=$chaintype ; exit now"
   exit 1
+fi
+
+if [[ "$(basename ${PWD})" == "${jobtmpdir}" ]] ; then
+  cd ..
+  rm -r ${jobtmpdir}/
 fi

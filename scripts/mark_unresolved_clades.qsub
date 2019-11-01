@@ -1,6 +1,14 @@
 #!/bin/bash
-module load anaconda3/personal
-source activate env_python2
+
+echo "This is job $PBS_JOBNAME, job_ID $PBS_JOBID on host $HOSTNAME, running $PBS_NUM_PPN processes on these workers:"
+cat $PBS_NODEFILE
+echo ""
+
+cd ${TMPDIR}
+echo "current directory is ${PWD}"
+
+source ${ptgscripts}/load_python2.7_env.sh
+
 collapsecriteriondef=$(cat ${colalinexuscodedir}/${collapsecond}.collapse_criterion_def)
 python2.7 ${ptgscripts}/mark_unresolved_clades.py --in_gene_tree_list=${mlgenetreelist}_${jobrange} --diraln=${cdsalifastacodedir} --fmt_aln_in='fasta' \
  --threads=${ncpus} --dirout=${colalinexuscodedir}/${collapsecond} --no_constrained_clade_subalns_output --dir_identseq=${didseq} \

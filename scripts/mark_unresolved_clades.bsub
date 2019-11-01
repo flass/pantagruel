@@ -8,28 +8,7 @@ jobtmpdir=mark_unresolved_clades.$LSB_JOBID
 mkdir -p ${jobtmpdir}/ && cd ${jobtmpdir}/
 echo "current directory is ${PWD}"
 
-
-echo "\$PYTHONPATH=$PYTHONPATH"
-python -c "import tree2"
-while [ ${?} -gt 0 ] ; do
-  echo "tree2 module was not detected."
-  if [ ! -z "$1" ] ; then
-    echo "try with path given through argument: $1"
-	export PYTHONPATH=$1
-    shift
-  else
-    echo "try to reload $HOME/.bashrc"
-    source $HOME/.bashrc
-	break
-  fi
-  python -c "import tree2"
-done
-echo ""
-
-# need the BCBio.GFF module to load ptg_utils
-#virtualenv -p $(which python2.7) --system-site-packages BCBio
-#source BCBio/bin/activate
-conda create -n ptgenv python=2.7 pip bcbio-gff
+source ${ptgscripts}/load_python2.7_env.sh
 
 collapsecriteriondef=$(cat ${colalinexuscodedir}/${collapsecond}.collapse_criterion_def)
 
@@ -40,9 +19,8 @@ python2.7 ${ptgscripts}/mark_unresolved_clades.py --in_gene_tree_list=${mlgenetr
 --diraln=${cdsalifastacodedir} --fmt_aln_in='fasta' --threads=${ncpus} --dirout=${colalinexuscodedir}/${collapsecond} \
 --no_constrained_clade_subalns_output --dir_identseq=${mlgenetrees}/identical_sequences ${collapsecriteriondef}
 
-#deactivate
-
 if [[ "$(basename ${PWD})" == "${jobtmpdir}" ]] ; then
   cd ..
   rm -r ${jobtmpdir}/
 fi
+

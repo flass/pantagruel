@@ -11,22 +11,34 @@
 usagemsg="
 Usage:\n
  For running the script:\n
-\t$0 ptg_config_file [ncpus=12] [mem=124] [wth=24] [hpctype='PBS'] [chunksize=100] [parallelflags='']\n
+\t$0 ptg_config_file [ncpus=8] [mem=96] [wth=24] [hpctype='PBS'] [chunksize=100] [parallelflags='']\n
 or for this help mesage:\n
 \t$0 -h\n
 \n
 \tOption details:\n
-\t ncpus:\tnumber of parallel threads.\n
-\t mem:\tmax memory allowance, in gigabytes (GB) (default: 124).\n
+\t ncpus:\tnumber of parallel threads (default: 8).\n
+\t mem:\tmax memory allowance, in gigabytes (GB) (default: 96).\n
 \t wth:\tmax walltime, in hours (default: 24).\n
 \t hpctype:\t'PBS' for Torque scheduling system (default), or 'LSF' for IBM schedulling system.\n
 \t chunksize:\tnumber of families to be processed in one submitted job (default: 100)\n
 \t parallelflags:\tadditional flags to be specified for worker nodes' resource requests\n
-\t\t\t for instance, specifying parallelflags=\"mpiprocs=1:ompthreads=12\" (with hpctype='PBS')\n
+\t\t\t for instance, specifying parallelflags=\"mpiprocs=1:ompthreads=8\" (with hpctype='PBS')\n
 \t\t\t will force the use of OpenMP multi-threading instead of default MPI parallelism.\n
 \t\t\t Note that parameter declaration syntax is not standard and differ depending on your HPC system;\n
 \t\t\t also the relevant parameter flags may be different depending on the HPC system config.\n
 \t\t\t Get in touch with your system admins to know the relevant flags and syntax.\n
+\n
+Note that the python scripts underlying this task require some non-standard packages.\n
+It is advised to use Ancaonda to set up a stable environment to run these scripts\n
+across the worker nodes of your HPC system. 
+The job-submitted wrapper script will first attempt to load a conda environment\n
+named 'ptgenv', which can be created (just once) using:\n
+\t\`\`\`conda create -n ptgenv python=2.7 pip\n
+\t\ \ \ conda activate ptgenv\n
+\t\ \ \ pip install scipy numpy biopython bcbio-gff Cython igraph psycopg2\`\`\`\n
+\n
+If not found, the script will attempt to load Anaconda and attached python modules
+with the \`module load anaconda3/personal\` command (not standard, likely not available on your cluster).
 "
 
 if [ "$1" == '-h' ] ; then
@@ -69,8 +81,6 @@ if [ ! -z "$7" ] ; then
   [ "$hpctype" == 'PBS' ] && parallelflags=":$7"
   [ "$hpctype" == 'LSF' ] && parallelflags="span[$7]"
 fi
-
-
 
 ################################################################################
 ## 06.4 Convert format of Bayesian gene trees and replace species by populations
