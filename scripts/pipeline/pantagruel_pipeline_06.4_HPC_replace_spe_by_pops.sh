@@ -47,7 +47,7 @@ usage (){
   echo -e ${usagemsg}
 }
 
-ARGS=`getopt --options "h" --longoptions "ncpus:,mem:,wth:,hpctype:,chunksize:,parallelflags:,fwdenv:" --name "pantagruel_pipeline_06.2_HPC_collapse_gene_trees.sh" -- "$@"`
+ARGS=`getopt --options "h" --longoptions "ncpus:,mem:,wth:,hpctype:,chunksize:,parallelflags:,fwdenv:" --name "pantagruel_pipeline_06.4_HPC_replace_spe_by_pops.sh" -- "$@"`
 
 #Bad arguments
 if [ ${?} -ne 0 ];
@@ -126,7 +126,7 @@ if [ -z "${mem}" ] ; then
   mem=96
 fi
 if [ -z "${wth}" ] ; then
-  wth=4
+  wth=24
 fi
 if [ -z "${hpctype}" ] ; then
   hpctype='PBS'
