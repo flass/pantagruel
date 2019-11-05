@@ -11,18 +11,20 @@
 
 usagemsg="
 Usage:\n
- For running the script:\n
-\t$0 ptg_config_file [ncpus=8] [mem=32] [wth=24] [hpctype='PBS'] [chunksize=3000] [parallelflags='']\n
+ For running the script: with [option (default)]\n
+\t$0 [--ncpus (8)] [--mem (32)] [--wth (24)] [--hpctype ('PBS')] [--chunksize (3000)] ptg_config_file\n
 or for this help mesage:\n
 \t$0 -h\n
 \n
 \tOption details:\n
-\t ncpus:\tnumber of parallel threads (default: 8).\n
-\t mem:\tmax memory allowance, in gigabytes (GB) (default: 32).\n
-\t wth:\tmax walltime, in hours (default: 24).\n
-\t hpctype:\t'PBS' for Torque scheduling system (default), or 'LSF' for IBM schedulling system.\n
-\t chunksize:\tnumber of families to be processed in one submitted job (default: 3000)\n
-\t parallelflags:\tadditional flags to be specified for worker nodes' resource requests\n
+\t --ncpus:\tnumber of parallel threads (default: 8).\n
+\t --mem:\tmax memory allowance, in gigabytes (GB) (default: 32).\n
+\t --wth:\tmax walltime, in hours (default: 24).\n
+\t --hpctype:\t'PBS' for Torque scheduling system (default), or 'LSF' for IBM schedulling system.\n
+\t --chunksize:\tnumber of families to be processed in one submitted job (default: 3000)\n
+\t --fwdenv:\tnames of current environment variables you want to be passed down to the submitted jobs\n
+\t\t\t if several, separate by ',' and enclose in quotes, e.g.: 'VAR1, VAR2' \n
+\t --parallelflags:\tadditional flags to be specified for worker nodes' resource requests\n
 \t\t\t for instance, specifying parallelflags=\"mpiprocs=1:ompthreads=8\" (with hpctype='PBS')\n
 \t\t\t will force the use of OpenMP multi-threading instead of default MPI parallelism.\n
 \t\t\t Note that parameter declaration syntax is not standard and differ depending on your HPC system;\n
@@ -42,46 +44,105 @@ If not found, the script will attempt to load Anaconda and attached python modul
 with the \`module load anaconda3/personal\` command (not standard, likely not available on your cluster).
 "
 
-if [ "$1" == '-h' ] ; then
- echo -e ${usagemsg}
- exit 0
-elif [ -z "$1" ] ; then
+usage (){
+  echo -e ${usagemsg}
+}
+
+ARGS=`getopt --options "h" --longoptions "ncpus:,mem:,wth:,hpctype:,chunksize:,parallelflags:,fwdenv:" --name "pantagruel_pipeline_06.2_HPC_collapse_gene_trees.sh" -- "$@"`
+
+#Bad arguments
+if [ ${?} -ne 0 ];
+then
+  usage ; exit 1
+fi
+
+eval set -- "${ARGS}"
+
+while true;
+do
+  case "${1}" in
+    -h|--help) 
+      echo usage
+      exit 0;;
+	
+    --ncpus)
+      testmandatoryarg "${1}" "${2}"
+      export ncpus="${2}"
+      echo "will run jobs using ${ncpus} parallel threads"
+      shift 2;;
+	  
+	--mem)
+      testmandatoryarg "${1}" "${2}"
+      export mem="${2}"
+      echo "will request ${mem} GB for submitted jobs"
+      shift 2;;
+	  
+	--wth)
+      testmandatoryarg "${1}" "${2}"
+      export wth="${2}"
+      echo "will request ${wth} hours walltime for submitted jobs"
+      shift 2;;
+	
+	--chunksize)
+      testmandatoryarg "${1}" "${2}"
+      export chunksize="${2}"
+      echo "will divide the work load into chunks of ${chunksize} individual tasks (gene trees)"
+      shift 2;;
+	
+	--parallelflags)
+      testmandatoryarg "${1}" "${2}"
+      export parallelflags="${2}"
+      echo "will add the following flags to the job submission resource request: '${parallelflags}'"
+      shift 2;;
+	
+	--fwdenv)
+      testmandatoryarg "${1}" "${2}"
+      export fwdenv="${2}"
+      echo "will forward the following environment variables to the submitted jobs' envronment: '${fwdenv}'"
+      shift 2;;
+	  
+	--)
+      shift
+      break;;
+    
+    *)
+	  echo "Error: this argument is not supported: ${1}"
+	  exit 1;;
+	  
+  esac
+done
+
+if [ -z "${1}" ] ; then
  echo -e "Error: missing mandatory parameter: pantagruel config file\n"
- echo -e ${usagemsg}
+ usage
  exit 1
 fi
 envsourcescript="$1"
 source ${envsourcescript}
 
-if [ ! -z "$2" ] ; then
-  export ncpus="$2"
-else
+if [ -z "${ncpus}" ] ; then
   export ncpus=8
 fi
-if [ ! -z "$3" ] ; then
-  mem="$3"
-else
+if [ -z "${mem}" ] ; then
   mem=32
 fi
-if [ ! -z "$4" ] ; then
-  wth="$4"
-else
+if [ -z "${wth}" ] ; then
   wth=4
 fi
-if [ ! -z "$5" ] ; then
-  hpctype="$5"
-else
+if [ -z "${hpctype}" ] ; then
   hpctype='PBS'
 fi
-if [ ! -z "$6" ] ; then
-  chunksize="$6"
-else
+if [ -z "${chunksize}" ] ; then
   chunksize=3000
 fi
-if [ ! -z "$7" ] ; then
-  [ "$hpctype" == 'PBS' ] && parallelflags=":$7"
-  [ "$hpctype" == 'LSF' ] && parallelflags=" span[$7]"
+if [ ! -z "${parallelflags}" ] ; then
+  [ "${hpctype}" == 'PBS' ] && parallelflags=":${parallelflags}"
+  [ "${hpctype}" == 'LSF' ] && parallelflags=" span[${parallelflags}]"
 fi
+#if [ ! -z "${fwdenv}" ] ; then
+#  [ "${hpctype}" == 'PBS' ] && fwdenv="-v '${fwdenv}'"
+#  [ "${hpctype}" == 'LSF' ] && fwdenv="-env '${fwdenv}'"
+#fi
 
 #############################################################
 ## 06.2 Gene tree collapsing on HPC
@@ -138,8 +199,13 @@ else
   for jobrange in ${jobranges[@]} ; do
     beg=`echo $jobrange | cut -d'-' -f1`
     tail -n +${beg} ${mlgenetreelist} | head -n ${chunksize} > ${mlgenetreelist}_${jobrange}
-    qsubvars="ptgscripts=${ptgscripts},mlgenetreelist=${mlgenetreelist}_${jobrange},cdsalifastacodedir=${cdsalifastacodedir},ncpus=${ncpus},colalinexuscodedir=${colalinexuscodedir},collapsecond=${collapsecond},didseq=${mlgenetrees}/identical_sequences"
-    case "$hpctype" in
+	
+    qsubvars="mlgenetreelist=${mlgenetreelist}_${jobrange},ptgscripts,cdsalifastacodedir,ncpus,colalinexuscodedir,collapsecond,mlgenetrees"
+    if [ ! -z "${fwdenv}" ] ; then
+	  qsubvars="${qsubvars},${fwdenv}"
+	fi
+	
+	case "${hpctype}" in
       'PBS')
          subcmd="qsub -N 'mark_unresolved_clades' -l select=1:ncpus=${ncpus}:mem=${mem}gb,walltime=${wth}:00:00 \
           -o ${ptglogs}/mark_unresolved_clades.${collapsecond}_${jobrange}.log -j oe \

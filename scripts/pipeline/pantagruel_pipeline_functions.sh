@@ -55,4 +55,14 @@ checkexec (){
 }
 export -f checkexec
 
+# function to check the presence of value in parsing option arguments
+testmandatoryarg (){
+  if [ -z "${2}" ]; then
+   echo "ERROR: missing argument for option '${1}'" 1>&2
+   echo "see pantagruel --help for more details" 1>&2
+   exit 1
+  fi
+}
+
+
 alias panup="cd ${ptgrepo} && git pull && git submodule update && cd -"

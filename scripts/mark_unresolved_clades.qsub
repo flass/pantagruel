@@ -10,6 +10,10 @@ echo "current directory is ${PWD}"
 source ${ptgscripts}/load_python2.7_env.sh
 
 collapsecriteriondef=$(cat ${colalinexuscodedir}/${collapsecond}.collapse_criterion_def)
-python2.7 ${ptgscripts}/mark_unresolved_clades.py --in_gene_tree_list=${mlgenetreelist}_${jobrange} --diraln=${cdsalifastacodedir} --fmt_aln_in='fasta' \
- --threads=${ncpus} --dirout=${colalinexuscodedir}/${collapsecond} --no_constrained_clade_subalns_output --dir_identseq=${didseq} \
- ${collapsecriteriondef}
+
+echo "python2.7 ${ptgscripts}/mark_unresolved_clades.py --in_gene_tree_list=${mlgenetreelist}_${jobrange} \
+--diraln=${cdsalifastacodedir} --fmt_aln_in='fasta' --threads=${ncpus} --dirout=${colalinexuscodedir}/${collapsecond} \
+--no_constrained_clade_subalns_output --dir_identseq=${mlgenetrees}/identical_sequences ${collapsecriteriondef}"
+python2.7 ${ptgscripts}/mark_unresolved_clades.py --in_gene_tree_list=${mlgenetreelist}_${jobrange} \
+--diraln=${cdsalifastacodedir} --fmt_aln_in='fasta' --threads=${ncpus} --dirout=${colalinexuscodedir}/${collapsecond} \
+--no_constrained_clade_subalns_output --dir_identseq=${mlgenetrees}/identical_sequences ${collapsecriteriondef}

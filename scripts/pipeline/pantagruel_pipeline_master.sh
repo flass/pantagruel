@@ -585,6 +585,9 @@ do
       break;;
     
     *)
+	  echo "Error: this argument is not supported: ${1}"
+	  exit 1;;
+	  
   esac
 done
 
