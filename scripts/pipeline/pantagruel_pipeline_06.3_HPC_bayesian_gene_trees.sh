@@ -64,7 +64,7 @@ if [ "${resumetask}" == 'true' ] ; then
 else
   export mbmcmcopt=''
 fi
-export mbmcmcpopt='Nruns=${nruns} Ngen=2000000 Nchains=${nchains}'
+export mbmcmcpopt="Nruns=${nruns} Ngen=2000000 Nchains=${nchains}"
 qsubvars="tasklist=${tasklist}, outputdir=${mboutputdir}"
 if [ ! -z "${mbbin}" ] ; then
   qsubvars="${qsubvars}, mbbin=${mbbin}"
