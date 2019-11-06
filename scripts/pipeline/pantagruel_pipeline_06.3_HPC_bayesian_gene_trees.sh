@@ -38,7 +38,7 @@ append=''
 
 # determine the set of numbered gene family prefixes to make separate folders
 # and breakdown the load of files per folder
-awk -F'/' '{print $NF}' ${mbtasklist} | grep -o "${famprefix}C[0-9]\{${ndiggrpfam}\}" | sort -u > ${nexusaln4chains}_ali_numprefixes
+awk -F'/' '{print $NF}' ${tasklist} | grep -o "${famprefix}C[0-9]\{${ndiggrpfam}\}" | sort -u > ${nexusaln4chains}_ali_numprefixes
 for pref in  `cat ${nexusaln4chains}_ali_numprefixes` ; do
   mkdir -p ${mboutputdir}/${pref}/
 done
