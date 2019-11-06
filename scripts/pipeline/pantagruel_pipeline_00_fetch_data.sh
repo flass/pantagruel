@@ -162,7 +162,7 @@ checkfoldersafe ${indata}
 #################################
 
 if [ ! -e ${ncbitax}/names.dmp ] ; then
-echo "$(promptdate) did not find the relevant taxonomy flat files in '${ncbitax}/'; download the from NCBI Taxonomy FTP"
+echo "$(promptdate) did not find the relevant NCBI Taxonomy flat files in '${ncbitax}/'; download the from NCBI Taxonomy FTP"
   ### Download data
   ## using FTP
   # downloading relevant tables from NCBI Taxonomy database 
@@ -173,7 +173,9 @@ echo "$(promptdate) did not find the relevant taxonomy flat files in '${ncbitax}
   source='/pub/taxonomy'
   files='taxcat.tar.gz* taxcat_readme.txt taxdump.tar.gz* taxdump_readme.txt'
   mkdir -p ${ncbitax}
-  lftp ${openparam} -e "cd ${source} ; mget -O ${ncbitax}/ ${files} ; quit"
+  #~ lftp ${openparam} -e "cd ${source} ; mget -O ${ncbitax}/ ${files} ; quit"
+  lftp -c "set dns:fatal-timeout 10 ; open ${openparam} ; cd ${source} ; mget -O ${ncbitax}/ ${files} ; quit"
+  checkexec "could not download the NCBI Taxonomy files; please check your network connection or download manually the files '${files}' from the FTP site ftp://${host}${source} into folder '${ncbitax}/' ; exit now" "succesfully downloaded  NCBI Taxonomy flat files in '${ncbitax}/'"
   cd ${ncbitax}/
   for tgz in `ls *.tar.gz` ; do md5sum -c ${tgz}.md5 && tar -xzf ${tgz} ; done
   cd -
