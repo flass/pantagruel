@@ -9,20 +9,17 @@
 
 # Copyright: Florent Lassalle (f.lassalle@imperial.ac.uk), 15 Jan 2019
 
+# environment variables to be passed on to interface script:
+export hpcscript=$(basename ${0})
+hpcscriptdir="$(dirname ${0})/pantagruel_pipeline_HPC_common_interface.sh"
+export defncpus='auto-configure'
+export defmem='auto-configure'
+export defwth='auto-configure'
+export defhpctype='PBS'
+export defchunksize=1000
+export withpython='true'
 
-if [ -z "$1" ] ; then 
-  echo "missing mandatory parameter: pantagruel config file"
-  echo "Usage: $0 ptg_env_file [hpc_type:{PBS(default)|LSF}]"
-  exit 1
-fi
-envsourcescript="$1"
-if [ -z "$2" ] ; then 
-  hpctype='PBS'
-else
-  hpctype="$2"
-fi
-source ${envsourcescript}
-
+${hpcscriptdir}/pantagruel_pipeline_HPC_common_interface.sh "${@}"
 
 #############################################################
 ## 06.1 Full ML gene trees on HPC
@@ -43,67 +40,73 @@ fi
 allmems=(4 8 32 64)
 allwalltimes=(12 24 48 72)
 allncpus=(4 4 4 16)
+
 for i in ${!allcdsfam2phylo[@]} ; do
-cdsfam2phylo=${allcdsfam2phylo[$i]} ; mem=${allmems[$i]} ; wth=${allwalltimes[$i]} ; ncpus=${allncpus[$i]}
-echo "cdsfam2phylo=${cdsfam2phylo} ; mem_per_core=${mem}gb ; walltime=${wth}:00:00 ; ncpus=${ncpus}"
-tasklist=${cdsfam2phylo}_aln_list
-rm -f $tasklist ; for fam in `cut -f1 $cdsfam2phylo` ; do ls ${cdsalifastacodedir}/${fam}.codes.aln >> $tasklist ; done
-if [ "$(wc -l $cdsfam2phylo | cut -f1 -d' ')" -lt "$(wc -l $tasklist | cut -f1 -d' ')" ] ; then 
-  >&2 echo "ERROR $(dateprompt): missing gene family alignments; please fix the list '$tasklist' or the content of folder '$alifastacodedir/' before continuing."
-  exit 1
-fi
-rm -f ${tasklist}* ; for fam in $(cut -f1 ${cdsfam2phylo}) ; do
-  aln=${cdsalifastacodedir}/${fam}.codes.aln
-  if [[ "${resumetask}" == "true" ]] ; then
-    if [[ ! -s ${mlgenetrees}/${mainresulttag}/RAxML_${mainresulttag}.${fam}.codes ]] ; then
-      ls ${aln} >> ${tasklist}_resume
+  # iterate over lists of family classed by sizes and find matching setting
+  [ ${i} -gt 3 ] && i=3 # max 
+  cdsfam2phylo=${allcdsfam2phylo[$i]}
+  # if their value was left to their default 'auto-configure', these variables are defined based on the size of the gene family
+  [ "${mem}" == 'auto-configure' ] && mem=${allmems[$i]}
+  [ "${wth}" == 'auto-configure'  ] && wth=${allwalltimes[$i]}
+  [ "${ncpus}" == 'auto-configure'  ] && ncpus=${allncpus[$i]}
+  echo "cdsfam2phylo=${cdsfam2phylo} ; mem_per_core=${mem}gb ; walltime=${wth}:00:00 ; ncpus=${ncpus}"
+  tasklist=${cdsfam2phylo}_aln_list
+  rm -f $tasklist ; for fam in `cut -f1 $cdsfam2phylo` ; do ls ${cdsalifastacodedir}/${fam}.codes.aln >> $tasklist ; done
+  if [ "$(wc -l $cdsfam2phylo | cut -f1 -d' ')" -lt "$(wc -l $tasklist | cut -f1 -d' ')" ] ; then 
+    >&2 echo "ERROR $(dateprompt): missing gene family alignments; please fix the list '$tasklist' or the content of folder '$alifastacodedir/' before continuing."
+    exit 1
+  fi
+
+  rm -f ${tasklist}*
+  for fam in $(cut -f1 ${cdsfam2phylo}) ; do
+    aln=${cdsalifastacodedir}/${fam}.codes.aln
+    if [[ "${resumetask}" == "true" ]] ; then
+      if [[ ! -s ${mlgenetrees}/${mainresulttag}/RAxML_${mainresulttag}.${fam}.codes ]] ; then
+        ls ${aln} >> ${tasklist}_resume
+      fi
     fi
+    ls ${aln} >> ${tasklist}
+  done
+  if [[ "${resumetask}" == "true" ]] ; then
+    if [[ -s ${tasklist}_resume ]] ; then
+      echo "Resume task 6: $(wc -l ${tasklist}_resume | cut -d' ' -f1) ML trees left to infer"
+    else
+      echo "Resume task 6: all ML tree built; skip ML tree building"
+    fi
+    tasklist=${tasklist}_resume
   fi
-  ls ${aln} >> ${tasklist}
-done
-if [[ "${resumetask}" == "true" ]] ; then
-  if [[ -s ${tasklist}_resume ]] ; then
-    echo "Resume task 6: $(wc -l ${tasklist}_resume | cut -d' ' -f1) ML trees left to infer"
-  else
-    echo "Resume task 6: all ML tree built; skip ML tree building"
+
+  qsubvars="tasklist=${tasklist},outputdir=${mlgenetrees},reducedaln=true,nbthreads=${ncpus}"
+  if [ ! -z "${raxmlbin}" ] ; then
+    qsubvars="${qsubvars},raxmlbin=${raxmlbin}"
   fi
-  tasklist=${tasklist}_resume
-fi
-
-
-
-qsubvars="tasklist=$tasklist,outputdir=$mlgenetrees,reducedaln=true,nbthreads=${ncpus}"
-if [ ! -z "${raxmlbin}" ] ; then
-  qsubvars="${qsubvars},raxmlbin=${raxmlbin}"
-fi
-Njob=`wc -l ${tasklist} | cut -f1 -d' '`
-# accomodate with possible upper limit on number of tasks in an array job; assume chunks of 3000 tasks are fine
-chunksize=1000
-jobranges=($(${ptgscripts}/get_jobranges.py $chunksize $Njob))
-for jobrange in ${jobranges[@]} ; do
-echo "jobrange=$jobrange"
-  case "$hpctype" in
-    'PBS') 
-      qsub -J $jobrange -l walltime=${wth}:00:00 -l select=1:ncpus=${ncpus}:mem=${mem}gb -N raxml_gene_trees_$(basename $cdsfam2phylo) \
-	  -o ${ptglogs}/raxml/gene_trees -j oe -v "$qsubvars" ${ptgscripts}/raxml_array_PBS.qsub
-	  ;;
-	'LSF')
-	  if [ ${wth} -le 12 ] ; then
-	    bqueue='normal'
-	  elif [ ${wth} -le 48 ] ; then
-	    bqueue='long'
-	  else
-	    bqueue='basement'
-	  fi
-	  memmb=$((${mem} * 1024)) 
-	  nflog="${ptglogs}/raxml/gene_trees/raxml_gene_trees_$(basename $cdsfam2phylo).%J.%I.o"
-	  bsub -J "raxml_gene_trees_$(basename $cdsfam2phylo)[$jobrange]" -q ${bqueue} -R "select[mem>${memmb}] rusage[mem=${memmb}] span[hosts=1]" \
-	  -n${ncpus} -M${memmb} -o ${nflog} -e ${nflog} -env "$qsubvars" ${ptgscripts}/raxml_array_LSF.bsub
-	  ;;
-	*)
-	  echo "Error: high-performance computer system '$hpctype' is not supported; exit now"
-	  exit 1;;
-  esac
-done
+  Njob=`wc -l ${tasklist} | cut -f1 -d' '`
+  # accomodate with possible upper limit on number of tasks in an array job
+  jobranges=($(${ptgscripts}/get_jobranges.py $chunksize $Njob))
+  for jobrange in ${jobranges[@]} ; do
+    echo "jobrange=$jobrange"
+    case "$hpctype" in
+      'PBS') 
+        qsub -J $jobrange -l walltime=${wth}:00:00 -l select=1:ncpus=${ncpus}:mem=${mem}gb -N raxml_gene_trees_$(basename $cdsfam2phylo) \
+	    -o ${ptglogs}/raxml/gene_trees -j oe -v "$qsubvars" ${ptgscripts}/raxml_array_PBS.qsub
+        ;;
+	  'LSF')
+	    if [ ${wth} -le 12 ] ; then
+	      bqueue='normal'
+	    elif [ ${wth} -le 48 ] ; then
+	      bqueue='long'
+	    else
+	      bqueue='basement'
+	    fi
+	    memmb=$((${mem} * 1024)) 
+	    nflog="${ptglogs}/raxml/gene_trees/raxml_gene_trees_$(basename $cdsfam2phylo).%J.%I.o"
+	    bsub -J "raxml_gene_trees_$(basename $cdsfam2phylo)[$jobrange]" -q ${bqueue} -R "select[mem>${memmb}] rusage[mem=${memmb}] span[hosts=1]" \
+	    -n${ncpus} -M${memmb} -o ${nflog} -e ${nflog} -env "$qsubvars" ${ptgscripts}/raxml_array_LSF.bsub
+	    ;;
+	  *)
+	    echo "Error: high-performance computer system '$hpctype' is not supported; exit now"
+	    exit 1;;
+    esac
+  done
 done
 
