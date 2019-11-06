@@ -103,6 +103,12 @@ do
       export wth="${2}"
       echo "will request ${wth} hours walltime for submitted jobs"
       shift 2;;
+	  
+	--hpctype)
+      testmandatoryarg "${1}" "${2}"
+      export hpctype="${2}"
+      echo "will use job submission syntax of HPC system: '${hpctype}'"
+      shift 2;;
 	
 	--chunksize)
       testmandatoryarg "${1}" "${2}"
