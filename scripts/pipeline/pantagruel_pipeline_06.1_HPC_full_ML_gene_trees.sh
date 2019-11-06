@@ -11,7 +11,7 @@
 
 # environment variables to be passed on to interface script:
 export hpcscript=$(basename ${0})
-hpcscriptdir="$(dirname ${0})/pantagruel_pipeline_HPC_common_interface.sh"
+hpcscriptdir=$(dirname ${0})
 export defncpus='auto-configure'
 export defmem='auto-configure'
 export defwth='auto-configure'
@@ -19,7 +19,7 @@ export defhpctype='PBS'
 export defchunksize=1000
 export withpython='true'
 
-${hpcscriptdir}/pantagruel_pipeline_HPC_common_interface.sh "${@}"
+source ${hpcscriptdir}/pantagruel_pipeline_HPC_common_interface.sh "${@}"
 
 #############################################################
 ## 06.1 Full ML gene trees on HPC

@@ -10,7 +10,7 @@
 # Copyright: Florent Lassalle (f.lassalle@imperial.ac.uk), 15 Jan 2019
 # environment variables to be passed on to interface script:
 export hpcscript=$(basename ${0})
-hpcscriptdir="$(dirname ${0})/pantagruel_pipeline_HPC_common_interface.sh"
+hpcscriptdir=$(dirname ${0})
 export defncpus=8
 export defmem=16
 export defwth=24
@@ -18,7 +18,7 @@ export defhpctype='PBS'
 export defchunksize=1000
 export withpython='false'
 
-${hpcscriptdir}/pantagruel_pipeline_HPC_common_interface.sh "${@}"
+source ${hpcscriptdir}/pantagruel_pipeline_HPC_common_interface.sh "${@}"
 
 ############################
 ## 06.3 Bayesian gene trees

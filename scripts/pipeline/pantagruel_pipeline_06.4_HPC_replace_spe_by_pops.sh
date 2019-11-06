@@ -11,7 +11,7 @@
 
 # environment variables to be passed on to interface script:
 export hpcscript=$(basename ${0})
-hpcscriptdir="$(dirname ${0})/pantagruel_pipeline_HPC_common_interface.sh"
+hpcscriptdir=$(dirname ${0})
 export defncpus=8
 export defmem=96
 export defwth=24
@@ -19,7 +19,7 @@ export defhpctype='PBS'
 export defchunksize=100
 export withpython='true'
 
-${hpcscriptdir}/pantagruel_pipeline_HPC_common_interface.sh "${@}"
+source ${hpcscriptdir}/pantagruel_pipeline_HPC_common_interface.sh "${@}"
 
 ################################################################################
 ## 06.4 Convert format of Bayesian gene trees and replace species by populations

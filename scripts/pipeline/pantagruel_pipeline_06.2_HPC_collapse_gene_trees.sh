@@ -11,7 +11,7 @@
 
 # environment variables to be passed on to interface script:
 export hpcscript=$(basename ${0})
-hpcscriptdir="$(dirname ${0})/pantagruel_pipeline_HPC_common_interface.sh"
+hpcscriptdir=$(dirname ${0})
 export defncpus=8
 export defmem=32
 export defwth=24
@@ -19,7 +19,7 @@ export defhpctype='PBS'
 export defchunksize=3000
 export withpython='true'
 
-${hpcscriptdir}/pantagruel_pipeline_HPC_common_interface.sh "${@}"
+source ${hpcscriptdir}/pantagruel_pipeline_HPC_common_interface.sh "${@}"
 
 #############################################################
 ## 06.2 Gene tree collapsing on HPC
