@@ -24,15 +24,24 @@ source ${hpcscriptdir}/pantagruel_pipeline_HPC_common_interface.sh "${@}"
 ## 06.3 Bayesian gene trees
 ############################
 
-## run mrbayes on collapsed alignments
-export nexusaln4chains=${colalinexuscodedir}/${collapsecond}/collapsed_alns
+## prpepare MrBayes run as a job array
+
+if [[ "${chaintype}" == 'fullgenetree' ]] ; then
+  export nexusaln4chains=${colalinexuscodedir}/${collapsecond}
+else
+  export nexusaln4chains=${colalinexuscodedir}/${collapsecond}/collapsed_alns
+fi
 export outputdir=${bayesgenetrees}/${collapsecond}
 mkdir -p ${outputdir}
+
 nruns=2
+ngen=2000000
 nchains=$(( ${ncpus} / ${nruns} ))
+
 export tasklist=${nexusaln4chains}_ali_list
 rm -f ${tasklist}
 ${ptgscripts}/lsfullpath.py "${nexusaln4chains}/*nex" > ${tasklist}
+
 dtag=$(date +"%Y-%m-%d-%H-%M-%S")
 append=''
 
@@ -58,7 +67,7 @@ if [ "${resumetask}" == 'true' ] ; then
 else
   export mbmcmcopt=''
 fi
-export mbmcmcpopt="Nruns=${nruns} Ngen=2000000 Nchains=${nchains}"
+export mbmcmcpopt="Nruns=${nruns} Ngen=${ngen} Nchains=${nchains}"
 qsubvars="tasklist, outputdir, mbmcmcopt, mbmcmcpopt, famprefix, ndiggrpfam"
 if [ ! -z "${fwdenv}" ] ; then
   qsubvars="${qsubvars}, ${fwdenv}"
