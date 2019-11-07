@@ -121,7 +121,7 @@ else
     exit 1
   fi
   # remove traces from potential previous chains 
-  rm ./*${nfrad2}* && echo -e "removed pre-existing files with name containing '${nfrad2}'\n"
+  rm ./*${nfrad2}* 2> /dev/null && echo -e "removed pre-existing files with name containing '${nfrad2}'\n"
 fi
 echo "current directory is $HOSTNAME:$PWD"
 

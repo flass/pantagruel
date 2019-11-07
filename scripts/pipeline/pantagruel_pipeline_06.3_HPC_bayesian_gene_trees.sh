@@ -26,11 +26,11 @@ source ${hpcscriptdir}/pantagruel_pipeline_HPC_common_interface.sh "${@}"
 
 ## run mrbayes on collapsed alignments
 export nexusaln4chains=${colalinexuscodedir}/${collapsecond}/collapsed_alns
-export mboutputdir=${bayesgenetrees}/${collapsecond}
-mkdir -p ${mboutputdir}
+export outputdir=${bayesgenetrees}/${collapsecond}
+mkdir -p ${outputdir}
 nruns=2
 nchains=$(( ${ncpus} / ${nruns} ))
-tasklist=${nexusaln4chains}_ali_list
+export tasklist=${nexusaln4chains}_ali_list
 rm -f ${tasklist}
 ${ptgscripts}/lsfullpath.py "${nexusaln4chains}/*nex" > ${tasklist}
 dtag=$(date +"%Y-%m-%d-%H-%M-%S")
@@ -40,7 +40,7 @@ append=''
 # and breakdown the load of files per folder
 awk -F'/' '{print $NF}' ${tasklist} | grep -o "${famprefix}C[0-9]\{${ndiggrpfam}\}" | sort -u > ${nexusaln4chains}_ali_numprefixes
 for pref in  `cat ${nexusaln4chains}_ali_numprefixes` ; do
-  mkdir -p ${mboutputdir}/${pref}/
+  mkdir -p ${outputdir}/${pref}/
 done
 
 if [ "${resumetask}" == 'true' ] ; then
@@ -49,17 +49,17 @@ if [ "${resumetask}" == 'true' ] ; then
    bnaln=$(basename $nfaln)
    bncontre=${bnaln/nex/mb.con.tre}
    pref=$(echo ${bncontre} | grep -o "${famprefix}C[0-9]\{${ndiggrpfam}\}")
-   if [ ! -e ${mboutputdir}/${pref}/${bncontre} ] ; then
+   if [ ! -e ${outputdir}/${pref}/${bncontre} ] ; then
     echo ${nfaln}
    fi
   done > ${tasklist}_resumetask_${dtag}
-  tasklist=${tasklist}_resumetask_${dtag}
+  export tasklist=${tasklist}_resumetask_${dtag}
   export mbmcmcopt='append=yes'
 else
   export mbmcmcopt=''
 fi
 export mbmcmcpopt="Nruns=${nruns} Ngen=2000000 Nchains=${nchains}"
-qsubvars="tasklist=${tasklist}, outputdir=${mboutputdir}"
+qsubvars="tasklist, outputdir, mbmcmcopt, mbmcmcpopt, famprefix, ndiggrpfam"
 if [ ! -z "${fwdenv}" ] ; then
   qsubvars="${qsubvars}, ${fwdenv}"
 fi
@@ -73,7 +73,7 @@ for jobrange in ${jobranges[@]} ; do
  case "$hpctype" in
     'PBS') 
       subcmd="qsub -J ${jobrange} -N mb_panterodb -l select=1:ncpus=${ncpus}:mem=${mem}gb -l walltime=${wth}:00:00 \
-	  -o ${dlogs} -v \"$qsubvars, mbmcmcopt, mbmcmcpopt, famprefix\" ${ptgscripts}/mrbayes_array_PBS.qsub"
+	  -o ${dlogs} -v \"${qsubvars}\" ${ptgscripts}/mrbayes_array_PBS.qsub"
 	  ;;
 	'LSF')
 	  if [ ${wth} -le 12 ] ; then
@@ -87,7 +87,7 @@ for jobrange in ${jobranges[@]} ; do
 	  nflog="${dlogs}/mrbayes.%J.%I.o"
 	  subcmd="bsub -J \"mb_panterodb[$jobrange]\" -q ${bqueue} \
 	  -R \"select[mem>${memmb}] rusage[mem=${memmb}] span[ptile=${ncpus}]\" -n${ncpus} -M${memmb} \
-	  -o ${nflog} -e ${nflog} -env \"$qsubvars, mbmcmcopt, mbmcmcpopt, famprefix\" \
+	  -o ${nflog} -e ${nflog} -env \"${qsubvars}\" \
 	  ${ptgscripts}/mrbayes_array_LSF.bsub"
 	  ;;
 	*)

@@ -110,7 +110,7 @@ mkdir -p ${jobtmpdir}/ && cd ${jobtmpdir}/
 echo "current host:directory is ${HOSTNAME}:${PWD}"
 
 # remove traces from potential previous chains 
-rm ./*${nfrad2}* && echo -e "removed pre-existing files with name containing '${nfrad2}'\n"
+rm ./*${nfrad2}* 2> /dev/null && echo -e "removed pre-existing files with name containing '${nfrad2}'\n"
 
 mbresume=$(python2.7 << EOF
 mbmcmcopts="${mbmcmcopt}".lower().split()
