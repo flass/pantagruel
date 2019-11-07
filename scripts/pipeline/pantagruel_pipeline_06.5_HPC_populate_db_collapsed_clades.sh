@@ -14,13 +14,13 @@ envsourcescript="$1"
 source ${envsourcescript}
 
 ################################################################################
-## 06.5 Populate database withh all gene tree results
+## 06.5 Populate database with all collapsed gene tree results
 ################################################################################
 
 if [[ "${chaintype}" == 'fullgenetree' ]] ; then
   #### OPTION A2: pretty much nothing to do
-  echo "Error: not implemented yet exit now"
-  exit 1
+  echo "Warning: step 5 of task 06 ('06.5 Populate database with all collapsed gene tree results') is not required when \${chaintype}='fullgenetree' ; exit now."
+  exit 0
   
   #### end OPTION A2: 
 else

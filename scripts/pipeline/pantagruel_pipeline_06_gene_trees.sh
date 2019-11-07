@@ -356,9 +356,9 @@ else
   export replacecoldate=$(date +%Y-%m-%d)
   echo -e "${replacecolid}\t${replacecoldate}" > ${genetrees}/replacecol
 
-  #####################################################
-  ## 06.5 Populate database withh all gene tree results
-  #####################################################
+  ##############################################################
+  ## 06.5 Populate database with all collapsed gene tree results
+  ##############################################################
   
   ## load these information into the database
   ${ptgscripts}/pantagruel_sqlitedb_phylogeny_populate_collapsed_clades.sh "${database}" "${sqldb}" "${colalinexuscodedir}" "${coltreechains}" "${collapsecond}" "${replmethod}" "${collapsecriteriondef}" "${collapsecolid}" "${replacecolid}" "${collapsecoldate}" "${replacecoldate}"
