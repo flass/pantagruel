@@ -80,22 +80,43 @@ nregin = 0
 nregout = 0
 fastatime = False
 dgffcontigname2rawcontigname = {}
+loctagprefix = None
 
 for line in fgffin:
 	if line.startswith('##sequence-region'):
 		lsp = line.rstrip('\n').split()
-		lregions.append(lsp[1])
-		dregionlens[lsp[1]] = tuple(lsp[2:4])
+		seqreg = lsp[1]
+		lregions.append(seqreg)
+		dregionlens[seqreg] = tuple(lsp[2:4])
 #			dgffcontigname2rawcontigname[lsp[1]] = lcontignames[nregin]
 #			# check this is the same lentgh as length-ordered contigs from the original contig file
 #			print nregin, repr(lsp), dcontiglenids[lcontignames[nregin]]
 #			if not int(lsp[3])==dcontiglenids[lcontignames[nregin]][0]:
 #				raise IndexError, "unmatched contig order:\nconting from original file: %s\n#%d 'sequence-region' annotation from Prokka GFF: %s"%(dcontiglenids[lcontignames[nregin]], nregin, repr(lsp))
 		nregin += 1
+		if not loctagprefix:
+			# get strain info - just need to do that once
+			loctagprefix = seqreg.split()[0].split('|')[-1].rsplit('_', 1)[0]
+			try:
+				straininfo = dstraininfo[loctagprefix]
+			except KeyError, e:
+				if loctagprefix == 'chr':
+					# special case of annotation of the chromosome contig with a different tag
+					# believed to be a legacy behaviour of prokka (<= v1.11), cf. https://github.com/flass/pantagruel/issues/25
+					# just wait for the next contig
+					loctagprefix = None
+				else:
+					raise KeyError, "missing information on genome with locus_tag prefix '%s'; please complete info in file '%s'"%(loctagprefix, nfstraininfo)
+
 	elif not line.startswith('##gff-version'):
 		fgffout.write(line)
 		break
 	fgffout.write(line)
+
+if not loctagprefix:
+	raise IndexError, """could not find out what is the locus_tag_prefix string from parsing the '##sequence-region' fields 
+	                     in the input GFF file '%s' (excluding those only annotated as 'chr') 
+						 so won't be able to match it to the strain reference file '%s'"""%(nfgffin, nfstraininfo)
 
 # sort on decreasing contig length
 lregions.sort(key=lambda x: dregionlens[x], reverse=True)
@@ -112,12 +133,6 @@ for line in fgffin:
 	else:
 		seqreg = line.split('\t')[0]
 		if not fastatime and (seqreg != currseqreg):
-			# get strain info
-			loctagprefix = seqreg.split()[0].split('|')[-1].rsplit('_', 1)[0]
-			try:
-				straininfo = dstraininfo[loctagprefix]
-			except IndexError, e:
-				raise IndexError, "missing information on genome with locus_tag prefix '%s'; please complete info in file '%s'"%(loctagprefix, nfstraininfo)
 			# add organism info line
 			if nregout==0:
 				fgffout.write('##species https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id=%s\n'%straininfo['taxid'])
