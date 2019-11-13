@@ -101,6 +101,7 @@ Finally, it is possible to run the whole pipeline at once, simply perform the `a
 ```sh
 pantagruel -i config_file all
 ```  
+#### Dependencies between subsequent tasks 
 
 Note there are **dependencies between tasks**, which must be carried on mostly sequentially:  
 - *00, 01, 02, 03 tasks* each strictly depend on the previous step: 00 -> 01 -> 02 -> 03  
