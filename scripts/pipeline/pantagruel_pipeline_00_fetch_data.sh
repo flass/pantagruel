@@ -255,8 +255,7 @@ if [ ! -z "${customassemb}" ] ; then
           echo "### assembly: $gproject; contig files from: ${contigs}/${allcontigs}"
           echo "running Prokka..."
           ${ptgscripts}/run_prokka.sh ${gproject} ${contigs}/${allcontigs} ${straininfo} ${annot}/${gproject} ${seqcentre} &> ${ptglogs}/${ptgdbname}_customassembly_annot_prokka.${gproject}.log
-          checkexec "something went wrong when annotating genome ${gproject}; check log at '${ptglogs}/${ptgdbname}_customassembly_annot_prokka.${gproject}.log'"
-          echo "done."
+          checkexec "something went wrong when annotating genome '${gproject}'; check log at '${ptglogs}/${ptgdbname}_customassembly_annot_prokka.${gproject}.log'" "succesfully annotated genome '${gproject}'"
           promptdate
         fi
 	  fi
@@ -293,8 +292,9 @@ if [ ! -z "${customassemb}" ] ; then
         fi
         mkdir -p ${ptglogs}/add_region_feature2prokkaGFF/
 		addregfeatlog=${ptglogs}/add_region_feature2prokkaGFF/add_region_feature2prokkaGFF.${gproject}.log
-        python2.7 ${ptgscripts}/add_region_feature2prokkaGFF.py ${annotgff[0]} ${annotgff[0]/.gff/.ptg.gff} ${straininfo} ${contigs}/${allcontigs} ${assembler} &> ${addregfeatlog}
-        checkexec "something went wrong when adding region features to GFF file (In: ${annotgff[0]}; Out:${annotgff[0]/.gff/.ptg.gff}; Stdin/Stderr or the last command: ${addregfeatlog})"
+		annotptggff=${annotgff[0]/.gff/.ptg.gff}
+        python2.7 ${ptgscripts}/add_region_feature2prokkaGFF.py ${annotgff[0]} ${annotptggff} ${straininfo} ${contigs}/${allcontigs} ${assembler} &> ${addregfeatlog}
+        checkexec "something went wrong when adding region features to GFF file (In: ${annotgff[0]}; Out:${annotptggff}; Stdin/Stderr or the last command: ${addregfeatlog})"
         echo "fix annotation to integrate taxid information into GBK files"
         annotfna=($(ls ${annot}/${gproject}/*.fna))
         annotgbk=($(ls ${annot}/${gproject}/*.gbf 2> /dev/null || ls ${annot}/${gproject}/*.gbk))
@@ -309,11 +309,11 @@ if [ ! -z "${customassemb}" ] ; then
             fi
           done
           cp ${contigs}/${allcontigs} ${annotgff[0]/gff/fna}
-          python2.7 ${ptgscripts}/GFFGenomeFasta2GenBankCDSProtFasta.py ${annotgff[0]/.gff/.ptg.gff} ${annotgff[0]/gff/fna}
-        checkexec "something went wrong when generating the GenBank flat file from GFF file ${annotgff[0]/.gff/.ptg.gff}"
+          python2.7 ${ptgscripts}/GFFGenomeFasta2GenBankCDSProtFasta.py ${annotptggff} ${annotgff[0]/gff/fna}
+        checkexec "something went wrong when generating the GenBank flat file from GFF file ${annotptggff}" "succesfuly generated the GenBank flat file from GFF file ${annotptggff}"
         fi
         annotfna=($(ls ${annot}/${gproject}/*.fna))
-        annotgbk=($(ls ${annot}/${gproject}/*.gbk))
+        annotgbk=($(ls ${annot}/${gproject}/*.gbk 2> /dev/null))
         annotrad=${annotgbk[0]%*.gbk}
         if [ -z "${annotgbk[0]}" ] ; then
           annotgbk=($(ls ${annot}/${gproject}/*.gbf))
@@ -322,8 +322,7 @@ if [ ! -z "${customassemb}" ] ; then
         annotfaa=($(ls ${annot}/${gproject}/*.faa))
         annotffn=($(ls ${annot}/${gproject}/*.ffn))
         python2.7 ${ptgscripts}/add_taxid_feature2prokkaGBK.py ${annotgbk[0]} ${annotrad}.ptg.gbk ${straininfo}
-        checkexec "something went wrong when modifying the GenBank flat file ${annotgbk[0]}"
-        echo "done."
+        checkexec "something went wrong when modifying the GenBank flat file ${annotgbk[0]}" "succesfully modified the GenBank flat file ${annotgbk[0]}"
 	  fi
 #    done
   
@@ -353,12 +352,15 @@ if [ ! -z "${customassemb}" ] ; then
 		  else
 		    tar -xzf ${annot}/${gproject}.tar.gz && gff=$(ls ${annot}/${gproject}/ 2> /dev/null | grep 'ptg.gff' | grep -v '\.original')
 	        if [ -z "${gff}" ] ; then
-	          echo "Error: annotation is missing for genome '${gproject}'; exit now"
+	          echo "Error: could not find file '${annotptggff}' in the extracted content of archive '${annot}/${gproject}.tar.gz'; annotation is missing for genome '${gproject}': exit now"
 		      exit 1
 			else
 			  assemb=${gproject}.1_${gff[0]%*.ptg.gff}
 	        fi
 	      fi
+		else
+		  echo "Error: could not find file '${annotptggff}' or archive '${annot}/${gproject}.tar.gz' ; annotation is missing for genome '${gproject}': exit now"
+		  exit 1
 	    fi
 	  else
 	    assemb=${gproject}.1_${gff[0]%*.ptg.gff}
