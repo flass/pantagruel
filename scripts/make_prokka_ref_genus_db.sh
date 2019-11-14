@@ -15,6 +15,15 @@ else
 fi
 
 prokkabin=$(which prokka)
+if [ -z "${prokkabin}" ] ; then
+  if [[ "${inrefass}" == 'check' ]] ; then
+    echo "noprokka"
+    exit 0
+  else
+    &>2 echo "Error: command 'prokka' was not found"
+    exit 1
+  fi
+fi
 prokkadir=$(dirname $(dirname $(readlink -f $prokkabin)))
 prokkablastdb=${prokkadir}/db/genus
 
