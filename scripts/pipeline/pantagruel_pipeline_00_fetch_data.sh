@@ -25,6 +25,7 @@ if assembsearch:
 
 EOF
 }
+export -f parseGBass
 
 extractass (){
   srcass=${1}
@@ -57,8 +58,8 @@ extractass (){
           rm -rf ${srcass}/$dass
           mv ${assd[0]}/$dass ${srcass}/
 		  if [ ! -z "${gp2ass}" ] ; then
-		     assaccname=$(parseGBass ${dass})
-			 if [ -z ${assaccname} ] ; then 
+		     assaccname="$(parseGBass ${dass})"
+			 if [ -z "${assaccname}" ] ; then 
 			   echo "could not parse '${dass}' assembly name as expected from the NCBI Assembly format pattern (Accession.v_Name => python regex: '(GC[AF]_[^\._]+\.[1-9])_(.+)')"
 			 fi
 	         echo -e "${dass}\t${assaccname}\tNCBI_Assembly_extracted" >> ${gp2ass}
@@ -82,6 +83,7 @@ extractass (){
   done
   cd -
 }
+export -f extractass
 
 downloadass (){
   srclist=${1}
@@ -114,6 +116,7 @@ downloadass (){
     fi
   done
 }
+export -f downloadass
 
 parsefastaext (){
 python2.7 << EOF
@@ -126,8 +129,8 @@ else:
   print allcontigs
 
 EOF
-
 }
+export -f parsefastaext
 
 addregionannotfeat (){
 python2.7 << EOF
@@ -151,8 +154,8 @@ outgff.write("##sequence-region %s 1 %d\n"%(seqid, seqlen))
 fcontig.close()
 outgff.close()
 EOF
-
 }
+export -f addregionannotfeat
 
 checkptgversion
 checkfoldersafe ${indata}
