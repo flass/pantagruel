@@ -109,7 +109,7 @@ if [ -s ${inrefass}_genomic_gbffgz_list ] ; then
     # use MMSeqs/Linclust,
     # with thresholds: 90% seq id (--min-seq-id 0.9), with seq identity defined over the (global) alignment length (--seq-id-mode 0)
     # a mininum (aligned!) length ratio of 80% (-c 0.8 --cov-mode 0)
-	mmseqs easy-linclust ${tmpd}/${refgenus}.faa ${refgenus}AnnotRef ${tmpd} &> ${logdir}/make_prokka_ref_mmseqs.log
+	mmseqs easy-linclust ${tmpd}/${refgenus}.faa ${tmpd}/${refgenus}AnnotRef ${tmpd} &> ${logdir}/make_prokka_ref_mmseqs.log
     # replace database name for genus detection by Prokka 
     mv -f ${tmpd}/${refgenus}AnnotRef_rep_seq.fasta ${prokkablastdb}/${refgenus} && rm -rfv ${tmpd}/
     cd ${prokkablastdb}/
