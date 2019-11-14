@@ -109,7 +109,7 @@ downloadass (){
     ln -s ${relpathass2srcass}/${ass} ${lndestass}/
     if [ ! -z "${gp2ass}" ] ; then
 		 assaccname=$(parseGBass ${ass})
-		 if [ -z ${assaccname} ] ; then 
+		 if [ -z "${assaccname}" ] ; then 
 		   echo "could not parse '${ass}' assembly name as expected from the NCBI Assembly format pattern (Accession.v_Name => python regex: '(GC[AF]_[^\._]+\.[1-9])_(.+)')"
 		 fi
 		 echo -e "${ass}\t${assaccname}\tNCBI_Assembly_downloaded" >> ${gp2ass}
