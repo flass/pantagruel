@@ -6,23 +6,40 @@ import sys, os
 minchrlen = 2000000
 verbose = False
 
-nfgffin = sys.argv[1]
-nfgffout = sys.argv[2]
-nfstraininfo = sys.argv[3]
-nfrawassembseq = sys.argv[4]
-assemblervers = sys.argv[5]
-if len(sys.argv)>6:
-	if sys.argv[6]=='verbose':
+gproject = sys.argv[1]
+nfgffin = sys.argv[2]
+nfgffout = sys.argv[3]
+nfstraininfo = sys.argv[4]
+nfrawassembseq = sys.argv[5]
+assemblervers = sys.argv[6]
+#nfgproject2assemb = sys.argv[6]
+if len(sys.argv)>7:
+	if sys.argv[7]=='verbose':
 		verbose=True
 
 dstraininfo = {}
 with open(nfstraininfo, 'r') as fstraininfo:
 	header = fstraininfo.readline().rstrip('\n').split('\t')
-	loctagprefixfield = header.index('locus_tag_prefix')
+#	loctagprefixfield = header.index('locus_tag_prefix')
+	gprojfield = header.index('assembly_id')
 	for line in fstraininfo:
 		lsp = line.rstrip('\n').split('\t')
-		loctagprefix = lsp[loctagprefixfield]
-		dstraininfo[loctagprefix] = dict(zip(header, lsp))
+		gproj = lsp[gprojfield]
+		dstraininfo[gproj] = dict(zip(header, lsp))
+
+straininfo = dstraininfo[gproject]
+print "extracted strain information:"
+print '\t'.join(header)
+print '\t'.join(dstraininfo[gproject])
+#dgproject2assemb = {}
+#with open(nfgproject2assemb, 'r') as fgproject2assemb:
+#	header = fgproject2assemb.readline().rstrip('\n').split('\t')
+#	gsourcefield = header.index('genome_source')
+#	for line in fgproject2assemb:
+#		lsp = line.rstrip('\n').split('\t')
+#		gsource = lsp[gsourcefield]
+#		dgproject2assemb[gsource] = dict(zip(header, lsp))
+	
 
 lcontignames = []
 dcontigs = {}
@@ -80,43 +97,43 @@ nregin = 0
 nregout = 0
 fastatime = False
 dgffcontigname2rawcontigname = {}
-loctagprefix = None
-
-for line in fgffin:
-	if line.startswith('##sequence-region'):
-		lsp = line.rstrip('\n').split()
-		seqreg = lsp[1]
-		lregions.append(seqreg)
-		dregionlens[seqreg] = tuple(lsp[2:4])
-#			dgffcontigname2rawcontigname[lsp[1]] = lcontignames[nregin]
-#			# check this is the same lentgh as length-ordered contigs from the original contig file
-#			print nregin, repr(lsp), dcontiglenids[lcontignames[nregin]]
-#			if not int(lsp[3])==dcontiglenids[lcontignames[nregin]][0]:
-#				raise IndexError, "unmatched contig order:\nconting from original file: %s\n#%d 'sequence-region' annotation from Prokka GFF: %s"%(dcontiglenids[lcontignames[nregin]], nregin, repr(lsp))
-		nregin += 1
-		if not loctagprefix:
-			# get strain info - just need to do that once
-			loctagprefix = seqreg.split()[0].split('|')[-1].rsplit('_', 1)[0]
-			try:
-				straininfo = dstraininfo[loctagprefix]
-			except KeyError, e:
-				if loctagprefix == 'chr':
-					# special case of annotation of the chromosome contig with a different tag
-					# believed to be a legacy behaviour of prokka (<= v1.11), cf. https://github.com/flass/pantagruel/issues/25
-					# just wait for the next contig
-					loctagprefix = None
-				else:
-					raise KeyError, "missing information on genome with locus_tag prefix '%s'; please complete info in file '%s'"%(loctagprefix, nfstraininfo)
-
-	elif not line.startswith('##gff-version'):
-		fgffout.write(line)
-		break
-	fgffout.write(line)
-
-if not loctagprefix:
-	raise IndexError, """could not find out what is the locus_tag_prefix string from parsing the '##sequence-region' fields 
-	                     in the input GFF file '%s' (excluding those only annotated as 'chr') 
-						 so won't be able to match it to the strain reference file '%s'"""%(nfgffin, nfstraininfo)
+#loctagprefix = None
+#
+#for line in fgffin:
+#	if line.startswith('##sequence-region'):
+#		lsp = line.rstrip('\n').split()
+#		seqreg = lsp[1]
+#		lregions.append(seqreg)
+#		dregionlens[seqreg] = tuple(lsp[2:4])
+##			dgffcontigname2rawcontigname[lsp[1]] = lcontignames[nregin]
+##			# check this is the same lentgh as length-ordered contigs from the original contig file
+##			print nregin, repr(lsp), dcontiglenids[lcontignames[nregin]]
+##			if not int(lsp[3])==dcontiglenids[lcontignames[nregin]][0]:
+##				raise IndexError, "unmatched contig order:\nconting from original file: %s\n#%d 'sequence-region' annotation from Prokka GFF: %s"%(dcontiglenids[lcontignames[nregin]], nregin, repr(lsp))
+#		nregin += 1
+#		if not loctagprefix:
+#			# get strain info - just need to do that once
+#			loctagprefix = seqreg.split()[0].split('|')[-1].rsplit('_', 1)[0]
+#			try:
+#				straininfo = dstraininfo[loctagprefix]
+#			except KeyError, e:
+#				if loctagprefix == 'chr':
+#					# special case of annotation of the chromosome contig with a different tag
+#					# believed to be a legacy behaviour of prokka (<= v1.11), cf. https://github.com/flass/pantagruel/issues/25
+#					# just wait for the next contig
+#					loctagprefix = None
+#				else:
+#					raise KeyError, "missing information on genome with locus_tag prefix '%s'; please complete info in file '%s'"%(loctagprefix, nfstraininfo)
+#
+#	elif not line.startswith('##gff-version'):
+#		fgffout.write(line)
+#		break
+#	fgffout.write(line)
+#
+#if not loctagprefix:
+#	raise IndexError, """could not find out what is the locus_tag_prefix string from parsing the '##sequence-region' fields 
+#	                     in the input GFF file '%s' (excluding those only annotated as 'chr') 
+#						 so won't be able to match it to the strain reference file '%s'"""%(nfgffin, nfstraininfo)
 
 # sort on decreasing contig length
 lregions.sort(key=lambda x: dregionlens[x], reverse=True)
