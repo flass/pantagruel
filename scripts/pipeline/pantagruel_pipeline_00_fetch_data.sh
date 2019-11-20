@@ -330,7 +330,7 @@ if [ ! -z "${customassemb}" ] ; then
         fi
         annotfaa=($(ls ${annot}/${gproject}/*.faa))
         annotffn=($(ls ${annot}/${gproject}/*.ffn))
-        python2.7 ${ptgscripts}/add_taxid_feature2prokkaGBK.py ${annotgbk[0]} ${annotrad}.ptg.gbk ${straininfo}
+        python2.7 ${ptgscripts}/add_taxid_feature2prokkaGBK.py ${gproject} ${annotgbk[0]} ${annotrad}.ptg.gbk ${straininfo}
         checkexec "something went wrong when modifying the GenBank flat file ${annotgbk[0]}" "succesfully modified the GenBank flat file ${annotgbk[0]}"
 	  fi
 #    done
