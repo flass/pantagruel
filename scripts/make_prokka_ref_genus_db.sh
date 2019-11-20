@@ -1,41 +1,5 @@
 #!/bin/bash
 
-
-inrefass=${1}
-refgenus=${2}
-if [ ! -z ${3} ] ; then
-  tmpdir=${3}
-else
-  tmpdir=$PWD
-fi
-if [ ! -z ${4} ] ; then
-  logdir=${4}
-else
-  logdir=$PWD
-fi
-
-prokkabin=$(which prokka)
-if [ -z "${prokkabin}" ] ; then
-  if [[ "${inrefass}" == 'check' ]] ; then
-    echo "noprokka"
-    exit 0
-  else
-    &>2 echo "Error: command 'prokka' was not found"
-    exit 1
-  fi
-fi
-prokkadir=$(dirname $(dirname $(readlink -f $prokkabin)))
-prokkablastdb=${prokkadir}/db/genus
-
-if [[ "${inrefass}" == 'check' ]] ; then
-  # just check the pre-existence of the database and exit with code 0
-  # print the path of the db file exists with non-null size ; nothing if the db file is absent or empty
-  if [[ -s ${prokkablastdb}/${refgenus} ]] ; then
-    echo ${prokkablastdb}/${refgenus}
-  fi
-  exit 0
-fi
-
 testpgb2fdb () {
   gbff=${1}
   testgbff=${gbff%*.gz}
@@ -85,8 +49,46 @@ gzpgb2fdb (){
 }
 export -f gzpgb2fdb
 
+## parse script arguments
+inrefass=${1}
+refgenus=${2}
+if [ ! -z ${3} ] ; then
+  tmpdir=${3}
+else
+  tmpdir=$PWD
+fi
+if [ ! -z ${4} ] ; then
+  logdir=${4}
+else
+  logdir=$PWD
+fi
 
-if [ -e ${prokkablastdb}/${refgenus} ] ; then
+# test existence of prokka command
+prokkabin=$(which prokka)
+if [ -z "${prokkabin}" ] ; then
+  if [[ "${inrefass}" == 'check' ]] ; then
+    echo "noprokka"
+    exit 0
+  else
+    &>2 echo "Error: command 'prokka' was not found"
+    exit 1
+  fi
+fi
+prokkadir=$(dirname $(dirname $(readlink -f $prokkabin)))
+prokkablastdb=${prokkadir}/db/genus
+
+if [[ "${inrefass}" == 'check' ]] ; then
+  # just check the pre-existence of the database and exit with code 0
+  # print the path of the db file exists with non-null size ; nothing if the db file is absent or empty
+  if [ -s "${prokkablastdb}/${refgenus}" ] ; then
+    echo ${prokkablastdb}/${refgenus}
+  elif [ ! -w "${prokkablastdb}/" ] ; then
+    echo "notwritable"
+  fi
+  exit 0
+fi
+
+if [ -s ${prokkablastdb}/${refgenus} ] ; then
   datetime=$(date +%Y-%m-%d_%H-%M-%S)
   echo "Warning: found a previous Prokka reference database for the genus '${refgenus}; save it to '${prokkablastdb}/${refgenus}.backup_${datetime}'"
   mv -f ${prokkablastdb}/${refgenus} ${prokkablastdb}/${refgenus}.backup_${datetime}
