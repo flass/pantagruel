@@ -104,6 +104,14 @@ if [ -z "$teraalgo" ] ; then
 fi
 echo "will use $teraalgo algorithm for reconciliation estimation"
 
+# relburninfrac
+echo "relburninfrac:"
+if [ -z "$relburninfrac" ] ; then
+  echo -n "Default: "
+  relburninfrac=0.25
+fi
+echo "will discard $relburninfrac fraction of the tree chain as burn-in"
+
 # alebin (facultative location for ALE executables; default to those found in $PATH, then the Docker container)
 if [ ! -z "$terabin" ] ; then
   if [ ! -z "$(ls -d "$terabin" 2> /dev/null)" ] ; then
