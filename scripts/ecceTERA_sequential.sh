@@ -216,8 +216,9 @@ for nfchain in $(cat $tasklist) ; do
     # take multiple Newick gene trees as input, i.e a gene tree chain
 	# this is the recomended option.
 	#
-	# this is a more memory-intensive option compared to single-gene tree options below,
-	# but it remains relatively cheap compared to ALE probabilistic reconciliation
+	# ecceTERA/amalgamate is a more memory-intensive option compared to using ecceTERA with a single-gene tree (options below);
+	# ecceTERA/amalgamate is basically comparable to ALEml for memory use on a similar G tree sample.
+	# But IN TERMS OF CPU TIME, ecceTERA/amalgamate is much cheaper than ALE probabilistic reconciliation.
 	
     if [[ -e ${nfchain}.ale ]] ; then
       # will use ALEobserve to produce .ale file of amalgamated gene trees from the input gene tree chain, with defined burn-in fraction

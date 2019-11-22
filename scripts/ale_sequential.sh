@@ -243,7 +243,7 @@ for nfchain in $(cat $tasklist) ; do
     alecmd="${aleexe} ${stree} ${chain}.ale sample=${nrecs} separators=_"
     if [ "${#DTLrates[@]}" -eq 3 ] ; then alecmd="${alecmd} delta=${DTLrates[0]} tau=${DTLrates[0]} lambda=${DTLrates[0]}" ; fi
   else
-    echo "ALE algorithm $alealgo not supported in this script, sorry; exit now"
+    echo "ALE algorithm ${alealgo} not supported in this script, sorry; exit now"
     exit 2
   fi
   echo "# ${alecmd}"
@@ -251,7 +251,7 @@ for nfchain in $(cat $tasklist) ; do
   ${alecmd} &
   alepid=$!
   runmin=0
-  top -b -n 1 -p ${terapid} | tail -n 2 > ${nfrad}.ale.toplog
+  top -b -n 1 -p ${alepid} | tail -n 2 > ${nfrad}.ale.toplog
   while [ ! -z $(ps -q ${alepid} -o comm=) ] ; do
     ## check memory use is not going off the charts
 	pcmem=$(ps -o pid,%mem | grep ${alepid} | awk '{print $NF}')
@@ -263,14 +263,14 @@ for nfchain in $(cat $tasklist) ; do
 	# fine grained record of what's happening, storing just the last value of time and mem
     ALEMEM=$(pmap ${alepid} | tail -n1 | awk '{print $NF}')
     echo -e "${nfrad}\t${alealgo}\t${ALEMEM}\tkB" > ${nfrad}.ale.memusage
-    ALETIME=$SECONDS
+    ALETIME=${SECONDS}
     echo -e "${nfrad}\t${alealgo}\t${ALETIME}\ts" > ${nfrad}.ale.computetime
-	if [ $(( $SECONDS / 60 )) -gt ${runmin} ] ; then
+	if [ $(( ${SECONDS} / 60 )) -gt ${runmin} ] ; then
 	  # more thorough report, logged every minute
-      top -b -n 1 -p ${terapid} | tail -n 1 >> ${nfrad}.ale.toplog
+      top -b -n 1 -p ${alepid} | tail -n 1 >> ${nfrad}.ale.toplog
 	  # and sync of potential results (mostly the .ale.computetime, .ale.memusage and .ale.toplog files, as results are only written aththe end)
-      $savecmd ./${nfrad}.ale.* ${resultdir}/
-	  runmin=$(( $SECONDS / 60 ))
+      ${savecmd} ./${nfrad}.ale.* ${resultdir}/
+	  runmin=$(( ${SECONDS} / 60 ))
     fi
     sleep 1s
   done
