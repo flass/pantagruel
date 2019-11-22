@@ -55,7 +55,7 @@ export hpcremoteptgroot='REPLACEhpcremoteptgroot'          # if not empty nor 'n
 source ${ptgscripts}/pipeline/environ_pantagruel_defaults.sh
 ## these defalts can be overriden by uncommenting the relevant line below and editing the variable's value
 ## or (recomended for changes to last past calls to `pantagruel --refresh init`):
-## create a file '${ptgroot}/${ptgdbname}/environ_pantagruel_${ptgdbname}_user_params.sh' containing the `export variable=value` commands
+## create a file '${ptgroot}/${ptgdbname}/user_environ_pantagruel_${ptgdbname}.sh' containing the `export variable=value` commands
 # default values are:
 # Prokka annotation parameters (only relevant if custom genome assemblies are provided):
 #~ export assembler="somesoftware"
@@ -80,7 +80,7 @@ source ${ptgscripts}/pipeline/environ_pantagruel_defaults.sh
 #~ export minevfreqmatch=0.5
 #~ export minjoinevfreqmatch=1.0
 #~ export maxreftreeheight=0.25
-userparams="${ptgroot}/${ptgdbname}/environ_pantagruel_${ptgdbname}_user_params.sh"
+userparams="${ptgroot}/${ptgdbname}/user_environ_pantagruel_${ptgdbname}.sh"
 if [ -e "${userparams}" ] ; then
   source "${userparams}"
 fi
