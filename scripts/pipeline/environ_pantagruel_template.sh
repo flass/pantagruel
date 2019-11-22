@@ -81,8 +81,10 @@ source ${ptgscripts}/pipeline/environ_pantagruel_defaults.sh
 #~ export minjoinevfreqmatch=1.0
 #~ export maxreftreeheight=0.25
 userparams="${ptgroot}/${ptgdbname}/user_environ_pantagruel_${ptgdbname}.sh"
-if [ -e "${userparams}" ] ; then
-  source "${userparams}"
+if [ -s "${userparams}" ] ; then
+  echo "Warning: will use user-defined values for Pantagruel environment variables, as deined in '${userparams}':"
+  cat ${userparams}
+  source ${userparams}
 fi
 
 # secondary vars are defined based on the above
