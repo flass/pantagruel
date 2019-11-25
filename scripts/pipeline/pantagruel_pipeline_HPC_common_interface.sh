@@ -32,6 +32,7 @@ or for this help mesage:\n
 \t --hpctype:\t'PBS' for Torque scheduling system, or 'LSF' for IBM schedulling system (default: '${defhpctype}').\n
 \t --chunksize:\tnumber of families to be processed in one submitted job (default: ${defchunksize})\n
 \t --fwdenv:\tnames of current environment variables you want to be passed down to the submitted jobs\n
+\t --modules:\tnames (quoted, comma-separated list) of local modules to be loaded using the 'module load' command\n
 \t\t\t if several, separate by ',' and enclose in quotes, e.g.: 'VAR1, VAR2' \n
 \t --parallelflags:\tadditional flags to be specified for worker nodes' resource requests\n
 \t\t\t for instance, specifying parallelflags=\"mpiprocs=1:ompthreads=8\" (with hpctype='PBS')\n
@@ -69,7 +70,7 @@ testmandatoryarg (){
   fi
 }
 
-ARGS=`getopt --options "h" --longoptions "ncpus:,mem:,wth:,hpctype:,chunksize:,parallelflags:,fwdenv:" --name "${hpcscript}" -- "$@"`
+ARGS=`getopt --options "h" --longoptions "ncpus:,mem:,wth:,hpctype:,chunksize:,parallelflags:,fwdenv:,modules:" --name "${hpcscript}" -- "$@"`
 
 #Bad arguments
 if [ ${?} -ne 0 ];
@@ -125,7 +126,13 @@ do
 	--fwdenv)
       testmandatoryarg "${1}" "${2}"
       export fwdenv="${2}"
-      echo "will forward the following environment variables to the submitted jobs' envronment: '${fwdenv}'"
+      echo "will forward the following environment variables to the submitted jobs' environment: '${fwdenv}'"
+      shift 2;;
+	
+	--modules)
+      testmandatoryarg "${1}" "${2}"
+      export modules="${2}"
+      echo "will load the following modules in the submitted jobs' environment: '${modules}'"
       shift 2;;
 	  
 	--)
@@ -166,3 +173,10 @@ if [ ! -z "${parallelflags}" ] ; then
   [ "${hpctype}" == 'PBS' ] && export parallelflags=":${parallelflags}"
   [ "${hpctype}" == 'LSF' ] && export parallelflags=" span[${parallelflags}]"
 fi
+if [ ! -z ${modules} ] ; then
+  echo "${modules}" | tr ',' '\n' | while read modu ; do
+    module load "${modu}"
+  done
+  echo "these modules were loaded"
+  module list
+done
