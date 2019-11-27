@@ -126,7 +126,13 @@ if [ "$installdebian" == 'true' ] ; then
   sqlite3 sqlite3-doc libmagick++-dev python python-scipy python-numpy python-biopython python-biopython-sql python-igraph cython \
   mpi-default-bin mpi-default-dev mrbayes-mpi python-pip openjdk-11-jdk openjdk-11-jre \
   libdw1 libdw-dev libgsl23 libgsl-dev"
-  if [ "$installbrew" == 'true' ] ; then deppackages="$deppackages linuxbrew-wrapper" ; fi
+  if [ "$installbrew" == 'true' ] ; then
+    deppackages="$deppackages linuxbrew-wrapper"
+  else
+    # GNU parallel should be installed via Homebrew as a dependency of Prokka;
+	# without Homebrew, install GNU parallel via Debian
+    deppackages="$deppackages parallel"
+  fi
   if [ "$installdocker" == 'true' ] ; then deppackages="$deppackages docker\.io" ; fi
   sudo add-apt-repository -y ppa:openjdk-r/ppa
   sudo apt update
