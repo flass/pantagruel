@@ -142,7 +142,7 @@ if [[ "${chaintype}" == 'fullgenetree' ]] ; then
   done
   checkexec "could not convert alignments from Fasta to Nexus format ; exit now" "succesfully converted alignemts from Fasta to Nexus format"
   export nexusaln4chains=${colalinexuscodedir}/${collapsecond}
-  export mboutputdir=${bayesgenetrees}/${collapsecond}
+#  export mboutputdir=${bayesgenetrees}/${collapsecond}
   
   #### end OPTION A1
 else
@@ -228,7 +228,7 @@ else
 
   export collapsecoldate=$(date +%Y-%m-%d)
   export nexusaln4chains=${colalinexuscodedir}/${collapsecond}/collapsed_alns
-  export mboutputdir=${bayesgenetrees}/${collapsecond}
+#  export mboutputdir=${bayesgenetrees}/${collapsecond}
   echo -e "${collapsecolid}\t${collapsecoldate}\t${collapsecriteriondef}" > ${genetrees}/collapsecol
 fi
 #### end OPTION B1
