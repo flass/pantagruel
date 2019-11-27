@@ -3,6 +3,11 @@
 echo "This is job $LSB_JOBNAME, job_ID $LSB_JOBID (array_task_ID $LSB_JOBINDEX) on host $HOSTNAME, running on these workers: $LSB_MCPU_HOSTS"
 echo ""
 
+# load potential modules
+if [ ! -z "${modulefile}" ] ; then
+  source ${modulefile}
+fi
+
 echo "using OpenMPI from:"
 ompi_info | head -n 36
 
@@ -27,21 +32,10 @@ EOF
 
 
 
-## use installation of mrbayes as a cluster module
-#module load mrbayes/${mbversion}
-## use parallel environment
-#module load intel-suite
-#if [ ${mbversion%.*} == '3.1' ] ; then
-## mpi/intel-5.1 is default MPI lib but old install of mrbayes requires loading both current version AND the deprecated mpi/intel-3.1
-#module load deprecated/mpi/intel-3.1
-#fi
-#module load mpi
-#if [ ${mbversion%.*} == '3.2' ] ; then
-## used by MrBayes v3.2
-#module load beagle-lib
-#fi
-#module list
-
+# load potential modules
+if [ ! -z "${modulefile}" ] ; then
+  source ${modulefile}
+fi
 
 if [ -z "${mbbin}" ] ; then
   mbbin="mb"

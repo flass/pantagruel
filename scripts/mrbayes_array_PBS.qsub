@@ -29,21 +29,25 @@ EOF
 #~ excludesync="--exclude=*.mb.ckp~ --exclude=*.mb.log --exclude=*.mb.noconv"
 
 
+# load potential modules
+if [ ! -z "${modulefile}" ] ; then
+  source ${modulefile}
+fi
 
-# use installation of mrbayes as a cluster module
-module load mrbayes/${mbversion}
-# use parallel environment
-module load intel-suite
-if [ ${mbversion%.*} == '3.1' ] ; then
-# mpi/intel-5.1 is default MPI lib but old install of mrbayes requires loading both current version AND the deprecated mpi/intel-3.1
-module load deprecated/mpi/intel-3.1
-fi
-module load mpi
-if [ ${mbversion%.*} == '3.2' ] ; then
-# used by MrBayes v3.2
-module load beagle-lib
-fi
-module list
+## environment of Imperial College HPC cluster:
+#module load mrbayes/${mbversion}
+## use parallel environment
+#module load intel-suite
+#if [ ${mbversion%.*} == '3.1' ] ; then
+## mpi/intel-5.1 is default MPI lib but old install of mrbayes requires loading both current version AND the deprecated mpi/intel-3.1
+#module load deprecated/mpi/intel-3.1
+#fi
+#module load mpi
+#if [ ${mbversion%.*} == '3.2' ] ; then
+## used by MrBayes v3.2
+#module load beagle-lib
+#fi
+#module list
 
 
 ### !!! Key variables must be define on qub call using -v option

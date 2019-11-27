@@ -8,36 +8,17 @@
 #########################################################
 
 # Copyright: Florent Lassalle (f.lassalle@imperial.ac.uk), 30 July 2018
+# environment variables to be passed on to interface script:
+export hpcscript=$(basename ${0})
+hpcscriptdir=$(dirname ${0})
+export defncpus=1
+export defmem=96
+export defwth=24
+export defhpctype='PBS'
+export defchunksize=1000
+export withpython='false'
 
-if [ -z "$1" ] ; then echo "missing mandatory parameter: pantagruel config file" ; echo "Usage: $0 ptg_env_file [[[[ncpus] mem(gb)] maxwalltime(h)] paralleflags(\"str:str:...\")]" ; exit 1 ; fi
-envsourcescript="$1"
-source ${envsourcescript}
-
-if [ ! -z "$2" ] ; then
-  export ncpus="$2"
-else
-  export ncpus=1
-fi
-if [ ! -z "$3" ] ; then
-  mem="$3"
-else
-  mem=96gb
-fi
-if [ ! -z "$4" ] ; then
-  wth="$4"
-else
-  wth=72
-fi
-if [ ! -z "$5" ] ; then
-  parallelflags=":$5"
-  # for instance, parallelflags="mpiprocs=1:ompthreads=8"
-  # will force the use of OpenMP multi-threading instead of default MPI parallelism
-  # note this is not standard and might not be the default on your HPC system;
-  # also the flags may be different depending on the HPC system config.
-  # you should get in touch with your system admins to know the right flags
-else
-  parallelflags=""
-fi
+source ${hpcscriptdir}/pantagruel_pipeline_HPC_common_interface.sh "${@}"
 
 ######################################################
 ## 07.1 Infer gene tree / Species tree reconciliations
@@ -55,7 +36,7 @@ if [ -z ${reccolid} ] ; then
  reccolid=1
 fi
 # derived parameters
-if [ ${ALEalgo} == 'ALEml_undated' ] ; then
+if [ "${ALEalgo}" == 'ALEml_undated' ] ; then
   export rectype='undat'
   tag='u'
 else
@@ -69,7 +50,7 @@ tasklist=${alerec}/${collapsecond}_${replmethod}_Gtrees_list
 
 ${ptgscripts}/lsfullpath.py "${coltreechains}/${collapsecond}/${replmethod}/*-Gtrees.nwk" > $tasklist
 alelogs=${ptgdb}/logs/ALE
-mkdir -p $alelogs/${reccol}
+mkdir -p ${alelogs}/${reccol}
 outrecdir=${recs}/${collapsecond}/${replmethod}/${reccol}
 mkdir -p $outrecdir
 if [[ "${chaintype}" == 'fullgenetree' ]] ; then
@@ -94,9 +75,34 @@ if [ "${resumetask}" == 'true' ] ; then
 fi
 
 Njob=`wc -l $tasklist | cut -f1 -d' '`
-qsubvars="tasklist='${tasklist}', resultdir='${outrecdir}', spetree='${spetree}', nrecs='${recsamplesize}', alealgo='${ALEalgo}', alebin='${alebin}', watchmem='${watchmem}'"
-echo "qsub -J 1-$Njob -N ${reccol} -l select=1:ncpus=${ncpus}:mem=${mem}${parallelflags},walltime=${wth}:00:00 -o $alelogs/${reccol} -j oe -v \"$qsubvars\" ${ptgscripts}/ale_array_PBS.qsub"
-qsub -J 1-$Njob -N ${reccol} -l select=1:ncpus=${ncpus}:mem=${mem}${parallelflags},walltime=${wth}:00:00 -o $alelogs/${reccol} -j oe -v "$qsubvars" ${ptgscripts}/ale_array_PBS.qsub
+qsubvars="tasklist, outrecdir, spetree, recsamplesize, ALEalgo, alebin, watchmem"
+
+case "$hpctype" in
+  'PBS') 
+    subcmd="qsub -J 1-$Njob -N ${reccol} -l select=1:ncpus=${ncpus}:mem=${mem}${parallelflags},walltime=${wth}:00:00 -o $alelogs/${reccol} -j oe -v \"$qsubvars\" ${ptgscripts}/ale_array_PBS.qsub"
+    ;;
+  'LSF')
+    if [ ${wth} -le 12 ] ; then
+      bqueue='normal'
+    elif [ ${wth} -le 48 ] ; then
+      bqueue='long'
+    else
+	  bqueue='basement'
+    fi
+    memmb=$((${mem} * 1024))
+    nflog="${alelogs}/${reccol}.%J.%I.o"
+	subcmd="bsub -J \"${reccol}[$jobrange]\" -q ${bqueue} \
+	-R \"select[mem>${memmb}] rusage[mem=${memmb}] span[hosts=1]\" -n${ncpus} -M${memmb} \
+	-o ${nflog} -e ${nflog} -env \"${qsubvars}\" \
+    ${ptgscripts}/ale_array_LSF.bsub"
+	;;
+  *)
+    echo "Error: high-performance computer system '${hpctype}' is not supported; exit now"
+    exit 1
+	;;
+esac
+echo "${subcmd}"
+eval "${subcmd}"
 
 export reccoldate=$(date +%Y-%m-%d)
 

@@ -3,6 +3,11 @@
 echo "This is job $LSB_JOBNAME, job_ID $LSB_JOBID on host $HOSTNAME, running on these workers: $LSB_MCPU_HOSTS"
 echo ""
 
+# load potential modules
+if [ ! -z "${modulefile}" ] ; then
+  source ${modulefile}
+fi
+
 cd /tmp/
 jobtmpdir=mark_unresolved_clades.$LSB_JOBID
 mkdir -p ${jobtmpdir}/ && cd ${jobtmpdir}/

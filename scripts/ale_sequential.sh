@@ -1,17 +1,17 @@
 #!/bin/bash
 
 tasklist=${1}
-resultdir=${2}
+outrecdir=${2}
 spetree=${3}
-nrecs=${4}
+recsamplesize=${4}
 alealgo=${5}
 maxpcmem=${6}
 
 echo "ale_sequential.sh call was: ${@}"
-echo "with variables set as: tasklist=${tasklist}, resultdir=${resultdir}, spetree=${spetree}, nrecs=${nrecs}, alealgo=${alealgo}, maxpcmem=${maxpcmem}"
+echo "with variables set as: tasklist=${tasklist}, outrecdir=${outrecdir}, spetree=${spetree}, recsamplesize=${recsamplesize}, alealgo=${alealgo}, maxpcmem=${maxpcmem}"
 
 usage() {
-	echo "Usage: ale_sequential.sh tasklist resultdir spetree [nrecs; default=1000] [alealgo; default='ALEml_undated'] [max %mem; default=90]"
+	echo "Usage: ale_sequential.sh tasklist outrecdir spetree [recsamplesize; default=1000] [alealgo; default='ALEml_undated'] [max %mem; default=90]"
 }
 
 nbtaxafromtree () {
@@ -41,19 +41,19 @@ else
   fi
 fi
 
-# resultdir
-echo "resultdir:"
-if [ -z "$resultdir" ] ; then
-  echo "ERROR: need to define variable resultdir ; exit now"
+# outrecdir
+echo "outrecdir:"
+if [ -z "$outrecdir" ] ; then
+  echo "ERROR: need to define variable outrecdir ; exit now"
   usage
   exit 2
 else
-  ls $resultdir -d
+  ls $outrecdir -d
   if [ $? != 0 ] ; then
-    echo "directory '$resultdir' is missing ; create it now"
-    mkdir -p $resultdir
+    echo "directory '$outrecdir' is missing ; create it now"
+    mkdir -p $outrecdir
     if [ $? != 0 ] ; then
-      echo "could not create directory '$resultdir' ; exit now"
+      echo "could not create directory '$outrecdir' ; exit now"
       exit 2
     fi
   fi
@@ -69,13 +69,13 @@ fi
 echo "gene trees will be reconciled with this species tree:"
 ls $spetree 2> /dev/null || echo "(will look for a local file contiaing a gene family-specific collapsed species)"
 
-# nrecs
-echo "nrecs:"
-if [ -z "$nrecs" ] ; then
+# recsamplesize
+echo "recsamplesize:"
+if [ -z "$recsamplesize" ] ; then
   echo -n "Default: "
-  nrecs=1000
+  recsamplesize=1000
 fi
-echo "will sample $nrecs reconciliations"
+echo "will sample $recsamplesize reconciliations"
 
 # alealgo
 echo "alealgo:"
@@ -192,12 +192,12 @@ for nfchain in $(cat $tasklist) ; do
   if [ "${#DTLrates[@]}" -eq 3 ] ; then
     echo -e "will perform analysis with set DTL rate parameters:\n${DTLrates[@]}"
   elif [ ! -z "$resumealefromtag" ] ; then
-    estparam=($(ls ${resultdir}/${bnchain}.ale.*ml_rec${resumealefromtag}))
+    estparam=($(ls ${outrecdir}/${bnchain}.ale.*ml_rec${resumealefromtag}))
     if [ ! -z "${estparam}" ] ; then
     DTLrates=($(grep -A 1 "rate of" ${estparam} | grep 'ML' | awk '{print $2,$3,$4}'))
     if [ "${#DTLrates[@]}" -eq 3 ] ; then
       echo -e "will resume analysis from previously estimated DTL rate parameters:\n${DTLrates[@]} \nas found in file:\n'$estparam'"
-      prevcomputetime=$(cat ${resultdir}/${nfrad}.ale.computetime${resumealefromtag} | cut -f3)
+      prevcomputetime=$(cat ${outrecdir}/${nfrad}.ale.computetime${resumealefromtag} | cut -f3)
       if [ ! -z $prevcomputetime ] ; then
       echo -e "will add previous computation time spent estimating parameters found in file:\n'${dnchain}/${nfrad}.ale.computetime${resumealefromtag}'\nto new record:\n'./${nfrad}.ale.computetime'"
       fi
@@ -213,12 +213,12 @@ for nfchain in $(cat $tasklist) ; do
     fi
     echo "use pre-existing ALE index file:"
     ls -lh ${nfchain}.ale
-  elif [[ -e ${resultdir}/${bnchain}.ale ]] ; then
+  elif [[ -e ${outrecdir}/${bnchain}.ale ]] ; then
     if [[ "$worklocal" == "yes" ]] ; then
      # copy input files locally
-     rsync -az ${resultdir}/${bnchain}.ale ./
+     rsync -az ${outrecdir}/${bnchain}.ale ./
 	else
-	 ln -s ${resultdir}/${bnchain}.ale ${chain}.ale
+	 ln -s ${outrecdir}/${bnchain}.ale ${chain}.ale
     fi
     echo "use pre-existing ALE index file:"
     ls -lh ${chain}.ale
@@ -237,10 +237,10 @@ for nfchain in $(cat $tasklist) ; do
   aleexe="${alebin}${alealgo}"
   # run ALE reconciliation 
   if [ "$alealgo" == 'ALEml' ] ; then
-    alecmd="${aleexe} ${stree} ${chain}.ale ${nrecs} _"
+    alecmd="${aleexe} ${stree} ${chain}.ale ${recsamplesize} _"
     if [ "${#DTLrates[@]}" -eq 3 ] ; then alecmd="${alecmd} ${DTLrates[@]}" ; fi
   elif [ "$alealgo" == 'ALEml_undated' ] ; then
-    alecmd="${aleexe} ${stree} ${chain}.ale sample=${nrecs} separators=_"
+    alecmd="${aleexe} ${stree} ${chain}.ale sample=${recsamplesize} separators=_"
     if [ "${#DTLrates[@]}" -eq 3 ] ; then alecmd="${alecmd} delta=${DTLrates[0]} tau=${DTLrates[0]} lambda=${DTLrates[0]}" ; fi
   else
     echo "ALE algorithm ${alealgo} not supported in this script, sorry; exit now"
@@ -269,7 +269,7 @@ for nfchain in $(cat $tasklist) ; do
 	  # more thorough report, logged every minute
       top -b -n 1 -p ${alepid} | tail -n 1 >> ${nfrad}.ale.toplog
 	  # and sync of potential results (mostly the .ale.computetime, .ale.memusage and .ale.toplog files, as results are only written aththe end)
-      ${savecmd} ./${nfrad}.ale.* ${resultdir}/
+      ${savecmd} ./${nfrad}.ale.* ${outrecdir}/
 	  runmin=$(( ${SECONDS} / 60 ))
     fi
     sleep 1s
@@ -290,17 +290,17 @@ for nfchain in $(cat $tasklist) ; do
   # save files
   ls ./${nfrad}*.ale.* > /dev/null
   if [ $? == 0 ] ; then
-    savecmd1="${savecmd} ./${nfrad}*.ale* ${resultdir}/"
+    savecmd1="${savecmd} ./${nfrad}*.ale* ${outrecdir}/"
     echo "# ${savecmd1}"
     ${savecmd1}
-    checkexec "unable to transfer result files from ${PWD}/ to ${resultdir}/" "succesfuly transferred result files from ${PWD}/ to ${resultdir}/"
+    checkexec "unable to transfer result files from ${PWD}/ to ${outrecdir}/" "succesfuly transferred result files from ${PWD}/ to ${outrecdir}/"
   else
     ls ${dnchain}/${nfrad}*.ale.* > /dev/null
     if [ $? == 0 ] ; then
-      savecmd2="${savecmd} ${dnchain}/${nfrad}*.ale.* ${resultdir}/"
+      savecmd2="${savecmd} ${dnchain}/${nfrad}*.ale.* ${outrecdir}/"
       echo "# ${savecmd2}"
       ${savecmd2}
-      checkexec "unable to save result files from ${dnchain} to ${resultdir}/" "succesfuly transferred result files from ${dnchain} to ${resultdir}/"
+      checkexec "unable to save result files from ${dnchain} to ${outrecdir}/" "succesfuly transferred result files from ${dnchain} to ${outrecdir}/"
     else
       echo "ERROR: unable to find the result files"
       exit 1

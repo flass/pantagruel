@@ -8,36 +8,17 @@
 #########################################################
 
 # Copyright: Florent Lassalle (f.lassalle@imperial.ac.uk), 30 July 2018
+# environment variables to be passed on to interface script:
+export hpcscript=$(basename ${0})
+hpcscriptdir=$(dirname ${0})
+export defncpus=1
+export defmem=96
+export defwth=24
+export defhpctype='PBS'
+export defchunksize=1000
+export withpython='false'
 
-if [ -z "$1" ] ; then echo "missing mandatory parameter: pantagruel config file" ; echo "Usage: $0 ptg_env_file [[[[ncpus] mem(gb)] maxwalltime(h)] paralleflags(\"str:str:...\")]" ; exit 1 ; fi
-envsourcescript="$1"
-source ${envsourcescript}
-
-if [ ! -z "$2" ] ; then
-  export ncpus="$2"
-else
-  export ncpus=1
-fi
-if [ ! -z "$3" ] ; then
-  mem="$3"
-else
-  mem=96gb
-fi
-if [ ! -z "$4" ] ; then
-  wth="$4"
-else
-  wth=24
-fi
-if [ ! -z "$5" ] ; then
-  parallelflags=":$5"
-  # for instance, parallelflags="mpiprocs=1:ompthreads=8"
-  # will force the use of OpenMP multi-threading instead of default MPI parallelism
-  # note this is not standard and might not be the default on your HPC system;
-  # also the flags may be different depending on the HPC system config.
-  # you should get in touch with your system admins to know the right flags
-else
-  parallelflags=""
-fi
+source ${hpcscriptdir}/pantagruel_pipeline_HPC_common_interface.sh "${@}"
 
 ######################################################
 ## 07.1 Infer gene tree / Species tree reconciliations
@@ -48,11 +29,11 @@ mkdir -p ${alerec}
 ### perform reconciliations with ecceTERA
 
 # parameters to be set: defaults:
-if [ -z ${reccolid} ] ; then
+if [ -z "${reccolid}" ] ; then
  reccolid=1
 fi
 # derived parameters
-if [ ${ecceTERAalgo} == 'amalgamate' ] ; then
+if [ "${ecceTERAalgo}" == 'amalgamate' ] ; then
   # work on gene tree samples
   export rectype='ecceTERA_amalgamatedGchain'
   inputtrees="${coltreechains}/${collapsecond}/${replmethod}/*-Gtrees.nwk"
@@ -61,7 +42,7 @@ else
   # work on single ML gene tree with branch supports
   inputtrees="${bayesgenetrees}/${collapsecond}/*.con.tre"
   inputtreetag="contre"
-  if [ ${ecceTERAalgo:0:8} == 'collapse' ] ; then
+  if [ "${ecceTERAalgo:0:8}" == 'collapse' ] ; then
     # ecceTERA uses branch supports to 'collapse' the unresolved clades (collapsing appraoch similar in principle but different from Pantagruel's')
     export rectype="ecceTERA_collapsedGconstree_${ecceTERAalgo##*_}"
   else
@@ -72,7 +53,7 @@ export reccol="${chaintype}_${rectype}_${reccolid}"
 
 
 tasklist=${alerec}/${collapsecond}_${replmethod}_${inputtreetag}_list
-if [ -z ${genefamlist} ] ; then
+if [ -z "${genefamlist}" ] ; then
   ${ptgscripts}/lsfullpath.py "${inputtrees}" > ${tasklist}
 else
   for fam in $(cut -f1 ${genefamlist}) ; do
@@ -117,10 +98,35 @@ if [[ -z "${terabin}" ]] ; then
   terabin="$(dirname $(readlink -f $(command -v ecceTERA)))"
 fi
 
-Njob=`wc -l $tasklist | cut -f1 -d' '`
-qsubvars="tasklist='${tasklist}', resultdir='${outrecdir}', spetree='${spetree}', nrecs='${recsamplesize}', alealgo='${ALEalgo}', alebin='${alebin}', terabin='${terabin}', watchmem='${watchmem}'"
-echo "qsub -J 1-$Njob -N ${reccol} -l select=1:ncpus=${ncpus}:mem=${mem}${parallelflags},walltime=${wth}:00:00 -o ${teralogs}/${reccol} -j oe -v \"$qsubvars\" ${ptgscripts}/ecceTERA_array_PBS.qsub"
-qsub -J 1-$Njob -N ${reccol} -l select=1:ncpus=${ncpus}:mem=${mem}${parallelflags},walltime=${wth}:00:00 -o ${teralogs}/${reccol} -j oe -v "$qsubvars" ${ptgscripts}/ecceTERA_array_PBS.qsub
+Njob=`wc -l ${tasklist} | cut -f1 -d' '`
+qsubvars="tasklist, outrecdir, spetree, alebin, terabin, watchmem"
+
+case "$hpctype" in
+  'PBS') 
+    subcmd="qsub -J 1-$Njob -N ${reccol} -l select=1:ncpus=${ncpus}:mem=${mem}${parallelflags},walltime=${wth}:00:00 -o ${teralogs}/${reccol} -j oe -v \"$qsubvars\" ${ptgscripts}/ecceTERA_array_PBS.qsub"
+    ;;
+  'LSF')
+    if [ ${wth} -le 12 ] ; then
+      bqueue='normal'
+    elif [ ${wth} -le 48 ] ; then
+      bqueue='long'
+    else
+	  bqueue='basement'
+    fi
+    memmb=$((${mem} * 1024))
+    nflog="${teralogs}/${reccol}.%J.%I.o"
+	subcmd="bsub -J \"${reccol}[$jobrange]\" -q ${bqueue} \
+	-R \"select[mem>${memmb}] rusage[mem=${memmb}] span[hosts=1]\" -n${ncpus} -M${memmb} \
+	-o ${nflog} -e ${nflog} -env \"${qsubvars}\" \
+    ${ptgscripts}/ecceTERA_array_LSF.bsub"
+	;;
+  *)
+    echo "Error: high-performance computer system '${hpctype}' is not supported; exit now"
+    exit 1
+	;;
+esac
+echo "${subcmd}"
+eval "${subcmd}"
 
 export reccoldate=$(date +%Y-%m-%d)
 

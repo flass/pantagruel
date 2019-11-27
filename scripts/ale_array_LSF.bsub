@@ -1,19 +1,12 @@
 #!/bin/bash
-#PBS -S /bin/bash
-#PBS -N ale
-#PBS -o /work/flassall/logs/ALE
-#PBS -j oe 
-#PBS -l walltime=168:00:00 
 
-echo "This is job $PBS_JOBNAME, job_ID $PBS_JOBID (array_task_ID $PBS_ARRAY_INDEX) on host $HOSTNAME, running $PBS_NUM_PPN processes on these workers:"
-cat $PBS_NODEFILE
+echo "This is job $LSB_JOBNAME, job_ID $LSB_JOBID (array_task_ID $LSB_JOBINDEX) on host $HOSTNAME, running on these workers: $LSB_MCPU_HOSTS"
+echo ""
 
 # load potential modules
 if [ ! -z "${modulefile}" ] ; then
   source ${modulefile}
 fi
-# environment of Imperial College HPC cluster
-#module load intel-suite
 
 ## verify key variable definition
 # tasklist
@@ -29,7 +22,7 @@ else
   fi
 fi
 
-nfchain=`awk "NR==$PBS_ARRAY_INDEX" $tasklist`
+nfchain=`awk "NR==${LSB_JOBINDEX}" ${tasklist}`
 echo "current task"
 echo $nfchain
 python2.7 << EOF
@@ -44,18 +37,18 @@ dnchain=`dirname $nfchain`
 bnchain=`basename $nfchain`
 nfrad=${bnchain%%-*}
 
-# outrecdir
-echo "outrecdir:"
-if [ -z "$outrecdir" ] ; then
-  echo "ERROR: need to define variable outrecdir ; exit now"
+# resultdir
+echo "resultdir:"
+if [ -z "$resultdir" ] ; then
+  echo "ERROR: need to define variable resultdir ; exit now"
   exit 2
 else
-  ls $outrecdir -d
+  ls $resultdir -d
   if [ $? != 0 ] ; then
-    echo "directory '$outrecdir' is missing ; create it now"
-    mkdir -p $outrecdir
+    echo "directory '$resultdir' is missing ; create it now"
+    mkdir -p $resultdir
     if [ $? != 0 ] ; then
-      echo "could not create directory '$outrecdir' ; exit now"
+      echo "could not create directory '$resultdir' ; exit now"
       exit 2
     fi
   fi
@@ -183,12 +176,12 @@ fi
 if [ "${#DTLrates[@]}" -eq 3 ] ; then
   echo -e "will perform analysis with set DTL rate parameters:\n${DTLrates[@]}"
 elif [ ! -z "$resumealefromtag" ] ; then
-  estparam=($(ls ${outrecdir}/${bnchain}.ale.*ml_rec${resumealefromtag}))
+  estparam=($(ls ${resultdir}/${bnchain}.ale.*ml_rec${resumealefromtag}))
   if [ ! -z "${estparam}" ] ; then
     DTLrates=($(grep -A 1 "rate of" ${estparam} | grep 'ML' | awk '{print $2,$3,$4}'))
     if [ "${#DTLrates[@]}" -eq 3 ] ; then
       echo -e "will resume analysis from previously estimated DTL rate parameters:\n${DTLrates[@]} \nas found in file:\n'$estparam'"
-      prevcomputetime=$(cat ${outrecdir}/${nfrad}.ale.computetime${resumealefromtag} | cut -f3)
+      prevcomputetime=$(cat ${resultdir}/${nfrad}.ale.computetime${resumealefromtag} | cut -f3)
       if [ ! -z "$prevcomputetime" ] ; then
         echo -e "will add previous computation time spent estimating parameters found in file:\n'${dnchain}/${nfrad}.ale.computetime${resumealefromtag}'\nto new record:\n'./${nfrad}.ale.computetime'"
       fi
@@ -204,12 +197,12 @@ if [[ -e ${nfchain}.ale ]] ; then
   fi
   echo "use pre-existing ALE index file:"
   ls ${nfchain}.ale
-elif [[ -e ${outrecdir}/${bnchain}.ale ]] ; then
+elif [[ -e ${resultdir}/${bnchain}.ale ]] ; then
   if [[ "$worklocal" == "yes" ]] ; then
    # copy input files locally
-   rsync -az ${outrecdir}/${bnchain}.ale ./
+   rsync -az ${resultdir}/${bnchain}.ale ./
   else
-   ln -s ${outrecdir}/${bnchain}.ale ${chain}.ale
+   ln -s ${resultdir}/${bnchain}.ale ${chain}.ale
   fi
   echo "use pre-existing ALE index file:"
   ls -lh ${chain}.ale
@@ -254,7 +247,7 @@ while [ ! -z $(ps -q $alepid -o comm=) ] ; do
   fi
   ALETIME=${SECONDS}
   echo -e "${nfrad}\t${ALEalgo}\t${ALETIME}\ts" > ${nfrad}.ale.computetime
-  ${savecmd} ./${nfrad}.ale.* ${outrecdir}/
+  ${savecmd} ./${nfrad}.ale.* ${resultdir}/
 done
 echo ""
 echo "# # # #"
@@ -270,20 +263,20 @@ ls ${nfrad}*
 # save files
 ls ./${nfrad}*.ale.* > /dev/null
 if [ ${?} == 0 ] ; then
-  savecmd1="$savecmd ./${nfrad}*.ale* ${outrecdir}/"
+  savecmd1="$savecmd ./${nfrad}*.ale* ${resultdir}/"
   echo "# ${savecmd1}"
   ${savecmd1}
   if [ $? != 0 ] ; then
-    echo "ERROR: unable to save result files from ${PWD}/ to ${outrecdir}/"
+    echo "ERROR: unable to save result files from ${PWD}/ to ${resultdir}/"
   fi
 else
 ls ${dnchain}/${nfrad}*.ale.* > /dev/null
 if [ ${?} == 0 ] ; then
-  savecmd2="${savecmd} ${dnchain}/${nfrad}*.ale.* ${outrecdir}/"
+  savecmd2="${savecmd} ${dnchain}/${nfrad}*.ale.* ${resultdir}/"
   echo "# ${savecmd2}"
   ${savecmd2}
   if [ ${?} != 0 ] ; then
-    echo "ERROR: unable to save result files from ${dnchain} to ${outrecdir}/"
+    echo "ERROR: unable to save result files from ${dnchain} to ${resultdir}/"
   fi
 else
   echo "ERROR: unable to find the result files"

@@ -4,6 +4,11 @@ echo "This is job $PBS_JOBNAME, job_ID $PBS_JOBID on host $HOSTNAME, running $PB
 cat $PBS_NODEFILE
 echo ""
 
+# load potential modules
+if [ ! -z "${modulefile}" ] ; then
+  source ${modulefile}
+fi
+
 cd ${TMPDIR}
 echo "current directory is ${PWD}"
 

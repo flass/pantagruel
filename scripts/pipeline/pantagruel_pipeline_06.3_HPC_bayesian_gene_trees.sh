@@ -76,10 +76,10 @@ fi
 Njob=`wc -l ${tasklist} | cut -f1 -d' '`
 jobranges=($(${ptgscripts}/get_jobranges.py $chunksize $Njob))
 for jobrange in ${jobranges[@]} ; do
- dlogs=${ptglogs}/mrbayes/${chaintype}_mrbayes_trees_${collapsecond}_${dtag}_${jobrange}
- mkdir -p ${dlogs}/
+  dlogs=${ptglogs}/mrbayes/${chaintype}_mrbayes_trees_${collapsecond}_${dtag}_${jobrange}
+  mkdir -p ${dlogs}/
  
- case "$hpctype" in
+  case "$hpctype" in
     'PBS') 
       subcmd="qsub -J ${jobrange} -N mb_panterodb -l select=1:ncpus=${ncpus}:mem=${mem}gb -l walltime=${wth}:00:00 \
 	  -o ${dlogs} -v \"${qsubvars}\" ${ptgscripts}/mrbayes_array_PBS.qsub"

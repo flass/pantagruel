@@ -6,9 +6,14 @@
 #PBS -l walltime=24:00:00 
 #PBS -l select=1:ncpus=4:mem=16gb
 
-module -v load raxml
-module -v load intel-suite
-module list
+# load potential modules
+if [ ! -z "${modulefile}" ] ; then
+  source ${modulefile}
+fi
+# environment of Imperial College HPC cluster:
+#module -v load raxml
+#module -v load intel-suite
+#module list
 
 # parse external variables pased through qsub -v "var1=toto,var2=tutu,..."
 # mandatory variables

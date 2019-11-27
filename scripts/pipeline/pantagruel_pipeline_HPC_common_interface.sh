@@ -174,9 +174,11 @@ if [ ! -z "${parallelflags}" ] ; then
   [ "${hpctype}" == 'LSF' ] && export parallelflags=" span[${parallelflags}]"
 fi
 if [ ! -z ${modules} ] ; then
+  export modulefile="${ptgtmp}/load_modules_$(date "+%Y-%m-%d_%H-%M-%S").sh"
+  echo "#!/bin/bash" > ${modulefile}
   echo "${modules}" | tr ',' '\n' | while read modu ; do
-    module load "${modu}"
+    echo "module load ${modu}" >> ${modulefile}
   done
-  echo "these modules were loaded"
-  module list
+  echo "echo 'these modules were loaded'" >> ${modulefile}
+  echo "module list" >> ${modulefile}
 done

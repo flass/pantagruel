@@ -4,6 +4,11 @@
 echo "This is job $LSB_JOBNAME, job_ID $LSB_JOBID (array_task_ID $LSB_JOBINDEX) on host $HOSTNAME, running on these workers: $LSB_MCPU_HOSTS"
 echo ""
 
+# load potential modules
+if [ ! -z "${modulefile}" ] ; then
+  source ${modulefile}
+fi
+
 # parse external variables pased through qsub -v "var1=toto,var2=tutu,..."
 # mandatory variables
 if [ -z $tasklist ] ; then
