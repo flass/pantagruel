@@ -181,4 +181,4 @@ if [ ! -z ${modules} ] ; then
   done
   echo "echo 'these modules were loaded'" >> ${modulefile}
   echo "module list" >> ${modulefile}
-done
+fi
