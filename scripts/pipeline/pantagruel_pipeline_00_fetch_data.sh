@@ -217,11 +217,11 @@ if [ ! -z "${customassemb}" ] ; then
     
     # gather representative proteins from the custom reference genome set to make a prot database for Prokka to search for similarities
     prevrefdb="$(${ptgscripts}/make_prokka_ref_genus_db.sh 'check' ${refgenus})"
-	if [[ "${prevrefdb}" == 'noprokka' ]] ; then
-	  echo "Warning: 'prokka' command was not available from the PATH; this may be fine, as long as none of you custome genomes need annotating"
+    if [[ "${prevrefdb}" == 'noprokka' ]] ; then
+      echo "Warning: 'prokka' command was not available from the PATH; this may be fine, as long as none of you custome genomes need annotating"
       echo "skip building the reference BLAST db"
-	elif [[ "${prevrefdb}" == 'notwritable' ]] ; then
-	  echo "Warning: the reference BLAST database folder for prokka is not writable; custom assemblies will be annotated with the standard prokka reference BLAST db (this cancels the use of options '--refseq_ass4annot' and '--refseq_list4annot')"
+    elif [[ "${prevrefdb}" == 'notwritable' ]] ; then
+      echo "Warning: the reference BLAST database folder for prokka is not writable; custom assemblies will be annotated with the standard prokka reference BLAST db (this cancels the use of options '--refseq_ass4annot' and '--refseq_list4annot')"
       echo "skip building the reference BLAST db"
     elif [[ "${resumetask}" == 'true' && ! -z "${prevrefdb}" ]] ; then
       echo "Resume mode: the reference BLAST database for ${refgenus} already exsists:"
@@ -291,7 +291,7 @@ if [ ! -z "${customassemb}" ] ; then
           exit 1
         fi
         if [ -z "$(grep '##sequence-region' ${annotgff[0]})" ] ; then
-        mv -f ${annotgff[0]} ${annotgff[0]}.original
+          mv -f ${annotgff[0]} ${annotgff[0]}.original
           # make GFF source file look more like the output of Prokka
           head -n1 ${annotgff[0]}.original > ${annotgff[0]}
           # add region annotation features
@@ -312,14 +312,14 @@ if [ ! -z "${customassemb}" ] ; then
         if [[ -z "${annotfna[0]}" || -z "${annotgbk[0]}" || -z "${annotffn[0]}" || -z "${annotfaa[0]}" ]] ; then
           echo "At least one of these files is missing in ${annot}/${gproject}/ folder: contig fasta file (.fna), GenBank flat file (gbk/gbf), CDS Fasta (ffn) or protein Fasta (faa)."
           echo "Will (re)generate them from the GFF anotation and genomic Fasta sequence; files already present are kept with an added prefix '.original'"
-          for annotf in ${annotfna[@]} ${annotgbk[@]} ${annotffn[@]} ${annotfaa[@]}; do
+          for annotf in ${annotfna[@]} ${annotgbk[@]} ${annotffn[@]} ${annotfaa[@]} ; do
             if [[ ! -z "${annotf}" ]] ; then
               mv ${annotf} ${annotf}.original
             fi
           done
           cp ${contigs}/${allcontigs} ${annotgff[0]/gff/fna}
           python2.7 ${ptgscripts}/GFFGenomeFasta2GenBankCDSProtFasta.py ${annotptggff} ${annotgff[0]/gff/fna}
-        checkexec "something went wrong when generating the GenBank flat file from GFF file ${annotptggff}" "succesfuly generated the GenBank flat file from GFF file ${annotptggff}"
+          checkexec "something went wrong when generating the GenBank flat file from GFF file ${annotptggff}" "succesfuly generated the GenBank flat file from GFF file ${annotptggff}"
         fi
         annotfna=($(ls ${annot}/${gproject}/*.fna))
         annotgbk=($(ls ${annot}/${gproject}/*.gbk 2> /dev/null))
@@ -406,8 +406,8 @@ if [ ! -z "${customassemb}" ] ; then
         python2.7 ${ptgscripts}/format_prokkaCDS.py ${annot}/${gproject}/${ffn[0]} ${cdsfnagz}
         ls -l ${cdsfnagz}
 	    if [[ "${compress}" == 'on' ]] ; then
-            # compress and only upon success delete the uncompress folder
-		echo "will compress folder '${annot}/${gproject}/':"
+          # compress and only upon success delete the uncompress folder
+		  echo "will compress folder '${annot}/${gproject}/':"
           tar -czf ${annot}/${gproject}.tar.gz ${annot}/${gproject}/ && rm -rf ${annot}/${gproject}/ && echo -e "successfully compressed into\n:'$(ls -l ${annot}/${gproject}.tar.gz)' and deleted source folder." || "Compression failed; leave source folder '${annot}/${gproject}/' as is"
 	    fi
 	  fi
