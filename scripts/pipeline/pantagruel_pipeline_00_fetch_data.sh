@@ -220,7 +220,7 @@ if [ ! -z "${customassemb}" ] ; then
 	if [[ "${prevrefdb}" == 'noprokka' ]] ; then
 	  echo "Warning: 'prokka' command was not available from the PATH; this may be fine, as long as none of you custome genomes need annotating"
       echo "skip building the reference BLAST db"
-	if [[ "${prevrefdb}" == 'notwritable' ]] ; then
+	elif [[ "${prevrefdb}" == 'notwritable' ]] ; then
 	  echo "Warning: the reference BLAST database folder for prokka is not writable; custom assemblies will be annotated with the standard prokka reference BLAST db (this cancels the use of options '--refseq_ass4annot' and '--refseq_list4annot')"
       echo "skip building the reference BLAST db"
     elif [[ "${resumetask}" == 'true' && ! -z "${prevrefdb}" ]] ; then
