@@ -11,7 +11,7 @@ mkdir ./pantagruel_pipeline/
 Then, you have to get the pantagruel scripts by dowloading the [archive of the last version on Github](https://github.com/flass/pantagruel/archive/master.zip) or use `git` to synchronize the repository (recomended for easier software update, especially during *Pantagruel* development phase!).
 ```sh
 cd pantagruel_pipeline/
-git clone https://github.com/flass/pantagruel.git
+git clone https://github.com/flass/pantagruel.git --recurse-submodules
 ```
 Finally, you may run the installation script:  
 !!! Note that for this step, you (i.e. your linux user) need to have the sudo rights (be part of the sudo group, check with `grep sudo /etc/group`); however, DO NOT execute the installtion script with `sudo` (which would make all software owned by the root user).  
