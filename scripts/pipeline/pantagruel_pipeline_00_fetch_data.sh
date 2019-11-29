@@ -304,7 +304,6 @@ if [ ! -z "${customassemb}" ] ; then
 		annotptggff=${annotgff[0]/.gff/.ptg.gff}
         python2.7 ${ptgscripts}/add_region_feature2prokkaGFF.py ${gproject} ${annotgff[0]} ${annotptggff} ${straininfo} ${contigs}/${allcontigs} ${assembler} &> ${addregfeatlog}
         checkexec "something went wrong when adding region features to GFF file (In: ${annotgff[0]}; Out:${annotptggff}; Stdin/Stderr or the last command: ${addregfeatlog})"
-        echo "fix annotation to integrate taxid information into GBK files"
         annotfna=($(ls ${annot}/${gproject}/*.fna))
         annotgbk=($(ls ${annot}/${gproject}/*.gbf 2> /dev/null || ls ${annot}/${gproject}/*.gbk))
         annotfaa=($(ls ${annot}/${gproject}/*.faa))
@@ -330,6 +329,7 @@ if [ ! -z "${customassemb}" ] ; then
         fi
         annotfaa=($(ls ${annot}/${gproject}/*.faa))
         annotffn=($(ls ${annot}/${gproject}/*.ffn))
+		echo "fix annotation to integrate taxid information into GBK files"
         python2.7 ${ptgscripts}/add_taxid_feature2prokkaGBK.py ${gproject} ${annotgbk[0]} ${annotrad}.ptg.gbk ${straininfo}
         checkexec "something went wrong when modifying the GenBank flat file ${annotgbk[0]}" "succesfully modified the GenBank flat file ${annotgbk[0]}"
 	  fi

@@ -34,14 +34,14 @@ promptdate "-- $(grep -c '>' ${allfaarad}.faa) proteins in dataset"
 python2.7 ${ptgscripts}/dereplicate_fasta.py ${allfaarad}.faa ${allfaarad}.nrprotids.faa
 promptdate "-- $(grep -c '>' ${allfaarad}.nrprotids.faa) non-redundant protein ids in dataset"
 
-mmseqslogs=${ptglogs}/mmseqs && mkdir -p $mmseqslogs
+mmseqslogs=${ptglogs}/mmseqs && mkdir -p ${mmseqslogs}/
 ## clustering of identical protein sequences
 # notably those from the custom assemblies to those from the public database (and those redudant between RefSeq and Genbank sets)
 # run mmseqs clusthash with 100% seq id threshold
 # used MMseqs2 Version: 6306925fa9ae6198116c26e605277132deff70d0
 echo "${datepad}-- Perform first protein clustering step (100% prot identity clustering with clusthash algorithm)"
 mmlog0=${mmseqslogs}/mmseqs-0-identicalprot-clusthash.log
-mmseqs createdb ${allfaarad}.nrprotids.faa  ${allfaarad}.mmseqsdb &> ${mmlog0}
+mmseqs createdb ${allfaarad}.nrprotids.faa ${allfaarad}.mmseqsdb &> ${mmlog0}
 mmseqs clusthash --min-seq-id 1.0 ${allfaarad}.mmseqsdb ${allfaarad}.clusthashdb_minseqid100 &>> ${mmlog0}
 mmseqs clust ${allfaarad}.mmseqsdb ${allfaarad}.clusthashdb_minseqid100 ${allfaarad}.clusthashdb_minseqid100_clust &>> ${mmlog0}
 mmsummary0=$(tail -n 4 ${mmlog0} | head -n 3)

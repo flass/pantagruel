@@ -40,7 +40,7 @@ if [ ! -z "$ncpus" ] ; then
 fi
 
 
-taskchunklist=`awk "NR==$PBS_ARRAY_INDEX" ${tasklist}_${dtag}_taskchunks`
+taskchunklist=`awk "NR==$LSB_JOBINDEX" ${tasklist}_${dtag}_taskchunks`
 if [ -z "${taskchunklist}" ] ; then
   # to cover the case when not running as an array job
   taskchunklist=${tasklist}
