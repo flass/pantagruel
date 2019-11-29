@@ -457,10 +457,11 @@ mkdir -p ${manuin}/
 touch ${manuin}/manual_metadata_dictionary.tab ${manuin}/manual_curated_metadata_dictionary.tab ${manuin}/manual_dbxrefs.tab
 mkdir -p ${genomeinfo}/assembly_metadata
 ## extract assembly/sample metadata from flat files
+nfextrgbfflog=${ptglogs}/extract_metadata_from_gbff.log
 python2.7 ${ptgscripts}/extract_metadata_from_gbff.py --assembly_folder_list=${genomeinfo}/assemblies_list --add_raw_metadata=${manuin}/manual_metadata_dictionary.tab \
 --add_curated_metadata=${manuin}/manual_curated_metadata_dictionary.tab --add_dbxref=${manuin}/manual_dbxrefs.tab --add_assembly_info_dir=${indata}/assembly_stats \
---default_species_name="unclassified organism" --output=${genomeinfo}/assembly_metadata
-
+--default_species_name="unclassified organism" --output=${genomeinfo}/assembly_metadata --verbose &> ${nfextrgbfflog}
+checkexec "something went wrong when extracting metadata from GenBank flat files; check errors in '${nfextrgbfflog}'" "Successfully extracted metadata from GenBank flat files"
 
 ## compute genome-to-genome MASH distances and plot them, notably as a heatmap along a distance tree (and possibly along the core-genome reference tree)
 if [ ! -z "$(command -v mash)" ] ; then 

@@ -71,7 +71,7 @@ def main(nfldirassemb, dirassemblyinfo, output, defspename, nfdhandmetaraw, nfdh
 	## metadata extraction from compressed GenBank flat files
 	with open(nfldirassemb, 'r') as fldirassemb:
 		ldirassemb = [line.rstrip('\n') for line in fldirassemb]
-
+	verbose = kw['verbose']
 
 	dmetadata = {}
 	lassembname = [os.path.basename(dirassemb) for dirassemb in ldirassemb]
@@ -86,13 +86,15 @@ def main(nfldirassemb, dirassemblyinfo, output, defspename, nfdhandmetaraw, nfdh
 	smlemptystart = "            "
 	lrgemptystart = "                     "
 
-	print "parsing genome annotation from genBank flat files..."
+	print "parsing genome annotation from GenBank flat files..."
 	for i, assembname in enumerate(lassembname):
 		assemb = parse_assembly_name(assembname)
-		print assemb,
 		qualif = None
 		val = None
-		with gzip.open("%s/%s_genomic.gbff.gz"%(ldirassemb[i], assembname), 'rb') as gbff:
+		nfgbff = "%s/%s_genomic.gbff.gz"%(ldirassemb[i], assembname)
+		if verbose: print "extract metadata from GenBank file '%s':"%nfgbff
+		else: print assemb,
+		with gzip.open(nfgbff, 'rb') as gbff:
 			gbheader = True
 			dbxrefblock = False
 			sourceblock = 0
@@ -112,12 +114,14 @@ def main(nfldirassemb, dirassemblyinfo, output, defspename, nfdhandmetaraw, nfdh
 					if dbxrefblock:
 						for linestart in (headerdbstart, smlemptystart):
 							if line.startswith(linestart):
-								ldbxref.append(line.rstrip('\n').split(linestart)[1])
+								dbxrefvarval = line.rstrip('\n').split(linestart)[1]
+								ldbxref.append(dbxrefvarval)
+								if verbose: print assemb, dbxrefvarval[0], dbxrefvarval[1]
 								break # for linestart loop
 						else:
 							dbxrefblock = False
 				if sourceblock==1:
-					# only captures the first source block ; second and more can be other organisms 
+					# only captures the first source block ; second and further can refer to other organisms 
 					# located within the bigger organism (e.g. inserted prophages) and should be ignored
 					if line.startswith(lrgemptystart):
 						li = line.strip()
@@ -129,11 +133,14 @@ def main(nfldirassemb, dirassemblyinfo, output, defspename, nfdhandmetaraw, nfdh
 								qualif, val = qualval
 								qualif = qualif.lower()
 								if qualif=="dbxref": qualif = "db_xref"
-								if not qualif in lqualif: lqualif.append(qualif) # Calife a la place du Calife!
+								if not qualif in lqualif: lqualif.append(qualif) # Calife a la place du Calife! https://fr.wikipedia.org/wiki/Iznogoud
 								dmetadata.setdefault(qualif, {})[assemb] = val
+								if verbose: print assemb, qualif, val
 						else:
 							if qualif is None: continue # for line loop
-							dmetadata[qualif][assemb] += ' '+li.strip('\n')
+							addval = ' '+li.strip('\n')
+							dmetadata[qualif][assemb] += addval
+							if verbose: print '\t\t', addval
 					else:
 						break # for line loop
 				if line.startswith(ftsourcestart) or line.startswith(ftregionstart):
@@ -141,12 +148,15 @@ def main(nfldirassemb, dirassemblyinfo, output, defspename, nfdhandmetaraw, nfdh
 		#~ print assemb, dmetadata['organism'][assemb]
 
 	print ' ...done'
+	
 	# read additional data extracted by hand, if provided:
 	if nfdhandmetaraw:
+		if verbose: print "extracted the following metadata from user-proviided metadata record:"
 		with open(nfdhandmetaraw, 'r') as fdhandmetaraw:
 			for line in fdhandmetaraw:
 				assemb, qualif, val = line.rstrip('\n').split('\t')
 				dmetadata.setdefault(qualif, {})[assemb] = val
+				if verbose: print assemb, qualif, val
 
 	## read potential sequencing/assembly statistics and metadata
 	if dirassemblyinfo:
@@ -161,6 +171,9 @@ def main(nfldirassemb, dirassemblyinfo, output, defspename, nfdhandmetaraw, nfdh
 						assembname, val = line.rstrip('\n').split('\t')
 						assemb = parse_assembly_name(assembname)
 						dmetadata.setdefault(infotag, {})[assemb] = val.strip('" \r')
+		if verbose:
+			print "extracted the following metadata from Assembly stats files:"
+			print dmetadata
 
 	if os.path.exists(output):
 			if os.path.isfile(output):
@@ -359,7 +372,7 @@ def main(nfldirassemb, dirassemblyinfo, output, defspename, nfdhandmetaraw, nfdh
 	
 ## script
 if __name__=="__main__":
-	opts, args = getopt.getopt(sys.argv[1:], '', ['assembly_folder_list=', 'add_raw_metadata=', 'add_curated_metadata=', 'add_dbxref=', 'add_assembly_info_dir=', 'default_species_name=', 'output='])
+	opts, args = getopt.getopt(sys.argv[1:], '', ['assembly_folder_list=', 'add_raw_metadata=', 'add_curated_metadata=', 'add_dbxref=', 'add_assembly_info_dir=', 'default_species_name=', 'output=', 'verbose'])
 	dopt = dict(opts)
 	nfldirassemb = dopt['--assembly_folder_list']
 	nfdhandmetaraw = dopt.get('--add_raw_metadata')
@@ -368,5 +381,6 @@ if __name__=="__main__":
 	dirassemblyinfo = dopt.get('--add_assembly_info_dir')
 	defspename = dopt.get('--default_species_name')
 	output = dopt.get('--output')
+	verbose = dopt.get('--verbose', False)
 
-	main(nfldirassemb, dirassemblyinfo, output, defspename, nfdhandmetaraw, nfdhandmetacur, nfdhanddbxref)
+	main(nfldirassemb, dirassemblyinfo, output, defspename, nfdhandmetaraw, nfdhandmetacur, nfdhanddbxref, verbose=verbose)
