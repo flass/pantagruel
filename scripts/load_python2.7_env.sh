@@ -19,7 +19,7 @@ echo ""
 
 # use Anaconda to load required Python modules
 # requires prior creation of the environment with:
-# `conda create -n ptgenv python=2.7 pip ; conda activate ptgenv ; pip install scipy numpy biopython bcbio-gff Cython igraph psycopg2`
+# `conda create -n ptgenv python=2.7 pip ; conda activate ptgenv ; pip install scipy numpy biopython bcbio-gff Cython python-igraph psycopg2`
 pyenvwarn="Warning: was not able to automatically load the Python environment ; the subsequent call to Python scripts may fail."
 if [ ! -z "$(conda env list | grep ptgenv 2> /dev/null)" ] ; then
   conda activate ptgenv
