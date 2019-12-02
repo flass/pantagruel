@@ -78,8 +78,8 @@ case "${hpctype}" in
     ;;
   LSF)
     if [ ${Nchunk} -gt 2 ] ; then
-      arrayspec="[1-${Nchunk}]"
-      arrayjobtag='.%J'
+      arrayspec="[1-${Nchunk}]%50"
+      arrayjobtag='.%I'
     fi
     if [ ${wth} -le 12 ] ; then
       bqueue='normal'
@@ -89,7 +89,7 @@ case "${hpctype}" in
      bqueue='basement'
     fi
     memmb=$((${mem} * 1024)) 
-    nflog="${repllogd}/replSpePopinGs.%I${arrayjobtag}.o"
+    nflog="${repllogd}/replSpePopinGs.%J${arrayjobtag}.o"
     [ -z "${parallelflags}" ] && parallelflags="span[hosts=1]"
     subcmd="bsub -J replSpePopinGs${arrayspec} -R \"select[mem=${memmb}] rusage[mem=${memmb}] ${parallelflags}\" \
             -n${ncpus} -M${memmb} -q ${bqueue} \
