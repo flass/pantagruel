@@ -40,6 +40,8 @@ or for this help mesage:\n
 \t\t\t Note that parameter declaration syntax is not standard and differ depending on your HPC system;\n
 \t\t\t also the relevant parameter flags may be different depending on the HPC system config.\n
 \t\t\t Get in touch with your system admins to know the relevant flags and syntax.\n
+\t --maxatonce:\tmaximum number of jobs you want to run at once (only relelvant on LSF system;
+\t\t\t useful for fair use of computing resources/queue priority management).\n
 "
 pythonmsg="
 \n
@@ -70,7 +72,7 @@ testmandatoryarg (){
   fi
 }
 
-ARGS=`getopt --options "h" --longoptions "ncpus:,mem:,wth:,hpctype:,chunksize:,parallelflags:,fwdenv:,modules:" --name "${hpcscript}" -- "$@"`
+ARGS=`getopt --options "h" --longoptions "ncpus:,mem:,wth:,hpctype:,chunksize:,parallelflags:,fwdenv:,modules:,maxatonce:" --name "${hpcscript}" -- "$@"`
 
 #Bad arguments
 if [ ${?} -ne 0 ];
@@ -133,6 +135,16 @@ do
       testmandatoryarg "${1}" "${2}"
       export modules="${2}"
       echo "will load the following modules in the submitted jobs' environment: '${modules}'"
+      shift 2;;
+	  
+	  --maxatonce)
+      testmandatoryarg "${1}" "${2}"
+      export maxatonce="${2}"
+      if [ "${hpctype}" == 'LSF' ] ; then
+	    echo "will only allow a maximum of ${maxatonce} jobs to run concurrently"
+	  else
+	    echo "option --maxatonce is irrelevant when not submitting to LSF system; this option will be ignored"
+	  fi
       shift 2;;
 	  
 	--)

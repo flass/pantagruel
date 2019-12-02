@@ -78,7 +78,8 @@ case "${hpctype}" in
     ;;
   LSF)
     if [ ${Nchunk} -gt 2 ] ; then
-      arrayspec="[1-${Nchunk}]%50"
+      arrayspec="[1-${Nchunk}]"
+	  [ ! -z ${maxatonce} ] && arrayspec="${arrayspec}%${maxatonce}"
       arrayjobtag='.%I'
     fi
     if [ ${wth} -le 12 ] ; then
@@ -91,7 +92,7 @@ case "${hpctype}" in
     memmb=$((${mem} * 1024)) 
     nflog="${repllogd}/replSpePopinGs.%J${arrayjobtag}.o"
     [ -z "${parallelflags}" ] && parallelflags="span[hosts=1]"
-    subcmd="bsub -J replSpePopinGs${arrayspec} -R \"select[mem=${memmb}] rusage[mem=${memmb}] ${parallelflags}\" \
+    subcmd="bsub -J replSpePopinGs${arrayspec} -R \"select[mem>${memmb}] rusage[mem=${memmb}] ${parallelflags}\" \
             -n${ncpus} -M${memmb} -q ${bqueue} \
             -o ${nflog} -e ${nflog} -env 'all' ${ptgscripts}/replSpePopinGs_array_LSF.bsub"
     ;;
