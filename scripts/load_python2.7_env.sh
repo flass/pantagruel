@@ -23,6 +23,13 @@ echo ""
 pyenvwarn="Warning: was not able to automatically load the Python environment ; the subsequent call to Python scripts may fail."
 if [ ! -z "$(conda env list | grep ptgenv 2> /dev/null)" ] ; then
   conda activate ptgenv
+  if [ ${?} -gt 0 ] ; then
+    echo "Conda is not properly set locally; will run the following and retry:"
+	sourcecondash="source ${HOME}/anaconda2/etc/profile.d/conda.sh"
+	echo "${sourcecondash}"
+	eval "${sourcecondash}"
+	conda activate ptgenv
+  fi
 elif  [ ! -z $(command -v module) ] ; then
   # use ad-hoc environment loading (deprecated: only known on Imperial College London HPC in its vintage form)
   #module load python
