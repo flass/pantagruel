@@ -37,18 +37,18 @@ dnchain=`dirname $nfchain`
 bnchain=`basename $nfchain`
 nfrad=${bnchain%%-*}
 
-# resultdir
-echo "resultdir:"
-if [ -z "$resultdir" ] ; then
-  echo "ERROR: need to define variable resultdir ; exit now"
+# outrecdir
+echo "outrecdir:"
+if [ -z "$outrecdir" ] ; then
+  echo "ERROR: need to define variable outrecdir ; exit now"
   exit 2
 else
-  ls $resultdir -d
+  ls $outrecdir -d
   if [ $? != 0 ] ; then
-    echo "directory '$resultdir' is missing ; create it now"
-    mkdir -p $resultdir
+    echo "directory '$outrecdir' is missing ; create it now"
+    mkdir -p $outrecdir
     if [ $? != 0 ] ; then
-      echo "could not create directory '$resultdir' ; exit now"
+      echo "could not create directory '$outrecdir' ; exit now"
       exit 2
     fi
   fi
@@ -176,12 +176,12 @@ fi
 if [ "${#DTLrates[@]}" -eq 3 ] ; then
   echo -e "will perform analysis with set DTL rate parameters:\n${DTLrates[@]}"
 elif [ ! -z "$resumealefromtag" ] ; then
-  estparam=($(ls ${resultdir}/${bnchain}.ale.*ml_rec${resumealefromtag}))
+  estparam=($(ls ${outrecdir}/${bnchain}.ale.*ml_rec${resumealefromtag}))
   if [ ! -z "${estparam}" ] ; then
     DTLrates=($(grep -A 1 "rate of" ${estparam} | grep 'ML' | awk '{print $2,$3,$4}'))
     if [ "${#DTLrates[@]}" -eq 3 ] ; then
       echo -e "will resume analysis from previously estimated DTL rate parameters:\n${DTLrates[@]} \nas found in file:\n'$estparam'"
-      prevcomputetime=$(cat ${resultdir}/${nfrad}.ale.computetime${resumealefromtag} | cut -f3)
+      prevcomputetime=$(cat ${outrecdir}/${nfrad}.ale.computetime${resumealefromtag} | cut -f3)
       if [ ! -z "$prevcomputetime" ] ; then
         echo -e "will add previous computation time spent estimating parameters found in file:\n'${dnchain}/${nfrad}.ale.computetime${resumealefromtag}'\nto new record:\n'./${nfrad}.ale.computetime'"
       fi
@@ -197,12 +197,12 @@ if [[ -e ${nfchain}.ale ]] ; then
   fi
   echo "use pre-existing ALE index file:"
   ls ${nfchain}.ale
-elif [[ -e ${resultdir}/${bnchain}.ale ]] ; then
+elif [[ -e ${outrecdir}/${bnchain}.ale ]] ; then
   if [[ "$worklocal" == "yes" ]] ; then
    # copy input files locally
-   rsync -az ${resultdir}/${bnchain}.ale ./
+   rsync -az ${outrecdir}/${bnchain}.ale ./
   else
-   ln -s ${resultdir}/${bnchain}.ale ${chain}.ale
+   ln -s ${outrecdir}/${bnchain}.ale ${chain}.ale
   fi
   echo "use pre-existing ALE index file:"
   ls -lh ${chain}.ale
@@ -247,7 +247,7 @@ while [ ! -z $(ps -q $alepid -o comm=) ] ; do
   fi
   ALETIME=${SECONDS}
   echo -e "${nfrad}\t${ALEalgo}\t${ALETIME}\ts" > ${nfrad}.ale.computetime
-  ${savecmd} ./${nfrad}.ale.* ${resultdir}/
+  ${savecmd} ./${nfrad}.ale.* ${outrecdir}/
 done
 echo ""
 echo "# # # #"
@@ -263,20 +263,20 @@ ls ${nfrad}*
 # save files
 ls ./${nfrad}*.ale.* > /dev/null
 if [ ${?} == 0 ] ; then
-  savecmd1="$savecmd ./${nfrad}*.ale* ${resultdir}/"
+  savecmd1="$savecmd ./${nfrad}*.ale* ${outrecdir}/"
   echo "# ${savecmd1}"
   ${savecmd1}
   if [ $? != 0 ] ; then
-    echo "ERROR: unable to save result files from ${PWD}/ to ${resultdir}/"
+    echo "ERROR: unable to save result files from ${PWD}/ to ${outrecdir}/"
   fi
 else
 ls ${dnchain}/${nfrad}*.ale.* > /dev/null
 if [ ${?} == 0 ] ; then
-  savecmd2="${savecmd} ${dnchain}/${nfrad}*.ale.* ${resultdir}/"
+  savecmd2="${savecmd} ${dnchain}/${nfrad}*.ale.* ${outrecdir}/"
   echo "# ${savecmd2}"
   ${savecmd2}
   if [ ${?} != 0 ] ; then
-    echo "ERROR: unable to save result files from ${dnchain} to ${resultdir}/"
+    echo "ERROR: unable to save result files from ${dnchain} to ${outrecdir}/"
   fi
 else
   echo "ERROR: unable to find the result files"
