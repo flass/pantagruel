@@ -74,6 +74,8 @@ if [ ! -z "${fwdenv}" ] ; then
 fi
 
 Njob=`wc -l ${tasklist} | cut -f1 -d' '`
+[ ! -z ${topindex} ] &&  [ ${Njob} -gt ${topindex} ] && Njob=${topindex}
+
 jobranges=($(${ptgscripts}/get_jobranges.py $chunksize $Njob))
 for jobrange in ${jobranges[@]} ; do
   dlogs=${ptglogs}/mrbayes/${chaintype}_mrbayes_trees_${collapsecond}_${dtag}_${jobrange}

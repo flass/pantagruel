@@ -61,6 +61,8 @@ else
   
   # accomodate with possible upper limit on number of tasks in an array job; assume chunks of 3000 tasks are fine
   Njob=`wc -l ${mlgenetreelist} | cut -f1 -d' '`
+  [ ! -z ${topindex} ] &&  [ ${Njob} -gt ${topindex} ] && Njob=${topindex}
+  
   jobranges=($(${ptgscripts}/get_jobranges.py $chunksize $Njob))
 
   # In the job submission commands below, some lines are specific to the HPC system 
@@ -111,7 +113,7 @@ else
 	eval "${subcmd}"
   done
   export collapsecoldate=$(date +%Y-%m-%d)
-  echo -e "${collapsecolid}\t${collapsecoldate}" > ${genetrees}/collapsecol
+  echo -e "${collapsecolid}\t${collapsecoldate}\t${collapsecriteriondef}" > ${genetrees}/collapsecol
   
  else
   echo "Error: incorrect value for variable chaintype: '${chaintype}'"

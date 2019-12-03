@@ -57,6 +57,8 @@ fi
 # PBS-submitted parallel job
 # divide run in small chunks o be run in different jobs
 Njob=`wc -l ${tasklist} | cut -f1 -d' '`
+[ ! -z ${topindex} ] &&  [ ${Njob} -gt ${topindex} ] && Njob=${topindex}
+
 jobranges=($(${ptgscripts}/get_jobranges.py $chunksize $Njob))
 rm -f ${tasklist}_${dtag}_taskchunks
 for jobrange in ${jobranges[@]} ; do

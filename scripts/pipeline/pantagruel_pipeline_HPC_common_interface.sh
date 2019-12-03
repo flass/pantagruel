@@ -31,6 +31,7 @@ or for this help mesage:\n
 \t --wth:\tmax walltime, in hours (default: ${defwth}).\n
 \t --hpctype:\t'PBS' for Torque scheduling system, or 'LSF' for IBM schedulling system (default: '${defhpctype}').\n
 \t --chunksize:\tnumber of families to be processed in one submitted job (default: ${defchunksize})\n
+\t --topindex:\tmax number of (gene family) sub-jobs to be actually submitted (default: '')\n
 \t --fwdenv:\tnames of current environment variables you want to be passed down to the submitted jobs\n
 \t --modules:\tnames (quoted, comma-separated list) of local modules to be loaded using the 'module load' command\n
 \t\t\t if several, separate by ',' and enclose in quotes, e.g.: 'VAR1, VAR2' \n
@@ -72,7 +73,7 @@ testmandatoryarg (){
   fi
 }
 
-ARGS=`getopt --options "h" --longoptions "ncpus:,mem:,wth:,hpctype:,chunksize:,parallelflags:,fwdenv:,modules:,maxatonce:" --name "${hpcscript}" -- "$@"`
+ARGS=`getopt --options "h" --longoptions "ncpus:,mem:,wth:,hpctype:,chunksize:,topindex:,parallelflags:,fwdenv:,modules:,maxatonce:" --name "${hpcscript}" -- "$@"`
 
 #Bad arguments
 if [ ${?} -ne 0 ];
@@ -116,7 +117,13 @@ do
 	--chunksize)
       testmandatoryarg "${1}" "${2}"
       export chunksize="${2}"
-      echo "will divide the work load into chunks of ${chunksize} individual tasks (gene trees)"
+      echo "will divide the work load into chunks of ${chunksize} individual tasks (gene families)"
+      shift 2;;
+	  
+	--topindex)
+      testmandatoryarg "${1}" "${2}"
+      export topindex="${2}"
+      echo "will sumit a maximum of ${topindex} individual tasks (gene families)"
       shift 2;;
 	
 	--parallelflags)

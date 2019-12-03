@@ -75,6 +75,8 @@ if [ "${resumetask}" == 'true' ] ; then
 fi
 
 Njob=`wc -l $tasklist | cut -f1 -d' '`
+[ ! -z ${topindex} ] &&  [ ${Njob} -gt ${topindex} ] && Njob=${topindex}
+
 qsubvars="tasklist, outrecdir, spetree, recsamplesize, ALEalgo, alebin, watchmem"
 
 case "$hpctype" in

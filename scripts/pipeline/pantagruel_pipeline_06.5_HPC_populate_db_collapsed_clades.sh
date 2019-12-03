@@ -9,9 +9,18 @@
 
 # Copyright: Florent Lassalle (f.lassalle@imperial.ac.uk), 15 Jan 2019
 
-if [ -z "$1" ] ; then echo "missing mandatory parameter: pantagruel config file" ; echo "Usage: $0 ptg_env_file" ; exit 1 ; fi
-envsourcescript="$1"
-source ${envsourcescript}
+
+# environment variables to be passed on to interface script:
+export hpcscript=$(basename ${0})
+hpcscriptdir=$(dirname ${0})
+export defncpus=1
+export defmem=32
+export defwth=12
+export defhpctype='PBS'
+export defchunksize=1
+export withpython='true'
+
+source ${hpcscriptdir}/pantagruel_pipeline_HPC_common_interface.sh "${@}"
 
 ################################################################################
 ## 06.5 Populate database with all collapsed gene tree results
@@ -24,13 +33,11 @@ if [[ "${chaintype}" == 'fullgenetree' ]] ; then
   
   #### end OPTION A2: 
 else
-  # In the job submission commands below, some lines are specific to the HPC system 
-  # and environmnt on which the script was developped:
-  module load anaconda3/personal
-  source activate env_python2
-  # In other environments, other methods may be used to access the required Python packages.
-  # To emulate this on other systems, it is best to use anaconda to build your own environment
-  # where you make sure you are using python 2.7 and have all required packages installed with it.
+  source ${ptgscripts}/load_python2.7_env.sh
+  # The command above will attempt to load the correct environment for Python 2.7 scripts, 
+  # given what options are available on the local (HPC) system.
+  # The preferred option is to use anaconda to build your own environment
+  # where you make sure you are using anaconda2 with python2.7 and have all required packages installed with it.
   # You can do so using the following command:
   # conda create -n env_python2 python=2.7 python-igraph biopython bcbio-gff scipy
   
@@ -38,14 +45,38 @@ else
   #### will feed data relative to these operation to the SQL databse
 
   ## edit the gene trees, producing the corresponding (potentially collapsed) species tree based on the 'time'-tree backbone
-  collapsecolid=$(cut -f1 ${genetrees}/collapsecol)
-  collapsecoldate=$(cut -f2 ${genetrees}/collapsecol)
-  collapsecriteriondef="$(cut -f3 ${genetrees}/collapsecol)"
-  replacecolid=$(cut -f1 ${genetrees}/replacecol)
-  replacecoldate=$(cut -f2 ${genetrees}/replacecol)
-    
+  export collapsecolid=$(cut -f1 ${genetrees}/collapsecol)
+  export collapsecoldate=$(cut -f2 ${genetrees}/collapsecol)
+  export collapsecriteriondef="$(cut -f3 ${genetrees}/collapsecol)"
+  export replacecolid=$(cut -f1 ${genetrees}/replacecol)
+  export replacecoldate=$(cut -f2 ${genetrees}/replacecol)
+  
+  echo "collapsecolid: '${collapsecolid}'; collapsecoldate: '${collapsecoldate}'; collapsecriteriondef: '${collapsecriteriondef}'; replacecolid: '${replacecolid}'; replacecoldate: '${replacecoldate}'; "
+	
   ## load these information into the database
-  ${ptgscripts}/pantagruel_sqlitedb_phylogeny_populate_collapsed_clades.sh "${database}" "${sqldb}" "${colalinexuscodedir}" "${coltreechains}" "${collapsecond}" "${replmethod}" "${collapsecriteriondef}" "${collapsecolid}" "${replacecolid}" "${collapsecoldate}" "${replacecoldate}"
+  
+  case "${hpctype}" in 
+   PBS)
+    subcmdpref="qsub${arrayspec} -N ptgSqlitePhyloPopulateCCs -l select=1:ncpus=${ncpus}:mem=${mem}gb${parallelflags},walltime=${wth}:00:00 -o ${repllogd} -j oe -V"
+    ;;
+   LSF)
+    if [ ${wth} -le 12 ] ; then
+      bqueue='normal'
+    elif [ ${wth} -le 48 ] ; then
+      bqueue='long'
+    else
+     bqueue='basement'
+    fi
+    memmb=$((${mem} * 1024)) 
+    nflog="${repllogd}/ptgSqlitePhyloPopulateCCs.%J.o"
+    [ -z "${parallelflags}" ] && parallelflags="span[hosts=1]"
+    subcmdpref="bsub -J replSpePopinGs${arrayspec} -R \"select[mem>${memmb}] rusage[mem=${memmb}] ${parallelflags}\" \
+            -n${ncpus} -M${memmb} -q ${bqueue} -o ${nflog} -e ${nflog} -env 'all'"
+    ;;
+  esac
 
+  subcmd = "${subcmdpref} ${ptgscripts}/pantagruel_sqlitedb_phylogeny_populate_collapsed_clades.sh"
+  echo "${subcmd}"
+  eval "${subcmd}"
 fi
 #### end OPTION B2

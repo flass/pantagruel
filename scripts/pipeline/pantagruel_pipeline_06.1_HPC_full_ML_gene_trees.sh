@@ -81,6 +81,8 @@ for i in ${!allcdsfam2phylo[@]} ; do
     qsubvars="${qsubvars},raxmlbin=${raxmlbin}"
   fi
   Njob=`wc -l ${tasklist} | cut -f1 -d' '`
+  [ ! -z ${topindex} ] &&  [ ${Njob} -gt ${topindex} ] && Njob=${topindex}
+  
   # accomodate with possible upper limit on number of tasks in an array job
   jobranges=($(${ptgscripts}/get_jobranges.py $chunksize $Njob))
   for jobrange in ${jobranges[@]} ; do
