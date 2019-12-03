@@ -98,12 +98,17 @@ if [[ -z "${terabin}" ]] ; then
   terabin="$(dirname $(readlink -f $(command -v ecceTERA)))"
 fi
 
-Njob=`wc -l ${tasklist} | cut -f1 -d' '`
-[ ! -z ${topindex} ] &&  [ ${Njob} -gt ${topindex} ] && Njob=${topindex}
-
 qsubvars="tasklist, outrecdir, spetree, alebin, terabin, watchmem"
 
-case "$hpctype" in
+Njob=`wc -l ${tasklist} | cut -f1 -d' '`
+[ ! -z ${topindex} ] &&  [ ${Njob} -gt ${topindex} ] && Njob=${topindex}
+jobranges=($(${ptgscripts}/get_jobranges.py $chunksize $Njob))
+
+for jobrange in ${jobranges[@]} ; do
+ dlogs=${alelogs}/${reccol}/ale_${dtag}_${jobrange}
+ mkdir -p ${dlogs}/
+
+ case "$hpctype" in
   'PBS') 
     subcmd="qsub -J 1-$Njob -N ${reccol} -l select=1:ncpus=${ncpus}:mem=${mem}${parallelflags},walltime=${wth}:00:00 -o ${teralogs}/${reccol} -j oe -v \"$qsubvars\" ${ptgscripts}/ecceTERA_array_PBS.qsub"
     ;;
@@ -126,9 +131,10 @@ case "$hpctype" in
     echo "Error: high-performance computer system '${hpctype}' is not supported; exit now"
     exit 1
 	;;
-esac
-echo "${subcmd}"
-eval "${subcmd}"
+ esac
+ echo "${subcmd}"
+ eval "${subcmd}"
+done
 
 export reccoldate=$(date +%Y-%m-%d)
 
