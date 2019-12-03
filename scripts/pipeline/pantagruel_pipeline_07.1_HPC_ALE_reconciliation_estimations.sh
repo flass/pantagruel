@@ -75,6 +75,8 @@ if [ "${resumetask}" == 'true' ] ; then
 fi
 
 export dtag="$(date +'%Y%m%d-%H%M%S')"
+export alebin="$alebin"
+export watchmem="$watchmem"
 
 qsubvars="tasklist, outrecdir, spetree, recsamplesize, ALEalgo, alebin, watchmem"
 
