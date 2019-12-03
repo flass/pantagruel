@@ -46,19 +46,19 @@ fi
 export reccol="ale_${chaintype}_${rectype}_${reccolid}"
 export recs=${alerec}/${chaintype}_ALE_recs
 
-tasklist=${alerec}/${collapsecond}_${replmethod}_Gtrees_list
+export tasklist=${alerec}/${collapsecond}_${replmethod}_Gtrees_list
 
 ${ptgscripts}/lsfullpath.py "${coltreechains}/${collapsecond}/${replmethod}/*-Gtrees.nwk" > $tasklist
 alelogs=${ptgdb}/logs/ALE
 mkdir -p ${alelogs}/${reccol}
-outrecdir=${recs}/${collapsecond}/${replmethod}/${reccol}
+export outrecdir=${recs}/${collapsecond}/${replmethod}/${reccol}
 mkdir -p $outrecdir
 if [[ "${chaintype}" == 'fullgenetree' ]] ; then
   # use the same species tree file for every gene family, with no collapsed populations
-  spetree=${speciestree}.lsd.nwk ${recsamplesize} ${ALEalgo}
+  export spetree=${speciestree}.lsd.nwk ${recsamplesize} ${ALEalgo}
 else
   # use a dedicated species tree file for each gene family, with population collapsed in accordance to the gene tree
-  spetree=Stree.nwk
+  export spetree=Stree.nwk
 fi
 
 if [ "${resumetask}" == 'true' ] ; then
