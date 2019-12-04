@@ -104,8 +104,10 @@ if (file.exists(nfabspresmat)){
 		print(paste(paste(head(colnames(genocount)), collapse=' '), '...'))
 		lasscode = read.table(nflasscode, row.names=1, stringsAsFactors=F, comment.char='')
 		rownames(lasscode) = make.names(rownames(lasscode))
-		print("substitute labels with translation table:")
-		print(head(lasscode))
+		if (verbose){
+			print("substitute labels with translation table:")
+			print(head(lasscode))
+		}
 		colnames(genocount) = lasscode[colnames(genocount),1]
 		print("changed the column labels of 'genocount' table:")
 		print(paste(paste(head(colnames(genocount)), collapse=' '), '...'))
@@ -179,6 +181,12 @@ for (i in 1:length(cladedefs)){
 			dbBegin(dbcon)
 			dbWriteTable(dbcon, "specific_genes", spefamogs, temporary=T)
 			write.table(spefamogs, file=file.path(diroutspegedetail, paste(bnoutspege[[ab]], cla, "spegene_fams_ogids.tab", sep='_')), sep='\t', quote=F, row.names=F, col.names=T, append=F)
+			if verbose{
+				spgq = "SELECT * from specific_genes LIMIT 10;"
+				print(spgq)
+				spegenesample = dbGetQuery(dbcon, spgq)
+				print(spegenesample)
+			}
 			# choose adequate reference genome
 			if (ab=="pres"){ occgenomes = cladedef$clade
 			}else{ occgenomes = cladedef$sisterclade }
@@ -202,7 +210,7 @@ for (i in 1:length(cladedefs)){
 			 "   INNER JOIN coding_sequences as cds ON ogs.replacement_label_or_cds_code=cds.cds_code AND ogs.gene_family_id=cds.gene_family_id",
 			 " UNION",
 			 "  SELECT gene_family_id, og_id, ortholog_col_id, coding_sequences.*",
-			 "	 FROM specific_genes",
+			 "    FROM specific_genes",
 			 "   LEFT JOIN orthologous_groups USING (gene_family_id, og_id)",
 			 "   INNER JOIN coding_sequences USING (gene_family_id)",
 			 "   WHERE og_id IS NULL ) as famog2cds",
