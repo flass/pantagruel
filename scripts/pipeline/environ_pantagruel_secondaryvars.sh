@@ -37,7 +37,6 @@ export mlgenetrees=${genetrees}/raxml_trees
 export colalinexuscodedir=${genetrees}/${chaintype}_cdsfam_alignments_species_code
 export bayesgenetrees=${genetrees}/${chaintype}_mrbayes_trees
 export coltreechains=${genetrees}/${chaintype}_tree_chains
-export mboutputdir=${bayesgenetrees}/${collapsecond}
 export recs=${alerec}/${chaintype}_${recmethod}_recs
 export goterms=${funcannot}/GeneOntology
 export claderefgodir=${goterms}/clade_go_term_reference_sets
@@ -80,6 +79,7 @@ else
   export collapsecond=${criterion}_stem${cladesupp}_within${withinfun}${subcladesupp}
   export replmethod='replaceCCinGasinS-collapsePOPinSnotinG'
 fi
+export mboutputdir=${bayesgenetrees}/${collapsecond}
 export IPversion=$(interproscan --version 2> /dev/null | head -n 1 | sed -e 's/InterProScan version //')
 if [ ! -z "${IPversion}" ] ; then
   export interpro=${funcannot}/InterProScan_${IPversion}
