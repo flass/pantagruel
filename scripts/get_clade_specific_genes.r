@@ -95,12 +95,14 @@ if (file.exists(nfabspresmat)){
 }else{
 	genocount = data.matrix(read.table(file=nffamgenomemat, comment.char=''))
 	if (!is.null(nflasscode)){
-			print("initial column labels for 'genocount' table:")
-			head(colnames(genocount))
-			lasscode = read.table(nflasscode, row.names=1, stringsAsFactors=F, comment.char='')
-			colnames(genocount) = lasscode[colnames(genocount),1]
-			print("changed the column labels of 'genocount' table:")
-			print(paste(paste(head(colnames(genocount)), collpase=' '), '...'))
+		print("initial column labels for 'genocount' table:")
+		print(head(colnames(genocount)))
+		lasscode = read.table(nflasscode, row.names=1, stringsAsFactors=F, comment.char='')
+		print("substitute labels with translation table:")
+		print(head(lasscode))
+		colnames(genocount) = lasscode[colnames(genocount),1]
+		print("changed the column labels of 'genocount' table:")
+		print(paste(paste(head(colnames(genocount)), collpase=' '), '...'))
 	}
 	if (!is.null(nfrestrictlist)){
 		print(sprintf("initial column count in 'genocount' table: %d", ncol(genocount)))
