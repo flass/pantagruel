@@ -34,7 +34,8 @@ spec = matrix(c(
   'ass_to_code',          'a', 2, "character", "(optional) path to file providing correspondency between assembly ids and UniProt-like genome codes; only if the input matrix has assembly ids in column names (deprecated)",
   'preferred_genomes',    'p', 2, "character", "(optional) comma-separated list of codes of preferred genomes which CDS info will be reported in reference tables (when part of the focal clade); genomes are selected in priority order as listed: 1st_preferred, 2nd_preferred, etc.",
   'interesting_families', 'f', 2, "character", "(optional) comma-separated list of gene families for which detail of presence/absence distribution will be printed out",
-  'help',                 'h', 0, "logical",   "prints this help message and quits"
+  'help',                 'h', 0, "logical",   "prints this help message and quits",
+  'verbose',              'v', 0, "logical",   "verbose mode; print SQL queries as they are processed"
 ), byrow=TRUE, ncol=5);
 opt = getopt(spec, opt=commandArgs(trailingOnly=T))
 
@@ -44,7 +45,9 @@ if ( !is.null(opt$help) ){
   cat(getopt(spec, usage=TRUE))
   quit(status=0)
 }
-
+if ( !is.null(opt$verbose) ){
+  verbose=TRUE
+}
 nffamgenomemat = opt$gene_count_matrix
 sqldb = opt$sqldb
 nfcladedef = opt$clade_defs
@@ -108,7 +111,7 @@ if (file.exists(nfabspresmat)){
 	if (!is.null(nfrestrictlist)){
 		print(sprintf("initial column count in 'genocount' table: %d", ncol(genocount)))
 		restrictgenomelist = readLines(nfrestrictlist)
-	#~ 	print(setdiff(restrictgenomelist, colnames(genocount)))
+	 	if (verbose) print(setdiff(restrictgenomelist, colnames(genocount)))
 		genocount = genocount[,restrictgenomelist]
 		gc()
 		print(sprintf("restricted 'genocount' table to %d columns with labels:", ncol(genocount)))
@@ -207,35 +210,43 @@ for (i in 1:length(cladedefs)){
 			 sprintf("WHERE code IN ( '%s' )", paste(occgenomes, collapse="','", sep='')),
 			 "AND (ortholog_col_id = :o OR ortholog_col_id IS NULL) ;"),
 			 collapse=" ")
-#~ 			print(creaspegeneannots)
+ 			if (verbose) print(creaspegeneannots)
 			dbExecute(dbcon, creaspegeneannots, params=list(o=ogcolid))
 			dbExecute(dbcon, "DROP TABLE specific_genes;")
 			genesetclauses = list(sprintf("WHERE code='%s' AND", refgenome), "WHERE") ; names(genesetclauses) = genesetscopes
 			for (genesetscope in genesetscopes){
 				gsc = genesetclauses[[genesetscope]] # = "WHERE [clause AND]"
-#~ 				print(gsc)
-				spegeneinfo = dbGetQuery(dbcon, paste( c(
+ 				if (verbose) print(gsc)
+				q1 = paste( c(
 				"SELECT gene_family_id, og_id, cds_code, genomic_accession, locus_tag, cds_begin, cds_end, product", 
 				"FROM spegeneannots", 
-				gsc, "1 ORDER BY locus_tag ;"), collapse=" "))
-				spegeneinfoplus = dbGetQuery(dbcon, paste( c(
+				gsc, "1 ORDER BY locus_tag ;"), collapse=" ")
+ 				if (verbose) print(q1)
+				spegeneinfo = dbGetQuery(dbcon, q1)
+				q2 = paste( c(
 				 "SELECT distinct gene_family_id, og_id, cds_code, genomic_accession, locus_tag, cds_begin, cds_end, product, interpro_id, interpro_description, go_terms, pathways",
 				 "FROM spegeneannots",
 				 "LEFT JOIN functional_annotations USING (nr_protein_id)",
 				 "LEFT JOIN interpro_terms USING (interpro_id)", 
-				 gsc, "1 ORDER BY locus_tag ;"), collapse=" "))
-				spegallgoterms = dbGetQuery(dbcon, paste( c(
+				 gsc, "1 ORDER BY locus_tag ;"), collapse=" ")
+ 				if (verbose) print(q2)
+				spegeneinfoplus = dbGetQuery(dbcon, q2)
+				q3 = paste( c(
 				 "SELECT distinct gene_family_id, og_id, cds_code, genomic_accession, locus_tag, go_id",
 				 "FROM spegeneannots",
 				 "LEFT JOIN functional_annotations USING (nr_protein_id)",
 				 "LEFT JOIN interpro2GO USING (interpro_id)",
-				 gsc, "go_id NOT NULL ORDER BY locus_tag ;"), collapse=" "))
-				spegallpathways = dbGetQuery(dbcon, paste( c(
+				 gsc, "go_id NOT NULL ORDER BY locus_tag ;"), collapse=" ")
+				spegallgoterms = dbGetQuery(dbcon, q3)
+ 				if (verbose) print(q3)
+				q4 = paste( c(
 				 "SELECT distinct gene_family_id, og_id, cds_code, genomic_accession, locus_tag, pathway_db, pathway_id",
 				 "FROM spegeneannots",
 				 "LEFT JOIN functional_annotations USING (nr_protein_id)",
 				 "LEFT JOIN interpro2pathways USING (interpro_id)",
-				 gsc, "pathway_id NOT NULL ORDER BY locus_tag ;"), collapse=" "))
+				 gsc, "pathway_id NOT NULL ORDER BY locus_tag ;"), collapse=" ")
+ 				if (verbose) print(q4)
+				spegallpathways = dbGetQuery(dbcon, q4)
 				if (genesetscope=="reprseq"){ write.table(spegeneinfo, file=nfoutspege[[ab]], sep='\t', quote=F, row.names=F, col.names=T, append=T) }
 				write.table(spegeneinfoplus, file=file.path(diroutspegedetail, paste(bnoutspege[[ab]], cla, genesetscope, "details.tab", sep='_')), sep='\t', quote=F, row.names=F, col.names=T, append=F)
 				write.table(spegallgoterms, file=file.path(diroutspegedetail, paste(bnoutspege[[ab]], cla, genesetscope, "goterms.tab", sep='_')), sep='\t', quote=F, row.names=F, col.names=T, append=F)
