@@ -37,6 +37,13 @@ spec = matrix(c(
 ), byrow=TRUE, ncol=5);
 opt = getopt(spec, opt=commandArgs(trailingOnly=T))
 
+# if help was asked for print a friendly message
+# and exit with a zero error code
+if ( !is.null(opt$help) ){
+  cat(getopt(spec, usage=TRUE))
+  quit(status=0)
+}
+
 nffamgenomemat = opt$gene_count_matrix
 sqldb = opt$sqldb
 nfcladedef = opt$clade_defs

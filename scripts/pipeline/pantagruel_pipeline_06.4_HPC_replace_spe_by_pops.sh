@@ -54,7 +54,7 @@ if [ "${resumetask}" == 'true' ] ; then
   done > ${tasklist}_resume
   export tasklist=${tasklist}_resume
 fi
-# PBS-submitted parallel job
+# submitted parallel job
 # divide run in small chunks o be run in different jobs
 Njob=`wc -l ${tasklist} | cut -f1 -d' '`
 [ ! -z ${topindex} ] &&  [ ${Njob} -gt ${topindex} ] && Njob=${topindex}
