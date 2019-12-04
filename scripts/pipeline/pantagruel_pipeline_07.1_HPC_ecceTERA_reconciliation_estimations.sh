@@ -120,9 +120,11 @@ for jobrange in ${jobranges[@]} ; do
     else
 	  bqueue='basement'
     fi
+    arrayspec="[$jobrange]"
+	[ ! -z ${maxatonce} ] && arrayspec="${arrayspec}%${maxatonce}"
     memmb=$((${mem} * 1024))
     nflog="${teralogs}/${reccol}.%J.%I.o"
-	subcmd="bsub -J \"${reccol}[$jobrange]\" -q ${bqueue} \
+	subcmd="bsub -J \"${reccol}${arrayspec}\" -q ${bqueue} \
 	-R \"select[mem>${memmb}] rusage[mem=${memmb}] span[hosts=1]\" -n${ncpus} -M${memmb} \
 	-o ${nflog} -e ${nflog} -env \"${qsubvars}\" \
     ${ptgscripts}/ecceTERA_array_LSF.bsub"
