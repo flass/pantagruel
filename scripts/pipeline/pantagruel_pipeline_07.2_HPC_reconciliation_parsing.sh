@@ -9,9 +9,17 @@
 
 # Copyright: Florent Lassalle (f.lassalle@imperial.ac.uk), 30 July 2018
 
-if [ -z "$1" ] ; then echo "missing mandatory parameter: pantagruel config file" ; echo "Usage: $0 ptg_env_file [ncpus=8] [mem=124gb] [walltimehours=24]" ; exit 1 ; fi
-envsourcescript="$1"
-source ${envsourcescript}
+# environment variables to be passed on to interface script:
+export hpcscript=$(basename ${0})
+hpcscriptdir=$(dirname ${0})
+export defncpus=8
+export defmem=124
+export defwth=24
+export defhpctype='PBS'
+export defchunksize=100
+export withpython='true'
+
+source ${hpcscriptdir}/pantagruel_pipeline_HPC_common_interface.sh "${@}"
 
 # safer specifying the reconciliation collaction to parse; e.g.: 'ale_collapsed_dated_1'
 if [ ! -z "$2" ] ; then
@@ -21,25 +29,12 @@ else
   reccol=$(cut -f4 ${alerec}/reccol)
 fi
 
-if [ ! -z "$3" ] ; then
-  ncpus="$3"
-else
-  ncpus=8
-fi
-if [ ! -z "$4" ] ; then
-  mem="$"
-else
-  mem=124gb
-fi
-if [ ! -z "$5" ] ; then
-  wth="$5"
-else
-  wth=24
-fi
-
 ######################################################
 ## 07.2 Parse gene tree / Species tree reconciliations
 ######################################################
+ 
+## normalise the species tree branch labels across gene families
+## and look for correlated transfer events across gene families
 
 ### parse the inferred scenarios
 # parameters to be set
@@ -53,40 +48,78 @@ export parsedrecs=${alerec}/parsed_recs/${parsedreccol}
 outrecdir=${recs}/${collapsecond}/${replmethod}/${reccol}
 
 mkdir -p ${parsedrecs}
-reclist=$outrecdir/${reccol}_${rectype}_uml_rec_list
-${ptgscripts}/lsfullpath.py "${outrecdir}/${reccol}_${rectype}/*ml_rec" > $reclist
- 
-## normalise the species tree branch labels across gene families
-## and look for correlated transfer events across gene families
+tasklist=$outrecdir/${reccol}_${rectype}_uml_rec_list
+${ptgscripts}/lsfullpath.py "${outrecdir}/${reccol}_${rectype}/*ml_rec" > $tasklist
 
-# PBS-submitted parallel job
 parsecollogd=${ptgdb}/logs/parsecol
-parsecollogs=${parsecollogd}/parse_collapsedALE_scenarios.og
+parsecollogs=${parsecollogd}/parse_collapsedALE_scenarios.log
 
-# In the job submission commands below, some lines are specific to the HPC system 
-# and environmnt on which the script was developped:
-#   module load anaconda3/personal
-#   source activate env_python2
-# In other environments, other methods may be used to access the required Python packages.
-# To emulate this on other systems, it is best to use anaconda to build your own environment
-# where you make sure you are using python 2.7 and have all required packages installed with it.
-# You can do so using the following command:
-# conda create -n env_python2 python=2.7 python-igraph biopython bcbio-gff scipy
 ALEsourcenote=$(cut -f3 ${alerec}/reccol)
+
+
+# submitted parallel job
+Njob=`wc -l ${tasklist} | cut -f1 -d' '`
+[ ! -z ${topindex} ] &&  [ ${Njob} -gt ${topindex} ] && Njob=${topindex}
+
+jobranges=($(${ptgscripts}/get_jobranges.py $chunksize $Njob))
+rm -f ${tasklist}_${dtag}_taskchunks
+for jobrange in ${jobranges[@]} ; do
+  replrun="${dtag}_${jobrange}"
+  tail -n +$(echo $jobrange | cut -d'-' -f1) ${tasklist} | head -n ${chunksize} > ${tasklist}_${replrun}
+  echo ${tasklist}_${replrun} >> ${tasklist}_${dtag}_taskchunks
+done
+Nchunk=`wc -l ${tasklist}_${dtag}_taskchunks | cut -f1 -d' '`
+if [ ${Nchunk} -gt 2 ] ; then
+  # run as an array job
+  arrayspec=" -J 1-${Nchunk}"
+else
+  arrayspec=""
+fi
+
+case "${hpctype}" in 
+  PBS)
+    [ ${Nchunk} -gt 2 ] && arrayspec=" -J 1-${Nchunk}"
+    subcmd="qsub${arrayspec} -N parseColALEscenario -l select=1:ncpus=${ncpus}:mem=${mem}gb${parallelflags},walltime=${wth}:00:00 -o ${repllogd} -j oe -V ${ptgscripts}/parseColALEscenario_array_PBS.qsub"
+    ;;
+  LSF)
+    if [ ${Nchunk} -gt 2 ] ; then
+      arrayspec="[1-${Nchunk}]"
+	  [ ! -z ${maxatonce} ] && arrayspec="${arrayspec}%${maxatonce}"
+      arrayjobtag='.%I'
+    fi
+    if [ ${wth} -le 12 ] ; then
+      bqueue='normal'
+    elif [ ${wth} -le 48 ] ; then
+      bqueue='long'
+    else
+     bqueue='basement'
+    fi
+    memmb=$((${mem} * 1024)) 
+    nflog="${repllogd}/replSpePopinGs.%J${arrayjobtag}.o"
+    [ -z "${parallelflags}" ] && parallelflags="span[hosts=1]"
+    subcmd="bsub -J parseColALEscenarios${arrayspec} -R \"select[mem>${memmb}] rusage[mem=${memmb}] ${parallelflags}\" \
+            -n${ncpus} -M${memmb} -q ${bqueue} \
+            -o ${nflog} -e ${nflog} -env 'all' ${ptgscripts}/parseColALEscenarios_array_LSF.bsub"
+    ;;
+esac
+echo "$subcmd"
+eval "$subcmd"
+
+
+
+
+qsub -N parseColALE -l select=1:ncpus=${ncpus}:mem=${mem},walltime=${wth}:00:00 -o ${parsecollogs} -j oe -V << EOF
+module load anaconda3/personal
+source activate env_python2
+python2.7 ${ptgscripts}/parse_collapsedALE_scenarios.py --rec_sample_list ${tasklist} \
+ --populations ${speciestree/.full/}_populations --reftree ${speciestree}.lsd.nwk \
+ --dir_table_out ${parsedrecs} --evtype ${evtypeparse} --minfreq ${minevfreqparse} \
+ --threads 8
 
 #### NOTE
 ## here for simplicity only the log variables refering to parsed reconciliations (parsedreccol, parsedreccolid, parsedreccoldate) are recorded in the database
 ## but not the log variables refering to the actual reconciliations (reccol, reccolid, reccoldate)
 ####
-
-qsub -N parseColALE -l select=1:ncpus=${ncpus}:mem=${mem},walltime=${wth}:00:00 -o ${parsecollogs} -j oe -V << EOF
-module load anaconda3/personal
-source activate env_python2
-python2.7 ${ptgscripts}/parse_collapsedALE_scenarios.py --rec_sample_list ${reclist} \
- --populations ${speciestree/.full/}_populations --reftree ${speciestree}.lsd.nwk \
- --dir_table_out ${parsedrecs} --evtype ${evtypeparse} --minfreq ${minevfreqparse} \
- --threads 8
-
 export parsedreccoldate=$(date +%Y-%m-%d)
 echo -e "${parsedreccolid}\t${parsedreccoldate}" > ${alerec}/parsedreccol
 
