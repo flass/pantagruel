@@ -93,12 +93,16 @@ for (i in 1:length(cladedefs)){
 if (file.exists(nfabspresmat)){
 	load(nfabspresmat)
 }else{
-	genocount = data.matrix(read.table(file=nffamgenomemat))
+	genocount = data.matrix(read.table(file=nffamgenomemat), comment.char='')
 	if (!is.null(nfrestrictlist)){
 		restrictgenomelist = readLines(nfrestrictlist)
 		if (!is.null(nflasscode)){
+			print("initial column labels for 'genocount' table:")
+			head(colnames(genocount))
 			lasscode = read.table(nflasscode, row.names=1, stringsAsFactors=F)
 			colnames(genocount) = lasscode[colnames(genocount),1]
+			print("changed the column labels of 'genocount' table:")
+			head(colnames(genocount))
 		}
 	#~ 	print(setdiff(restrictgenomelist, colnames(genocount)))
 		genocount = genocount[,restrictgenomelist]
