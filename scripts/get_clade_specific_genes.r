@@ -181,7 +181,7 @@ for (i in 1:length(cladedefs)){
 			dbBegin(dbcon)
 			dbWriteTable(dbcon, "specific_genes", spefamogs, temporary=T)
 			write.table(spefamogs, file=file.path(diroutspegedetail, paste(bnoutspege[[ab]], cla, "spegene_fams_ogids.tab", sep='_')), sep='\t', quote=F, row.names=F, col.names=T, append=F)
-			if verbose{
+			if (verbose){
 				spgq = "SELECT * from specific_genes LIMIT 10;"
 				print(spgq)
 				spegenesample = dbGetQuery(dbcon, spgq)
