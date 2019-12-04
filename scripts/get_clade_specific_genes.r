@@ -97,7 +97,7 @@ if (file.exists(nfabspresmat)){
 	if (!is.null(nflasscode)){
 			print("initial column labels for 'genocount' table:")
 			head(colnames(genocount))
-			lasscode = read.table(nflasscode, row.names=1, stringsAsFactors=F)
+			lasscode = read.table(nflasscode, row.names=1, stringsAsFactors=F, comment.char='')
 			colnames(genocount) = lasscode[colnames(genocount),1]
 			print("changed the column labels of 'genocount' table:")
 			print(paste(paste(head(colnames(genocount)), collpase=' '), '...'))
