@@ -76,15 +76,16 @@ if [ "${mbresume}" == 'yes' ] ; then
     # import files from previous interupted analysis
     echo "rsync -avz ${outputdir}/${pref}/*${nfrad2}* ./"
     rsync -avz ${outputdir}/${pref}/*${nfrad2}* ./
+	echo "recovered intermediary files from previous run with exit status $?"
   fi
 else
   if [ ! -z "$(ls ./${nfrad2}.mb* 2> /dev/null)" ] ; then
     echo "there are already files matching pattern './${nfrad2}.mb*' ; I do not risk overwritting them: exit now"
     exit 1
   fi
-  echo "rsync -avz ${nfaln} ./"
-  rsync -avz ${nfaln} ./
 fi
+echo "rsync -avz ${nfaln} ./"
+rsync -avz ${nfaln} ./
 echo "copied input files with exit status $?"
 echo "ls ./*${nfrad2}*"
 ls ./*${nfrad2}*
