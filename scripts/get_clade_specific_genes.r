@@ -33,7 +33,8 @@ spec = matrix(c(
   'og_col_id',            'c', 2, "integer",   "orthologous group collection id in SQL database; if not provided, will only use the homologous family mapping of genes (coarser homology mapping, meaning stricter clade-specific gene definition)",
   'ass_to_code',          'a', 2, "character", "(optional) path to file providing correspondency between assembly ids and UniProt-like genome codes; only if the input matrix has assembly ids in column names (deprecated)",
   'preferred_genomes',    'p', 2, "character", "(optional) comma-separated list of codes of preferred genomes which CDS info will be reported in reference tables (when part of the focal clade); genomes are selected in priority order as listed: 1st_preferred, 2nd_preferred, etc.",
-  'interesting_families', 'f', 2, "character", "(optional) comma-separated list of gene families for which detail of presence/absence distribution will be printed out"
+  'interesting_families', 'f', 2, "character", "(optional) comma-separated list of gene families for which detail of presence/absence distribution will be printed out",
+  'help',                 'h', 0, "logical",   "prints this help message and quits"
 ), byrow=TRUE, ncol=5);
 opt = getopt(spec, opt=commandArgs(trailingOnly=T))
 
