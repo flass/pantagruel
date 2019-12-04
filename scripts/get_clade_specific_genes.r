@@ -93,7 +93,7 @@ for (i in 1:length(cladedefs)){
 if (file.exists(nfabspresmat)){
 	load(nfabspresmat)
 }else{
-	genocount = data.matrix(read.table(file=nffamgenomemat), comment.char='')
+	genocount = data.matrix(read.table(file=nffamgenomemat, comment.char=''))
 	if (!is.null(nfrestrictlist)){
 		restrictgenomelist = readLines(nfrestrictlist)
 		if (!is.null(nflasscode)){
