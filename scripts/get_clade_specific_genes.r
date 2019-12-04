@@ -98,11 +98,12 @@ if (file.exists(nfabspresmat)){
 		print("initial column labels for 'genocount' table:")
 		print(head(colnames(genocount)))
 		lasscode = read.table(nflasscode, row.names=1, stringsAsFactors=F, comment.char='')
+		rownames(lasscode) = make.names(rownames(lasscode))
 		print("substitute labels with translation table:")
 		print(head(lasscode))
 		colnames(genocount) = lasscode[colnames(genocount),1]
 		print("changed the column labels of 'genocount' table:")
-		print(paste(paste(head(colnames(genocount)), collpase=' '), '...'))
+		print(paste(paste(head(colnames(genocount)), collapse=' '), '...'))
 	}
 	if (!is.null(nfrestrictlist)){
 		print(sprintf("initial column count in 'genocount' table: %d", ncol(genocount)))
