@@ -46,7 +46,9 @@ if ( !is.null(opt$help) ){
   quit(status=0)
 }
 if ( !is.null(opt$verbose) ){
-  verbose=TRUE
+	verbose = TRUE
+}else{
+	verbose = FALSE
 }
 nffamgenomemat = opt$gene_count_matrix
 sqldb = opt$sqldb
@@ -99,7 +101,7 @@ if (file.exists(nfabspresmat)){
 	genocount = data.matrix(read.table(file=nffamgenomemat, header=T, comment.char=''))
 	if (!is.null(nflasscode)){
 		print("initial column labels for 'genocount' table:")
-		print(head(colnames(genocount)))
+		print(paste(paste(head(colnames(genocount)), collapse=' '), '...'))
 		lasscode = read.table(nflasscode, row.names=1, stringsAsFactors=F, comment.char='')
 		rownames(lasscode) = make.names(rownames(lasscode))
 		print("substitute labels with translation table:")
