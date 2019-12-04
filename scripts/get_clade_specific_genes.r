@@ -100,28 +100,28 @@ if (file.exists(nfabspresmat)){
 }else{
 	genocount = data.matrix(read.table(file=nffamgenomemat, header=T, comment.char=''))
 	if (!is.null(nflasscode)){
-		print("initial column labels for 'genocount' table:")
-		print(paste(paste(head(colnames(genocount)), collapse=' '), '...'))
+		print("initial column labels for 'genocount' table:", quotes=F)
+		print(paste(paste(head(colnames(genocount)), collapse=' '), '...'), quotes=F)
 		lasscode = read.table(nflasscode, row.names=1, stringsAsFactors=F, comment.char='')
 		rownames(lasscode) = make.names(rownames(lasscode))
 		if (verbose){
-			print("substitute labels with translation table:")
-			print(head(lasscode))
+			print("substitute labels with translation table:", quotes=F)
+			print(head(lasscode), quotes=F)
 		}
 		colnames(genocount) = lasscode[colnames(genocount),1]
-		print("changed the column labels of 'genocount' table:")
-		print(paste(paste(head(colnames(genocount)), collapse=' '), '...'))
-		print("")
+		print("changed the column labels of 'genocount' table:", quotes=F)
+		print(paste(paste(head(colnames(genocount)), collapse=' '), '...'), quotes=F)
+		print("", quotes=F)
 	}
 	if (!is.null(nfrestrictlist)){
-		print(sprintf("initial column count in 'genocount' table: %d", ncol(genocount)))
+		print(sprintf("initial column count in 'genocount' table: %d", ncol(genocount)), quotes=F)
 		restrictgenomelist = readLines(nfrestrictlist)
 	 	if (verbose) print(setdiff(restrictgenomelist, colnames(genocount)))
 		genocount = genocount[,restrictgenomelist]
 		gc()
-		print(sprintf("restricted 'genocount' table to %d columns with labels:", ncol(genocount)))
-		print(paste(paste(head(colnames(genocount)), collpase=' '), '...'))
-		print("")
+		print(sprintf("restricted 'genocount' table to %d columns with labels:", ncol(genocount)), quotes=F)
+		print(paste(paste(head(colnames(genocount)), collpase=' '), '...'), quotes=F)
+		print("", quotes=F)
 	}
 	save(genocount, file=nfabspresmat)
 }
@@ -206,15 +206,15 @@ for (i in 1:length(cladedefs)){
 			 "CREATE TABLE spegeneannots AS ",
 			 "SELECT gene_family_id, og_id, genomic_accession, code, locus_tag, cds_code, cds_begin, cds_end, nr_protein_id, product",
 			 "FROM (",
-			 "  SELECT gene_family_id, og_id, ortholog_col_id, cds.*",
+			 "  SELECT cds.gene_family_id, og_id, ortholog_col_id, cds.*",
 			 "   FROM specific_genes",
 			 "   INNER JOIN orthologous_groups as ogs USING (gene_family_id, og_id)",
 			 "   INNER JOIN coding_sequences as cds ON ogs.replacement_label_or_cds_code=cds.cds_code AND ogs.gene_family_id=cds.gene_family_id",
 			 " UNION",
-			 "  SELECT gene_family_id, og_id, ortholog_col_id, cds.*",
+			 "  SELECT cds.gene_family_id, og_id, ortholog_col_id, cds.*",
 			 "    FROM specific_genes",
-			 "   LEFT JOIN orthologous_groups USING (gene_family_id, og_id)",
-			 "   INNER JOIN coding_sequences as cds USING (gene_family_id)",
+			 "   LEFT JOIN orthologous_groups as ogs USING (gene_family_id, og_id)",
+			 "   INNER JOIN coding_sequences as cds ON ogs.gene_family_id=cds.gene_family_id",
 			 "   WHERE og_id IS NULL ) as famog2cds",
 			 "INNER JOIN proteins USING (nr_protein_id)",
 			 "INNER JOIN replicons USING (genomic_accession)",
