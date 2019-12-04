@@ -1,7 +1,7 @@
 #!/bin/bash
 
 tasklist="${1}"
-outputdir="${2}"
+export outputdir="${2}"
 export mbmcmcopt="${3}"
 
 if [ -z $q ] ; then
