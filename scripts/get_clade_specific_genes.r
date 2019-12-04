@@ -214,7 +214,7 @@ for (i in 1:length(cladedefs)){
 			 "  SELECT gene_family_id, og_id, ortholog_col_id, cds.*",
 			 "    FROM specific_genes",
 			 "   LEFT JOIN orthologous_groups USING (gene_family_id, og_id)",
-			 "   INNER JOIN coding_sequences USING (gene_family_id)",
+			 "   INNER JOIN coding_sequences as cds USING (gene_family_id)",
 			 "   WHERE og_id IS NULL ) as famog2cds",
 			 "INNER JOIN proteins USING (nr_protein_id)",
 			 "INNER JOIN replicons USING (genomic_accession)",
