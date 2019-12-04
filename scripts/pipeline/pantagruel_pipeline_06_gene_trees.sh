@@ -239,7 +239,7 @@ fi
 
 ## run mrbayes on collapsed alignments
 #~ export bayesgenetrees=${genetrees}/${chaintype}_mrbayes_trees
-mkdir -p ${mboutputdir}
+mkdir -p ${mboutputdir}/
 nchains=4
 nruns=2
 ngen=2000000
@@ -252,6 +252,7 @@ ${ptgscripts}/lsfullpath.py "${nexusaln4chains}/*.nex" > ${mbtasklist}
 # determine the set of numbered gene family prefixes to make separate folders
 # and breakdown the load of files per folder
 awk -F'/' '{print $NF}' ${mbtasklist} | grep -o "${famprefix}C[0-9]\{${ndiggrpfam}\}" | sort -u > ${nexusaln4chains}_ali_numprefixes
+echo "create folders for MrBayes ouput, broken down by gene family prefixes, in '${mboutputdir}/'"
 for pref in  `cat ${nexusaln4chains}_ali_numprefixes` ; do
   mkdir -p ${mboutputdir}/${pref}/
 done
@@ -292,7 +293,7 @@ if [ -s ${mbtasklist} ] ; then
   echo "Will now run MrBayes in parallel (i.e. sequentially for each gene alignment, with several alignments processed in parallel"
   echo "with options: ${mbopts}"
   echo ""
-  ${ptgscripts}/mrbayes_sequential.sh ${mbtasklist} ${mboutputdir} "${mbopts}"
+  ${ptgscripts}/mrbayes_sequential.sh "${mbtasklist}" "${mboutputdir}" "${mbopts}"
   checkexec "MrBayes tree estimation was interupted ; exit now" "MrBayes tree estimation complete"
 else
   echo "no bayesian gene tree left to compute; skip to next step"
