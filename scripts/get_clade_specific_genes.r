@@ -62,7 +62,8 @@ if (!is.null(opt$interesting_families)){
 }else{
 	interstfams = c()
 }
-if ( is.null(ogcolid) | ogcolid < 0 ){
+if ( is.null(ogcolid) ){ ogcolid = -1 }
+if (  ogcolid < 0 ){
 	print("will only use the homologous family mapping of genes (coarser homology mapping and stricter clade-specific gene finding)", quote=F)
 }else{
 	print("use ortholog classification of homologous genes", quote=F)
