@@ -285,7 +285,8 @@ fi
 if [[ "${resumetask}" == "true" && -e ${mbtasklist}_alreadydone ]] ; then
   echo "$(wc -l ${mbtasklist}_alreadydone | cut -d' ' -f1) bayesian tree chains already complete; skip their computation"
   mbtasklist=${mbtasklist}_resume
-  apyes='append=yes'
+#  apyes='append=yes'
+  export mbresume='yes'
 fi
 
 if [ -s ${mbtasklist} ] ; then

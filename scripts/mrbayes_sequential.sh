@@ -61,22 +61,23 @@ cd ${outputdir}/${pref}/
 echo "current directory (output directory) is $HOSTNAME:$PWD"
 
 echo "mbmcmcopt=$mbmcmcopt"
-
-mbresume=$(python2.7 << EOF
-mbmcmcopts="$mbmcmcopt".lower().split()
-mbresume = 'no'
-for opteqval in mbmcmcopts:
-  opt, val = opteqval.split('=')
-  if opt.strip(' "')=='append': mbresume = val.strip(' "')
-print mbresume
-EOF
-)
+#
+#mbresume=$(python2.7 << EOF
+#mbmcmcopts="$mbmcmcopt".lower().split()
+#mbresume = 'no'
+#for opteqval in mbmcmcopts:
+#  opt, val = opteqval.split('=')
+#  if opt.strip(' "')=='append': mbresume = val.strip(' "')
+#print mbresume
+#EOF
+#)
 if [ "${mbresume}" == 'yes' ] ; then
   if [ "$PWD" != "$(realpath ${outputdir}/${pref})" ] ; then
     # import files from previous interupted analysis
     echo "rsync -avz ${outputdir}/${pref}/*${nfrad2}* ./"
     rsync -avz ${outputdir}/${pref}/*${nfrad2}* ./
 	echo "recovered intermediary files from previous run with exit status $?"
+	[ -s ./*${nfrad2}*ckp ] && mbmcmcopt="$mbmcmcopt append=yes"
   fi
 else
   if [ ! -z "$(ls ./${nfrad2}.mb* 2> /dev/null)" ] ; then
