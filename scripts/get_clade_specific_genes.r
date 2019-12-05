@@ -214,14 +214,16 @@ for (i in 1:length(cladedefs)){
 			 "CREATE TABLE spegeneannots AS ",
 			 "SELECT gene_family_id, og_id, genomic_accession, code, locus_tag, cds_code, cds_begin, cds_end, nr_protein_id, product",
 			 "FROM (",
-			 "  SELECT cds.gene_family_id, og_id, ortholog_col_id, cds.*",
+			 "  SELECT cds.gene_family_id, og_id, cds.*",
+			 "  , ortholog_col_id",
 			 "   FROM specific_genes as sg",
 			 "   INNER JOIN orthologous_groups as ogs USING (gene_family_id, og_id)",
 			 "   INNER JOIN coding_sequences as cds",
 			 "    ON sg.gene_family_id=cds.gene_family_id",
 			 "    AND ogs.replacement_label_or_cds_code=cds.cds_code",
 			 " UNION",
-			 "  SELECT cds.gene_family_id, og_id, ortholog_col_id, cds.*",
+			 "  SELECT cds.gene_family_id, og_id, cds.*",
+			 "  , ortholog_col_id",
 			 "   FROM specific_genes as sg",
 			 "   LEFT JOIN orthologous_groups as ogs USING (gene_family_id, og_id)",
 			 "   INNER JOIN coding_sequences as cds",
@@ -237,7 +239,7 @@ for (i in 1:length(cladedefs)){
 			if (ogcolid < 0){
 				# query without restricting based on orthologous group classification
 				# optimize query by removing useless joins
-				ogidlines = c(6,9,13,21)
+				ogidlines = c(5,7,10,13,15,23)
 				vqs = vqs[-ogidlines]
 			}																							  
 			creaspegeneannots = paste(vqs, collapse=" ")
