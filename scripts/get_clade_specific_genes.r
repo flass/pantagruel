@@ -97,9 +97,9 @@ for (i in 1:length(cladedefs)){
 	sissize = length(cladedefs[[cla]]$sisterclade)
 	cladedefs[[cla]]$name = ifelse(!is.null(cladedefcsv$name), cladedefcsv$name[i], "")
 	cladedefs[[cla]]$maxabsin = ifelse(!is.null(cladedefcsv$maxabsin), cladedefcsv$maxabsin[i], round(clasize*relaxfrac))
-	cladedefs[[cla]]$maxpresout = ifelse(!is.null(cladedefcsv$maxpresout), cladedefcsv$maxpresout[i], round(sissize*relaxfrac)
-	cladedefs[[cla]]$maxpresin = ifelse(!is.null(cladedefcsv$maxpresin), cladedefcsv$maxpresin[i], round(clasize*relaxfrac)
-	cladedefs[[cla]]$maxabsout = ifelse(!is.null(cladedefcsv$maxabsout), cladedefcsv$maxabsout[i], round(sissize*relaxfrac)
+	cladedefs[[cla]]$maxpresout = ifelse(!is.null(cladedefcsv$maxpresout), cladedefcsv$maxpresout[i], round(sissize*relaxfrac))
+	cladedefs[[cla]]$maxpresin = ifelse(!is.null(cladedefcsv$maxpresin), cladedefcsv$maxpresin[i], round(clasize*relaxfrac))
+	cladedefs[[cla]]$maxabsout = ifelse(!is.null(cladedefcsv$maxabsout), cladedefcsv$maxabsout[i], round(sissize*relaxfrac))
 }
 
 # load gene presence / absence data
