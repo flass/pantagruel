@@ -241,10 +241,13 @@ for (i in 1:length(cladedefs)){
 				# optimize query by removing useless joins
 				ogidlines = c(5,7,10,13,15,23)
 				vqs = vqs[-ogidlines]
-			}																							  
+				parlist=list()
+			}else{
+				parlist=list(o=ogcolid)
+			}																					  
 			creaspegeneannots = paste(vqs, collapse=" ")
  			if (verbose) print(creaspegeneannots)
-			dbExecute(dbcon, creaspegeneannots, params=list(o=ogcolid))
+			dbExecute(dbcon, creaspegeneannots, params=parlist)
 			dbExecute(dbcon, "DROP TABLE specific_genes;")
 			genesetclauses = list(sprintf("WHERE code='%s' AND", refgenome), "WHERE") ; names(genesetclauses) = genesetscopes
 			for (genesetscope in genesetscopes){
