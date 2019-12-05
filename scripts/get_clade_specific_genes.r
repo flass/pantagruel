@@ -237,7 +237,7 @@ for (i in 1:length(cladedefs)){
 			if (ogcolid < 0){
 				# query without restricting based on orthologous group classification
 				# optimize query by removing useless joins
-				ogidlines = c(6,9,13)
+				ogidlines = c(6,9,13,21)
 				vqs = vqs[-ogidlines]
 			}																							  
 			creaspegeneannots = paste(vqs, collapse=" ")
