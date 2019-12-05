@@ -60,7 +60,6 @@ cd ${outputdir}/${pref}/
 
 echo "current directory (output directory) is $HOSTNAME:$PWD"
 
-echo "mbmcmcopt=$mbmcmcopt"
 #
 #mbresume=$(python2.7 << EOF
 #mbmcmcopts="$mbmcmcopt".lower().split()
@@ -92,6 +91,7 @@ echo "ls ./*${nfrad2}*"
 ls ./*${nfrad2}*
 echo ""
 
+echo "mbmcmcopt=$mbmcmcopt"
 # give a glimpse of data complexity
 echo "data matrix:"
 \grep 'dimensions' ${nfrad1}

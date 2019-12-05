@@ -34,6 +34,7 @@ spec = matrix(c(
   'ass_to_code',          'a', 2, "character", "(optional) path to file providing correspondency between assembly ids and UniProt-like genome codes; only if the input matrix has assembly ids in column names (deprecated)",
   'preferred_genomes',    'p', 2, "character", "(optional) comma-separated list of codes of preferred genomes which CDS info will be reported in reference tables (when part of the focal clade); genomes are selected in priority order as listed: 1st_preferred, 2nd_preferred, etc.",
   'interesting_families', 'f', 2, "character", "(optional) comma-separated list of gene families for which detail of presence/absence distribution will be printed out",
+  'relaxfrac',            'r', 2, "numeric",   "(optional) real value between 0 and 1 specifying the fraction of genomes in the clade and sister clade that are allowed to be in breach of the specificity criterion to a call specific gene. For example, with -r .05, a gene present in >=95% isolates in a clade and <=5% isolates in its sister clade is considered clade-specific; this is over-ridden by clade-specific threshold given in the clade definition file (option -C)",
   'help',                 'h', 0, "logical",   "prints this help message and quits",
   'verbose',              'v', 0, "logical",   "verbose mode; print SQL queries as they are processed"
 ), byrow=TRUE, ncol=5);
@@ -67,6 +68,11 @@ if (!is.null(opt$interesting_families)){
 }else{
 	interstfams = c()
 }
+if (!is.null(opt$relaxfrac)){
+	relaxfrac = opt$relaxfrac
+}else{
+	relaxfrac = 0.0
+}
 if ( is.null(ogcolid) ){ ogcolid = -1 }
 if (  ogcolid < 0 ){
 	print("will only use the homologous family mapping of genes (coarser homology mapping and stricter clade-specific gene finding)", quote=F)
@@ -87,11 +93,13 @@ cladedefs = apply(cladedefcsv[,c('clade', 'sisterclade')], 1, strsplit, split=',
 
 for (i in 1:length(cladedefs)){
 	cla = names(cladedefs)[i]
+	clasize = length(cladedefs[[cla]]$clade)
+	sissize = length(cladedefs[[cla]]$sisterclade)
 	cladedefs[[cla]]$name = ifelse(!is.null(cladedefcsv$name), cladedefcsv$name[i], "")
-	cladedefs[[cla]]$maxabsin = ifelse(!is.null(cladedefcsv$maxabsin), cladedefcsv$maxabsin[i], 0)
-	cladedefs[[cla]]$maxpresout = ifelse(!is.null(cladedefcsv$maxpresout), cladedefcsv$maxpresout[i], 0)
-	cladedefs[[cla]]$maxpresin = ifelse(!is.null(cladedefcsv$maxpresin), cladedefcsv$maxpresin[i], 0)
-	cladedefs[[cla]]$maxabsout = ifelse(!is.null(cladedefcsv$maxabsout), cladedefcsv$maxabsout[i], 0)
+	cladedefs[[cla]]$maxabsin = ifelse(!is.null(cladedefcsv$maxabsin), cladedefcsv$maxabsin[i], round(clasize*relaxfrac))
+	cladedefs[[cla]]$maxpresout = ifelse(!is.null(cladedefcsv$maxpresout), cladedefcsv$maxpresout[i], round(sissize*relaxfrac)
+	cladedefs[[cla]]$maxpresin = ifelse(!is.null(cladedefcsv$maxpresin), cladedefcsv$maxpresin[i], round(clasize*relaxfrac)
+	cladedefs[[cla]]$maxabsout = ifelse(!is.null(cladedefcsv$maxabsout), cladedefcsv$maxabsout[i], round(sissize*relaxfrac)
 }
 
 # load gene presence / absence data
