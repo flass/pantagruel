@@ -241,7 +241,7 @@ for (i in 1:length(cladedefs)){
 				# optimize query by removing useless joins
 				ogidlines = c(5,7,10,13,15,23)
 				vqs = vqs[-ogidlines]
-				parlist=list()
+				parlist=NULL
 			}else{
 				parlist=list(o=ogcolid)
 			}																					  
