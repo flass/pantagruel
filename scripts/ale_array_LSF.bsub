@@ -208,8 +208,8 @@ elif [[ -e ${outrecdir}/${bnchain}.ale ]] ; then
   ls -lh ${chain}.ale
 else
   # prepare ALE index
-  lenchain=`wc -l ${chain} | cut -d' ' -f1`
-  burnin=`echo "${lenchain} * ${relburninfrac}" | bc`
+  lenchain=$(wc -l ${chain} | cut -d' ' -f1)
+  burnin=$(python2.7 -c "print int(${lenchain} * float(${relburninfrac}))")
   echo "input tree chain is ${lenchain} long; burnin is set to ${burnin%%.*}"
   echo "# ${alebin}ALEobserve ${chain} burnin=${burnin%%.*}"
   ${alebin}ALEobserve ${chain} burnin=${burnin%%.*}
