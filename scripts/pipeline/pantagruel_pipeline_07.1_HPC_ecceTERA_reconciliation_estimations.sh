@@ -98,7 +98,7 @@ if [[ -z "${terabin}" ]] ; then
   export terabin="$(dirname $(readlink -f $(command -v ecceTERA)))"
 fi
 
-qsubvars="tasklist, outrecdir, spetree, terabin, alebin, watchmem"
+qsubvars="tasklist, outrecdir, spetree, terabin"
 if [ ! -z "${fwdenv}" ] ; then
   qsubvars="${qsubvars}, ${fwdenv}"
 fi
