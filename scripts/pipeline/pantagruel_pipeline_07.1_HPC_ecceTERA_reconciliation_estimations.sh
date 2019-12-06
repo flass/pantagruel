@@ -88,7 +88,7 @@ if [ "${resumetask}" == 'true' ] ; then
   done > ${tasklist}_resumetasklist
   if [ ${nGdone} -gt 0 ] ; then
     echo "resume from previous computations: ${nGdone} G trees already reconciled"
-    tasklist=${tasklist}_resumetasklist
+    export tasklist=${tasklist}_resumetasklist
   else
     rm -f ${tasklist}_resumetasklist
   fi
@@ -114,7 +114,7 @@ Njob=`wc -l ${tasklist} | cut -f1 -d' '`
 jobranges=($(${ptgscripts}/get_jobranges.py $chunksize $Njob))
 
 for jobrange in ${jobranges[@]} ; do
- dlogs=${alelogs}/${reccol}/ale_${dtag}_${jobrange}
+ dlogs=${teralogs}/${reccol}/eccetera_${dtag}_${jobrange}
  mkdir -p ${dlogs}/
 
  case "$hpctype" in
@@ -132,7 +132,7 @@ for jobrange in ${jobranges[@]} ; do
     arrayspec="[$jobrange]"
 	[ ! -z ${maxatonce} ] && arrayspec="${arrayspec}%${maxatonce}"
     memmb=$((${mem} * 1024))
-    nflog="${teralogs}/${reccol}.%J.%I.o"
+    nflog="${dlogs}/${reccol}.%J.%I.o"
 	subcmd="bsub -J \"${reccol}${arrayspec}\" -q ${bqueue} \
 	-R \"select[mem>${memmb}] rusage[mem=${memmb}] span[hosts=1]\" -n${ncpus} -M${memmb} \
 	-o ${nflog} -e ${nflog} -env \"${qsubvars}\" \
