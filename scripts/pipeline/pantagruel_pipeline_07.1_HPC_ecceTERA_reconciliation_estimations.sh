@@ -52,7 +52,7 @@ fi
 export reccol="${chaintype}_${rectype}_${reccolid}"
 
 
-tasklist=${alerec}/${collapsecond}_${replmethod}_${inputtreetag}_list
+export tasklist=${alerec}/${collapsecond}_${replmethod}_${inputtreetag}_list
 if [ -z "${genefamlist}" ] ; then
   ${ptgscripts}/lsfullpath.py "${inputtrees}" > ${tasklist}
 else
@@ -62,15 +62,15 @@ else
 fi
 teralogs=${ptgdb}/logs/ecceTERA
 mkdir -p ${teralogs}/${reccol}
-outrecdir=${recs}/${collapsecond}/${replmethod}/${reccol}
+export outrecdir=${recs}/${collapsecond}/${replmethod}/${reccol}
 mkdir -p ${outrecdir}
 
 if [[ "${chaintype}" == 'fullgenetree' ]] ; then
   # use the same species tree file for every gene family, with no collapsed populations
-  spetree=${speciestree}.lsd.nwk ${recsamplesize} ${ALEalgo}
+  export spetree=${speciestree}.lsd.nwk ${recsamplesize} ${ALEalgo}
 else
   # use a dedicated species tree file for each gene family, with population collapsed in accordance to the gene tree
-  spetree=Stree.nwk
+  export spetree=Stree.nwk
 fi
 
 
@@ -95,10 +95,19 @@ if [ "${resumetask}" == 'true' ] ; then
 fi
 
 if [[ -z "${terabin}" ]] ; then
-  terabin="$(dirname $(readlink -f $(command -v ecceTERA)))"
+  export terabin="$(dirname $(readlink -f $(command -v ecceTERA)))"
 fi
 
-qsubvars="tasklist, outrecdir, spetree, alebin, terabin, watchmem"
+qsubvars="tasklist, outrecdir, spetree, terabin, alebin, watchmem"
+if [ ! -z "${fwdenv}" ] ; then
+  qsubvars="${qsubvars}, ${fwdenv}"
+fi
+if [ ! -z "${alebin}" ] ; then
+  qsubvars="${qsubvars}, alebin"
+fi
+if [ ! -z "${watchmem}" ] ; then
+  qsubvars="${qsubvars}, watchmem"
+fi
 
 Njob=`wc -l ${tasklist} | cut -f1 -d' '`
 [ ! -z ${topindex} ] &&  [ ${Njob} -gt ${topindex} ] && Njob=${topindex}

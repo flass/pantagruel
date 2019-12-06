@@ -79,6 +79,9 @@ export alebin="$alebin"
 export watchmem="$watchmem"
 
 qsubvars="tasklist, outrecdir, spetree, recsamplesize, ALEalgo, alebin, watchmem"
+if [ ! -z "${fwdenv}" ] ; then
+  qsubvars="${qsubvars}, ${fwdenv}"
+fi
 
 Njob=`wc -l $tasklist | cut -f1 -d' '`
 [ ! -z ${topindex} ] &&  [ ${Njob} -gt ${topindex} ] && Njob=${topindex}
