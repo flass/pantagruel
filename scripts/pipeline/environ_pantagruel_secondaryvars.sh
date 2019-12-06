@@ -16,7 +16,7 @@ export coregenome=${ptgdb}/05.core_genome
 export genetrees=${ptgdb}/06.gene_trees
 export alerec=${ptgdb}/07.reconciliations
 export orthogenes=${ptgdb}/08.orthologs
-export comparerecs=${entdb}/09.compare_scenarios
+export comparerecs=${ptgdb}/09.compare_scenarios
 
 # sub folders
 export contigs=${customassemb}/contigs
