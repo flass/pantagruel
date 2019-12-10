@@ -3,7 +3,7 @@
 """makes a matrix of collapsed clade (CC) occurence in genome populations"""
 
 import os, sys, getopt
-import multiprocessing
+import multiprocessing as mp
 
 def parse_pops(nfpopdef):
 	dcode2pop = {}
