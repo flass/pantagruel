@@ -44,9 +44,9 @@ def main():
 		print usage()
 		sys.exit(0)
 	
-	ccdefdir = dopt['--CC_defs']
-	nfpopdef = dopt['--populations']
-	nfmatout = dopt['--out']
+	ccdefdir = dopt.get('-c', dopt.get('--CC_defs'))
+	nfpopdef = dopt.get('-p', dopt.get('--populations'))
+	nfmatout = dopt.get('-o', dopt.get('--out'))
 	verbose = ('-v' in dopt) or ('--verbose' in dopt)
 	nbthreads = int(dopt.get('--threads', dopt.get('-T', -1)))
 	if nbthreads < 1:
