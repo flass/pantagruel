@@ -289,3 +289,12 @@ else
   echo "ERROR: unable to find the result files"
 fi
 fi
+if [[ "$worklocal" == "yes" && "$(readlink -f ${PWD})" != "$(readlink -f ${outrecdir})" ]] ; then
+  # remove local copies of input/output files
+  rm -f ./${nfrad}*
+fi
+
+echo ""
+echo "# # # # #"
+echo " # # # #"
+

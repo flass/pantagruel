@@ -21,10 +21,10 @@ export -f checkexecnoquit
 echo "This is job $PBS_JOBNAME, job_ID $PBS_JOBID (array_task_ID $PBS_ARRAY_INDEX) on host $HOSTNAME, running $PBS_NUM_PPN processes on these workers:"
 cat $PBS_NODEFILE
 
-# use parallel environment
-module load intel-suite
-
-module list
+# load potential modules
+if [ ! -z "${modulefile}" ] ; then
+  source ${modulefile}
+fi
 
 ## verify key variable definition
 # tasklist
@@ -176,7 +176,7 @@ makerunopt (){
 	if [ ! -z ${4} ] ; then
 		op="${4}."
 	else
-		op="$(basename ${2})."
+		op="$(basename ${2}).ecceTERA."
 	fi
 	echo "species.file=${1} gene.file=${2} output.dir=${3} output.prefix=${op}"
 }
@@ -283,7 +283,7 @@ fi
 echo "# ${teracmd}"
 # run it in bg with a daemon checking
 ${teracmd} &
-terapid=$!
+terapid=${!}
 runmin=0
 top -b -n 1 -p ${terapid} | tail -n 2 > ${nfrad}.ecceTERA.toplog
 while [ ! -z $(ps -q ${terapid} -o comm=) ] ; do
@@ -332,7 +332,7 @@ else
     exit 1
   fi
 fi
-if [[ "$worklocal" == "yes" ]] ; then
+if [[ "$worklocal" == "yes"  && "$(readlink -f ${PWD})" != "$(readlink -f ${outrecdir})" ]] ; then
   # remove local copies of input/output files
   rm -f ./${nfrad}*
 fi
