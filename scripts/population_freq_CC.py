@@ -23,7 +23,7 @@ def parse_fam_constraint_folder(dfamcons):
 	lnfcons = os.listdir(dfamcons)
 	dmatCCcount = {}
 	for nfcons in lnfcons:
-		with open(nfcons) as fcons:
+		with open(os.path.join(dfamcons, nfcons)) as fcons:
 			for line in fcons:
 				if not line.startswith('constraint'): continue
 				cladef, cdscodes = line.rstrip('\n').split(' = ')
