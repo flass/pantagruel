@@ -72,7 +72,7 @@ def main():
 	fmatout = open(nfmatout, 'w')
 	for dmatCCcount in idmatCCcount:
 		for famcla, dmatCCrow in dmatCCcount.iteritems():
-			fmatout.write('\t'.join([famcla]+[dmatCCrow.get(p, 0) for p in lpop]))
+			fmatout.write('\t'.join([famcla]+[str(dmatCCrow.get(p, 0)) for p in lpop]))
 	
 	fmatout.close()
 
