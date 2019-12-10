@@ -13,8 +13,8 @@ def parse_pops(nfpopdef):
 			lsp = line.rstrip('\n').split('\t')
 			p = lsp[0]
 			spop.add(p)
-			for code in lsp[1:]
-			dcode2pop[code] = p
+			for code in lsp[1:]:
+				dcode2pop[code] = p
 	lpop = sorted(spop)
 	return (lpop, dcode2pop)
 
