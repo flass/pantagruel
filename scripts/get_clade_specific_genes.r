@@ -84,6 +84,7 @@ if (  ogcolid < 0 ){
 comparecol = 'sisterclade'
 if (!is.null(opt$compare_with)){
 	comparecol = opt$compare_with
+	print(sprintf("will compare focal clade to genome set defined under column '%s'", comparecol))
 }
 
 # output files
@@ -99,7 +100,7 @@ cladedefs = apply(cladedefcsv[,c('clade', comparecol)], 1, strsplit, split=',')
 for (i in 1:length(cladedefs)){
 	cla = names(cladedefs)[i]
 	clasize = length(cladedefs[[cla]]$clade)
-	if (comparecol != 'sisterclade'){ cladedefs[[cla]]$sisterclade = cladedefs[[cla]][,comparecol] }
+	if (comparecol != 'sisterclade'){ cladedefs[[cla]]$sisterclade = cladedefs[[cla]][[comparecol]] }
 	sissize = length(cladedefs[[cla]]$sisterclade)
 	cladedefs[[cla]]$name = ifelse(!is.null(cladedefcsv$name), cladedefcsv$name[i], "")
 	cladedefs[[cla]]$maxabsin = ifelse(!is.null(cladedefcsv$maxabsin), cladedefcsv$maxabsin[i], round(clasize*relaxfrac))
