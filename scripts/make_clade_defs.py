@@ -14,7 +14,7 @@ if len(sys.argv)>2:
     foutheader.append('compareclade')
 
 reftree = tree2.read_check_newick(nfreftree)
-nfout = reftree+"clade_defs"
+nfout = nfreftree+"clade_defs"
 fout = open(nfout, 'w')
 fout.write('\t'.join(foutheader)+'\n')
 k = 0
