@@ -84,7 +84,7 @@ if (  ogcolid < 0 ){
 comparecol = 'sisterclade'
 if (!is.null(opt$compare_with)){
 	comparecol = opt$compare_with
-	print(sprintf("will compare focal clade to genome set defined under column '%s'", comparecol))
+	print(sprintf("will compare focal clade to genome set defined under column '%s'", comparecol), quote=F)
 }
 
 # output files
@@ -97,16 +97,20 @@ dir.create(diroutspegedetail, showWarnings=F)
 cladedefcsv = read.table(nfcladedef, sep='\t', header=T, row.names=1, stringsAsFactors=F)
 cladedefs = apply(cladedefcsv[,c('clade', comparecol)], 1, strsplit, split=',')
 
+print(cladedefs[[1]])
+
 for (i in 1:length(cladedefs)){
 	cla = names(cladedefs)[i]
 	clasize = length(cladedefs[[cla]]$clade)
-	sissize = length(cladedefs[[cla]][[comparecol]])
+	compsize = length(cladedefs[[cla]][[comparecol]])
 	cladedefs[[cla]]$name = ifelse(!is.null(cladedefcsv$name), cladedefcsv$name[i], cla)
 	cladedefs[[cla]]$maxabsin = ifelse(!is.null(cladedefcsv$maxabsin), cladedefcsv$maxabsin[i], round(clasize*relaxfrac))
-	cladedefs[[cla]]$maxpresout = ifelse(!is.null(cladedefcsv$maxpresout), cladedefcsv$maxpresout[i], round(sissize*relaxfrac))
+	cladedefs[[cla]]$maxpresout = ifelse(!is.null(cladedefcsv$maxpresout), cladedefcsv$maxpresout[i], round(compsize*relaxfrac))
 	cladedefs[[cla]]$maxpresin = ifelse(!is.null(cladedefcsv$maxpresin), cladedefcsv$maxpresin[i], round(clasize*relaxfrac))
-	cladedefs[[cla]]$maxabsout = ifelse(!is.null(cladedefcsv$maxabsout), cladedefcsv$maxabsout[i], round(sissize*relaxfrac))
+	cladedefs[[cla]]$maxabsout = ifelse(!is.null(cladedefcsv$maxabsout), cladedefcsv$maxabsout[i], round(compsize*relaxfrac))
 }
+
+print(cladedefs[[1]])
 
 # load gene presence / absence data
 if (file.exists(nfabspresmat)){
