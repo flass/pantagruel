@@ -97,8 +97,6 @@ dir.create(diroutspegedetail, showWarnings=F)
 cladedefcsv = read.table(nfcladedef, sep='\t', header=T, row.names=1, stringsAsFactors=F)
 cladedefs = apply(cladedefcsv[,c('clade', comparecol)], 1, strsplit, split=',')
 
-print(cladedefs[[1]])
-
 for (i in 1:length(cladedefs)){
 	cla = names(cladedefs)[i]
 	clasize = length(cladedefs[[cla]]$clade)
@@ -109,8 +107,6 @@ for (i in 1:length(cladedefs)){
 	cladedefs[[cla]]$maxpresin = ifelse(!is.null(cladedefcsv$maxpresin), cladedefcsv$maxpresin[i], round(clasize*relaxfrac))
 	cladedefs[[cla]]$maxabsout = ifelse(!is.null(cladedefcsv$maxabsout), cladedefcsv$maxabsout[i], round(compsize*relaxfrac))
 }
-
-print(cladedefs[[1]])
 
 # load gene presence / absence data
 if (file.exists(nfabspresmat)){
@@ -176,8 +172,8 @@ for (i in 1:length(cladedefs)){
 	
 	for (ab in abspres){
 		write(sprintf("# %s %s", cla, cladedef$name), file=nfoutspege[[ab]], append=T)
-		write( paste(sprintf("# gene families %sent in all genomes but %d of clade:", abspres[ab], cladedef$maxabsin), cladedefcsv[cla,'clade'], sep=cladedefwritesep), file=nfoutspege[[ab]], append=T)
-		write( paste(sprintf("# and %sent in all but %d genomes of sister clade:", presabs[ab], cladedef$maxpresout), cladedefcsv[cla,'sisterclade'], sep=cladedefwritesep), file=nfoutspege[[ab]], append=T)
+		write( paste(sprintf("# gene families %sent in all genomes but %d of clade:", abspres[ab], cladedef$maxabsin), cladedefcsv[cla, 'clade'], sep=cladedefwritesep), file=nfoutspege[[ab]], append=T)
+		write( paste(sprintf("# and %sent in all but %d genomes of sister clade:", presabs[ab], cladedef$maxpresout), cladedefcsv[cla, comparecol], sep=cladedefwritesep), file=nfoutspege[[ab]], append=T)
 	
 		specset = specifisets[[ab]][[cla]]
 		ncsg = length(specset)
