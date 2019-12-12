@@ -29,6 +29,7 @@ spec = matrix(c(
   'sqldb',                'd', 1, "character", "path to SQLite database file",
   'clade_defs',           'C', 1, "character", "path to file describing clade composition; this must be a (tab-delimited) table file with named rows and a header with the following collumns: (mandatory:) 'clade', 'siterclade', (facultative:) 'name', 'maxabsin', 'maxpresout', 'maxpresin' and 'maxabsout'",
   'outrad',               'o', 1, "character", "path to output dir+file prefix for output files",
+  'compare_with',         'w', 2, "character", "(optional) char string: 'sisterclade', for comparison to sister clades (default), or any other name matching a column in the clade definition file; use 'contrastclade' to select a deeper contrasting genome set",
   'restrict_to_genomes',  'g', 2, "character", "(optional) path to file listing the genomes (UniProt-like codes) to which the analysis will be restricted",
   'og_col_id',            'c', 2, "integer",   "orthologous group collection id in SQL database; if not provided, will only use the homologous family mapping of genes (coarser homology mapping, meaning stricter clade-specific gene definition)",
   'ass_to_code',          'a', 2, "character", "(optional) path to file providing correspondency between assembly ids and UniProt-like genome codes; only if the input matrix has assembly ids in column names (deprecated)",
@@ -80,6 +81,10 @@ if (  ogcolid < 0 ){
 	print("use ortholog classification of homologous genes", quote=F)
 }
 
+comparecol = 'sisterclade'
+if (!is.null(opt$compare_with)){
+	comparecol = opt$compare_with
+}
 
 # output files
 nfabspresmat = sprintf("%s_gene_abspres.mat.RData", outfilerad)
@@ -89,11 +94,12 @@ diroutspegedetail = sprintf("%s_specific_genes.tables_byclade_goterms_pathways",
 dir.create(diroutspegedetail, showWarnings=F)
 
 cladedefcsv = read.table(nfcladedef, sep='\t', header=T, row.names=1, stringsAsFactors=F)
-cladedefs = apply(cladedefcsv[,c('clade', 'sisterclade')], 1, strsplit, split=',')
+cladedefs = apply(cladedefcsv[,c('clade', comparecol)], 1, strsplit, split=',')
 
 for (i in 1:length(cladedefs)){
 	cla = names(cladedefs)[i]
 	clasize = length(cladedefs[[cla]]$clade)
+	if (comparecol != 'sisterclade'){ cladedefs[[cla]]$sisterclade = cladedefs[[cla]][,comparecol] }
 	sissize = length(cladedefs[[cla]]$sisterclade)
 	cladedefs[[cla]]$name = ifelse(!is.null(cladedefcsv$name), cladedefcsv$name[i], "")
 	cladedefs[[cla]]$maxabsin = ifelse(!is.null(cladedefcsv$maxabsin), cladedefcsv$maxabsin[i], round(clasize*relaxfrac))
