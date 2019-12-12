@@ -10,9 +10,8 @@ foutheader = ['', 'clade', 'sisterclade']
 nfreftree = sys.argv[1]
 if len(sys.argv)>2:
     mincompare = int(sys.argv[2])
-	assert mincompare>0
-	foutheader.append('compareclade')
-    
+    assert mincompare>0
+    foutheader.append('compareclade')
 
 reftree = tree2.read_check_newick(nfreftree)
 nfout = reftree+"clade_defs"
@@ -30,18 +29,18 @@ for node in reftree:
         child.edit_label(focchildlab)
         focchildleaflabset = set(child.get_leaf_labels())
         sischildleaflabset = set(child.go_brother().get_leaf_labels())
-		outrow = [focchildlab, ','.join(sorted(focchildleaflabset)), ','.join(sorted(sischildleaflabset))]
-		if mincompare>0:
-			comparenode = child.go_brother()
-			compareleaflabset = set(comparenode.get_leaf_labels())
-			while len(compareleaflabset) < mincompare:
-				if comparenode.go_father():
-					comparenode = comparenode.go_father()
-					compareleaflabset = set(comparenode.get_leaf_labels()) - focchildleaflabset
-				else:
-					break
-			outrow.append(','.join(sorted(compareleaflabset)))
-				
+        outrow = [focchildlab, ','.join(sorted(focchildleaflabset)), ','.join(sorted(sischildleaflabset))]
+        if mincompare>0:
+            comparenode = child.go_brother()
+            compareleaflabset = set(comparenode.get_leaf_labels())
+            while len(compareleaflabset) < mincompare:
+                if comparenode.go_father():
+                    comparenode = comparenode.go_father()
+                    compareleaflabset = set(comparenode.get_leaf_labels()) - focchildleaflabset
+                else:
+                    break
+            outrow.append(','.join(sorted(compareleaflabset)))
+                
         fout.write('\t'.join(outrow)+'\n')
 
 fout.close()
