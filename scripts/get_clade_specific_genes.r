@@ -100,9 +100,8 @@ cladedefs = apply(cladedefcsv[,c('clade', comparecol)], 1, strsplit, split=',')
 for (i in 1:length(cladedefs)){
 	cla = names(cladedefs)[i]
 	clasize = length(cladedefs[[cla]]$clade)
-	if (comparecol != 'sisterclade'){ cladedefs[[cla]]$sisterclade = cladedefs[[cla]][[comparecol]] }
-	sissize = length(cladedefs[[cla]]$sisterclade)
-	cladedefs[[cla]]$name = ifelse(!is.null(cladedefcsv$name), cladedefcsv$name[i], "")
+	sissize = length(cladedefs[[cla]][[comparecol]])
+	cladedefs[[cla]]$name = ifelse(!is.null(cladedefcsv$name), cladedefcsv$name[i], cla)
 	cladedefs[[cla]]$maxabsin = ifelse(!is.null(cladedefcsv$maxabsin), cladedefcsv$maxabsin[i], round(clasize*relaxfrac))
 	cladedefs[[cla]]$maxpresout = ifelse(!is.null(cladedefcsv$maxpresout), cladedefcsv$maxpresout[i], round(sissize*relaxfrac))
 	cladedefs[[cla]]$maxpresin = ifelse(!is.null(cladedefcsv$maxpresin), cladedefcsv$maxpresin[i], round(clasize*relaxfrac))
@@ -145,14 +144,14 @@ if (file.exists(nfabspresmat)){
 specificPresGenes = lapply(cladedefs, function(cladedef){
 	# relaxed specific presence is allowed by 'maxabsin' and 'maxpresout' parameters
 	allpres = apply(genocount[,cladedef$clade,drop=F], 1, function(x){ length(which(x==0))<=cladedef$maxabsin })
-	allabssis = apply(genocount[,cladedef$sisterclade,drop=F], 1, function(x){ length(which(x>0))<=cladedef$maxpresout })
+	allabssis = apply(genocount[,cladedef[[comparecol]],drop=F], 1, function(x){ length(which(x>0))<=cladedef$maxpresout })
 	return(which(allpres & allabssis))
 })
 
 specificAbsGenes = lapply(cladedefs, function(cladedef){
 	# relaxed specific absence is allowed by 'maxpresin' and 'maxabsout' parameters
 	allabs = apply(genocount[,cladedef$clade,drop=F], 1, function(x){ length(which(x>0))<=cladedef$maxpresin })
-	allpressis = apply(genocount[,cladedef$sisterclade,drop=F], 1, function(x){ length(which(x==0))<=cladedef$maxabsout })
+	allpressis = apply(genocount[,cladedef[[comparecol]],drop=F], 1, function(x){ length(which(x==0))<=cladedef$maxabsout })
 	return(which(allabs & allpressis))
 })
 
@@ -188,9 +187,9 @@ for (i in 1:length(cladedefs)){
 					if (ab=="pres"){ abspresin = which(genocount[interstfam,cladedef$clade,drop=F]==0)
 					}else{ abspresin = which(genocount[interstfam,cladedef$clade,drop=F]>0) }
 					print(sprintf("  %sent in %d clade genomes:        %s", abspres[[ab]], length(abspresin), paste(cladedef$clade[abspresin], sep=' ', collapse=' ')), quote=F)
-					if (ab=="pres"){ abspresout = which(genocount[interstfam,cladedef$sisterclade,drop=F]>0)
-					}else{ abspresout = which(genocount[interstfam,cladedef$sisterclade,drop=F]==0) }
-					print(sprintf("  %sent in %d sister clade genomes: %s", presabs[[ab]], length(abspresout), paste(cladedef$sisterclade[abspresout], sep=' ', collapse=' ')), quote=F)
+					if (ab=="pres"){ abspresout = which(genocount[interstfam,cladedef[[comparecol]],drop=F]>0)
+					}else{ abspresout = which(genocount[interstfam,cladedef[[comparecol]],drop=F]==0) }
+					print(sprintf("  %sent in %d sister clade genomes: %s", presabs[[ab]], length(abspresout), paste(cladedef[[comparecol]][abspresout], sep=' ', collapse=' ')), quote=F)
 				}
 			}
 			spefamogs = as.data.frame(t(sapply(strsplit(rownames(genocount)[specset], split='-'), function(x){ if (length(x)==2) return(x) else return(c(x, NA)) })), stringsAsFactors=F)
@@ -206,7 +205,7 @@ for (i in 1:length(cladedefs)){
 			}
 			# choose adequate reference genome
 			if (ab=="pres"){ occgenomes = cladedef$clade
-			}else{ occgenomes = cladedef$sisterclade }
+			}else{ occgenomes = cladedef[[comparecol]] }
 			refgenome = NULL
 			for (prefgenome in preferredgenomes){
 				if (prefgenome %in% occgenomes){
