@@ -449,28 +449,7 @@ echo "Found $nspepop disctinct populations in the species tree"
 
 
 ### extract sister clade pairs from the reference species tree for later clade-specific gene search
-python2.7 << EOF
-import tree2, sys
-sys.setrecursionlimit(20000)
-reftree = tree2.read_check_newick('${speciestree}')
-nfout = "${speciestree}_clade_defs"
-fout = open(nfout, 'w')
-fout.write('\t'.join(['', 'clade', 'sisterclade'])+'\n')
-k = 0
-for node in reftree:
-  if len(node.children) != 2: continue
-  for child in node.children:
-    if child.nb_leaves() <= 1: continue
-    focchildlab = child.label()
-    if not focchildlab:
-      focchildlab = "clade%d"%k
-      k += 1
-    focchildleaflabset = ','.join(sorted(child.get_leaf_labels()))
-    sischildleaflabset = ','.join(sorted(child.go_brother().get_leaf_labels()))
-    fout.write('\t'.join([focchildlab, focchildleaflabset, sischildleaflabset])+'\n')
-
-fout.close()
-EOF
+python2.7 ${ptgscripts}/make_clade_defs.py ${speciestree} 10
 checkexec "failed defining contrasting clades in reference tree" "defining contrasting clades in reference tree complete; clade description stored in file '${speciestree}_clade_defs'"
 
 if [ -s ${indata}/all_assemblies_mash.dist ] ; then
