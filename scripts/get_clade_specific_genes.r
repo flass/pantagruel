@@ -3,7 +3,8 @@ library('RSQLite')
 library('getopt')
 
 # clade definition file format example :
-# (order of columns is irrelevant; only 'clade' and 'sisterclade' fields are mandatory; note there is no column name for the row id field (first actual column with 'cladeA' etc.))
+# (order of columns is irrelevant; only 'clade' and 'sisterclade' fields are mandatory, unless --contrast_with option is used to specify an alternative to 'sisterclade'
+# note there is no column name for the row id field (first actual column with 'cladeA' etc.))
 # relaxed specific presence pattern can be detected by specifying values of parameters 'maxabsin' and 'maxpresout' > 0
 # relaxed specific absence pattern can be detected by specifying values of parameters 'maxpresin' and 'maxabsout' > 0
 
@@ -29,7 +30,7 @@ spec = matrix(c(
   'sqldb',                'd', 1, "character", "path to SQLite database file",
   'clade_defs',           'C', 1, "character", "path to file describing clade composition; this must be a (tab-delimited) table file with named rows and a header with the following collumns: (mandatory:) 'clade', 'siterclade', (facultative:) 'name', 'maxabsin', 'maxpresout', 'maxpresin' and 'maxabsout'",
   'outrad',               'o', 1, "character", "path to output dir+file prefix for output files",
-  'compare_with',         'w', 2, "character", "(optional) char string: 'sisterclade', for comparison to sister clades (default), or any other name matching a column in the clade definition file; use 'contrastclade' to select a deeper contrasting genome set",
+  'contrast_with',         'w', 2, "character", "(optional) char string: 'sisterclade', for comparison to sister clades (default), or any other name matching a column in the clade definition file; use 'backgroundclade' to select a deeper contrasting genome set",
   'restrict_to_genomes',  'g', 2, "character", "(optional) path to file listing the genomes (UniProt-like codes) to which the analysis will be restricted",
   'og_col_id',            'c', 2, "integer",   "orthologous group collection id in SQL database; if not provided, will only use the homologous family mapping of genes (coarser homology mapping, meaning stricter clade-specific gene definition)",
   'ass_to_code',          'a', 2, "character", "(optional) path to file providing correspondency between assembly ids and UniProt-like genome codes; only if the input matrix has assembly ids in column names (deprecated)",
@@ -81,10 +82,10 @@ if (  ogcolid < 0 ){
 	print("use ortholog classification of homologous genes", quote=F)
 }
 
-comparecol = 'sisterclade'
-if (!is.null(opt$compare_with)){
-	comparecol = opt$compare_with
-	print(sprintf("will compare focal clade to genome set defined under column '%s'", comparecol), quote=F)
+contrastcol = 'sisterclade'
+if (!is.null(opt$contrast_with)){
+	contrastcol = opt$contrast_with
+	print(sprintf("will contrast focal clade to genome set defined under column '%s'", contrastcol), quote=F)
 }
 
 # output files
@@ -95,12 +96,12 @@ diroutspegedetail = sprintf("%s_specific_genes.tables_byclade_goterms_pathways",
 dir.create(diroutspegedetail, showWarnings=F)
 
 cladedefcsv = read.table(nfcladedef, sep='\t', header=T, row.names=1, stringsAsFactors=F)
-cladedefs = apply(cladedefcsv[,c('clade', comparecol)], 1, strsplit, split=',')
+cladedefs = apply(cladedefcsv[,c('clade', contrastcol)], 1, strsplit, split=',')
 
 for (i in 1:length(cladedefs)){
 	cla = names(cladedefs)[i]
 	clasize = length(cladedefs[[cla]]$clade)
-	compsize = length(cladedefs[[cla]][[comparecol]])
+	compsize = length(cladedefs[[cla]][[contrastcol]])
 	cladedefs[[cla]]$name = ifelse(!is.null(cladedefcsv$name), cladedefcsv$name[i], cla)
 	cladedefs[[cla]]$maxabsin = ifelse(!is.null(cladedefcsv$maxabsin), cladedefcsv$maxabsin[i], round(clasize*relaxfrac))
 	cladedefs[[cla]]$maxpresout = ifelse(!is.null(cladedefcsv$maxpresout), cladedefcsv$maxpresout[i], round(compsize*relaxfrac))
@@ -144,14 +145,14 @@ if (file.exists(nfabspresmat)){
 specificPresGenes = lapply(cladedefs, function(cladedef){
 	# relaxed specific presence is allowed by 'maxabsin' and 'maxpresout' parameters
 	allpres = apply(genocount[,cladedef$clade,drop=F], 1, function(x){ length(which(x==0))<=cladedef$maxabsin })
-	allabssis = apply(genocount[,cladedef[[comparecol]],drop=F], 1, function(x){ length(which(x>0))<=cladedef$maxpresout })
+	allabssis = apply(genocount[,cladedef[[contrastcol]],drop=F], 1, function(x){ length(which(x>0))<=cladedef$maxpresout })
 	return(which(allpres & allabssis))
 })
 
 specificAbsGenes = lapply(cladedefs, function(cladedef){
 	# relaxed specific absence is allowed by 'maxpresin' and 'maxabsout' parameters
 	allabs = apply(genocount[,cladedef$clade,drop=F], 1, function(x){ length(which(x>0))<=cladedef$maxpresin })
-	allpressis = apply(genocount[,cladedef[[comparecol]],drop=F], 1, function(x){ length(which(x==0))<=cladedef$maxabsout })
+	allpressis = apply(genocount[,cladedef[[contrastcol]],drop=F], 1, function(x){ length(which(x==0))<=cladedef$maxabsout })
 	return(which(allabs & allpressis))
 })
 
@@ -172,8 +173,8 @@ for (i in 1:length(cladedefs)){
 	
 	for (ab in abspres){
 		write(sprintf("# %s %s", cla, cladedef$name), file=nfoutspege[[ab]], append=T)
-		write( paste(sprintf("# gene families %sent in all genomes but %d of clade:", abspres[ab], cladedef$maxabsin), cladedefcsv[cla, 'clade'], sep=cladedefwritesep), file=nfoutspege[[ab]], append=T)
-		write( paste(sprintf("# and %sent in all but %d genomes of sister clade:", presabs[ab], cladedef$maxpresout), cladedefcsv[cla, comparecol], sep=cladedefwritesep), file=nfoutspege[[ab]], append=T)
+		write( paste(sprintf("# gene families %sent in all genomes but %d of focal clade:", abspres[ab], cladedef$maxabsin), cladedefcsv[cla, 'clade'], sep=cladedefwritesep), file=nfoutspege[[ab]], append=T)
+		write( paste(sprintf("# and %sent in all but %d genomes of contrast genome set ('%s'):", presabs[ab], cladedef$maxpresout, contrastcol), cladedefcsv[cla, contrastcol], sep=cladedefwritesep), file=nfoutspege[[ab]], append=T)
 	
 		specset = specifisets[[ab]][[cla]]
 		ncsg = length(specset)
@@ -186,10 +187,10 @@ for (i in 1:length(cladedefs)){
 					print(sprintf("%s family:", interstfam), quote=F)
 					if (ab=="pres"){ abspresin = which(genocount[interstfam,cladedef$clade,drop=F]==0)
 					}else{ abspresin = which(genocount[interstfam,cladedef$clade,drop=F]>0) }
-					print(sprintf("  %sent in %d clade genomes:        %s", abspres[[ab]], length(abspresin), paste(cladedef$clade[abspresin], sep=' ', collapse=' ')), quote=F)
-					if (ab=="pres"){ abspresout = which(genocount[interstfam,cladedef[[comparecol]],drop=F]>0)
-					}else{ abspresout = which(genocount[interstfam,cladedef[[comparecol]],drop=F]==0) }
-					print(sprintf("  %sent in %d sister clade genomes: %s", presabs[[ab]], length(abspresout), paste(cladedef[[comparecol]][abspresout], sep=' ', collapse=' ')), quote=F)
+					print(sprintf("  %sent in %d focal clade genomes:        %s", abspres[[ab]], length(abspresin), paste(cladedef$clade[abspresin], sep=' ', collapse=' ')), quote=F)
+					if (ab=="pres"){ abspresout = which(genocount[interstfam,cladedef[[contrastcol]],drop=F]>0)
+					}else{ abspresout = which(genocount[interstfam,cladedef[[contrastcol]],drop=F]==0) }
+					print(sprintf("  %sent in %d contrast genomes: %s", presabs[[ab]], length(abspresout), paste(cladedef[[contrastcol]][abspresout], sep=' ', collapse=' ')), quote=F)
 				}
 			}
 			spefamogs = as.data.frame(t(sapply(strsplit(rownames(genocount)[specset], split='-'), function(x){ if (length(x)==2) return(x) else return(c(x, NA)) })), stringsAsFactors=F)
@@ -205,7 +206,7 @@ for (i in 1:length(cladedefs)){
 			}
 			# choose adequate reference genome
 			if (ab=="pres"){ occgenomes = cladedef$clade
-			}else{ occgenomes = cladedef[[comparecol]] }
+			}else{ occgenomes = cladedef[[contrastcol]] }
 			refgenome = NULL
 			for (prefgenome in preferredgenomes){
 				if (prefgenome %in% occgenomes){

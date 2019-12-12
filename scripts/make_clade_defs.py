@@ -11,7 +11,7 @@ nfreftree = sys.argv[1]
 if len(sys.argv)>2:
     mincompare = int(sys.argv[2])
     assert mincompare>0
-    foutheader.append('contrastclade')
+    foutheader.append('backgroundclade')
 
 reftree = tree2.read_check_newick(nfreftree)
 nfout = nfreftree+"_clade_defs"
