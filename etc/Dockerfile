@@ -8,7 +8,7 @@ RUN apt-get update && apt-get install -y git build-essential cmake gcc g++ \
         r-cran-igraph r-cran-getopt sqlite3 sqlite3-doc libmagick++-dev python \
         python-scipy python-numpy python-biopython python-biopython-sql python-igraph \
         cython mpi-default-bin mpi-default-dev mrbayes-mpi python-pip \
-        openjdk-8-jdk openjdk-8-jre cd-hit parallel
+        openjdk-11-jdk openjdk-11-jre parallel libdw1 libdw-dev libgsl23 libgsl-dev
 
 RUN echo 'source("https://bioconductor.org/biocLite.R") ; biocLite("topGO")' | R --vanilla
 RUN apt-get install -y libxml2-dev libcurl4-openssl-dev
@@ -30,9 +30,9 @@ RUN prokka --setupdb
 
 #MMSEQ2
 RUN apt-get install -y --allow-unauthenticated cmake xxd
-RUN wget "https://github.com/soedinglab/MMseqs2/archive/7-4e23d.tar.gz" && \
-    tar xvfz 7-4e23d.tar.gz
-RUN cd MMseqs2-7-4e23d && \
+RUN wget "https://github.com/soedinglab/MMseqs2/archive/10-6d92c.tar.gz" && \
+    tar xvfz 10-6d92c.tar.gz.tar.gz
+RUN cd MMseqs2-10-6d92c.tar.gz && \
     mkdir build && \
     cd build && \
     cmake -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_INSTALL_PREFIX=. .. && \
