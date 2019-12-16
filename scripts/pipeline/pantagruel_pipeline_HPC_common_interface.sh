@@ -88,7 +88,7 @@ while true;
 do
   case "${1}" in
     -h|--help) 
-      echo usage
+      usage
       exit 0;;
 	
     --ncpus)
