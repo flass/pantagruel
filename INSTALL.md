@@ -1,6 +1,8 @@
 # Installing Pantagruel and its dependencies
 
-## The automatic, easy way
+## Installing the Pantagruel scripts
+
+Pantagruel pipeline is "just" a bunch of scripts. What you simply need to do is to downlaod them, that's about it. Here is how:
 
 Under a Debian environment (e.g. Ubuntu), you can automatically install all dependencies using the script [install_dependencies.sh](https://github.com/flass/pantagruel/blob/master/install_dependencies.sh), following the indications below:  
 
@@ -12,11 +14,42 @@ Then, you have to get the pantagruel scripts by dowloading the [archive of the l
 ```sh
 cd pantagruel_pipeline/
 git clone https://github.com/flass/pantagruel.git --recurse-submodules
+cd .. # return to parent folder
 ```
+
+Finally, you need to install the dependencies. Because of course, the pipeline is more than just the master scripts, it's also all the fantastic software it realies on.
+
+## Installing Dependencies 
+
+### The container, worryless way
+
+This is what is recommended, because that should always work. and that it provide a shared environment for us all in which you can report your bugs and I know what's going on.
+
+You need Docker installed. On Debian-based systems, you should run:
+```sh
+sudo apt install docker.io
+```
+
+Then, assuming you are sitll in the parent folder where you initially created the sub-folder `pantagruel_pipeline/`, run:
+
+```sh
+docker build -t pantagruel pantagruel_pipeline/pantagruel/pantagruel/etc
+```
+
+This should create a Docker image that will be stored on your server. That's it!
+Now to run the pipeline, you will only need to call the pipeline through this container, by mounting the container where you the scripts are present on your machine:
+```sh
+docker run -v $PWD:$PWD -w $PWD pantagruel pantagruel_pipeline/pantagruel/pantagruel
+```
+
+You can even alias this command so it's less ugly and you just need to call `pantagruel`:
+```sh
+alias pantagruel="docker run -v $PWD:$PWD -w $PWD pantagruel pantagruel_pipeline/pantagruel/pantagruel"
+
+### The scripted, fairly easy way
 Finally, you may run the installation script:  
 !!! Note that for this step, you (i.e. your linux user) need to have the sudo rights (be part of the sudo group, check with `grep sudo /etc/group`); however, DO NOT execute the installtion script with `sudo` (which would make all software owned by the root user).  
 ```sh
-cd .. # return to parent folder
 pantagruel_pipeline/pantagruel/install_dependencies.sh pantagruel_pipeline/
 ```  
 
@@ -25,7 +58,7 @@ Optionally, you can also specify the folder where relevant executable files, inc
 pantagruel_pipeline/pantagruel/install_dependencies.sh pantagruel_pipeline/ pantagruel_pipeline/bin/
 ```
 
-Finally, you may want not to install automatically all Debian packages (some could mess up with your local install), Brew and all its packages (same reason), Docker and all its packages (you may have a special deamon installed you don't want to be replaced) or InterProScan (it takes a lot of disk space). For this, you can use the options `--no-debian` `--no-brew` `--no-docker` and `--no-interpro`, respectively (anywhere after the first argument).  
+may want not to install automatically all Debian packages (some could mess up with your local install), Brew and all its packages (same reason), Docker and all its packages (you may have a special deamon installed you don't want to be replaced) or InterProScan (it takes a lot of disk space). For this, you can use the options `--no-debian` `--no-brew` `--no-docker` and `--no-interpro`, respectively (anywhere after the first argument).  
 ```sh
 pantagruel_pipeline/pantagruel/install_dependencies.sh pantagruel_pipeline/ --no-debian --no-interpro --no-brew --no-docker
 ```

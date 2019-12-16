@@ -15,30 +15,26 @@ RUN apt-get install -y libxml2-dev libcurl4-openssl-dev
 RUN echo 'install.packages(c("phytools","pvclust"), repos="https://pbil.univ-lyon1.fr/CRAN/")' | R --vanilla
 
 
-#RUN brew update && brew doctor && brew install brewsci/bio/prokka
+# HOMEBREW
+RUN apt-get install -y locales linuxbrew-wrapper
+RUN localedef -i en_US -f UTF-8 en_US.UTF-8 \
+   && useradd -m -s /bin/bash linuxbrew \
+   && echo 'linuxbrew ALL=(ALL) NOPASSWD:ALL' >>/etc/sudoers
+USER linuxbrew
+WORKDIR /home/linuxbrew
+ENV USER=linuxbrew \
+    PATH=/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:$PATH \
+    SHELL=/bin/bash
+RUN HOMEBREW_NO_ANALYTICS=1 HOMEBREW_NO_AUTO_UPDATE=1 brew tap brewsci/bio
+USER root
+WORKDIR /
 
-
-# RUN prokka --setupdb
-
-RUN apt-get install -y libdatetime-perl libxml-simple-perl libdigest-md5-perl git default-jre bioperl
-RUN cpan Bio::Perl
-RUN apt-get install ncbi-blast+
-RUN git clone https://github.com/tseemann/prokka.git /prokka && cd /prokka && git checkout d6adb2c79ceedf # closest commit to 1.13 that fixes https://github.com/tseemann/prokka/issues/291
-RUN cd /usr/bin && ln -s /prokka/bin/prokka
+# PROKKA
+RUN brew install brewsci/bio/prokka
 RUN prokka --setupdb
 
-
-#MMSEQ2
-RUN apt-get install -y --allow-unauthenticated cmake xxd
-RUN wget "https://github.com/soedinglab/MMseqs2/archive/10-6d92c.tar.gz" && \
-    tar xvfz 10-6d92c.tar.gz.tar.gz
-RUN cd MMseqs2-10-6d92c.tar.gz && \
-    mkdir build && \
-    cd build && \
-    cmake -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_INSTALL_PREFIX=. .. && \
-    make && \
-    make install && \
-    cp bin/mmseqs /usr/bin
+# MMSEQS
+RUN brew install mmseqs2
 
 #PAL2NAL
 RUN wget http://www.bork.embl.de/pal2nal/distribution/pal2nal.v14.tar.gz && \
@@ -46,11 +42,11 @@ RUN wget http://www.bork.embl.de/pal2nal/distribution/pal2nal.v14.tar.gz && \
     chmod +x /pal2nal.v14/pal2nal.pl && \
     ln -s /pal2nal.v14/pal2nal.pl /usr/bin
 
-#MAD
-RUN wget https://www.mikrobio.uni-kiel.de/de/ag-dagan/ressourcen/mad2-2.zip && \
-    unzip ${SOFTWARE}/mad2-2.zip && \
-    chmod +x ${SOFTWARE}/mad/mad && \
-    ln -s ${SOFTWARE}/mad/mad /usr/bin
+##MAD
+#RUN wget https://www.mikrobio.uni-kiel.de/de/ag-dagan/ressourcen/mad2-2.zip && \
+#    unzip ${SOFTWARE}/mad2-2.zip && \
+#    chmod +x ${SOFTWARE}/mad/mad && \
+#    ln -s ${SOFTWARE}/mad/mad /usr/bin
 
 # PYTHON libs
 RUN pip install bcbio-gff
@@ -72,9 +68,10 @@ RUN git clone https://github.com/ssolo/ALE
 RUN cd ALE && mkdir build && cd build && cmake .. && make
 RUN cp /ALE/build/bin/* /usr/bin
 
-COPY ./scripts /pantagruel/scripts
-COPY ./python_libs /pantagruel/python_libs
-COPY ./pantagruel /pantagruel
-COPY ./.git /pantagruel/.git
-ENV PATH="/pantagruel:/pantagruel/scripts:/pantagruel/scripts/pipeline:${PATH}"
+#
+#COPY ./scripts /pantagruel/scripts
+#COPY ./python_libs /pantagruel/python_libs
+#COPY ./pantagruel /pantagruel
+#COPY ./.git /pantagruel/.git
+#ENV PATH="/pantagruel:/pantagruel/scripts:/pantagruel/scripts/pipeline:${PATH}"
 
