@@ -1,6 +1,6 @@
 #!/usr/bin/python2.7
 # -*- coding: utf-8 -*-
-"""makes a matrix of collapsed clade (CC) occurence in genome populations"""
+"""makes a matrix of collapsed clade (CC) occurence in genome populations ; only to use if not running Pantagruel task 06.5"""
 
 import os, sys, getopt
 import multiprocessing as mp
@@ -10,6 +10,7 @@ def parse_pops(nfpopdef):
 	spop = set([])
 	with open(nfpopdef, 'r') as fpopdef:
 		for line in fpopdef:
+			if line.startswith('#'): continue
 			lsp = line.rstrip('\n').split('\t')
 			p = lsp[0]
 			spop.add(p)

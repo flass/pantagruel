@@ -358,6 +358,13 @@ else
   export replacecoldate=$(date +%Y-%m-%d)
   echo -e "${replacecolid}\t${replacecoldate}" > ${genetrees}/replacecol
 
+  ## make a summary matrix of collapsed clade (CC) occurence in genome populations
+  matCC=${coltreechains}/${collapsecond}/${replmethod}_PopFreqsCC.mat
+  echo -e -n "\t" > ${matCC}
+  grep -v '#' ${coretreerad}_populations | cut -f1 | tr '\n' '\t' >> ${matCC}
+  echo "" >> ${matCC}
+  cat ${coltreechains}/${collapsecond}/${replmethod}_phyloprofiles/* >> ${matCC}
+
   ##############################################################
   ## 06.5 Populate database with all collapsed gene tree results
   ##############################################################
@@ -368,3 +375,4 @@ else
 
   #### end OPTION B2
 fi
+

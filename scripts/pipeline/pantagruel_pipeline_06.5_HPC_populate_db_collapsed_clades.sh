@@ -44,6 +44,13 @@ else
   #### OPTION B2: rake clades in gene trees were collapsed and later replaced by mock population leaves
   #### will feed data relative to these operation to the SQL databse
 
+  ## make a summary matrix of collapsed clade (CC) occurence in genome populations [this belongs to task 06.4, but must be executed after its completion]
+  matCC=${coltreechains}/${collapsecond}/${replmethod}_PopFreqsCC.mat
+  echo -e -n "\t" > ${matCC}
+  grep -v '#' ${coretreerad}_populations | cut -f1 | tr '\n' '\t' >> ${matCC}
+  echo "" >> ${matCC}
+  cat ${coltreechains}/${collapsecond}/${replmethod}_phyloprofiles/* >> ${matCC}
+
   ## edit the gene trees, producing the corresponding (potentially collapsed) species tree based on the 'time'-tree backbone
   export collapsecolid=$(cut -f1 ${genetrees}/collapsecol)
   export collapsecoldate=$(cut -f2 ${genetrees}/collapsecol)
