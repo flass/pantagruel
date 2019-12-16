@@ -33,6 +33,7 @@ or for this help mesage:\n
 \t --chunksize:\tnumber of families to be processed in one submitted job (default: ${defchunksize})\n
 \t --topindex:\tmax number of (gene family) sub-jobs to be actually submitted (default: '')\n
 \t --fwdenv:\tnames of current environment variables you want to be passed down to the submitted jobs\n
+\t --resume:\tresume the task from previous run that was interupted (skip gene families for wich the task already completed)\n
 \t --modules:\tnames (quoted, comma-separated list) of local modules to be loaded using the 'module load' command\n
 \t\t\t if several, separate by ',' and enclose in quotes, e.g.: 'VAR1, VAR2' \n
 \t --parallelflags:\tadditional flags to be specified for worker nodes' resource requests\n
@@ -73,7 +74,7 @@ testmandatoryarg (){
   fi
 }
 
-ARGS=`getopt --options "h" --longoptions "ncpus:,mem:,wth:,hpctype:,chunksize:,topindex:,parallelflags:,fwdenv:,modules:,maxatonce:" --name "${hpcscript}" -- "$@"`
+ARGS=`getopt --options "h" --longoptions "ncpus:,mem:,wth:,hpctype:,chunksize:,topindex:,parallelflags:,fwdenv:,modules:,maxatonce:,resume" --name "${hpcscript}" -- "$@"`
 
 #Bad arguments
 if [ ${?} -ne 0 ];
@@ -131,6 +132,11 @@ do
       export parallelflags="${2}"
       echo "will add the following flags to the job submission resource request: '${parallelflags}'"
       shift 2;;
+	  
+    --resume)
+      export resumetask=true
+      echo "will resume computation of task where it was last stopped"
+      shift ;;
 	
 	--fwdenv)
       testmandatoryarg "${1}" "${2}"
