@@ -690,7 +690,7 @@ for task in ${tasks} ; do
      ${ptgscripts}/pipeline/pantagruel_pipeline_01_homologous_seq_families.sh ${initfile}
      checkexectask "${task}"  ;;
     2)
-     promptdate "Pantagruel pipeline task ${task}: align homologous protein sequences and translate alignemnts into coding sequences."
+     promptdate "Pantagruel pipeline task ${task}: align homologous protein sequences and reverse-translate aligned proteins into aligned coding sequences."
      ${ptgscripts}/pipeline/pantagruel_pipeline_02_align_homologous_seq.sh ${initfile}
      checkexectask "${task}"  ;;
     3)

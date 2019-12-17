@@ -132,11 +132,12 @@ done
 
 for listsrcass in "${listncbiass}" "${listrefass}" ; do
 if [ ! -z "${listsrcass}" ] ; then
-  rm -f ${listsrcass}_wrongFormatAssIds
-  grep -v "GC[AF]_[0-9]\{9,\}" ${listsrcass} > ${listsrcass}_wrongFormatAssIds
-  if [ -s ${listsrcass}_wrongFormatAssIds ] ; then
+  wfalist=${ptgtmp}/$(basename ${listsrcass})_wrongFormatAssIds
+  rm -f ${wfalist}
+  grep -v "GC[AF]_[0-9]\{9,\}" ${listsrcass} > ${wfalist}
+  if [ -s ${wfalist} ] ; then
     echo "the list of NCBI Assembly accession ids provided through option -L has uncorrectly formatted entries:"
-    cat ${listsrcass}_wrongFormatAssIds
+    cat ${wfalist}
     echo "will not be able to download these from NCBI FTP site; exit now"
     exit 1
   fi
