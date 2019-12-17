@@ -645,6 +645,8 @@ for task in ${tasks} ; do
 	    echo "(appending the new arguments: ${postrefreshargs})"
         ptginitcmd=${ptginitcmd/init/${postrefreshargs}}
       fi
+	  # modify PATH so to fall back on the original executable if not available in the current PATH
+	  export PATH=${PATH}:${ptgrepo}
       echo "# ${ptginitcmd}"
       eval "${ptginitcmd}"
     else
