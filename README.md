@@ -2,8 +2,10 @@
 
 ## News
 
-the [Dockerfile] (a 'recipe' to generate a Docker image) is now ready!  
-Use it to generate a Docker image containing all Pantagruel dependencies; then use that image to run `pantagruel` commmands within the environment provided by the container, as explained [here](https://github.com/flass/pantagruel/blob/master/INSTALL.md#the-container-worryless-way)
+### 17/12/2019
+:whale: The [Dockerfile] (a 'recipe' to generate a Docker image) is now ready!  
+Use it to generate a Docker image containing all Pantagruel dependencies; then use that image to run `pantagruel` commands within the environment provided by the container, as explained [here](https://github.com/flass/pantagruel/blob/master/INSTALL.md#the-container-worryless-way).
+NB: this may be used to generate a Singularity container as well, even though it was not teted yet
 
 ## Reference
 

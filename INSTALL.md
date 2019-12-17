@@ -13,7 +13,7 @@ mkdir ./pantagruel_pipeline/
 Then, you have to get the pantagruel scripts by dowloading the [archive of the last version on Github](https://github.com/flass/pantagruel/archive/master.zip) or use `git` to synchronize the repository (recomended for easier software update, especially during *Pantagruel* development phase!).
 ```sh
 cd pantagruel_pipeline/
-git clone https://github.com/flass/pantagruel.git --recurse-submodules
+git clone --recurse-submodules https://github.com/flass/pantagruel.git
 cd .. # return to parent folder
 ```
 
@@ -30,14 +30,14 @@ You need Docker installed. On Debian-based systems, you should run:
 sudo apt install docker.io
 ```
 
-Then, assuming you are sitll in the parent folder where you initially created the sub-folder `pantagruel_pipeline/`, run:
+Then, assuming you are still in the parent folder where you initially created the sub-folder `pantagruel_pipeline/`, run:
 
 ```sh
 docker build -t pantagruel pantagruel_pipeline/pantagruel/pantagruel/etc
 ```
 
-This should create a Docker image that will be stored on your server. That's it!
-Now to run the pipeline, you will only need to call the pipeline through this container, by mounting the container where you the scripts are present on your machine:
+This should create a Docker image that will be stored on your server. That's it!  
+Now, to run the pipeline, you will only need to call the pipeline through this container, by mounting the container where you the scripts are present on your machine:
 ```sh
 docker run -v $PWD:$PWD -w $PWD pantagruel pantagruel_pipeline/pantagruel/pantagruel
 ```
@@ -54,7 +54,7 @@ Finally, you may run the installation script:
 pantagruel_pipeline/pantagruel/install_dependencies.sh pantagruel_pipeline/
 ```  
 
-Optionally, you can also specify the folder where relevant executable files, including the main `pantagruel` excutable, will be linked (it defaults to `~/bin/`, i.e. is user-specific). The path to this folder will be permatnently added to your path (via editing your ~/.bashrc).  
+Optionally, you can also specify the folder where relevant executable files, including the main `pantagruel` executable, will be linked (it defaults to `~/bin/`, i.e. is user-specific). The path to this folder will be permatnently added to your path (via editing your ~/.bashrc).  
 ```sh
 pantagruel_pipeline/pantagruel/install_dependencies.sh pantagruel_pipeline/ pantagruel_pipeline/bin/
 ```
