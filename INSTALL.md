@@ -45,6 +45,7 @@ docker run -v $PWD:$PWD -w $PWD pantagruel pantagruel_pipeline/pantagruel/pantag
 You can even alias this command so it's less ugly and you just need to call `pantagruel`:
 ```sh
 alias pantagruel="docker run -v $PWD:$PWD -w $PWD pantagruel pantagruel_pipeline/pantagruel/pantagruel"
+```
 
 ### The scripted, fairly easy way
 Finally, you may run the installation script:  

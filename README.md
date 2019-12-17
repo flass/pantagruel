@@ -1,5 +1,10 @@
 # *Pantagruel*: a bioinformatic pipeline for the inference of gene evolution scenarios in bacterial pangenomes.
 
+## News
+
+the [Dockerfile] (a 'recipe' to generate a Docker image) is now ready!  
+Use it to generate a Docker image containing all Pantagruel dependencies; then use that image to run `pantagruel` commmands within the environment provided by the container, as explained [here](https://github.com/flass/pantagruel/blob/master/INSTALL.md#the-container-worryless-way)
+
 ## Reference
 
 26/03/2019: now on bioRxiv! [https://www.biorxiv.org/content/10.1101/586495v2](https://www.biorxiv.org/content/10.1101/586495v2)
@@ -458,11 +463,11 @@ Options are detailed here:
 ## Installing Pantagruel and its dependencies
 
 This bioinformatic pipeline relies on a quite a few other pieces of software.  
-To install them, please follow the indications in the [INSTALL](https://github.com/flass/pantagruel/blob/master/INSTALL.md) page.  
+To install them, please follow the indications in the [INSTALL] page.  
 
 Main options are to use either: 
-- the automated [install_dependencies.sh](https://github.com/flass/pantagruel/blob/master/install_dependencies.sh) shell script (for Debian systems; tested on Ubuntu 18.04)
-- (SOON) the Docker instance file containing all dependencies; pantegruel can be run within that container
+- the automated [install_dependencies.sh] shell script (for Debian systems; tested on Ubuntu 18.04)
+- (NEW!) the [Dockerfile] to generate a Docker image containing all dependencies; use that image to run `pantagruel` commmands within the environment provided by the container
 
 -------------
 
@@ -473,6 +478,9 @@ Main options are to use either:
 [pipeline1]: https://github.com/flass/pantagruel/blob/master/pics/extract_cluster_concat_spetree_MLgenetrees.png
 [pipeline2]: https://github.com/flass/pantagruel/blob/master/pics/collapse_samplebackbones_reconcile_compare.png
 [installation]: https://github.com/flass/pantagruel#installing-pantagruel-and-its-dependencies
+[INSTALL]: https://github.com/flass/pantagruel/blob/master/INSTALL.md
 [usage]: https://github.com/flass/pantagruel#using-pantagruel
 [examples]: https://github.com/flass/pantagruel#usage-example
 [template environment script]: https://github.com/flass/pantagruel/blob/master/scripts/pipeline/environ_pantagruel_template.sh
+[install_dependencies.sh]: https://github.com/flass/pantagruel/blob/master/install_dependencies.sh
+[Dockerfile]:  https://github.com/flass/pantagruel/blob/master/etc/Dockerfile
