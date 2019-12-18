@@ -181,9 +181,10 @@ else
   else
     raxthreads=$(nproc)
   fi
-  ${ptgscripts}/raxml_sequential.sh "${tasklist}" "${mlgenetrees}" 'GTRCATX' 'bipartitions rootedTree identical_sequences' 'x' "${raxthreads}" 'true'
-  checkexec "RAxML tree estimation was interupted ; exit now" "RAxML tree estimation complete"
-  
+  [ -s "${tasklist}" ] ; then
+    ${ptgscripts}/raxml_sequential.sh "${tasklist}" "${mlgenetrees}" 'GTRCATX' 'bipartitions rootedTree identical_sequences' 'x' "${raxthreads}" 'true'
+    checkexec "RAxML tree estimation was interupted ; exit now" "RAxML tree estimation complete"
+  fi
   ############################
   ## 06.2 Gene tree collapsing
   ############################
@@ -221,11 +222,12 @@ else
     mlgenetreelist=${mlgenetreelist}_resume
   fi
 
-  python2.7 ${ptgscripts}/mark_unresolved_clades.py --in_gene_tree_list=${mlgenetreelist} --diraln=${cdsalifastacodedir} --fmt_aln_in='fasta' \
-   --threads=$(nproc) --dirout=${colalinexuscodedir}/${collapsecond} --no_constrained_clade_subalns_output --dir_identseq=${mlgenetrees}/identical_sequences \
-   ${collapsecriteriondef} 
-  checkexec "ML tree collapsing was interupted ; exit now" "ML tree collapsing complete"
-
+  if [ -s "${mlgenetreelist}" ] ; then
+    python2.7 ${ptgscripts}/mark_unresolved_clades.py --in_gene_tree_list=${mlgenetreelist} --diraln=${cdsalifastacodedir} --fmt_aln_in='fasta' \
+     --threads=$(nproc) --dirout=${colalinexuscodedir}/${collapsecond} --no_constrained_clade_subalns_output --dir_identseq=${mlgenetrees}/identical_sequences \
+     ${collapsecriteriondef} 
+    checkexec "ML tree collapsing was interupted ; exit now" "ML tree collapsing complete"
+  fi
   export collapsecoldate=$(date +%Y-%m-%d)
   export nexusaln4chains=${colalinexuscodedir}/${collapsecond}/collapsed_alns
 #  export mboutputdir=${bayesgenetrees}/${collapsecond}
