@@ -19,11 +19,11 @@ if not keepPrevRecord: dbcur.execute("DELETE FROM orthologous_groups WHERE ortho
 filesuffix = "_%s.orthologs.%s"%(orthomethod, clustmethod)
 lnfortho = glob.glob(os.path.join(dirortho, orthomethod, '*'+filesuffix))
 for nfortho in lnfortho:
-  fam = os.path.basename(nfortho).replace(filesuffix, '')
-  with open(nfortho, 'r') as fortho:
-    lcdsog = [tuple(line.replace(' ', '').rstrip('\n').split('\t')) for line in fortho]
-  dbcur.executemany("INSERT INTO orthologous_groups (replacement_label_or_cds_code, gene_family_id, og_id, ortholog_col_id) VALUES (?,?,?,?);", [(cds, fam, ogid, ortcolid) for cds, ogid in lcdsog])
-  #~ dbcur.executemany("INSERT INTO orthologous_groups (cds_code, gene_family_id, og_id, ortholog_col_id) VALUES (?,?,?,?);", [(cds, fam, ogid, ortcolid) for cds, ogid in lcdsog])
+    fam = os.path.basename(nfortho).replace(filesuffix, '')
+    with open(nfortho, 'r') as fortho:
+        lcdsog = [tuple(line.replace(' ', '').rstrip('\n').split('\t')) for line in fortho]
+    dbcur.executemany("INSERT INTO orthologous_groups (replacement_label_or_cds_code, gene_family_id, og_id, ortholog_col_id) VALUES (?,?,?,?);", [(cds, fam, ogid, ortcolid) for cds, ogid in lcdsog])
+    #~ dbcur.executemany("INSERT INTO orthologous_groups (cds_code, gene_family_id, og_id, ortholog_col_id) VALUES (?,?,?,?);", [(cds, fam, ogid, ortcolid) for cds, ogid in lcdsog])
 
 dbcur.execute("CREATE INDEX IF NOT EXISTS og_cds_idx ON orthologous_groups (replacement_label_or_cds_code);")
 #~ dbcur.execute("CREATE INDEX IF NOT EXISTS og_cds_idx ON orthologous_groups (cds_code);")
@@ -37,13 +37,13 @@ dbcur.execute("""CREATE TABLE gene_fam_og_sizes AS
                    SELECT gene_family_id, og_id, count(cds_code) AS size, count(cds_code) AS genome_present, ortholog_col_id 
                     FROM orthologous_groups 
                     INNER JOIN genome.gene_tree_label2cds_code USING (replacement_label_or_cds_code)
-                   WHERE ortholog_col_id=%d
+                   WHERE ortholog_col_id=?
                    GROUP BY gene_family_id, og_id, ortholog_col_id
                   UNION
-                    SELECT gene_family_id, CAST(NULL AS INT) AS og_id, size, genome_present, %d AS ortholog_col_id 
+                    SELECT gene_family_id, CAST(NULL AS INT) AS og_id, size, genome_present, ? AS ortholog_col_id 
                      FROM gene_family_sizes
                     WHERE gene_family_id NOT IN (SELECT DISTINCT gene_family_id FROM orthologous_groups)
-                  ;"""%(ortcolid, ortcolid))
+                  ;""", (ortcolid, ortcolid))
 
 #~ dbcur.execute("""CREATE TABLE gene_fam_og_sizes AS 
                    #~ SELECT gene_family_id, og_id, count(cds_code) AS size, count(cds_code) AS genome_present, ortholog_col_id 

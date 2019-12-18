@@ -450,6 +450,11 @@ echo "Found $nspepop disctinct populations in the species tree"
 
 ### extract sister clade pairs from the reference species tree for later clade-specific gene search
 python2.7 ${ptgscripts}/make_clade_defs.py ${speciestree} 10
+# the resulting fle ${cladedefs} can have information filled/changed in the following collumns:
+# - 'name':       a taxon or practical name for the clade
+# - 'maxabsin':   the maximum count of genomes in the focal clade missing the gene (default 0)
+# - 'maxpresout': the maximum count of genomes in the sister clade featuring the gene (default 0)
+# additionally, extra rows can be added with custom genome group definitions (they don't need to be clades)
 checkexec "failed defining contrasting clades in reference tree" "defining contrasting clades in reference tree complete; clade description stored in file '${speciestree}_clade_defs'"
 
 if [ -s ${indata}/all_assemblies_mash.dist ] ; then
