@@ -52,8 +52,8 @@ if [ -z ${genefamlist} ] ; then
 else
   rm -f ${tasklist}
   for fam in $(cut -f1 ${genefamlist}) ; do
-    ls ${coltreechains}/${collapsecond}/${replmethod}/${fam}*-Gtrees.nwk >> ${tasklist}
-  done
+    ls ${coltreechains}/${collapsecond}/${replmethod}/${fam}*-Gtrees.nwk 2> /dev/null
+  done > ${tasklist} 
 fi
 alelogs=${ptgdb}/logs/ALE
 mkdir -p $alelogs/${reccol}
