@@ -1,7 +1,7 @@
 #!/bin/bash
 thisscript=${0}
 [ -z "${database}" ] && database="${1}"
-[ -z "${sqldb} "] && sqldb="${2}"
+[ -z "${sqldb}" ] && sqldb="${2}"
 [ -z "${colalinexuscodedir}" ] && colalinexuscodedir="${3}"
 [ -z "${coltreechains}" ] && coltreechains="${4}"
 [ -z "${collapsecond}" ] && collapsecond="${5}"
@@ -16,7 +16,7 @@ if [ -z $database ] ; then
  echo "Error: incomplete argument list. Usage:"
  echo "${thisscript} db_table_dump_folder sqlitedb_file collapsed_alignment_folder collapsed_treechain_folder collapse_criterion replacement_criterion [collapsed_clade_collection_id replaced_clade_collection_id collapsed_clade_collection_date replaced_clade_collection_date]"
  echo "currently set variable:"
- echo "database=$1 sqldb=$2 colalinexuscodedir=$3 coltreechains=$4 collapsecond=$5 replmethod=$6 collapsecriteriondef=$7 collapsecolid=$8 replacecolid=$9 collapsecoldate=$10 replacecoldate=$11"
+ echo "database=${1} sqldb=${2} colalinexuscodedir=${3} coltreechains=${4} collapsecond=${5} replmethod=${6} collapsecriteriondef=${7} collapsecolid=${8} replacecolid=${9} collapsecoldate=${10} replacecoldate=${11}"
  exit 1
 fi
 if [ -z ${collapsecolid} ] ; then
