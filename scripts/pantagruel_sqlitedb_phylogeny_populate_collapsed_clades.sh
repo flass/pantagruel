@@ -27,10 +27,11 @@ if [ -z ${replacecolid} ] ; then
 fi
 cd ${database}
 
+dblquotecollapsecriteriondef=$(echo ${collapsecriteriondef} | sed -e "s/'/''/g")
 echostep1='load metadata on (collapsed) gene tree collections'
 sqlite3 ${sqldb} << EOF 
 INSERT INTO criteria_collapse_gene_tree_clades (criterion_id, criterion_name, criterion_definition, collapsed_clade_collection_creation)
- VALUES (${collapsecolid}, '${collapsecond}', '$(echo ${collapsecriteriondef} | sed -e "s/\'/\'\'/g")', '${collapsecoldate}') ;
+ VALUES (${collapsecolid}, '${collapsecond}', '${dblquotecollapsecriteriondef}', '${collapsecoldate}') ;
 INSERT INTO criteria_replace_gene_tree_clades (criterion_id, criterion_name, criterion_definition, replaced_clade_collection_creation)
  VALUES (${replacecolid}, '${replmethod}', '--method=${replmethod}', '${replacecoldate}') ;
 EOF

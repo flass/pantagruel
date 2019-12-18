@@ -206,6 +206,7 @@ else
   rm -f ${mlgenetreelist}
   ${ptgscripts}/lsfullpath.py "${mlgenetrees}/${mainresulttag}/*" | sort > ${mlgenetreelist}
   if [[ "${resumetask}" == "true" ]] ; then
+    rm -f ${mlgenetreelist}_resume
     for gt in $(cat ${mlgenetreelist}) ; do
       bngt=$(basename $gt)
       fam=$( echo ${gt} | cut -d'.' -f2 )
