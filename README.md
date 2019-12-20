@@ -123,6 +123,8 @@ Note there are **dependencies between tasks**, which must be carried on mostly s
 
 So all in all, you're better off running all the tasks sequentially, for instance using `pantagruel all`.
 
+Importantly, it is recomended to use the alternative interface provided by HPC scripts to run intensive tasks `06` and `07` on high-performance computer (HPC) clusters for efficient and time-tractable computing; see [HPC scripts doc] below.
+
 ### Usage example  
 Here is a standard examples of using `pantagruel` program.
 
@@ -465,9 +467,10 @@ Tasks `06|genetrees` and `07|reconciliations` are computationally intensive due 
 Thankfully, most academic institutions will nowadays give you access to a HPC cluster, that provides: 
  - high-efficience compute nodes for demanding tasks (reconciliation can be very memory hungry, up to above 100GB for complex gene family scenarios and large species trees);
  - an interface to submit many similar individual jobs as _arrays_ of jobs. The structure of data handled by Pantagruel - many gene families expecting the same computational treatment - lend themselves perfectly to this sort of computing infracstructure.  
+ 
 It is therefore highly recomended to use HPC clusters to deal with these intensive tasks if you can and have a dense dataset (or want it done with quickly).
 
-For this sake, Pantagruel package provides an alternative to the main interface, using shell scripts for submission of jobs to the HPC cluster. So far, only *Torque/PBS* and *IBM LSF* cluster systems are suported.
+For this sake, Pantagruel package provides an alternative to the main interface, using shell scripts for submission of jobs to the HPC cluster. So far, only **Torque/PBS** and **IBM LSF** cluster systems are suported.
 Tasks are broken down into steps, as every step within tasks need to be completed for all gene families (at least those you want to include in dowstream analyses) before things are carried forward.
 
 Here is how to proceed:
@@ -499,8 +502,8 @@ then copy back ouput files and updated database file by syncing the root folder 
 ```
 Of course, Pantagruel should be installed on the HPC host! 
 
-Logging onto the HPC host, you should visit the folder where you copied your database, and open the database's configuration file to edit the value of the `$ptgrepo` environment variable so to reflect where the pantagruel git repository has been cloned on that host.
-Then, you can run the scripts sequentially (waiting for full completion in-between each step!) as indicated above. 
+Logging onto the HPC host, you should visit the folder where you copied your database, and open the database's configuration file to edit the value of the `$ptgrepo` environment variable so to reflect where the pantagruel git repository has been cloned on that host.  
+Then, you can run the scripts sequentially (waiting for full completion in-between each step!) as indicated above.  
 Note that parameters relevant to the HPC submission can be specified for these scripts using options (each script comes with its own set of default values, for instance regarding requested resources like max memory allowance on the compute node):  
 ```sh
 ptgrepo=/where/you/cloned/pantagruel
@@ -538,3 +541,4 @@ Main options are to use either:
 [template environment script]: https://github.com/flass/pantagruel/blob/master/scripts/pipeline/environ_pantagruel_template.sh
 [install_dependencies.sh]: https://github.com/flass/pantagruel/blob/master/install_dependencies.sh
 [Dockerfile]:  https://github.com/flass/pantagruel/blob/master/etc/Dockerfile
+[HPC scripts doc]: https://github.com/flass/pantagruel#hpc-scripts-submission-of-intensive-tasks-to-high-performance-computer-clusters
