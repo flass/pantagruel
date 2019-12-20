@@ -414,9 +414,9 @@ Options are detailed here:
     -H|--submit_hpc  full address (hostname:/folder/location) of a folder on a remote high-performance computating (HPC) cluster server.
                        This indicate that computationally intensive tasks, including building the gene tree collection
                        ('genetrees') and reconciling gene tree with species tree ('reconciliations') will be run
-                       on a HPC server (only Torque/PBS job submission system is supported so far).
+                       on a HPC server (only Torque/PBS and LSF job submission systemd are supported so far).
                        [support for core genome tree building ('core') remains to be implemented].
-                       Instead of running the computations, scripts for cluster job submission will be generated automatically.
+                       Instead of running the computations, scripts for HPC cluster job array submission will be generated automatically.
                        Data and scripts will be transfered to the specified address (the database folder structure
                        will be duplicated there, but only relevant files will be synced). Note that job submission
                        scripts will need to be executed manually on the cluster server.
@@ -458,6 +458,58 @@ Options are detailed here:
 
     -h|--help          print this help message and exit.
 ```  
+
+### HPC scripts: submission of intensive tasks to high-performance computer clusters
+
+Tasks `06|genetrees` and `07|reconciliations` are computationally intensive due to the use of Bayesian algorithm, and due to the sheer number of homologous gene families for which a tree and a an evolution scenario need to be computed.  
+Thankfully, most academic institutions will nowadays give you access to a HPC cluster, that provides: 
+ - high-efficience compute nodes for demanding tasks (reconciliation can be very memory hungry, up to above 100GB for complex gene family scenarios and large species trees);
+ - an interface to submit many similar individual jobs as _arrays_ of jobs. The structure of data handled by Pantagruel - many gene families expecting the same computational treatment - lend themselves perfectly to this sort of computing infracstructure.  
+It is therefore highly recomended to use HPC clusters to deal with these intensive tasks if you can and have a dense dataset (or want it done with quickly).
+
+For this sake, Pantagruel package provides an alternative to the main interface, using shell scripts for submission of jobs to the HPC cluster. So far, only *Torque/PBS* and *IBM LSF* cluster systems are suported.
+Tasks are broken down into steps, as every step within tasks need to be completed for all gene families (at least those you want to include in dowstream analyses) before things are carried forward.
+
+Here is how to proceed:
+
+1) first, you should refresh your configuration file so to include the HPC parameters through the `-H|--submit_hpc` option:  
+```sh
+pantagruel -i previous_config_file --refresh --submit_hpc hpchost:/where/you/will/set/your/database init
+```
+
+2) then run task `06` as you would normally do:
+```sh
+pantagruel -i previous_config_file 06
+```
+This will generate the list of gene families for which trees are to be computed, then send the files to the designated location on the HPC server. 
+This copy step will only work provided you can connect via `ssh` to that host and that it does not require specifying the remote user account or to type in a password, i.e. that the simple command `ssh hpchost` would get you logged in your account without prompting you for a password.
+This is easily achieved i) using secure (e.g. RSA) key pairs to log-in between local and remote hosts (see [SSH documentation](https://help.ubuntu.com/community/SSH/OpenSSH/Keys)) and *using no passphrase* (which is more secure anyway) 
+and ii) by using a SSH config file (located in our local home folder as `~/.ssh/config`, see [ssh_config documetation](http://manpages.ubuntu.com/manpages/trusty/man5/ssh_config.5.html#files)) to describe the log-in details (remote user name, etc.)
+
+the task will then stop short and tell you what to do next:
+```
+please connect to remote host hpchost and execute the following scripts in order 
+(waiting for completion of all array jobs submitted by one script before executing the next):
+- pantagruel_pipeline_06.1_HPC_full_ML_gene_trees.sh
+- pantagruel_pipeline_06.2_HPC_collapse_gene_trees.sh
+- pantagruel_pipeline_06.3_HPC_bayesian_gene_trees.sh
+- pantagruel_pipeline_06.4_HPC_replace_spe_by_pops.sh
+- pantagruel_pipeline_06.5_HPC_populate_db_collapsed_clades.sh
+then copy back ouput files and updated database file by syncing the root folder from remote host to this host
+```
+Of course, Pantagruel should be installed on the HPC host! 
+
+Logging onto the HPC host, you should visit the folder where you copied your database, and open the database's configuration file to edit the value of the `$ptgrepo` environment variable so to reflect where the pantagruel git repository has been cloned on that host.
+Then, you can run the scripts sequentially (waiting for full completion in-between each step!) as indicated above. 
+Note that parameters relevant to the HPC submission can be specified for these scripts using options (each script comes with its own set of default values, for instance regarding requested resources like max memory allowance on the compute node):  
+```sh
+ptgrepo=/where/you/cloned/pantagruel
+ptgscripts=${ptgrepo}/scripts
+# to see the options:
+${ptgscripts}/pantagruel_pipeline_06.1_HPC_full_ML_gene_trees.sh --help
+# example of options, to specify that you will use the LSF system and request 32GB and 4 CPUs on the compute node, and 24h of maximum walltime use of the node:
+${ptgscripts}/pantagruel_pipeline_06.1_HPC_full_ML_gene_trees.sh --mem 32 --ncpus 4 --wth 24 --hpctype 'LSF'
+```
 
 
 -------------
