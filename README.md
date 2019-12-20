@@ -5,7 +5,7 @@
 ### 17/12/2019
 :whale: The [Dockerfile] (a 'recipe' to generate a Docker image) is now ready!  
 Use it to generate a Docker image containing all Pantagruel dependencies; then use that image to run `pantagruel` commands within the environment provided by the container, as explained [here](https://github.com/flass/pantagruel/blob/master/INSTALL.md#the-container-worryless-way).  
-NB: this may be used to generate a Singularity container as well, even though it was not teted yet
+NB: this may be used to generate a Singularity container as well, even though it was not tested yet
 
 ## Reference
 
@@ -44,7 +44,7 @@ Two version of the pipeline are distributed:
 
 - a script version, which source code is adaptable and can be deployed on high-performance computing (HPC) "cluster" Linux systems;  
 
-- (in development) a pre-compiled Docker image that can be deployed on pretty much any platform, including swarms of virtual machines (VMs). The latter version was implemented using Philippe Veber's [Bistro](https://github.com/pveber/bistro) framework.
+- (in development) a pre-compiled Docker image that can be deployed on pretty much any platform, including swarms of virtual machines (VMs). Future versions will be implemented using Philippe Veber's [Bistro](https://github.com/pveber/bistro) framework.
 
 See below for instruction on software [installation] and [usage]. Impatients can go directly to running [examples].
 
@@ -510,7 +510,7 @@ ptgrepo=/where/you/cloned/pantagruel
 ptgscripts=${ptgrepo}/scripts
 # to see the options:
 ${ptgscripts}/pantagruel_pipeline_06.1_HPC_full_ML_gene_trees.sh --help
-# example of options, to specify that you will use the LSF system and request 32GB and 4 CPUs on the compute node, and 24h of maximum walltime use of the node:
+# example of options, to specify that you will use the LSF system and request 32GB and 4 CPUs on each compute node, and 24h of maximum walltime use of the node:
 ${ptgscripts}/pantagruel_pipeline_06.1_HPC_full_ML_gene_trees.sh --mem 32 --ncpus 4 --wth 24 --hpctype 'LSF'
 ```
 
