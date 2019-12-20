@@ -43,6 +43,8 @@ else
   export rectype='dated'
 fi
 
+outrecdir=${recs}/${collapsecond}/${replmethod}/${reccol}
+
 # generate ortholog collection
 step1="generating ortholog collection from reconciled gene trees"
 echo ${step1}
