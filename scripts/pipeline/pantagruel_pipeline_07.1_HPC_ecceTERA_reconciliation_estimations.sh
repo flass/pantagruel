@@ -152,5 +152,5 @@ export reccoldate=$(date +%Y-%m-%d)
 terasourcenote=""
 pathterabin=$(readlink -f ${terabin})
 terasourcenote="using ecceTERA software compiled from source; $(ecceTERA | grep version); binaries found at ${pathterabin}"
-echo -e "${reccolid}\t${reccoldate}\t${terasourcenote}" > ${genetrees}/reccol
+echo -e "${reccolid}\t${reccoldate}\t${terasourcenote}\t${reccol}" > ${alerec}/reccol
 

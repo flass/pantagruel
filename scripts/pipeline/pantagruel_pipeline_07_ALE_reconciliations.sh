@@ -108,7 +108,7 @@ else
     ALEsourcenote="${ALEheader#*${ALEalgo} } binaries found at ${pathalebin}"
   fi
 fi
-echo -e "${reccolid}\t${reccoldate}\t${ALEsourcenote}" > ${genetrees}/reccol
+echo -e "${reccolid}\t${reccoldate}\t${ALEsourcenote}\t${reccol}" > ${alerec}/reccol
 
 ######################################################
 ## 07.2 Parse gene tree / Species tree reconciliations

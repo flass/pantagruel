@@ -43,6 +43,13 @@ else
   export rectype='dated'
 fi
 
+# safer specifying the reconciliation collection to parse; e.g.: 'ale_collapsed_dated_1'
+if [ -z "${reccol}" ] ; then
+  # if not inferred from the record of the last reconciliation computation
+  reccol=$(cut -f4 ${alerec}/reccol)
+  [ -z "${reccol}" ] && echo "Error: cannot find reconciliation collection as env variable \$reccol is empty; exit now" ; exit 1
+fi
+
 outrecdir=${recs}/${collapsecond}/${replmethod}/${reccol}
 
 # generate ortholog collection
