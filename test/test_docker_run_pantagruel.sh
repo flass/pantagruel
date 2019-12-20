@@ -31,3 +31,5 @@ docker run -v $cwd:$cwd -w $cwd pantagruel ${ptgexe} -i ${ptgdbconfig} 02
 docker run -v $cwd:$cwd -w $cwd pantagruel ${ptgexe} -i ${ptgdbconfig} 03
 docker run -v $cwd:$cwd -w $cwd pantagruel ${ptgexe} -i ${ptgdbconfig} 05
 docker run -v $cwd:$cwd -w $cwd pantagruel ${ptgexe} -i ${ptgdbconfig} 06
+docker run -v $cwd:$cwd -w $cwd pantagruel ${ptgexe} -i ${ptgdbconfig} 07
+docker run -v $cwd:$cwd -w $cwd pantagruel ${ptgexe} -i ${ptgdbconfig} 08
