@@ -493,11 +493,11 @@ the task will then stop short and tell you what to do next:
 ```
 please connect to remote host hpchost and execute the following scripts in order 
 (waiting for completion of all array jobs submitted by one script before executing the next):
-- pantagruel_pipeline_06.1_HPC_full_ML_gene_trees.sh
-- pantagruel_pipeline_06.2_HPC_collapse_gene_trees.sh
-- pantagruel_pipeline_06.3_HPC_bayesian_gene_trees.sh
-- pantagruel_pipeline_06.4_HPC_replace_spe_by_pops.sh
-- pantagruel_pipeline_06.5_HPC_populate_db_collapsed_clades.sh
+- pantagruel_pipeline_06.1_HPC_full_ML_gene_trees.sh [OPTIONS] ptg_config_file
+- pantagruel_pipeline_06.2_HPC_collapse_gene_trees.sh [OPTIONS] ptg_config_file
+- pantagruel_pipeline_06.3_HPC_bayesian_gene_trees.sh [OPTIONS] ptg_config_file
+- pantagruel_pipeline_06.4_HPC_replace_spe_by_pops.sh [OPTIONS] ptg_config_file
+- pantagruel_pipeline_06.5_HPC_populate_db_collapsed_clades.sh [OPTIONS] ptg_config_file
 then copy back ouput files and updated database file by syncing the root folder from remote host to this host
 ```
 Of course, Pantagruel should be installed on the HPC host! 
@@ -511,7 +511,7 @@ ptgscripts=${ptgrepo}/scripts
 # to see the options:
 ${ptgscripts}/pantagruel_pipeline_06.1_HPC_full_ML_gene_trees.sh --help
 # example of options, to specify that you will use the LSF system and request 32GB and 4 CPUs on each compute node, and 24h of maximum walltime use of the node:
-${ptgscripts}/pantagruel_pipeline_06.1_HPC_full_ML_gene_trees.sh --mem 32 --ncpus 4 --wth 24 --hpctype 'LSF'
+${ptgscripts}/pantagruel_pipeline_06.1_HPC_full_ML_gene_trees.sh --mem 32 --ncpus 4 --wth 24 --hpctype 'LSF' ptg_config_file
 ```
 
 

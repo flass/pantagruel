@@ -75,11 +75,11 @@ if [[ ! -z "$hpcremoteptgroot" && "$hpcremoteptgroot" != 'none' ]] ; then
 
   echo "please connect to remote host $hpcremotehost and execute the following scripts in order "
   echo "(waiting for completion of all array jobs submitted by one script before executing the next):"
-  echo "- pantagruel_pipeline_06.1_HPC_full_ML_gene_trees.sh"
-  echo "- pantagruel_pipeline_06.2_HPC_collapse_gene_trees.sh"
-  echo "- pantagruel_pipeline_06.3_HPC_bayesian_gene_trees.sh"
-  echo "- pantagruel_pipeline_06.4_HPC_replace_spe_by_pops.sh"
-  echo "- pantagruel_pipeline_06.5_HPC_populate_db_collapsed_clades.sh"
+  echo "- pantagruel_pipeline_06.1_HPC_full_ML_gene_trees.sh [OPTIONS] ${hpcremoteptgroot}/$(basename ${envsourcescript})"
+  echo "- pantagruel_pipeline_06.2_HPC_collapse_gene_trees.sh [OPTIONS] ${hpcremoteptgroot}/$(basename ${envsourcescript})"
+  echo "- pantagruel_pipeline_06.3_HPC_bayesian_gene_trees.sh [OPTIONS] ${hpcremoteptgroot}/$(basename ${envsourcescript})"
+  echo "- pantagruel_pipeline_06.4_HPC_replace_spe_by_pops.sh [OPTIONS] ${hpcremoteptgroot}/$(basename ${envsourcescript})"
+  echo "- pantagruel_pipeline_06.5_HPC_populate_db_collapsed_clades.sh [OPTIONS] ${hpcremoteptgroot}/$(basename ${envsourcescript})"
   echo "then copy back ouput files and updated database file by syncing the root folder from remote host to this host"
 
   exit 0
