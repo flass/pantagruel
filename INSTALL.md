@@ -65,6 +65,12 @@ may want not to install automatically all Debian packages (some could mess up wi
 ```sh
 pantagruel_pipeline/pantagruel/install_dependencies.sh pantagruel_pipeline/ --no-debian --no-interpro --no-brew --no-docker
 ```
+
+### Checking ALE functions
+
+You may want to test that ALE commands work after installation, by typing the single commands `ALEml` and `ALEobserve` - preceeeded by `docker run -v $PWD:$PWD -w $PWD` if using the docker iamge; see [here](https://github.com/flass/pantagruel/blob/master/doc/installing_ALE.md#checking-it-works).
+
+
 ________
 
 ## The details if you are picky
