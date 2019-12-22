@@ -77,3 +77,18 @@ cd build
 cmake ..
 make
 ```
+
+## Checking it works!
+
+To verify that the ALE commands are available in your system (i.e. that the location of excutable is listed in your `$PATH`) and that they function correctly, you should simply type the commands in your shell, and get these usage messages back:  
+
+```sh
+$ ALEml
+ALEml using ALE v0.4
+usage:
+ ./ALEml species_tree.newick gene_tree_sample.ale  [samples] [gene_name_separator]
+$ ALEobserve 
+ALEobserve using ALE v0.4
+usage:
+ ./ALEobserve gene_tree_sample.newicks [burnin=0]
+```
