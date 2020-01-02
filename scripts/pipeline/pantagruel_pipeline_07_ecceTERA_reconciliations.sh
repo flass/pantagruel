@@ -154,8 +154,8 @@ echo -e "\n# Parsed reconciliation collection details:"
 cat ${alerec}/parsedreccol
 
 if [ "${resumetask}" == 'true' ] ; then
-  echo "resume mode: first clean the database from previous inserts and indexes"
+  echo "Resume mode: first clean the database from previous inserts and indexes"
   ${ptgscripts}/pantagruel_sqlitedb_phylogeny_clean_reconciliations.sh "${database}" "${sqldb}" "${parsedreccolid}"
 fi
-## store reconciliation parameters and load parsed reconciliation data into database
+echo "Store reconciliation parameters and load parsed reconciliation data into database"
 ${ptgscripts}/pantagruel_sqlitedb_phylogeny_populate_reconciliations.sh "${database}" "${sqldb}" "${parsedrecs}" "${ALEversion}" "${ALEalgo}" "${ALEsourcenote}" "${parsedreccol}" "${parsedreccolid}" "${parsedreccoldate}"

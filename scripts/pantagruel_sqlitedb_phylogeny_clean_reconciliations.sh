@@ -52,13 +52,13 @@ DROP INDEX IF EXISTS replaced_gene_tree_clades_replab_replcritid;
 
 DELETE FROM replaced_gene_tree_clades;
 
-DROP UNIQUE INDEX rlocds2genefam_rlocds;
+DROP INDEX rlocds2genefam_rlocds;
 DROP INDEX IF EXISTS rlocds2genefam_genefam;
 
 DELETE FROM replacement_label_or_cds_code2gene_families;
 
 DROP INDEX IF EXISTS gtlab2cds_rlocds;
-DROP UNIQUE INDEX gtlab2cds_cdscode;
+DROP INDEX gtlab2cds_cdscode;
 
 DELETE FROM gene_tree_label2cds_code;
 
