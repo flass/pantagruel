@@ -138,8 +138,9 @@ export parsedreccol=${reccol}_parsed_${parsedreccolid}
 export parsedrecs=${alerec}/parsed_recs/${parsedreccol}
 
 mkdir -p ${parsedrecs}
-reclist=$outrecdir/ale_collapsed_${rectype}_uml_rec_list
-${ptgscripts}/lsfullpath.py "${outrecdir}/ale_collapsed_${rectype}/*ml_rec" > $reclist
+
+reclist=${outrecdir}_rec_list
+${ptgscripts}/lsfullpath.py "${outrecdir}/*ml_rec" > ${reclist}
 
 if [ "$chaintype" == 'fullgenetree' ] ; then
   pops=""

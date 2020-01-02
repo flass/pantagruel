@@ -48,8 +48,8 @@ export parsedrecs=${alerec}/parsed_recs/${parsedreccol}
 outrecdir=${recs}/${collapsecond}/${replmethod}/${reccol}
 
 mkdir -p ${parsedrecs}
-tasklist=$outrecdir/${reccol}_${rectype}_uml_rec_list
-${ptgscripts}/lsfullpath.py "${outrecdir}/${reccol}_${rectype}/*ml_rec" > $tasklist
+tasklist=${recs}/${collapsecond}/${replmethod}/${reccol}_ml_rec_list
+${ptgscripts}/lsfullpath.py "${outrecdir}/*ml_rec" > $tasklist
 
 parsecollogd=${ptgdb}/logs/parsecol
 parsecollogs=${parsecollogd}/parse_collapsedALE_scenarios.log
