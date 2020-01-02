@@ -39,7 +39,7 @@ fi
 if [ -z "${reccol}" ] ; then
   # if not inferred from the record of the last reconciliation computation
   reccol=$(cut -f4 ${alerec}/reccol)
-  [ -z "${reccol}" ] && echo "Error: cannot find reconciliation collection as env variable \$reccol is empty; exit now" ; exit 1
+  [ -z "${reccol}" ] && echo "Error: cannot find reconciliation collection as env variable \$reccol is empty; exit now" && exit 1
 fi
 # derived parameters
 export rectype=$(echo ${reccol} | cut -d'_' -f2)
