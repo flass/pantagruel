@@ -62,12 +62,21 @@ mkdir -p $outrecdir
 
 cd ${ptgtmp} 
 
+if [[ "${chaintype}" == 'fullgenetree' ]] ; then
+  # use the same species tree file for every gene family, with no collapsed populations
+  stree=${speciestree}.lsd.nwk
+else
+  # use a dedicated species tree file for each gene family, with population collapsed in accordance to the gene tree
+  stree='Stree.nwk'
+fi
+
 if [ "${resumetask}" == 'true' ] ; then
   rm -f ${tasklist}_resumetasklist
   # resuming after a stop in batch computing, or to collect those jobs that crashed (and may need to be re-ran with more mem/time allowance)
   for nfgs in $(cat ${tasklist}) ; do
     bng=$(basename ${nfgs})
-    bnalerec=${bng}.ale.${tag}ml_rec
+    [ ${stree} == 'Stree.nwk' ] && aleoutSpref=${bng/Gtrees/Stree} || aleoutSpref=$(basename ${stree})
+    bnalerec=${aleoutSpref}_${bng}.ale.${tag}ml_rec
     if [[ ! -e ${recs}/${collapsecond}/${replmethod}/${reccol}/${bnalerec} ]] ; then
      echo ${nfgs}
    fi
@@ -77,13 +86,8 @@ fi
 
 ## perform receonciliations sequentially (one gene family after another)
 export worklocal='false'
-if [[ "${chaintype}" == 'fullgenetree' ]] ; then
-  # use the same species tree file for every gene family, with no collapsed populations
-  ${ptgscripts}/ale_sequential.sh ${tasklist} ${outrecdir} ${speciestree}.lsd.nwk ${recsamplesize} ${ALEalgo}
-else
-  # use a dedicated species tree file for each gene family, with population collapsed in accordance to the gene tree
-  ${ptgscripts}/ale_sequential.sh ${tasklist} ${outrecdir} Stree.nwk ${recsamplesize} ${ALEalgo}
-fi
+${ptgscripts}/ale_sequential.sh ${tasklist} ${outrecdir} ${stree} ${recsamplesize} ${ALEalgo}
+
 export reccoldate=$(date +%Y-%m-%d)
 if [[ -z "$alebin" ]] ; then
   alebin=$(command -v $ALEalgo)
