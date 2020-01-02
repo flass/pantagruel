@@ -55,10 +55,10 @@ export outrecdir=${recs}/${collapsecond}/${replmethod}/${reccol}
 mkdir -p $outrecdir
 if [[ "${chaintype}" == 'fullgenetree' ]] ; then
   # use the same species tree file for every gene family, with no collapsed populations
-  export spetree=${speciestree}.lsd.nwk ${recsamplesize} ${ALEalgo}
+  export spetree=${speciestree}.lsd.nwk
 else
   # use a dedicated species tree file for each gene family, with population collapsed in accordance to the gene tree
-  export spetree=Stree.nwk
+  export spetree='Stree.nwk'
 fi
 
 if [ "${resumetask}" == 'true' ] ; then
@@ -66,7 +66,8 @@ if [ "${resumetask}" == 'true' ] ; then
   # resuming after a stop in batch computing, or to collect those jobs that crashed (and may need to be re-ran with more mem/time allowance)
   for nfgs in $(cat $tasklist) ; do
     bng=$(basename $nfgs)
-    bnalerec=${bng}.ale.${tag}ml_rec
+    [ ${spetree} == 'Stree.nwk' ] && aleoutSpref=${bng/Gtrees/Stree} || aleoutSpref=$(basename ${spetree})
+    bnalerec=${aleoutSpref}_${bng}.ale.${tag}ml_rec
     if [[ ! -e ${recs}/${collapsecond}/${replmethod}/${reccol}/${bnalerec} ]] ; then
      echo ${nfgs}
    fi
