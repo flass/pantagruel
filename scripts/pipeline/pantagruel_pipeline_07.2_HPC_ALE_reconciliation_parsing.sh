@@ -48,7 +48,7 @@ export parsedrecs=${alerec}/parsed_recs/${parsedreccol}
 outrecdir=${recs}/${collapsecond}/${replmethod}/${reccol}
 
 mkdir -p ${parsedrecs}
-tasklist=${recs}/${collapsecond}/${replmethod}/${reccol}_ml_rec_list
+tasklist=${outrecdir}_rec_list
 ${ptgscripts}/lsfullpath.py "${outrecdir}/*ml_rec" > $tasklist
 
 parsecollogd=${ptgdb}/logs/parsecol
