@@ -57,8 +57,9 @@ step1="generating ortholog collection from reconciled gene trees"
 echo ${step1}
 orthocol=ortholog_collection_${orthocolid}
 mkdir -p ${orthogenes}/${orthocol}
-${ptgscripts}/get_orthologues_from_ALE_recs.py -i ${outrecdir} -o ${orthogenes}/${orthocol} ${getOrpthologuesOptions} &> $ptglogs/get_orthologues_from_ALE_recs_${orthocol}.log
-checkexec "step 1: failed when ${step1}" "step 1: complete ${step1}"
+getorthologs=$ptglogs/get_orthologues_from_ALE_recs_${orthocol}.log
+${ptgscripts}/get_orthologues_from_ALE_recs.py -i ${outrecdir} -o ${orthogenes}/${orthocol} ${getOrpthologuesOptions} &> ${getorthologs}
+checkexec "step 1: failed when ${step1}; check specific logs in '${getorthologs}' for more details" "step 1: complete ${step1}"
 
 # import ortholog classification into database
 step2="importing ortholog classification into database"

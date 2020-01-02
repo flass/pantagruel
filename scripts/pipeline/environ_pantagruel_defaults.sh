@@ -25,3 +25,5 @@ export evtypematch='ODTS'
 export minevfreqmatch=0.5
 export minjointevfreqmatch=1.0
 export maxreftreeheight=0.25
+
+export ptgcitation="Lassalle F, Veber P, Jauneikaite E, Didelot X. Automated Reconstruction of All Gene Histories in Large Bacterial Pangenome Datasets and Search for Co-Evolved Gene Modules with Pantagruel.” bioRxiv 586495. doi: 10.1101/586495"

@@ -8,11 +8,15 @@
 #########################################################
 # Copyright: Florent Lassalle (f.lassalle@imperial.ac.uk), 01 October 2018.
 
+ptgcitation="Lassalle F, Veber P, Jauneikaite E, Didelot X. Automated Reconstruction of All Gene Histories in Large Bacterial Pangenome Datasets and Search for Co-Evolved Gene Modules with Pantagruel.” bioRxiv 586495. doi: 10.1101/586495"
+pleasecite="When using this software, please cite: '${ptgcitation}'"
+
 ptgcmdargs=$(echo ${@} | sed -e "s/'/\'/g")
 locexec=$(readlink -e $0)
 export ptgrepo=${locexec%%/scripts/pipeline/*}
 cd ${ptgrepo} ; export ptgversion=$(git log | head -n 1 | awk '{ print $2 }') ; cd - > /dev/null
 echo "This is Pantagruel pipeline version ${ptgversion} using source code from repository '$ptgrepo'"
+echo
 export ptgscripts=${ptgrepo}/scripts
 
 usage (){
@@ -264,6 +268,15 @@ usagelong (){
   echo "        pantagruel -i previous_config_file --refresh init "
   echo "_________________________________________________________________________________________________________________"
   echo ""
+  echo "Copyright: Florent Lassalle (f.lassalle@imperial.ac.uk), 01 January 2020."
+  echo "Pantagruel is distributed under a GNU GENERAL PUBLIC LICENSE, Version 3 <http://gnu.org/licenses/gpl.html>."
+  echo "This is free software: you are free to change and redistribute it. There is NO WARRANTY, to the extent permitted by law."
+  echo ""
+  echo "${pleasecite}"
+  echo ""
+  echo "_________________________________________________________________________________________________________________"
+  echo ""
+
 }
 
 ptgenvsetdefaults (){

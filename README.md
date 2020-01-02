@@ -5,15 +5,16 @@
 ### 17/12/2019: :whale: Dockerfile
 The [Dockerfile] (a 'recipe' to generate a Docker image) is now ready!  
 Use it to generate a Docker image containing all Pantagruel dependencies; then use that image to run `pantagruel` commands within the environment provided by the container, as explained [here](https://github.com/flass/pantagruel/blob/master/INSTALL.md#the-container-worryless-way).  
-NB: this may be used to generate a Singularity container as well, even though it was not tested yet
+NB: this may be used to generate a Singularity container as well, even though it was not tested yet.
 
 ### 26/03/2019: now on bioRxiv! 
-The preprint describing the software and underlying methods is available on bioRxiv preprint server at [https://www.biorxiv.org/content/10.1101/586495v3](https://www.biorxiv.org/content/10.1101/586495v2)
+The preprint describing the software and underlying methods is available on bioRxiv preprint server at:  
+[https://www.biorxiv.org/content/10.1101/586495v3](https://www.biorxiv.org/content/10.1101/586495v2).
 
 ## Reference
 
 If using this software, please cite:  
-Lassalle F, Veber P, Jauneikaite E, Didelot X. Automated Reconstruction of All Gene Histories in Large Bacterial Pangenome Datasets and Search for Co-Evolved Gene Modules with Pantagruel.” *bioRxiv* 586495. [doi: 10.1101/586495](doi.org/10.1101/586495)
+**Lassalle F, Veber P, Jauneikaite E, Didelot X. Automated Reconstruction of All Gene Histories in Large Bacterial Pangenome Datasets and Search for Co-Evolved Gene Modules with Pantagruel.” *bioRxiv* 586495. [doi: 10.1101/586495](doi.org/10.1101/586495).**
 
 
 ## Aim and description
