@@ -1,0 +1,87 @@
+#! /bin/bash
+#PBS -S /bin/bash
+#PBS -N parseColALEscenarios
+
+# load potential modules
+if [ ! -z "${modulefile}" ] ; then
+  source ${modulefile}
+fi
+
+echo "This is job $PBS_JOBNAME, job_ID $PBS_JOBID (array_task_ID $PBS_ARRAY_INDEX) on host $HOSTNAME, running $PBS_NUM_PPN processes on these workers:"
+cat $PBS_NODEFILE
+echo ""
+
+
+# load potential modules
+if [ ! -z "${modulefile}" ] ; then
+  source ${modulefile}
+fi
+
+# all environment variables should have been passed on by  qsub -V
+# verify for the most important
+if [ -z "${tasklist}" ] ; then
+  echo "Error: mandatory variable \${tasklist} not provied, exit now"
+  exit 1
+fi
+if [ -z "${dtag}" ] ; then
+  echo "Error: mandatory variable \${dtag} not provied, exit now"
+  exit 1
+fi
+if [ -z "${parsedrecs}" ] ; then
+  echo "Error: mandatory variable \${parsedrecs} not provied, exit now"
+  exit 1
+fi
+if [ -z "${evtypeparse}" ] ; then
+  echo "Error: mandatory variable \${evtypeparse} not provied, exit now"
+  exit 1
+fi
+if [ -z "${minevfreqparse}" ] ; then
+  echo "Error: mandatory variable \${minevfreqparse} not provied, exit now"
+  exit 1
+fi
+if [ ! -s "${speciestree}.lsd.nwk" ] ; then
+  echo "Error: input ultrametric species tree file '${speciestree}.lsd.nwk' does not exist or is empty, exit now"
+  exit 1
+fi
+if [ ! -s "${speciestree%.*}_populations" ] ; then
+  echo "Error: input species population file '${speciestree%.*}_populations' does not exist or is empty, exit now"
+  exit 1
+fi
+
+if [ ! -z "$ncpus" ] ; then
+  ncpus=1
+fi
+
+source ${ptgscripts}/load_python2.7_env.sh
+
+[ -x "${TMPDIR}" ] && cd ${TMPDIR} || cd /tmp/
+jobtmpdir=replSpePopinGs.$LSB_JOBID
+mkdir -p ${jobtmpdir}/ && cd ${jobtmpdir}/
+echo "current directory is ${PWD}"
+
+
+taskchunklist=`awk "NR==$PBS_ARRAY_INDEX" ${tasklist}_${dtag}_taskchunks`
+if [ -z "${taskchunklist}" ] ; then
+  # to cover the case when not running as an array job
+  taskchunklist=${tasklist}
+  replrun="${dtag}"
+else
+  jobrange=$(echo $taskchunklist | awk -F'_' '{print $NF}')
+  replrun="${dtag}_${jobrange}"
+fi
+
+if [ ! -z "${verboseparseColALEscenarios}" ] ; then
+  verbosemode="--verbose=${verboseparseColALEscenarios}"
+else
+  verbosemode=""
+fi
+
+python2.7 ${ptgscripts}/parse_collapsedALE_scenarios.py --rec_sample_list ${taskchunklist} \
+ --populations ${speciestree/.full/}_populations --reftree ${speciestree}.lsd.nwk \
+ --dir_table_out ${parsedrecs} --evtype ${evtypeparse} --minfreq ${minevfreqparse} \
+ --threads ${ncpus} ${verbosemode}
+ 
+if [[ "$(basename ${PWD})" == "${jobtmpdir}" ]] ; then
+  cd ..
+  rm -r ${jobtmpdir}/
+fi

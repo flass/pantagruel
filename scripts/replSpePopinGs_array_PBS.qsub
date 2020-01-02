@@ -1,9 +1,6 @@
 #!/bin/bash
 #PBS -S /bin/bash
 #PBS -N replSpePopinGs
-#PBS -o /work/flassall/logs/mrbayes
-#PBS -j oe 
-#PBS -l walltime=24:00:00 
 
 # load potential modules
 if [ ! -z "${modulefile}" ] ; then
@@ -62,7 +59,7 @@ else
   verbosemode=""
 fi
 
-cd ${TMPDIR}
+[ -x "${TMPDIR}" ] && cd ${TMPDIR} || cd /tmp/
 echo "current directory is ${PWD}"
 
 source ${ptgscripts}/load_python2.7_env.sh

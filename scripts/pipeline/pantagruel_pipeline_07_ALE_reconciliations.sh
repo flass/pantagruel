@@ -109,6 +109,8 @@ else
   fi
 fi
 echo -e "${reccolid}\t${reccoldate}\t${ALEsourcenote}\t${reccol}" > ${alerec}/reccol
+echo -e "\n# Reconciliation collection details:"
+cat ${alerec}/reccol
 
 ######################################################
 ## 07.2 Parse gene tree / Species tree reconciliations

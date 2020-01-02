@@ -77,11 +77,11 @@ else
 fi
 
 case "${hpctype}" in 
-  PBS)
+  'PBS')
     [ ${Nchunk} -gt 2 ] && arrayspec=" -J 1-${Nchunk}"
-    subcmd="qsub${arrayspec} -N parseColALEscenario -l select=1:ncpus=${ncpus}:mem=${mem}gb${parallelflags},walltime=${wth}:00:00 -o ${repllogd} -j oe -V ${ptgscripts}/parseColALEscenario_array_PBS.qsub"
+    subcmd="qsub${arrayspec} -N parseColALEscenarios -l select=1:ncpus=${ncpus}:mem=${mem}gb${parallelflags},walltime=${wth}:00:00 -o ${repllogd} -j oe -V ${ptgscripts}/parseColALEscenario_array_PBS.qsub"
     ;;
-  LSF)
+  'LSF')
     if [ ${Nchunk} -gt 2 ] ; then
       arrayspec="[1-${Nchunk}]"
 	  [ ! -z ${maxatonce} ] && arrayspec="${arrayspec}%${maxatonce}"
@@ -95,26 +95,19 @@ case "${hpctype}" in
      bqueue='basement'
     fi
     memmb=$((${mem} * 1024)) 
-    nflog="${repllogd}/replSpePopinGs.%J${arrayjobtag}.o"
+    nflog="${repllogd}/parseColALEscenarios.%J${arrayjobtag}.o"
     [ -z "${parallelflags}" ] && parallelflags="span[hosts=1]"
     subcmd="bsub -J parseColALEscenarios${arrayspec} -R \"select[mem>${memmb}] rusage[mem=${memmb}] ${parallelflags}\" \
             -n${ncpus} -M${memmb} -q ${bqueue} \
             -o ${nflog} -e ${nflog} -env 'all' ${ptgscripts}/parseColALEscenarios_array_LSF.bsub"
     ;;
+  *)
+    echo "Error: high-performance computer system '${hpctype}' is not supported; exit now"
+    exit 1
+	;;
 esac
 echo "$subcmd"
 eval "$subcmd"
-
-
-
-
-qsub -N parseColALE -l select=1:ncpus=${ncpus}:mem=${mem},walltime=${wth}:00:00 -o ${parsecollogs} -j oe -V << EOF
-module load anaconda3/personal
-source activate env_python2
-python2.7 ${ptgscripts}/parse_collapsedALE_scenarios.py --rec_sample_list ${tasklist} \
- --populations ${speciestree/.full/}_populations --reftree ${speciestree}.lsd.nwk \
- --dir_table_out ${parsedrecs} --evtype ${evtypeparse} --minfreq ${minevfreqparse} \
- --threads 8
 
 #### NOTE
 ## here for simplicity only the log variables refering to parsed reconciliations (parsedreccol, parsedreccolid, parsedreccoldate) are recorded in the database

@@ -64,8 +64,8 @@ nfrad2=${nfrad1%.*}
 echo $nfrad2
 
 
-cd $TMPDIR/
-echo "current directory is $PWD"
+[ -x "${TMPDIR}" ] && cd ${TMPDIR} || cd /tmp/
+echo "current directory is ${PWD}"
 
 rsync -az $nfaln $TMPDIR/
 if [ $? != 0 ] ; then

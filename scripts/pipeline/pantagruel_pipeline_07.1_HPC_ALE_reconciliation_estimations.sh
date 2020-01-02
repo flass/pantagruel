@@ -148,3 +148,5 @@ else
 fi
 
 echo -e "${reccolid}\t${reccoldate}\t${ALEsourcenote}\t${reccol}" > ${alerec}/reccol
+echo -e "\n# Reconciliation collection details:"
+cat ${alerec}/reccol

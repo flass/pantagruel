@@ -63,10 +63,10 @@ else
   ## load these information into the database
   
   case "${hpctype}" in 
-   PBS)
+   'PBS')
     subcmdpref="qsub${arrayspec} -N ptgSqlitePhyloPopulateCCs -l select=1:ncpus=${ncpus}:mem=${mem}gb${parallelflags},walltime=${wth}:00:00 -o ${repllogd} -j oe -V"
     ;;
-   LSF)
+   'LSF')
     if [ ${wth} -le 12 ] ; then
       bqueue='normal'
     elif [ ${wth} -le 48 ] ; then
@@ -80,6 +80,10 @@ else
     subcmdpref="bsub -J replSpePopinGs${arrayspec} -R \"select[mem>${memmb}] rusage[mem=${memmb}] ${parallelflags}\" \
             -n${ncpus} -M${memmb} -q ${bqueue} -o ${nflog} -e ${nflog} -env 'all'"
     ;;
+   *)
+    echo "Error: high-performance computer system '${hpctype}' is not supported; exit now"
+    exit 1
+	;;
   esac
 
   subcmd = "${subcmdpref} ${ptgscripts}/pantagruel_sqlitedb_phylogeny_populate_collapsed_clades.sh"

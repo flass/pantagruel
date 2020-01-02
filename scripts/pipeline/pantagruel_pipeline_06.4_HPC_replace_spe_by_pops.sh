@@ -74,11 +74,11 @@ else
   arrayspec=""
 fi
 case "${hpctype}" in 
-  PBS)
+  'PBS')
     [ ${Nchunk} -gt 2 ] && arrayspec=" -J 1-${Nchunk}"
     subcmd="qsub${arrayspec} -N replSpePopinGs -l select=1:ncpus=${ncpus}:mem=${mem}gb${parallelflags},walltime=${wth}:00:00 -o ${repllogd} -j oe -V ${ptgscripts}/replSpePopinGs_array_PBS.qsub"
     ;;
-  LSF)
+  'LSF')
     if [ ${Nchunk} -gt 2 ] ; then
       arrayspec="[1-${Nchunk}]"
 	  [ ! -z ${maxatonce} ] && arrayspec="${arrayspec}%${maxatonce}"
@@ -98,6 +98,10 @@ case "${hpctype}" in
             -n${ncpus} -M${memmb} -q ${bqueue} \
             -o ${nflog} -e ${nflog} -env 'all' ${ptgscripts}/replSpePopinGs_array_LSF.bsub"
     ;;
+  *)
+    echo "Error: high-performance computer system '${hpctype}' is not supported; exit now"
+    exit 1
+	;;
 esac
 echo "$subcmd"
 eval "$subcmd"

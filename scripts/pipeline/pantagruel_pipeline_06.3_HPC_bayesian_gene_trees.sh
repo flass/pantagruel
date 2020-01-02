@@ -102,8 +102,9 @@ for jobrange in ${jobranges[@]} ; do
 	  ${ptgscripts}/mrbayes_array_LSF.bsub"
 	  ;;
 	*)
-	  echo "Error: high-performance computer system '$hpctype' is not supported; exit now"
-	  exit 1;;
+	  echo "Error: high-performance computer system '${hpctype}' is not supported; exit now"
+	  exit 1
+	  ;;
   esac
   echo "${subcmd}"
   eval "${subcmd}"
