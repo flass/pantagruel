@@ -148,7 +148,9 @@ python2.7 ${ptgscripts}/parse_collapsedALE_scenarios.py --rec_sample_list ${recl
 checkexec "Could not complete parsing ALE scenarios" "Successfully parsed ALE scenarios"
 
 export parsedreccoldate=$(date +%Y-%m-%d)
-echo -e "${parsedreccolid}\t${parsedreccoldate}" > ${genetrees}/parsedreccol
+echo -e "${parsedreccolid}\t${parsedreccoldate}\t${parsedreccol}" > ${alerec}/parsedreccol
+echo -e "\n# Parsed reconciliation collection details:"
+cat ${alerec}/parsedreccol
 
 if [ "${resumetask}" == 'true' ] ; then
   echo "resume mode: first clean the database from previous inserts and indexes"

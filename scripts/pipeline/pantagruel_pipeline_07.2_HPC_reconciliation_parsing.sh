@@ -114,7 +114,9 @@ eval "$subcmd"
 ## but not the log variables refering to the actual reconciliations (reccol, reccolid, reccoldate)
 ####
 export parsedreccoldate=$(date +%Y-%m-%d)
-echo -e "${parsedreccolid}\t${parsedreccoldate}" > ${alerec}/parsedreccol
+echo -e "${parsedreccolid}\t${parsedreccoldate}\t${parsedreccol}" > ${alerec}/parsedreccol
+echo -e "\n# Parsed reconciliation collection details:"
+cat ${alerec}/parsedreccol
 
 ## store reconciliation parameters and load parsed reconciliation data into database
 ${ptgscripts}/pantagruel_sqlitedb_phylogeny_populate_reconciliations.sh "${database}" "${sqldb}" "${parsedrecs}" "${ALEversion}" "${ALEalgo}" "${ALEsourcenote}" "${parsedreccol}" "${parsedreccolid}" "${parsedreccoldate}"
