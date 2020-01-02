@@ -65,8 +65,8 @@ cd ${ptgtmp}
 if [ "${resumetask}" == 'true' ] ; then
   rm -f ${tasklist}_resumetasklist
   # resuming after a stop in batch computing, or to collect those jobs that crashed (and may need to be re-ran with more mem/time allowance)
-  for nfgs in $(cat $tasklist) ; do
-    bng=$(basename $nfgs)
+  for nfgs in $(cat ${tasklist}) ; do
+    bng=$(basename ${nfgs})
     bnalerec=${bng}.ale.${tag}ml_rec
     if [[ ! -e ${recs}/${collapsecond}/${replmethod}/${reccol}/${bnalerec} ]] ; then
      echo ${nfgs}

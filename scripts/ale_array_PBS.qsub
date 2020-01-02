@@ -264,22 +264,22 @@ if [ ! -z "${prevcomputetime}" ] ; then ALETIME=$(( ${ALETIME} + ${prevcomputeti
 echo -e "${nfrad}\t${ALEalgo}\t${ALETIME}\ts" > ${nfrad}.ale.computetime
 echo "reconciliation estimation took" $(date -u -d @${ALETIME} +"%Hh%Mm%Ss") "total time"
 if [ ! -z "${prevcomputetime}" ] ; then echo "(including ${prevcomputetime} in previous run)" ; fi
-echo "# ls ${nfrad}*"
-ls ${nfrad}*
+echo "# ls *${nfrad}*"
+ls *${nfrad}*
 
 # save files
-ls ./${nfrad}*.ale.* > /dev/null
+ls ./*${nfrad}*.ale.* > /dev/null
 if [ ${?} == 0 ] ; then
-  savecmd1="$savecmd ./${nfrad}*.ale* ${outrecdir}/"
+  savecmd1="$savecmd ./*${nfrad}*.ale* ${outrecdir}/"
   echo "# ${savecmd1}"
   ${savecmd1}
   if [ $? != 0 ] ; then
     echo "ERROR: unable to save result files from ${PWD}/ to ${outrecdir}/"
   fi
 else
-ls ${dnchain}/${nfrad}*.ale.* > /dev/null
+ls ${dnchain}/*${nfrad}*.ale.* > /dev/null
 if [ ${?} == 0 ] ; then
-  savecmd2="${savecmd} ${dnchain}/${nfrad}*.ale.* ${outrecdir}/"
+  savecmd2="${savecmd} ${dnchain}/*${nfrad}*.ale.* ${outrecdir}/"
   echo "# ${savecmd2}"
   ${savecmd2}
   if [ ${?} != 0 ] ; then
@@ -291,7 +291,7 @@ fi
 fi
 if [[ "$worklocal" == "yes" && "$(readlink -f ${PWD})" != "$(readlink -f ${outrecdir})" ]] ; then
   # remove local copies of input/output files
-  rm -f ./${nfrad}*
+  rm -f ./*${nfrad}*
 fi
 
 echo ""

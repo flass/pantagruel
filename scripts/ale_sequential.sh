@@ -147,7 +147,7 @@ for nfchain in $(cat $tasklist) ; do
   bnchain=`basename $nfchain`
   nfrad=${bnchain%%-*}
 
-  ls $spetree
+  ls ${spetree}
   if [ $? != 0 ] ; then
     echo "look for $spetree species tree file in $dnchain/ folder"
     ls ${dnchain}/${nfrad}*${spetree}*
@@ -163,7 +163,7 @@ for nfchain in $(cat $tasklist) ; do
   else
     nfstree=${spetree}
   fi
-  bnstree=`basename $nfstree`
+  bnstree=`basename ${nfstree}`
 
   ####
   if [[ "$worklocal" == "yes" ]] ; then
@@ -280,24 +280,24 @@ for nfchain in $(cat $tasklist) ; do
 
   ALETIME=$SECONDS
   if [ ! -z "${prevcomputetime}" ] ; then ALETIME=$(( ${ALETIME} + ${prevcomputetime} )) ; fi
-  echo -e "${nfrad}\t${alealgo}\t${ALETIME}" > $nfrad.ale.computetime
+  echo -e "${nfrad}\t${alealgo}\t${ALETIME}" > ${nfrad}.ale.computetime
   echo "reconciliation estimation took" $(date -u -d @${ALETIME} +"%Hh%Mm%Ss") "total time"
   if [ ! -z "${prevcomputetime}" ] ; then echo "(including ${{prevcomputetime}} in previous run)" ; fi
 
-  echo "# ls ./${nfrad}*"
-  ls ./${nfrad}*
+  echo "# ls ./*${nfrad}*"
+  ls ./*${nfrad}*
 
   # save files
-  ls ./${nfrad}*.ale.* > /dev/null
+  ls ./*${nfrad}*.ale.* > /dev/null
   if [ $? == 0 ] ; then
-    savecmd1="${savecmd} ./${nfrad}*.ale* ${outrecdir}/"
+    savecmd1="${savecmd} ./*${nfrad}*.ale* ${outrecdir}/"
     echo "# ${savecmd1}"
     ${savecmd1}
     checkexec "unable to transfer result files from ${PWD}/ to ${outrecdir}/" "succesfuly transferred result files from ${PWD}/ to ${outrecdir}/"
   else
-    ls ${dnchain}/${nfrad}*.ale.* > /dev/null
+    ls ${dnchain}/*${nfrad}*.ale.* > /dev/null
     if [ $? == 0 ] ; then
-      savecmd2="${savecmd} ${dnchain}/${nfrad}*.ale.* ${outrecdir}/"
+      savecmd2="${savecmd} ${dnchain}/*${nfrad}*.ale.* ${outrecdir}/"
       echo "# ${savecmd2}"
       ${savecmd2}
       checkexec "unable to save result files from ${dnchain} to ${outrecdir}/" "succesfuly transferred result files from ${dnchain} to ${outrecdir}/"
@@ -308,7 +308,7 @@ for nfchain in $(cat $tasklist) ; do
   fi
   if [[ "${worklocal}" == "yes" ]] ; then
     # remove local copies of input/output files
-    rm -f ./${nfrad}*
+    rm -f ./*${nfrad}*
   fi
   
   echo ""
