@@ -84,9 +84,13 @@ if [ "${resumetask}" == 'true' ] ; then
   tasklist=${tasklist}_resumetasklist
 fi
 
-## perform receonciliations sequentially (one gene family after another)
-export worklocal='false'
-${ptgscripts}/ale_sequential.sh ${tasklist} ${outrecdir} ${spetree} ${recsamplesize} ${ALEalgo}
+## perform reconciliations sequentially (one gene family after another)
+if [ -s ${tasklist} ] ; then
+  export worklocal='false'
+  ${ptgscripts}/ale_sequential.sh ${tasklist} ${outrecdir} ${spetree} ${recsamplesize} ${ALEalgo}
+else
+  echo "no gene tree left to reconcile, skip reconciliation computation"
+fi
 
 export reccoldate=$(date +%Y-%m-%d)
 if [[ -z "$alebin" ]] ; then
