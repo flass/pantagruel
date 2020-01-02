@@ -42,9 +42,9 @@ if [ -z "${reccol}" ] ; then
   [ -z "${reccol}" ] && echo "Error: cannot find reconciliation collection as env variable \$reccol is empty; exit now" && exit 1
 fi
 # derived parameters
-export rectype=$(echo ${reccol} | cut -d'_' -f2)
+export rectype=$(echo ${reccol} | cut -d'_' -f3)
 if [ "${rectype}" != 'dated' ] ; then
-  echo "Error: model not supported"
+  echo "Error: model '${rectype}' not supported"
   echo "evolution scenario-based classification of orthologs is only supported when ALEml (dated ALE model) reconciliations were used"
   echo "exit now"
   exit 1
