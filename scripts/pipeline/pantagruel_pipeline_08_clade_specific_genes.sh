@@ -20,8 +20,6 @@ checkfoldersafe ${orthogenes}
 ## 08. orthologous and clade-specific gene sets
 ###############################################
 
-cd ${ptgrepo} ; export ptgversion=$(git log | grep commit | cut -d' ' -f2) ; cd -
-
 # classify genes into orthologous groups for each gene of the reconciled gene tree sample
 # do not report detailed results but, using gptgh analysis, combine the sample-wide classification into one classification for the gene family
 # run in parallel
