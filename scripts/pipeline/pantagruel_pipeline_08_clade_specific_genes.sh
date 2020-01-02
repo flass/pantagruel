@@ -24,21 +24,15 @@ checkfoldersafe ${orthogenes}
 # do not report detailed results but, using gptgh analysis, combine the sample-wide classification into one classification for the gene family
 # run in parallel
 
-## for the moment only coded for dated ALE model (ALEml reconciliations)
+## for the moment only supports dated ALE model (ALEml reconciliations)
 ## and with no colpased gene tree clades (need to discard events below replacement clade subtree roots [as in parse_collapsedALE_scenarios.py]
 ## and to transpose orthologus group classification of collapsed clade to member genes)
 
-if [ -z ${getOrpthologuesOptions} ] ; then
+if [ -z "${getOrpthologuesOptions}" ] ; then
   getOrpthologuesOptions=" --ale.model=${rectype} --methods='mixed' --max.frac.extra.spe=0.5 --majrule.combine=0.5 --colour.combined.tree --use.unreconciled.gene.trees ${mbgenetrees} --unreconciled.format 'nexus' --unreconciled.ext '.con.tre'"
 fi
-if [ -z ${orthocolid} ] ; then
+if [ -z "${orthocolid}" ] ; then
   orthocolid=1
-fi
-# derived parameters
-if [ ${ALEalgo} == 'ALEml_undated' ] ; then
-  export rectype='undat'
-else
-  export rectype='dated'
 fi
 
 # safer specifying the reconciliation collection to parse; e.g.: 'ale_collapsed_dated_1'
@@ -46,6 +40,14 @@ if [ -z "${reccol}" ] ; then
   # if not inferred from the record of the last reconciliation computation
   reccol=$(cut -f4 ${alerec}/reccol)
   [ -z "${reccol}" ] && echo "Error: cannot find reconciliation collection as env variable \$reccol is empty; exit now" ; exit 1
+fi
+# derived parameters
+export rectype=$(echo ${reccol} | cut -d'_' -f2)
+if [ "${rectype}" != 'dated' ] ; then
+  echo "Error: model not supported"
+  echo "evolution scenario-based classification of orthologs is only supported when ALEml (dated ALE model) reconciliations were used"
+  echo "exit now"
+  exit 1
 fi
 
 outrecdir=${recs}/${collapsecond}/${replmethod}/${reccol}
