@@ -149,7 +149,9 @@ python2.7 ${ptgscripts}/parse_collapsedTERA_scenarios.py --rec_sample_list ${rec
 checkexec "Could not complete parsing ecceTERA scenarios" "Successfully parsed ecceTERA scenarios"
 
 export parsedreccoldate=$(date +%Y-%m-%d)
-echo -e "${parsedreccolid}\t${parsedreccoldate}\t${parsedreccol}" > ${genetrees}/parsedreccol
+echo -e "${parsedreccolid}\t${parsedreccoldate}\t${parsedreccol}" > ${alerec}/parsedreccol
+echo -e "\n# Parsed reconciliation collection details:"
+cat ${alerec}/parsedreccol
 
 if [ "${resumetask}" == 'true' ] ; then
   echo "resume mode: first clean the database from previous inserts and indexes"
