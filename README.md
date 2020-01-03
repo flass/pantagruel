@@ -279,10 +279,10 @@ Options are detailed here:
                         (default: off, pre-exisitance of a folder will result in an early error)
 
     -R|--resume       (no value) try and resume the task from previous run that was interupted
-                        (available for tasks 04-07, i.e. 'functional', 'core', 'genetrees' and 'reconciliations')
+                        (available for tasks 04-07)
 
     -N|--threads      specify the number of threads to use for (some) parrallelizable tasks (defaults to the maximum available))
-                        (available for tasks: 00, 04-07 i.e. 'fetch', 'functional', 'core', 'genetrees' and 'reconciliations')
+                        (available for tasks: 00, 04-08)
 						Note 1: this does not apply to ALE/ecceTERA reconciliations,
 						  which jobs always run sequentially due to their high memory needs.
 						Note 2: this does not apply to tasks run through the HPC script,

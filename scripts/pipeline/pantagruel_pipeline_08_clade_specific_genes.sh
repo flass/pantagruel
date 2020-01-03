@@ -16,6 +16,10 @@ source ${envsourcescript}
 checkptgversion
 checkfoldersafe ${orthogenes}
 
+if [ -z "${ptgthreads}" ] ; then
+  export ptgthreads=$(nproc)
+fi
+
 ###############################################
 ## 08. orthologous and clade-specific gene sets
 ###############################################
@@ -58,7 +62,9 @@ echo ${step1}
 orthocol=ortholog_collection_${orthocolid}
 mkdir -p ${orthogenes}/${orthocol}
 getorthologs=$ptglogs/get_orthologues_from_ALE_recs_${orthocol}.log
-${ptgscripts}/get_orthologues_from_ALE_recs.py -i ${outrecdir} -o ${orthogenes}/${orthocol} ${getOrpthologuesOptions} &> ${getorthologs}
+getorthocmd="python2.7 ${ptgscripts}/get_orthologues_from_ALE_recs.py -i ${outrecdir} -o ${orthogenes}/${orthocol} --threads=${ptgthreads} ${getOrpthologuesOptions} &> ${getorthologs}"
+echo "# call: ${getorthocmd}"
+eval "${getorthocmd}"
 checkexec "step 1: failed when ${step1}; check specific logs in '${getorthologs}' for more details" "step 1: complete ${step1}"
 
 # import ortholog classification into database
