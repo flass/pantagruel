@@ -30,7 +30,7 @@ if [ -z "${bootstrapalgo}" ] ; then
   bootstrapalgo='x'
 fi
 if [ -z "${nbthreads}" ] ; then
-  nbthreads=4
+  nbthreads=$(nproc)
 fi
 if [ -z "${reducedaln}" ] ; then
   reducedaln=false

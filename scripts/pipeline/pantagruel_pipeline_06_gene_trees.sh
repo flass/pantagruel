@@ -20,7 +20,10 @@ fi
 checkptgversion
 checkfoldersafe ${genetrees}
 
-
+if [ -z "${ptgthreads}" ] ; then
+  export ptgthreads=$(nproc)
+fi
+  
 #############################################################
 ## 06. Gene trees (full [ML] and collapsed [bayesian sample])
 #############################################################
@@ -176,13 +179,8 @@ else
     fi
     tasklist=${tasklist}_resume
   fi
-  if [ -z "${ptgthreads}" ] ; then
-    raxthreads=${ptgthreads}
-  else
-    raxthreads=$(nproc)
-  fi
   if [ -s "${tasklist}" ] ; then
-    ${ptgscripts}/raxml_sequential.sh "${tasklist}" "${mlgenetrees}" 'GTRCATX' 'bipartitions rootedTree identical_sequences' 'x' "${raxthreads}" 'true'
+    ${ptgscripts}/raxml_sequential.sh "${tasklist}" "${mlgenetrees}" 'GTRCATX' 'bipartitions rootedTree identical_sequences' 'x' "${ptgthreads}" 'true'
     checkexec "step 1: RAxML tree estimation was interupted ; exit now" "step 1: RAxML tree estimation complete"
   fi
   ############################
@@ -225,7 +223,7 @@ else
 
   if [ -s "${mlgenetreelist}" ] ; then
     python2.7 ${ptgscripts}/mark_unresolved_clades.py --in_gene_tree_list=${mlgenetreelist} --diraln=${cdsalifastacodedir} --fmt_aln_in='fasta' \
-     --threads=$(nproc) --dirout=${colalinexuscodedir}/${collapsecond} --no_constrained_clade_subalns_output --dir_identseq=${mlgenetrees}/identical_sequences \
+     --threads=${ptgthreads} --dirout=${colalinexuscodedir}/${collapsecond} --no_constrained_clade_subalns_output --dir_identseq=${mlgenetrees}/identical_sequences \
      ${collapsecriteriondef} 
     checkexec "step 2: ML tree collapsing was interupted ; exit now" "step 2: ML tree collapsing complete"
   fi
@@ -247,7 +245,7 @@ nchains=4
 nruns=2
 ngen=2000000
 samplef=500
-ncpus=$(( ${nchains} * ${nruns} ))
+#ncpus=$(( ${nchains} * ${nruns} )) # will actually run run as many gene trees concurrently as possible, one per cpu, each run sequentially
 ntreeperchain=$(( ${ngen} / ${samplef} ))
 mbtasklist=${nexusaln4chains}_ali_list
 ${ptgscripts}/lsfullpath.py "${nexusaln4chains}/*.nex" > ${mbtasklist}
@@ -349,7 +347,7 @@ if [ -s ${repltasklist} ] ; then
  if [[ "${chaintype}" == 'fullgenetree' ]] ; then
   #### OPTION A2: 
   ## no need to replace anything in the tree, just convert format from Nexus to Newick treee chains
-  python2.7 ${ptgscripts}/replace_species_by_pop_in_gene_trees.py -G ${repltasklist} --no_replace -o ${coltreechains}/${collapsecond} --threads=${ncpus} --reuse=0 --verbose=0 --logfile=${repllogs}_${replrun}.log &
+  python2.7 ${ptgscripts}/replace_species_by_pop_in_gene_trees.py -G ${repltasklist} --no_replace -o ${coltreechains}/${collapsecond} --threads=${ptgthreads} --reuse=0 --verbose=0 --logfile=${repllogs}_${replrun}.log &
   checkexec "step 4: conversion of gene tree chains was interupted ; exit now" "step 4: conversion of gene tree chains complete"
  
   #### end OPTION A2
@@ -366,7 +364,7 @@ if [ -s ${repltasklist} ] ; then
   # local parallel run
   python2.7 ${ptgscripts}/replace_species_by_pop_in_gene_trees.py -G ${repltasklist} -c ${colalinexuscodedir}/${collapsecond} -S ${speciestree}.lsd.nwk -o ${coltreechains}/${collapsecond} \
    --populations=${speciestree%.*}_populations --population_tree=${speciestree%.*}_collapsedPopulations.nwk --population_node_distance=${speciestree%.*}_interNodeDistPopulations \
-   --dir_full_gene_trees=${mlgenetrees}/rootedTree --method=${replmethod} --threads=$(nproc) --reuse=0 --verbose=0 --max.recursion.limit=12000 --logfile=${repllogs}_${replrun}.log
+   --dir_full_gene_trees=${mlgenetrees}/rootedTree --method=${replmethod} --threads=${ptgthreads} --reuse=0 --verbose=0 --max.recursion.limit=12000 --logfile=${repllogs}_${replrun}.log
   checkexec "step 4: format conversion and replacement of collapsed clades was interupted ; exit now" "step 4: format conversion and replacement of collapsed clades complete"
  fi
 fi

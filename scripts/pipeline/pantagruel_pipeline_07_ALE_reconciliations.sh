@@ -20,6 +20,10 @@ fi
 checkptgversion
 checkfoldersafe ${alerec}
 
+if [ -z "${ptgthreads}" ] ; then
+  export ptgthreads=$(nproc)
+fi
+
 ###############################################
 ## 07. Gene tree / Species tree reconciliations
 ###############################################
@@ -152,7 +156,7 @@ fi
 python2.7 ${ptgscripts}/parse_collapsedALE_scenarios.py --rec_sample_list ${reclist} \
  ${pops} --reftree ${speciestree}.lsd.nwk \
  --dir_table_out ${parsedrecs} --evtype ${evtypeparse} --minfreq ${minevfreqparse} \
- --threads 8  &> ${ptglogs}/parse_collapsedALE_scenarios.log
+ --threads ${ptgthreads}  &> ${ptglogs}/parse_collapsedALE_scenarios.log
 
 checkexec "Could not complete parsing ALE scenarios" "Successfully parsed ALE scenarios"
 

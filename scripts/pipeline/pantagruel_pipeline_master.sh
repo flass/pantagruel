@@ -40,10 +40,14 @@ usagelong (){
   echo "                        (default: off, pre-exisitance of a folder will result in an early error)"
   echo ""
   echo "    -R|--resume       try and resume the task from previous run that was interupted"
-  echo "                        (for the moment only available for tasks: 04-07 i.e. 'functional', 'core', 'genetrees' and 'reconciliations')"
+  echo "                        (available for tasks: 04-07 i.e. 'functional', 'core', 'genetrees' and 'reconciliations')"
   echo ""
   echo "    -N|--threads      specify the number of threads to use for (some) parrallelizable tasks (defaults to the maximum available: $(nproc))"
-  echo "                        (for the moment only available for tasks: 00,04,05 i.e. 'fetch', 'functional', 'core')"
+  echo "                        (available for tasks: 00, 04-07 i.e. 'fetch', 'functional', 'core', 'genetrees' and 'reconciliations')"
+  echo "                        Note 1: this does not apply to ALE/ecceTERA reconciliations,"
+  echo "                          which jobs always run sequentially due to their high memory needs."
+  echo "                        Note 2: this does not apply to tasks run through the HPC script,"
+  echo "                          which have their own interface to define number of used CPUs."
   echo ""
   echo "    -z|--compress     will try and compress result file on the go (especially bulky files that won't be used much later"
   echo "                        This will induce possible extra decompressing/re-generating data computing time"
@@ -74,13 +78,13 @@ usagelong (){
   echo "                        (even -d and -r options can be omitted if \`pantagruel -i config_file --refresh init\` is used)"
   echo "                        Note that when options had quoted string arguments, unpredictable behaviour might occur;"
   echo "                        please verify the outcome in the regenerated config file."
-  echo "						 New options can be added _after_ the --refresh option to change the value of environment variables in the config file:"
-  echo "						   to set non-default values if not already, e.g. turn on collapsing:"
-  echo "						     \`pantagruel -i config_file --refresh -c init\`"
-  echo "						   to revert to default values, e.g. turn off collapsing:"
-  echo "						     \`pantagruel -i config_file --refresh --no_colapse init\`"
-  echo "					       to do both, e.g. turn off collapsing and switch to use ecceTERA recconciliation method:"
-  echo "						     \`pantagruel -i config_file --refresh --no_colapse -e ecceTERA init\`"                       
+  echo "                         New options can be added _after_ the --refresh option to change the value of environment variables in the config file:"
+  echo "                           to set non-default values if not already, e.g. turn on collapsing:"
+  echo "                             \`pantagruel -i config_file --refresh -c init\`"
+  echo "                           to revert to default values, e.g. turn off collapsing:"
+  echo "                             \`pantagruel -i config_file --refresh --no_colapse init\`"
+  echo "                           to do both, e.g. turn off collapsing and switch to use ecceTERA recconciliation method:"
+  echo "                             \`pantagruel -i config_file --refresh --no_colapse -e ecceTERA init\`"                       
   echo ""
   echo " General configuration options:"
   echo ""
@@ -308,7 +312,7 @@ ptgenvsetdefaults (){
     fi
     if [ -z "${pseudocoremingenomes}" ] ; then
       echo "Default: will use a strict core-genome gene set, i.e. genes present in a single copy in all the studied genomes."
-	  if [ "${runmode}" != 'wasrefresh' ] ; then
+      if [ "${runmode}" != 'wasrefresh' ] ; then
         echo ""
         echo "!!! WARNING: strict core-genome definition can be very resctrictive, especially when including draft genome in the study."
         echo "You might prefer to use a pseudo-core genome definition instead, i.e. selecting gene present in a minimum fraction of genomes, for instance 98%."
@@ -318,14 +322,14 @@ ptgenvsetdefaults (){
         echo "'${ptgscripts}/choose_min_genome_occurrence_pseudocore_genes.sh'"
         echo "and then manualy edit the value of variable 'pseudocoremingenomes' in the pantagruel configuration file."
         echo ""
-	  fi
+      fi
     else
       if [[ "${pseudocoremingenomes}" =~ ^[0-9]+$ ]]; then
-      	 echo "'pseudocoremingenomes' variable is set to ${pseudocoremingenomes}; this integer value is interpreted as a number of genomes"
+         echo "'pseudocoremingenomes' variable is set to ${pseudocoremingenomes}; this integer value is interpreted as a number of genomes"
       elif [[ "${pseudocoremingenomes}" =~ ^0*\.[0-9]+$ ]]; then
-      	 echo "'pseudocoremingenomes' variable is set to ${pseudocoremingenomes}; this float value is interpreted as a fraction of total number of genomes"
-      else		
-      	 echo "'pseudocoremingenomes' variable is not set to a numeric value: '${pseudocoremingenomes}'; will run INTERACTIVE script to pick an appropriate one"
+         echo "'pseudocoremingenomes' variable is set to ${pseudocoremingenomes}; this float value is interpreted as a fraction of total number of genomes"
+      else  
+         echo "'pseudocoremingenomes' variable is not set to a numeric value: '${pseudocoremingenomes}'; will run INTERACTIVE script to pick an appropriate one"
       fi
     fi
     if [ -z "${coreseqtype}" ] ; then
@@ -395,7 +399,7 @@ do
     -F|--FORCE) 
       export runmode='force'
       shift ;;  
-	
+    
     -z|--compress) 
       export compress='on'
       shift ;;
@@ -404,7 +408,7 @@ do
       export runmode='refreshconfig'
       shift
       export postrefreshargs="${*/--/}"
-	  ;;
+      ;;
       
     -d|--dbname) 
       testmandatoryarg "${1}" "${2}"
@@ -539,13 +543,13 @@ do
       export extravars="${2}"
       echo "will add the following environment variable definition to the configuration file: ${extravars}"
       shift 2;;
-	  
-	-N|--threads)
+      
+    -N|--threads)
       testmandatoryarg "${1}" "${2}"
-	  export ptgthreads=${2}
+      export ptgthreads=${2}
       echo "will try and execute processes in parallel with the following number of threads: ${ptgthreads}"
       shift 2;;
-	  
+      
     -T|--taxonomy)
       testmandatoryarg "${1}" "${2}"
       export ncbitax=$(readlink -f ${2})
@@ -562,7 +566,7 @@ do
       export chaintype="collapsed"
       echo "gene tree clade collapsing enabled"
       shift ;;
-	
+    
     --no_collapse)
       export chaintype=""
       echo "gene tree clade collapsing disabled"
@@ -573,10 +577,10 @@ do
       export collapseCladeParams="${2}"
       echo "set parameters for rake clade collapsing in gene trees"
       shift 2;;
-	  
-	-e|--rec_method)
+      
+    -e|--rec_method)
       testmandatoryarg "${1}" "${2}"
-	  export recmethod="${2}"
+      export recmethod="${2}"
       case "${recmethod}" in
         ALE|ecceTERA)
           echo "set gene tree/species tree reconciliation method to '${recmethod}'" ;;
@@ -585,7 +589,7 @@ do
           exit 1 ;;
       esac
       shift 2;;
-	  
+      
 
     -g|--genefam_list)
       testmandatoryarg "${1}" "${2}"
@@ -598,9 +602,9 @@ do
       break;;
     
     *)
-	  echo "Error: this argument is not supported: ${1}"
-	  exit 1;;
-	  
+      echo "Error: this argument is not supported: ${1}"
+      exit 1;;
+      
   esac
 done
 
@@ -655,11 +659,11 @@ for task in ${tasks} ; do
       unset initfile
       export runmode='wasrefresh'
       if [ ! -z "${postrefreshargs}" ] ; then
-	    echo "(appending the new arguments: ${postrefreshargs})"
+        echo "(appending the new arguments: ${postrefreshargs})"
         ptginitcmd=${ptginitcmd/init/${postrefreshargs}}
       fi
-	  # modify PATH so to fall back on the original executable if not available in the current PATH
-	  export PATH=${PATH}:${ptgrepo}
+      # modify PATH so to fall back on the original executable if not available in the current PATH
+      export PATH=${PATH}:${ptgrepo}
       echo "# ${ptginitcmd}"
       eval "${ptginitcmd}"
     else
@@ -726,7 +730,7 @@ for task in ${tasks} ; do
      checkexectask "${task}"  ;;
     7)
      promptdate "Pantagruel pipeline task ${task}: compute species tree/gene tree reconciliations."
-	 ${ptgscripts}/pipeline/pantagruel_pipeline_07_reconciliations_wrapper.sh ${initfile}
+     ${ptgscripts}/pipeline/pantagruel_pipeline_07_reconciliations_wrapper.sh ${initfile}
      checkexectask "${task}"  ;;
     8)
      promptdate "Pantagruel pipeline task ${task}: classify genes into orthologous groups (OGs) and search clade-specific OGs."

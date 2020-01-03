@@ -4,9 +4,13 @@ tasklist="${1}"
 export outputdir="${2}"
 export mbmcmcopt="${3}"
 
-if [ -z $q ] ; then
+if [ -z $mbversion ] ; then
   # assumes use of most recent version
   mbversion='3.2.6'
+fi
+
+if [ -z "${ptgthreads}" ] ; then
+  ptgthreads=$(nproc)
 fi
 
 ## I/O file path (lists)
@@ -146,4 +150,4 @@ echo ""
 
 export -f runmb 
 # choose to run each tree on only one process, and to parallelize by the tasks (avoid relying on MPI interface)
-parallel runmb :::: ${tasklist}
+parallel -j ${ptgthreads} runmb :::: ${tasklist}

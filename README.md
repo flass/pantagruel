@@ -275,14 +275,18 @@ Options are detailed here:
                         this file is generated at init stage, from the specified options.
   _facultative runtime options_
 
-    -F|--FORCE         (no value) FORCE mode: will erase any pre-existing main folder for the task
-                         (default: off, pre-exisitance of a folder will result in an early error)
+    -F|--FORCE        (no value) FORCE mode: will erase any pre-existing main folder for the task
+                        (default: off, pre-exisitance of a folder will result in an early error)
 
-    -R|--resume        (no value) try and resume the task from previous run that was interupted
-                         (for the moment only available for tasks 04-07, i.e. 'functional', 'core', 'genetrees' and 'reconciliations')
+    -R|--resume       (no value) try and resume the task from previous run that was interupted
+                        (available for tasks 04-07, i.e. 'functional', 'core', 'genetrees' and 'reconciliations')
 
     -N|--threads      specify the number of threads to use for (some) parrallelizable tasks (defaults to the maximum available))
-                        (for the moment only available for tasks: 00,04,05 i.e. 'fetch', 'functional', 'core')
+                        (available for tasks: 00, 04-07 i.e. 'fetch', 'functional', 'core', 'genetrees' and 'reconciliations')
+						Note 1: this does not apply to ALE/ecceTERA reconciliations,
+						  which jobs always run sequentially due to their high memory needs.
+						Note 2: this does not apply to tasks run through the HPC script,
+						  which have their own interface to define number of used CPUs.
 
     -z|--compress     will try and compress result file on the go (especially bulky files that won't be used much later
                         This will induce possible extra decompressing/re-generating data computing time

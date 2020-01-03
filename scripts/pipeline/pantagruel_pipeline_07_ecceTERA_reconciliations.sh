@@ -20,6 +20,10 @@ fi
 checkptgversion
 checkfoldersafe ${alerec}
 
+if [ -z "${ptgthreads}" ] ; then
+  export ptgthreads=$(nproc)
+fi
+
 ###############################################
 ## 07. Gene tree / Species tree reconciliations    with ecceTERA
 ###############################################
@@ -128,6 +132,7 @@ mkdir -p ${parsedrecs}
 reclist=${outrecdir}_rec_list
 ${ptgscripts}/lsfullpath.py "${outrecdir}/*reconciliationsFile_canonical_symmetric.txt" > $reclist
 
+
 if [ "$chaintype" == 'fullgenetree' ] ; then
   pops=""
 else
@@ -144,7 +149,7 @@ exit 2
 python2.7 ${ptgscripts}/parse_collapsedTERA_scenarios.py --rec_sample_list ${reclist} \
  ${pops} --reftree ${speciestree}.lsd.nwk \
  --dir_table_out ${parsedrecs} --evtype ${evtypeparse} --minfreq ${minevfreqparse} \
- --threads 8  &> ${ptglogs}/parse_collapsedTERA_scenarios.log
+ --threads ${ptgthreads}  &> ${ptglogs}/parse_collapsedTERA_scenarios.log
 
 checkexec "Could not complete parsing ecceTERA scenarios" "Successfully parsed ecceTERA scenarios"
 
