@@ -154,7 +154,7 @@ fi
 ## normalise the species tree branch labels across gene families
 ## and look for correlated transfer events across gene families
 python2.7 ${ptgscripts}/parse_collapsedALE_scenarios.py --rec_sample_list ${reclist} \
- ${pops} --reftree ${speciestree}.lsd.nwk \
+ ${pops} --reftree ${speciestree}.lsd.nwk --ALE_algo ${rectype} \
  --dir_table_out ${parsedrecs} --evtype ${evtypeparse} --minfreq ${minevfreqparse} \
  --threads ${ptgthreads}  &> ${ptglogs}/parse_collapsedALE_scenarios.log
 

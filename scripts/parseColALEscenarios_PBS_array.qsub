@@ -39,6 +39,10 @@ if [ -z "${minevfreqparse}" ] ; then
   echo "Error: mandatory variable \${minevfreqparse} not provied, exit now"
   exit 1
 fi
+if [ -z "${rectype}" ] ; then
+  echo "Error: mandatory variable \${rectype} not provied, exit now"
+  exit 1
+fi
 if [ ! -s "${speciestree}.lsd.nwk" ] ; then
   echo "Error: input ultrametric species tree file '${speciestree}.lsd.nwk' does not exist or is empty, exit now"
   exit 1
@@ -79,7 +83,7 @@ fi
 python2.7 ${ptgscripts}/parse_collapsedALE_scenarios.py --rec_sample_list ${taskchunklist} \
  --populations ${speciestree/.full/}_populations --reftree ${speciestree}.lsd.nwk \
  --dir_table_out ${parsedrecs} --evtype ${evtypeparse} --minfreq ${minevfreqparse} \
- --threads ${ncpus} ${verbosemode}
+ --ALE_algo ${rectype} --threads ${ncpus} ${verbosemode}
  
 if [[ "$(basename ${PWD})" == "${jobtmpdir}" ]] ; then
   cd ..

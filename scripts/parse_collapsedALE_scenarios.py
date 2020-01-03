@@ -449,6 +449,7 @@ def main():
 	# other params
 	# ALE reconciliation format
 	ALEmodel = dopt.get('--ALE_algo', 'undated')
+	if ALEmodel.startswith('undat'): ALEmodel = 'undated'
 	
 	# facultative input files
 	nfpop = dopt.get('--populations')
@@ -493,6 +494,10 @@ def usage():
 	s += "\t\t--dir_constraints\tfolder containing files listing leaf labels of collapsed gene tree clades\n"
 	s += "\t\t--dir_replaced\tfolder containing files listing replaced leaf labels (e.g. when giving a species identity to collapsed gene tree clades)\n"
 	s += "\t\t--genefams\ttabulated file with header containing at least those two fields: 'cds_code', 'gene_family_id'\n"
+	s += "\t\t--ALE_algo\tmodel used in ALE reconciliations: 'dated' or 'undat[ed]' (default)\n"
+	s += "Options only required when parsing reconciliations from collapsed gene trees:\n"
+	s += "\t\t--populations\tpath to file defining populations\n"
+	s += "\t\t--reftree\tpath to reference species file (the full tree, not the gene-family-specific collapsed tree used for the reconciliations)\n"
 	s += "\t\t\t\trows indicate the genes to be treated in the search, and to which gene family they belong\n"
 	s += "\t\t\t\t(and hence in which reconciliation file to find them).\n"
 	return s

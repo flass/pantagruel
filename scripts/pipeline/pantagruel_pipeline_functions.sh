@@ -65,4 +65,4 @@ testmandatoryarg (){
 }
 
 
-alias panup="cd ${ptgrepo} && git pull && git submodule update && cd -"
+alias panup="cd ${ptgrepo} && git pull --recurse-submodules && cd -"

@@ -28,6 +28,16 @@ else
   # if not inferred from the record of the last reconciliation computation
   reccol=$(cut -f4 ${alerec}/reccol)
 fi
+export rectype="$(echo ${reccol} | cut -d'_' -f3)"
+case ${rectype:0:5} in 
+  'dated')
+    echo "will parse dated ALE scenarios" ;;
+  'undat')
+    echo "will parse undated ALE scenarios" ;;
+  *)
+    echo "ALE reconciliation model (value of \$rectype) '$rectype' is not supported; it must be either 'dated' or 'undat[ed]' ; exit now"
+	exit 1 ;;
+esac
 
 ######################################################
 ## 07.2 Parse gene tree / Species tree reconciliations
