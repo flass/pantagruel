@@ -99,6 +99,7 @@ checkexec "step 3: failed ${step3}" "step 3: completed ${step3}\n"
 step4="listing clade-specific orthologs"
 echo ${step4}
 claspelogs=${ptglogs}/get_clade_specific_genes.log
+cladedefs=${speciestree}_clade_defs
 ${ptgscripts}/get_clade_specific_genes.r --gene_count_matrix ${orthomatrad}_genome_counts.no-singletons.mat \
  --sqldb ${sqldb} --og_col_id ${orthocolid} --clade_defs ${cladedefs} \
  --outrad ${orthomatrad} &> ${claspelogs}
@@ -161,7 +162,7 @@ tail -n +2 ${cladedefs} | while read cla name cladedef siscladedef maxabs maxpre
   checkexec "step 6: failed ${step6} for clade ${cla}"
   ls -lh ${dirgoenrichcladespecore}/*_${cla}_* ; echo ""
 done &> ${claspevscoreenrichlogsrad}_${enrichlogsext}
-checkexec "step 6: failed ${step6}; check specific logs in '${claspevscoreenrichlogs}' for more details" "step 6: completed ${step6}\n"
+checkexec "step 6: failed ${step6}; check specific logs in '${claspevscoreenrichlogsrad}*' for more details" "step 6: completed ${step6}\n"
 
 export dirgotablescladespe=${orthomatrad}_specific_genes.tables_byclade_goterms_pathways
 export dirgoenrichcladespepan=${goterms}/clade_go_term_enriched_cladespecific_vs_pangenome
@@ -182,7 +183,7 @@ tail -n +2 ${cladedefs} | while read cla name cladedef siscladedef maxabs maxpre
   checkexec "step 7: failed ${step7} for clade ${cla}"
   ls -lh ${dirgoenrichcladespepan}/*${cla}* ; echo ""
 done &> ${claspevspanenrichlogsrad}_${enrichlogsext}
-checkexec "step 7: failed ${step7}" "step 7: completed ${step7}\n"
+checkexec "step 7: failed ${step7}; check specific logs in '${claspevspanenrichlogsrad}*' for more details" "step 7: completed ${step7}\n"
 
 # concatenate summary reports
 step8="concatenating summary reports"
