@@ -142,9 +142,13 @@ checkexec "step 5: failed ${step5}" "step 5: completed ${step5}\n"
 export dirgotablescladespe=${orthomatrad}_specific_genes.tables_byclade_goterms_pathways
 export dirgoenrichcladespecore=${goterms}/clade_go_term_enriched_cladespecific_vs_coregenome
 mkdir -p ${dirgoenrichcladespecore}/
+gotermlogs=${ptglogs}/GOterm_enrichment
+mkdir -p ${gotermlogs}/
+enrichlogsext=GOterm_enrichment_test.log
 # compare each clade-specific core genome (single repr sequence per OG) to its respective core genome (single repr sequence per OG)
 step6="comparing each clade-specific core genome to its respective core genome"
 echo ${step6}
+claspevscoreenrichlogsrad=${gotermlogs}/cladespecific_vs_coregenome_genes
 tail -n +2 ${cladedefs} | while read cla name cladedef siscladedef maxabs maxpres ; do
   echo $cla
   cladspego=${dirgotablescladespe}/mixed_majrule_combined_0.5.orthologs_specific_genes_${cla}_reprseq_goterms.tab
@@ -153,11 +157,11 @@ tail -n +2 ${cladedefs} | while read cla name cladedef siscladedef maxabs maxpre
   --study_annots ${cladspego}_nonull  \
   --population_annots ${claderefgodir}/${cla}_coregenome_terms.tab_nonull \
   --out ${dirgoenrichcladespecore}/${cla}_go_term_enriched_cladespecific_vs_coregenome.tab \
-  --algo "weight01" --stat "Fisher" &> ${ptglogs}/clade_specific_vs_coregenome_${cla}_GOterm_enrichment_test.log
+  --algo "weight01" --stat "Fisher" &> ${claspevscoreenrichlogsrad}_${cla}_${enrichlogsext}
   checkexec "step 6: failed ${step6} for clade ${cla}"
   ls -lh ${dirgoenrichcladespecore}/*_${cla}_* ; echo ""
-done &> ${ptglogs}/cladespecific_vs_coregenome_genes_GOterm_enrichment_test.log
-checkexec "step 6: failed ${step6}" "step 6: completed ${step6}\n"
+done &> ${claspevscoreenrichlogsrad}_${enrichlogsext}
+checkexec "step 6: failed ${step6}; check specific logs in '${claspevscoreenrichlogs}' for more details" "step 6: completed ${step6}\n"
 
 export dirgotablescladespe=${orthomatrad}_specific_genes.tables_byclade_goterms_pathways
 export dirgoenrichcladespepan=${goterms}/clade_go_term_enriched_cladespecific_vs_pangenome
@@ -165,6 +169,7 @@ mkdir -p ${dirgoenrichcladespepan}/
 # compare each clade-specific core genome (all sequences) to its respective pangenome (all sequences)
 step7="comparing each clade-specific core genome to its respective pangenome"
 echo ${step7}
+claspevspanenrichlogsrad=${gotermlogs}/cladespecific_vs_pangenome_genes
 tail -n +2 ${cladedefs} | while read cla name cladedef siscladedef maxabs maxpres ; do
   echo $cla
   cladspego=${dirgotablescladespe}/mixed_majrule_combined_0.5.orthologs_specific_genes_${cla}_allseq_goterms.tab
@@ -173,10 +178,10 @@ tail -n +2 ${cladedefs} | while read cla name cladedef siscladedef maxabs maxpre
   --study_annots ${cladspego}_nonull  \
   --population_annots ${claderefgodir}/${cla}_pangenome_terms.tab_nonull \
   --out ${dirgoenrichcladespepan}/${cla}_go_term_enriched_cladespecific_vs_pangenome.tab \
-  --algo "weight01" --stat "Fisher" &> ${ptglogs}/clade_specific_vs_coregenome_${cla}_GOterm_enrichment_test.log
+  --algo "weight01" --stat "Fisher" &> ${claspevspanenrichlogsrad}_${cla}_${enrichlogsext}
   checkexec "step 7: failed ${step7} for clade ${cla}"
   ls -lh ${dirgoenrichcladespepan}/*${cla}* ; echo ""
-done &> ${ptglogs}/cladespecific_vs_pangenome_genes_GOterm_enrichment_test.log
+done &> ${claspevspanenrichlogsrad}_${enrichlogsext}
 checkexec "step 7: failed ${step7}" "step 7: completed ${step7}\n"
 
 # concatenate summary reports
