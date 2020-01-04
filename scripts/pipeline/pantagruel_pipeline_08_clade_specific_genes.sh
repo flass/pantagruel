@@ -95,9 +95,6 @@ orthomatrad=${orthogenes}/${orthocol}/mixed_majrule_combined_0.5.orthologs
 python2.7 ${ptgscripts}/get_ortholog_presenceabsence_matrix_from_sqlitedb.py ${sqldb} ${orthomatrad} ${orthocolid}
 checkexec "step 3: failed ${step3}" "step 3: completed ${step3}"
 
-# create clsutering based on the abs/pres matrix (using Jaccard Distance)
-${ptgscripts}/pangenome_hclust.r ${orthomatrad} 1000 & 
-
 # list clade-specific orthologs
 step4="listing clade-specific orthologs"
 echo ${step4}
@@ -105,6 +102,9 @@ ${ptgscripts}/get_clade_specific_genes.r --gene_count_matrix ${orthomatrad}_geno
  --sqldb ${sqldb} --og_col_id ${orthocolid} --clade_defs ${cladedefs} \
  --outrad ${orthomatrad} &> ${raplogs}/get_clade_specific_genes.log
  checkexec "step 4: failed ${step4}" "step 4: completed ${step4}"
+
+# create clustering based on the abs/pres matrix (using Jaccard Distance)
+${ptgscripts}/pangenome_hclust.r ${orthomatrad} 1000 & 
 
 ## test GO term enrichment in gene sets
 
