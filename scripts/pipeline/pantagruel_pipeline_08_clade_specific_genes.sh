@@ -70,12 +70,18 @@ checkexec "step 1: failed when ${step1}; check specific logs in '${getorthologs}
 # import ortholog classification into database
 step2="importing ortholog classification into database"
 echo ${step2}
+if [ "${resumetask}" == 'true' ] ; then
+  echo "first delete previous records for this ortholog collection ('${orthocol}') in the database '${sqldb}'"
+  sqlite3 ${sqldb} """DELETE FROM ortholog_collections WHERE ortholog_col_id=${orthocolid};"""
+  # statement made below through first call to pantagruel_sqlitedb_load_orthologous_groups.py:
+  # DELETE FROM orthologous_groups WHERE ortholog_col_id=${orthocol};
+fi
 sqlite3 ${sqldb} """INSERT INTO ortholog_collections (ortholog_col_id, ortholog_col_name, reconciliation_id, software, version, algorithm, ortholog_col_date, notes) VALUES 
 (${orthocolid}, '${orthocol}', ${parsedreccolid}, 'pantagruel/scripts/get_orthologues_from_ALE_recs.py', '${ptgversion:0:7}', 'getOrthologues(method=''mixed'')', '$(date +%Y-%m-%d)', 
 'source from https://github.com/flass/pantagruel/commits/${ptgversion}, call: ''scripts/get_orthologues_from_ALE_recs.py ${getOrpthologuesOptions}''')
 ;
 """
-python2.7 ${ptgscripts}/pantagruel_sqlitedb_load_orthologous_groups.py ${sqldb} ${orthogenes}/${orthocol} "mixed" "majrule_combined_0.500000" ${orthocolid}
+python2.7 ${ptgscripts}/pantagruel_sqlitedb_load_orthologous_groups.py ${sqldb} ${orthogenes}/${orthocol} "mixed" "majrule_combined_0.500000" ${orthocolid} 0
 checkexec "step 2.1: failed when ${step2} for reconciled gene trees" "step 2.1: completed ${step2} for reconciled gene trees"
 python2.7 ${ptgscripts}/pantagruel_sqlitedb_load_orthologous_groups.py ${sqldb} ${orthogenes}/${orthocol} "unreconciled" "unicopy" ${orthocolid} 1
 checkexec "step 2.2: failed when ${step2} for unreconciled gene trees" "step 2.2: completed ${step2} for unreconciled gene trees"
