@@ -96,12 +96,11 @@ python2.7 ${ptgscripts}/get_ortholog_presenceabsence_matrix_from_sqlitedb.py ${s
 checkexec "step 3: failed ${step3}" "step 3: completed ${step3}"
 
 # create clsutering based on the abs/pres matrix (using Jaccard Distance)
-${dbscripts}/pangenome_hclust.r ${orthomatrad} 1000 & 
+${ptgscripts}/pangenome_hclust.r ${orthomatrad} 1000 & 
 
 # list clade-specific orthologs
 step4="listing clade-specific orthologs"
 echo ${step4}
-${ptgscripts}/get_clade_specific_genes.r ${orthomatrad}_genome_counts.no-singletons.mat ${sqldb} ${orthocolid} ${speciestree} ${orthomatrad}
 ${ptgscripts}/get_clade_specific_genes.r --gene_count_matrix ${orthomatrad}_genome_counts.no-singletons.mat \
  --sqldb ${sqldb} --og_col_id ${orthocolid} --clade_defs ${cladedefs} \
  --outrad ${orthomatrad} &> ${raplogs}/get_clade_specific_genes.log
