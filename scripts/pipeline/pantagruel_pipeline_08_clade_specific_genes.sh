@@ -65,7 +65,7 @@ getorthologs=$ptglogs/get_orthologues_from_ALE_recs_${orthocol}.log
 getorthocmd="python2.7 ${ptgscripts}/get_orthologues_from_ALE_recs.py -i ${outrecdir} -o ${orthogenes}/${orthocol} --threads=${ptgthreads} ${getOrpthologuesOptions} &> ${getorthologs}"
 echo "# call: ${getorthocmd}"
 eval "${getorthocmd}"
-checkexec "step 1: failed when ${step1}; check specific logs in '${getorthologs}' for more details" "step 1: complete ${step1}"
+checkexec "step 1: failed when ${step1}; check specific logs in '${getorthologs}' for more details" "step 1: complete ${step1}\n"
 
 # import ortholog classification into database
 step2="importing ortholog classification into database"
@@ -84,7 +84,7 @@ sqlite3 ${sqldb} """INSERT INTO ortholog_collections (ortholog_col_id, ortholog_
 python2.7 ${ptgscripts}/pantagruel_sqlitedb_load_orthologous_groups.py ${sqldb} ${orthogenes}/${orthocol} "mixed" "majrule_combined_0.500000" ${orthocolid} 0
 checkexec "step 2.1: failed when ${step2} for reconciled gene trees" "step 2.1: completed ${step2} for reconciled gene trees"
 python2.7 ${ptgscripts}/pantagruel_sqlitedb_load_orthologous_groups.py ${sqldb} ${orthogenes}/${orthocol} "unreconciled" "unicopy" ${orthocolid} 1
-checkexec "step 2.2: failed when ${step2} for unreconciled gene trees" "step 2.2: completed ${step2} for unreconciled gene trees"
+checkexec "step 2.2: failed when ${step2} for unreconciled gene trees" "step 2.2: completed ${step2} for unreconciled gene trees\n"
 
 # generate abs/pres matrix
 step3="generating abs/pres matrix"
@@ -93,22 +93,23 @@ orthocol=ortholog_collection_${orthocolid}
 echo ${orthocol}
 orthomatrad=${orthogenes}/${orthocol}/mixed_majrule_combined_0.5.orthologs
 python2.7 ${ptgscripts}/get_ortholog_presenceabsence_matrix_from_sqlitedb.py ${sqldb} ${orthomatrad} ${orthocolid}
-checkexec "step 3: failed ${step3}" "step 3: completed ${step3}"
+checkexec "step 3: failed ${step3}" "step 3: completed ${step3}\n"
 
 # list clade-specific orthologs
 step4="listing clade-specific orthologs"
 echo ${step4}
+claspelogs=${ptglogs}/get_clade_specific_genes.log
 ${ptgscripts}/get_clade_specific_genes.r --gene_count_matrix ${orthomatrad}_genome_counts.no-singletons.mat \
  --sqldb ${sqldb} --og_col_id ${orthocolid} --clade_defs ${cladedefs} \
- --outrad ${orthomatrad} &> ${raplogs}/get_clade_specific_genes.log
- checkexec "step 4: failed ${step4}" "step 4: completed ${step4}"
+ --outrad ${orthomatrad} &> ${claspelogs}
+ checkexec "step 4: failed ${step4}; check specific logs in '${claspelogs}' for more details" "step 4: completed ${step4}\n"
 
 # create clustering based on the abs/pres matrix (using Jaccard Distance)
 ${ptgscripts}/pangenome_hclust.r ${orthomatrad} 1000 & 
 
 ## test GO term enrichment in gene sets
 
-## generate background term distribution for clades i.e. list all genes in their pangenome and associated terms
+# generate background term distribution for clades i.e. list all genes in their pangenome and associated terms
 step5="generating background term distribution for clades"
 echo ${step5}
 export goterms=${funcannot}/GeneOntology
@@ -136,7 +137,7 @@ tail -n +2 ${cladedefs} | while read cla cladedef siscladedef ; do
   checkexec "step 5: failed ${step5} for clade ${cla} not including NULL go_id"
   ls -lh ${cladest}
 done
-checkexec "step 5: failed ${step5}" "step 5: completed ${step5}"
+checkexec "step 5: failed ${step5}" "step 5: completed ${step5}\n"
 
 export dirgotablescladespe=${orthomatrad}_specific_genes.tables_byclade_goterms_pathways
 export dirgoenrichcladespecore=${goterms}/clade_go_term_enriched_cladespecific_vs_coregenome
@@ -152,11 +153,11 @@ tail -n +2 ${cladedefs} | while read cla name cladedef siscladedef maxabs maxpre
   --study_annots ${cladspego}_nonull  \
   --population_annots ${claderefgodir}/${cla}_coregenome_terms.tab_nonull \
   --out ${dirgoenrichcladespecore}/${cla}_go_term_enriched_cladespecific_vs_coregenome.tab \
-  --algo "weight01" --stat "Fisher" &> ${raplogs}/clade_specific_vs_coregenome_${cla}_GOterm_enrichment_test.log
+  --algo "weight01" --stat "Fisher" &> ${ptglogs}/clade_specific_vs_coregenome_${cla}_GOterm_enrichment_test.log
   checkexec "step 6: failed ${step6} for clade ${cla}"
   ls -lh ${dirgoenrichcladespecore}/*_${cla}_* ; echo ""
-done &> ${raplogs}/cladespecific_vs_coregenome_genes_GOterm_enrichment_test.log
-checkexec "step 6: failed ${step6}" "step 6: completed ${step6}"
+done &> ${ptglogs}/cladespecific_vs_coregenome_genes_GOterm_enrichment_test.log
+checkexec "step 6: failed ${step6}" "step 6: completed ${step6}\n"
 
 export dirgotablescladespe=${orthomatrad}_specific_genes.tables_byclade_goterms_pathways
 export dirgoenrichcladespepan=${goterms}/clade_go_term_enriched_cladespecific_vs_pangenome
@@ -172,14 +173,15 @@ tail -n +2 ${cladedefs} | while read cla name cladedef siscladedef maxabs maxpre
   --study_annots ${cladspego}_nonull  \
   --population_annots ${claderefgodir}/${cla}_pangenome_terms.tab_nonull \
   --out ${dirgoenrichcladespepan}/${cla}_go_term_enriched_cladespecific_vs_pangenome.tab \
-  --algo "weight01" --stat "Fisher" &> ${raplogs}/clade_specific_vs_coregenome_${cla}_GOterm_enrichment_test.log
+  --algo "weight01" --stat "Fisher" &> ${ptglogs}/clade_specific_vs_coregenome_${cla}_GOterm_enrichment_test.log
   checkexec "step 7: failed ${step7} for clade ${cla}"
   ls -lh ${dirgoenrichcladespepan}/*${cla}* ; echo ""
-done &> ${raplogs}/cladespecific_vs_pangenome_genes_GOterm_enrichment_test.log
-checkexec "step 7: failed ${step7}" "step 7: completed ${step7}"
+done &> ${ptglogs}/cladespecific_vs_pangenome_genes_GOterm_enrichment_test.log
+checkexec "step 7: failed ${step7}" "step 7: completed ${step7}\n"
 
 # concatenate summary reports
 step8="concatenating summary reports"
+echo ${step8}
 tail -n +2 ${cladedefs} | while read cla name cladedef siscladedef maxabs maxpres ; do
   cla=clade${n}
   echo "# ${cla} ${name}"
@@ -189,4 +191,4 @@ tail -n +2 ${cladedefs} | while read cla name cladedef siscladedef maxabs maxpre
   cat ${dirgoenrichcladespepan}/${cla}_go_term_enriched_cladespecific_vs_pangenome.tab
   echo "# - - - "
 done > ${goterms}/clade_go_term_enriched_cladespecific_summary.tab
-checkexec "step 8: failed ${step8}" "step 8: completed ${step8}"
+checkexec "step 8: failed ${step8}" "step 8: completed ${step8}\n"
