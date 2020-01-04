@@ -142,7 +142,7 @@ with open(nfoutlortho, 'w') as foutlortho:
 	foutlortho.write('\n'.join(lorthofams)+'\n')
 print "%d families covererd by orthology classification into a total of %d orthologous groups"%(len(lorthofams), northofamogs)
 
-print "these toalize %d families with unique representative in the dataset (singletons) and %d others [total: %d]"%(northosing, northonosing, northosing+northonosing)
+print "these totalize %d families with unique representative in the dataset (singletons) and %d others [total: %d]"%(northosing, northonosing, northosing+northonosing)
 
 dbcon.close()
 for s in ['singletons', 'no-singletons']:

@@ -110,7 +110,10 @@ for (i in 1:length(cladedefs)){
 }
 
 # load gene presence / absence data
+print(nfabspresmat)
+print(file.exists(nfabspresmat))
 if (file.exists(nfabspresmat)){
+	print(sprintf("load 'genocount' table of ortholog cluster occurrence in genomes frmo file '%s'", nfabspresmat))
 	load(nfabspresmat)
 }else{
 	genocount = data.matrix(read.table(file=nffamgenomemat, header=T, comment.char=''))
