@@ -197,13 +197,15 @@ checkexec "step 7: failed ${step7}; check specific logs in '${claspevspanenrichl
 # concatenate summary reports
 step8="concatenating summary reports"
 echo ${step8}
-tail -n +2 ${cladedefs} | while read cla name cladedef siscladedef maxabs maxpres ; do
+tail -n +2 ${cladedefs} | while read cla ${cladedefhead} ; do
   cla=clade${n}
   echo "# ${cla} ${name}"
   echo "# cladespe vs. core"
-  cat ${dirgoenrichcladespecore}/${cla}_go_term_enriched_cladespecific_vs_coregenome.tab
+  cladespevscoresum=${dirgoenrichcladespecore}/${cla}_go_term_enriched_cladespecific_vs_coregenome.tab
+  [ -s ${cladespevscoresum} ] && cat ${cladespevscoresum} || echo "no data available"
   echo "# cladespe vs. pan"
-  cat ${dirgoenrichcladespepan}/${cla}_go_term_enriched_cladespecific_vs_pangenome.tab
+  cladespevspansum=${dirgoenrichcladespepan}/${cla}_go_term_enriched_cladespecific_vs_pangenome.tab
+   [ -s ${cladespevspansum} ] && cat ${cladespevspansum} || echo "no data available"
   echo "# - - - "
 done > ${goterms}/clade_go_term_enriched_cladespecific_summary.tab
 checkexec "step 8: failed ${step8}" "step 8: completed ${step8}\n"
