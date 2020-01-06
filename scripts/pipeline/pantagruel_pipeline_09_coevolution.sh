@@ -40,19 +40,18 @@ if [ ! -z "${maxreftreeheight}" ] ; then
   if [ "${resumetask}" == 'true' ] ; then
     # varify if new tables were already built in which case revert to initial state
 	if [ ! -z "$(sqlite3 ${sqldb} ".tables" | grep 'gene_lineage_events_full')" ] ; then
-	  sqlite3 ${sqldb} << EOF
+	  sqlite3 ${sqldb} """
 	  DROP TABLE gene_lineage_events;
-	  ALTER TABLE gene_lineage_events_full RENAME TO gene_lineage_events_full;
+	  ALTER TABLE gene_lineage_events_full RENAME TO gene_lineage_events;
 	  DROP INDEX IF EXISTS genelineev_rlocds;
       DROP INDEX IF EXISTS genelineev_rlocds_hash;
       DROP INDEX IF EXISTS genelineev_eventid;
       DROP INDEX IF EXISTS genelineev_eventid_hash;
-      DROP INDEX IF EXISTS genelineev_freq;
-EOF
+      DROP INDEX IF EXISTS genelineev_freq;"""
     fi
   fi
   # create smaller table with only desired event
-  sqlite3 ${sqldb} << EOF
+  sqlite3 ${sqldb} """
   ALTER TABLE gene_lineage_events RENAME TO gene_lineage_events_full;
   CREATE TABLE gene_lineage_events AS  
   (SELECT gene_lineage_events_full.* 
@@ -69,8 +68,7 @@ EOF
   CREATE INDEX genelineev_freq ON gene_lineage_events (freq);
   ALTER TABLE gene_lineage_events ADD PRIMARY KEY (replacement_label_or_cds_code, event_id);
   ANALYZE;
-  .quit
-EOF
+  .quit"""
 
 fi
 ### end OPTION

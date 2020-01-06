@@ -226,6 +226,13 @@ usagelong (){
   echo "                        Reverting to the exhaustive computation behavior can be done similarly by setting 'genefamlist' variable to an empty value or by using:"
   echo "                          pantagruel -i configfile --refresh -g '' init"
   echo ""
+  echo " Output: Gene co-evolution options:"
+  echo ""
+  echo "    -q|--max_event_age Older relative age on the species tree (real value between 0.0 = tips and 1.0 = root) under which events will considered to compute co-evolution scores"
+  echo "                       and to build the gene co-evolution network. Deeper branches of the species tree are often long and aglomerate long evolutionary periods into one time point."
+  echo "                       As a result, gene histories involving old events mapped to these deep branches will be more likely to correlate in an unspecific way."
+  echo "                       Default value is 0.5, meaning events older than half the height of the ultrametric species tree are not considered for co-evolution scoring."
+  echo ""
   echo "# for any Pantagruel command calls:"
   echo ""
   echo "    -h|--help          print this help message and exit."
@@ -356,6 +363,10 @@ ptgenvsetdefaults (){
      echo "Default: all computations will be run locally"
      export hpcremoteptgroot='none'
     fi
+	if [ -z "${maxreftreeheight}" ] ; then
+     export maxreftreeheight='0.5'
+     echo "Default: will restict events younger than age ${maxreftreeheight} on the species tree for gene co-evolution scoring"
+    fi
 }
 
 testmandatoryarg (){
@@ -379,7 +390,7 @@ promptdate () {
   echo $(date +'[%Y-%m-%d %H:%M:%S]') ${1}
 }
 
-ARGS=`getopt --options "d:r:i:I:f:a:T:A:L:s:t:RV:N:H:cg:e:hFz" --longoptions "dbname:,rootdir:,initfile:,refresh,iam:,famprefix:,refseq_ass:,refseq_list:,refseq_ass4annot:,refseq_list4annot:,custom_ass:,taxonomy:,pseudocore:,core_seqtype:,pop_lg_thresh:,pop_bs_thresh:,rooting:,reftree:,resume,env_var:,threads:,submit_hpc:,collapse,no_collapse,collapse_param:,genefam_list:,rec_method:,help,FORCE,compress" --name "pantagruel" -- "$@"`
+ARGS=`getopt --options "d:r:i:I:f:a:T:A:L:s:t:RV:N:H:cg:e:q:hFz" --longoptions "dbname:,rootdir:,initfile:,refresh,iam:,famprefix:,refseq_ass:,refseq_list:,refseq_ass4annot:,refseq_list4annot:,custom_ass:,taxonomy:,pseudocore:,core_seqtype:,pop_lg_thresh:,pop_bs_thresh:,rooting:,reftree:,resume,env_var:,threads:,submit_hpc:,collapse,no_collapse,collapse_param:,genefam_list:,rec_method:,max_event_age:,help,FORCE,compress" --name "pantagruel" -- "$@"`
 
 #Bad arguments
 if [ ${?} -ne 0 ];
@@ -596,6 +607,13 @@ do
       export genefamlist=$(readlink -f ${2})
       echo "set resticted list for computation of gene trees"
       shift 2;;
+	  
+	-q|--max_event_age)
+      testmandatoryarg "${1}" "${2}"
+      export maxreftreeheight=$(readlink -f ${2})
+      echo "will restict events younger than age ${maxreftreeheight} on the species tree for gene co-evolution scoring"
+      shift 2;;
+	  
 
     --)
       shift

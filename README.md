@@ -417,7 +417,7 @@ Options are detailed here:
                           To use codes, you may thus want run task 3 first, then run task init again with this option to regenerate the config file with 
                           the desired outgroup organism codes and only then run task 5.
                           
-   Output: gene trees / reconciliations options:
+ Output: gene trees / reconciliations options:
      
     -H|--submit_hpc  full address (hostname:/folder/location) of a folder on a remote high-performance computating (HPC) cluster server.
                        This indicate that computationally intensive tasks, including building the gene tree collection
@@ -461,6 +461,13 @@ Options are detailed here:
                           pantagruel -i configfile --refresh -g genelist init  (note it is important that -g option be placed after the --refresh option)
                         Reverting to the exhaustive computation behavior can be done similarly by setting 'genefamlist' variable to an empty value or by using:
                           pantagruel -i configfile --refresh -g '' init
+   
+ Output: Gene co-evolution options:"
+
+    -q|--max_event_age Older relative age on the species tree (real value between 0.0 = tips and 1.0 = root) under which events will considered to compute co-evolution scores"
+                       and to build the gene co-evolution network. Deeper branches of the species tree are often long and aglomerate long evolutionary periods into one time point."
+                       As a result, gene histories involving old events mapped to these deep branches will be more likely to correlate in an unspecific way."
+                       Default value is 0.5, meaning events older than half the height of the ultrametric species tree are not considered for co-evolution scoring.
 
 # for any Pantagruel command calls:
 
