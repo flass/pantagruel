@@ -197,6 +197,7 @@ checkexec "step 7: failed ${step7}; check specific logs in '${claspevspanenrichl
 # concatenate summary reports
 step8="concatenating summary reports"
 echo ${step8}
+cladespevssummary=${goterms}/clade_go_term_enriched_cladespecific_summary.tab
 tail -n +2 ${cladedefs} | while read cla ${cladedefhead} ; do
   cla=clade${n}
   echo "# ${cla} ${name}"
@@ -207,5 +208,5 @@ tail -n +2 ${cladedefs} | while read cla ${cladedefhead} ; do
   cladespevspansum=${dirgoenrichcladespepan}/${cla}_go_term_enriched_cladespecific_vs_pangenome.tab
    [ -s ${cladespevspansum} ] && cat ${cladespevspansum} || echo "no data available"
   echo "# - - - "
-done > ${goterms}/clade_go_term_enriched_cladespecific_summary.tab
-checkexec "step 8: failed ${step8}" "step 8: completed ${step8}\n"
+done > ${cladespevssummary}
+checkexec "step 8: failed ${step8}" "step 8: completed ${step8}; summary table saved at '${cladespevssummary}'\n"

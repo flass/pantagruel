@@ -31,7 +31,7 @@ fi
 ## look for correlated gene lineage histories through identification of matching speciation and transfer events
 
 ### OPTION: exclude oldest species tree branches to avoid unspecific matches (and speed-up search):
-if [ ! -z "${maxreftreeheight}" ]
+if [ ! -z "${maxreftreeheight}" ] ; then
   # e.g.: maxreftreeheight=0.25
   exclbrlist=${coretree}/branches_older_than_${maxreftreeheight}
   python2.7 ${ptgscripts}/list_branches.py --intree ${speciestreeBS}.lsd_internalPopulations.nwk --root_age 1.0 --older_than ${maxreftreeheight} --out ${exclbrlist}
