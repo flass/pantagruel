@@ -115,6 +115,7 @@ step5="generating background term distribution for clades"
 echo ${step5}
 export goterms=${funcannot}/GeneOntology
 mkdir -p ${goterms}
+cladedefhead=$(head -n1 ${cladedefs})
 # for the whole dataset
 sqlite3 -cmd ".mode tab" ${sqldb} "select distinct locus_tag, go_id from coding_sequences 
 left join functional_annotations using (nr_protein_id) 
@@ -122,7 +123,7 @@ left join interpro2GO using (interpro_id) ;" > ${goterms}/${ngenomes}-genomes_pa
 # for all clades of the species tree
 export claderefgodir=${goterms}/clade_go_term_reference_sets
 mkdir -p ${claderefgodir}/
-tail -n +2 ${cladedefs} | while read cla cladedef siscladedef ; do
+tail -n +2 ${cladedefs} | while read cla ${cladedefhead} ; do
   claspeset="'$(echo $cladedef | sed -e "s/,/','/g")'"
   echo $cla $claspeset
   cladest=${claderefgodir}/${cla}_pangenome_terms.tab
@@ -150,17 +151,21 @@ enrichlogsext=GOterm_enrichment_test.log
 step6="comparing each clade-specific core genome to its respective core genome"
 echo ${step6}
 claspevscoreenrichlogsrad=${gotermlogs}/cladespecific_vs_coregenome_genes
-tail -n +2 ${cladedefs} | while read cla name cladedef siscladedef maxabs maxpres ; do
+tail -n +2 ${cladedefs} | while read cla ${cladedefhead} ; do
   echo $cla
-  cladspego=${dirgotablescladespe}/mixed_majrule_combined_0.5.orthologs_specific_genes_${cla}_reprseq_goterms.tab
-  cut -f5,6 ${cladspego} | grep -v "NA$" > ${cladspego}_nonull
-  ${ptgscripts}/clade_specific_genes_GOterm_enrichment_test.r \
-  --study_annots ${cladspego}_nonull  \
-  --population_annots ${claderefgodir}/${cla}_coregenome_terms.tab_nonull \
-  --out ${dirgoenrichcladespecore}/${cla}_go_term_enriched_cladespecific_vs_coregenome.tab \
-  --algo "weight01" --stat "Fisher" &> ${claspevscoreenrichlogsrad}_${cla}_${enrichlogsext}
-  checkexec "step 6: failed ${step6} for clade ${cla}"
-  ls -lh ${dirgoenrichcladespecore}/*_${cla}_* ; echo ""
+  cladspego=${dirgotablescladespe}/mixed_majrule_combined_0.5.orthologs_specific_pres_genes_${cla}_reprseq_goterms.tab
+  if [ -s ${cladspego} ] ; then
+    cut -f5,6 ${cladspego} | grep -v "NA$" > ${cladspego}_nonull
+    ${ptgscripts}/clade_specific_genes_GOterm_enrichment_test.r \
+    --study_annots ${cladspego}_nonull  \
+    --population_annots ${claderefgodir}/${cla}_coregenome_terms.tab_nonull \
+    --out ${dirgoenrichcladespecore}/${cla}_go_term_enriched_cladespecific_vs_coregenome.tab \
+    --algo "weight01" --stat "Fisher" &> ${claspevscoreenrichlogsrad}_${cla}_${enrichlogsext}
+    checkexec "step 6: failed ${step6} for clade ${cla}"
+    ls -lh ${dirgoenrichcladespecore}/*_${cla}_* ; echo ""
+  else
+    echo "no clade-specific (present) genes with referenced GO terms for ${cla}; skip GO term enrichment test"
+  fi
 done &> ${claspevscoreenrichlogsrad}_${enrichlogsext}
 checkexec "step 6: failed ${step6}; check specific logs in '${claspevscoreenrichlogsrad}*' for more details" "step 6: completed ${step6}\n"
 
@@ -171,17 +176,21 @@ mkdir -p ${dirgoenrichcladespepan}/
 step7="comparing each clade-specific core genome to its respective pangenome"
 echo ${step7}
 claspevspanenrichlogsrad=${gotermlogs}/cladespecific_vs_pangenome_genes
-tail -n +2 ${cladedefs} | while read cla name cladedef siscladedef maxabs maxpres ; do
+tail -n +2 ${cladedefs} | while read cla ${cladedefhead} ; do
   echo $cla
-  cladspego=${dirgotablescladespe}/mixed_majrule_combined_0.5.orthologs_specific_genes_${cla}_allseq_goterms.tab
-  cut -f5,6 ${cladspego} | grep -v "NA$" > ${cladspego}_nonull
-  ${ptgscripts}/clade_specific_genes_GOterm_enrichment_test.r \
-  --study_annots ${cladspego}_nonull  \
-  --population_annots ${claderefgodir}/${cla}_pangenome_terms.tab_nonull \
-  --out ${dirgoenrichcladespepan}/${cla}_go_term_enriched_cladespecific_vs_pangenome.tab \
-  --algo "weight01" --stat "Fisher" &> ${claspevspanenrichlogsrad}_${cla}_${enrichlogsext}
-  checkexec "step 7: failed ${step7} for clade ${cla}"
-  ls -lh ${dirgoenrichcladespepan}/*${cla}* ; echo ""
+  cladspego=${dirgotablescladespe}/mixed_majrule_combined_0.5.orthologs_specific_pres_genes_${cla}_allseq_goterms.tab
+  if [ -s ${cladspego} ] ; then
+    cut -f5,6 ${cladspego} | grep -v "NA$" > ${cladspego}_nonull
+    ${ptgscripts}/clade_specific_genes_GOterm_enrichment_test.r \
+    --study_annots ${cladspego}_nonull  \
+    --population_annots ${claderefgodir}/${cla}_pangenome_terms.tab_nonull \
+    --out ${dirgoenrichcladespepan}/${cla}_go_term_enriched_cladespecific_vs_pangenome.tab \
+    --algo "weight01" --stat "Fisher" &> ${claspevspanenrichlogsrad}_${cla}_${enrichlogsext}
+    checkexec "step 7: failed ${step7} for clade ${cla}"
+    ls -lh ${dirgoenrichcladespepan}/*${cla}* ; echo ""
+  else
+    echo "no clade-specific (present) genes with referenced GO terms for ${cla}; skip GO term enrichment test"
+  fi
 done &> ${claspevspanenrichlogsrad}_${enrichlogsext}
 checkexec "step 7: failed ${step7}; check specific logs in '${claspevspanenrichlogsrad}*' for more details" "step 7: completed ${step7}\n"
 
