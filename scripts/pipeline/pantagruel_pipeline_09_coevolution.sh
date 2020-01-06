@@ -36,7 +36,21 @@ if [ ! -z "${maxreftreeheight}" ] ; then
   exclbrlist=${coretree}/branches_older_than_${maxreftreeheight}
   python2.7 ${ptgscripts}/list_branches.py --intree ${speciestreeBS}.lsd_internalPopulations.nwk --root_age 1.0 --older_than ${maxreftreeheight} --out ${exclbrlist}
   exclbr=$(cat ${exclbrlist} | tr '\n' ',' | sed -e "s/,$/\n/g" | sed -e "s/,/', '/g")
-
+  
+  if [ "${resumetask}" == 'true' ] ; then
+    # varify if new tables were already built in which case revert to initial state
+	if [ ! -z "$(sqlite3 ${sqldb} ".tables" | grep 'gene_lineage_events_full')" ] ; then
+	  sqlite3 ${sqldb} << EOF
+	  DROP TABLE gene_lineage_events;
+	  ALTER TABLE gene_lineage_events_full RENAME TO gene_lineage_events_full;
+	  DROP INDEX IF EXISTS genelineev_rlocds;
+      DROP INDEX IF EXISTS genelineev_rlocds_hash;
+      DROP INDEX IF EXISTS genelineev_eventid;
+      DROP INDEX IF EXISTS genelineev_eventid_hash;
+      DROP INDEX IF EXISTS genelineev_freq;
+EOF
+    fi
+  fi
   # create smaller table with only desired event
   sqlite3 ${sqldb} << EOF
   ALTER TABLE gene_lineage_events RENAME TO gene_lineage_events_full;
@@ -48,11 +62,11 @@ if [ ! -z "${maxreftreeheight}" ] ; then
    WHERE branch_name NOT IN ('${exclbr}') )
    AND reconciliation_id=${parsedreccolid}
   ;
-  CREATE INDEX ON gene_lineage_events (replacement_label_or_cds_code);
-  CREATE INDEX ON gene_lineage_events USING HASH (replacement_label_or_cds_code);
-  CREATE INDEX ON gene_lineage_events (event_id);
-  CREATE INDEX ON gene_lineage_events USING HASH (event_id);
-  CREATE INDEX ON gene_lineage_events (freq);
+  CREATE INDEX genelineev_rlocds ON gene_lineage_events (replacement_label_or_cds_code);
+  CREATE INDEX genelineev_rlocds_hash ON gene_lineage_events USING HASH (replacement_label_or_cds_code);
+  CREATE INDEX genelineev_eventid ON gene_lineage_events (event_id);
+  CREATE INDEX genelineev_eventid_hash ON gene_lineage_events USING HASH (event_id);
+  CREATE INDEX genelineev_freq ON gene_lineage_events (freq);
   ALTER TABLE gene_lineage_events ADD PRIMARY KEY (replacement_label_or_cds_code, event_id);
   ANALYZE;
   .quit
