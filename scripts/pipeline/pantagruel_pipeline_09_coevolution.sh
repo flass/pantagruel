@@ -28,6 +28,13 @@ if [ -z $parsedreccolid ] ; then
   parsedreccolid=1
 fi
 
+# safer specifying the parsed reconciliation collection to consider; e.g.: 'ale_collapsed_dated_1_parsed_1'
+if [ -z "${reccol}" ] ; then
+  # if not inferred from the record of the last reconciliation computation
+  parsedreccol=$(cut -f3 ${alerec}/parsedreccol)
+  [ -z "${reccol}" ] && echo "Error: cannot find parsed reconciliation collection as env variable \$parsedreccol is empty; exit now" && exit 1
+fi
+
 ## look for correlated gene lineage histories through identification of matching speciation and transfer events
 
 ### OPTION: exclude oldest species tree branches to avoid unspecific matches (and speed-up search):
@@ -36,7 +43,7 @@ if [ ! -z "${maxreftreeheight}" ] ; then
   echo ${step1}
   # e.g.: maxreftreeheight=0.5
   exclbrlist=${coretree}/branches_older_than_${maxreftreeheight}
-  python2.7 ${ptgscripts}/list_branches.py --intree ${speciestreeBS}.lsd_internalPopulations.nwk --root_age 1.0 --older_than ${maxreftreeheight} --out ${exclbrlist}
+  python2.7 ${ptgscripts}/list_branches.py --intree ${speciestree}.lsd_internalPopulations.nwk --root_age 1.0 --older_than ${maxreftreeheight} --out ${exclbrlist}
   exclbr=$(cat ${exclbrlist} | tr '\n' ',' | sed -e "s/,$/\n/g" | sed -e "s/,/', '/g")
   
   if [ "${resumetask}" == 'true' ] ; then
@@ -76,15 +83,19 @@ if [ ! -z "${maxreftreeheight}" ] ; then
 fi
 ### end OPTION
 
+step2="computing co-evolution scores"
 # collect data
-# BEWARE: GENERATES AN AWFUL LOT OF DATA, PREPARE DISK SPACE ACCORDINGLY
+spacewarning="""BEWARE: GENERATES AN AWFUL LOT OF DATA, PREPARE DISK SPACE ACCORDINGLY
 # indication: with defaults settings evtypematch='ST'; minevfreqmatch=0.5; minjoinevfreqmatch=1.0; maxreftreeheight=0.5; recsamplesize=1000
-# on a 880 Enterobacteriaceae dataset, results in ~300 GB output (made to be split into ~1GB files)
-python2.7 $ptgscripts/compare_collapsedALE_scenarios.py --events_from_postgresql_db ${sqldbname} --nrec_per_sample ${recsamplesize} \
+# on a 880 Enterobacteriaceae dataset, results in ~300 GB output (made to be split into ~1GB files)"""
+echo ${step2}
+echo ${spacewarning}
+python2.7 $ptgscripts/compare_collapsedALE_scenarios.py --events_from_sqlite_db ${sqldb} --nrec_per_sample ${recsamplesize} \
  --event_type ${evtypematch} --min_freq ${minevfreqmatch} --min_joint_freq ${minjointevfreqmatch} --threads 8 \
- --dir_table_out ${compoutdir} &> ${ptglogs}/compare_collapsedALE_scenarios.${parsedreccol}.log &
+ --dir_table_out ${compoutdir} &> ${ptglogs}/compare_collapsedALE_scenarios.${parsedreccol}.log
+checkexec "failed ${step2}" "completed ${step2}\n"
 
-if [ ! -z ${somehowusingpostgres} ] ; then
+if [ ! -z "${somehowusingpostgres}" ] ; then
 #### NOT IMPLEMENTED YET IN SQLite
 # load data in database, adding mention of reconciliation_id to ensure events are not matched across collections
 export assocoutdir=${compoutdir}/gene_lineage_assocations/between_fams_scores
