@@ -154,7 +154,7 @@ claspevscoreenrichlogsrad=${gotermlogs}/cladespecific_vs_coregenome_genes
 tail -n +2 ${cladedefs} | while read cla ${cladedefhead} ; do
   echo $cla
   cladspego=${dirgotablescladespe}/mixed_majrule_combined_0.5.orthologs_specific_pres_genes_${cla}_reprseq_goterms.tab
-  if [ -s ${cladspego} ] ; then
+  if [[ -s ${cladspego} && $(wc -l ${cladspego} | cut -d ' ' -f1) -gt 1 ]] ; then
     cut -f5,6 ${cladspego} | grep -v "NA$" > ${cladspego}_nonull
     ${ptgscripts}/clade_specific_genes_GOterm_enrichment_test.r \
     --study_annots ${cladspego}_nonull  \
@@ -179,7 +179,7 @@ claspevspanenrichlogsrad=${gotermlogs}/cladespecific_vs_pangenome_genes
 tail -n +2 ${cladedefs} | while read cla ${cladedefhead} ; do
   echo $cla
   cladspego=${dirgotablescladespe}/mixed_majrule_combined_0.5.orthologs_specific_pres_genes_${cla}_allseq_goterms.tab
-  if [ -s ${cladspego} ] ; then
+  if [[ -s ${cladspego} && $(wc -l ${cladspego} | cut -d ' ' -f1) -gt 1 ]] ; then
     cut -f5,6 ${cladspego} | grep -v "NA$" > ${cladspego}_nonull
     ${ptgscripts}/clade_specific_genes_GOterm_enrichment_test.r \
     --study_annots ${cladspego}_nonull  \
