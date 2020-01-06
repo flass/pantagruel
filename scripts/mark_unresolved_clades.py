@@ -37,7 +37,9 @@ doutdext = {'mbc':('mbconstraints', 'mbconstraints'), \
 			'ccs':('constrained_clade_subalns', 'outgroup'), \
 			'rle':('representative_leaves', 'representative_leaves'), \
 			'col':('collapsed_alns', 'collapsed'), \
-			'cgt':('coloured_genetrees', 'full_genetree.coloured')}
+			'cgt':('coloured_genetrees', 'full_genetree.coloured'), \
+			'nwk':('collapsed_ML_genetrees', 'nwk')
+		   }
 
 ##core functions
 	
@@ -346,7 +348,27 @@ def restrict_alignment_representative_leaves(constraints, tree, nffullali, dirou
 			AlignIO.write(aliremainingseqs, os.path.join(dirout, coloutd, radout+"-%s.%s"%(colext, dalnext[aliformatout])), aliformatout)
 		else:
 			sys.stderr.write( "Warning: collapsed alignment %s has too few remaining sequences (%d out of %d) for subsequent tree building, will not write it\n"%(os.path.basename(nffullali), len(aliremainingseqs), len(aln)) )
-	return loutgroups
+	return (loutgroups, representativeseqids)
+
+def collapse_tree_from_constraint_list(tree, constraints, representativeseqids):
+	# first copy the tree to collapse so to leave untouched the input tree object
+	coltree = copy.deepcopy(tree)
+	assert len(constraints) == len(representativeseqids)
+	i = -1
+	for constraint, reprseqid in zip(constraints, representativeseqids):
+		i += 1
+		cladename = "clade%d"%i
+		for seqid in constraint:
+			node = coltree.labelgetnode(seqid)
+			if not node:
+				# one of the identical sequences not present in the input tree
+				continue # the for seqid loop
+			if seqid == reprseqid:
+				# make this leaf the representative of the clade
+				node.edit_label(cladename)
+			else:
+				coltree.pop(node)
+	return coltree
 
 def write_out_MrBayes_clade_constraints(constraints, outgroup, nfout, allowin=False, verbose=False, ilist=None, **kw):
 	if isinstance(outgroup, list): outgroupleaves = outgroup
@@ -441,11 +463,11 @@ def main(nfgenetree, diraln, dirout, outtag, mkdircons=True, **kw):
 		else:
 			newconstraintsfromidseqs.append([refidseq]+redidseqs)
 	if verbose: print 'newconstraintsfromidseqs =', newconstraintsfromidseqs
-	# for reporting, filter out contraint clades that are just made of one leaf (NB: these are useful for proper definitition of other constraint clades, when nested, non-inclusive clades are allowed)
+	# for reporting, filter out contraint clades that are just made of one leaf (NB: these are useful for proper definition of other constraint clades, when nested, non-inclusive clades are allowed)
 	constraints = [c for c in constraintswithsingles+newconstraintsfromidseqs if len(c)>1]
 	if verbose: print 'constraints =', constraints
 	# write out subalignments and the main alignment with collapsed clades
-	loutgroups = restrict_alignment_representative_leaves(constraints, genetree, nfaln, dirout, radout=bnfaln, selectRepr=0, didseq=didseq, **kw)
+	loutgroups, representativeseqids = restrict_alignment_representative_leaves(constraints, genetree, nfaln, dirout, radout=bnfaln, selectRepr=0, didseq=didseq, **kw)
 	if not 'mbc' in supressout:	
 		mbcoutd, mbcext = doutdext['mbc']
 		if mkdircons is True:
@@ -457,6 +479,10 @@ def main(nfgenetree, diraln, dirout, outtag, mkdircons=True, **kw):
 			cladename = "clade%d"%i
 			# write out MrBayes clade constraint for the sub-alignment, in order to compute subalignment samples and/or ancestral sequence
 			write_out_MrBayes_clade_constraints([constraint], loutgroups[i], os.path.join(dirout, mbcoutd, bnfaln+'-'+cladename+'.'+mbcext), ilist=[i], verbose=verbose)
+	if not 'nwk' in supressout:
+		colgenetree = collapse_tree_from_constraint_list(genetree, constraints)
+		nwkoutd, nwkext = doutdext['nwk']
+		colgenetree.write_newick(os.path.join(dirout, nwkoutd, bnfaln+'-%s.nwk'%nwkext), ignoreBS=True)
 	if not 'cgt' in supressout:	
 		fmtcoltree = kw.get('format_color_tree')
 		cgtoutd, cgtext = doutdext['cgt']
