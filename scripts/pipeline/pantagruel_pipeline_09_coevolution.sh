@@ -32,7 +32,9 @@ fi
 
 ### OPTION: exclude oldest species tree branches to avoid unspecific matches (and speed-up search):
 if [ ! -z "${maxreftreeheight}" ] ; then
-  # e.g.: maxreftreeheight=0.25
+  step1="restricting events to those younger than age ${maxreftreeheight} on the species tree"
+  echo ${step1}
+  # e.g.: maxreftreeheight=0.5
   exclbrlist=${coretree}/branches_older_than_${maxreftreeheight}
   python2.7 ${ptgscripts}/list_branches.py --intree ${speciestreeBS}.lsd_internalPopulations.nwk --root_age 1.0 --older_than ${maxreftreeheight} --out ${exclbrlist}
   exclbr=$(cat ${exclbrlist} | tr '\n' ',' | sed -e "s/,$/\n/g" | sed -e "s/,/', '/g")
@@ -69,20 +71,23 @@ if [ ! -z "${maxreftreeheight}" ] ; then
   ALTER TABLE gene_lineage_events ADD PRIMARY KEY (replacement_label_or_cds_code, event_id);
   ANALYZE;
   .quit"""
+  checkexec "failed ${step1}" "completed ${step1}\n"
 
 fi
 ### end OPTION
 
 # collect data
 # BEWARE: GENERATES AN AWFUL LOT OF DATA, PREPARE DISK SPACE ACCORDINGLY
-# indication: with defaults settings evtypematch='ST'; minevfreqmatch=0.5; minjoinevfreqmatch=1.0; maxreftreeheight=0.25
+# indication: with defaults settings evtypematch='ST'; minevfreqmatch=0.5; minjoinevfreqmatch=1.0; maxreftreeheight=0.5; recsamplesize=1000
 # on a 880 Enterobacteriaceae dataset, results in ~300 GB output (made to be split into ~1GB files)
-python2.7 $ptgscripts/compare_collapsedALE_scenarios.py --events_from_postgresql_db ${sqldbname} \
+python2.7 $ptgscripts/compare_collapsedALE_scenarios.py --events_from_postgresql_db ${sqldbname} --nrec_per_sample ${recsamplesize} \
  --event_type ${evtypematch} --min_freq ${minevfreqmatch} --min_joint_freq ${minjointevfreqmatch} --threads 8 \
  --dir_table_out ${compoutdir} &> ${ptglogs}/compare_collapsedALE_scenarios.${parsedreccol}.log &
 
+if [ ! -z ${somehowusingpostgres} ] ; then
 #### NOT IMPLEMENTED YET IN SQLite
 # load data in database, adding mention of reconciliation_id to ensure events are not matched across collections
 export assocoutdir=${compoutdir}/gene_lineage_assocations/between_fams_scores
 ${ptgscripts}/pantagruel_sqlitedb_load_coevolution_scores.py ${sqldb} ${assocoutdir} ${parsedreccolid}
 ####
+fi

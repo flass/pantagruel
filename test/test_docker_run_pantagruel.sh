@@ -16,7 +16,7 @@ if [ ${ptgdbname} == "testPTGdatabase" ] ; then
   # location of Pantagruel executable and test data
   ptgdata="${ptgrepo}/data"
   initargs="-L ${ptgdata}/NCBI_Assembly_accession_ids_test_10Brady -a ${ptgdata}/custom_genomes"
-  refreshargs="-c -g ${ptgdata}/test_genefam_list"
+  refreshargs="-c -g ${ptgdata}/test_genefam_list -q 0.75"
 else
   # use this to run on actual data
   initargs="${@}"  # all trailing script arguments
