@@ -86,7 +86,7 @@ fi
 step2="computing co-evolution scores"
 # collect data
 spacewarning="""BEWARE: GENERATES AN AWFUL LOT OF DATA, PREPARE DISK SPACE ACCORDINGLY
-# indication: with defaults settings evtypematch='ST'; minevfreqmatch=0.5; minjoinevfreqmatch=1.0; maxreftreeheight=0.5; recsamplesize=1000
+# indication: with defaults settings evtypematch='ST'; minevfreqmatch=0.5; minjoinevfreqmatch=1.0; maxreftreeheight=0.25; recsamplesize=1000
 # on a 880 Enterobacteriaceae dataset, results in ~300 GB output (made to be split into ~1GB files)"""
 echo ${step2}
 echo ${spacewarning}
@@ -95,10 +95,41 @@ python2.7 $ptgscripts/compare_collapsedALE_scenarios.py --events_from_sqlite_db 
  --dir_table_out ${compoutdir} &> ${ptglogs}/compare_collapsedALE_scenarios.${parsedreccol}.log
 checkexec "failed ${step2}" "completed ${step2}\n"
 
-if [ ! -z "${somehowusingpostgres}" ] ; then
-#### NOT IMPLEMENTED YET IN SQLite
-# load data in database, adding mention of reconciliation_id to ensure events are not matched across collections
 export assocoutdir=${compoutdir}/gene_lineage_assocations/between_fams_scores
-${ptgscripts}/pantagruel_sqlitedb_load_coevolution_scores.py ${sqldb} ${assocoutdir} ${parsedreccolid}
+
+step3="explore network of gene co-evolution (with every single gene lineage represented" 
+step3details="(, i.e. with every [collpased clade of] CDS as a single node)"
+
+step4="loading HUGE matrix of co-evolution scores into database"
+step4details=", with mention of reconciliation_id to ensure events are not matched across collections"
+
+step5="explore network of gene co-evolution (with network condensed by Orthologous Groups [OGs]" 
+step5details=", i.e. with gene lineages belonging to a same OG as a single node)"
+
+if [ ! -z "${somehowusingpostgres}" ] ; then
+  echo ${step3}${step3details} "using PostgreSQL db engine"
+  ${ptgscripts}/explore_gene_lineage_assoiations.r --dir_match_events ${assocoutdir} --db_type 'postgres'
+  checkexec "failed ${step3})" "completed ${step3})\n"
+  
+  echo ${step4}${step4details}
+  ${ptgscripts}/pantagruel_postgres_load_coevolution_scores.py ${sqldb} ${assocoutdir} ${parsedreccolid}
+  checkexec "failed ${step4}" "completed ${step4}\n"
+  
+  echo ${step5}${step5details}
+  ${ptgscripts}/explore_orthologous_group_assoiations.r --dir_match_events ${assocoutdir} --db_type 'postgres'
+  checkexec "failed ${step5})" "completed ${step5})\n"
+  
+  python condense_coevolution_network_by_orthologous_groups.py --sqlite_db ${sqldb} 
+else
+  echo ${step3}${step3details} "using SQLite db engine"
+  ${ptgscripts}/explore_gene_lineage_assoiations.r --dir_match_events ${assocoutdir} --db_type 'sqlite'
+  checkexec "failed ${step3}" "completed ${step3}\n"
+  
+  echo """will not load (possibly HUGE) matrix of co-evolution scores into SQLite database, as this is NOT YET IMPLEMENTED to support SQLite db engine. 
+  Also, on large data collections this would result into an even larger database file that would be too big to be functional.
+  Lack of this prevents the using the orthologous group classification to condense the co-evolution graph by OG (in the current implementation).
+  """
+  #${ptgscripts}/pantagruel_sqlitedb_load_coevolution_scores.py ${sqldb} ${assocoutdir} ${parsedreccolid}
+  exit 0
 ####
 fi

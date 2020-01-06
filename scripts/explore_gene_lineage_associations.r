@@ -3,7 +3,7 @@ library(gplots)
 library(igraph)
 library(getopt)
 library(parallel)
-library(RPostgreSQL)
+#library(RPostgreSQL)
 
 eventstablim = 50
 plotlabellim = 100
