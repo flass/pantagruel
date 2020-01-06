@@ -154,7 +154,7 @@ tail -n +2 ${cladedefs} | while read cla name cladedef siscladedef maxabs maxpre
   echo $cla
   cladspego=${dirgotablescladespe}/mixed_majrule_combined_0.5.orthologs_specific_genes_${cla}_reprseq_goterms.tab
   cut -f5,6 ${cladspego} | grep -v "NA$" > ${cladspego}_nonull
-  ${dbscripts}/clade_specific_genes_GOterm_enrichment_test.r \
+  ${ptgscripts}/clade_specific_genes_GOterm_enrichment_test.r \
   --study_annots ${cladspego}_nonull  \
   --population_annots ${claderefgodir}/${cla}_coregenome_terms.tab_nonull \
   --out ${dirgoenrichcladespecore}/${cla}_go_term_enriched_cladespecific_vs_coregenome.tab \
@@ -175,7 +175,7 @@ tail -n +2 ${cladedefs} | while read cla name cladedef siscladedef maxabs maxpre
   echo $cla
   cladspego=${dirgotablescladespe}/mixed_majrule_combined_0.5.orthologs_specific_genes_${cla}_allseq_goterms.tab
   cut -f5,6 ${cladspego} | grep -v "NA$" > ${cladspego}_nonull
-  ${dbscripts}/clade_specific_genes_GOterm_enrichment_test.r \
+  ${ptgscripts}/clade_specific_genes_GOterm_enrichment_test.r \
   --study_annots ${cladspego}_nonull  \
   --population_annots ${claderefgodir}/${cla}_pangenome_terms.tab_nonull \
   --out ${dirgoenrichcladespepan}/${cla}_go_term_enriched_cladespecific_vs_pangenome.tab \
