@@ -321,8 +321,8 @@ def tree2toBioPhylo(node):
 	"""perform tree2.Node -> Newick -> Bio.Phylo.Newick.Tree conversion"""
 	return PhyloIO.read(StringIO(node.newick()), 'newick', rooted=True)
 
-def parseChain(lnfchains, dold2newname={}, nfchainout=None, inchainfmt='nexus', outchainfmt='newick', maskchars=None, verbose=False):
-	"""parse a Nexus-format tree chain and re-write it in a Newick format; edit the tree on the fly, substituting tip labels or grafting trees on tips
+def parseChain(lnfchains, dold2newname={}, nfchainout=None, inchainfmt='nexus', outchainfmt='newick', maskchars=None, dirout='', verbose=False):
+	"""parse a (Nexus-format) tree chain file and re-write it in a Newick format; edit the tree on the fly, substituting tip labels or grafting trees on tips
 	
 	A character filter is added as a file pipe when parsing the file, replacing any character of maskchars[0] with the counterpart in maskchars[1].
 	The filter is reverted when writing the file. 
@@ -381,7 +381,7 @@ def parseChain(lnfchains, dold2newname={}, nfchainout=None, inchainfmt='nexus', 
 							elif isinstance(nutipname, BaseTree.TreeElement):
 								nusubtree = nutipname
 							else:
-								raise ValueError, "replacement value for a leaf must be either a string (to edit leaf label) of a tree object instance of classes tree2.Node or Bio.Phylo.TreeElement (or derivates)"
+								raise ValueError, "replacement value for a leaf must be either a string (to edit leaf label) or a tree object instance of classes tree2.Node or Bio.Phylo.TreeElement (or derivates)"
 							subtreelen = nusubtree.total_branch_length()/nusubtree.count_terminals()
 							if subtreelen:
 								# substract the subtree length to its branch length
@@ -403,6 +403,101 @@ def parseChain(lnfchains, dold2newname={}, nfchainout=None, inchainfmt='nexus', 
 	if treebuffer: treeappend(treebuffer, nfout, outchainfmt, maskchars=invmaskchars)
 	print '%s%s ...done (%d trees)'%(('\n' if verbose else ''), nfout, ntree)
 	return None
+
+def replaceInSingleTree(nfgt, dold2newname={}, nfgtout=None, ingtfmt='newick', outchainfmt='newick', maskchars=None, verbose=False, dirout='', mode='tree2.Node'):
+	"""(single-tree version of parseChain) parse a (Newick-format) tree file and re-write it in a Newick format; edit the tree on the fly, substituting tip labels or grafting trees on tips"""
+	
+	### alternative codes
+	def replaceInSingleTree_withBioPhylo(nfgt, dold2newname, nfout, ingtfmt, outgtfmt, maskchars, verbose):
+		"""Using Bio.Phylo - direct equivalent of parseChain
+		
+		complex code with no real point when not parsing large ammount of trees from each input file
+		
+		A character filter is added as a file pipe when parsing the file, replacing any character of maskchars[0] with the counterpart in maskchars[1].
+		The filter is reverted when writing the file. 
+		With the filter maskchars=[('\([A-Z0-9]\)-', '\\1@'), ('\([A-Z0-9]\)@', '\\1-')] (using sed command), dash characters '-' PRECEDED BY A CAPITAL LETTER OR DIGIT 
+		are translated into at symbols '@' on input, and '@'s are translated into '-'s on output; 
+		this is to handle the fact that Bio.Nexus tree parser does not support dashes in the taxon labels (see https://github.com/biopython/biopython/issues/1022).
+		!!! CAUTION: any '@' in the original label will thus be turned into a '-' in the final file output. Please avoid '@'s in tree taxon labels. !!!
+		!!! CAUTION 2: maskchars=('-', '@') leads to wrong behaviour if hyphen float numbers noted Xe-XXX are substituted as leads to branch lengths to be read as names.
+		"""
+		if maskchars:
+			if isinstance(maskchars, list):
+				invmaskchars = maskchars[1]
+				maskchars = maskchars[0]
+			else:
+				invmaskchars = (maskchars[1], maskchars[0])
+		else:
+			invmaskchars = None
+		if verbose:
+			print "replaceInSingleTree('%s')"%repr(lnfgt)
+			if maskchars: print "'%s' character set will be substituted with '%s' on input and back on output"%maskchars
+		dhandles = {}
+		# parse input file
+		treehandle = treeparse(nfgt, ingtfmt, maskchars=maskchars)
+		tree = treehandle.next()
+		if dold2newname:
+			for tip in tree.get_terminals():
+				nutipname = dold2newname.get(tip.name)
+				if nutipname:
+					if isinstance(nutipname, str):
+						tip.name = nutipname
+					else:
+						if isinstance(nutipname, tree2.Node):
+							nusubtree = tree2toBioPhylo(nutipname)
+						elif isinstance(nutipname, BaseTree.TreeElement):
+							nusubtree = nutipname
+						else:
+							raise ValueError, "replacement value for a leaf must be either a string (to edit leaf label) or a tree object instance of classes tree2.Node or Bio.Phylo.TreeElement (or derivates)"
+						subtreelen = nusubtree.total_branch_length()/nusubtree.count_terminals()
+						if subtreelen:
+							# substract the subtree length to its branch length
+							tip.branch_length = max(0.0, tip.branch_length - subtreelen)
+						# attach subtree to tree
+						tip.clades = nusubtree.root.clades
+						tip.name = ''
+		treewrite(tree, nfout, outgtfmt, maskchars=invmaskchars)
+		if verbose: print '\n%s ...done'%(nfout)
+		return None
+	
+	def replaceInSingleTree_withtree2Node(nfgt, dold2newname, nfgtout, ingtfmt, outgtfmt, verbose):
+		"""Using tree2.Node - no support for replacement clades in Bio.Phylo.TreeElement format
+		
+		less object format conversions and more straightforward code so more efficient when only a single trees is read from each input file
+		"""
+		tree = getattr(tree2, 'read_%s'%ingtfmt)(nfgt)
+		if dold2newname:
+			for tip in tree.get_leaves():
+				nutipname = dold2newname.get(tip.label)
+				if nutipname:
+					if isinstance(nutipname, str):
+						tip.edit_label(nutipname)
+					else:
+						if not isinstance(nutipname, tree2.Node):
+							raise ValueError, "replacement value for a leaf must be either a string (to edit leaf label) or a tree object instance of classes tree2.Node or Bio.Phylo.TreeElement (or derivates)"
+						nusubtree = nutipname.deepcopybelow()
+						nusubtree.edit_label('')
+						tipfat = tip.go_father()
+						subtreelen = nusubtree.treelength()/nusubtree.nb_leaves()
+						# substract the subtree length to its branch length
+						newlen = max(0.0, tip.lg() - subtreelen)
+						newboot = tip.bs()
+						# remove tip node from tree
+						tipfat.unlink_child(tip)
+						# attach subtree node to tree
+						tipfat.link_child(nusubtree, newlen=newlen, newboot=newboot)
+		getattr(tree2, 'write_%s'%outgtfmt)(tree, nfout)
+		if verbose: print '\n%s ...done'%(nfout)
+		return None
+
+	### run
+	# pepare output file
+	if nfgtout: nfout = nfgtout
+	else: nfout = n2outChainFileName(nfgt, dirout, ingtfmt, outgtfmt)
+	if mode=='Bio.Phylo':
+		return replaceInSingleTree_withBioPhylo(nfgt, dold2newname, nfout, ingtfmt, outgtfmt, maskchars, verbose)
+	elif mode=='tree2.Node':
+		return replaceInSingleTree_withtree2Node(nfgt, dold2newname, nfout, ingtfmt, outgtfmt, verbose)
 
 def seqrecordsFromGBFF(nfgbff):
 	if nfgbff.endswith('.gz'):
