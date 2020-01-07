@@ -581,7 +581,7 @@ def mapPop2GeneTree(nfingt, dircons, dirout, method, spetree, poptree, dspe2pop,
 	assert method in methods
 	# get file pre/sufix
 	dirgt = os.path.dirname(nfingt)
-	bngt, extgt = os.path.basename(nfingt).split('.', 1)
+	bngt = os.path.basename(nfingt).split('.', 1)[0]
 	outbn = bngt
 	fam = bngt.rsplit('-', 1)[0]
 	
