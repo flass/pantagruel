@@ -79,7 +79,7 @@ if [[ "${chaintype}" == 'fullgenetree' ]] ; then
 else
   export collapsecond=${criterion}_stem${cladesupp}_within${withinfun}${subcladesupp}
   export replmethod='replaceCCinGasinS-collapsePOPinSnotinG'
-  export colmlgenetrees=${colalinexuscodedir}/collapsed_ML_genetrees
+  export colmlgenetrees=${colalinexuscodedir}/${collapsecond}/collapsed_ML_genetrees
 fi
 export mboutputdir=${bayesgenetrees}/${collapsecond}
 export IPversion=$(interproscan --version 2> /dev/null | head -n 1 | sed -e 's/InterProScan version //')
