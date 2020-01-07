@@ -38,7 +38,7 @@ doutdext = {'mbc':('mbconstraints', 'mbconstraints'), \
 			'rle':('representative_leaves', 'representative_leaves'), \
 			'col':('collapsed_alns', 'collapsed'), \
 			'cgt':('coloured_genetrees', 'full_genetree.coloured'), \
-			'nwk':('collapsed_ML_genetrees', 'nwk')
+			'nwk':('collapsed_ML_genetrees', 'collapsed')
 		   }
 
 ##core functions
