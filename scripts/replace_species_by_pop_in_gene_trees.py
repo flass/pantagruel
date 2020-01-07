@@ -397,10 +397,10 @@ def allPWpopDist(poptree, lnamepops, nfmatpopdist, nbthreads=1, verbose=False):
 		ddnd = {lpopnames[i]:dnd for i, dnd in enumerate(res)}
 		
 	with open(nfmatpopdist, 'w') as fmatpopdist:
-		 fmatpopdist.write('\t'.join(['']+lpopnames)+'\n')
-		 for popname1 in lpopnames:
-			 dnd = ddnd[popname1]
-			 fmatpopdist.write('\t'.join([popname1]+[str(dnd.get(popname2, ddnd[popname2].get(popname1, 0))) for popname2 in lpopnames])+'\n')
+		fmatpopdist.write('\t'.join(['']+lpopnames)+'\n')
+		for popname1 in lpopnames:
+			dnd = ddnd[popname1]
+			fmatpopdist.write('\t'.join([popname1]+[str(dnd.get(popname2, ddnd[popname2].get(popname1, 0))) for popname2 in lpopnames])+'\n')
 	return ddnd
 
 def inferPopfromSpeTree(nfspetree, \
@@ -475,7 +475,7 @@ def inferPopfromSpeTree(nfspetree, \
 	
 	return (spetree, poptree, dspe2pop, lnamepops, dpopnd)
 	
-def mapPop2GeneTree(nfingtchain1, dircons, dirout, method, spetree, poptree, dspe2pop, lnamepops, \
+def mapPop2GeneTree(nfingt, dircons, dirout, method, spetree, poptree, dspe2pop, lnamepops, \
                     dpopnd={}, reuseOutput=0, combine_monophyletic=3, \
                     chain1ext='mb.run1.t', nbchains=2, aliext='nex', contreext='mb.con.tre', \
                     constrainttag='mbconstraints', collapsalntag='collapsed_alns', \
@@ -580,15 +580,15 @@ def mapPop2GeneTree(nfingtchain1, dircons, dirout, method, spetree, poptree, dsp
 	           'collapseCCinG-collapsematchingPOPinS', 'collapseALLinSandG', 'collapseCCinG-collapsePOPinSnotinGbutinCC']
 	assert method in methods
 	# get file pre/sufix
-	dirgt = os.path.dirname(nfingtchain1)
-	bngt, extgt = os.path.basename(nfingtchain1).split('.', 1)
+	dirgt = os.path.dirname(nfingt)
+	bngt, extgt = os.path.basename(nfingt).split('.', 1)
 	outbn = bngt
 	fam = bngt.rsplit('-', 1)[0]
 	
-	nfoutcolGtrees = "%s/%s-Gtrees.nwk"%(dirout, outbn)
-	if ((os.path.exists(nfoutcolGtrees)) and (reuseOutput==2)):
+	nfoutcolGtree = "%s/%s-Gtree.nwk"%(dirout, outbn)
+	if ((os.path.exists(nfoutcolGtree)) and (reuseOutput==2)):
 		# assume work was done before, skip
-		print "# (reused all) %s"%nfoutcolGtrees
+		print "# (reused all) %s"%nfoutcolGtree
 		return None
 		
 	if dontReplace:
@@ -603,17 +603,8 @@ def mapPop2GeneTree(nfingtchain1, dircons, dirout, method, spetree, poptree, dsp
 		nfccmaxlen = "%s/%s/%s.%s"%(dircons, ccmaxlentag, fam, ccmaxlentag)
 		
 		## define mapping from the leaf set
-		# try and find the consensus gene tree
-		nfcongt = '.'.join([os.path.join(dirgt, bngt), extgt.replace(chain1ext, contreext)])
-		nfali = '.'.join([os.path.join(dircons, collapsalntag, bngt), extgt.replace(chain1ext, aliext)])
-		if os.path.exists(nfcongt):
-			congt = tree2.read_nexus(nfcongt, returnDict=False, allLower=False)[0]
-			gtleaflabels = congt.get_leaf_labels()
-		elif os.path.exists(nfali):
-			ali = AlignIO.read(nfali, 'nexus')
-			gtleaflabels = [aliseq.id for aliseq in ali]
-		else:
-			raise IOError, "could not access either of consensus tree '%s' or alignment '%s' files"%(nfcongt, nfali)
+		ingt = tree2.read_newick(nfingt)
+		gtleaflabels = ingt.get_leaf_labels()
 		sspeG = set(getSpeFromGenes(gtleaflabels, species_sep=species_sep))
 		genetreepopset = set([])
 		for spe in sspeG:
@@ -777,21 +768,17 @@ def mapPop2GeneTree(nfingtchain1, dircons, dirout, method, spetree, poptree, dsp
 					foutlabpoplab.write('\t'.join([pop]+[str(dpoptyperepcount[pop][reptype]) for reptype in reptypes])+'\n')
 			
 	## apply to gene tree sample
-	# load gene tree sample from Newick concatenate tree file
-	if ((not os.path.exists(nfoutcolGtrees)) or (not reuseOutput)):
-		nfingtchains = [nfingtchain1.replace(chain1ext, chain1ext.replace('1', str(k))) for k in range(1, nbchains+1)]
-		parseChain(nfingtchains, dold2newname, nfchainout=nfoutcolGtrees, verbose=verbose, maskchars=charfilter)
-	else:
-		print "# (reused) %s"%nfoutcolGtrees
+	# load gene tree sample from Newick tree file, replace labels/clades in it, and write it out
+	replaceInSingleTree(nfingt, dold2newname, nfgtout=nfoutcolGtree, verbose=verbose, maskchars=charfilter)
 		
 def usage():
 	s =  'For population assignation:\n'
 	s += ' python2.7 replace_species_by_pop_in_gene_trees.py -S /path/to/species_tree\n'
 	s += 'For replacement of species labels with population labels in gene tree samples:\n'
-	s += ' python2.7 replace_species_by_pop_in_gene_trees.py -S /path/to/[TIMED.]species.tree -G /path/to/list.of.gene.tree.sample.chain1.files -c /path/to/folder.of.collapsed.clade.info.files -o /path/to/output.folder \\\n'
+	s += ' python2.7 replace_species_by_pop_in_gene_trees.py -S /path/to/[TIMED.]species.tree -G /path/to/list.of.gene.tree.files -c /path/to/folder.of.collapsed.clade.info.files -o /path/to/output.folder \\\n'
 	s += ' [--populations=/path/to/species2population_map --population_tree=/path/to/population_annotated_species_tree] [OTHER OPTIONS]\n'
 	s += 'For NO replacement of species labels in gene tree samples (simply reformating):\n'
-	s += ' python replace_species_by_pop_in_gene_trees.py -G /path/to/list.of.gene.tree.sample.chain1.files --no_replace -o /path/to/output.folder\n'
+	s += ' python replace_species_by_pop_in_gene_trees.py -G /path/to/list.of.gene.tree.files --no_replace -o /path/to/output.folder\n'
 	s += ''
 	s += ' Options:\n'
 	s += '  Input file options:\n'
@@ -829,7 +816,7 @@ if __name__=='__main__':
 		sys.exit(0)
 	
 	nfspetree = dopt.get('-S')
-	nflnfingtchain = dopt.get('-G')
+	nflnfingt = dopt.get('-G')
 	dircons = dopt.get('-c')
 	dirout = dopt.get('-o')
 	dontReplace = ('--no_replace' in dopt)
@@ -870,7 +857,7 @@ if __name__=='__main__':
 	else:
 		spetree = poptree = dspe2pop = lnamepops = dpopnd = None
 	
-	if nflnfingtchain:
+	if nflnfingt:
 		ldircreate = []
 		if not dirout: raise ValueError, "must provide value for options -o when passing gene tree samples to -G"
 		ldircreate += [os.path.join(dirout, meth) for meth in methods]
@@ -884,31 +871,31 @@ if __name__=='__main__':
 				os.mkdir(d)
 		
 		### map populations on gene trees	
-		with open(nflnfingtchain, 'r') as flnfingtchain:
-			lnfingtchain = [line.strip('\n') for line in flnfingtchain]
+		with open(nflnfingt, 'r') as flnfingt:
+			lnfingt = [line.strip('\n') for line in flnfingt]
 		
 		# wrapper function for a single-family run
-		def mapPop2GeneTreeSetArgs(nfingtchain):
+		def mapPop2GeneTreeSetArgs(nfingt):
 			if nflog and nbthreads>1:
 				pflog = open(nflog+".%d"%(os.getpid()), 'a')
 				sys.stdout = sys.stderr = pflog
 				
-			print '#', nfingtchain
+			print '#', nfingt
 			for method in methods:
 				print 'method:', method
 				try:
-					mapPop2GeneTree(nfingtchain, dircons, os.path.join(dirout, method), method, spetree, poptree, dspe2pop, lnamepops, dpopnd, \
+					mapPop2GeneTree(nfingt, dircons, os.path.join(dirout, method), method, spetree, poptree, dspe2pop, lnamepops, dpopnd, \
 									dontReplace=dontReplace, reuseOutput=reuseOutput, phyloproftag=phyloproftag, dirfullgt=dirfullgt, charfilter=charfilter, verbose=verbose)
 				except Exception, e:
 					if (type(e) is RuntimeError) and str(e).startswith('maximum recursion depth exceeded'):
-						print "met RuntimeError on file '%s':"%nfingtchain, e
+						print "met RuntimeError on file '%s':"%nfingt, e
 						if sys.getrecursionlimit() < maxreclim*maxreclimupfactor:
 							# allow for increase of recursion limit
 							sys.setrecursionlimit(sys.getrecursionlimit()+2000)
 							print "re-run with increased recursion depth +2000"
-							mapPop2GeneTreeSetArgs(nfingtchain)
+							mapPop2GeneTreeSetArgs(nfingt)
 						else:
-							print "Error: failed to run on file '%s':"%nfingtchain
+							print "Error: failed to run on file '%s':"%nfingt
 							return 1
 					else:	
 						print 'Caught exception:'
@@ -924,14 +911,14 @@ if __name__=='__main__':
 		
 		# run in sequential
 		if nbthreads==1:
-			for nfingtchain in lnfingtchain:
-				if verbose: print nfingtchain
-				mapPop2GeneTreeSetArgs(nfingtchain)
+			for nfingt in lnfingt:
+				if verbose: print nfingt
+				mapPop2GeneTreeSetArgs(nfingt)
 		# or run in parallel
 		else:
 			pool = mp.Pool(processes=nbthreads)
-			res = pool.map(mapPop2GeneTreeSetArgs, lnfingtchain)
-			#~ res = [pool.apply_async(mapPop2GeneTreeSetArgs, nfingtchain) for nfingtchain in lnfingtchain] #, chunksize=5
+			res = pool.map(mapPop2GeneTreeSetArgs, lnfingt)
+			#~ res = [pool.apply_async(mapPop2GeneTreeSetArgs, nfingt) for nfingt in lnfingt] #, chunksize=5
 
 	if nflog:
 		flog.close()

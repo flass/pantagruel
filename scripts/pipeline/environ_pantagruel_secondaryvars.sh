@@ -35,7 +35,6 @@ export coretree=${coregenome}/raxml_tree
 export mlgenetrees=${genetrees}/raxml_trees
 # sub folders that depend on the gene tree clade collapsing option
 export colalinexuscodedir=${genetrees}/${chaintype}_cdsfam_alignments_species_code
-export bayesgenetrees=${genetrees}/${chaintype}_mrbayes_trees
 export coltreechains=${genetrees}/${chaintype}_tree_chains
 export recs=${alerec}/${chaintype}_${recmethod}_recs
 export goterms=${funcannot}/GeneOntology
@@ -75,9 +74,12 @@ export pseudocorealn=${coregenome}/${treename}.aln
 if [[ "${chaintype}" == 'fullgenetree' ]] ; then
   export collapsecond='nocollapse'
   export replmethod='noreplace'
+#  export colmlgenetrees=${mlgenetrees}/rootedTree
+  export colmlgenetrees=${mlgenetrees}/bipartitions 
 else
   export collapsecond=${criterion}_stem${cladesupp}_within${withinfun}${subcladesupp}
   export replmethod='replaceCCinGasinS-collapsePOPinSnotinG'
+  export colmlgenetrees=${colalinexuscodedir}/collapsed_ML_genetrees
 fi
 export mboutputdir=${bayesgenetrees}/${collapsecond}
 export IPversion=$(interproscan --version 2> /dev/null | head -n 1 | sed -e 's/InterProScan version //')

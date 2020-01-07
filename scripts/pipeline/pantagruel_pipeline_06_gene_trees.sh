@@ -234,143 +234,63 @@ else
 fi
 #### end OPTION B1
 
-############################
-## 06.3 Bayesian gene trees
-############################
-
-## run mrbayes on collapsed alignments
-#~ export bayesgenetrees=${genetrees}/${chaintype}_mrbayes_trees
-mkdir -p ${mboutputdir}/
-nchains=4
-nruns=2
-ngen=2000000
-samplef=500
-#ncpus=$(( ${nchains} * ${nruns} )) # will actually run run as many gene trees concurrently as possible, one per cpu, each run sequentially
-ntreeperchain=$(( ${ngen} / ${samplef} ))
-mbtasklist=${nexusaln4chains}_ali_list
-${ptgscripts}/lsfullpath.py "${nexusaln4chains}/*.nex" > ${mbtasklist}
-
-# determine the set of numbered gene family prefixes to make separate folders
-# and breakdown the load of files per folder
-awk -F'/' '{print $NF}' ${mbtasklist} | grep -o "${famprefix}C[0-9]\{${ndiggrpfam}\}" | sort -u > ${nexusaln4chains}_ali_numprefixes
-echo "create folders for MrBayes ouput, broken down by gene family prefixes, in '${mboutputdir}/'"
-for pref in  `cat ${nexusaln4chains}_ali_numprefixes` ; do
-  mkdir -p ${mboutputdir}/${pref}/
-done
-
-if [[ "${resumetask}" == "true" ]] ; then
-  rm -f ${mbtasklist}_alreadydone
-  rm -f ${mbtasklist}_resume
-  for nfaln in $(cat ${mbtasklist}) ; do
-    chaindone=''
-    chainstarted=''
-    nfrad1=$(basename ${nfaln})
-    nfrad2=${nfrad1%.*}
-    pref=$(echo ${nfrad2} | grep -o "${famprefix}C[0-9]\{${ndiggrpfam}\}")
-    gtchain1=${mboutputdir}/${pref}/${nfrad2}.mb.run1.t
-    if [[ -s ${gtchain1} ]] ; then
-      if [[ $(grep -F -c "tree gen" ${gtchain1} | cut -d' ' -f1) -ge ${ntreeperchain} && ! -z "$(tail -n 1 ${gtchain1} | grep 'end')" ]] ; then
-        chaindone='yes'
-      else
-        chainstarted='yes'
-      fi
-    fi
-    if [ -z "${chaindone}" ] ; then
-      echo ${nfaln} >> ${mbtasklist}_resume
-    else
-      echo ${nfaln} >> ${mbtasklist}_alreadydone
-    fi
-  done
-fi
-if [ -s ${mbtasklist}_alreadydone ] ; then
-  echo "Resume task 6, step 3: $(wc -l ${mbtasklist}_alreadydone | cut -d' ' -f1) bayesian tree chains already complete"
-fi
-
-if [[ "${resumetask}" == "true" ]] ; then
-  if [ -s ${mbtasklist}_resume ] ; then
-    echo "Resume task 6, step 3: $(wc -l ${mbtasklist}_resume | cut -d' ' -f1) bayesian tree chains remain to compute"
-  else
-    echo "Resume task 6, step 3: all bayesian tree chains sampled; skip Bayesian sampling"
-  fi
-  mbtasklist=${mbtasklist}_resume
-#  apyes='append=yes'
-  export mbresume='yes'
-fi
-
-if [ -s ${mbtasklist} ] ; then
-  mbopts="Nruns=${nruns} Ngen=${ngen} Nchains=${nchains} Samplefreq=${samplef} ${apyes}"
-  echo "step 3: Will now run MrBayes in parallel (i.e. sequentially for each gene alignment, with several alignments processed in parallel"
-  echo "with options: ${mbopts}"
-  echo ""
-  ${ptgscripts}/mrbayes_sequential.sh "${mbtasklist}" "${mboutputdir}" "${mbopts}"
-  checkexec "step 3: MrBayes tree estimation was interupted ; exit now" "step 3: MrBayes tree estimation complete"
-fi
-
 ################################################################################
-## 06.4 Convert format of Bayesian gene trees and replace species by populations
+## 06.4 Replace species by populations
 ################################################################################
 
 mkdir -p ${ptgdb}/logs/replspebypop
 repltasklist=${coltreechains}_${collapsecond}_nexus_list
-${ptgscripts}/lsfullpath.py "${bayesgenetrees}/${collapsecond}/${famprefix}*/*.mb.run1.t" > ${repltasklist}
+${ptgscripts}/lsfullpath.py ${colmlgenetrees}/ > ${repltasklist}
 repllogd=${ptgdb}/logs/replspebypop
 repllogs=$repllogd/replace_species_by_pop_in_gene_trees
 replrun=$(date +'%d%m%Y')  
-
-export dtag="$(date +'%Y%m%d-%H%M%S')"
-if [ "${resumetask}" == 'true' ] ; then
-  rm -f ${repltasklist}_resume
-  # following lines are for resuming after a stop in batch computing, or to collect those jobs that crashed (and may need to be re-ran with more mem/time allowance)
-  for nfrun1t in $(cat ${repltasklist}) ; do
-    bnrun1t=$(basename ${nfrun1t})
-    bnGtre=${bnrun1t/.mb.run1.t/-Gtrees.nwk}
-    if [[ "${chaintype}" == 'fullgenetree' ]] ; then
-      if [ ! -e ${coltreechains}/${collapsecond}/${replmethod}/${bnGtre} ] ; then
-        echo ${nfrun1t}
-      fi
-    else
-      bnStre=${bnrun1t/.mb.run1.t/-Stree.nwk}
-      if [[ ! -e ${coltreechains}/${collapsecond}/${replmethod}/${bnGtre} || ! -e ${coltreechains}/${collapsecond}/${replmethod}/${bnStre} ]] ; then
-        echo ${nfrun1t}
-      fi
-    fi
-  done > ${repltasklist}_resume
-  if [ -s ${mbtasklist}_resume ] ; then
-    echo "Resume task 6, step 4: $(wc -l ${mbtasklist}_resume | cut -d' ' -f1) bayesian tree chains remain to be processed for format conversion and replacement of collapsed clades"
-  else
-    echo "Resume task 6, step 4: all bayesian tree chains processed; skip format conversion and replacement of collapsed clades"
-  fi
-  repltasklist=${repltasklist}_resume
-fi
-  
-if [ -s ${repltasklist} ] ; then
- if [[ "${chaintype}" == 'fullgenetree' ]] ; then
+if [[ "${chaintype}" == 'fullgenetree' ]] ; then
   #### OPTION A2: 
-  ## no need to replace anything in the tree, just convert format from Nexus to Newick treee chains
-  python2.7 ${ptgscripts}/replace_species_by_pop_in_gene_trees.py -G ${repltasklist} --no_replace -o ${coltreechains}/${collapsecond} --threads=${ptgthreads} --reuse=0 --verbose=0 --logfile=${repllogs}_${replrun}.log &
-  checkexec "step 4: conversion of gene tree chains was interupted ; exit now" "step 4: conversion of gene tree chains complete"
- 
+  ## no need to replace anything in the tree; just link the original ML gene trees to the folder of replaced gene tree chains
+  echo "will directly use ML trees from RAxML; link files from '${colmlgenetrees}/' into '${coltreechains}/${collapsecond}/${replmethod}/'"
+  rm -rf ${coltreechains}/${collapsecond}/${replmethod}/
+  mkdir ${coltreechains}/${collapsecond}/${replmethod}/
+  for nfgt in $(cat ${repltasklist}) ; do
+    bnfgt=$(basename ${nfgt})
+    radnfgt=${bnfgt#*.}  # trim RAxML_tag. prefix
+    ln -s ${nfgt} ${coltreechains}/${collapsecond}/${replmethod}/${radnfgt}-Gtree.nwk
+  done
   #### end OPTION A2
- else
+else
   #### OPTION B2: collapsed rake clades in gene trees need to be replaced by mock population leaves
-  #### will edit collapsed gene trees to attribute an (ancestral) species identity to the leafs representing collapsed clades = pre-reconciliation of recent gene history
-  if [ -z ${replacecolid} ] ; then
-   replacecolid=1
+  if [ "${resumetask}" == 'true' ] ; then
+    # resume mode (useful fter a stop in batch computing, or to collect those jobs that crashed and may need to be re-ran with more mem/time allowance)
+	# evaluate what gene tree parsing/replacement jobs remain to be done
+    rm -f ${repltasklist}_resume
+    for nfcolgt in $(cat ${repltasklist}) ; do
+      bncolgt=$(basename ${nfcolgt})
+      bnGtre=${bncolgt/.nwk/-Gtree.nwk}
+      bnStre=${bncolgt/.nwk/-Stree.nwk}
+      if [[ ! -e ${coltreechains}/${collapsecond}/${replmethod}/${bnGtre} || ! -e ${coltreechains}/${collapsecond}/${replmethod}/${bnStre} ]] ; then
+        echo ${nfcolgt}
+      fi
+    done > ${repltasklist}_resume
+    if [ -s ${mbtasklist}_resume ] ; then
+      echo "Resume task 6, step 4: $(wc -l ${mbtasklist}_resume | cut -d' ' -f1) bayesian tree chains remain to be processed for format conversion and replacement of collapsed clades"
+    else
+      echo "Resume task 6, step 4: all bayesian tree chains processed; skip format conversion and replacement of collapsed clades"
+    fi
+    repltasklist=${repltasklist}_resume
   fi
-  mkdir -p ${coltreechains}/${collapsecond}
+  #### will edit collapsed gene trees to attribute an (ancestral) species identity to the leafs representing collapsed clades = pre-reconciliation of recent gene history  
+  if [ -s ${repltasklist} ] ; then
+    if [ -z ${replacecolid} ] ; then
+     replacecolid=1
+    fi
+    mkdir -p ${coltreechains}/${collapsecond}
 
-  ## edit the gene trees, producing the corresponding (potentially collapsed) species tree based on the 'time'-tree backbone
-
-  # local parallel run
-  python2.7 ${ptgscripts}/replace_species_by_pop_in_gene_trees.py -G ${repltasklist} -c ${colalinexuscodedir}/${collapsecond} -S ${speciestree}.lsd.nwk -o ${coltreechains}/${collapsecond} \
-   --populations=${speciestree%.*}_populations --population_tree=${speciestree%.*}_collapsedPopulations.nwk --population_node_distance=${speciestree%.*}_interNodeDistPopulations \
-   --dir_full_gene_trees=${mlgenetrees}/rootedTree --method=${replmethod} --threads=${ptgthreads} --reuse=0 --verbose=0 --max.recursion.limit=12000 --logfile=${repllogs}_${replrun}.log
-  checkexec "step 4: format conversion and replacement of collapsed clades was interupted ; exit now" "step 4: format conversion and replacement of collapsed clades complete"
- fi
-fi
-
-if [[ "${chaintype}" != 'fullgenetree' ]] ; then
- 
+    ## edit the gene trees, producing the corresponding (potentially collapsed) species tree based on the 'time'-tree backbone
+    # local parallel run
+    python2.7 ${ptgscripts}/replace_species_by_pop_in_gene_trees.py -G ${repltasklist} -c ${colalinexuscodedir}/${collapsecond} -S ${speciestree}.lsd.nwk -o ${coltreechains}/${collapsecond} \
+     --populations=${speciestree%.*}_populations --population_tree=${speciestree%.*}_collapsedPopulations.nwk --population_node_distance=${speciestree%.*}_interNodeDistPopulations \
+     --dir_full_gene_trees=${mlgenetrees}/rootedTree --method=${replmethod} --threads=${ptgthreads} --reuse=0 --verbose=0 --max.recursion.limit=12000 --logfile=${repllogs}_${replrun}.log
+    checkexec "step 4: format conversion and replacement of collapsed clades was interupted ; exit now" "step 4: format conversion and replacement of collapsed clades complete"
+  fi 
   ## make a summary matrix of collapsed clade (CC) occurence in genome populations
   ## this really reflects the output of step 2, but relies on files made during step 4
   matCC=${coltreechains}/${collapsecond}/${replmethod}_PopFreqsCC.mat
