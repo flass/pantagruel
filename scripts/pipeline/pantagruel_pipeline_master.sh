@@ -610,7 +610,7 @@ do
 	  
 	-q|--max_event_age)
       testmandatoryarg "${1}" "${2}"
-      export maxreftreeheight=$(readlink -f ${2})
+      export maxreftreeheight=${2}
       echo "will restict events younger than age ${maxreftreeheight} on the species tree for gene co-evolution scoring"
       shift 2;;
 	  
