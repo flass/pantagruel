@@ -480,7 +480,7 @@ def main(nfgenetree, diraln, dirout, outtag, mkdircons=True, **kw):
 			# write out MrBayes clade constraint for the sub-alignment, in order to compute subalignment samples and/or ancestral sequence
 			write_out_MrBayes_clade_constraints([constraint], loutgroups[i], os.path.join(dirout, mbcoutd, bnfaln+'-'+cladename+'.'+mbcext), ilist=[i], verbose=verbose)
 	if not 'nwk' in supressout:
-		colgenetree = collapse_tree_from_constraint_list(genetree, constraints)
+		colgenetree = collapse_tree_from_constraint_list(genetree, constraints, representativeseqids)
 		nwkoutd, nwkext = doutdext['nwk']
 		colgenetree.write_newick(os.path.join(dirout, nwkoutd, bnfaln+'-%s.nwk'%nwkext), ignoreBS=True)
 	if not 'cgt' in supressout:	
