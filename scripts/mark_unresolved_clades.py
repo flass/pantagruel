@@ -350,8 +350,9 @@ def restrict_alignment_representative_leaves(constraints, tree, nffullali, dirou
 			sys.stderr.write( "Warning: collapsed alignment %s has too few remaining sequences (%d out of %d) for subsequent tree building, will not write it\n"%(os.path.basename(nffullali), len(aliremainingseqs), len(aln)) )
 	return (loutgroups, representativeseqids)
 
-def collapse_tree_from_constraint_list(tree, constraints, representativeseqids):
+def collapse_tree_from_constraint_list(tree, constraints, representativeseqids, verbose=False):
 	# first copy the tree to collapse so to leave untouched the input tree object
+	if verbose: print "generate collapse tree from constraint list"
 	coltree = copy.deepcopy(tree)
 	assert len(constraints) == len(representativeseqids)
 	i = -1
@@ -362,11 +363,17 @@ def collapse_tree_from_constraint_list(tree, constraints, representativeseqids):
 			node = coltree.labelgetnode(seqid)
 			if not node:
 				# one of the identical sequences not present in the input tree
+				if verbose: print "%s not present in gene tree"%seqid
 				continue # the for seqid loop
 			if seqid == reprseqid:
 				# make this leaf the representative of the clade
+				if verbose:
+					print "%s representative sequence; change label:"%seqid
+					print node, '->', 
 				node.edit_label(cladename)
+				if verbose: print node
 			else:
+				if verbose: print "pop leaf %s"%seqid
 				coltree.pop(node)
 	return coltree
 
@@ -480,7 +487,7 @@ def main(nfgenetree, diraln, dirout, outtag, mkdircons=True, **kw):
 			# write out MrBayes clade constraint for the sub-alignment, in order to compute subalignment samples and/or ancestral sequence
 			write_out_MrBayes_clade_constraints([constraint], loutgroups[i], os.path.join(dirout, mbcoutd, bnfaln+'-'+cladename+'.'+mbcext), ilist=[i], verbose=verbose)
 	if not 'nwk' in supressout:
-		colgenetree = collapse_tree_from_constraint_list(genetree, constraints, representativeseqids)
+		colgenetree = collapse_tree_from_constraint_list(genetree, constraints, representativeseqids, verbose=verbose)
 		nwkoutd, nwkext = doutdext['nwk']
 		colgenetree.write_newick(os.path.join(dirout, nwkoutd, bnfaln+'-%s.nwk'%nwkext), ignoreBS=True)
 	if not 'cgt' in supressout:	
