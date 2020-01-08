@@ -276,15 +276,15 @@ def restrict_alignment_representative_leaves(constraints, tree, nffullali, dirou
 	verbose = kw.get('verbose')
 	supressout = kw.get('supressout', {})
 	aln = AlignIO.read(nffullali, format=aliformatin, alphabet=Alphabet.generic_dna)
-	lcollapsedseqids = []
+	lcollapsedseqalnrowids = []
 	loutgroups = []
-	representativeseqids = []
+	representativeseqalnrowids = []
 	for i, constraint in enumerate(constraints):
 		cladename = "clade%d"%i
 		# collect clade sequences
-		collapsedseqids = findSeqRecordIndexesFromSeqNames(aln, constraint)
-		lcollapsedseqids.append(collapsedseqids)
-		alicollapsedseqs = Align.MultipleSeqAlignment([seq for k,seq in enumerate(aln) if k in collapsedseqids])
+		collapsedseqalnrowids = findSeqRecordIndexesFromSeqNames(aln, constraint)
+		lcollapsedseqalnrowids.append(collapsedseqalnrowids)
+		alicollapsedseqs = Align.MultipleSeqAlignment([seq for k,seq in enumerate(aln) if k in collapsedseqalnrowids])
 		# select outgroup sequence: first leaf of sister clade
 		#~ try:
 			#~ anccons = tree.mrca(constraint)
@@ -317,31 +317,32 @@ def restrict_alignment_representative_leaves(constraints, tree, nffullali, dirou
 				raise ValueError, e
 		loutgroups.append(outgroupleaf)
 		if not 'ccs' in supressout:
-			outgroupseqid = findSeqRecordIndexesFromSeqNames(aln, outgroupleaf)
-			alicollapsedseqs.append(aln[outgroupseqid])
+			outgroupseqalnrowid = findSeqRecordIndexesFromSeqNames(aln, outgroupleaf)
+			alicollapsedseqs.append(aln[outgroupseqalnrowid])
 			ccsoutd, ccsext = doutdext['ccs']
 			AlignIO.write(alicollapsedseqs, os.path.join(dirout, ccsoutd, radout+"-%s-%s-%s.%s"%(cladename, ccsext, outgroupleaf, dalnext[aliformatout])), aliformatout)
 		# select representative sequence out of the clade
 		if callable(selectRepr): reprseq = selectRepr(alicollapsedseqs) # function returning a seq
 		else: reprseq = alicollapsedseqs[selectRepr]
-		reprseqid = findSeqRecordIndexesFromSeqNames(aln, reprseq.id)
-		representativeseqids.append(reprseqid)
+		reprseqalnrowid = findSeqRecordIndexesFromSeqNames(aln, reprseq.id)
+		representativeseqalnrowids.append(reprseqalnrowid)
 		if verbose: 
-			for thing in ['i', 'cladename', 'leaves', 'reprseq.id', 'reprseqid']: #, 'outgroupleaf', 'outgroupseqid'
+			for thing in ['i', 'cladename', 'leaves', 'reprseq.id', 'reprseqalnrowid']: #, 'outgroupleaf', 'outgroupseqalnrowid'
 				print thing+':', eval(thing),
 				print ''
-	allcollapsedbutreprseqids = reduce(lambda i,j: set(i) | set(j), lcollapsedseqids, set([])) - set(representativeseqids)
+	allcollapsedbutreprseqalnrowids = reduce(lambda i,j: set(i) | set(j), lcollapsedseqalnrowids, set([])) - set(representativeseqalnrowids)
+	representativeseqids = [aln[reprseqalnrowid].id for reprseqalnrowid in representativeseqalnrowids]
 	if not 'rle' in supressout:
 		rleoutd, rleext = doutdext['rle']
 		with open(os.path.join(dirout, rleoutd, radout+'-'+rleext), 'w') as foutrepr:
-			for i, reprseqid in enumerate(representativeseqids):
+			for i, reprseqalnrowid in enumerate(representativeseqalnrowids):
 				cladename = "clade%d"%i
-				if verbose: print cladename, reprseqid, aln[reprseqid].id
-				foutrepr.write('\t'.join([cladename, aln[reprseqid].id])+'\n')
-				aln[reprseqid].id = cladename	# rename the sequence in the main alignment
+				if verbose: print cladename, reprseqalnrowid, representativeseqids[i]
+				foutrepr.write('\t'.join([cladename, representativeseqids[i]])+'\n')
+				aln[reprseqalnrowid].id = cladename	# rename the sequence in the main alignment
 	if not 'col' in supressout:
 		coloutd, colext = doutdext['col']
-		aliremainingseqs = Align.MultipleSeqAlignment([seq for k,seq in enumerate(aln) if k not in allcollapsedbutreprseqids])
+		aliremainingseqs = Align.MultipleSeqAlignment([seq for k,seq in enumerate(aln) if k not in allcollapsedbutreprseqalnrowids])
 		if len(aliremainingseqs) >= 4:
 			AlignIO.write(aliremainingseqs, os.path.join(dirout, coloutd, radout+"-%s.%s"%(colext, dalnext[aliformatout])), aliformatout)
 		else:
