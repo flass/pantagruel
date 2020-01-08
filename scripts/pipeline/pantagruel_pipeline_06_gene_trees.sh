@@ -307,7 +307,7 @@ else
   ##############################################################
   if [ "${resumetask}" == 'true' ] ; then
     # first clean the database
-    ${ptgscripts}/pantagruel_sqlitedb_phylogeny_clean_collapsed_clades.sh "${database}" "${sqldb}" "${collapsecolid}" "${replacecolid}"
+    ${ptgscripts}/pantagruel_sqlitedb_phylogeny_clean_collapsed_clades.sh "${sqldb}" "${collapsecolid}" "${replacecolid}"
   fi
   ## load these information into the database
   ${ptgscripts}/pantagruel_sqlitedb_phylogeny_populate_collapsed_clades.sh "${database}" "${sqldb}" "${colalinexuscodedir}" "${coltreechains}" "${collapsecond}" "${replmethod}" "${collapsecriteriondef}" "${collapsecolid}" "${replacecolid}" "${collapsecoldate}" "${replacecoldate}"
