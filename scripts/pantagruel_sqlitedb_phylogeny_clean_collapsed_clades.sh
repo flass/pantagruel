@@ -24,3 +24,18 @@ DELETE FROM collapsed_gene_tree_clades WHERE collapse_criterion_id=${collapsecol
 DELETE FROM replaced_gene_tree_clades WHERE replace_criterion_id=${replacecolid};
 """
 checkexec "failed to ${echostep3}" "succeeded to ${echostep3}"
+
+echostep4='delete indexes of collapsed/replaced gene tree collection tables'
+sqlite3 ${sqldb} """
+DROP INDEX IF EXISTS collapsed_gene_tree_clades_colcritid;
+DROP INDEX IF EXISTS collapsed_gene_tree_clades_genefamid;
+DROP INDEX IF EXISTS collapsed_gene_tree_clades_cc;
+DROP INDEX IF EXISTS collapsed_gene_tree_clades_cdscode ;
+DROP INDEX IF EXISTS collapsed_gene_tree_clades_cdscode_colcritid;
+
+DROP INDEX IF EXISTS replaced_gene_tree_clades_replcritid;
+DROP INDEX IF EXISTS replaced_gene_tree_clades_genefamid_ccocds;
+DROP INDEX IF EXISTS replaced_gene_tree_clades_replab;
+DROP INDEX IF EXISTS replaced_gene_tree_clades_replab_replcritid;
+"""
+checkexec "failed to ${echostep4}" "succeeded to ${echostep4}"
