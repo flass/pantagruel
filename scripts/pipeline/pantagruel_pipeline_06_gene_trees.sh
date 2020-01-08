@@ -187,10 +187,10 @@ else
   ## 06.2 Gene tree collapsing
   ############################
   if [ -z ${collapsecolid} ] ; then
-    if [ -e ${genetrees}/replacecol ] ; then
-      collapsecolid=$(cut -f1 ${genetrees}/replacecol)
+    if [ -e ${genetrees}/collapsecol ] ; then
+      collapsecolid=$(cut -f1 ${genetrees}/collapsecol)
       if [[ "${resumetask}" != "true" ]] ; then
-        collapsecolid=$(( $collapsecolid + 1 ))
+        collapsecolid=$(( ${collapsecolid} + 1 ))
       fi
     else
       collapsecolid=1
@@ -278,12 +278,18 @@ else
     repltasklist=${repltasklist}_resume
   fi
   #### will edit collapsed gene trees to attribute an (ancestral) species identity to the leafs representing collapsed clades = pre-reconciliation of recent gene history  
-  if [ -s ${repltasklist} ] ; then
-    if [ -z ${replacecolid} ] ; then
-     replacecolid=1
+  if [ -z ${replacecolid} ] ; then
+    if [ -e ${genetrees}/replacecol ] ; then
+      replacecolid=$(cut -f1 ${genetrees}/replacecol)
+      if [[ "${resumetask}" != "true" ]] ; then
+        replacecolid=$(( ${replacecolid} + 1 ))
+      fi
+    else
+      replacecolid=1
     fi
+  fi
+  if [ -s ${repltasklist} ] ; then
     mkdir -p ${coltreechains}/${collapsecond}
-
     ## edit the gene trees, producing the corresponding (potentially collapsed) species tree based on the 'time'-tree backbone
     # local parallel run
     python2.7 ${ptgscripts}/replace_species_by_pop_in_gene_trees.py -G ${repltasklist} -c ${colalinexuscodedir}/${collapsecond} -S ${speciestree}.lsd.nwk -o ${coltreechains}/${collapsecond} \
