@@ -45,16 +45,17 @@ python2.7 ${ptgscripts}/generate_collapsed_replaced_clades_tables.py \
 checkexec "failed to ${echostep2}" "succeeded to ${echostep2}"
 
 echostep3='load big table files of collapsed/replacement clade data into the sqlite db'
-sqlite3 ${sqldb} """ 
+sqlite3 ${sqldb} << EOF
 .mode tabs
 .import '${database}/phylogeny_collapsed_gene_tree_clades.tab' collapsed_gene_tree_clades
 .import '${database}/phylogeny_replaced_gene_tree_clades.tab' replaced_gene_tree_clades
-"""
+EOF
 checkexec "failed to ${echostep3}" "succeeded to ${echostep3}"
 
 
 echostep4='index tables of collapsed/replacement clade data into the sqlite db'
 sqlite3 ${sqldb} """
+BEGIN;
 CREATE INDEX collapsed_gene_tree_clades_colcritid ON collapsed_gene_tree_clades (collapse_criterion_id);
 CREATE INDEX collapsed_gene_tree_clades_genefamid ON collapsed_gene_tree_clades (gene_family_id);
 CREATE INDEX collapsed_gene_tree_clades_cc ON collapsed_gene_tree_clades (gene_family_id, col_clade);
@@ -65,5 +66,7 @@ CREATE INDEX replaced_gene_tree_clades_replcritid ON replaced_gene_tree_clades (
 CREATE INDEX replaced_gene_tree_clades_genefamid_ccocds ON replaced_gene_tree_clades (gene_family_id, col_clade_or_cds_code);
 CREATE INDEX replaced_gene_tree_clades_replab ON replaced_gene_tree_clades (replacement_label);
 CREATE UNIQUE INDEX replaced_gene_tree_clades_replab_replcritid ON replaced_gene_tree_clades (replacement_label, replace_criterion_id);
+COMMIT;
+ANALYZE;
 """
 checkexec "failed to ${echostep4}" "succeeded to ${echostep4}"
