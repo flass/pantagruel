@@ -14,6 +14,7 @@ fi
 
 echostep1="delete metadata from (collapsed) gene tree collection ${collapsecolid}"
 sqlite3 ${sqldb} "DELETE FROM criteria_collapse_gene_tree_clades WHERE criterion_id=${collapsecolid} ;"
+sqlite3 ${sqldb} "DELETE FROM criteria_replace_gene_tree_clades WHERE criterion_id=${replacecolid} ;"
 checkexec "failed to ${echostep1}" "succeeded to ${echostep1}"
 
 

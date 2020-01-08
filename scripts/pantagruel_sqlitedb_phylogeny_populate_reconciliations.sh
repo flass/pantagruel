@@ -66,17 +66,6 @@ CREATE INDEX gene_lineage_events_freq ON gene_lineage_events (freq);
 CREATE INDEX gene_lineage_events_rlocds_evtid ON gene_lineage_events (replacement_label_or_cds_code, event_id);
 CREATE UNIQUE INDEX gene_lineage_events_recid_rlocds_evtid ON gene_lineage_events (reconciliation_id, replacement_label_or_cds_code, event_id);
 
-CREATE UNIQUE INDEX collapsed_gene_tree_clades_colcritid ON collapsed_gene_tree_clades (collapse_criterion_id);
-CREATE INDEX collapsed_gene_tree_clades_genefamid ON collapsed_gene_tree_clades (gene_family_id);
-CREATE INDEX collapsed_gene_tree_clades_cc ON collapsed_gene_tree_clades (gene_family_id, col_clade);
-CREATE INDEX collapsed_gene_tree_clades_cdscode ON collapsed_gene_tree_clades (cds_code);
-CREATE UNIQUE INDEX collapsed_gene_tree_clades_cdscode_colcritid ON collapsed_gene_tree_clades (cds_code, collapse_criterion_id);
-
-CREATE UNIQUE INDEX replaced_gene_tree_clades_replcritid ON replaced_gene_tree_clades (replace_criterion_id);
-CREATE INDEX replaced_gene_tree_clades_genefamid_ccocds ON replaced_gene_tree_clades (gene_family_id, col_clade_or_cds_code);
-CREATE INDEX replaced_gene_tree_clades_replab ON replaced_gene_tree_clades (replacement_label);
-CREATE UNIQUE INDEX replaced_gene_tree_clades_replab_replcritid ON replaced_gene_tree_clades (replacement_label, replace_criterion_id);
-
 INSERT INTO replacement_label_or_cds_code2gene_families (replacement_label_or_cds_code, gene_family_id) 
 SELECT replacement_label_or_cds_code, gene_family_id FROM (
  SELECT cds_code as replacement_label_or_cds_code, gene_family_id FROM coding_sequences
