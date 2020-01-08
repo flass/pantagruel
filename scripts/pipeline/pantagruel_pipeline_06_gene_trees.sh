@@ -187,10 +187,10 @@ else
   ## 06.2 Gene tree collapsing
   ############################
   if [ -z ${collapsecolid} ] ; then
-    if [ -e ${genetrees}/replacecol ] ; then
-      collapsecolid=$(cut -f1 ${genetrees}/replacecol)
+    if [ -e ${genetrees}/collapsecol ] ; then
+      collapsecolid=$(cut -f1 ${genetrees}/collapsecol)
       if [[ "${resumetask}" != "true" ]] ; then
-        collapsecolid=$(( $collapsecolid + 1 ))
+        collapsecolid=$(( ${collapsecolid} + 1 ))
       fi
     else
       collapsecolid=1
@@ -342,7 +342,16 @@ if [ "${resumetask}" == 'true' ] ; then
   fi
   repltasklist=${repltasklist}_resume
 fi
-  
+if [ -z ${replacecolid} ] ; then
+  if [ -e ${genetrees}/replacecol ] ; then
+    replacecolid=$(cut -f1 ${genetrees}/replacecol)
+    if [[ "${resumetask}" != "true" ]] ; then
+      replacecolid=$(( ${replacecolid} + 1 ))
+    fi
+  else
+    replacecolid=1
+  fi
+fi
 if [ -s ${repltasklist} ] ; then
  if [[ "${chaintype}" == 'fullgenetree' ]] ; then
   #### OPTION A2: 
@@ -385,6 +394,10 @@ if [[ "${chaintype}" != 'fullgenetree' ]] ; then
   ##############################################################
   ## 06.5 Populate database with all collapsed gene tree results
   ##############################################################
+  if [ "${resumetask}" == 'true' ] ; then
+    # first clean the database
+    ${ptgscripts}/pantagruel_sqlitedb_phylogeny_clean_collapsed_clades.sh "${sqldb}" "${collapsecolid}" "${replacecolid}"
+  fi
   ## load these information into the database
   ${ptgscripts}/pantagruel_sqlitedb_phylogeny_populate_collapsed_clades.sh "${database}" "${sqldb}" "${colalinexuscodedir}" "${coltreechains}" "${collapsecond}" "${replmethod}" "${collapsecriteriondef}" "${collapsecolid}" "${replacecolid}" "${collapsecoldate}" "${replacecoldate}"
   checkexec "step 5: populating the SQL database with collapsed/replaced gene tree clades was interupted ; exit now" "step 5: populating the SQL database with collapsed/replaced gene tree clades complete"
