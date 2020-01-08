@@ -305,6 +305,10 @@ else
   ##############################################################
   ## 06.5 Populate database with all collapsed gene tree results
   ##############################################################
+  if [ "${resumetask}" == 'true' ] ; then
+    # first clean the database
+    ${ptgscripts}/pantagruel_sqlitedb_phylogeny_clean_collapsed_clades.sh "${database}" "${sqldb}" "${collapsecolid}" "${replacecolid}"
+  fi
   ## load these information into the database
   ${ptgscripts}/pantagruel_sqlitedb_phylogeny_populate_collapsed_clades.sh "${database}" "${sqldb}" "${colalinexuscodedir}" "${coltreechains}" "${collapsecond}" "${replmethod}" "${collapsecriteriondef}" "${collapsecolid}" "${replacecolid}" "${collapsecoldate}" "${replacecoldate}"
   checkexec "step 5: populating the SQL database with collapsed/replaced gene tree clades was interupted ; exit now" "step 5: populating the SQL database with collapsed/replaced gene tree clades complete"
