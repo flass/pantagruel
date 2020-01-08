@@ -98,4 +98,5 @@ CREATE UNIQUE INDEX gtlab2cds_cdscode ON gene_tree_label2cds_code (cds_code);
 
 COMMIT;
 VACUUM;
+ANALYZE;
 EOF
