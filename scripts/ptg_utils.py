@@ -404,7 +404,7 @@ def parseChain(lnfchains, dold2newname={}, nfchainout=None, inchainfmt='nexus', 
 	print '%s%s ...done (%d trees)'%(('\n' if verbose else ''), nfout, ntree)
 	return None
 
-def replaceInSingleTree(nfgt, dold2newname={}, nfgtout=None, ingtfmt='newick', outchainfmt='newick', maskchars=None, verbose=False, dirout='', mode='tree2.Node'):
+def replaceInSingleTree(nfgt, dold2newname={}, nfgtout=None, ingtfmt='newick', outgtfmt='newick', maskchars=None, verbose=False, dirout='', mode='tree2.Node'):
 	"""(single-tree version of parseChain) parse a (Newick-format) tree file and re-write it in a Newick format; edit the tree on the fly, substituting tip labels or grafting trees on tips"""
 	
 	### alternative codes
