@@ -614,7 +614,7 @@ def mapPop2GeneTree(nfingt, dircons, dirout, method, spetree, poptree, dspe2pop,
 	fam = bngt.rsplit('-', 1)[0]
 	reptag = '' if dontReplace else '-replaced'
 	
-	nfoutcolGtree = "%s/%s%s-Gtree.nwk"%(dirout, reptag, outbn)
+	nfoutcolGtree = "%s/%s%s-Gtree.nwk"%(dirout, outbn, reptag)
 	if ((os.path.exists(nfoutcolGtree)) and (reuseOutput==2)):
 		# assume work was done before, skip
 		print "# (reused all) %s"%nfoutcolGtree
