@@ -479,7 +479,8 @@ def mapPop2GeneTree(nfingt, dircons, dirout, method, spetree, poptree, dspe2pop,
                     dpopnd={}, reuseOutput=0, combine_monophyletic=3, \
                     chain1ext='mb.run1.t', nbchains=2, aliext='nex', contreext='mb.con.tre', \
                     constrainttag='mbconstraints', collapsalntag='collapsed_alns', \
-                    phyloproftag='phyloprofile', ccmaxlentag='max_subtree_lengths', dirfullgt=None, \
+                    phyloproftag='phyloprofile', ccmaxlentag='max_subtree_lengths', \
+					dirfullgt=None, dircolali=None, inalnext='nex', \
                     species_sep='_', charfilter=None, dontReplace=False, verbose=False, **kw):
 	"""take as main input a name of Nexus tree chain file (from which is inferred 
 	the list of all parallel chain files for the same family) and ouput a single 
@@ -607,6 +608,8 @@ def mapPop2GeneTree(nfingt, dircons, dirout, method, spetree, poptree, dspe2pop,
 		nfoutreflab = "%s/%s-leaflabels_Spe2Pop.txt"%(dirout, outbn)
 		nfoutlabpoplab = "%s/%s-replacedlabelsbyPop.txt"%(dirout, outbn)
 		nfoutfreqpopdistr = "%s/%s-PopFreqDistrib.txt"%(dirout, outbn)
+		nfcolaln = "%s/%s.%s"%(dircolali, outbn, inalnext)
+		nfoutreplaln = "%s/%s-replaced.aln"%(dirout, outbn)
 		nfccmaxlen = "%s/%s/%s.%s"%(dircons, ccmaxlentag, fam, ccmaxlentag)
 		
 		## define mapping from the leaf set
@@ -758,12 +761,7 @@ def mapPop2GeneTree(nfingt, dircons, dirout, method, spetree, poptree, dspe2pop,
 		if ((not os.path.exists(nfoutreflab)) or (not reuseOutput)):
 			with open(nfoutreflab, 'w') as foutreflab:
 				for oldlab, newlaborst in dold2newname.iteritems():
-					if isinstance(newlaborst, str):
-						newlabs = [newlaborst]
-					elif isinstance(newlaborst, tree2.Node):
-						newlabs = newlaborst.get_leaf_labels()
-					elif isinstance(newlaborst, BaseTree.TreeElement):
-						newlabs = [tip.name for tip in newlaborst.get_terminals()]
+					newlabs = labsFromReplacementLabOrSubtree(newlaborst)
 					for newlab in newlabs:
 						newlabpop, fam, ngtag = newlab.rsplit('-'+oldlab, 1)[0].rsplit('_',2)
 						dpoptyperepcount.setdefault(newlabpop, {rt:0 for rt in reptypes})[ngtag] += 1
@@ -777,6 +775,10 @@ def mapPop2GeneTree(nfingt, dircons, dirout, method, spetree, poptree, dspe2pop,
 	## apply to gene tree sample
 	# load gene tree sample from Newick tree file, replace labels/clades in it, and write it out
 	replaceInSingleTree(nfingt, dold2newname, nfgtout=nfoutcolGtree, verbose=verbose, maskchars=charfilter)
+	# generate alignment with sequence labels matching the ones in the gene tree produced above;
+	# for that, the sequece representative of the CC in the input collapsed alignment is duplicated 
+	# into identical sequences with different labels as in the replacement clade 
+	duplicateSeqsInAln(nfcolaln, dold2newname, nfoutreplaln)
 		
 def usage():
 	s =  'For population assignation:\n'
@@ -793,6 +795,7 @@ def usage():
 	s += '  --population_tree\t\t\tpath to Newick-formatted tree file of an already computed mapping of populations ancestors onto the species tree.\n'
 	s += '  --population_node_distance\t\tpath to pre-computed matrix of inter-node distances between populations in the species tree.\n'
 	s += '  --dir_full_gene_trees\t\tpath to folder of original (before clade collapsing) gene trees (can be used to scale subtree grafts)\n\t\t\t\t(overridden by the presence of a adequate file in the collapsed.clade.info.files subfolder \'max_subtree_lengths\').\n'
+	s += '  --dir_collapsed_alns\t\tpath to folder of collapsed gene alignments (will be used to generate alignments with sequences matching\n\t\t\t\tthe replacement clades, by duplicating the representative sequence so that the replacement clade will be a flat rake in resulting gene tree).\n'
 	s += '  Parameters:\n'
 	s += '  --pop_stem_conds\t\tconditions on clade stem to select populations in the species tree (see mark_unresolved_clades.py)\n'
 	s += '  --within_pop_conds\t\tconditions on clade subtree to select populations in the species tree (see mark_unresolved_clades.py)\n'
@@ -814,7 +817,8 @@ def usage():
 	
 if __name__=='__main__':	
 	opts, args = getopt.getopt(sys.argv[1:], 'G:c:S:o:T:hv', ['dir_out=', 'method=', 'no_replace', \
-															'populations=', 'population_tree=', 'population_node_distance=', 'dir_full_gene_trees=', \
+															'populations=', 'population_tree=', 'population_node_distance=', \
+															'dir_full_gene_trees=', 'dir_collapsed_alns=', \
 															'pop_stem_conds=', 'within_pop_conds=', 'pop_lab_prefix=', 'filter_dashes', \
 															'threads=', 'reuse=', 'verbose=', 'max.recursion.limit=', 'logfile=', 'help'])
 	dopt = dict(opts)
@@ -833,6 +837,7 @@ if __name__=='__main__':
 	nfpoptree = dopt.get('--population_tree')
 	nfdpopnd = dopt.get('--population_node_distance')
 	dirfullgt = dopt.get('--dir_full_gene_trees')
+	dircolali = dopt.get('--dir_collapsed_alns')
 	psc = eval(dopt.get('--pop_stem_conds', 'None'))
 	wpc = eval(dopt.get('--within_pop_conds', 'None'))
 	reuseOutput = int(dopt.get('--reuse', 0))
@@ -892,7 +897,7 @@ if __name__=='__main__':
 				print 'method:', method
 				try:
 					mapPop2GeneTree(nfingt, dircons, os.path.join(dirout, method), method, spetree, poptree, dspe2pop, lnamepops, dpopnd, \
-									dontReplace=dontReplace, reuseOutput=reuseOutput, phyloproftag=phyloproftag, dirfullgt=dirfullgt, charfilter=charfilter, verbose=verbose)
+									dontReplace=dontReplace, reuseOutput=reuseOutput, phyloproftag=phyloproftag, dirfullgt=dirfullgt, dircolali=dircolali, charfilter=charfilter, verbose=verbose)
 				except Exception, e:
 					if (type(e) is RuntimeError) and str(e).startswith('maximum recursion depth exceeded'):
 						print "met RuntimeError on file '%s':"%nfingt, e

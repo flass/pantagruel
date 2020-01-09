@@ -3,16 +3,17 @@
 
 import sys
 import tree2
-from Bio import SeqIO
+from Bio import SeqIO, AlignIO, Align, Alphabet
 from BCBio import GFF
-from Bio.Alphabet import generic_dna
 from Bio.Phylo import BaseTree, NewickIO, NexusIO, _io as PhyloIO
 from StringIO import StringIO
 from random import randint
 import gzip
 import pipes, tempfile
+import copy
 
 supported_formats = {'newick': NewickIO, 'nexus': NexusIO}
+dalnext = {'fasta':'fasta', 'nexus':'nex'}
 
 ### general purpose functions
 
@@ -248,6 +249,26 @@ def findSeqRecordIndexesFromSeqNames(aln, seqnames):
 	else:
 		for k,seq in enumerate(aln):
 			if seq.id in seqnames: return k
+
+def findCladeOutgroup(constraint, tree, didseq):
+	anccons = tree.mrca(constraint, force=True) # constraint contain labels from the identical leaf set
+	try:
+		outgroup = anccons.go_brother()
+		outgroupleaf = outgroup.get_leaf_labels()[0]
+	except ValueError, e:
+		sys.stderr.write( "Warning: in family %s, constraint %s leaf set makes a paraphyletic group.\nconstraint: %s\nanccons is root: %s\n"%(nffullali, cladename, constraint, str(anccons.is_root())) )
+		for refidseq, redidseqs in didseq.iteritems():
+			if (set(constraint) & set(redidseqs)):
+				sw = "Inclusion of identical leaf set: {%s:%s}\n to constraint results in paraphyletic group.\n"%(refidseq, repr(redidseqs))
+				sw+= "This indicate bad rooting of the gene tree, but can be ignored here.\nOutgroup for consraint %s will be set to 'None'.\n"%cladename
+				sys.stderr.write( sw )
+				outgroup = None
+				outgroupleaf = 'None'
+				break
+		else:
+			sys.stderr.write( "This indicate a definition of constraint clade that is inconsistent with the tree.\n" )
+			raise ValueError, e
+	return outgroupleaf
 
 def openwithfilterpipe(filepath, mode, maskchars=None):
 	"""opens file trough a character translating pipe.
@@ -507,6 +528,40 @@ def replaceInSingleTree(nfgt, dold2newname={}, nfgtout=None, ingtfmt='newick', o
 	elif mode=='tree2.Node':
 		return replaceInSingleTree_withtree2Node(nfgt, dold2newname, nfout, ingtfmt, outgtfmt, verbose)
 
+def labsFromReplacementLabOrSubtree(newlaborst):
+	if isinstance(newlaborst, str):
+		newlabs = [newlaborst]
+	elif isinstance(newlaborst, tree2.Node):
+		newlabs = newlaborst.get_leaf_labels()
+	elif isinstance(newlaborst, BaseTree.TreeElement):
+		newlabs = [tip.name for tip in newlaborst.get_terminals()]
+	else:
+		raise ValueError: "unsupported format for replacement label or subtree: %s"%repr(newlaborst)
+	return newlabs
+
+def duplicateSeqsInAln(nfcolaln, dold2newname, nfoutreplaln=None, inalnfmt='nexus', outalnfmt='fasta'):
+	colaln = AlignIO.read(nfcolaln, format=inalnfmt, alphabet=Alphabet.generic_dna)
+	replaln = Align.MultipleSeqAlignment([], alphabet=Alphabet.generic_dna)
+	rmseqrowid = []
+			
+	for cladename, newlaborst in dold2newname.iteritems():
+		# collect collpased clade representative sequences
+		ccreprseqalnrowid = findSeqRecordIndexesFromSeqNames(aln, cladename)
+		rmseqrowid.append(ccreprseqalnrowid)
+		ccreprseq = colaln[ccreprseqalnrowid]
+		newlabs = labsFromReplacementLabOrSubtree(newlaborst)
+		for newlab in newlabs:
+			newseq = copy.copy(ccreprseq) # shallow copy is enough as 'id' attribute is a str i.e. non referenceable object
+			newseq.id = newlab
+			replaln.append(newseq)
+	
+	for rowseqid in range(len(colaln):
+		if not rowseqid in rmseqrowid:
+			replaln.append(colaln[rowseqid])
+	
+	if nfoutreplaln: AlignIO.write(replaln, nfoutreplaln, outalnfmt)
+	return replaln
+
 def seqrecordsFromGBFF(nfgbff):
 	if nfgbff.endswith('.gz'):
 		fgbff = gzip.open(nfgbff, 'rb')
@@ -525,7 +580,7 @@ def seqrecordsFromGFFandGenomicFasta(nfgff, nffastain):
 		ffastain = gzip.open(nffastain, 'rb')
 	else:
 		ffastain = open(nffastain, 'r')
-	seqdict = SeqIO.to_dict(SeqIO.parse(ffastain, "fasta", alphabet=generic_dna))
+	seqdict = SeqIO.to_dict(SeqIO.parse(ffastain, "fasta", alphabet=Alphabet.generic_dna))
 	genome = list(GFF.parse(fgff, seqdict))
 	fgff.close()
 	ffastain.close()

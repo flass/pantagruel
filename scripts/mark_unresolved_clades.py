@@ -272,10 +272,11 @@ def mark_unresolved_clades(tree, cladesupport=None, subcladesupport=None, crit='
 ### output functions
 		
 def restrict_alignment_representative_leaves(constraints, tree, nffullali, dirout, radout, selectRepr=0, aliformatin='nexus', aliformatout='nexus', verbose=False, doutdext=doutdext, **kw):
-	dalnext = {'fasta':'fasta', 'nexus':'nex'}
 	verbose = kw.get('verbose')
 	supressout = kw.get('supressout', {})
+	didseq = kw.get('didseq', {})
 	aln = AlignIO.read(nffullali, format=aliformatin, alphabet=Alphabet.generic_dna)
+	if verbose: print os.path.basename(nffullali)
 	lcollapsedseqalnrowids = []
 	loutgroups = []
 	representativeseqalnrowids = []
@@ -286,35 +287,7 @@ def restrict_alignment_representative_leaves(constraints, tree, nffullali, dirou
 		lcollapsedseqalnrowids.append(collapsedseqalnrowids)
 		alicollapsedseqs = Align.MultipleSeqAlignment([seq for k,seq in enumerate(aln) if k in collapsedseqalnrowids])
 		# select outgroup sequence: first leaf of sister clade
-		#~ try:
-			#~ anccons = tree.mrca(constraint)
-		#~ except IndexError, e:
-			#~ for refidseq, redidseqs in didseq.iteritems():
-				#~ if (set(constraint) & set(redidseqs)):
-					#~ anccons = tree.mrca(constraint, force=True) # constraint contain labels from the identical leaf set
-					#~ break
-			#~ else:
-				#~ sys.stderr.write( "This indicate a definition of constraint clade that is inconsistent with the tree.\n" )
-				#~ raise IndexError, e
-		anccons = tree.mrca(constraint, force=True) # constraint contain labels from the identical leaf set
-		try:
-			outgroup = anccons.go_brother()
-			outgroupleaf = outgroup.get_leaf_labels()[0]
-		except ValueError, e:
-			print os.path.basename(nffullali)
-			sys.stderr.write( "Warning: in family %s, constraint %s leaf set makes a paraphyletic group.\nconstraint: %s\nanccons is root: %s\n"%(nffullali, cladename, constraint, str(anccons.is_root())) )
-			didseq = kw.get('didseq', {})
-			for refidseq, redidseqs in didseq.iteritems():
-				if (set(constraint) & set(redidseqs)):
-					sw = "Inclusion of identical leaf set: {%s:%s}\n to constraint results in paraphyletic group.\n"%(refidseq, repr(redidseqs))
-					sw+= "This indicate bad rooting of the gene tree, but can be ignored here.\nOutgroup for consraint %s will be set to 'None'.\n"%cladename
-					sys.stderr.write( sw )
-					outgroup = None
-					outgroupleaf = 'None'
-					break
-			else:
-				sys.stderr.write( "This indicate a definition of constraint clade that is inconsistent with the tree.\n" )
-				raise ValueError, e
+		outgroupleaf = findCladeOutgroup(constraint, tree, didseq)
 		loutgroups.append(outgroupleaf)
 		if not 'ccs' in supressout:
 			outgroupseqalnrowid = findSeqRecordIndexesFromSeqNames(aln, outgroupleaf)
