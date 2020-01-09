@@ -441,6 +441,7 @@ def replaceInSingleTree(nfgt, dold2newname={}, nfgtout=None, ingtfmt='newick', o
 				nutipname = dold2newname.get(tip.name)
 				if nutipname:
 					if isinstance(nutipname, str):
+						if verbose: print "replace leaf label '%s' with label %s"%(tip.name, repr(nutipname))
 						tip.name = nutipname
 					else:
 						if isinstance(nutipname, tree2.Node):
@@ -449,6 +450,7 @@ def replaceInSingleTree(nfgt, dold2newname={}, nfgtout=None, ingtfmt='newick', o
 							nusubtree = nutipname
 						else:
 							raise ValueError, "replacement value for a leaf must be either a string (to edit leaf label) or a tree object instance of classes tree2.Node or Bio.Phylo.TreeElement (or derivates)"
+						if verbose: print "replace leaf labelled '%s' with clade %s"%(tip.name, repr(nutipname))
 						subtreelen = nusubtree.total_branch_length()/nusubtree.count_terminals()
 						if subtreelen:
 							# substract the subtree length to its branch length
@@ -471,13 +473,18 @@ def replaceInSingleTree(nfgt, dold2newname={}, nfgtout=None, ingtfmt='newick', o
 				nutipname = dold2newname.get(tip.label())
 				if nutipname:
 					if isinstance(nutipname, str):
+						if verbose: print "replace leaf label '%s' with label %s"%(tip.label(), repr(nutipname))
 						tip.edit_label(nutipname)
-					else:
+					else:						
+						if verbose: print "replace leaf labelled '%s' with clade %s:"%(tip.label(), repr(nutipname))
 						if not isinstance(nutipname, tree2.Node):
 							raise ValueError, "replacement value for a leaf must be either a string (to edit leaf label) or a tree object instance of classes tree2.Node or Bio.Phylo.TreeElement (or derivates)"
 						nusubtree = nutipname.deepcopybelow()
 						nusubtree.edit_label('')
 						tipfat = tip.go_father()
+						if verbose:
+							print tipfat
+							print '  ->'
 						subtreelen = nusubtree.treelength()/nusubtree.nb_leaves()
 						# substract the subtree length to its branch length
 						newlen = max(0.0, tip.lg() - subtreelen)
@@ -486,6 +493,7 @@ def replaceInSingleTree(nfgt, dold2newname={}, nfgtout=None, ingtfmt='newick', o
 						tipfat.unlink_child(tip)
 						# attach subtree node to tree
 						tipfat.link_child(nusubtree, newlen=newlen, newboot=newboot)
+						if verbose: print tipfat
 		getattr(tree2, 'write_%s'%outgtfmt)(tree, nfout)
 		if verbose: print '\n%s ...done'%(nfout)
 		return None
