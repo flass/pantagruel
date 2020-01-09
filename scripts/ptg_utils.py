@@ -468,7 +468,7 @@ def replaceInSingleTree(nfgt, dold2newname={}, nfgtout=None, ingtfmt='newick', o
 		tree = getattr(tree2, 'read_%s'%ingtfmt)(nfgt)
 		if dold2newname:
 			for tip in tree.get_leaves():
-				nutipname = dold2newname.get(tip.label)
+				nutipname = dold2newname.get(tip.label())
 				if nutipname:
 					if isinstance(nutipname, str):
 						tip.edit_label(nutipname)

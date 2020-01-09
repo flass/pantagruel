@@ -574,10 +574,12 @@ def mapPop2GeneTree(nfingt, dircons, dirout, method, spetree, poptree, dspe2pop,
 		if verbose: print popsubtree.newick(ignoreBS=1)
 		if mode=='tree2.Node':
 			dold2newname[cla] = popsubtree
-		else:
+		elif mode=='Bio.Phylo':
 			print "Warning: conversion of clade objects from tree2.Node to Bio.Phylo.TreeElement format is DEPRECATED in pantagruel/usingGeneRax branch"
 			# already formats the tree in Bio.Phylo format to later integration to the parsed gene tree chain	
 			dold2newname[cla] = tree2toBioPhylo(popsubtree)
+		else:
+			raise ValueError, "mode %s is not valid"%mode
 	
 	
 	if verbose: print 'mapPop2GeneTree()'
