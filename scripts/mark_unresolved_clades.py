@@ -369,6 +369,7 @@ def collapse_tree_from_constraint_list(tree, constraints, representativeseqids, 
 				# make this leaf the representative of the clade
 				if verbose: print "  %s is CC representative sequence; change label:"%seqid, node, '->', 
 				node.edit_label(cladename)
+				if verbose: print node
 			else:
 				if verbose: print "  %s in CC: pop leaf"%seqid
 				coltree.pop(node)
