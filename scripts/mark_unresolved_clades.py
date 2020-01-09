@@ -316,10 +316,9 @@ def restrict_alignment_representative_leaves(constraints, tree, nffullali, dirou
 	if not 'col' in supressout:
 		coloutd, colext = doutdext['col']
 		aliremainingseqs = Align.MultipleSeqAlignment([seq for k,seq in enumerate(aln) if k not in allcollapsedbutreprseqalnrowids])
-		if len(aliremainingseqs) >= 4:
-			AlignIO.write(aliremainingseqs, os.path.join(dirout, coloutd, radout+"-%s.%s"%(colext, dalnext[aliformatout])), aliformatout)
-		else:
-			sys.stderr.write( "Warning: collapsed alignment %s has too few remaining sequences (%d out of %d) for subsequent tree building, will not write it\n"%(os.path.basename(nffullali), len(aliremainingseqs), len(aln)) )
+		AlignIO.write(aliremainingseqs, os.path.join(dirout, coloutd, radout+"-%s.%s"%(colext, dalnext[aliformatout])), aliformatout)
+		if len(aliremainingseqs) < 4:
+			sys.stderr.write( "Warning: collapsed alignment '%s' has too few remaining sequences (%d out of %d) for subsequent tree building; however further sequence may be added in the clade replacement step\n"%(os.path.basename(nffullali), len(aliremainingseqs), len(aln)) )
 	return (loutgroups, representativeseqids)
 
 def collapse_tree_from_constraint_list(tree, constraints, representativeseqids, verbose=False):
