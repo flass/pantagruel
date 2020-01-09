@@ -164,7 +164,7 @@ def select_clades_on_conditions(tree, clade_stem_conds, within_clade_conds, dept
 								# this clade would be nesting previously defines ones, skip
 								continue # the for node loop
 					leaves = node.get_leaf_labels()
-					if verbose: print '', leaves
+					if verbose: print ' -> CC!', leaves
 					if not inclusive:
 						# restrict the leaf set to those not yet covered by selected leaf sets
 						leaves = list(set(leaves) - selectedleaves)
@@ -358,21 +358,21 @@ def collapse_tree_from_constraint_list(tree, constraints, representativeseqids, 
 	for constraint, reprseqid in zip(constraints, representativeseqids):
 		i += 1
 		cladename = "clade%d"%i
+		if verbose: print cladename
 		for seqid in constraint:
 			node = coltree.labelgetnode(seqid)
 			if not node:
 				# one of the identical sequences not present in the input tree
-				if verbose: print "%s not present in gene tree"%seqid
+				if verbose: print "  %s not present in gene tree"%seqid
 				continue # the for seqid loop
 			if seqid == reprseqid:
 				# make this leaf the representative of the clade
 				if verbose:
-					print "%s representative sequence; change label:"%seqid
-					print node, '->', 
+					print "  %s is CC representative sequence; change label:"%seqid, node, '->', 
 				node.edit_label(cladename)
 				if verbose: print node
 			else:
-				if verbose: print "pop leaf %s"%seqid
+				if verbose: print "  %s in CC: pop leaf"%seqid
 				coltree.pop(node)
 	return coltree
 

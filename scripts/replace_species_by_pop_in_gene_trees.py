@@ -535,7 +535,7 @@ def mapPop2GeneTree(nfingt, dircons, dirout, method, spetree, poptree, dspe2pop,
 		dold2newname[cla] = newname
 		if verbose: print 'rename leaf:', newname
 	
-	def replaceCCwithSubtree(cla, ancpopnodelabels, fam, dold2newname, lostpops=[], speciestoprune=[], tag='RC'): #, onlyancs=False
+	def replaceCCwithSubtree(cla, ancpopnodelabels, fam, dold2newname, lostpops=[], speciestoprune=[], tag='RC', mode='tree2.Node'): #, onlyancs=False
 		"""collapsed clade is replaced by a subtree of populations and/or single species copied from the population tree (collapsed species tree).
 		
 		new G subtree has leaf labels with the following structure: POPNAME_FAM_RC-xxxx, 
@@ -572,7 +572,12 @@ def mapPop2GeneTree(nfingt, dircons, dirout, method, spetree, poptree, dspe2pop,
 				# naming internal nodes might lead to Gene being trees incompatible with ALE
 				popnode.edit_label("")
 		if verbose: print popsubtree.newick(ignoreBS=1)
-		dold2newname[cla] = tree2toBioPhylo(popsubtree) # already formats the tree in Bio.Phylo format to later integration to the parsed gene tree chain	
+		if mode=='tree2.Node':
+			dold2newname[cla] = popsubtree
+		else:
+			print "Warning: conversion of clade objects from tree2.Node to Bio.Phylo.TreeElement format is DEPRECATED in pantagruel/usingGeneRax branch"
+			# already formats the tree in Bio.Phylo format to later integration to the parsed gene tree chain	
+			dold2newname[cla] = tree2toBioPhylo(popsubtree)
 	
 	
 	if verbose: print 'mapPop2GeneTree()'
