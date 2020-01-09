@@ -555,7 +555,7 @@ def duplicateSeqsInAln(nfcolaln, dold2newname, nfoutreplaln=None, inalnfmt='nexu
 			newseq.id = newlab
 			replaln.append(newseq)
 	
-	for rowseqid in range(len(colaln):
+	for rowseqid in range(len(colaln)):
 		if not rowseqid in rmseqrowid:
 			replaln.append(colaln[rowseqid])
 	
