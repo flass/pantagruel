@@ -484,8 +484,21 @@ def mapPop2GeneTree(nfingt, dircons, dirout, method, spetree, poptree, dspe2pop,
                     species_sep='_', charfilter=None, dontReplace=False, verbose=False, **kw):
 	"""take as main input a name of Nexus tree chain file (from which is inferred 
 	the list of all parallel chain files for the same family) and ouput a single 
-	Newick tree chain file combining these parallel chains, having replaced the 
-	collapsed clades with approapriate label or subtree.
+	Newick tree chain file (ending '-Gtree.nwk') combining these parallel chains, 
+	having replaced the collapsed clades with approapriate label or subtree.
+	
+	Depending on the method (see below), a tailored species tree will be generated
+	in a file ending '-Stree.nwk', so that it covers the species set represented 
+	in the output gene tree.
+	
+	Other files describing the data transformation are produced, including:
+	- a phyloprofile (a presence/absence matrix of collapsed clade in species populations)
+	- a table of correspondence (1-to-many mapping) between collapsed clades
+	   and replacing leaf labels (file ending '-leaflabels_Spe2Pop.txt')
+	- a table of what replacement approach led to the occurence of species in the ouput gene tree
+	  (file ending '-replacedlabelsbyPop.txt')
+	- a table of population occurence frequency in each colpased clades
+	  (file ending '-PopFreqDistrib.txt')
 	
 	Using the input collapsed gene alignments found in the collpased alignment folder
 	(in the collapsed gene tree info folder indicated by 'dircons', 
@@ -496,7 +509,7 @@ def mapPop2GeneTree(nfingt, dircons, dirout, method, spetree, poptree, dspe2pop,
 		
 	- if dontReplace is True, skip all the label/subtree replacement 
 	  and just re-format the tree files from Nexus tree chain file(s)
-	  to a single Newick tree chain file.
+	  to a single Newick tree chain file; only the 'Gtree.nwk' file is produced.
 	
 	- method can be 'collapseCCinG', 'replaceCCinGasinS', 'replaceCCinGasinS-collapsePOPinSnotinG'.
 	
