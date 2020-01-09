@@ -612,8 +612,9 @@ def mapPop2GeneTree(nfingt, dircons, dirout, method, spetree, poptree, dspe2pop,
 	bngt = os.path.basename(nfingt).split('.', 1)[0]
 	outbn = bngt
 	fam = bngt.rsplit('-', 1)[0]
+	reptag = '' if dontReplace else '-replaced'
 	
-	nfoutcolGtree = "%s/%s-Gtree.nwk"%(dirout, outbn)
+	nfoutcolGtree = "%s/%s%s-Gtree.nwk"%(dirout, reptag, outbn)
 	if ((os.path.exists(nfoutcolGtree)) and (reuseOutput==2)):
 		# assume work was done before, skip
 		print "# (reused all) %s"%nfoutcolGtree
@@ -798,7 +799,7 @@ def mapPop2GeneTree(nfingt, dircons, dirout, method, spetree, poptree, dspe2pop,
 	# generate alignment with sequence labels matching the ones in the gene tree produced above;
 	# for that, the sequece representative of the CC in the input collapsed alignment is duplicated 
 	# into identical sequences with different labels as in the replacement clade 
-	duplicateSeqsInAln(nfcolaln, dold2newname, nfoutreplaln)
+	duplicateSeqsInAln(nfcolaln, dold2newname, nfoutreplaln, verbose=verbose)
 		
 def usage():
 	s =  'For population assignation:\n'

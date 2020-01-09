@@ -539,8 +539,9 @@ def labsFromReplacementLabOrSubtree(newlaborst):
 		raise ValueError, "unsupported format for replacement label or subtree: %s"%repr(newlaborst)
 	return newlabs
 
-def duplicateSeqsInAln(nfcolaln, dold2newname, nfoutreplaln=None, inalnfmt='nexus', outalnfmt='fasta'):
+def duplicateSeqsInAln(nfcolaln, dold2newname, nfoutreplaln=None, inalnfmt='nexus', outalnfmt='fasta', verbose=False):
 	colaln = AlignIO.read(nfcolaln, format=inalnfmt, alphabet=Alphabet.generic_dna)
+	if verbose: print "loaded collapsed gene alignment '%s'; will duplicated the repsentative sequences of the collpased clades to match their replacement clades"
 	replaln = Align.MultipleSeqAlignment([], alphabet=Alphabet.generic_dna)
 	rmseqrowid = []
 			
