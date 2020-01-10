@@ -22,14 +22,16 @@ else
   initargs="${@}"  # all trailing script arguments
 fi
 
-docker run -v $cwd:$cwd -w $cwd pantagruel ${ptgexe} -r ${ptgroot} -d ${ptgdbname} ${initargs} init
+dockerrunptg="docker run --user $USER -v $cwd:$cwd -w $cwd pantagruel"
+
+${dockerrunptg} ${ptgexe} -r ${ptgroot} -d ${ptgdbname} ${initargs} init
 cd ${ptgrepo}/ && git pull && git submodule update && cd -
-docker run -v $cwd:$cwd -w $cwd pantagruel ${ptgexe} -i ${ptgdbconfig} --refresh ${refreshargs} init
-docker run -v $cwd:$cwd -w $cwd pantagruel ${ptgexe} -i ${ptgdbconfig} 00
-docker run -v $cwd:$cwd -w $cwd pantagruel ${ptgexe} -i ${ptgdbconfig} 01
-docker run -v $cwd:$cwd -w $cwd pantagruel ${ptgexe} -i ${ptgdbconfig} 02
-docker run -v $cwd:$cwd -w $cwd pantagruel ${ptgexe} -i ${ptgdbconfig} 03
-docker run -v $cwd:$cwd -w $cwd pantagruel ${ptgexe} -i ${ptgdbconfig} 05
-docker run -v $cwd:$cwd -w $cwd pantagruel ${ptgexe} -i ${ptgdbconfig} 06
-docker run -v $cwd:$cwd -w $cwd pantagruel ${ptgexe} -i ${ptgdbconfig} 07
-docker run -v $cwd:$cwd -w $cwd pantagruel ${ptgexe} -i ${ptgdbconfig} 08
+${dockerrunptg} ${ptgexe} -i ${ptgdbconfig} --refresh ${refreshargs} init
+${dockerrunptg} ${ptgexe} -i ${ptgdbconfig} 00
+${dockerrunptg} ${ptgexe} -i ${ptgdbconfig} 01
+${dockerrunptg} ${ptgexe} -i ${ptgdbconfig} 02
+${dockerrunptg} ${ptgexe} -i ${ptgdbconfig} 03
+${dockerrunptg} ${ptgexe} -i ${ptgdbconfig} 05
+${dockerrunptg} ${ptgexe} -i ${ptgdbconfig} 06
+${dockerrunptg} ${ptgexe} -i ${ptgdbconfig} 07
+${dockerrunptg} ${ptgexe} -i ${ptgdbconfig} 08
