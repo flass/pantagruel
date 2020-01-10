@@ -239,7 +239,7 @@ fi
 ################################################################################
 
 mkdir -p ${ptgdb}/logs/replspebypop
-repltasklist=${coltreechains}_${collapsecond}_nexus_list
+repltasklist=${=genetrees}/$(basename ${colmlgenetrees})_list
 ${ptgscripts}/lsfullpath.py ${colmlgenetrees}/ > ${repltasklist}
 repllogd=${ptgdb}/logs/replspebypop
 repllogs=$repllogd/replace_species_by_pop_in_gene_trees
@@ -264,9 +264,10 @@ else
     rm -f ${repltasklist}_resume
     for nfcolgt in $(cat ${repltasklist}) ; do
       bncolgt=$(basename ${nfcolgt})
-      bnGtre=${bncolgt/.nwk/-Gtree.nwk}
+      bnGtre=${bncolgt/.nwk/-replaced-Gtree.nwk}
+      bnGaln=${bncolgt/.nwk/-replaced.aln}
       bnStre=${bncolgt/.nwk/-Stree.nwk}
-      if [[ ! -e ${coltreechains}/${collapsecond}/${replmethod}/${bnGtre} || ! -e ${coltreechains}/${collapsecond}/${replmethod}/${bnStre} ]] ; then
+      if [[ ! -e ${coltreechains}/${collapsecond}/${replmethod}/${bnGtre} || ! -e ${coltreechains}/${collapsecond}/${replmethod}/${bnGaln} || ! -e ${coltreechains}/${collapsecond}/${replmethod}/${bnStre} ]] ; then
         echo ${nfcolgt}
       fi
     done > ${repltasklist}_resume
