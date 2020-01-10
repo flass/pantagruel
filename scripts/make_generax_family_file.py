@@ -31,17 +31,17 @@ for nfgt in lnfgt:
 	# assume everything is in the same folder
 	bnaln = bnrad2+'.aln'
 #	bnst = bnrad3+'-Stree.nwk'
-#	bnmap = bnrad2+'.link'
-#	nfmap = os.path.join(dirgt, bnmap)
-#	with open(nfmap, 'w'):
-#		# generate the mapping file
-#		gt = tree2.read_newick(nfgt)
-#		for leaflab in gt.get_leaf_labels():
-#			nfmap.write('%s\t%s\n'%(leaflab, leaflab.split('_', 1)[0]))
-#	
+	bnmap = bnrad2+'.link'
+	nfmap = os.path.join(dirgt, bnmap)
+	with open(nfmap, 'w'):
+		# generate the mapping file
+		gt = tree2.read_newick(nfgt)
+		for leaflab in gt.get_leaf_labels():
+			nfmap.write('%s\t%s\n'%(leaflab, leaflab.split('_', 1)[0]))
+	
 	# write out
 	fout.write('- %s\n'%fam)
-#	fout.write('mapping = %s\n'%(os.path.join(dirgt, bnmap)))
+	fout.write('mapping = %s\n'%(os.path.join(dirgt, bnmap)))
 	fout.write('alignment = %s\n'%(os.path.join(dirgt, bnaln)))
 	fout.write('subst_model = %s\n'%(model))
 	fout.write('starting_gene_tree = %s\n'%(nfgt))
