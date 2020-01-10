@@ -17,6 +17,7 @@ export ndiggrpfam=4
 # gene tree/species tree reconciliation inference parameters
 export ALEalgo='ALEml'
 export ecceTERAalgo='amalgamate'
+export GeneRaxalgo='reconciliation-samples'
 export recsamplesize=1000
 # gene tree/species tree reconciliation parsing parameters for co-evolution analysis
 export evtypeparse='ODTSL'
