@@ -67,7 +67,7 @@ if [[ "${chaintype}" == 'fullgenetree' ]] ; then
   # this allows a single run of GeneRax, with built-in optimised load balance
   # generate the family file i.e. job scheduling list
   generaxfamfi=${alerec}/${reccol}_generax.families ${generaxfamfi}
-  ${ptgscripts}/make_generax_family_file.py ${gttorecdir} 
+  python ${ptgscripts}/make_generax_family_file.py ${gttorecdir} 
   mpiexec -np ${ptgthreads} generax ${generaxcommonopt} -s ${spetree} -f ${generaxfamfi} -p ${outrecdir} ${generaxopt}
 
 else
