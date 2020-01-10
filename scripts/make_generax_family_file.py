@@ -33,11 +33,11 @@ for nfgt in lnfgt:
 #	bnst = bnrad3+'-Stree.nwk'
 	bnmap = bnrad2+'.link'
 	nfmap = os.path.join(dirgt, bnmap)
-	with open(nfmap, 'w'):
+	with open(nfmap, 'w') as fmap:
 		# generate the mapping file
 		gt = tree2.read_newick(nfgt)
 		for leaflab in gt.get_leaf_labels():
-			nfmap.write('%s\t%s\n'%(leaflab, leaflab.split('_', 1)[0]))
+			fmap.write('%s\t%s\n'%(leaflab, leaflab.split('_', 1)[0]))
 	
 	# write out
 	fout.write('- %s\n'%fam)
