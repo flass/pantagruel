@@ -6,10 +6,10 @@ import tree2
 
 gttag = '-Gtree.nwk'
 
-dirgt = sys.argv[0]
-nfout = sys.argv[1]
-if len(sys.argv) > 2:
-	model = sys.argv[2]
+dirgt = sys.argv[1]
+nfout = sys.argv[2]
+if len(sys.argv) > 3:
+	model = sys.argv[3]
 else:
 	model = 'GTR+G'
 
