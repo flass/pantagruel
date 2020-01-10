@@ -54,6 +54,7 @@ mkdir -p ${raxlogs}
 ### begin loop over alignment tasks
 for nfaln in `cat ${tasklist}` ; do
 
+raxlog=${raxlogs}/${nfrad2}.raxml.log
 echo -e "# this is Pantagruel script raxml_sequential.sh\ntask: '${nfaln}'; current directory:${PWD} ; date: $(date "+%Y-%m-%d_%H-%M-%S")" &> ${raxlog}
 
 diraln=$(dirname ${nfaln})
@@ -62,7 +63,6 @@ nfext=${nfrad1##*.}
 nfrad2=${nfrad1%.*}
 echo "# ouput will be named with file radical nfrad2='${nfrad2}'" &>> ${raxlog}
 
-raxlog=${raxlogs}/${nfrad2}.raxml.log
 
 cd ${outputdir}/bulk/
 
