@@ -181,7 +181,7 @@ else
   fi
   if [ -s "${tasklist}" ] ; then
     ${ptgscripts}/raxml_sequential.sh "${tasklist}" "${mlgenetrees}" 'GTRCATX' 'bipartitions rootedTree identical_sequences' 'x' "${ptgthreads}" 'true'
-    checkexec "step 1: RAxML tree estimation was interupted ; exit now" "step 1: RAxML tree estimation complete"
+    checkexec "step 1: RAxML tree estimation was interupted. You can check the cause in logs stored in '${ptglogs}/raxml/gene_trees/' ; exit now" "step 1: RAxML tree estimation complete"
   fi
   ############################
   ## 06.2 Gene tree collapsing
@@ -207,7 +207,7 @@ else
     rm -f ${mlgenetreelist}_resume
     for gt in $(cat ${mlgenetreelist}) ; do
       bngt=$(basename $gt)
-      fam=$( echo ${gt} | cut -d'.' -f2 )
+      fam=$(echo ${bngt} | cut -d'.' -f2 )
       colaln=${colalinexuscodedir}/${collapsecond}/collapsed_alns/${fam}-collapsed.nex
       if [[ ! -s ${colaln} ]] ; then
         echo ${gt} >> ${mlgenetreelist}_resume
@@ -239,7 +239,7 @@ fi
 ################################################################################
 
 mkdir -p ${ptgdb}/logs/replspebypop
-repltasklist=${=genetrees}/$(basename ${colmlgenetrees})_list
+repltasklist=${genetrees}/$(basename ${colmlgenetrees})_list
 ${ptgscripts}/lsfullpath.py ${colmlgenetrees}/ > ${repltasklist}
 repllogd=${ptgdb}/logs/replspebypop
 repllogs=$repllogd/replace_species_by_pop_in_gene_trees

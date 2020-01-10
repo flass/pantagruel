@@ -48,8 +48,13 @@ if [ ! -e "${tasklist}" ] ; then
   exit 1
 fi
 
-### begin loop over alignments
+raxlogs=${ptglogs}/raxml/gene_trees
+mkdir -p ${raxlogs}
+
+### begin loop over alignment tasks
 for nfaln in `cat ${tasklist}` ; do
+
+echo -e "# this is Pantagruel script raxml_sequential.sh\ntask: '${nfaln}'; current directory:${PWD} ; date: $(date "+%Y-%m-%d_%H-%M-%S")" &> ${raxlog}
 
 diraln=$(dirname ${nfaln})
 nfrad1=$(basename ${nfaln})
@@ -57,19 +62,18 @@ nfext=${nfrad1##*.}
 nfrad2=${nfrad1%.*}
 echo ${nfrad2}
 
+raxlog=${raxlogs}/${nfrad2}.raxml.log
 
 cd ${outputdir}/bulk/
-echo "current directory is ${PWD}"
-
 
 # convert file format
 if [ "${nfext}" == 'nex' ] ; then
-  python2.7 -c "from Bio import AlignIO ; AlignIO.convert('${nfaln}', 'nexus', '${outputdir}/bulk/${nfrad2}.fasta', 'fasta')"
+  python2.7 -c "from Bio import AlignIO ; AlignIO.convert('${nfaln}', 'nexus', '${outputdir}/bulk/${nfrad2}.fasta', 'fasta')" &>> ${raxlog}
   if [ $? == 0 ] ; then
-    echo "succesfully converted Nexus input file ${nfrad1} into FASTA format: ${nfrad2}.fasta"
+    echo "succesfully converted Nexus input file ${nfrad1} into FASTA format: ${nfrad2}.fasta" &>> ${raxlog}
     localn=${outputdir}/bulk/${nfrad2}.fasta
   else
-    echo "failed conversion of input file ${nfrad1} into FASTA format; we'll see if it goes through..."
+    echo "failed conversion of input file ${nfrad1} into FASTA format; we'll see if it goes through..." &>> ${raxlog}
   fi
 else
   cp ${nfaln} ./
@@ -128,7 +132,7 @@ for i in {0..5} ; do
     eval raxmlcall='$'${raxmlcalls[$i]}
     echo ""
     echo "#####"
-    echo ${raxmlcall}
+    echo "# RAxML call: ${raxmlcall}"
     eval ${raxmlcall}
     status=${?}
     if [ ${i} -eq 0 ] ; then
@@ -149,7 +153,7 @@ for i in {0..5} ; do
       fi
     fi
   fi
-done
+done &> ${raxlog}
 
 if [ -z ${smallfam} ] ; then
   for resulttag in ${resulttags[@]} ; do
