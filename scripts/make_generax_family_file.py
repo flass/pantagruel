@@ -43,7 +43,7 @@ for nfgt in lnfgt:
 	fout.write('- %s\n'%fam)
 #	fout.write('mapping = %s\n'%(os.path.join(dirgt, bnmap)))
 	fout.write('alignment = %s\n'%(os.path.join(dirgt, bnaln)))
-	fout.write('subst_model = %s\n'%(model)
+	fout.write('subst_model = %s\n'%(model))
 	fout.write('starting_gene_tree = %s\n'%(nfgt))
 	
 fout.close()
