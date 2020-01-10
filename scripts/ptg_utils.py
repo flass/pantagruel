@@ -245,10 +245,16 @@ def colour_tree_with_leaf_groups(tree, leafgroups, **kw):
 ## BioPython-using functions
 
 def findSeqRecordIndexesFromSeqNames(aln, seqnames):
-	if isinstance(seqnames, list): return [k for k,seq in enumerate(aln) if seq.id in seqnames]
+	if isinstance(seqnames, list):
+		return [k for k, seq in enumerate(aln) if seq.id in seqnames]
+	elif isinstance(seqnames, str):
+		for k, seq in enumerate(aln):
+			if seq.id==seqnames:
+				return k
+		else
+			return None
 	else:
-		for k,seq in enumerate(aln):
-			if seq.id in seqnames: return k
+		raise ValueError, "'seqnames' must be either a list of strings or a single string obbject; %s is invalid"%repr(seqnames)
 
 def findCladeOutgroup(constraint, tree, didseq):
 	anccons = tree.mrca(constraint, force=True) # constraint contain labels from the identical leaf set
