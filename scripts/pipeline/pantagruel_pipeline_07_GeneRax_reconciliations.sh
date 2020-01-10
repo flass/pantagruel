@@ -44,6 +44,7 @@ fi
 # derived parameters
 if [ ${GeneRaxalgo} == 'reconciliation-samples' ] ; then
   export rectype='recsampling'
+  generaxopt="--reconciliation-samples ${recsamplesize}"
 else
   export rectype='pointestimate'
 fi
@@ -58,6 +59,7 @@ mkdir -p ${outrecdir}
 
 cd ${ptgtmp} 
 
+generaxcommonopt="-r UndatedDTL --max-spr-radius 5 --strategy SPR"
 
 if [[ "${chaintype}" == 'fullgenetree' ]] ; then
   # use the same species tree file for every gene family, with no collapsed populations
@@ -66,7 +68,7 @@ if [[ "${chaintype}" == 'fullgenetree' ]] ; then
   # generate the family file i.e. job scheduling list
   generaxfamfi=${alerec}/${reccol}_generax.families ${generaxfamfi}
   ${ptgscripts}/make_generax_family_file.py ${gttorecdir} 
-  mpiexec -np ${ptgthread} generax -r UndatedDTL -s ${spetree} -f ${generaxfamfi} -p ${outrecdir}
+  mpiexec -np ${ptgthread} generax ${generaxcommonopt} -s ${spetree} -f ${generaxfamfi} -p ${outrecdir} ${generaxopt}
 
 else
   # use a dedicated species tree file for each gene family, with population collapsed in accordance to the gene tree
