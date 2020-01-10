@@ -60,7 +60,7 @@ diraln=$(dirname ${nfaln})
 nfrad1=$(basename ${nfaln})
 nfext=${nfrad1##*.}
 nfrad2=${nfrad1%.*}
-echo ${nfrad2}
+echo "# ouput will be named with file radical nfrad2='${nfrad2}'" &>> ${raxlog}
 
 raxlog=${raxlogs}/${nfrad2}.raxml.log
 
@@ -153,7 +153,7 @@ for i in {0..5} ; do
       fi
     fi
   fi
-done &> ${raxlog}
+done &>> ${raxlog}
 
 if [ -z ${smallfam} ] ; then
   for resulttag in ${resulttags[@]} ; do
