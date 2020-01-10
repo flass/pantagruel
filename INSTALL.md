@@ -44,7 +44,7 @@ docker run -v $PWD:$PWD -w $PWD pantagruel pantagruel_pipeline/pantagruel/pantag
 
 You can even alias this command so it's less ugly and you just need to call `pantagruel`:
 ```sh
-alias pantagruel="docker run -v $PWD:$PWD -w $PWD pantagruel pantagruel_pipeline/pantagruel/pantagruel"
+alias pantagruel="docker run --user $USER -v $PWD:$PWD -w $PWD pantagruel pantagruel_pipeline/pantagruel/pantagruel"
 ```
 
 NB: task `04` for InterProScan functional annotation is **NOT included** in the docker image, as InterProScan is bulky and frequent relaeses require regular manual re-installation. It can however be installed manually *in complement* of the docker image.
