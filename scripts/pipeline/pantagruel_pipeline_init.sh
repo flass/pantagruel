@@ -79,7 +79,7 @@ done
 echo -n " >> ${envsourcescript}" >> ${ptgtmp}/sedenvvar.sh
 bash < ${ptgtmp}/sedenvvar.sh
 
-if [ ! -z ${extravars} ] ; then
+if [ ! -z "${extravars}" ] ; then
   # add custom env variables
   echo "custom environment variables:"
   echo "${extravars}" | tr ',' '\n' | while read exp ; do

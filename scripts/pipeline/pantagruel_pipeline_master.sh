@@ -205,16 +205,20 @@ usagelong (){
   echo "                        Default is equivalent to providing the following string:"
   echo "                           'cladesupp=70 ; subcladesupp=35 ; criterion=bs ; withinfun=median'"
   echo ""
-  echo "    -e|--rec_method   {ALE|ecceTERA} choose the method to reconcile gene trees and the species tree."
-  echo "                       ALE (default): a probabilistic method to sample gene Duplication, Transfer and Loss (DTL) scenarios"
+  echo "    -e|--rec_method   {ALE|ecceTERA|GeneRax} choose the method to reconcile gene trees and the species tree."
+  echo "                       ALE: a probabilistic method to sample gene Duplication, Transfer and Loss (DTL) scenarios"
   echo "                        by amalgamating the likelihood of bayesian samples of trees (doi:10.1093/sysbio/syt003;doi:10.1093/sysbio/syt054)."
   echo "                        The likelihood-based approach can be heavy in memory use (several 10GB for one gene family scenario) and computation time."
   echo "                        The option '-c' (to collapse gene trees prior to reconciliation) efficiently mitigates this issue as it generally reduces"
   echo "                        the compute time to minutes is highly recommmended when the dataset size grows (>50 bacterial genomes)."
   echo "                       ecceTERA: a parsimony method to sample gene DTL scenarios by amalgamating the likelihood of bayesian samples of trees"
   echo "                        under a model and procedure similar to ALE (doi:10.1093/bioinformatics/btw105)."
-  echo "                        The parsimony apporach allows the use of this methods on large-scale datasets within a reasonable time and using little memory"
+  echo "                        The parsimony apporach allows the use of this methods on large-scale datasets within a reasonable time (but may still  use a large memory heap)"
   echo "                        without having to resort to gene tree collapsing with option '-c' (but using it is possible and would make reconciliation even faster)."
+  echo "                       GeneRax (default): a probabilistic method to sample gene Duplication, Transfer and Loss (DTL) scenarios"
+  echo "                        by maximum-likelihood co-estimation of the substitution and evolution scenario that generate the gene trees (doi:10.1101/779066)."
+  echo "                        Parallel computation is optimised across gene families so can be effciently deployed when the families share the species tree,"
+  echo "                        i.e. when option -c is NOT used; using it is possible however and would make reconciliation problems more simple in their own right."
   echo ""
   echo "    -g|--genefam_list Path to gene family list file. Resticts the computation of gene trees and all subsequent analyses to a list of gene families."
   echo "                        This impacts all task from 06 and forward. The list has to be one gene family identifier per line."
@@ -314,7 +318,7 @@ ptgenvsetdefaults (){
       echo "Default: set gene tree type to '${chaintype}'"
     fi
     if [ -z "${recmethod}" ] ; then
-      export recmethod='ALE'
+      export recmethod='GeneRax'
       echo "Default: set gene tree/species tree reconciliation method to '${recmethod}'"
     fi
     if [ -z "${pseudocoremingenomes}" ] ; then
@@ -551,7 +555,7 @@ do
 
     -V|--env_var)
       testmandatoryarg "${1}" "${2}"
-      export extravars="${2}"
+      [ -z ${extravars} ] && export extravars="${2}" || export extravars="${extravars},${2}"
       echo "will add the following environment variable definition to the configuration file: ${extravars}"
       shift 2;;
       
@@ -593,14 +597,17 @@ do
       testmandatoryarg "${1}" "${2}"
       export recmethod="${2}"
       case "${recmethod}" in
-        ALE|ecceTERA)
+        ALE|ecceTERA|GeneRax)
           echo "set gene tree/species tree reconciliation method to '${recmethod}'" ;;
         *)
-          echo "ERROR: incorrect gene tree/species tree reconciliation method was specified: ${recmethod} (must be either 'ALE' or 'ecceTERA'); exit now"
+          echo "ERROR: incorrect gene tree/species tree reconciliation method was specified: ${recmethod} (must be either 'ALE', 'ecceTERA' or 'GeneRax'); exit now"
           exit 1 ;;
       esac
+	  if [ "${recmethod}" != 'GeneRax' ] ; then
+	    echo "this is the 'usingGeneRax' branch of Pantagruel pipeline; only 'GeneRax' reconciliation method is supported; use the 'master' branch of the pipeline for other methods; exit now."
+		exit 1
+	  fi
       shift 2;;
-      
 
     -g|--genefam_list)
       testmandatoryarg "${1}" "${2}"

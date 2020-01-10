@@ -26,5 +26,7 @@ if [ "${recmethod}" == 'ALE' ] ; then
   ${ptgscripts}/pipeline/pantagruel_pipeline_07_ALE_reconciliations.sh ${envsourcescript}
 elif [ "${recmethod}" == 'ecceTERA' ] ; then
   ${ptgscripts}/pipeline/pantagruel_pipeline_07_ecceTERA_reconciliations.sh ${envsourcescript}
+  elif [ "${recmethod}" == 'GeneRax' ] ; then
+  ${ptgscripts}/pipeline/pantagruel_pipeline_07_GeneRax_reconciliations.sh ${envsourcescript}
 fi
 checkexec "Could not complete reconciliations with ${recmethod}" "Successfully reconciled gene trees with ${recmethod}"
