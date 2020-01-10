@@ -271,10 +271,10 @@ else
         echo ${nfcolgt}
       fi
     done > ${repltasklist}_resume
-    if [ -s ${mbtasklist}_resume ] ; then
-      echo "Resume task 6, step 4: $(wc -l ${mbtasklist}_resume | cut -d' ' -f1) bayesian tree chains remain to be processed for format conversion and replacement of collapsed clades"
+    if [ -s ${repltasklist}_resume ] ; then
+      echo "Resume task 6, step 4: $(wc -l ${repltasklist}_resume | cut -d' ' -f1) collapsed ML trees remain to be processed for format conversion and replacement of collapsed clades"
     else
-      echo "Resume task 6, step 4: all bayesian tree chains processed; skip format conversion and replacement of collapsed clades"
+      echo "Resume task 6, step 4: all collapsed ML trees processed; skip format conversion and replacement of collapsed clades"
     fi
     repltasklist=${repltasklist}_resume
   fi
