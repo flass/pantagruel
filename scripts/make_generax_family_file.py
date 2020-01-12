@@ -51,7 +51,7 @@ for nfali in lnfali:
 	
 	# write out
 	fout.write('- %s\n'%fam)
-	fout.write('alignment = %s\n'%(os.path.join(dirgt, bnaln)))
+	fout.write('alignment = %s\n'%(nfali))
 	fout.write('subst_model = %s\n'%(model))
 	if nfgt: fout.write('starting_gene_tree = %s\n'%(nfgt))
 	if nfmap: fout.write('mapping = %s\n'%(os.path.join(dirgt, bnmap)))
