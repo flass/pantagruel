@@ -27,8 +27,7 @@ if not nfout:
 if not dirali:
 	raise ValueError, "you must specify an input alignment folder with -a|--alignments"
 
-lnfali = glob.glob('%s/*%s'%(dirali, gttag))
-lnfgt = glob.glob('%s/*%s'%(dirgt, alitag))
+lnfali = glob.glob('%s/*%s'%(dirali, alitag))
 
 fout = open(nfout, 'w')
 fout.write('[FAMILIES]\n')
