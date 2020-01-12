@@ -15,7 +15,7 @@ if ('-h' in dopt) or ('--help' in dopt):
 	sys.exit(0)
 
 gttag = '-Gtree.nwk'
-alitag = 'aln'
+alitag = '.aln'
 
 dirali = dopt.get('-a', dopt.get('--alignments'))
 dirgt = dopt.get('--gene-trees')
@@ -28,7 +28,7 @@ if not dirali:
 	raise ValueError, "you must specify an input alignment folder with -a|--alignments"
 
 lnfali = glob.glob('%s/*%s'%(dirali, gttag))
-lnfgt = glob.glob('%s/*%s'%(dirgt, gttag))
+lnfgt = glob.glob('%s/*%s'%(dirgt, alitag))
 
 fout = open(nfout, 'w')
 fout.write('[FAMILIES]\n')
