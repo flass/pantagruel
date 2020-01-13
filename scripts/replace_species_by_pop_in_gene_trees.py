@@ -476,7 +476,7 @@ def inferPopfromSpeTree(nfspetree, \
 	return (spetree, poptree, dspe2pop, lnamepops, dpopnd)
 	
 def mapPop2GeneTree(nfingt, dircons, dirout, method, spetree, poptree, dspe2pop, lnamepops, \
-                    dpopnd={}, reuseOutput=0, combine_monophyletic=3, \
+                    dpopnd={}, reuseOutput=0, combine_monophyletic=3, flatRCs=False, \
                     chain1ext='mb.run1.t', nbchains=2, aliext='nex', contreext='mb.con.tre', \
                     constrainttag='mbconstraints', collapsalntag='collapsed_alns', \
                     phyloproftag='phyloprofile', ccmaxlentag='max_subtree_lengths', \
@@ -556,7 +556,7 @@ def mapPop2GeneTree(nfingt, dircons, dirout, method, spetree, poptree, dspe2pop,
 		dold2newname[cla] = newname
 		if verbose: print 'rename leaf:', newname
 	
-	def replaceCCwithSubtree(cla, ancpopnodelabels, fam, dold2newname, lostpops=[], speciestoprune=[], tag='RC', mode='tree2.Node'): #, onlyancs=False
+	def replaceCCwithSubtree(cla, ancpopnodelabels, fam, dold2newname, lostpops=[], speciestoprune=[], dccmaxlen={}, tag='RC', flatRCs=False, mode='tree2.Node'): #, onlyancs=False
 		"""collapsed clade is replaced by a subtree of populations and/or single species copied from the population tree (collapsed species tree).
 		
 		new G subtree has leaf labels with the following structure: POPNAME_FAM_RC-xxxx, 
@@ -569,7 +569,10 @@ def mapPop2GeneTree(nfingt, dircons, dirout, method, spetree, poptree, dspe2pop,
 		spetoprune = list((set(speciestoprune) | lostspecies) & set(spesubtree.get_leaf_labels()))
 		popsubtree = collapsePopulationInSpeciesTree(spesubtree, sublnamepops, speciestoprune=spetoprune, collapseAllPops=False, verbose=verbose)
 		if verbose: print "replace with subtree of populations %s (%d leaves)"%(repr(ancpopnodelabels), popsubtree.nb_leaves())
-		if dccmaxlen:
+		if flatRCs:
+			# set the height of all branches in the new gene subtree to zero, i.e. a 'flat' replacement clade
+			popsubtree *= 0
+		elif dccmaxlen:
 			# scale the height of the new gene subtree to that of the original
 			maxlenspesub = popsubtree.max_leaf_distance()
 			maxlenoricc = float(dccmaxlen[cla])
@@ -583,7 +586,7 @@ def mapPop2GeneTree(nfingt, dircons, dirout, method, spetree, poptree, dspe2pop,
 				if verbose: print 'set leaf branch to equal lengths %g'%maxlenoricc
 				for popleaf in popsubtree:
 					popleaf.set_lg(maxlenoricc)
-			popsubtree.set_lg(0.0) # set its root length to 0
+		popsubtree.set_lg(0.0) # set its root length to 0
 		for popnode in popsubtree: 
 			if popnode.is_leaf():
 				# new G leaf labels have the following structure: SPENAME_FAM_RC-clade1234, with RC referring to a replaced clade
@@ -658,7 +661,7 @@ def mapPop2GeneTree(nfingt, dircons, dirout, method, spetree, poptree, dspe2pop,
 			write_out_clade_phyloprofiles({fam:famprof}, nfphyloprof)
 		# gather the max subtree lengths of the constrained clades
 		dccmaxlen = {}
-		if constraintclades and os.path.exists(nfccmaxlen):
+		if (constraintclades and os.path.exists(nfccmaxlen)) and (not flatRCs):
 			if verbose: print "get max subtree lengths from file '%s'"%nfccmaxlen
 			with open(nfccmaxlen, 'r') as fccmaxlen:
 				for line in fccmaxlen:
@@ -673,13 +676,14 @@ def mapPop2GeneTree(nfingt, dircons, dirout, method, spetree, poptree, dspe2pop,
 				nrleaves = fullleafset & set(leaves)
 				if not nrleaves: raise ValueError, "no representative leaf of collapsed clade %s found in gene tree '%s'"%(cla, nffullgt)
 				ccsullsubtree = fullgt.map_to_node(nrleaves)
-				dccmaxlen[cla] = ccsullsubtree.max_leaf_distance()
-			try:
-				with open(nfccmaxlen, 'w') as fccmaxlen:
-					fccmaxlen.write('\n'.join(['%s\t%f'%cml for cml in dccmaxlen.iteritems()])+'\n')
-			except IOError, e:
-				sys.stderr.write("failed attempt to write max subtree lengths of the constrained clades to file '%s'\n"%nfccmaxlen)
-			
+				if (not flatRCs): dccmaxlen[cla] = ccsullsubtree.max_leaf_distance()
+			if (not flatRCs):
+				try:
+					with open(nfccmaxlen, 'w') as fccmaxlen:
+						fccmaxlen.write('\n'.join(['%s\t%f'%cml for cml in dccmaxlen.iteritems()])+'\n')
+				except IOError, e:
+					sys.stderr.write("failed attempt to write max subtree lengths of the constrained clades to file '%s'\n"%nfccmaxlen)
+
 		# record collapsed bush clades' leaf labels to edit in G
 		pop2collapseinS = set([])
 		popnot2collapseinS = set([])
@@ -736,7 +740,7 @@ def mapPop2GeneTree(nfingt, dircons, dirout, method, spetree, poptree, dspe2pop,
 			if len(stleaves)==1:
 				replaceCCwithLabel(cla, stleaves.pop(), fam, dold2newname, tag='CC')
 			elif len(stleaves)>1:
-				replaceCCwithSubtree(cla, list(stleaves), fam, dold2newname, lostpops=lostpopnames, speciestoprune=list(speciestoprune), tag='RC')
+				replaceCCwithSubtree(cla, list(stleaves), fam, dold2newname, lostpops=lostpopnames, speciestoprune=list(speciestoprune), dccmaxlen=dccmaxlen, tag='RC')
 			elif t < A:
 				raise ValueError, "at least one species should be selected"
 				
@@ -836,7 +840,7 @@ def usage():
 
 	
 if __name__=='__main__':	
-	opts, args = getopt.getopt(sys.argv[1:], 'G:c:S:o:T:hv', ['dir_out=', 'method=', 'no_replace', \
+	opts, args = getopt.getopt(sys.argv[1:], 'G:c:S:o:T:hv', ['dir_out=', 'method=', 'no_replace', 'flat_RCs', \
 															'populations=', 'population_tree=', 'population_node_distance=', 'dir_full_gene_trees=', \
 															'pop_stem_conds=', 'within_pop_conds=', 'pop_lab_prefix=', 'filter_dashes', \
 															'threads=', 'reuse=', 'verbose=', 'max.recursion.limit=', 'logfile=', 'help'])
@@ -864,6 +868,7 @@ if __name__=='__main__':
 	nflog = dopt.get('--logfile')
 	nbthreads = int(dopt.get('--threads', dopt.get('-T', -1)))
 	poptag = dopt.get('--pop_lab_prefix')
+	flatRCs = ('--flat_RCs' in dopt)
 	if ('--filter_dashes' in dopt):
 		charfilter = [('\([A-Z0-9]\)-', '\\1@'), ('\([A-Z0-9]\)@', '\\1-')]
 	else:
@@ -915,7 +920,7 @@ if __name__=='__main__':
 				print 'method:', method
 				try:
 					mapPop2GeneTree(nfingt, dircons, os.path.join(dirout, method), method, spetree, poptree, dspe2pop, lnamepops, dpopnd, \
-									dontReplace=dontReplace, reuseOutput=reuseOutput, phyloproftag=phyloproftag, dirfullgt=dirfullgt, charfilter=charfilter, verbose=verbose)
+									dontReplace=dontReplace, reuseOutput=reuseOutput, flatRCs=flatRCs, phyloproftag=phyloproftag, dirfullgt=dirfullgt, charfilter=charfilter, verbose=verbose)
 				except Exception, e:
 					if (type(e) is RuntimeError) and str(e).startswith('maximum recursion depth exceeded'):
 						print "met RuntimeError on file '%s':"%nfingt, e
