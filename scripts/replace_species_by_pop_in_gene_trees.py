@@ -834,13 +834,14 @@ def usage():
 	s += '  --no_replace won\'t touch the tree structure, just reformat them from several Nexus tree chain files into a single Newick chain tree file.\n'
 	s += '  --logfile\t\t\tpath to file where combined stdout and stderr are redirected (if multiple threads, several files with this basename and a pid suffix will be created in addition to the master process\' one).\n'
 	s += '  --filter_dashes\t\t\tenables filtering of dashes PRECEDED BY A CAPITAL LETTER OR DIGIT when parsing the Nexus trees; dash are restored when written to Newick.\n'
+	s += '  --flatRCs\t\t\tmake replacement clades (RCs) to have zero branch length, in accordance to the corresponding sequences in the generated alignment to be all identical within the RC.\n'
 	s += '  --verbose {0,1,2}\tverbose mode, from none to plenty.\n'
 	s += '  -v\t\t\tequivalent to --verbose=1.\n'
 	return s
 
 	
 if __name__=='__main__':	
-	opts, args = getopt.getopt(sys.argv[1:], 'G:c:S:o:T:hv', ['dir_out=', 'method=', 'no_replace', 'flat_RCs', \
+	opts, args = getopt.getopt(sys.argv[1:], 'G:c:S:o:T:hv', ['dir_out=', 'method=', 'no_replace', 'flatRCs', \
 															'populations=', 'population_tree=', 'population_node_distance=', 'dir_full_gene_trees=', \
 															'pop_stem_conds=', 'within_pop_conds=', 'pop_lab_prefix=', 'filter_dashes', \
 															'threads=', 'reuse=', 'verbose=', 'max.recursion.limit=', 'logfile=', 'help'])
@@ -868,7 +869,7 @@ if __name__=='__main__':
 	nflog = dopt.get('--logfile')
 	nbthreads = int(dopt.get('--threads', dopt.get('-T', -1)))
 	poptag = dopt.get('--pop_lab_prefix')
-	flatRCs = ('--flat_RCs' in dopt)
+	flatRCs = ('--flatRCs' in dopt)
 	if ('--filter_dashes' in dopt):
 		charfilter = [('\([A-Z0-9]\)-', '\\1@'), ('\([A-Z0-9]\)@', '\\1-')]
 	else:
