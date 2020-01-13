@@ -50,18 +50,19 @@ nfrad1=$(basename ${generaxfamfi})
 dngrff=$(dirname ${generaxfamfi})
 nfext=${nfrad1##*.}
 nfrad2=${nfrad1%.*}
+nfrad3=${nfrad2%%-*}
 echo ${nfrad2}
 
 ls ${spetree}
 if [ ${?} != 0 ] ; then
   echo "look for ${spetree} species tree file in ${dnchain}/ folder"
-  ls ${dngrff}/${nfrad}*${spetree}*
+  ls ${dngrff}/${nfrad3}*${spetree}*
   if [ ${?} != 0 ] ; then
       echo "ERROR: file '${spetree}' is missing/empty ; exit now"
       exit 2
   else
     echo "found it!" 
-    lnfstree=(`ls ${dngrff}/${nfrad}*${spetree}* 2> /dev/null/`)
+    lnfstree=(`ls ${dngrff}/${nfrad3}*${spetree}* 2> /dev/null/`)
     nfstree=${lnfstree[0]}
     echo "will use nfstree=${nfstree}"
   fi

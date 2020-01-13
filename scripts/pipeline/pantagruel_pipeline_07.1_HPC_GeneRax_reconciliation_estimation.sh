@@ -64,7 +64,7 @@ if [[ "${chaintype}" == 'fullgenetree' ]] ; then
     'LSF')
 	  bqueue='parallel'
       memmb=$((${mem} * 1024))
-	  
+	  nflog="${grxlogs}/${reccol}/generax_global_mpi.%J.log"
       subcmd="bsub -q parallel -J \"${reccol}\" -R \"select[mem>${memmb}] rusage[mem=${memmb}] span[ptile=${ncpuperhost}]\" -M ${memmb} -n ${ncpus} \
        -o ${grlog} -e ${grlog} -env 'all' ${ptgscripts}/generax_global_mpi.bsub ${generaxfamfi}"
 	  ;;
@@ -97,14 +97,12 @@ else
     done > ${tasklist} 
   fi
   
-  grlog=${grxlogs}/generax_perfam.log
-  
   Njob=`wc -l ${tasklist} | cut -f1 -d' '`
   [ ! -z ${topindex} ] &&  [ ${Njob} -gt ${topindex} ] && Njob=${topindex}
   jobranges=($(${ptgscripts}/get_jobranges.py $chunksize $Njob))
 
   for jobrange in ${jobranges[@]} ; do
-    dlogs=${grxlogs}/${reccol}/generax_perfam_${dtag}_${jobrange}.log
+    dlogs=${grxlogs}/${reccol}/generax_perfam_array_${dtag}_${jobrange}
     mkdir -p ${dlogs}/
     case "$hpctype" in
       'LSF')
@@ -112,7 +110,7 @@ else
         arrayspec="[$jobrange]"
 	    [ ! -z ${maxatonce} ] && arrayspec="${arrayspec}%${maxatonce}"
         memmb=$((${mem} * 1024))
-        nflog="${dlogs}/${reccol}.%J.%I.o"
+        nflog="${dlogs}/generax_perfam.%J.%I.log"
   
         subcmd="bsub -J \"${reccol}${arrayspec}\" -q ${bqueue} -R \"select[mem>${memmb}] rusage[mem=${memmb}] span[hosts=1]\" \
 		 -M ${memmb} -n ${ncpus} -o ${nflog} -e ${nflog} -env 'all' ${ptgscripts}/generax_perfam_array.bsub"

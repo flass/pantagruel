@@ -15,6 +15,7 @@ if ('-h' in dopt) or ('--help' in dopt):
 	sys.exit(0)
 
 gttag = '-Gtree.nwk'
+sttag = '-Stree.nwk'
 alitag = '.aln'
 
 dirali = dopt.get('-a', dopt.get('--alignments'))
@@ -38,7 +39,6 @@ lnfali = glob.glob('%s/*%s'%(dirali, alitag))
 
 for nfali in lnfali:
 	bnali = os.path.basename(nfali)
-#	dirgt = os.path.dirname(nfgt)
 	fam = bnali.split('.')[0]
 	bnrad = bnali.rsplit('.',1)[0]
 	if perfam:
