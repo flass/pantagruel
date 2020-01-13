@@ -41,7 +41,7 @@ for nfali in lnfali:
 #	dirgt = os.path.dirname(nfgt)
 	fam = bnali.rsplit('.')[0]
 	if perfam:
-		fout = open(os.path.join(dirout, "%s.generax_families"%fam))
+		fout = open(os.path.join(dirout, "%s.generax_families"%fam), 'w')
 		fout.write('[FAMILIES]\n')
 	if dirgt:
 		nfgt = glob.glob("%s/*%s*%s"%(dirgt, fam, gttag))
