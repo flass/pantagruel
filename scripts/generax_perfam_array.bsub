@@ -1,0 +1,22 @@
+#!/bin/bash
+
+
+
+if [ ${GeneRaxalgo} == 'reconciliation-samples' ] ; then
+  export rectype='recsampling'
+  generaxopt="--reconciliation-samples ${recsamplesize}"
+else
+  export rectype='pointestimate'
+fi
+export reccol="generax_${chaintype}_${rectype}_${reccolid}"
+export recs=${alerec}/${chaintype}_GenRax_recs
+
+gttorecdir=${coltreechains}/${collapsecond}/${replmethod}
+alelogs=${ptgdb}/logs/GeneRax
+mkdir -p $alelogs/${reccol}
+outrecdir=${recs}/${collapsecond}/${replmethod}/${reccol}
+mkdir -p ${outrecdir}
+
+#generaxcommonopt="-r UndatedDTL --max-spr-radius 5 --strategy SPR" # now a pipeline default
+
+mpirun -np ${ncpus} generax -r UndatedDTL --max-spr-radius 5 --strategy SPR -s ${speciestree}_clade_defs.nwk -f ${generaxfamfi} -p ${outrecdir} --reconciliation-samples 1000" > ${generaxscript}

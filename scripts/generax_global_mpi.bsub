@@ -1,0 +1,25 @@
+#!/bin/bash
+
+if [ -z ${generaxfamfi} ] ; then
+  generaxfamfi="${1}"
+  if [ -z ${generaxfamfi} ] ; then
+    echo "missing mandatory argument: generax famil file path (to pass either through env var \$generaxfamfi or as positional argument \$1); exit now"
+	exit 1
+  fi
+fi
+
+if [ ${GeneRaxalgo} == 'reconciliation-samples' ] ; then
+  export rectype='recsampling'
+  generaxopt="--reconciliation-samples ${recsamplesize}"
+else
+  export rectype='pointestimate'
+fi
+export reccol="generax_${chaintype}_${rectype}_${reccolid}"
+export recs=${alerec}/${chaintype}_GenRax_recs
+
+#generaxcommonopt="-r UndatedDTL --max-spr-radius 5 --strategy SPR" # now a pipeline default
+
+outrecdir=${recs}/${collapsecond}/${replmethod}/${reccol}
+mkdir -p ${outrecdir}/
+
+mpirun -np ${ncpus} generax ${generaxcommonopt} -s ${speciestree}_clade_defs.nwk -f ${generaxfamfi} -p ${outrecdir} --reconciliation-samples ${recsamplesize}

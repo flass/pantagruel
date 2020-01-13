@@ -59,7 +59,7 @@ mkdir -p ${outrecdir}
 
 cd ${ptgtmp} 
 
-generaxcommonopt="-r UndatedDTL --max-spr-radius 5 --strategy SPR"
+#generaxcommonopt="-r UndatedDTL --max-spr-radius 5 --strategy SPR" # now a pipeline default
 
 if [[ "${chaintype}" == 'fullgenetree' ]] ; then
   # use the same species tree file for every gene family, with no collapsed populations
@@ -68,7 +68,9 @@ if [[ "${chaintype}" == 'fullgenetree' ]] ; then
   # generate the family file i.e. job scheduling list
   generaxfamfi=${alerec}/${reccol}_generax.families
   python ${ptgscripts}/make_generax_family_file.py --alignments ${cdsalifastacodedir} --out ${generaxfamfi}
-  mpiexec -np ${ptgthreads} generax ${generaxcommonopt} -s ${spetree} -f ${generaxfamfi} -p ${outrecdir} ${generaxopt}
+  ${ptgscripts}/generax_global_mpi.bsub ${generaxfamfi}
+  bsub -q parallel -R "select[mem>${memmb}] rusage[mem=${memmb}] span[ptile=${ncpuperhost}]" -M ${memmb} -n ${ncpus} \
+   -o ${grlog} -e ${grlog} -env 'all' ${ptgscripts}/generax_global_mpi.bsub ${generaxfamfi}
 
 else
   # use a dedicated species tree file for each gene family, with population collapsed in accordance to the gene tree
