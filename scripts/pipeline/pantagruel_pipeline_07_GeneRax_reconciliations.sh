@@ -65,12 +65,12 @@ if [[ "${chaintype}" == 'fullgenetree' ]] ; then
   # use the same species tree file for every gene family, with no collapsed populations
   spetree=${speciestree}_clade_defs.nwk
   # this allows a single run of GeneRax, with built-in optimised load balance
-  # generate the family file i.e. job scheduling list
+  # generate a global family file i.e. job scheduling list and per-family parameter settings
   generaxfamfi=${alerec}/${reccol}_generax.families
   python ${ptgscripts}/make_generax_family_file.py --alignments ${cdsalifastacodedir} --out ${generaxfamfi}
   ${ptgscripts}/generax_global_mpi.bsub ${generaxfamfi}
-  bsub -q parallel -R "select[mem>${memmb}] rusage[mem=${memmb}] span[ptile=${ncpuperhost}]" -M ${memmb} -n ${ncpus} \
-   -o ${grlog} -e ${grlog} -env 'all' ${ptgscripts}/generax_global_mpi.bsub ${generaxfamfi}
+#  bsub -q parallel -R "select[mem>${memmb}] rusage[mem=${memmb}] span[ptile=${ncpuperhost}]" -M ${memmb} -n ${ncpus} \
+#   -o ${grlog} -e ${grlog} -env 'all' ${ptgscripts}/generax_global_mpi.bsub ${generaxfamfi}
 
 else
   # use a dedicated species tree file for each gene family, with population collapsed in accordance to the gene tree
@@ -87,4 +87,11 @@ else
       ls ${gttorecdir}/${fam}*-Gtree.nwk 2> /dev/null
     done > ${tasklist} 
   fi
+  
+  # generate a family file i.e. parameter settings for each gene family
+  generaxfamfidir=${alerec}/${reccol}_generax_families
+  mkdir -p ${generaxfamfidir}/
+  gttorecdir=${coltreechains}/${collapsecond}/${replmethod}
+  python ${ptgscripts}/make_generax_family_file.py --perfam --alignments ${gttorecdir} --gene-trees ${gttorecdir} --out ${generaxfamfidir}
+  
 fi

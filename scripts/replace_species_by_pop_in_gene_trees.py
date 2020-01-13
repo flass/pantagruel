@@ -740,7 +740,7 @@ def mapPop2GeneTree(nfingt, dircons, dirout, method, spetree, poptree, dspe2pop,
 			if len(stleaves)==1:
 				replaceCCwithLabel(cla, stleaves.pop(), fam, dold2newname, tag='CC')
 			elif len(stleaves)>1:
-				replaceCCwithSubtree(cla, list(stleaves), fam, dold2newname, lostpops=lostpopnames, speciestoprune=list(speciestoprune), dccmaxlen=dccmaxlen, tag='RC')
+				replaceCCwithSubtree(cla, list(stleaves), fam, dold2newname, lostpops=lostpopnames, speciestoprune=list(speciestoprune), dccmaxlen=dccmaxlen, tag='RC', flatRCs=flatRCs)
 			elif t < A:
 				raise ValueError, "at least one species should be selected"
 				
