@@ -3,21 +3,27 @@
 echo "This is job $LSB_JOBNAME, job_ID $LSB_JOBID (array_task_ID $LSB_JOBINDEX) on host $HOSTNAME, running on these workers: $LSB_MCPU_HOSTS"
 echo ""
 
-
-if [ ${GeneRaxalgo} == 'reconciliation-samples' ] ; then
-  export rectype='recsampling'
-  generaxopt="--reconciliation-samples ${recsamplesize}"
-else
-  export rectype='pointestimate'
+# load potential modules
+if [ ! -z "${modulefile}" ] ; then
+  source ${modulefile}
 fi
-export reccol="generax_${chaintype}_${rectype}_${reccolid}"
-export recs=${alerec}/${chaintype}_GenRax_recs
 
-alelogs=${ptgdb}/logs/GeneRax
-mkdir -p $alelogs/${reccol}
-outrecdir=${recs}/${collapsecond}/${replmethod}/${reccol}
-mkdir -p ${outrecdir}
+thisscript=$(readlink -f ${0})
+dirscript=$(dirname ${thisscript})
 
-#generaxcommonopt="-r UndatedDTL --max-spr-radius 5 --strategy SPR" # now a pipeline default
+### verify and parse key variable definition
+# tasklist
+echo "tasklist:"
+if [ -z "${tasklist}" ] ; then
+  echo "ERROR: need to define variable tasklist ; exit now"
+  exit 2
+else
+  ls ${tasklist}
+  if [ ${?} != 0 ] ; then
+    echo "ERROR: file '${tasklist}' is missing ; exit now"
+    exit 2
+  fi
+fi
+export generaxfamfi=`awk "NR==${LSB_JOBINDEX}" ${tasklist}`
 
-mpirun -np ${ncpus} generax -r UndatedDTL --max-spr-radius 5 --strategy SPR -s ${speciestree}_clade_defs.nwk -f ${generaxfamfi} -p ${outrecdir} --reconciliation-samples 1000" > ${generaxscript}
+${dirscript}/generax_perfam.sh ${generaxfamfi}
