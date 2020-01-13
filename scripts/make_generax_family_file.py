@@ -45,7 +45,7 @@ for nfali in lnfali:
 		fout = open(os.path.join(dirout, "%s.generax_families"%fam), 'w')
 		fout.write('[FAMILIES]\n')
 	if dirgt:
-		nfgt = glob.glob("%s/*%s*%s"%(dirgt, fam, gttag))
+		nfgt = glob.glob("%s/*%s*%s"%(dirgt, fam, gttag))[0]
 		bnmap = bnrad+'.link'
 		nfmap = os.path.join(dirgt, bnmap)
 		with open(nfmap, 'w') as fmap:
