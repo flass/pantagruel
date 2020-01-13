@@ -1,5 +1,8 @@
 #!/bin/bash
 
+echo "This is job $LSB_JOBNAME, job_ID $LSB_JOBID on host $HOSTNAME, running on these workers: $LSB_MCPU_HOSTS"
+echo ""
+
 if [ -z ${generaxfamfi} ] ; then
   generaxfamfi="${1}"
   if [ -z ${generaxfamfi} ] ; then

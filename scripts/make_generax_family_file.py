@@ -32,11 +32,9 @@ if not perfam:
 else:
 	dirout = nfout
 	if not os.path.isdir(dirout):
-		raise ValueError: "specified output directory '%s' does not exist / is not a directory / cannot be accessed"%dirout
+		raise ValueError, "specified output directory '%s' does not exist / is not a directory / cannot be accessed"%dirout
 
 lnfali = glob.glob('%s/*%s'%(dirali, alitag))
-
-	
 
 for nfali in lnfali:
 	bnali = os.path.basename(nfali)

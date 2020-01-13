@@ -1,5 +1,7 @@
 #!/bin/bash
 
+echo "This is job $LSB_JOBNAME, job_ID $LSB_JOBID (array_task_ID $LSB_JOBINDEX) on host $HOSTNAME, running on these workers: $LSB_MCPU_HOSTS"
+echo ""
 
 
 if [ ${GeneRaxalgo} == 'reconciliation-samples' ] ; then
@@ -11,7 +13,6 @@ fi
 export reccol="generax_${chaintype}_${rectype}_${reccolid}"
 export recs=${alerec}/${chaintype}_GenRax_recs
 
-gttorecdir=${coltreechains}/${collapsecond}/${replmethod}
 alelogs=${ptgdb}/logs/GeneRax
 mkdir -p $alelogs/${reccol}
 outrecdir=${recs}/${collapsecond}/${replmethod}/${reccol}

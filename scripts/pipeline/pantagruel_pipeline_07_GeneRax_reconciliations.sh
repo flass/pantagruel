@@ -44,16 +44,15 @@ fi
 # derived parameters
 if [ ${GeneRaxalgo} == 'reconciliation-samples' ] ; then
   export rectype='recsampling'
-  generaxopt="--reconciliation-samples ${recsamplesize}"
 else
   export rectype='pointestimate'
 fi
 export reccol="generax_${chaintype}_${rectype}_${reccolid}"
-export recs=${alerec}/${chaintype}_GenRax_recs
+export recs=${alerec}/${chaintype}_GeneRax_recs
 
 gttorecdir=${coltreechains}/${collapsecond}/${replmethod}
-alelogs=${ptgdb}/logs/GeneRax
-mkdir -p $alelogs/${reccol}
+grxlogs=${ptgdb}/logs/GeneRax
+mkdir -p $grxlogs/${reccol}
 outrecdir=${recs}/${collapsecond}/${replmethod}/${reccol}
 mkdir -p ${outrecdir}
 
@@ -62,6 +61,7 @@ cd ${ptgtmp}
 #generaxcommonopt="-r UndatedDTL --max-spr-radius 5 --strategy SPR" # now a pipeline default
 
 if [[ "${chaintype}" == 'fullgenetree' ]] ; then
+  grlog=${grxlogs}/generax_global_mpi.log
   # use the same species tree file for every gene family, with no collapsed populations
   spetree=${speciestree}_clade_defs.nwk
   # this allows a single run of GeneRax, with built-in optimised load balance
@@ -76,22 +76,22 @@ else
   # use a dedicated species tree file for each gene family, with population collapsed in accordance to the gene tree
   spetree='Stree.nwk'
   # this dictate that every family ned to be run independently, thus loosing the benefit of built-in optimised load balance
-  echo "Error: NOT SUPPORTED YET; exit now" ; exit 1
-  
-  tasklist=${alerec}/${collapsecond}_${replmethod}_Gtree_list
-  if [ -z ${genefamlist} ] ; then
-    ${ptgscripts}/lsfullpath.py "${gttorecdir}/*-Gtree.nwk" > ${tasklist}
-  else
-    rm -f ${tasklist}
-    for fam in $(cut -f1 ${genefamlist}) ; do
-      ls ${gttorecdir}/${fam}*-Gtree.nwk 2> /dev/null
-    done > ${tasklist} 
-  fi
   
   # generate a family file i.e. parameter settings for each gene family
   generaxfamfidir=${alerec}/${reccol}_generax_families
   mkdir -p ${generaxfamfidir}/
   gttorecdir=${coltreechains}/${collapsecond}/${replmethod}
   python ${ptgscripts}/make_generax_family_file.py --perfam --alignments ${gttorecdir} --gene-trees ${gttorecdir} --out ${generaxfamfidir}
+  
+  tasklist=${generaxfamfidir}_list
+  if [ -z ${genefamlist} ] ; then
+    ${ptgscripts}/lsfullpath.py "${gttorecdir}/*_generax.families" > ${tasklist}
+  else
+    rm -f ${tasklist}
+    for fam in $(cut -f1 ${genefamlist}) ; do
+      ls ${generaxfamfidir}/${fam}*_generax.families 2> /dev/null
+    done > ${tasklist} 
+  fi
+  
   
 fi
