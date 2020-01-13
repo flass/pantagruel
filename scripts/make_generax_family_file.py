@@ -39,13 +39,14 @@ lnfali = glob.glob('%s/*%s'%(dirali, alitag))
 for nfali in lnfali:
 	bnali = os.path.basename(nfali)
 #	dirgt = os.path.dirname(nfgt)
-	fam = bnali.rsplit('.')[0]
+	fam = bnali.split('.')[0]
+	bnrad = bnali.rsplit('.',1)[0]
 	if perfam:
 		fout = open(os.path.join(dirout, "%s.generax_families"%fam), 'w')
 		fout.write('[FAMILIES]\n')
 	if dirgt:
 		nfgt = glob.glob("%s/*%s*%s"%(dirgt, fam, gttag))
-		bnmap = bnrad2+'.link'
+		bnmap = bnrad+'.link'
 		nfmap = os.path.join(dirgt, bnmap)
 		with open(nfmap, 'w') as fmap:
 			# generate the mapping file
