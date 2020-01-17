@@ -311,7 +311,7 @@ fi
 ################################################################################
 
 mkdir -p ${ptgdb}/logs/replspebypop
-repltasklist=${coltreechains}_${collapsecond}_nexus_list
+repltasklist=${bayesgenetrees}_${collapsecond}_nexus_list
 ${ptgscripts}/lsfullpath.py "${bayesgenetrees}/${collapsecond}/${famprefix}*/*.mb.run1.t" > ${repltasklist}
 repllogd=${ptgdb}/logs/replspebypop
 repllogs=$repllogd/replace_species_by_pop_in_gene_trees
@@ -335,8 +335,8 @@ if [ "${resumetask}" == 'true' ] ; then
       fi
     fi
   done > ${repltasklist}_resume
-  if [ -s ${mbtasklist}_resume ] ; then
-    echo "Resume task 6, step 4: $(wc -l ${mbtasklist}_resume | cut -d' ' -f1) bayesian tree chains remain to be processed for format conversion and replacement of collapsed clades"
+  if [ -s ${repltasklist}_resume ] ; then
+    echo "Resume task 6, step 4: $(wc -l ${repltasklist}_resume | cut -d' ' -f1) bayesian tree chains remain to be processed for format conversion and replacement of collapsed clades"
   else
     echo "Resume task 6, step 4: all bayesian tree chains processed; skip format conversion and replacement of collapsed clades"
   fi
