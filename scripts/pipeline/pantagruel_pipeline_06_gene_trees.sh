@@ -311,6 +311,7 @@ fi
 ################################################################################
 
 mkdir -p ${ptgdb}/logs/replspebypop
+mkdir -p ${coltreechains}/${collapsecond}
 repltasklist=${bayesgenetrees}_${collapsecond}_nexus_list
 ${ptgscripts}/lsfullpath.py "${bayesgenetrees}/${collapsecond}/${famprefix}*/*.mb.run1.t" > ${repltasklist}
 repllogd=${ptgdb}/logs/replspebypop
@@ -352,6 +353,7 @@ if [ -z ${replacecolid} ] ; then
     replacecolid=1
   fi
 fi
+
 if [ -s ${repltasklist} ] ; then
  if [[ "${chaintype}" == 'fullgenetree' ]] ; then
   #### OPTION A2: 
@@ -363,13 +365,8 @@ if [ -s ${repltasklist} ] ; then
  else
   #### OPTION B2: collapsed rake clades in gene trees need to be replaced by mock population leaves
   #### will edit collapsed gene trees to attribute an (ancestral) species identity to the leafs representing collapsed clades = pre-reconciliation of recent gene history
-  if [ -z ${replacecolid} ] ; then
-   replacecolid=1
-  fi
-  mkdir -p ${coltreechains}/${collapsecond}
 
   ## edit the gene trees, producing the corresponding (potentially collapsed) species tree based on the 'time'-tree backbone
-
   # local parallel run
   python2.7 ${ptgscripts}/replace_species_by_pop_in_gene_trees.py -G ${repltasklist} -c ${colalinexuscodedir}/${collapsecond} -S ${speciestree}.lsd.nwk -o ${coltreechains}/${collapsecond} \
    --populations=${speciestree%.*}_populations --population_tree=${speciestree%.*}_collapsedPopulations.nwk --population_node_distance=${speciestree%.*}_interNodeDistPopulations \
