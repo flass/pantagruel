@@ -10,8 +10,7 @@ RUN apt-get update && apt-get install -y git build-essential cmake gcc g++ \
         cython mpi-default-bin mpi-default-dev mrbayes-mpi python-pip \
         openjdk-11-jdk openjdk-11-jre parallel libdw1 libdw-dev libgsl23 libgsl-dev \
         libxml2-dev libcurl4-openssl-dev locales linuxbrew-wrapper rsync \
-        libboost-dev libboost-serialization-dev libboost-mpi-dev \
-        libbpp-core-dev libbpp-phyl-dev libbpp-seq-dev libbpp-seq-omics-dev
+        flex bison libgmp3-dev
 
 RUN echo 'source("https://bioconductor.org/biocLite.R") ; biocLite("topGO") ; install.packages(c("phytools","pvclust"), repos="https://pbil.univ-lyon1.fr/CRAN/")' | R --vanilla
 
@@ -68,9 +67,9 @@ RUN pip install bcbio-gff bioscripts.convert
 RUN wget -O /usr/bin/lsd https://github.com/tothuhien/lsd-0.3beta/releases/download/v0.3.3/lsd_unix && \
     chmod +x /usr/bin/lsd
 
-# ALE
-RUN git clone https://github.com/ssolo/ALE && cd ALE && mkdir build && cd build && cmake .. && make \
-    && cp /ALE/build/bin/* /usr/bin/
+## ALE
+#RUN git clone https://github.com/ssolo/ALE && cd ALE && mkdir build && cd build && cmake .. && make \
+#    && cp /ALE/build/bin/* /usr/bin/
 
 #
 #COPY ./scripts /pantagruel/scripts
@@ -79,3 +78,5 @@ RUN git clone https://github.com/ssolo/ALE && cd ALE && mkdir build && cd build 
 #COPY ./.git /pantagruel/.git
 #ENV PATH="/pantagruel:/pantagruel/scripts:/pantagruel/scripts/pipeline:${PATH}"
 
+# GeneRax
+RUN git clone --recursive https://github.com/BenoitMorel/GeneRax && ./GeneRax/install.sh
