@@ -39,7 +39,7 @@ docker build -t pantagruel pantagruel_pipeline/pantagruel/pantagruel/etc
 This should create a Docker image that will be stored on your server. That's it!  
 Now, to run the pipeline, you will only need to call the pipeline through this container, by mounting the container where you the scripts are present on your machine:
 ```sh
-docker run -v $PWD:$PWD -w $PWD pantagruel pantagruel_pipeline/pantagruel/pantagruel
+docker run --user $USER -v $PWD:$PWD -w $PWD pantagruel pantagruel_pipeline/pantagruel/pantagruel
 ```
 
 You can even alias this command so it's less ugly and you just need to call `pantagruel`:
@@ -68,7 +68,7 @@ pantagruel_pipeline/pantagruel/install_dependencies.sh pantagruel_pipeline/ --no
 
 ### Checking ALE functions
 
-You may want to test that ALE commands work after installation (see [here](https://github.com/flass/pantagruel/blob/master/doc/installing_ALE.md#checking-it-works)), by typing the single commands `ALEml` and `ALEobserve` - preceeeded by `docker run -v $PWD:$PWD -w $PWD` if using the docker image.
+You may want to test that ALE commands work after installation (see [here](https://github.com/flass/pantagruel/blob/master/doc/installing_ALE.md#checking-it-works)), by typing the single commands `ALEml` and `ALEobserve` - preceeeded by `docker run --user $USER -v $PWD:$PWD -w $PWD` if using the docker image.
 
 
 ________
@@ -133,6 +133,15 @@ To compile ALE from source, Bio++ version >=2.2.0 is required. The version 2.4.1
 sudo apt install libbpp-core-dev libbpp-phyl-dev libbpp-seq-dev libbpp-seq-omics-dev
 ```
 Previous Ubuntu versions, such as 16.4 LTS (Xenial Xerius) have version 2.1.0, in which case Bio++ have to be compiled from source (much heavier, see [installing_ALE](https://github.com/flass/pantagruel/blob/master/doc/installing_ALE.md)).  
+
+#### Install GeneRax
+You need to follow the guidance from [GeneRax own repository](https://github.com/BenoitMorel/GeneRax#generax).  
+In short, you need to run the following commands:
+```sh
+sudo apt-get install flex bison libgmp3-dev
+git clone --recursive https://github.com/BenoitMorel/GeneRax
+./GeneRax/install.sh
+```
  
 ### Platform-independent software installation
 
