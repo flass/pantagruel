@@ -39,7 +39,7 @@ docker build -t pantagruel pantagruel_pipeline/pantagruel/pantagruel/etc
 This should create a Docker image that will be stored on your server. That's it!  
 Now, to run the pipeline, you will only need to call the pipeline through this container, by mounting the container where you the scripts are present on your machine:
 ```sh
-docker run -v $PWD:$PWD -w $PWD pantagruel pantagruel_pipeline/pantagruel/pantagruel
+docker run --user $USER -v $PWD:$PWD -w $PWD pantagruel pantagruel_pipeline/pantagruel/pantagruel
 ```
 
 You can even alias this command so it's less ugly and you just need to call `pantagruel`:
@@ -68,7 +68,7 @@ pantagruel_pipeline/pantagruel/install_dependencies.sh pantagruel_pipeline/ --no
 
 ### Checking ALE functions
 
-You may want to test that ALE commands work after installation (see [here](https://github.com/flass/pantagruel/blob/master/doc/installing_ALE.md#checking-it-works)), by typing the single commands `ALEml` and `ALEobserve` - preceeeded by `docker run -v $PWD:$PWD -w $PWD` if using the docker image.
+You may want to test that ALE commands work after installation (see [here](https://github.com/flass/pantagruel/blob/master/doc/installing_ALE.md#checking-it-works)), by typing the single commands `ALEml` and `ALEobserve` - preceeeded by `docker run --user $USER -v $PWD:$PWD -w $PWD` if using the docker image.
 
 
 ________
