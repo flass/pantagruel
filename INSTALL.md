@@ -33,18 +33,18 @@ sudo apt install docker.io
 Then, assuming you are still in the parent folder where you initially created the sub-folder `pantagruel_pipeline/`, run:
 
 ```sh
-docker build -t pantagruel pantagruel_pipeline/pantagruel/pantagruel/etc
+docker build -t panta pantagruel_pipeline/pantagruel/etc
 ```
 
-This should create a Docker image that will be stored on your server. That's it!  
+This should create a Docker image called `panta` that will be stored on your server. That's it!  
 Now, to run the pipeline, you will only need to call the pipeline through this container, by mounting the container where you the scripts are present on your machine:
 ```sh
-docker run --user $USER -v $PWD:$PWD -w $PWD pantagruel pantagruel_pipeline/pantagruel/pantagruel
+docker run --user $USER -v $PWD:$PWD -w $PWD panta pantagruel_pipeline/pantagruel/pantagruel
 ```
 
 You can even alias this command so it's less ugly and you just need to call `pantagruel`:
 ```sh
-alias pantagruel="docker run --user $USER -v $PWD:$PWD -w $PWD pantagruel pantagruel_pipeline/pantagruel/pantagruel"
+alias pantagruel="docker run --user $USER -v $PWD:$PWD -w $PWD panta pantagruel_pipeline/pantagruel/pantagruel"
 ```
 
 NB: task `04` for InterProScan functional annotation is **NOT included** in the docker image, as InterProScan is bulky and frequent relaeses require regular manual re-installation. It can however be installed manually *in complement* of the docker image.
