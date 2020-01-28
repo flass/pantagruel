@@ -33,7 +33,7 @@ sudo apt install docker.io
 Then, assuming you are still in the parent folder where you initially created the sub-folder `pantagruel_pipeline/`, run:
 
 ```sh
-docker build -t panta pantagruel_pipeline/pantagruel/pantagruel/etc
+docker build -t panta pantagruel_pipeline/pantagruel/etc
 ```
 
 This should create a Docker image called `panta` that will be stored on your server. That's it!  
