@@ -68,7 +68,7 @@ pantagruel_pipeline/pantagruel/install_dependencies.sh pantagruel_pipeline/ --no
 
 ### Checking ALE functions
 
-You may want to test that ALE commands work after installation (see [here](https://github.com/flass/pantagruel/blob/master/doc/installing_ALE.md#checking-it-works)), by typing the single commands `ALEml` and `ALEobserve` - preceeeded by `docker run --user $USER -v $PWD:$PWD -w $PWD` if using the docker image.
+You may want to test that ALE commands work after installation (see [here](https://github.com/flass/pantagruel/blob/master/doc/installing_ALE.md#checking-it-works)), by typing the single commands `ALEml` and `ALEobserve` - preceeeded by `docker run --user $USER -v $PWD:$PWD -w $PWD panta` if using the Pantagruel dependency docker image described above, or `docker run --user $USER -v $PWD:$PWD -w $PWD boussau/alesuite` if using the scripted install of Pantagruel and the Docker version of ALE.
 
 
 ________
