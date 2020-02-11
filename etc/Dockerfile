@@ -39,6 +39,9 @@ RUN cd /opt \
     && rm ${BLAST_ARCHIVE}
 ENV PATH=/opt/${BLAST_NAME}/bin:$PATH
 
+# prepare Homebrew
+RUN brew tap brewsci/bio && brew doctor
+
 # PROKKA
 RUN brew install brewsci/bio/prokka && prokka --setupdb
 
