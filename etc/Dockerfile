@@ -17,25 +17,21 @@ RUN apt-get update && apt-get install -y git build-essential cmake gcc g++ \
 RUN echo 'source("https://bioconductor.org/biocLite.R") ; biocLite("topGO") ; install.packages(c("phytools","pvclust"), repos="https://pbil.univ-lyon1.fr/CRAN/")' | R --vanilla
 
 # HOMEBREW
-RUN localedef -i en_US -f UTF-8 en_US.UTF-8 \
-   && useradd -m -s /bin/bash linuxbrew \
-   && echo 'linuxbrew ALL=(ALL) NOPASSWD:ALL' >>/etc/sudoers
-USER linuxbrew
-WORKDIR /home/linuxbrew
-ENV USER=linuxbrew \
-    PATH=/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:$PATH \
-    SHELL=/bin/bash
-RUN HOMEBREW_NO_ANALYTICS=1 HOMEBREW_NO_AUTO_UPDATE=1 brew tap brewsci/bio
-RUN HOMEBREW_NO_ANALYTICS=1 HOMEBREW_NO_AUTO_UPDATE=1 mkdir -p /home/linuxbrew/.linuxbrew/var/homebrew/linked && brew doctor
-USER root
-WORKDIR /
+#RUN localedef -i en_US -f UTF-8 en_US.UTF-8 \
+#   && useradd -m -s /bin/bash linuxbrew \
+#   && echo 'linuxbrew ALL=(ALL) NOPASSWD:ALL' >>/etc/sudoers
+#USER linuxbrew
+#WORKDIR /home/linuxbrew
+#ENV USER=linuxbrew \
+#    PATH=/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:$PATH \
+#    SHELL=/bin/bash
+#RUN HOMEBREW_NO_ANALYTICS=1 HOMEBREW_NO_AUTO_UPDATE=1 brew tap brewsci/bio
+#RUN HOMEBREW_NO_ANALYTICS=1 HOMEBREW_NO_AUTO_UPDATE=1 mkdir -p /home/linuxbrew/.linuxbrew/var/homebrew/linked && brew doctor
+#USER root
+#WORKDIR /
 
-RUN cpan -T Module::Build Bio::Perl
-RUN git clone https://github.com/tseemann/prokka.git && git checkout v1.14.5
-ENV PATH=/prokka/bin:${PATH}
 
-# BLAST+
-# to enforce use of version 2.9.0 (min requirement for Prokka is blast+ 2.8.0) as brew considers version 2.10 is older that 2.8 
+# BLAST+ >= 2.8 required by Prokka
 ARG BLAST_TAG=2.10.0
 ARG BLAST_NAME=ncbi-blast-${BLAST_TAG}+
 ARG BLAST_ARCHIVE=${BLAST_NAME}-x64-linux.tar.gz
@@ -48,16 +44,24 @@ ENV PATH=/opt/${BLAST_NAME}/bin:$PATH
 
 # PROKKA
 #RUN brew install brewsci/bio/prokka && prokka --setupdb
+RUN cpan -T Module::Build Bio::Perl
+RUN git clone https://github.com/tseemann/prokka.git && cd prokka && git checkout v1.14.5 && cd /
+ENV PATH=/prokka/bin:${PATH}
 RUN prokka --setupdb
 
 # MMSEQS
-RUN brew install mmseqs2
+#RUN brew install mmseqs2
+RUN git clone https://github.com/soedinglab/MMseqs2.git \
+    && mkdir -p MMseqs2/build && cd MMseqs2/build \
+    && cmake -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_INSTALL_PREFIX=. .. \
+    && make && make install
+ENV PATH=$(pwd)/bin/:$PATH
 
 #PAL2NAL
 RUN wget http://www.bork.embl.de/pal2nal/distribution/pal2nal.v14.tar.gz && \
-    tar -xzf pal2nal.v14.tar.gz && \
-    chmod +x /pal2nal.v14/pal2nal.pl && \
-    cp /pal2nal.v14/pal2nal.pl /usr/bin/
+    tar -xzf pal2nal.v14.tar.gz \
+    && chmod +x /pal2nal.v14/pal2nal.pl \
+    && cp /pal2nal.v14/pal2nal.pl /usr/bin/
 
 ##MAD
 #RUN wget https://www.mikrobio.uni-kiel.de/de/ag-dagan/ressourcen/mad2-2.zip && \
@@ -80,9 +84,6 @@ RUN git clone https://github.com/ssolo/ALE && cd ALE && mkdir build && cd build 
     && cp /ALE/build/bin/* /usr/bin/
 
 # make pantagruel executable and scripts avalable
-COPY ./scripts /pantagruel/scripts
-COPY ./python_libs /pantagruel/python_libs
-COPY ./pantagruel /pantagruel
-COPY ./.git /pantagruel/.git
+RUN git clone --recurse-submodules https://github.com/flass/pantagruel.git
 ENV PATH="/pantagruel:/pantagruel/scripts:/pantagruel/scripts/pipeline:${PATH}"
 
