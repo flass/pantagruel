@@ -23,7 +23,8 @@ USER linuxbrew
 WORKDIR /home/linuxbrew
 ENV PATH=/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:$PATH \
     SHELL=/bin/bash
-RUN HOMEBREW_NO_ANALYTICS=1 HOMEBREW_NO_AUTO_UPDATE=1 mkdir -p /home/linuxbrew/.linuxbrew/var/homebrew/linked && brew tap brewsci/bio && brew doctor
+RUN HOMEBREW_NO_ANALYTICS=1 HOMEBREW_NO_AUTO_UPDATE=1 brew tap brewsci/bio
+RUN HOMEBREW_NO_ANALYTICS=1 HOMEBREW_NO_AUTO_UPDATE=1 mkdir -p /home/linuxbrew/.linuxbrew/var/homebrew/linked && brew doctor
 USER root
 WORKDIR /
 
