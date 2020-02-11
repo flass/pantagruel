@@ -24,7 +24,7 @@ WORKDIR /home/linuxbrew
 ENV USER=linuxbrew \
     PATH=/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:$PATH \
     SHELL=/bin/bash
-RUN HOMEBREW_NO_ANALYTICS=1 HOMEBREW_NO_AUTO_UPDATE=1 brew tap brewsci/bio
+RUN HOMEBREW_NO_ANALYTICS=1 HOMEBREW_NO_AUTO_UPDATE=1 brew tap brewsci/bio && brew doctor
 USER root
 WORKDIR /
 
@@ -39,9 +39,6 @@ RUN cd /opt \
     && tar xzf ${BLAST_ARCHIVE} \
     && rm ${BLAST_ARCHIVE}
 ENV PATH=/opt/${BLAST_NAME}/bin:$PATH
-
-# prepare Homebrew
-RUN brew tap brewsci/bio && brew doctor
 
 # PROKKA
 RUN brew install brewsci/bio/prokka && prokka --setupdb
