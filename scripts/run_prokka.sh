@@ -69,6 +69,7 @@ prokkaopts="
  --kingdom Bacteria --gcode 11 ${paraopt}"
 echo "#call: prokka $prokkaopts ${allcontigs}"
 prokka $prokkaopts ${allcontigs}
+prokkaexit=${?}
 date
 
 # revert to the original 'Genus' database
@@ -82,3 +83,8 @@ for dbfile in $(ls ${prokkablastdb}/${genus} ${prokkablastdb}/${genus}.*) ; do
     mv -f ${dbfile/${genus}/${genus}_bak} ${dbfile}
   fi
 done
+
+if [ ${prokkaexit} -gt 0 ] ; then 
+  echo "error during prokka run; see logs in $(ls ${outdir}/*.log)"
+  exit ${prokkaexit}
+fi
