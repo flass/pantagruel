@@ -36,7 +36,7 @@ RUN cpan -T Module::Build Bio::Perl
 # PYTHON libs
 RUN pip install bcbio-gff bioscripts.convert
 
-# BLAST+ >= 2.8 required by Prokka
+# BLAST+ v2.10.0 ( >= 2.8 required by Prokka)
 ARG BLAST_TAG=2.10.0
 ARG BLAST_NAME=ncbi-blast-${BLAST_TAG}+
 ARG BLAST_ARCHIVE=${BLAST_NAME}-x64-linux.tar.gz
@@ -46,14 +46,15 @@ RUN cd /opt \
     && tar xzf ${BLAST_ARCHIVE} \
     && rm ${BLAST_ARCHIVE}
 
-# PROKKA
+# PROKKA v1.14.5
 #RUN brew install brewsci/bio/prokka && prokka --setupdb
-RUN cd / && git clone https://github.com/tseemann/prokka.git && cd prokka && git checkout v1.14.5
+RUN cd / && git clone https://github.com/tseemann/prokka.git \
+    && cd prokka && git checkout v1.14.5
 
-# MMSEQS
+# MMSEQS v10
 #RUN brew install mmseqs2
 RUN cd / && git clone https://github.com/soedinglab/MMseqs2.git \
-    && cd MMseqs2/ && git checkout 10-6d92c mkdir build && cd build \
+    && cd MMseqs2/ && git checkout 10-6d92c && mkdir build && cd build \
     && cmake -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_INSTALL_PREFIX=. .. \
     && make && make install
 
@@ -75,8 +76,8 @@ RUN wget -O /usr/bin/lsd https://github.com/tothuhien/lsd-0.3beta/releases/downl
 
 # ALE
 RUN cd / && git clone https://github.com/ssolo/ALE \
-    && cd ALE && mkdir build \
-    && cd build && cmake .. && make
+    && cd ALE && mkdir build && cd build \
+    && cmake .. && make
 
 # make pantagruel executable and scripts avalable
 RUN cd / && git clone --recurse-submodules https://github.com/flass/pantagruel.git
