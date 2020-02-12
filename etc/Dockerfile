@@ -46,10 +46,16 @@ RUN cd /opt \
     && tar xzf ${BLAST_ARCHIVE} \
     && rm ${BLAST_ARCHIVE}
 
+# add relevant locations to the PATH
+ENV PATH="/pantagruel:/pantagruel/scripts:/pantagruel/scripts/pipeline:/opt/${BLAST_NAME}/bin:/MMseqs2/build/bin:/prokka/bin:/ALE/build/bin:/pal2nal.v14:/mad:${PATH}"
+ENV PYTHONPATH="/pantagruel/python_libs:${PYTHONPATH}"
+
 # PROKKA v1.14.5
 #RUN brew install brewsci/bio/prokka && prokka --setupdb
 RUN cd / && git clone https://github.com/tseemann/prokka.git \
     && cd prokka && git checkout v1.14.5
+# set up Prokka
+RUN prokka --setupdb
 
 # MMSEQS v10
 #RUN brew install mmseqs2
@@ -81,9 +87,3 @@ RUN cd / && git clone https://github.com/ssolo/ALE \
 
 # make pantagruel executable and scripts avalable
 RUN cd / && git clone --recurse-submodules https://github.com/flass/pantagruel.git
-
-# add relevant locations to the PATH
-ENV PATH="/pantagruel:/pantagruel/scripts:/pantagruel/scripts/pipeline:/opt/${BLAST_NAME}/bin:/MMseqs2/build/bin:/prokka/bin:/ALE/build/bin:/pal2nal.v14:/mad:${PATH}"
-
-# set up Prokka
-RUN prokka --setupdb
