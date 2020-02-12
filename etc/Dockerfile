@@ -30,6 +30,11 @@ RUN echo 'source("https://bioconductor.org/biocLite.R") ; biocLite("topGO") ; in
 #USER root
 #WORKDIR /
 
+# PERL modules
+RUN cpan -T Module::Build Bio::Perl
+
+# PYTHON libs
+RUN pip install bcbio-gff bioscripts.convert
 
 # BLAST+ >= 2.8 required by Prokka
 ARG BLAST_TAG=2.10.0
@@ -40,50 +45,44 @@ RUN cd /opt \
     && wget ${BLAST_URL} --progress=dot:giga \
     && tar xzf ${BLAST_ARCHIVE} \
     && rm ${BLAST_ARCHIVE}
-ENV PATH=/opt/${BLAST_NAME}/bin:$PATH
 
 # PROKKA
 #RUN brew install brewsci/bio/prokka && prokka --setupdb
-RUN cpan -T Module::Build Bio::Perl
-RUN git clone https://github.com/tseemann/prokka.git && cd prokka && git checkout v1.14.5 && cd /
-ENV PATH=/prokka/bin:${PATH}
-RUN prokka --setupdb
+RUN cd / && git clone https://github.com/tseemann/prokka.git && cd prokka && git checkout v1.14.5
 
 # MMSEQS
 #RUN brew install mmseqs2
-RUN git clone https://github.com/soedinglab/MMseqs2.git \
-    && mkdir -p MMseqs2/build && cd MMseqs2/build \
+RUN cd / && git clone https://github.com/soedinglab/MMseqs2.git \
+    && cd MMseqs2/ && git checkout 10-6d92c mkdir build && cd build \
     && cmake -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_INSTALL_PREFIX=. .. \
     && make && make install
-ENV PATH=$(pwd)/bin/:$PATH
 
 #PAL2NAL
-RUN wget http://www.bork.embl.de/pal2nal/distribution/pal2nal.v14.tar.gz && \
-    tar -xzf pal2nal.v14.tar.gz \
-    && chmod +x /pal2nal.v14/pal2nal.pl \
-    && cp /pal2nal.v14/pal2nal.pl /usr/bin/
+RUN cd / && wget http://www.bork.embl.de/pal2nal/distribution/pal2nal.v14.tar.gz \
+    && tar -xzf pal2nal.v14.tar.gz \
+    && chmod +x /pal2nal.v14/pal2nal.pl
 
-##MAD
-#RUN wget https://www.mikrobio.uni-kiel.de/de/ag-dagan/ressourcen/mad2-2.zip && \
-#    unzip ${SOFTWARE}/mad2-2.zip && \
-#    chmod +x ${SOFTWARE}/mad/mad && \
-#    ln -s ${SOFTWARE}/mad/mad /usr/bin/
-
-# PYTHON libs
-RUN pip install bcbio-gff bioscripts.convert
+#MAD
+RUN wget https://www.mikrobio.uni-kiel.de/de/ag-dagan/ressourcen/mad2-2.zip \
+    && unzip mad2-2.zip && chmod +x /mad/mad
 
 #INTERPROSCAN
 #RUN (cd /usr/local && wget -O interproscan-5.35-74.0-64-bit.tar.gz ftp://ftp.ebi.ac.uk/pub/software/unix/iprscan/5/5.35-74.0/interproscan-5.35-74.0-64-bit.tar.gz)
 
 # LSD
-RUN wget -O /usr/bin/lsd https://github.com/tothuhien/lsd-0.3beta/releases/download/v0.3.3/lsd_unix && \
-    chmod +x /usr/bin/lsd
+RUN wget -O /usr/bin/lsd https://github.com/tothuhien/lsd-0.3beta/releases/download/v0.3.3/lsd_unix \
+    && chmod +x /usr/bin/lsd
 
 # ALE
-RUN git clone https://github.com/ssolo/ALE && cd ALE && mkdir build && cd build && cmake .. && make \
-    && cp /ALE/build/bin/* /usr/bin/
+RUN cd / && git clone https://github.com/ssolo/ALE \
+    && cd ALE && mkdir build \
+    && cd build && cmake .. && make
 
 # make pantagruel executable and scripts avalable
-RUN git clone --recurse-submodules https://github.com/flass/pantagruel.git
-ENV PATH="/pantagruel:/pantagruel/scripts:/pantagruel/scripts/pipeline:${PATH}"
+RUN cd / && git clone --recurse-submodules https://github.com/flass/pantagruel.git
 
+# add relevant locations to the PATH
+ENV PATH="/pantagruel:/pantagruel/scripts:/pantagruel/scripts/pipeline:/opt/${BLAST_NAME}/bin:/MMseqs2/build/bin:/prokka/bin:/ALE/build/bin:/pal2nal.v14:/mad:${PATH}"
+
+# set up Prokka
+RUN prokka --setupdb
