@@ -1,12 +1,16 @@
 #!/bin/bash
-cwd=${1}	
-ptgrepo=${2}							  
-ptgroot=${3}							  
-ptgdbname=${3}							  
-[ -z ${cwd} ] && cwd=${PWD}									# working directory, defaults to current folder
-[ -z ${ptgrepo} ] && ptgrepo="${cwd}/software/pantagruel"	# pantagruel git repository folder, defaults to ./software/pantagruel
-[ -z ${ptgroot} ] && ptgroot="${cwd}/pantagruel_databases"	# target folder for new database, defaults to ./pantagruel_databases
-[ -z ${ptgdbname} ] && ptgdbname="testPTGdatabase"			# name for new database, defaults to 'testPTGdatabase', which will trigger test of software
+cwd=${1}
+ptgroot=${2}
+ptgdbname=${3}
+dockerimage=${4}
+ptgrepo=${5}
+[ -z ${cwd} ] && cwd=${PWD}									# working directory; defaults to current folder
+[ -z ${ptgroot} ] && ptgroot="${cwd}/pantagruel_databases"	# target folder for new database; defaults to ./pantagruel_databases
+[ -z ${ptgdbname} ] && ptgdbname="testPTGdatabase"			# name for new database;
+#															  defaults to 'testPTGdatabase', which will trigger test of software
+[ -z ${dockerimage} ] && dockerimage="panta"				# name of the docker image to use; defaults to 'panta'
+[ -z ${ptgrepo} ] && ptgrepo="/pantagruel"					# pantagruel git repository folder containing the pantagruel executables and scripts; 
+#															  defaults to the docker image's built-in repo in /pantagruel
 
 ptgexe="${ptgrepo}/pantagruel"
 ptgdbconfig="${ptgroot}/${ptgdbname}/environ_pantagruel_${ptgdbname}.sh"
@@ -22,10 +26,9 @@ else
   initargs="${@}"  # all trailing script arguments
 fi
 
-dockerrunptg="docker run --user $USER -v $cwd:$cwd -w $cwd pantagruel"
+dockerrunptg="docker run --user ${USER} -v ${cwd}:${cwd} -w ${cwd} ${dockerimage}"
 
 ${dockerrunptg} ${ptgexe} -r ${ptgroot} -d ${ptgdbname} ${initargs} init
-cd ${ptgrepo}/ && git pull && git submodule update && cd -
 ${dockerrunptg} ${ptgexe} -i ${ptgdbconfig} --refresh ${refreshargs} init
 ${dockerrunptg} ${ptgexe} -i ${ptgdbconfig} 00
 ${dockerrunptg} ${ptgexe} -i ${ptgdbconfig} 01
