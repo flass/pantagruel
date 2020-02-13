@@ -33,7 +33,7 @@ mkdir -p ${outdir}
 
 
 prokkablastdb=$(dirname $(dirname $(readlink -f `which prokka` | awk '{ print $NF }')))/db/genus
-export BLASTDB="/:${prokkablastdb}:${BLASTDB}"
+#export BLASTDB="/:${prokkablastdb}:${BLASTDB}" # unnecessary when using Blast+ 2.8.1, and not enough to fix issue with Blast+ 2.10.0
 
 if [ -e ${prokkablastdb}/${refgenus} ] ; then
  usegenus="--usegenus"
