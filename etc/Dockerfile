@@ -37,7 +37,7 @@ RUN cpan -T Module::Build Bio::Perl
 RUN pip install bcbio-gff bioscripts.convert
 
 # BLAST+ v2.8.1 ( >= 2.8 required by Prokka)
-ARG BLAST_TAG=2.10.0
+ARG BLAST_TAG=2.8.1
 ARG BLAST_NAME=ncbi-blast-${BLAST_TAG}+
 ARG BLAST_ARCHIVE=${BLAST_NAME}-x64-linux.tar.gz
 ARG BLAST_URL=ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/${BLAST_TAG}/${BLAST_ARCHIVE}
