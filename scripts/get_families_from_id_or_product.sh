@@ -9,6 +9,8 @@ for fam in $(cut -f1 ${genefamlist} | sed -e 's/ /=^+^=/g') ; do
   else
     # anything else, assume its a gene product description
 	prod="$(echo ${fam} | sed -e 's/=^+^=/ /g' | sed -e "s/'/\'/g")"
-	sqlite3 ${sqldb} "select distinct gene_family_id from coding_sequences inner join proteins using (nr_protein_id) where product like '%${fam}%';"
+	sqlite3 ${sqldb} "select distinct gene_family_id from coding_sequences inner join proteins using (nr_protein_id) where product like '%${fam}%';" | while read selfam ; do
+	  grep ${selfam} ${allfamlist}
+	done
   fi
 done
