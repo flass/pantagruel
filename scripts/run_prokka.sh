@@ -33,6 +33,7 @@ mkdir -p ${outdir}
 
 
 prokkablastdb=$(dirname $(dirname $(readlink -f `which prokka` | awk '{ print $NF }')))/db/genus
+export BLASTDB="/:${prokkablastdb}:${BLASTDB}"
 
 if [ -e ${prokkablastdb}/${refgenus} ] ; then
  usegenus="--usegenus"
