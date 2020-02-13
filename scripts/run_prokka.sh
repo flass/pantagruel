@@ -93,7 +93,7 @@ if [ ${prokkaexit} -gt 0 ] ; then
   echo "error during prokka run; see logs in $(ls ${outdir}/*.log)"
   echo "DEBUG: try running the last command caled by Prokka, but keeping the STDERR:"
   failedcmd=$(grep "Could not run command: " ${outdir}/*.log | sed -e 's#\[.\+\] Could not run command: \(.\+\) 2> /dev/null#\1#')
-  echo "# $(failedcmd)"
-  eval "$(failedcmd)"
+  echo "# ${failedcmd}"
+  eval "${failedcmd}"
   exit ${prokkaexit}
 fi
