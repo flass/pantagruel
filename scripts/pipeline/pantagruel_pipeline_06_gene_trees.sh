@@ -107,9 +107,7 @@ else
   fi
   bngenefamlist=$(basename ${genefamlist})
   famlist=${genetrees}/${bngenefamlist}_cdsfams_minsize4
-  for fam in $(cut -f1 ${genefamlist}) ; do
-    grep ${fam} ${allfamlist}
-  done > ${famlist}
+  ${ptgscripts}/get_families_from_id_or_product.sh ${genefamlist} ${allfamlist} > ${famlist}
   nrestrfam=$(wc -l $famlist)
   checkexec "could not generate restricted gene family list ; exit now" "succesfully generated restricted gene family lists :\n$famlist (containing $(echo $nrestrfam | cut -d' ' -f1) gene families)"
 fi
