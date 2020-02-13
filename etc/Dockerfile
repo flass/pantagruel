@@ -86,4 +86,7 @@ RUN cd / && git clone https://github.com/ssolo/ALE \
     && cmake .. && make
 
 # make pantagruel executable and scripts avalable
-RUN cd / && git clone --recurse-submodules https://github.com/flass/pantagruel.git
+# last echo command is a dummy one that can be edited so that build is resumed at this stage
+RUN cd / && git clone --recurse-submodules https://github.com/flass/pantagruel.git \
+    && cd pantagruel && echo "included pantagruel version: $(git log | head -n 1 | awk '{ print $2 }')" \
+	&& echo "Dockerfile last edited on 2020-02-13"
