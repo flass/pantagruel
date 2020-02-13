@@ -85,6 +85,10 @@ RUN cd / && git clone https://github.com/ssolo/ALE \
     && cd ALE && mkdir build && cd build \
     && cmake .. && make
 
+# tbl2asn (Prokka dependency)
+RUN cd / && wget ftp://ftp.ncbi.nih.gov/toolbox/ncbi_tools/converters/by_program/tbl2asn/linux64.tbl2asn.gz \
+    && gzip -d linux64.tbl2asn.gz && chmod +x linux64.tbl2asn && mv -f linux64.tbl2asn /usr/bin/tbl2asn
+
 # make pantagruel executable and scripts avalable
 # last echo command is a dummy one that can be edited so that build is resumed at this stage
 RUN cd / && git clone --recurse-submodules https://github.com/flass/pantagruel.git \
