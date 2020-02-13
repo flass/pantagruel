@@ -8,10 +8,9 @@ if [ -z $seqcentre ] ; then
   $seqcentre='XXX' 
 fi
 
-prokkablastdb=$(dirname $(dirname $(readlink -f `which prokka` | awk '{ print $NF }')))/db/genus
-
 echo "### assembly: $gproject; contig files from: ${allcontigs}/"
 head -n1 $refstrains
+
 taxo=($(grep -P "^${gproject}\t" ${refstrains} | sed -e 's/ /@#=/g')) # escapes the whitespaces
 # restores the whitespaces or replace them with underscores when deemsd unsafe
 genus="$(echo ${taxo[1]} | sed -e 's/@#=/ /g')"
@@ -31,28 +30,34 @@ if [[ -z "${genus}" || -z "${species}" || -z "${strain}" || -z "${taxid}" || -z 
   exit 1
 fi
 mkdir -p ${outdir}
+
+
+prokkablastdb=$(dirname $(dirname $(readlink -f `which prokka` | awk '{ print $NF }')))/db/genus
+
 if [ -e ${prokkablastdb}/${refgenus} ] ; then
  usegenus="--usegenus"
- echo "will use ${prokkablastdb}/${refgenus} protein database for BLAST-based annotation"
+ echo "will use '${prokkablastdb}/${refgenus}' protein database for BLAST-based annotation"
  if [[ "${refgenus}" != "${genus}" ]] ; then
    # refgenus value is 'Reference', or different genus than that of the focal genome (hereafter 'Genus')
    if [[ -e ${prokkablastdb}/${genus} ]] ; then
      # substitute the 'Reference' files to the 'Genus' files for the time of this annotation
-     echo "temporarily move the resident genus database '${prokkablastdb}/${genus}' to '${prokkablastdb}/${genus}_bak' to substitute it with '${prokkablastdb}/${refgenus}'"
+     echo "temporarily move the resident genus database '${prokkablastdb}/${genus}' to '${prokkablastdb}/${genus}_bak' to substitute it with '${prokkablastdb}/${refgenus}' and make links:"
      for gdbfile in $(ls ${prokkablastdb}/${genus} ${prokkablastdb}/${genus}.*) ; do
        mv -f ${gdbfile} ${gdbfile/${genus}/${genus}_bak}
-       ln -s ${prokkablastdb}/$(basename ${gdbfile/${genus}/${refgenus}}) ${gdbfile}
+	   refdbfile=${prokkablastdb}/$(basename ${gdbfile/${genus}/${refgenus}})
+       ln -s ${refdbfile} ${gdbfile}
+       ls -l ${gdbfile}
      done
    else
      # substitute the 'Reference' files to the 'Genus' files for the time of this annotation
-     echo "temporarily link the reference database '${prokkablastdb}/${refgenus}' to '${prokkablastdb}/${refgenus}' for detection by Prokka"
+     echo "temporarily link the reference database '${prokkablastdb}/${refgenus}' to '${prokkablastdb}/${genus}' for detection by Prokka:"
      for refdbfile in $(ls ${prokkablastdb}/${refgenus} ${prokkablastdb}/${refgenus}.*) ; do
-       ln -s ${refdbfile} ${prokkablastdb}/$(basename ${refdbfile/${refgenus}/${genus}})
+       gdbfile=${prokkablastdb}/$(basename ${refdbfile/${refgenus}/${genus}})
+	   ln -s ${refdbfile} ${gdbfile}
+	   ls -l ${gdbfile}
      done
    fi
  fi
- echo "made links:"
- ls -l ${gdbfile} ${gdbfile}.*
 elif [ -e ${prokkablastdb}/${genus} ] ; then
  usegenus="--usegenus"
 fi
@@ -86,5 +91,9 @@ done
 
 if [ ${prokkaexit} -gt 0 ] ; then 
   echo "error during prokka run; see logs in $(ls ${outdir}/*.log)"
+  echo "DEBUG: try running the last command caled by Prokka, but keeping the STDERR:"
+  failedcmd=$(grep "Could not run command: " ${outdir}/*.log | sed -e 's#\[.\+\] Could not run command: \(.\+\) 2> /dev/null#\1#')
+  echo "# $(failedcmd)"
+  eval "$(failedcmd)"
   exit ${prokkaexit}
 fi
