@@ -2,7 +2,7 @@
 
 ## Installing the Pantagruel scripts
 
-Pantagruel pipeline is "just" a bunch of scripts. What you simply need to do is to downlaod them, that's about it. Here is how:
+Pantagruel pipeline is 'just' a bunch of scripts. What you simply need to do is to download them, that's about it. Here is how:
 
 Under a Debian environment (e.g. Ubuntu), you can automatically install all dependencies using the script [install_dependencies.sh](https://github.com/flass/pantagruel/blob/master/install_dependencies.sh), following the indications below:  
 
@@ -66,18 +66,12 @@ may want not to install automatically all Debian packages (some could mess up wi
 pantagruel_pipeline/pantagruel/install_dependencies.sh pantagruel_pipeline/ --no-debian --no-interpro --no-brew --no-docker
 ```
 
-### Checking ALE functions
-
-You may want to test that ALE commands work after installation (see [here](https://github.com/flass/pantagruel/blob/master/doc/installing_ALE.md#checking-it-works)), by typing the single commands `ALEml` and `ALEobserve` - preceeeded by `docker run --user $USER -v $PWD:$PWD -w $PWD panta` if using the Pantagruel dependency docker image described above, or `docker run --user $USER -v $PWD:$PWD -w $PWD boussau/alesuite` if using the scripted install of Pantagruel and the Docker version of ALE.
-
-
 ________
 
 ## The details if you are picky
 
 If you are using a Debian environment but don't want to run the install script all at once (you may have your own reasons), here is a summary of what it does, so you can manually install each piece of software at your own discretion.  
 These indications would also stand for installation on another type of Linux/Unix OS (e.g. Redhat, MacOS), but you would have to adapt the first part (using `apt` to install system packages on a Debian OS) to the relevant system (e.g. for a Red Hat OS, using `yum` instead of `apt`, and finding the matching packages).  
-A special note clarifying deferent scenarios to install ALE can be found [here](https://github.com/flass/pantagruel/blob/master/doc/installing_ALE.md).
 
 ### Platform-dependent software installation: using Debian system packages
 
@@ -112,27 +106,6 @@ sudo apt install python python-scipy python-numpy python-biopython python-biopyt
 ```sh
 sudo apt install mpi-default-bin mpi-default-dev mrbayes-mpi
 ```
-
-Regarding the installation of ALE, you may need to install either the Docker daemon, or the Boost and Bio++ C++ libraries (see [installing_ALE](https://github.com/flass/pantagruel/blob/master/doc/installing_ALE.md)).
-
-#### Install Docker:
-```sh
-sudo apt install docker.io
-sudo groupadd docker
-sudo usermod -aG docker $USER
-sudo newgrp docker
-```
-#### Install Boost libraries
-This is more cumbersome, but safer when installing this software on a computer that has other functions, especially on  al large production server. See [ALE's own installation page](https://github.com/ssolo/ALE/blob/master/INSTALL.md) for more details and updates.
-```sh
-sudo apt install libboost-dev libboost-serialization-dev libboost-mpi-dev
-```
-#### Install Bio++ libraries 
-To compile ALE from source, Bio++ version >=2.2.0 is required. The version 2.4.1 can be found as a Debian package on Ubuntu 18.4 LTS (Bionic Beaver).  
-```sh
-sudo apt install libbpp-core-dev libbpp-phyl-dev libbpp-seq-dev libbpp-seq-omics-dev
-```
-Previous Ubuntu versions, such as 16.4 LTS (Xenial Xerius) have version 2.1.0, in which case Bio++ have to be compiled from source (much heavier, see [installing_ALE](https://github.com/flass/pantagruel/blob/master/doc/installing_ALE.md)).  
 
 #### Install GeneRax
 You need to follow the guidance from [GeneRax own repository](https://github.com/BenoitMorel/GeneRax#generax).  
@@ -207,19 +180,6 @@ sudo -H pip install bcbio-gff
 sudo -H pip install bioscripts.convert
 ```
 
-#### Using Docker to install ALE
-This is recommended for use within a virtual machine with no other function.
-It is however to avoid on a server or desktop due to the need to grant root-equivalent right to main user which leads to significant security breach exposure.
-
-```sh
-docker pull boussau/alesuite
-```
-Then set the following command aliases (add these lines to your .bashrc file for them to last beyond the current session):
-```sh
-alias ALEobserve="docker run -v $PWD:$PWD -w $PWD boussau/alesuite ALEobserve"
-alias ALEml="docker run -v $PWD:$PWD -w $PWD boussau/alesuite ALEml"
-alias ALEml_undated="docker run -v $PWD:$PWD -w $PWD boussau/alesuite ALEml_undated"
-```
 ______________________________________________
 
 ## List of software dependencies
@@ -254,8 +214,8 @@ If you feel like installing the depedencies your own way without following the a
 - **LSD** for species tree rooting  
   ([source code](http://www.atgc-montpellier.fr/LSD/))
   
-- **ALE/xODT** for gene tree / species tree reconciliation  
-  (Install from [source code](https://github.com/ssolo/ALE); version used and recommended: 0.4; notably depends on [Bio++ libs](https://github.com/BioPP) (v2.2.0+))
+- **GeneRax** for gene tree / species tree reconciliation  
+  (Install from [source code](https://github.com/BenoitMorel/GeneRax); version used and recommended: 1.0.0)
   
 ### Required code libraries
 - **R** (version 3, >=3.2.3 recommended) + packages:
