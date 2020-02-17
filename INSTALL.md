@@ -2,7 +2,7 @@
 
 ## Installing the Pantagruel scripts
 
-Pantagruel pipeline is "just" a bunch of scripts. What you simply need to do is to download them, that's about it. Here is how:
+Pantagruel pipeline is 'just' a bunch of scripts. What you simply need to do is to download them, that's about it. Here is how:
 
 Under a Debian environment (e.g. Ubuntu), you can automatically install all dependencies using the script [install_dependencies.sh](https://github.com/flass/pantagruel/blob/master/install_dependencies.sh), following the indications below:  
 
@@ -69,7 +69,6 @@ After cloning the `pantagruel` code repository, you may run the installation scr
 !!! Note that for this step, you (i.e. your linux user) need to have the sudo rights (be part of the sudo group, check with `grep sudo /etc/group`); however, DO NOT execute the installtion script with `sudo` (which would make all software owned by the root user).  
 Assuming you are still in the parent folder where you initially created the sub-folder `pantagruel_pipeline/`, run:
 ```sh
-# 
 pantagruel_pipeline/pantagruel/install_dependencies.sh pantagruel_pipeline/
 ```
 This will download and build all dependencies in the `pantagruel_pipeline/` folder.
