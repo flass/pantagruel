@@ -49,12 +49,13 @@ alias pantagruel="docker run --user $USER -v $PWD:$PWD -w $PWD panta pantagruel_
 
 NB: task `04` for InterProScan functional annotation is **NOT included** in the docker image, as InterProScan is bulky and frequent relaeses require regular manual re-installation. It can however be installed manually *in complement* of the docker image.
 
-### The scripted, fairly easy way
-Finally, you may run the installation script:  
-!!! Note that for this step, you (i.e. your linux user) need to have the sudo rights (be part of the sudo group, check with `grep sudo /etc/group`); however, DO NOT execute the installtion script with `sudo` (which would make all software owned by the root user).  
+### The scripted, fairly easy way  
+
+Finally, assuming you are still in the parent folder where you initially created the sub-folder `pantagruel_pipeline/`, you may run the installation script:  
 ```sh
 pantagruel_pipeline/pantagruel/install_dependencies.sh pantagruel_pipeline/
 ```  
+!!! Note that for this step, you (i.e. your linux user) need to have the sudo rights (be part of the sudo group, check with `grep sudo /etc/group`); however, DO NOT execute the installtion script with `sudo` (which would make all software owned by the `root` user).  
 
 Optionally, you can also specify the folder where relevant executable files, including the main `pantagruel` executable, will be linked (it defaults to `~/bin/`, i.e. is user-specific). The path to this folder will be permatnently added to your path (via editing your ~/.bashrc).  
 ```sh
@@ -203,10 +204,6 @@ If you feel like installing the depedencies your own way without following the a
 - **RAxML** for species tree and initial (full) gene tree estimation  
   (Install from [source code](https://github.com/stamatak/standard-RAxML) or as Debian package *raxml*; version used and recommended: 8.2.9)  
   - \[ future development: consider using RAxML-NG (Install from [source code](https://github.com/amkozlov/raxml-ng)) \]
-
-- **MrBayes** for secondary estimation of (collapsed) gene trees  
-  (Install from [source code](http://mrbayes.sourceforge.net/) or as Debian packages *mrbayes* and *mrbayes-mpi*; version used and recommended: 3.2.6)  
-  - \[ future development: consider using [RevBayes](http://revbayes.github.io/) \]
 
 - **MAD** for species tree rooting  
   ([R source code](https://www.mikrobio.uni-kiel.de/de/ag-dagan/ressourcen/mad2-2.zip))
