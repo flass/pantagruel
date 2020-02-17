@@ -2,7 +2,7 @@
 
 ## Installing the Pantagruel scripts
 
-Pantagruel pipeline is "just" a bunch of scripts. What you simply need to do is to downlaod them, that's about it. Here is how:
+Pantagruel pipeline is "just" a bunch of scripts. What you simply need to do is to download them, that's about it. Here is how:
 
 Under a Debian environment (e.g. Ubuntu), you can automatically install all dependencies using the script [install_dependencies.sh](https://github.com/flass/pantagruel/blob/master/install_dependencies.sh), following the indications below:  
 
@@ -63,12 +63,16 @@ alias pantagruel="docker run --user $USER -v $PWD:$PWD -w $PWD panta pantagruel_
 
 NB: task `04` for InterProScan functional annotation is **NOT included** in the docker image, as InterProScan is bulky and frequent relaeses require regular manual re-installation. It can however be installed manually *in complement* of the docker image, and be called as an external program through the container; for this again you just need to make sure the (link to the) executable `interproscan` is available somewhere in the location mounted with `docker run` option `-v`.
 
+
 ### The scripted, fairly easy way
-Finally, you may run the installation script:  
+After cloning the `pantagruel` code repository, you may run the installation script:  
 !!! Note that for this step, you (i.e. your linux user) need to have the sudo rights (be part of the sudo group, check with `grep sudo /etc/group`); however, DO NOT execute the installtion script with `sudo` (which would make all software owned by the root user).  
+Assuming you are still in the parent folder where you initially created the sub-folder `pantagruel_pipeline/`, run:
 ```sh
+# 
 pantagruel_pipeline/pantagruel/install_dependencies.sh pantagruel_pipeline/
-```  
+```
+This will download and build all dependencies in the `pantagruel_pipeline/` folder.
 
 Optionally, you can also specify the folder where relevant executable files, including the main `pantagruel` executable, will be linked (it defaults to `~/bin/`, i.e. is user-specific). The path to this folder will be permatnently added to your path (via editing your ~/.bashrc).  
 ```sh
