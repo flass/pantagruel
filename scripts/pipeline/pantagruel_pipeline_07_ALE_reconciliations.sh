@@ -187,7 +187,10 @@ select don_branch_id, don_branch_name, rec_branch_id, rec_branch_name, event_typ
 ) as weg
 order by nb_lineages desc, avg_support desc;
 """ > ${parsedrecs}/summary_gene_tree_events_minfreq${freqthresh} 
-wc -l ${parsedrecs}/summary_gene_tree_events_minfreq${freqthresh} 
-${ptgscripts}/plot_spetree_event_density.r ${parsedrecs}/summary_gene_tree_events_minfreq${freqthresh} ${speciestree/.full/}_collapsedPopulations.nwk
-done &
+nevt=$(wc -l ${parsedrecs}/summary_gene_tree_events_minfreq${freqthresh})
+echo ${nevt}
+if [ $(echo ${nevt} | cut -f1 -d' ') -gt 0 ] ; then
+  ${ptgscripts}/plot_spetree_event_density.r ${parsedrecs}/summary_gene_tree_events_minfreq${freqthresh} ${speciestree/.full/}_collapsedPopulations.nwk
+fi
+done
 
