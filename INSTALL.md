@@ -50,7 +50,7 @@ pantagruel_pipeline/pantagruel/install_dependencies.sh pantagruel_pipeline/ --no
 You may want to test that ALE commands work after installation (see [here](https://github.com/flass/pantagruel/blob/master/doc/installing_ALE.md#checking-it-works)), by typing the single commands `ALEml` and `ALEobserve` - preceeeded by `docker run --user $USER -v $PWD:$PWD -w $PWD` if using the docker image.
 
 
-### The container, worryless way
+### The container, worryless way :whale:
 
 #### Building the docker image
 
@@ -67,7 +67,7 @@ Then, assuming you are still in the parent folder where you initially created th
 docker build -t panta pantagruel_pipeline/pantagruel/etc
 ```
 
-This should create a Docker image called `panta` that will be stored on your server. It contains all Pantagruel's dependecies (apart InterProScan, see below) and the latest version of its source code. That's it!  
+This should create a Docker image called `panta` that will be stored on your server. It contains all Pantagruel's dependecies (except InterProScan, see below) and the latest version of its source code. That's it!  
 
 #### Using the docker image
 
