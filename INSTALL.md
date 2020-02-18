@@ -2,7 +2,7 @@
 
 ## Installing the Pantagruel scripts
 
-Pantagruel pipeline is "just" a bunch of scripts. What you simply need to do is to downlaod them, that's about it. Here is how:
+Pantagruel pipeline is 'just' a bunch of scripts. What you simply need to do is to download them, that's about it. Here is how:
 
 Under a Debian environment (e.g. Ubuntu), you can automatically install all dependencies using the script [install_dependencies.sh](https://github.com/flass/pantagruel/blob/master/install_dependencies.sh), following the indications below:  
 
@@ -23,6 +23,8 @@ Finally, you need to install the dependencies. Because of course, the pipeline i
 
 ### The container, worryless way
 
+#### Building the docker image
+
 This is what is recommended, because that should always work. and that it provide a shared environment for us all in which you can report your bugs and I know what's going on.
 
 You need Docker installed. On Debian-based systems, you should run:
@@ -36,10 +38,22 @@ Then, assuming you are still in the parent folder where you initially created th
 docker build -t panta pantagruel_pipeline/pantagruel/etc
 ```
 
-This should create a Docker image called `panta` that will be stored on your server. That's it!  
-Now, to run the pipeline, you will only need to call the pipeline through this container, by mounting the container where you the scripts are present on your machine:
+This should create a Docker image called `panta` that will be stored on your server. It contains all Pantagruel's dependecies (apart InterProScan, see below) and the latest version of its source code. That's it!  
+
+#### Using the docker image
+
+Now, to run the pipeline, you will only need to create a docker container from that image. The pipeline scripts (and other executables) are available from the `$PATH` of the container, so you can use this syntax:  
 ```sh
-docker run --user $USER -v $PWD:$PWD -w $PWD panta pantagruel_pipeline/pantagruel/pantagruel
+docker run --user $USER -v $PWD:$PWD -w $PWD panta pantagruel
+```
+The `-v $PWD:$PWD` part of the command mounts your current directory `$PWD` as a volume onto the filesystem of the container, which otherwise is completely isolated from your host machine's own filesystem. The right bit of that part `:$PWD` indicates the mounting destination, which in that case is the same, meaning this location will have the same path in the container's filesystem, making it seemless to use the docker container vs. other modes of installing Pantagruel. Mounting a location of your own filesystem (it can be somewhere else than `$PWD`) thus allows you to write in it - so you can keep the output! The location chosen as root of your Pantgruel database (given as argument of `-r` option of the `init` task call) thus has to be included in that location. For instance, you can write the results in `/home/me/pantagruel_databases` if you mounted `/home/me` onto the container:  
+```sh
+docker run --user $USER -v /home/me:/home/me -w /home/me panta pantagruel -d nameofptgdb -r /home/me/pantagruel_databases init
+```
+
+If you want to use another version of Pantagruel source code (for instance because a bug fix or a new feature has been published), you don't have to rebuild the docker image! You can call an external version of pipeline through the container, provided the location of that code repository on your machine is included in the mounted volume:
+```sh
+docker run --user $USER -v $PWD:$PWD -w $PWD panta $PWD/pantagruel_pipeline/pantagruel/pantagruel
 ```
 
 You can even alias this command so it's less ugly and you just need to call `pantagruel`:
@@ -47,14 +61,17 @@ You can even alias this command so it's less ugly and you just need to call `pan
 alias pantagruel="docker run --user $USER -v $PWD:$PWD -w $PWD panta pantagruel_pipeline/pantagruel/pantagruel"
 ```
 
-NB: task `04` for InterProScan functional annotation is **NOT included** in the docker image, as InterProScan is bulky and frequent relaeses require regular manual re-installation. It can however be installed manually *in complement* of the docker image.
+NB: task `04` for InterProScan functional annotation is **NOT included** in the docker image, as InterProScan is bulky and frequent relaeses require regular manual re-installation. It can however be installed manually *in complement* of the docker image, and be called as an external program through the container; for this again you just need to make sure the (link to the) executable `interproscan` is available somewhere in the location mounted with `docker run` option `-v`.
+
 
 ### The scripted, fairly easy way
-Finally, you may run the installation script:  
+After cloning the `pantagruel` code repository, you may run the installation script:  
 !!! Note that for this step, you (i.e. your linux user) need to have the sudo rights (be part of the sudo group, check with `grep sudo /etc/group`); however, DO NOT execute the installtion script with `sudo` (which would make all software owned by the root user).  
+Assuming you are still in the parent folder where you initially created the sub-folder `pantagruel_pipeline/`, run:
 ```sh
 pantagruel_pipeline/pantagruel/install_dependencies.sh pantagruel_pipeline/
-```  
+```
+This will download and build all dependencies in the `pantagruel_pipeline/` folder.
 
 Optionally, you can also specify the folder where relevant executable files, including the main `pantagruel` executable, will be linked (it defaults to `~/bin/`, i.e. is user-specific). The path to this folder will be permatnently added to your path (via editing your ~/.bashrc).  
 ```sh
