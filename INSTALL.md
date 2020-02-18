@@ -50,9 +50,9 @@ pantagruel_pipeline/pantagruel/install_dependencies.sh pantagruel_pipeline/ --no
 You may want to test that ALE commands work after installation (see [here](https://github.com/flass/pantagruel/blob/master/doc/installing_ALE.md#checking-it-works)), by typing the single commands `ALEml` and `ALEobserve` - preceeeded by `docker run --user $USER -v $PWD:$PWD -w $PWD` if using the docker image.
 
 
-### The container, worryless way :whale:
+### The container, worryless way
 
-#### Building the docker image
+#### Building the docker image :whale:
 
 This is what is recommended, because that should always work. and that it provide a shared environment for us all in which you can report your bugs and I know what's going on.
 
