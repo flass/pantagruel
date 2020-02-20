@@ -77,7 +77,7 @@ RUN cd / && wget --progress=dot:giga https://www.mikrobio.uni-kiel.de/de/ag-daga
 #RUN (cd /usr/local && wget -O interproscan-5.35-74.0-64-bit.tar.gz ftp://ftp.ebi.ac.uk/pub/software/unix/iprscan/5/5.35-74.0/interproscan-5.35-74.0-64-bit.tar.gz)
 
 # LSD
-RUN wget --progress=dot:giga -O /usr/bin/lsd https://github.com/tothuhien/lsd-0.3beta/releases/download/v0.3.3/lsd_unix \
+RUN cd / && wget --progress=dot:giga -O /usr/bin/lsd https://github.com/tothuhien/lsd-0.3beta/releases/download/v0.3.3/lsd_unix \
     && chmod +x /usr/bin/lsd
 
 # ALE
@@ -86,7 +86,7 @@ RUN cd / && git clone https://github.com/ssolo/ALE \
     && cmake .. && make
 
 # tbl2asn (Prokka dependency)
-RUN cd / && wget ftp://ftp.ncbi.nih.gov/toolbox/ncbi_tools/converters/by_program/tbl2asn/linux64.tbl2asn.gz \
+RUN cd / && wget --progress=dot:giga ftp://ftp.ncbi.nih.gov/toolbox/ncbi_tools/converters/by_program/tbl2asn/linux64.tbl2asn.gz \
     && gzip -d linux64.tbl2asn.gz && chmod +x linux64.tbl2asn && mv -f linux64.tbl2asn /usr/bin/tbl2asn
 
 # make pantagruel executable and scripts avalable
