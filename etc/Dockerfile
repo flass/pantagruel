@@ -70,14 +70,14 @@ RUN cd / && wget http://www.bork.embl.de/pal2nal/distribution/pal2nal.v14.tar.gz
     && chmod +x /pal2nal.v14/pal2nal.pl
 
 #MAD
-RUN wget https://www.mikrobio.uni-kiel.de/de/ag-dagan/ressourcen/mad2-2.zip \
+RUN cd / && wget --progress=dot:giga https://www.mikrobio.uni-kiel.de/de/ag-dagan/ressourcen/mad2-2.zip \
     && unzip mad2-2.zip && chmod +x /mad/mad
 
 #INTERPROSCAN
 #RUN (cd /usr/local && wget -O interproscan-5.35-74.0-64-bit.tar.gz ftp://ftp.ebi.ac.uk/pub/software/unix/iprscan/5/5.35-74.0/interproscan-5.35-74.0-64-bit.tar.gz)
 
 # LSD
-RUN wget -O /usr/bin/lsd https://github.com/tothuhien/lsd-0.3beta/releases/download/v0.3.3/lsd_unix \
+RUN wget --progress=dot:giga -O /usr/bin/lsd https://github.com/tothuhien/lsd-0.3beta/releases/download/v0.3.3/lsd_unix \
     && chmod +x /usr/bin/lsd
 
 # ALE
