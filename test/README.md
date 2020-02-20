@@ -15,8 +15,7 @@ cd ..
 # install
 ./pantagruel_pipeline/pantagruel/install_dependencies.sh pantagruel_pipeline/
 
-# run pipeline on a list of 10 genome accessions (9 RefSeq + 1 GenBank) to download from NCBI FTP
-# + 1 genome to annotate (using the contigs from assembly GCF_900113725.1)
+# run pipeline tests
 pantagruel -d testPTGdatabase -r ./ -f PANTAGFAM -I e.mail@institu.ti.on -L ./pantagruel_pipeline/pantagruel/data/NCBI_Assembly_accession_ids_test_10Brady -a ./pantagruel_pipeline/pantagruel/data/custom_genomes init
 pantagruel -i ./testPTGdatabase/environ_pantagruel_testPTGdatabase.sh --refresh -c -g ./pantagruel_pipeline/pantagruel/data/test_genefam_list -q 0.75 init
 pantagruel -i ./testPTGdatabase/environ_pantagruel_testPTGdatabase.sh all
@@ -38,7 +37,7 @@ docker build -t panta etc
 pantagruel_pipeline/pantagruel/install_install_interproscan.sh pantagruel_pipeline/
 
 
-# run pipeline on 
+# run pipeline tests 
 docker run --user $USER -v $PWD:$PWD -w $PWD panta pantagruel -d testPTGdatabase -r ./ -f PANTAGFAM -I e.mail@institu.ti.on -L ./pantagruel_pipeline/pantagruel/data/NCBI_Assembly_accession_ids_test_10Brady -a ./pantagruel_pipeline/pantagruel/data/custom_genomes init
 docker run --user $USER -v $PWD:$PWD -w $PWD panta pantagruel -i ./testPTGdatabase/environ_pantagruel_testPTGdatabase.sh --refresh -c -g ./pantagruel_pipeline/pantagruel/data/test_genefam_list -q 0.75 init
 docker run --user $USER -v $PWD:$PWD -w $PWD panta pantagruel -i ./testPTGdatabase/environ_pantagruel_testPTGdatabase.sh all
