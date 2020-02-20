@@ -73,21 +73,21 @@ This should create a Docker image called `panta` that will be stored on your ser
 
 Now, to run the pipeline, you will only need to create a docker container from that image. The pipeline scripts (and other executables) are available from the `$PATH` of the container, so you can use this syntax:  
 ```sh
-docker run --user $USER -v $PWD:$PWD -w $PWD panta pantagruel
+docker run -u $UID -v $PWD:$PWD -w $PWD panta pantagruel
 ```
 The `-v $PWD:$PWD` part of the command mounts your current directory `$PWD` as a volume onto the filesystem of the container, which otherwise is completely isolated from your host machine's own filesystem. The right bit of that part `:$PWD` indicates the mounting destination, which in that case is the same, meaning this location will have the same path in the container's filesystem, making it seemless to use the docker container vs. other modes of installing Pantagruel. Mounting a location of your own filesystem (it can be somewhere else than `$PWD`) thus allows you to write in it - so you can keep the output! The location chosen as root of your Pantgruel database (given as argument of `-r` option of the `init` task call) thus has to be included in that location. For instance, you can write the results in `/home/me/pantagruel_databases` if you mounted `/home/me` onto the container:  
 ```sh
-docker run --user $USER -v /home/me:/home/me -w /home/me panta pantagruel -d nameofptgdb -r /home/me/pantagruel_databases init
+docker run -u $UID -v /home/me:/home/me -w /home/me panta pantagruel -d nameofptgdb -r /home/me/pantagruel_databases init
 ```
 
 If you want to use another version of Pantagruel source code (for instance because a bug fix or a new feature has been published), you don't have to rebuild the docker image! You can call an external version of pipeline through the container, provided the location of that code repository on your machine is included in the mounted volume:
 ```sh
-docker run --user $USER -v $PWD:$PWD -w $PWD panta $PWD/pantagruel_pipeline/pantagruel/pantagruel
+docker run -u $UID -v $PWD:$PWD -w $PWD panta $PWD/pantagruel_pipeline/pantagruel/pantagruel
 ```
 
 You can even alias this command so it's less ugly and you just need to call `pantagruel`:
 ```sh
-alias pantagruel="docker run --user $USER -v $PWD:$PWD -w $PWD panta pantagruel_pipeline/pantagruel/pantagruel"
+alias pantagruel="docker run -u $UID -v $PWD:$PWD -w $PWD panta pantagruel_pipeline/pantagruel/pantagruel"
 ```
 
 NB: task `04` for InterProScan functional annotation is **NOT included** in the docker image, as InterProScan is bulky and frequent releases require regular manual re-installation.  
