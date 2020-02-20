@@ -42,5 +42,6 @@ else
 fi
 
 echo "test running pipeline"
-${ptgexe} -d testPTGdatabase -r ./ -f PANTAGFAM -I e.mail@institu.ti.on -L ./pantagruel_pipeline/pantagruel/data/NCBI_Assembly_accession_ids_test_10Brady -a ./pantagruel_pipeline/pantagruel/data/custom_genomes init
+${ptgexe} -d testPTGdatabase -r ./ -f PANTAGFAM -I e.mail@institu.ti.on -L ${ptgdata}/NCBI_Assembly_accession_ids_test_10Brady -a ${ptgdata}/custom_genomes init
+${ptgexe} -i ./testPTGdatabase/environ_pantagruel_testPTGdatabase.sh --refresh -c -g ${ptgdata}/test_genefam_list -q 0.75 init
 ${ptgexe} -i ./testPTGdatabase/environ_pantagruel_testPTGdatabase.sh all
