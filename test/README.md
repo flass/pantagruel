@@ -38,9 +38,9 @@ pantagruel_pipeline/pantagruel/install_install_interproscan.sh pantagruel_pipeli
 
 
 # run pipeline tests 
-docker run --user $USER -v $PWD:$PWD -w $PWD panta pantagruel -d testPTGdatabase -r ./ -f PANTAGFAM -I e.mail@institu.ti.on -L ./pantagruel_pipeline/pantagruel/data/NCBI_Assembly_accession_ids_test_10Brady -a ./pantagruel_pipeline/pantagruel/data/custom_genomes init
-docker run --user $USER -v $PWD:$PWD -w $PWD panta pantagruel -i ./testPTGdatabase/environ_pantagruel_testPTGdatabase.sh --refresh -c -g ./pantagruel_pipeline/pantagruel/data/test_genefam_list -q 0.75 init
-docker run --user $USER -v $PWD:$PWD -w $PWD panta pantagruel -i ./testPTGdatabase/environ_pantagruel_testPTGdatabase.sh all
+docker run -u $UID -v $PWD:$PWD -w $PWD panta pantagruel -d testPTGdatabase -r ./ -f PANTAGFAM -I e.mail@institu.ti.on -L ./pantagruel_pipeline/pantagruel/data/NCBI_Assembly_accession_ids_test_10Brady -a ./pantagruel_pipeline/pantagruel/data/custom_genomes init
+docker run -u $UID -v $PWD:$PWD -w $PWD panta pantagruel -i ./testPTGdatabase/environ_pantagruel_testPTGdatabase.sh --refresh -c -g ./pantagruel_pipeline/pantagruel/data/test_genefam_list -q 0.75 init
+docker run -u $UID -v $PWD:$PWD -w $PWD panta pantagruel -i ./testPTGdatabase/environ_pantagruel_testPTGdatabase.sh all
 ```
 
 Scripts are provided to run the testing part of the above in a more flexible way, see [test_install_run_pantagruel.sh](https://github.com/flass/pantagruel/blob/master/test/test_install_run_pantagruel.sh) and [test_docker_run_pantagruel.sh](https://github.com/flass/pantagruel/blob/master/test/test_docker_run_pantagruel.sh).
