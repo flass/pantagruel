@@ -26,7 +26,7 @@ else
   initargs="${@}"  # all trailing script arguments
 fi
 
-dockerrunptg="docker run --user ${UID} -v ${cwd}:${cwd} -w ${cwd} ${dockerimage}"
+dockerrunptg="docker run --user ${UID}:${UID} -v ${cwd}:${cwd} -w ${cwd} ${dockerimage}"
 
 ${dockerrunptg} ${ptgexe} -r ${ptgroot} -d ${ptgdbname} ${initargs} init
 ${dockerrunptg} ${ptgexe} -i ${ptgdbconfig} --refresh ${refreshargs} init

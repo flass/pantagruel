@@ -28,15 +28,16 @@ cd ${database}
 
 # fetch UniProt taxon codes
 if [ ! -e speclist ] ; then
- wget http://www.uniprot.org/docs/speclist
+ wget --progress=dot:mega http://www.uniprot.org/docs/speclist
 fi
 
 
 ## create database and load database schema
 sqlite3 ${dbname} < $initiatescript
 
-
 ## generate input data tables
+step1="generating input files for database tables"
+echo ${step1}
 # create function for searching field positions
 getnumfield (){
  local table=$1
@@ -77,10 +78,16 @@ protfieldnums=$(getnumfield ${assemblyinfo}/allproteins_info.tab $protfields)
 head -n 1  ${assemblyinfo}/allproteins_info.tab | cut -f ${protfieldnums} | sed -e ${protidsedfilter} > genome_protein_products.tab && \
 tail -n +2 ${assemblyinfo}/allproteins_info.tab | cut -f ${protfieldnums} | grep -vP "^\t" | sort -u | sed -e "s/%2C/,/g" | sed -e "s/%3B/;/g" >> genome_protein_products.tab
 
+ls genome_replicons.tab genome_gene_families.tab  genome_protein_families.tab genome_coding_sequences.tab genome_protein_products.tab
+checkexec "failed ${step1}" "succesfully ${step1/ing/ed}"
+
 ## populate database
+step2="populating database with information on genome assemblies, CDS/protein annotation and gene families"
+echo ${step2}
 if [ -z  "${customassemb}" ] ; then
   python2.7 ${populatescript} ${dbname} ${protorfanclust} ${cdsorfanclust} ${database}/speclist ${gp2ass}
 else
   python2.7 ${populatescript} ${dbname} ${protorfanclust} ${cdsorfanclust} ${database}/speclist ${gp2ass} ${usergenomeinfo} ${usergenomefinalassdir}
 fi
+checkexec "failed ${step2}" "succesfully ${step2/ing/ed}"
 cd -

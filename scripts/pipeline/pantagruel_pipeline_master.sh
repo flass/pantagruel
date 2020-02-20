@@ -450,53 +450,31 @@ do
 
     -a|--custom_ass)
       testmandatoryarg "${1}" "${2}"
-      if [[ ${runmode} == 'force' || ${runmode} == 'refreshconfig' ||  ${runmode} == 'wasrefresh' ]] ; then
-        export customassemb=${2}
-      else
-        export customassemb=$(readlink -f ${2})
-      fi
+      export customassemb=$(readlink -f ${2})
       echo "set custom (raw) genome assembly source folder to '$customassemb'"
       shift 2;;
 
     -A|--refseq_ass)
       testmandatoryarg "${1}" "${2}"
-      if [[ ${runmode} == 'force' || ${runmode} == 'refreshconfig' ||  ${runmode} == 'wasrefresh' ]] ; then
-        export ncbiass=${2}
-      else
-        export ncbiass=$(readlink -f ${2})
-      fi
+
+      export ncbiass=$(readlink -f ${2})
       echo "set NCBI RefSeq(-like) genome assembly source folder to '$ncbiass'"
       shift 2;;
 
     -L|--refseq_list)
       testmandatoryarg "${1}" "${2}"
-      if [[ ${runmode} == 'force' || ${runmode} == 'refreshconfig' ||  ${runmode} == 'wasrefresh' ]] ; then
-        export listncbiass=${2}
-      else
-        export listncbiass=$(readlink -f ${2})
-      fi
       export listncbiass=$(readlink -f ${2})
       echo "set NCBI RefSeq(-like) genome assembly id list to '$listncbiass'"
       shift 2;;
 
     --refseq_ass4annot)
       testmandatoryarg "${1}" "${2}"
-      if [[ ${runmode} == 'force' || ${runmode} == 'refreshconfig' ||  ${runmode} == 'wasrefresh' ]] ; then
-        export refass=${2}
-      else
-        export refass=$(readlink -f ${2})
-      fi
       export refass=$(readlink -f ${2})
       echo "set NCBI RefSeq(-like) genome assembly source folder for reference in user genome annotation to '$refass'"
       shift 2;;
 
     --refseq_list4annot)
       testmandatoryarg "${1}" "${2}"
-      if [[ ${runmode} == 'force' || ${runmode} == 'refreshconfig' ||  ${runmode} == 'wasrefresh' ]] ; then
-        export listrefass=${2}
-      else
-        export listrefass=$(readlink -f ${2})
-      fi
       export listrefass=$(readlink -f ${2})
       echo "set NCBI RefSeq(-like) genome assembly id list for reference in user genome annotation to '$listrefass'"
       shift 2;;
