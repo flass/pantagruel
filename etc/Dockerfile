@@ -47,7 +47,7 @@ RUN cd /opt \
     && rm ${BLAST_ARCHIVE}
 
 # tbl2asn (Prokka dependency)
-RUN cd / && wget ftp://ftp.ncbi.nih.gov/toolbox/ncbi_tools/converters/by_program/tbl2asn/linux64.tbl2asn.gz \
+RUN cd / && wget --progress=dot:giga ftp://ftp.ncbi.nih.gov/toolbox/ncbi_tools/converters/by_program/tbl2asn/linux64.tbl2asn.gz \
     && gzip -d linux64.tbl2asn.gz && chmod +x linux64.tbl2asn && mv -f linux64.tbl2asn /usr/bin/tbl2asn
 
 # add relevant locations to the PATH
@@ -69,24 +69,24 @@ RUN cd / && git clone https://github.com/soedinglab/MMseqs2.git \
     && make && make install
 
 #PAL2NAL
-RUN cd / && wget http://www.bork.embl.de/pal2nal/distribution/pal2nal.v14.tar.gz \
+RUN cd / && wget --progress=dot:giga http://www.bork.embl.de/pal2nal/distribution/pal2nal.v14.tar.gz \
     && tar -xzf pal2nal.v14.tar.gz \
     && chmod +x /pal2nal.v14/pal2nal.pl
 
 #MAD
-RUN wget https://www.mikrobio.uni-kiel.de/de/ag-dagan/ressourcen/mad2-2.zip \
+RUN cd / && wget --progress=dot:giga https://www.mikrobio.uni-kiel.de/de/ag-dagan/ressourcen/mad2-2.zip \
     && unzip mad2-2.zip && chmod +x /mad/mad
 
 #INTERPROSCAN
 #RUN (cd /usr/local && wget -O interproscan-5.35-74.0-64-bit.tar.gz ftp://ftp.ebi.ac.uk/pub/software/unix/iprscan/5/5.35-74.0/interproscan-5.35-74.0-64-bit.tar.gz)
 
 # LSD
-RUN wget -O /usr/bin/lsd https://github.com/tothuhien/lsd-0.3beta/releases/download/v0.3.3/lsd_unix \
+RUN cd / && wget --progress=dot:giga -O /usr/bin/lsd https://github.com/tothuhien/lsd-0.3beta/releases/download/v0.3.3/lsd_unix \
     && chmod +x /usr/bin/lsd
 
 # GeneRax
 RUN cd / && git clone --recursive https://github.com/BenoitMorel/GeneRax \
-    && ./GeneRax/install.sh
+    && cd GeneRax/ && ./install.sh
 
 # make pantagruel executable and scripts avalable
 # last echo command is a dummy one that can be edited so that build is resumed at this stage
