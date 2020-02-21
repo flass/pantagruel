@@ -174,8 +174,7 @@ ${ptgscripts}/pantagruel_sqlitedb_phylogeny_populate_reconciliations.sh "${datab
 
 # rapid survey of event density over the reference tree
 for freqthresh in 0.1 0.25 0.5 ; do
-sqlite3 ${sqldb} """
-.mode tabs 
+sqlite3 -cmd ".mode tabs" ${sqldb} """
 select don_branch_id, don_branch_name, rec_branch_id, rec_branch_name, event_type, nb_lineages, cum_freq, cum_freq/nb_lineages as avg_support from (
  select don_branch_id, don_stree.branch_name as don_branch_name, rec_branch_id, rec_stree.branch_name as rec_branch_name, event_type, count(*) as nb_lineages, sum(freq)::real/${nsample} as cum_freq
   from gene_lineage_events 
