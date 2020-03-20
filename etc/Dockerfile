@@ -88,8 +88,10 @@ RUN cd / && wget --progress=dot:giga -O /usr/bin/lsd https://github.com/tothuhie
 RUN cd / && git clone --recursive https://github.com/BenoitMorel/GeneRax \
     && cd GeneRax/ && ./install.sh
 
-# make pantagruel executable and scripts avalable
+# make pantagruel executable and scripts available
 # last echo command is a dummy one that can be edited so that build is resumed at this stage
-RUN cd / && git clone --recurse-submodules https://github.com/flass/pantagruel.git \
-    && cd pantagruel && echo "included pantagruel version: $(git log | head -n 1 | awk '{ print $2 }')" \
-	&& echo "Dockerfile last edited on 2020-02-13"
+COPY . /pantagruel/
+RUN cd /pantagruel 
+    && git submodule update --init --recursive
+    && echo "included pantagruel version: $(git log | head -n 1 | awk '{ print $2 }')" \
+	&& echo "Dockerfile last edited on 2020-03-20"

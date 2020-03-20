@@ -38,10 +38,18 @@ fi
 # GeneRaxalgo
 if [ ${GeneRaxalgo} == 'reconciliation-samples' ] ; then
   generaxopt="${generaxopt} --reconciliation-samples ${recsamplesize}"
+else
+  generaxopt="${generaxopt} --reconcile"
 fi
 # ncpus
-if [ ! -z "${ncpus}" ] ; then
+if [ -z "${ncpus}" ] ; then
   ncpus=1
+fi
+
+if [ ${ncpus} -gt 1 ] ; then
+  grxcmd="mpirun -np ${ncpus} generax"
+else
+  grxcmd="generax"
 fi
 
 ######
@@ -77,4 +85,4 @@ if [ ${ncpus} -gt 1 ] ; then
 else
   grxcmd="generax"
 fi
-mpirun -np ${ncpus} generax ${generaxcommonopt} -s ${speciestree}_clade_defs.nwk -f ${generaxfamfi} -p ${outrecdir}/${nfrad2} ${generaxopt}
+${grxcmd} ${generaxcommonopt} -s ${speciestree}_clade_defs.nwk -f ${generaxfamfi} -p ${outrecdir}/${nfrad2} ${generaxopt}

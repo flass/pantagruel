@@ -28,13 +28,15 @@ if [ ! -s "${spetree}" ] ; then
 fi
 if [ "${GeneRaxalgo}" == 'reconciliation-samples' ] ; then
   generaxopt="${generaxopt} --reconciliation-samples ${recsamplesize}"
+else
+  generaxopt="${generaxopt} --reconcile"
 fi
 # generaxcommonopt
 if [ -z "${generaxcommonopt}" ] ; then
   generaxcommonopt="-r UndatedDTL --max-spr-radius 5 --strategy SPR" # env var is a pipeline default
 fi
 # ncpus
-if [ ! -z "${ncpus}" ] ; then
+if [ -z "${ncpus}" ] ; then
   ncpus=1
 fi
 
