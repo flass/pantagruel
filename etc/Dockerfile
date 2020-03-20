@@ -92,6 +92,5 @@ RUN cd / && git clone --recursive https://github.com/BenoitMorel/GeneRax \
 # last echo command is a dummy one that can be edited so that build is resumed at this stage
 COPY . /pantagruel/
 RUN cd /pantagruel \
-    && git submodule update --init --recursive \
     && echo "included pantagruel version: $(git log | head -n 1 | awk '{ print $2 }')" \
 	&& echo "Dockerfile last edited on 2020-03-20"
