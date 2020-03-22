@@ -37,10 +37,12 @@ docker build -t panta etc
 pantagruel_pipeline/pantagruel/install_install_interproscan.sh pantagruel_pipeline/
 
 
-# run pipeline tests 
-docker run -u $UID:$UID -v $PWD:$PWD -w $PWD panta pantagruel -d testPTGdatabase -r ./ -f PANTAGFAM -I e.mail@institu.ti.on -L ./pantagruel_pipeline/pantagruel/data/NCBI_Assembly_accession_ids_test_10Brady -a ./pantagruel_pipeline/pantagruel/data/custom_genomes init
-docker run -u $UID:$UID -v $PWD:$PWD -w $PWD panta pantagruel -i ./testPTGdatabase/environ_pantagruel_testPTGdatabase.sh --refresh -c -g ./pantagruel_pipeline/pantagruel/data/test_genefam_list -q 0.75 init
+# Run pipeline tests 
+docker run -u $UID:$UID -v $PWD:$PWD -w $PWD panta pantagruel -d testPTGdatabase -r ./ -f PANTAGFAM -I e.mail@institu.ti.on -L /pantagruel/data/NCBI_Assembly_accession_ids_test_10Brady -a /pantagruel/data/custom_genomes init
+docker run -u $UID:$UID -v $PWD:$PWD -w $PWD panta pantagruel -i ./testPTGdatabase/environ_pantagruel_testPTGdatabase.sh --refresh -c -g /pantagruel/data/test_genefam_list -q 0.75 init
 docker run -u $UID:$UID -v $PWD:$PWD -w $PWD panta pantagruel -i ./testPTGdatabase/environ_pantagruel_testPTGdatabase.sh all
 ```
+Note that the arguments for options -a, -l and -g here refer to files located in the docker container's own filesystem.
+For actual analyses, provide path to locations within your host machine's filesystem, and within the folder that is mounted on the container (value of docker run -v option).
 
 Scripts are provided to run the testing part of the above in a more flexible way, see [test_install_run_pantagruel.sh](https://github.com/flass/pantagruel/blob/master/test/test_install_run_pantagruel.sh) and [test_docker_run_pantagruel.sh](https://github.com/flass/pantagruel/blob/master/test/test_docker_run_pantagruel.sh).
