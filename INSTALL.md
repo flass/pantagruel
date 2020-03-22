@@ -4,13 +4,13 @@
 
 Pantagruel pipeline is 'just' a bunch of scripts. What you simply need to do is to download them, that's about it. Here is how:
 
-Under a Debian environment (e.g. Ubuntu), you can automatically install all dependencies using the script [install_dependencies.sh](https://github.com/flass/pantagruel/blob/master/install_dependencies.sh), following the indications below:  
+Under a Debian environment (e.g. Ubuntu), you can automatically install all dependencies using the script [install_dependencies.sh](https://github.com/flass/pantagruel/blob/usingGeneRax/install_dependencies.sh), following the indications below:  
 
 Assuming you want to create a folder named `pantagruel_pipeline/` in the current working directory and install the whole software pipeline (the *pantagruel* package and its dependencies) in it, you should first do:
 ```sh
 mkdir ./pantagruel_pipeline/
 ```
-Then, you have to get the pantagruel scripts by dowloading the [archive of the last version on Github](https://github.com/flass/pantagruel/archive/master.zip) or use `git` to synchronize the repository (recomended for easier software update, especially during *Pantagruel* development phase!).
+Then, you have to get the pantagruel scripts by dowloading the [archive of the last version on Github](https://github.com/flass/pantagruel/archive/usingGeneRax.zip) or use `git` to synchronize the repository (recomended for easier software update, especially during *Pantagruel* development phase!).
 ```sh
 cd pantagruel_pipeline/
 git clone --recurse-submodules https://github.com/flass/pantagruel.git
@@ -39,12 +39,12 @@ docker build -t panta pantagruel_pipeline/pantagruel/etc
 This should create a Docker image called `panta` that will be stored on your server. That's it!  
 Now, to run the pipeline, you will only need to call the pipeline through this container, by mounting the container where you the scripts are present on your machine:
 ```sh
-docker run --user $USER -v $PWD:$PWD -w $PWD panta pantagruel_pipeline/pantagruel/pantagruel
+docker run --user $UID:$UID -v $PWD:$PWD -w $PWD panta pantagruel_pipeline/pantagruel/pantagruel
 ```
 
 You can even alias this command so it's less ugly and you just need to call `pantagruel`:
 ```sh
-alias pantagruel="docker run --user $USER -v $PWD:$PWD -w $PWD panta pantagruel_pipeline/pantagruel/pantagruel"
+alias pantagruel="docker run --user $UID:$UID -v $PWD:$PWD -w $PWD panta pantagruel_pipeline/pantagruel/pantagruel"
 ```
 
 NB: task `04` for InterProScan functional annotation is **NOT included** in the docker image, as InterProScan is bulky and frequent relaeses require regular manual re-installation. It can however be installed manually *in complement* of the docker image.

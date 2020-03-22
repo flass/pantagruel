@@ -4,7 +4,7 @@
 
 ### 17/12/2019: :whale: Dockerfile
 The [Dockerfile] (a 'recipe' to generate a Docker image) is now ready!  
-Use it to generate a Docker image containing all Pantagruel dependencies; then use that image to run `pantagruel` commands within the environment provided by the container, as explained [here](https://github.com/flass/pantagruel/blob/master/INSTALL.md#the-container-worryless-way).  
+Use it to generate a Docker image containing all Pantagruel dependencies; then use that image to run `pantagruel` commands within the environment provided by the container, as explained [here](https://github.com/flass/pantagruel/blob/usingGeneRax/INSTALL.md#the-container-worryless-way).  
 NB: this may be used to generate a Singularity container as well, even though it was not tested yet.
 
 ### 26/03/2019: now on bioRxiv! 
@@ -544,14 +544,14 @@ Main options are to use either:
 ![repas]
 
 
-[repas]: https://github.com/flass/pantagruel/blob/master/pics/Pantagruels_childhood.jpg
-[pipeline1]: https://github.com/flass/pantagruel/blob/master/pics/extract_cluster_concat_spetree_MLgenetrees.png
-[pipeline2]: https://github.com/flass/pantagruel/blob/master/pics/collapse_samplebackbones_reconcile_compare.png
+[repas]: https://github.com/flass/pantagruel/blob/usingGeneRax/pics/Pantagruels_childhood.jpg
+[pipeline1]: https://github.com/flass/pantagruel/blob/usingGeneRax/pics/extract_cluster_concat_spetree_MLgenetrees.png
+[pipeline2]: https://github.com/flass/pantagruel/blob/usingGeneRax/pics/collapse_samplebackbones_reconcile_compare.png
 [installation]: https://github.com/flass/pantagruel#installing-pantagruel-and-its-dependencies
-[INSTALL]: https://github.com/flass/pantagruel/blob/master/INSTALL.md
+[INSTALL]: https://github.com/flass/pantagruel/blob/usingGeneRax/INSTALL.md
 [usage]: https://github.com/flass/pantagruel#using-pantagruel
 [examples]: https://github.com/flass/pantagruel#usage-example
-[template environment script]: https://github.com/flass/pantagruel/blob/master/scripts/pipeline/environ_pantagruel_template.sh
-[install_dependencies.sh]: https://github.com/flass/pantagruel/blob/master/install_dependencies.sh
-[Dockerfile]:  https://github.com/flass/pantagruel/blob/master/etc/Dockerfile
+[template environment script]: https://github.com/flass/pantagruel/blob/usingGeneRax/scripts/pipeline/environ_pantagruel_template.sh
+[install_dependencies.sh]: https://github.com/flass/pantagruel/blob/usingGeneRax/install_dependencies.sh
+[Dockerfile]:  https://github.com/flass/pantagruel/blob/usingGeneRax/Dockerfile
 [HPC scripts doc]: https://github.com/flass/pantagruel#hpc-scripts-submission-of-intensive-tasks-to-high-performance-computer-clusters
