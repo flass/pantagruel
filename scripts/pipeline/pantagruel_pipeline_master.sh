@@ -456,7 +456,6 @@ do
 
     -A|--refseq_ass)
       testmandatoryarg "${1}" "${2}"
-
       export ncbiass=$(readlink -f ${2})
       echo "set NCBI RefSeq(-like) genome assembly source folder to '$ncbiass'"
       shift 2;;

@@ -94,4 +94,4 @@ RUN cd / && wget --progress=dot:giga ftp://ftp.ncbi.nih.gov/toolbox/ncbi_tools/c
 COPY . /pantagruel/
 RUN cd /pantagruel \
     && echo "included pantagruel version: $(git log | head -n 1 | awk '{ print $2 }')" \
-	&& echo "Dockerfile last edited on 2020-03-20"
+	&& echo "Dockerfile last edited on 2020-03-22"
