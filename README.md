@@ -14,7 +14,8 @@ The preprint describing the software and underlying methods is available on bioR
 ## Reference
 
 If using this software, please cite:  
-**Lassalle F, Veber P, Jauneikaite E, Didelot X. Automated Reconstruction of All Gene Histories in Large Bacterial Pangenome Datasets and Search for Co-Evolved Gene Modules with Pantagruel.” *bioRxiv* 586495. [doi: 10.1101/586495](doi.org/10.1101/586495).**
+**Lassalle F, Veber P, Jauneikaite E, Didelot X. Automated Reconstruction of All Gene Histories in Large Bacterial Pangenome Datasets and Search for Co-Evolved Gene Modules with Pantagruel.” *bioRxiv* 586495.**  
+**[doi: 10.1101/586495](doi.org/10.1101/586495)**
 
 
 ## Aim and description
@@ -553,5 +554,5 @@ Main options are to use either:
 [examples]: https://github.com/flass/pantagruel#usage-example
 [template environment script]: https://github.com/flass/pantagruel/blob/master/scripts/pipeline/environ_pantagruel_template.sh
 [install_dependencies.sh]: https://github.com/flass/pantagruel/blob/master/install_dependencies.sh
-[Dockerfile]:  https://github.com/flass/pantagruel/blob/master/etc/Dockerfile
+[Dockerfile]:  https://github.com/flass/pantagruel/blob/master/Dockerfile
 [HPC scripts doc]: https://github.com/flass/pantagruel#hpc-scripts-submission-of-intensive-tasks-to-high-performance-computer-clusters
