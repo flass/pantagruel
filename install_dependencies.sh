@@ -125,7 +125,7 @@ if [ "$installdebian" == 'true' ] ; then
   r-base-core r-recommended r-cran-ape r-cran-ade4 r-cran-vegan r-cran-dbi r-cran-rsqlite r-cran-igraph r-cran-getopt r-cran-phytools \
   sqlite3 sqlite3-doc libmagick++-dev python python-scipy python-numpy python-biopython python-biopython-sql python-igraph cython \
   mpi-default-bin mpi-default-dev mrbayes-mpi python-pip openjdk-11-jdk openjdk-11-jre \
-  libdw1 libdw-dev libgsl23 libgsl-dev"
+  libdw1 libdw-dev libgsl23 libgsl-dev flex bison libgmp3-dev"
   if [ "$installbrew" == 'true' ] ; then
     deppackages="$deppackages linuxbrew-wrapper"
   else

@@ -12,7 +12,8 @@ RUN apt-get update && apt-get install -y git build-essential cmake gcc g++ \
         libxml2-dev libcurl4-openssl-dev locales linuxbrew-wrapper rsync \
         libboost-dev libboost-serialization-dev libboost-mpi-dev \
         libbpp-core-dev libbpp-phyl-dev libbpp-seq-dev libbpp-seq-omics-dev \
-		libdatetime-perl libxml-simple-perl libdigest-md5-perl bioperl
+		libdatetime-perl libxml-simple-perl libdigest-md5-perl bioperl \
+		flex bison libgmp3-dev
 
 RUN echo 'source("https://bioconductor.org/biocLite.R") ; biocLite("topGO") ; install.packages(c("phytools","pvclust"), repos="https://pbil.univ-lyon1.fr/CRAN/")' | R --vanilla
 
