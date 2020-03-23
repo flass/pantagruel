@@ -64,7 +64,7 @@ The simpler way to get the image for the pantagruel deindencies is to download i
 
 Just run:
 ```sh
-docker pull flass/pantagruel-dep
+docker pull flass/pantagruel-dep:master-latest
 ```
 
 #### Building the docker image
