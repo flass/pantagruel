@@ -75,7 +75,7 @@ alias pantagruel="docker run -u $UID:$UID -v $PWD:$PWD -w $PWD flass/pantagruel-
 
 ### InterProScan/task 04 NOT included in docker image
 
-NB: task `04` for InterProScan functional annotation is **NOT included** in the docker image, as InterProScan is bulky and frequent releases require regular manual re-installation.  
+Note that task `04` for InterProScan functional annotation is **NOT included** in the docker image, as InterProScan is bulky and frequent releases require regular manual re-installation.  
 It can however be installed manually *in complement* of the docker image, and be called as an external program through the container; for this again you just need to make sure the (link to the) executable `interproscan` is available somewhere in the location mounted with `docker run` option `-v`.  
 To this end, you can use the [install_interproscan.sh](https://github.com/flass/pantagruel/blob/usingGeneRax/install_interproscan.sh) script, using the same syntax as the `install_dependencies.sh` script (see above) but installing only InterProScan:  
 ```sh
