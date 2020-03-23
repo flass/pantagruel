@@ -73,7 +73,7 @@ You can even alias this command so it's less ugly and you just need to call `pan
 alias pantagruel="docker run -u $UID:$UID -v $PWD:$PWD -w $PWD flass/pantagruel-dep pantagruel_pipeline/pantagruel/pantagruel"
 ```
 
-### InterProScan/task 04 NOT included in docker image
+#### InterProScan/task 04 NOT included in docker image
 
 Note that task `04` for InterProScan functional annotation is **NOT included** in the docker image, as InterProScan is bulky and frequent releases require regular manual re-installation.  
 It can however be installed manually *in complement* of the docker image, and be called as an external program through the container; for this again you just need to make sure the (link to the) executable `interproscan` is available somewhere in the location mounted with `docker run` option `-v`.  

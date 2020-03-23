@@ -4,14 +4,14 @@
 
 ### 23/03/2019: docker image on DockerHub! :whale:
 
-The worries of installing Pantagruel are in the past! now you just have to download the docker iamge from the [Dockerhub] repository!
+The worries of installing Pantagruel are in the past! now you just have to download the docker image from the [Dockerhub] repository!
 
 ```sh
 docker pull flass/pantagruel-dep:usingGeneRax-latest
 ```
 
 See details [here](https://github.com/flass/pantagruel/blob/master/INSTALL.md#building-the-docker-image).
-Note that the image is quite large (2.05 GB) so make sure you have the relevant space on your machine (and on the filesystem partition that hosts the docker client). Also, InterProScan (used in task 04) is NOT included in docker image, see [here](https://github.com/flass/pantagruel/blob/usingGeneRax/INSTALL.md#interproscan-task-04-not-included-in-docker-image).
+Note that the image is quite large (2.05 GB) so make sure you have the relevant space on your machine (and on the filesystem partition that hosts the docker client). Also, InterProScan (used in task 04) is NOT included in docker image, see [here](https://github.com/flass/pantagruel/blob/usingGeneRax/INSTALL.md#interproscantask-04-not-included-in-docker-image).
 
 ### 17/12/2019: :whale: Dockerfile
 The [Dockerfile] (a 'recipe' to generate a Docker image) is now ready!  
