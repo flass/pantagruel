@@ -600,6 +600,7 @@ do
 	  testmandatoryarg "${1}" "${2}"
 	  export pathtoipscan=${2}
       echo "path to interproscan executable is: ${pathtoipscan}"
+      shift 2;;
 
     --)
       shift
