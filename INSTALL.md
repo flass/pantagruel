@@ -82,7 +82,7 @@ pantagruel_pipeline/pantagruel/install_interproscan.sh pantagruel_pipeline/ $PWD
 ```
 This will donwload the last version of InterProScan, extract the (BIG!) Java library, and link the executable `interproscan.sh` to `$PWD`.
 
-Then to indicate to Pantagruel where to find the executable, run the initial configuration command `pantagruel init` with the option `--path_to_interproscan $PWD`; you can use any location istead of `$PWD`, but remember is has to be located within the folder that will be mounted with `docker run -v`.
+Then to indicate to Pantagruel where to find the executable, run the initial configuration command `pantagruel init` with the option `--path_to_interproscan $PWD`; you can use any locations instead of `pantagruel_pipeline/` and `$PWD`, but remember they have to be located within the folder that will be mounted with `docker run -v`.
 
 ### The scripted, fairly easy way
 
