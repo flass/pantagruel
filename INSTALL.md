@@ -78,11 +78,11 @@ Note that task `04` for InterProScan functional annotation is **NOT included** i
 It can however be installed manually *in complement* of the docker image, and be called as an external program through the container; for this again you just need to make sure the (link to the) executable `interproscan` is available somewhere in the location mounted with `docker run` option `-v`.  
 To this end, you can use the [install_interproscan.sh](https://github.com/flass/pantagruel/blob/master/install_interproscan.sh) script, using the same syntax as the `install_dependencies.sh` script (see above) but installing only InterProScan:  
 ```sh
-pantagruel_pipeline/pantagruel/install_interproscan.sh pantagruel_pipeline/ $HOME/bin/
+pantagruel_pipeline/pantagruel/install_interproscan.sh pantagruel_pipeline/ $PWD/
 ```
-This will donwload the last version of InterProScan, extract the (BIG!) Java library, and link the executable `interproscan.sh` to `$HOME/bin/interproscan`.
+This will donwload the last version of InterProScan, extract the (BIG!) Java library, and link the executable `interproscan.sh` to `$PWD`.
 
-Then to indicate to Pantagruel where to find the executable, run the initial configuration command `pantagruel init` with the option `--path_to_interproscan $HOME/bin`
+Then to indicate to Pantagruel where to find the executable, run the initial configuration command `pantagruel init` with the option `--path_to_interproscan $PWD`; you can use any location istead of `$PWD`, but remember is has to be located within the folder that will be mounted with `docker run -v`.
 
 ### The scripted, fairly easy way
 
