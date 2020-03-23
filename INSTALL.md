@@ -82,7 +82,7 @@ This should create a Docker image called `pantagruel-dep` that will be stored on
 
 Now, to run the pipeline, you will only need to create a docker container from that image. The pipeline scripts (and other executables) are available from the `$PATH` of the container, so you can use this syntax:  
 ```sh
-docker run -u $UID:$UID -v $PWD:$PWD -w $PWD panta pantagruel
+docker run -u $UID:$UID -v $PWD:$PWD -w $PWD pantagruel-dep pantagruel
 ```
 The `-v $PWD:$PWD` part of the command mounts your current directory `$PWD` as a volume onto the filesystem of the container, which otherwise is completely isolated from your host machine's own filesystem. The right bit of that part `:$PWD` indicates the mounting destination, which in that case is the same, meaning this location will have the same path in the container's filesystem, making it seemless to use the docker container vs. other modes of installing Pantagruel. Mounting a location of your own filesystem (it can be somewhere else than `$PWD`) thus allows you to write in it - so you can keep the output! The location chosen as root of your Pantgruel database (given as argument of `-r` option of the `init` task call) thus has to be included in that location. For instance, you can write the results in `/home/me/pantagruel_databases` if you mounted `/home/me` onto the container:  
 ```sh
@@ -103,7 +103,7 @@ NB: task `04` for InterProScan functional annotation is **NOT included** in the 
 It can however be installed manually *in complement* of the docker image, and be called as an external program through the container; for this again you just need to make sure the (link to the) executable `interproscan` is available somewhere in the location mounted with `docker run` option `-v`.  
 To this end, you can use the [install_interproscan.sh](https://github.com/flass/pantagruel/blob/master/install_interproscan.sh) script, using the same syntax as the `install_dependencies.sh` script (see above) but installing only InterProScan:  
 ```sh
-pantagruel_pipeline/pantagruel/install_install_interproscan.sh pantagruel_pipeline/ $HOME/bin/
+pantagruel_pipeline/pantagruel/install_interproscan.sh pantagruel_pipeline/ $HOME/bin/
 ```
 This will donwload the last version of InterProScan, extract the (BIG!) Java library, and link the executable `interproscan.sh` to `$HOME/bin/interproscan`.
 
