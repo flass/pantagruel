@@ -80,7 +80,16 @@ else
   export replmethod='replaceCCinGasinS-collapsePOPinSnotinG'
 fi
 export mboutputdir=${bayesgenetrees}/${collapsecond}
-export IPversion=$(interproscan --version 2> /dev/null | head -n 1 | sed -e 's/InterProScan version //')
+if [ -z "${pathtoipscan}" ] ; then
+  export ipscanexe=interproscan
+else
+  export ipscanexe=${ptgdb}/interproscan
+  rm -f ${ipscanexe}
+  if [ -d "${pathtoipscan}" ] ; then
+  ln -s ${pathtoipscan}/interproscan ${ipscanexe}
+  chmod +x ${ipscanexe}
+fi
+export IPversion=$(${ipscanexe} --version 2> /dev/null | head -n 1 | sed -e 's/InterProScan version //')
 if [ ! -z "${IPversion}" ] ; then
   export interpro=${funcannot}/InterProScan_${IPversion}
 else

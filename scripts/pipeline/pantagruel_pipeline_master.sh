@@ -93,6 +93,11 @@ usagelong (){
   echo "    -f|--famprefix    alphanumerical prefix (no number first) of the names for homologous protein/gene family clusters; defaults to 'PANTAG'"
   echo "                        the chosen prefix will be appended with a 'P' for protein families and a 'C' for CDS families."
   echo ""
+  echo "    --path-to-interproscan  path to the InterProScan executable script, or to the folder containing an executable file named \`interproscan\`,"
+  echo "                              which itself should link to the script \`interproscan.sh\` that is found in the InterProScan software archive."
+  echo "                              Defaults to the empty string, meaning that Pantagruel will look for the \`interproscan\` command in the \$PATH."
+  echo "                              Using this option is mandatory to execute task 04 when when calling \`pantagruel\` through the docker image."
+  echo ""
   echo " Input options:"
   echo ""
   echo "    -T|--taxonomy     path to folder of taxonomy database flat files; defaults to \$rootdir/NCBI/Taxonomy_YYYY-MM-DD (suffix is today's date)"
@@ -582,15 +587,19 @@ do
     -g|--genefam_list)
       testmandatoryarg "${1}" "${2}"
       export genefamlist=$(readlink -f ${2})
-      echo "set resticted list for computation of gene trees"
+      echo "set restricted list for computation of gene trees"
       shift 2;;
 	  
 	-q|--max_event_age)
       testmandatoryarg "${1}" "${2}"
       export maxreftreeheight=${2}
-      echo "will restict events younger than age ${maxreftreeheight} on the species tree for gene co-evolution scoring"
+      echo "will restrict events younger than age ${maxreftreeheight} on the species tree for gene co-evolution scoring"
       shift 2;;
 	  
+	--path-to-interproscan)
+	  testmandatoryarg "${1}" "${2}"
+	  export pathtoipscan=${2}
+      echo "path to interproscan executable is: ${pathtoipscan}"
 
     --)
       shift

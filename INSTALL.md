@@ -82,6 +82,8 @@ pantagruel_pipeline/pantagruel/install_interproscan.sh pantagruel_pipeline/ $HOM
 ```
 This will donwload the last version of InterProScan, extract the (BIG!) Java library, and link the executable `interproscan.sh` to `$HOME/bin/interproscan`.
 
+Then to indicate to Pantagruel where to find the executable, run the initial configuration command `pantagruel init` with the option `--path-to-interproscan $HOME/bin`
+
 ### The scripted, fairly easy way
 
 #### Using the `install_dependencies.sh` script 

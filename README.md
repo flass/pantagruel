@@ -343,7 +343,14 @@ Options are detailed here:
 
     -f|--famprefix     alphanumerical prefix (no number first) of the names for homologous protein/gene family clusters; defaults to 'PANTAG'
                          the chosen prefix will be appended with a 'P' for protein families and a 'C' for CDS families.
+ 
+    --path-to-interproscan  path to the InterProScan executable script, or to the folder containing an executable file named \`interproscan\`,"
+                              which itself should link to the script \`interproscan.sh\` that is found in the InterProScan software archive."
+                              Defaults to the empty string, meaning that Pantagruel will look for the \`interproscan\` command in the \$PATH."
+                             Using this option is mandatory to execute task 04 when when calling \`pantagruel\` through the docker image."
 
+ Input options:
+ 
     -T|--taxonomy      path to folder of taxonomy database flat files. Defaults to $rootdir/NCBI/Taxonomy_YYYY-MM-DD (suffix is today's date)
                          if this is not containing the expected file, triggers downloading the daily dump from NCBI Taxonomy at task 00
 
