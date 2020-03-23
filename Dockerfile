@@ -94,4 +94,4 @@ RUN cd / && git clone --recursive https://github.com/BenoitMorel/GeneRax \
 COPY . /pantagruel
 RUN cd /pantagruel \
     && echo "included pantagruel version: $(git log | head -n 1 | awk '{ print $2 }')" \
-	&& echo "Dockerfile last edited on 2020-03-20"
+	&& echo "Dockerfile last edited on $(ls -l Dockerfile | awk '{print $6,$7,$8}')"
