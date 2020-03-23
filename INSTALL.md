@@ -76,14 +76,15 @@ alias pantagruel="docker run -u $UID:$UID -v $PWD:$PWD -w $PWD flass/pantagruel-
 #### InterProScan/task 04 NOT included in docker image
 
 Note that task `04` for InterProScan functional annotation is **NOT included** in the docker image, as InterProScan is bulky and frequent releases require regular manual re-installation.  
-It can however be installed manually *in complement* of the docker image, and be called as an external program through the container; for this again you just need to make sure the (link to the) executable `interproscan` is available somewhere in the location mounted with `docker run` option `-v`.  
+
+It can however be installed manually *in complement* of the docker image, and be called as an external program through the container; for this again you just need to make sure the executable `interproscan` is located somewhere within the folder mounted with `docker run` option `-v`.  
 To this end, you can use the [install_interproscan.sh](https://github.com/flass/pantagruel/blob/usingGeneRax/install_interproscan.sh) script, using the same syntax as the `install_dependencies.sh` script (see above) but installing only InterProScan:  
 ```sh
 pantagruel_pipeline/pantagruel/install_interproscan.sh pantagruel_pipeline/ $PWD/
 ```
-This will donwload the last version of InterProScan, extract the (BIG!) Java library, and link the executable `interproscan.sh` to `$PWD`.
+This will download the last version of InterProScan, extract the (BIG!) Java library into `pantagruel_pipeline/`, and link the executable `interproscan.sh` to `$PWD/interproscan`; you can use any locations instead of `pantagruel_pipeline/` and `$PWD`, but remember they have to be located within the folder that will be mounted with `docker run -v`.
 
-Then to indicate to Pantagruel where to find the executable, run the initial configuration command `pantagruel init` with the option `--path_to_interproscan $PWD`; you can use any locations instead of `pantagruel_pipeline/` and `$PWD`, but remember they have to be located within the folder that will be mounted with `docker run -v`.
+Then to indicate to Pantagruel where to find the executable, run the initial configuration command `pantagruel init` with the option `--path_to_interproscan $PWD/interproscan`.
 
 ### The scripted, fairly easy way
 
