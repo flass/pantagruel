@@ -32,7 +32,7 @@ fi
 ############################
 
 mkdir -p ${funcannot}/
-export currIPversion=$(interproscan --version | head -n 1 | sed -e 's/InterProScan version //')
+export currIPversion=$(${ipscanexe} --version | head -n 1 | sed -e 's/InterProScan version //')
 if [ -z "$currIPversion" ] ; then
   echo "Error: unable to dertermine version of Interproscan; please verify the program is correctly installed ; exiting now."
   exit 1
@@ -43,7 +43,7 @@ lastIPversion=$(lftp -c "open ${iphost} ; ls -tr ${iploc}[0-9].[0-9][0-9]*-[0-9]
 if [ -z "${currIPversion}" ] ; then
   echo "could not reach the InterproScan FTP server and verify the current version; the InterproScan look-up service may fail if the current version '${currIPversion}' is not the last"
 elif [ "${currIPversion}" != "${lastIPversion}" ] ; then
-  echo "Error: the installed verison of InterProScan (found at $(ls -l `which interproscan` | awk '{print $NF}')) is '${currIPversion}', different from the version currently published on the EBI FTP: '${lastIPversion}'."
+  echo "Error: the installed version of InterProScan (found at $(readlink -f `which interproscan`)) is '${currIPversion}', different from the version currently published on the EBI FTP: '${lastIPversion}'."
   echo "Using this outdated version would cause the look-up service not to work and thus a significant loss of efficiency."
   echo "Please install the most recent version by running again the script '${ptgrepo}/install_dependencies.sh'."
   echo "Exiting now."
@@ -88,7 +88,7 @@ for nrfaa in $(ls ${interpro}/all_complete_proteomes/*.faa* | grep -v '\.tsv') ;
    echo "Found the output of a previous InterProScan run for protein flat file ${nrfaa}: ${nrfaa}.tsv ; skip computation."
  else
    echo "Run InterProScan annotation of the protein flat file ${nrfaa}"
-   ipcmd="interproscan -T ${ptgtmp}/interpro -i ${nrfaa} -b ${nrfaa} --formats TSV${ipcpu} --iprlookup --goterms --pathways &> ${ptglogs}/interpro/$(basename ${nrfaa})_interpro.log"
+   ipcmd="${ipscanexe} -T ${ptgtmp}/interpro -i ${nrfaa} -b ${nrfaa} --formats TSV${ipcpu} --iprlookup --goterms --pathways &> ${ptglogs}/interpro/$(basename ${nrfaa})_interpro.log"
    echo "#call: ${ipcmd}"
    eval "${ipcmd}"
    checkexec "Something went wrong during InterProScan run on '${nrfaa}'"

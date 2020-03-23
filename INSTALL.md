@@ -81,11 +81,16 @@ To this end, you can use the [install_interproscan.sh](https://github.com/flass/
 ```sh
 pantagruel_pipeline/pantagruel/install_interproscan.sh pantagruel_pipeline/ $PWD/
 ```
-This will donwload the last version of InterProScan, extract the (BIG!) Java library, and link the executable `interproscan.sh` to `./interproscan`.
+This will donwload the last version of InterProScan, extract the (BIG!) Java library, and link the executable `interproscan.sh` to `$HOME/bin/interproscan`.
 
-### The scripted, fairly easy way  
+Then to indicate to Pantagruel where to find the executable, run the initial configuration command `pantagruel init` with the option `--path-to-interproscan $HOME/bin`
 
-Finally, assuming you are still in the parent folder where you initially created the sub-folder `pantagruel_pipeline/`, you may run the installation script:  
+### The scripted, fairly easy way
+
+#### Using the `install_dependencies.sh` script 
+
+After cloning the `pantagruel` code repository, you may run the installation script [install_dependencies.sh](https://github.com/flass/pantagruel/blob/usingGeneRax/install_dependencies.sh).  
+Assuming you are still in the parent folder where you initially created the sub-folder `pantagruel_pipeline/`, run:
 ```sh
 pantagruel_pipeline/pantagruel/install_dependencies.sh pantagruel_pipeline/
 ```  
