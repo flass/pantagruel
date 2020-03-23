@@ -43,7 +43,7 @@ lastIPversion=$(lftp -c "open ${iphost} ; ls -tr ${iploc}[0-9].[0-9][0-9]*-[0-9]
 if [ -z "${currIPversion}" ] ; then
   echo "could not reach the InterproScan FTP server and verify the current version; the InterproScan look-up service may fail if the current version '${currIPversion}' is not the last"
 elif [ "${currIPversion}" != "${lastIPversion}" ] ; then
-  echo "Error: the installed version of InterProScan (found at $(readlink -f `which interproscan`)) is '${currIPversion}', different from the version currently published on the EBI FTP: '${lastIPversion}'."
+  echo "Error: the installed version of InterProScan (found at $(readlink -f "$(which interproscan)") is '${currIPversion}', different from the version currently published on the EBI FTP: '${lastIPversion}'."
   echo "Using this outdated version would cause the look-up service not to work and thus a significant loss of efficiency."
   echo "Please install the most recent version by running again the script '${ptgrepo}/install_dependencies.sh'."
   echo "Exiting now."
