@@ -88,8 +88,10 @@ else
   export ipscanexe=${ptgdb}/interproscan
   rm -f ${ipscanexe}
   if [ -d "${pathtoipscan}" ] ; then
-  ln -s ${pathtoipscan}/interproscan ${ipscanexe}
-  chmod +x ${ipscanexe}
+    ln -s ${pathtoipscan}/interproscan ${ipscanexe}
+  else
+	ln -s ${pathtoipscan} ${ipscanexe}
+  fi
 fi
 export IPversion=$(${ipscanexe} --version 2> /dev/null | head -n 1 | sed -e 's/InterProScan version //')
 if [ ! -z "${IPversion}" ] ; then
