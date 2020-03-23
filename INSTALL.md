@@ -21,35 +21,6 @@ Finally, you need to install the dependencies. Because of course, the pipeline i
 
 ## Installing Dependencies 
 
-### The scripted, fairly easy way
-
-#### Using the `install_dependencies.sh` script 
-
-After cloning the `pantagruel` code repository, you may run the installation script [install_dependencies.sh](https://github.com/flass/pantagruel/blob/master/install_dependencies.sh):  
-
-Assuming you are still in the parent folder where you initially created the sub-folder `pantagruel_pipeline/`, run:
-```sh
-pantagruel_pipeline/pantagruel/install_dependencies.sh pantagruel_pipeline/
-```
-This will download and build all dependencies in the `pantagruel_pipeline/` folder.
-
-!!! Note that for this step, you (i.e. your linux user) need to have the sudo rights (be part of the sudo group, check with `grep sudo /etc/group`); however, **DO NOT** execute the installtion script with `sudo` (which would make all software owned by the root user).  
-
-Optionally, you can also specify the folder where relevant executable files, including the main `pantagruel` executable, will be linked, or it will default to `~/bin/` (user-specific). The path to this folder will be **permatnently** added to your `$PATH` (via editing your ~/.bashrc).  
-```sh
-pantagruel_pipeline/pantagruel/install_dependencies.sh pantagruel_pipeline/ pantagruel_pipeline/bin/
-```
-
-You may want not to install automatically all Debian packages (some could mess up with your local install), Brew and all its packages (same reason), Docker and all its packages (you may have a special deamon installed you don't want to be replaced) or InterProScan (it takes a lot of disk space). For this, you can use the options `--no-debian` `--no-brew` `--no-docker` and `--no-interpro`, respectively (anywhere after the first argument).  
-```sh
-pantagruel_pipeline/pantagruel/install_dependencies.sh pantagruel_pipeline/ --no-debian --no-interpro --no-brew --no-docker
-```
-
-#### Checking ALE functions
-
-You may want to test that ALE commands work after installation (see [here](https://github.com/flass/pantagruel/blob/master/doc/installing_ALE.md#checking-it-works)), by typing the single commands `ALEml` and `ALEobserve` - preceeeded by `docker run --user $USER -v $PWD:$PWD -w $PWD` if using the docker image.
-
-
 ### The container, worryless way :whale:
 
 This is what is recommended, because that should always work. and that it provide a shared environment for us all in which you can report your bugs and I know what's going on.
@@ -101,13 +72,45 @@ You can even alias this command so it's less ugly and you just need to call `pan
 alias pantagruel="docker run -u $UID:$UID -v $PWD:$PWD -w $PWD flass/pantagruel-dep pantagruel_pipeline/pantagruel/pantagruel"
 ```
 
-NB: task `04` for InterProScan functional annotation is **NOT included** in the docker image, as InterProScan is bulky and frequent releases require regular manual re-installation.  
+#### InterProScan/task 04 NOT included in docker image
+
+Note that task `04` for InterProScan functional annotation is **NOT included** in the docker image, as InterProScan is bulky and frequent releases require regular manual re-installation.  
 It can however be installed manually *in complement* of the docker image, and be called as an external program through the container; for this again you just need to make sure the (link to the) executable `interproscan` is available somewhere in the location mounted with `docker run` option `-v`.  
 To this end, you can use the [install_interproscan.sh](https://github.com/flass/pantagruel/blob/master/install_interproscan.sh) script, using the same syntax as the `install_dependencies.sh` script (see above) but installing only InterProScan:  
 ```sh
 pantagruel_pipeline/pantagruel/install_interproscan.sh pantagruel_pipeline/ $HOME/bin/
 ```
 This will donwload the last version of InterProScan, extract the (BIG!) Java library, and link the executable `interproscan.sh` to `$HOME/bin/interproscan`.
+
+### The scripted, fairly easy way
+
+#### Using the `install_dependencies.sh` script 
+
+After cloning the `pantagruel` code repository, you may run the installation script [install_dependencies.sh](https://github.com/flass/pantagruel/blob/master/install_dependencies.sh):  
+
+Assuming you are still in the parent folder where you initially created the sub-folder `pantagruel_pipeline/`, run:
+```sh
+pantagruel_pipeline/pantagruel/install_dependencies.sh pantagruel_pipeline/
+```
+This will download and build all dependencies in the `pantagruel_pipeline/` folder.
+
+!!! Note that for this step, you (i.e. your linux user) need to have the sudo rights (be part of the sudo group, check with `grep sudo /etc/group`); however, **DO NOT** execute the installtion script with `sudo` (which would make all software owned by the root user).  
+
+Optionally, you can also specify the folder where relevant executable files, including the main `pantagruel` executable, will be linked, or it will default to `~/bin/` (user-specific). The path to this folder will be **permatnently** added to your `$PATH` (via editing your ~/.bashrc).  
+```sh
+pantagruel_pipeline/pantagruel/install_dependencies.sh pantagruel_pipeline/ pantagruel_pipeline/bin/
+```
+
+You may want not to install automatically all Debian packages (some could mess up with your local install), Brew and all its packages (same reason), Docker and all its packages (you may have a special deamon installed you don't want to be replaced) or InterProScan (it takes a lot of disk space). For this, you can use the options `--no-debian` `--no-brew` `--no-docker` and `--no-interpro`, respectively (anywhere after the first argument).  
+```sh
+pantagruel_pipeline/pantagruel/install_dependencies.sh pantagruel_pipeline/ --no-debian --no-interpro --no-brew --no-docker
+```
+
+#### Checking ALE functions
+
+You may want to test that ALE commands work after installation (see [here](https://github.com/flass/pantagruel/blob/master/doc/installing_ALE.md#checking-it-works)), by typing the single commands `ALEml` and `ALEobserve` - preceeeded by `docker run --user $USER -v $PWD:$PWD -w $PWD` if using the docker image.
+
+
 
 ________
 

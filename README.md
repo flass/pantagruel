@@ -11,7 +11,7 @@ docker pull flass/pantagruel-dep:master-latest
 ```
 
 See details [here](https://github.com/flass/pantagruel/blob/master/INSTALL.md#building-the-docker-image).
-Note that the image is quite large (2.05 GB) so make sure you have the relevant space on your machine (and on the filesystem partition that hosts the docker client).
+Note that the image is quite large (2.05 GB) so make sure you have the relevant space on your machine (and on the filesystem partition that hosts the docker client). Also, InterProScan (used in task 04) is NOT included in docker image, see [here](https://github.com/flass/pantagruel/blob/master/INSTALL.md#interproscantask-04-not-included-in-docker-image).
 
 ### 17/12/2019: :whale: Dockerfile
 The [Dockerfile] (a 'recipe' to generate a Docker image) is now ready!  
