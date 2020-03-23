@@ -2,6 +2,17 @@
 
 ## News
 
+### 23/03/2019: docker image on DockerHub! :whale:
+
+The worries of installing Pantagruel are in the past! now you just have to download the docker iamge from the [Dockerhub] repository!
+
+```sh
+docker pull flass/pantagruel-dep:usingGeneRax-latest
+```
+
+See details [here](https://github.com/flass/pantagruel/blob/master/INSTALL.md#building-the-docker-image).
+Note that the image is quite large (2.05 GB) so make sure you have the relevant space on your machine (and on the filesystem partition that hosts the docker client).
+
 ### 17/12/2019: :whale: Dockerfile
 The [Dockerfile] (a 'recipe' to generate a Docker image) is now ready!  
 Use it to generate a Docker image containing all Pantagruel dependencies; then use that image to run `pantagruel` commands within the environment provided by the container, as explained [here](https://github.com/flass/pantagruel/blob/usingGeneRax/INSTALL.md#the-container-worryless-way).  
@@ -555,3 +566,4 @@ Main options are to use either:
 [install_dependencies.sh]: https://github.com/flass/pantagruel/blob/usingGeneRax/install_dependencies.sh
 [Dockerfile]:  https://github.com/flass/pantagruel/blob/usingGeneRax/Dockerfile
 [HPC scripts doc]: https://github.com/flass/pantagruel#hpc-scripts-submission-of-intensive-tasks-to-high-performance-computer-clusters
+[Dockerhub]: https://hub.docker.com/repository/docker/flass/pantagruel-dep
