@@ -5,9 +5,12 @@
 ### 23/03/2019: docker image on DockerHub! :whale:
 
 The worries of installing Pantagruel are in the past! now you just have to download the docker iamge from the [Dockerhub] repository!
+
 ```sh
 docker pull flass/pantagruel-dep:master-latest
 ```
+
+See details [here](https://github.com/flass/pantagruel/blob/master/INSTALL.md#building-the-docker-image).
 Note that the image is quite large (2.05 GB) so make sure you have the relevant space on your machine (and on the filesystem partition that hosts the docker client).
 
 ### 17/12/2019: :whale: Dockerfile
