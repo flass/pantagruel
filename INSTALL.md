@@ -31,7 +31,7 @@ sudo apt install docker.io
 ```
 
 #### Downloading the docker image from Dockerhub
-The simpler way to get the image for the pantagruel deindencies is to download it form the [Dockerhub](https://hub.docker.com/r/flass/pantagruel-dep) repository, where builds are made automatically with the latest code on the Gihub repository - magical!
+The simpler way to get the docker image for the pantagruel dependencies is to download it form the [Dockerhub](https://hub.docker.com/r/flass/pantagruel-dep) repository, where builds are made automatically with the latest code on the Gihub repository - magical!
 
 Just run:
 ```sh
@@ -39,7 +39,7 @@ docker pull flass/pantagruel-dep:usingGeneRax-latest
 ```
 
 #### Building the docker image
-If for some reason, you want to build your own image (you may have modified the code for instance), do as follows:
+If for some reason, you want to build your own image rather than downloading it (you may have modified the source code for instance), do as follows:
 
 Assuming you are still in the parent folder where you initially created the sub-folder `pantagruel_pipeline/`, run:
 
