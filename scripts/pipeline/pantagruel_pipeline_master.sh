@@ -93,7 +93,7 @@ usagelong (){
   echo "    -f|--famprefix    alphanumerical prefix (no number first) of the names for homologous protein/gene family clusters; defaults to 'PANTAG'"
   echo "                        the chosen prefix will be appended with a 'P' for protein families and a 'C' for CDS families."
   echo ""
-  echo "    --path-to-interproscan  path to the InterProScan executable script, or to the folder containing an executable file named \`interproscan\`,"
+  echo "    --path_to_interproscan  path to the InterProScan executable script, or to the folder containing an executable file named \`interproscan\`,"
   echo "                              which itself should link to the script \`interproscan.sh\` that is found in the InterProScan software archive."
   echo "                              Defaults to the empty string, meaning that Pantagruel will look for the \`interproscan\` command in the \$PATH."
   echo "                              Using this option is mandatory to execute task 04 when when calling \`pantagruel\` through the docker image."
@@ -395,7 +395,7 @@ promptdate () {
   echo $(date +'[%Y-%m-%d %H:%M:%S]') ${1}
 }
 
-ARGS=`getopt --options "d:r:i:I:f:a:T:A:L:s:t:RV:N:H:cg:e:q:hFz" --longoptions "dbname:,rootdir:,initfile:,refresh,iam:,famprefix:,refseq_ass:,refseq_list:,refseq_ass4annot:,refseq_list4annot:,custom_ass:,taxonomy:,pseudocore:,core_seqtype:,pop_lg_thresh:,pop_bs_thresh:,rooting:,reftree:,resume,env_var:,threads:,submit_hpc:,collapse,no_collapse,collapse_param:,genefam_list:,rec_method:,max_event_age:,help,FORCE,compress,path-to-interproscan:" --name "pantagruel" -- "$@"`
+ARGS=`getopt --options "d:r:i:I:f:a:T:A:L:s:t:RV:N:H:cg:e:q:hFz" --longoptions "dbname:,rootdir:,initfile:,refresh,iam:,famprefix:,refseq_ass:,refseq_list:,refseq_ass4annot:,refseq_list4annot:,custom_ass:,taxonomy:,pseudocore:,core_seqtype:,pop_lg_thresh:,pop_bs_thresh:,rooting:,reftree:,resume,env_var:,threads:,submit_hpc:,collapse,no_collapse,collapse_param:,genefam_list:,rec_method:,max_event_age:,help,FORCE,compress,path_to_interproscan:" --name "pantagruel" -- "$@"`
 
 #Bad arguments
 if [ ${?} -ne 0 ];
@@ -596,7 +596,7 @@ do
       echo "will restrict events younger than age ${maxreftreeheight} on the species tree for gene co-evolution scoring"
       shift 2;;
 	  
-	--path-to-interproscan)
+	--path_to_interproscan)
 	  testmandatoryarg "${1}" "${2}"
 	  export pathtoipscan=${2}
       echo "path to interproscan executable is: ${pathtoipscan}"
