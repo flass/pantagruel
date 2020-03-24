@@ -35,6 +35,7 @@ fi
 if [ -z "${generaxcommonopt}" ] ; then
   generaxcommonopt="-r UndatedDTL --max-spr-radius 5 --strategy SPR" # env var is a pipeline default
 fi
+generaxopt=" --per-family-rates"
 # GeneRaxalgo
 if [ ${GeneRaxalgo} == 'reconciliation-samples' ] ; then
   generaxopt="${generaxopt} --reconciliation-samples ${recsamplesize}"
