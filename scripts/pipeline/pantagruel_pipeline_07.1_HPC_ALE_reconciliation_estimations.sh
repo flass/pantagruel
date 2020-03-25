@@ -124,27 +124,27 @@ done
 
 export reccoldate=$(date +%Y-%m-%d)
 
-if [[ -z "$alebin" ]] ; then
-  alebin=$(command -v $ALEalgo)
+if [[ -z "${alebin}" ]] ; then
+  alebin=$(command -v ${ALEalgo})
 fi
 
 if [[ ! -z "$(echo ${alebin} | grep docker)" ]] ; then
   ALEsourcenote="using ALE Docker image $(docker image ls | grep alesuite | awk '{print $1,$3}')"
 else
-  pathalebin=$(readlink -f ${alebin})
+  pathalebin=$(readlink -f "${alebin}")
   alerepo=${pathalebin%%ALE/*}ALE/
   if [ -d ${alerepo} ] ; then
 	alesrcvers=$(cd ${alerepo} && git log | head -n 1 | awk '{ print $2 }' 2> /dev/null && cd - > /dev/null)
 	alesrcorig=$(cd ${alerepo} && git remote -v | grep fetch | awk '{ print $2 }' 2> /dev/null && cd - > /dev/null)
   fi
-  if [ ! -z "$alesrcvers" ] ; then
+  if [ ! -z "${alesrcvers}" ] ; then
     ALEsourcenote="using ALE software compiled from source; code origin: ${alesrcorig}; version ${alesrcvers}"
   else
     ALEheader="$(${ALEalgo} -h | head -n 1)"
     if [ -z "${ALEheader}" ] ; then
       ALEheader="using ALE software"
     fi
-    ALEsourcenote="${ALEheader#*${ALEalgo} } binaries found at ${pathalebin}"
+    ALEsourcenote="${ALEheader#*${ALEalgo} } binaries found at '${pathalebin}'"
   fi
 fi
 
