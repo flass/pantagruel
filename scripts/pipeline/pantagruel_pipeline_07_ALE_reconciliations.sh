@@ -191,7 +191,7 @@ for freqthresh in 0.1 0.25 0.5 ; do
 sqlite3 ${sqldb} """
 .mode tabs 
 select don_branch_id, don_branch_name, rec_branch_id, rec_branch_name, event_type, nb_lineages, cum_freq, cum_freq/nb_lineages as avg_support from (
- select don_branch_id, don_stree.branch_name as don_branch_name, rec_branch_id, rec_stree.branch_name as rec_branch_name, event_type, count(*) as nb_lineages, CAST(sum(freq) AS REAL)/${nsample} as cum_freq
+ select don_branch_id, don_stree.branch_name as don_branch_name, rec_branch_id, rec_stree.branch_name as rec_branch_name, event_type, count(*) as nb_lineages, cast(sum(freq) as real)/${recsamplesize} as cum_freq
   from gene_lineage_events 
   inner join species_tree_events using (event_id) 
   inner join species_tree as rec_stree on rec_branch_id=rec_stree.branch_id
