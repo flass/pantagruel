@@ -76,11 +76,13 @@ if [ "${resumetask}" == 'true' ] ; then
   # statement made below through first call to pantagruel_sqlitedb_load_orthologous_groups.py:
   # DELETE FROM orthologous_groups WHERE ortholog_col_id=${orthocol};
 fi
+parsedreccolid=$(cut -f1 ${alerec}/parsedreccol)
 sqlite3 ${sqldb} """INSERT INTO ortholog_collections (ortholog_col_id, ortholog_col_name, reconciliation_id, software, version, algorithm, ortholog_col_date, notes) VALUES 
 (${orthocolid}, '${orthocol}', ${parsedreccolid}, 'pantagruel/scripts/get_orthologues_from_ALE_recs.py', '${ptgversion:0:7}', 'getOrthologues(method=''mixed'')', '$(date +%Y-%m-%d)', 
 'source from https://github.com/flass/pantagruel/commits/${ptgversion}, call: ''scripts/get_orthologues_from_ALE_recs.py ${getOrpthologuesOptions}''')
 ;
 """
+checkexec "step 2.0: failed when ${step2/classification/collection record}" "step 2.0: completed ${step2/classification/collection record}"
 python2.7 ${ptgscripts}/pantagruel_sqlitedb_load_orthologous_groups.py ${sqldb} ${orthogenes}/${orthocol} "mixed" "majrule_combined_0.500000" ${orthocolid} 0
 checkexec "step 2.1: failed when ${step2} for reconciled gene trees" "step 2.1: completed ${step2} for reconciled gene trees"
 python2.7 ${ptgscripts}/pantagruel_sqlitedb_load_orthologous_groups.py ${sqldb} ${orthogenes}/${orthocol} "unreconciled" "unicopy" ${orthocolid} 1
