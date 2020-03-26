@@ -103,7 +103,7 @@ if [[ -z "${alebin}" ]] ; then
     echo "'${ALEalgo}' command is not available from the PATH"
     dockerale="$(docker image ls | grep alesuite | awk '{print $1,$3}')"
 	if [ ! -z "${dockerale}" ] ; then
-	  ALEsourcenote="using ALE Docker image '${dockerale}'"
+	  ALEsourcenote="using ALE Docker image ${dockerale}"
 	else
 	  echo "alesuite docker image not detected on this host"
 	  echo "could not determine what ALE executables are being used"
@@ -162,12 +162,13 @@ else
 fi
 ## normalise the species tree branch labels across gene families
 ## and look for correlated transfer events across gene families
+stepa="parsing ALE scenarios"
+echo "${stepa}"
 python2.7 ${ptgscripts}/parse_collapsedALE_scenarios.py --rec_sample_list ${reclist} \
  ${pops} --reftree ${speciestree}.lsd.nwk --ALE_algo ${rectype} \
  --dir_table_out ${parsedrecs} --evtype ${evtypeparse} --minfreq ${minevfreqparse} \
  --threads ${ptgthreads}  &> ${ptglogs}/parse_collapsedALE_scenarios.log
-
-checkexec "Could not complete parsing ALE scenarios" "Successfully parsed ALE scenarios"
+checkexec "Could not complete ${stepa}" "Successfully ${stepa/ing/ed}"
 
 export parsedreccoldate=$(date +%Y-%m-%d)
 echo -e "${parsedreccolid}\t${parsedreccoldate}\t${parsedreccol}" > ${alerec}/parsedreccol
@@ -175,11 +176,15 @@ echo -e "\n# Parsed reconciliation collection details:"
 cat ${alerec}/parsedreccol
 
 if [ "${resumetask}" == 'true' ] ; then
-  echo "Resume mode: first clean the database from previous inserts and indexes"
+  stepb="clean the database from previous inserts and indexes"
+  echo "Resume mode: first ${stepb}"
   ${ptgscripts}/pantagruel_sqlitedb_phylogeny_clean_reconciliations.sh "${database}" "${sqldb}" "${parsedreccolid}"
+  checkexec "Could not complete ${stepb/clean/cleaning}" "Successfully ${stepb/clean/cleaned}"
 fi
-echo "Store reconciliation parameters and load parsed reconciliation data into database"
+stepc="Storing reconciliation parameters and load parsed reconciliation data into database"
+echo ${stepc}
 ${ptgscripts}/pantagruel_sqlitedb_phylogeny_populate_reconciliations.sh "${database}" "${sqldb}" "${parsedrecs}" "${ALEversion}" "${ALEalgo}" "${ALEsourcenote}" "${parsedreccol}" "${parsedreccolid}" "${parsedreccoldate}"
+checkexec "Could not complete ${stepc}" "Successfully ${stepc/ing/ed}"
 
 # rapid survey of event density over the reference tree
 for freqthresh in 0.1 0.25 0.5 ; do
