@@ -32,18 +32,15 @@ fi
 ## and with no colpased gene tree clades (need to discard events below replacement clade subtree roots [as in parse_collapsedALE_scenarios.py]
 ## and to transpose orthologus group classification of collapsed clade to member genes)
 
-if [ -z "${getOrpthologuesOptions}" ] ; then
-  getOrpthologuesOptions=" --ale.model=${rectype} --methods='mixed' --max.frac.extra.spe=0.5 --majrule.combine=0.5 --colour.combined.tree --use.unreconciled.gene.trees ${mbgenetrees} --unreconciled.format 'nexus' --unreconciled.ext '.con.tre'"
-fi
-if [ -z "${orthocolid}" ] ; then
-  orthocolid=1
-fi
-
 # safer specifying the reconciliation collection to parse; e.g.: 'ale_collapsed_dated_1'
 if [ -z "${reccol}" ] ; then
   # if not inferred from the record of the last reconciliation computation
   reccol=$(cut -f4 ${alerec}/reccol)
   [ -z "${reccol}" ] && echo "Error: cannot find reconciliation collection as env variable \$reccol is empty; exit now" && exit 1
+fi
+if [ "$(echo ${reccol} | cut -d'_' -f1)" != 'ale' ] ; then
+  echo "Error: orthologous group analysis implemented only to use output from ALE reconciliations ; exit now"
+  exit 1
 fi
 # derived parameters
 export rectype=$(echo ${reccol} | cut -d'_' -f3)
@@ -52,6 +49,13 @@ if [ "${rectype}" != 'dated' ] ; then
   echo "evolution scenario-based classification of orthologs is only supported when ALEml (dated ALE model) reconciliations were used"
   echo "exit now"
   exit 1
+fi
+
+if [ -z "${getOrpthologuesOptions}" ] ; then
+  getOrpthologuesOptions=" --ale.model=${rectype} --methods='mixed' --max.frac.extra.spe=0.5 --majrule.combine=0.5 --colour.combined.tree --use.unreconciled.gene.trees ${mbgenetrees} --unreconciled.format 'nexus' --unreconciled.ext '.con.tre'"
+fi
+if [ -z "${orthocolid}" ] ; then
+  orthocolid=1
 fi
 
 outrecdir=${recs}/${collapsecond}/${replmethod}/${reccol}
@@ -78,7 +82,7 @@ if [ "${resumetask}" == 'true' ] ; then
 fi
 parsedreccolid=$(cut -f1 ${alerec}/parsedreccol)
 sqlite3 ${sqldb} """INSERT INTO ortholog_collections (ortholog_col_id, ortholog_col_name, reconciliation_id, software, version, algorithm, ortholog_col_date, notes) VALUES 
-(${orthocolid}, '${orthocol}', ${parsedreccolid}, 'pantagruel/scripts/get_orthologues_from_ALE_recs.py', '${ptgversion:0:7}', 'getOrthologues(method=''mixed'')', '$(date +%Y-%m-%d)', 
+(${orthocolid}, '${orthocol}', ${parsedreccolid}, 'pantagruel/scripts/get_orthologues_from_ALE_recs.py', '${ptgversion:0:7}', 'getOrthologues-mixed', '$(date +%Y-%m-%d)', 
 'source from https://github.com/flass/pantagruel/commits/${ptgversion}, call: ''scripts/get_orthologues_from_ALE_recs.py ${getOrpthologuesOptions}''')
 ;
 """
