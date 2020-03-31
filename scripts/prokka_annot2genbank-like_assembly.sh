@@ -73,17 +73,21 @@ export -f checkexec
 #export -f parseGBass
 
 # parse script arguments
-[ -z "${3}" ] && echo "Error: missing arguments" && echo -e "usage is: ${0} input_prokka_annotation_folder output_GenBank-like_annotation_folder strain_info_file [pantagruel_scripts_folder]"
-annot=${1}
-gblikeass=${2}
-straininfo=${3}
-[ -z "${ptgscripts}" ] && ptgscripts=${4}
-[ -z "${ptgscripts}" ] && echo "Error: please define \${ptgscripts} environment variable or pass its value as 4th positional argument ; exit now" && exit 1
+[ -z "${3}" ] && echo "Error: missing arguments" && echo -e "usage is: ${0} contig_folder_(original_prokka_input) input_prokka_annotation_folder output_GenBank-like_annotation_folder strain_info_file [pantagruel_scripts_folder] [log_folder]"
+contigs=${1}
+annot=${2}
+gblikeass=${3}
+straininfo=${4}
+[ -z "${ptgscripts}" ] && ptgscripts=${5}
+[ -z "${ptgscripts}" ] && echo "Error: please define \${ptgscripts} environment variable or pass its value as 5th positional argument ; exit now" && exit 1
+[ -z "${ptglogs}" ] && ptglogs=${PWD}/${0/.sh/_logs}
 
-mkdir -p ${annot}
 mkdir -p ${gblikeass}/
-contigsets="$(ls -A "${annot}/" 2>/dev/null)"
-	
+mkdir -p ${ptglogs}/
+contigsets="$(ls -A "${contigs}/" 2>/dev/null)"
+
+nannnot=0
+
 for allcontigs in ${contigsets} ; do
   gproject=$(parsefastaext ${allcontigs})
   echo "$(promptdate) ${gproject}"
@@ -96,10 +100,12 @@ for allcontigs in ${contigsets} ; do
 	  echo "annotation in archive ${annot}/${gproject}.tar.gz does not contain .ptg.gff and .ptg.gbk files; extract fill to process the input .gff and .gbk files"
 	  tar -xzf ${annot}/${gproject}.tar.gz
 	fi
+  elif [[ ! -d ${annot}/${gproject} ]] ; then
+    echo "Error: annotation folder or archive is missing for contig set '${allcontigs}' ; exit now" && exit 1
   fi
   if [[ "${doprocess1}" == 'true' ]] ; then
 	if [[ "$(grep ${gproject} ${straininfo} | cut -f2- | grep -P '[^\t]' | wc -l)" -eq 0 ]] ; then
-	  echo "Error: missing mandatory information about custom genomes"
+	  echo "Error: missing mandatory information about custom genome assembly with id '${gproject}'"
 	  echo "Please fill information in '${straininfo}' file before running this step again."
 	  exit 1
 	fi
@@ -223,11 +229,7 @@ for allcontigs in ${contigsets} ; do
 	  tar -czf ${annot}/${gproject}.tar.gz ${annot}/${gproject}/ && rm -rf ${annot}/${gproject}/ && echo -e "successfully compressed into\n:'$(ls -l ${annot}/${gproject}.tar.gz)' and deleted source folder." || "Compression failed; leave source folder '${annot}/${gproject}/' as is"
 	fi
   fi
-#    done > ${ptglogs}/genbank-format_assemblies.log
+  nannot=$(( ${nannot} + 1 ))
 done
     
-relpathass2gblass=$(realpath --relative-to=${assemblies} ${gblikeass})
-for gblass in $(ls -A ${gblikeass}/) ; do
-  ln -s ${relpathass2gblass}/${gblass} ${assemblies}/
-done
-
+echo "$(promptdate) converted ${nannot} from Prokka output format from '${annot}/' to a GenBank Assembly style format, wirtten in '${gblikeass}/'; done."
