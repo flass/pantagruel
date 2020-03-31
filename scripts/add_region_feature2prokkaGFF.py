@@ -29,8 +29,7 @@ with open(nfstraininfo, 'r') as fstraininfo:
 
 straininfo = dstraininfo[gproject]
 print "extracted strain information:"
-print '\t'.join(header)
-print '\t'.join(dstraininfo[gproject])
+print repr(straininfo)
 #dgproject2assemb = {}
 #with open(nfgproject2assemb, 'r') as fgproject2assemb:
 #	header = fgproject2assemb.readline().rstrip('\n').split('\t')
