@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 
 # define functions
+promptdate () {
+  echo $(date +'[%Y-%m-%d %H:%M:%S]') $1
+}
+export -f promptdate
+export datepad="                      "
+
 addregionannotfeat (){
 python2.7 << EOF
 fcontig = open('${1}', 'r')
@@ -76,7 +82,7 @@ straininfo=${3}
 
 mkdir -p ${annot}
 mkdir -p ${gblikeass}/
-contigsets="$(ls -A "${contigs}/" 2>/dev/null)"
+contigsets="$(ls -A "${annot}/" 2>/dev/null)"
 	
 for allcontigs in ${contigsets} ; do
   gproject=$(parsefastaext ${allcontigs})
