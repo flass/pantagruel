@@ -138,7 +138,7 @@ for allcontigs in ${contigsets} ; do
 	    assembler='unknown'
 	  fi
 	fi
-	python2.7 ${ptgscripts}/add_region_feature2prokkaGFF.py ${gproject} ${annotgff[0]} ${annotptggff} ${straininfo} ${contigs}/${allcontigs} ${assembler} &> ${addregfeatlog}
+	python2.7 ${ptgscripts}/add_region_feature2prokkaGFF.py "${gproject}" "${annotgff[0]}" "${annotptggff}" "${straininfo}" "${contigs}/${allcontigs}" "${assembler}" &> ${addregfeatlog}
 	checkexec "something went wrong when adding region features to GFF file (In: ${annotgff[0]}; Out:${annotptggff}; Stdin/Stderr or the last command: ${addregfeatlog})"
 	annotfna=($(ls ${annot}/${gproject}/*.fna))
 	annotgbk=($(ls ${annot}/${gproject}/*.gbf 2> /dev/null || ls ${annot}/${gproject}/*.gbk))
