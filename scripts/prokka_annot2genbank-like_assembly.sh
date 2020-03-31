@@ -73,14 +73,16 @@ export -f checkexec
 #export -f parseGBass
 
 # parse script arguments
-[ -z "${3}" ] && echo "Error: missing arguments" && echo -e "usage is: ${0} contig_folder_(original_prokka_input) input_prokka_annotation_folder output_GenBank-like_annotation_folder strain_info_file [pantagruel_scripts_folder] [log_folder]"
+thisscript=$(readlink -f ${0})
+bnscript=$(basename ${thisscript})
+[ -z "${3}" ] && echo "Error: missing arguments" && echo -e "usage is: ${bnscript} contig_folder_(original_prokka_input) input_prokka_annotation_folder output_GenBank-like_annotation_folder strain_info_file [pantagruel_scripts_folder] [log_folder]"
 contigs=${1}
 annot=${2}
 gblikeass=${3}
 straininfo=${4}
 [ -z "${ptgscripts}" ] && ptgscripts=${5}
 [ -z "${ptgscripts}" ] && echo "Error: please define \${ptgscripts} environment variable or pass its value as 5th positional argument ; exit now" && exit 1
-[ -z "${ptglogs}" ] && ptglogs=${PWD}/${0/.sh/_logs}
+[ -z "${ptglogs}" ] && ptglogs=${PWD}/${bnscript/.sh/_logs}
 
 mkdir -p ${gblikeass}/
 mkdir -p ${ptglogs}/
@@ -127,6 +129,15 @@ for allcontigs in ${contigsets} ; do
 	mkdir -p ${ptglogs}/add_region_feature2prokkaGFF/
 	addregfeatlog=${ptglogs}/add_region_feature2prokkaGFF/add_region_feature2prokkaGFF.${gproject}.log
 	annotptggff=${annotgff[0]/.gff/.ptg.gff}
+	if [ -z "${assembler}" ] ; then
+	  if [[ "${gproject}" == *"spades"* ]] ; then
+	    assembler='SPAdes'
+      elif [[ "${gproject}" == *"velvet"* ]] ; then
+	    assembler='Velvet'
+	  else
+	    assembler='unknown'
+	  fi
+	fi
 	python2.7 ${ptgscripts}/add_region_feature2prokkaGFF.py ${gproject} ${annotgff[0]} ${annotptggff} ${straininfo} ${contigs}/${allcontigs} ${assembler} &> ${addregfeatlog}
 	checkexec "something went wrong when adding region features to GFF file (In: ${annotgff[0]}; Out:${annotptggff}; Stdin/Stderr or the last command: ${addregfeatlog})"
 	annotfna=($(ls ${annot}/${gproject}/*.fna))
