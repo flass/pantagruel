@@ -26,6 +26,20 @@ EOF
 }
 export -f addregionannotfeat
 
+parsefastaext (){
+python2.7 << EOF
+allcontigs = '${1}'
+for ext in ['.fa', '.fna', '.fasta', '.fsa']:
+  if allcontigs.endswith(ext):
+    print allcontigs.rsplit(ext, 1)[0]
+    break
+else:
+  print allcontigs
+
+EOF
+}
+export -f parsefastaext
+
 checkexec (){
   if [ ${?} != 0 ]; then
     echo "ERROR: $1" 1>&2
@@ -65,7 +79,8 @@ mkdir -p ${gblikeass}/
 contigsets="$(ls -A "${contigs}/" 2>/dev/null)"
 	
 for allcontigs in ${contigsets} ; do
-
+  gproject=$(parsefastaext ${allcontigs})
+  echo "$(promptdate) ${gproject}"
   doprocess1=true
   if [[ ! -d ${annot}/${gproject} && -s ${annot}/${gproject}.tar.gz ]] ; then
 	if [ "$(tar -tf ${annot}/${gproject}.tar.gz | grep -c '.ptg.gff\|.ptg.gbk')" -eq 2 ] ; then
