@@ -16,6 +16,9 @@ source ${envsourcescript}
 checkptgversion
 checkfoldersafe ${protali}
 
+if [ -z "${ptgthreads}" ] ; then
+  ptgthreads=1
+fi
 
 ####################################
 ## 02. Homologous Sequence Alignemnt
@@ -37,7 +40,7 @@ run_clustalo_sequential () {
   date +"%d/%m/%Y %H:%M:%S" &> ${ptglogs}/clustalo/${bn}.clustalo.log
 }
 export -f run_clustalo_sequential
-parallel --joblog ${ptglogs}/run_clustalo_sequential.log run_clustalo_sequential :::: ${tasklist}
+parallel --jobs ${ptgthreads} --joblog ${ptglogs}/run_clustalo_sequential.log run_clustalo_sequential :::: ${tasklist}
 
 # check that alignments are not empty
 ${ptgscripts}/lsfullpath.py "${nrprotali}/*" > ${nrprotali}_list
@@ -62,7 +65,8 @@ for cg in `cat ${genomeinfo}/assemblies_list` ; do ls $cg/*_cds_from_genomic.fna
 mkdir -p ${ptglogs}/extract_full_prot_and_cds_family_alignments/
 python2.7 ${ptgscripts}/extract_full_prot_and_cds_family_alignments.py --nrprot_fam_alns ${nrprotali} --singletons ${protfamseqs}/${protorfanclust}.fasta \
  --prot_info ${genomeinfo}/assembly_info/allproteins_info.tab --repli_info ${genomeinfo}/assembly_info/allreplicons_info.tab --assemblies ${assemblies} \
- --dirout ${protali} --famprefix ${famprefix} --logs ${ptglogs}/extract_full_prot_and_cds_family_alignments --identical_prots ${allfaarad}.identicals.list
+ --dirout ${protali} --famprefix ${famprefix} --identical_prots ${allfaarad}.identicals.list \
+ --threads ${ptgthreads} --logs ${ptglogs}/extract_full_prot_and_cds_family_alignments
 checkexec "$(promptdate)-- Critical error during the production of full CDS alignments from the nr protein alignments" "$(promptdate)-- complete generation of full CDS alignments without critical errors"
 
 ## check consistency of full reverse translated alignment set
