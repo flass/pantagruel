@@ -43,7 +43,7 @@ usagelong (){
   echo "                        (available for tasks: 04-07)"
   echo ""
   echo "    -N|--threads      specify the number of threads to use for (some) parrallelizable tasks (defaults to the maximum available: $(nproc))"
-  echo "                        (available for tasks: 00, 04-08)"
+  echo "                        (available for tasks: 00-02, 04-08)"
   echo "                        Note 1: this does not apply to ALE/ecceTERA reconciliations,"
   echo "                          which jobs always run sequentially due to their high memory needs."
   echo "                        Note 2: this does not apply to tasks run through the HPC script,"

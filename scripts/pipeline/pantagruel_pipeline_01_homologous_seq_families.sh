@@ -16,6 +16,12 @@ source ${envsourcescript}
 checkptgversion
 checkfoldersafe ${seqdb}
 
+if [ ! -z "${ptgthreads}" ] ; then
+  mmthreads="--threads ${ptgthreads}"
+else
+  mmthreads=""
+fi
+
 #############################
 ## 01. Homologous Sequence db
 #############################
@@ -42,8 +48,8 @@ mmseqslogs=${ptglogs}/mmseqs && mkdir -p ${mmseqslogs}/
 echo "${datepad}-- Perform first protein clustering step (100% prot identity clustering with clusthash algorithm)"
 mmlog0=${mmseqslogs}/mmseqs-0-identicalprot-clusthash.log
 mmseqs createdb ${allfaarad}.nrprotids.faa ${allfaarad}.mmseqsdb &> ${mmlog0}
-mmseqs clusthash --min-seq-id 1.0 ${allfaarad}.mmseqsdb ${allfaarad}.clusthashdb_minseqid100 &>> ${mmlog0}
-mmseqs clust ${allfaarad}.mmseqsdb ${allfaarad}.clusthashdb_minseqid100 ${allfaarad}.clusthashdb_minseqid100_clust &>> ${mmlog0}
+mmseqs clusthash ${mmthreads} --min-seq-id 1.0 ${allfaarad}.mmseqsdb ${allfaarad}.clusthashdb_minseqid100 &>> ${mmlog0}
+mmseqs clust ${mmthreads} ${allfaarad}.mmseqsdb ${allfaarad}.clusthashdb_minseqid100 ${allfaarad}.clusthashdb_minseqid100_clust &>> ${mmlog0}
 mmsummary0=$(tail -n 4 ${mmlog0} | head -n 3)
 mmseqs createseqfiledb ${allfaarad}.mmseqsdb ${allfaarad}.clusthashdb_minseqid100_clust ${allfaarad}.clusthashdb_minseqid100_clusters &>> ${mmlog0}
 checkexec "First protein clustering step failed; please inestigate error reports in '${mmlog0}'" "${datepad}-- First protein clustering step complete: ${mmsummary0}"
@@ -94,10 +100,10 @@ mkdir -p ${families}
 echo "${datepad}-- Perform second protein clustering step (to find homologs with cluster algorithm)"
 mmseqsclout=${families}/$(basename ${allfaarad}.nr).mmseqs_clusterdb_default
 # perform similarity search and clustering ; uses all CPU cores by default
-mmseqs cluster ${allfaarad}.nr.mmseqsdb $mmseqsclout $mmseqstmp &>> ${mmlog1}
+mmseqs cluster ${mmthreads} ${allfaarad}.nr.mmseqsdb $mmseqsclout $mmseqstmp &>> ${mmlog1}
 mmsummary=$(tail -n 4 ${mmlog1} | head -n 3)
 # generate indexed fasta file listing all protein families
-mmseqs createseqfiledb ${allfaarad}.nr.mmseqsdb $mmseqsclout ${mmseqsclout}_clusters &>> ${mmlog1}
+mmseqs createseqfiledb ${mmthreads} ${allfaarad}.nr.mmseqsdb $mmseqsclout ${mmseqsclout}_clusters &>> ${mmlog1}
 checkexec "Second protein clustering step failed; please inestigate error reports in '${mmlog1}'" "${datepad}-- Second protein clustering step complete: ${mmsummary1}"
 # generate separate fasta files with family identifiers distinc from representative sequence name
 python2.7 ${ptgscripts}/split_mmseqs_clustdb_fasta.py ${mmseqsclout}_clusters "${famprefix}P" ${mmseqsclout}_clusters_fasta 6 1 0
