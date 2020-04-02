@@ -86,4 +86,4 @@ if [ ${ncpus} -gt 1 ] ; then
 else
   grxcmd="generax"
 fi
-${grxcmd} ${generaxcommonopt} -s ${speciestree}_clade_defs.nwk -f ${generaxfamfi} -p ${outrecdir}/${nfrad2} ${generaxopt}
+${grxcmd} ${generaxcommonopt} -s ${speciestree}_clade_defs.nwk -f ${generaxfamfi} -p ${outrecdir} ${generaxopt}
