@@ -1,6 +1,6 @@
 #!/usr/bin/python2.7
 # -*- coding: utf-8 -*-
-"""remove duplicate sequences from a FASTA file based on a list of identical seqeunces"""
+"""remove duplicate sequences from a FASTA file based on a table of clusters of identical sequences"""
 import sys
 
 nfastain = sys.argv[1]
@@ -8,16 +8,39 @@ nfidentseq = sys.argv[2]
 nfastaout = sys.argv[3]
 
 lredundant = []
-curfam = None
-with open(nfidentseq, 'r') as fidentseq:
-	for line in fidentseq:
-		#~ fam, prot = line.rstrip('\n').split('\t')
-		#~ if fam == curfam:
-			#~ lredundant.append(prot)
-		#~ else:
-			#~ curfam = fam
-		prots = line.rstrip('\n').split('\t')
-		lredundant += prots[1:]
+sfam = set()
+
+if len(sys.argv)>4: 
+	nfprevdbidentseq = sys.argv[4]
+	print "will select representative sequences based on previous clustering"
+	dprevfamreprseq = {}
+	with open(nfprevdbidentseq, 'r') as fprevdbidentseq:
+		for line in fprevdbidentseq:
+			fam, prot = line.rstrip('\n').split('\t')
+			if fam not in dprevfamreprseq:
+				dprevfamreprseq[fam] = prot
+	
+	with open(nfidentseq, 'r') as fidentseq:
+		for line in fidentseq:
+			fam, prot = line.rstrip('\n').split('\t')
+			if (fam in dprevfamreprseq):
+				if prot != dprevfamreprseq[fam]:
+					lredundant.append(prot)
+			else:
+				if fam not in sfam:
+					sfam.add(fam)
+				else:
+					lredundant.append(prot)
+else:
+	with open(nfidentseq, 'r') as fidentseq:
+		for line in fidentseq:
+			fam, prot = line.rstrip('\n').split('\t')
+			if fam not in sfam:
+				sfam.add(fam)
+			else:
+				lredundant.append(prot)
+			#~ prots = line.rstrip('\n').split('\t')
+			#~ lredundant += prots[1:]
 
 print "listed %d redundant sequences in dataset"%len(lredundant)
 sredundant = set(lredundant)

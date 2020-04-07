@@ -98,6 +98,13 @@ usagelong (){
   echo "                              Defaults to the empty string, meaning that Pantagruel will look for the \`interproscan\` command in the \$PATH."
   echo "                              Using this option is mandatory to execute task 04 when when calling \`pantagruel\` through the docker image."
   echo ""
+  echo "    -u|--update_from  the new pantagruel database will be an update from a template/reference pantagruel database found at this path."
+  echo "                        Requirements:"
+  echo "                          1) The genome set covered by the template db should be included in the genome set of the new db"
+  echo "                          2) the gene family prefix tag provided by option -F should be the same"
+  echo "                        As a result of the update, all gene family identifiers will correspond to the same"
+  echo "                        families between the datasets (unless when they are unique to the new genomes)."
+  echo ""
   echo " Input options:"
   echo ""
   echo "    -T|--taxonomy     path to folder of taxonomy database flat files; defaults to \$rootdir/NCBI/Taxonomy_YYYY-MM-DD (suffix is today's date)"
@@ -399,7 +406,7 @@ promptdate () {
   echo $(date +'[%Y-%m-%d %H:%M:%S]') ${1}
 }
 
-ARGS=`getopt --options "d:r:i:I:f:a:T:A:L:s:t:RV:N:H:cg:e:q:hFz" --longoptions "dbname:,rootdir:,initfile:,refresh,iam:,famprefix:,refseq_ass:,refseq_list:,refseq_ass4annot:,refseq_list4annot:,custom_ass:,taxonomy:,pseudocore:,core_seqtype:,pop_lg_thresh:,pop_bs_thresh:,rooting:,reftree:,resume,env_var:,threads:,submit_hpc:,collapse,no_collapse,collapse_param:,genefam_list:,rec_method:,max_event_age:,help,FORCE,compress,path_to_interproscan:" --name "pantagruel" -- "$@"`
+ARGS=`getopt --options "d:r:i:I:f:a:T:A:L:s:t:RV:N:H:cg:e:q:u:hFz" --longoptions "dbname:,rootdir:,initfile:,refresh,iam:,famprefix:,refseq_ass:,refseq_list:,refseq_ass4annot:,refseq_list4annot:,custom_ass:,taxonomy:,pseudocore:,core_seqtype:,pop_lg_thresh:,pop_bs_thresh:,rooting:,reftree:,resume,env_var:,threads:,submit_hpc:,collapse,no_collapse,collapse_param:,genefam_list:,rec_method:,max_event_age:,help,FORCE,compress,path_to_interproscan:,update_from:" --name "pantagruel" -- "$@"`
 
 #Bad arguments
 if [ ${?} -ne 0 ];
@@ -607,6 +614,12 @@ do
 	  testmandatoryarg "${1}" "${2}"
 	  export pathtoipscan=${2}
       echo "path to interproscan executable is: ${pathtoipscan}"
+      shift 2;;
+	  
+	-u|--update_from)
+	  testmandatoryarg "${1}" "${2}"
+	  export updatedbfrom=${2}
+      echo "the current pantagruel database is an update from that found at this path: ${updatedbfrom}"
       shift 2;;
 
     --)
