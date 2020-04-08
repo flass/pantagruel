@@ -2,7 +2,7 @@ FROM ubuntu:bionic
 
 ARG DEBIAN_FRONTEND=noninteractive
 
-RUN apt-get update && apt-get install -y git build-essential cmake gcc g++ \
+RUN apt-get update && apt-get install -y --no-install-recommends git build-essential cmake gcc g++ \
         linuxbrew-wrapper lftp clustalo raxml libhmsbeagle1v5 mrbayes r-base-core \
         r-recommended r-cran-ape r-cran-ade4 r-cran-vegan r-cran-dbi r-cran-rsqlite \
         r-cran-igraph r-cran-getopt sqlite3 sqlite3-doc libmagick++-dev python \
@@ -13,7 +13,8 @@ RUN apt-get update && apt-get install -y git build-essential cmake gcc g++ \
         libboost-dev libboost-serialization-dev libboost-mpi-dev \
         libbpp-core-dev libbpp-phyl-dev libbpp-seq-dev libbpp-seq-omics-dev \
 		libdatetime-perl libxml-simple-perl libdigest-md5-perl bioperl \
-		flex bison libgmp3-dev
+		flex bison libgmp3-dev \
+	&& rm -rf /var/lib/apt/lists/*
 
 RUN echo 'source("https://bioconductor.org/biocLite.R") ; biocLite("topGO") ; install.packages(c("phytools","pvclust"), repos="https://pbil.univ-lyon1.fr/CRAN/")' | R --vanilla
 
