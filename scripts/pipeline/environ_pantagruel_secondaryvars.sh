@@ -47,7 +47,15 @@ export compoutdir=${comparerecs}/${parsedreccol}
 
 # other secondary variables
 export ngenomes=$(ls -A "${indata}/assemblies/" 2> /dev/null | wc -l)
-export straininfo=${customassemb}/strain_infos_${ptgdbname}.txt
+if [ -d "${customassemb}" ] ; then
+  export straininfo=${customassemb}/strain_infos_${ptgdbname}.txt
+else
+  if [ ! -z "${customstraininfo}" ] ; then
+    export straininfo=${customstraininfo}
+  else
+    export straininfo=''
+  fi
+fi
 export sqldbname=${ptgdbname,,}
 export sqldb=${database}/${sqldbname}
 export allfaarad=${seqdb}/all_proteomes

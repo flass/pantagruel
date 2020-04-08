@@ -52,7 +52,8 @@ export withinfun='REPLACEwithinfun'                        # - aggregate functio
 export hpcremoteptgroot='REPLACEhpcremoteptgroot'          # if not empty nor 'none', will use this server address to send data and scripts to run heavy computions there 
 export maxreftreeheight='REPLACEmaxreftreeheight'          # restict events younger than that age (comprised in [0.0; 1.0]) on the species tree for gene co-evolution scoring
 export updatedbfrom='REPLACEupdatedbfrom'                  # the current pantagruel database is an update from that found at this path
-export pathtoipscan='REPLACEpathtoipscan'
+export customstraininfo='REPLACEcustomstraininfo'          # optional custom strain information file
+export pathtoipscan='REPLACEpathtoipscan'                  # optional path to interproscan executable
 ## other parameters have default values defined in the generic source file environ_pantagruel_defaults.sh
 source ${ptgscripts}/pipeline/environ_pantagruel_defaults.sh
 ## these defalts can be overriden by uncommenting the relevant line below and editing the variable's value
