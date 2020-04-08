@@ -71,7 +71,7 @@ export ptgversinit="${ptgversion}"
 rm -f ${ptgtmp}/sedenvvar.sh
 echo -n "tail -n +16 ${templateenv}" > ${ptgtmp}/sedenvvar.sh
 for var in 'ptginitcmd' 'ptgdbname' 'ptgroot' 'ptgrepo' 'ptgversinit' 'myemail' 'famprefix' 'pathtoipscan' \
-     'ncbitax' 'ncbiass' 'listncbiass' 'customassemb' 'refass' 'listrefass' 'updatedbfrom' \
+     'ncbitax' 'ncbiass' 'listncbiass' 'customassemb' 'refass' 'listrefass' 'updatedbfrom' 'customstraininfo' \
      'pseudocoremingenomes' 'userreftree' 'coreseqtype' 'poplgthresh' 'poplgleafmul' 'popbsthresh' 'rootingmethod' \
      'chaintype' 'cladesupp' 'subcladesupp' 'criterion' 'withinfun' 'hpcremoteptgroot' 'genefamlist' 'recmethod' 'maxreftreeheight' ; do
 echo -n " | sed -e \"s#REPLACE${var}#\${${var}}#\"" >> ${ptgtmp}/sedenvvar.sh

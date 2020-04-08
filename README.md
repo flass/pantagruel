@@ -405,7 +405,11 @@ Options are detailed here:
                          in a separate folder, which name must match a contig file (e.g. 'seqProjID/' for 'seqProjID.fasta').
                       NOTE: to ensure proper parsing, it is strongly advised that any provided annotation was generated with Prokka
                       NOTE: to ensure uniform annotation of the dataset, it is advised to let Pantagruel annotate the contigs (calling Prokka)
-
+ 
+ --strain_info   path to an optional custom strain information file, provided in the same format as described above for 'strain_infos_\$\{databasename\}.txt'
+                      This is only taken into account in the basence of option -a, i.e. only when using options -A or -L to specify input genomes
+                      from GenBank/RefSeq (or genomes with compliant formats). This allows to override automated genome code generation.
+					  
     -V|--env_var    quoted string of the form: 'variable1=value1[,variable2=value2[,...]]'.
                      Will add these variables to the configuration file so they can be exported to the environment during tasks.
                      Can be useful to define custom values of generic variables, e.g. "refgenus=Escherichia,seqcentre=Sanger_Institute"

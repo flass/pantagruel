@@ -158,9 +158,13 @@ usagelong (){
   echo "                       NOTE: to ensure proper parsing, it is strongly advised that any provided annotation was generated with Prokka"
   echo "                       NOTE: to ensure uniform annotation of the dataset, it is advised to let Pantagruel annotate the contigs (calling Prokka)"
   echo ""
+  echo "    --strain_info   path to an optional custom strain information file, provided in the same format as described above for 'strain_infos_\$\{databasename\}.txt'"
+  echo "                      This is only taken into account in the basence of option -a, i.e. only when using options -A or -L to specify input genomes"
+  echo "                      from GenBank/RefSeq (or genomes with compliant formats). This allows to override automated genome code generation."
+  echo ""
   echo "    -V|--env_var    (preferably double-quoted) string of the form: \"variable1=value1[,variable2=value2[,...]]'.\""
-  echo "                     Will add these variables to the configuration file so they can be exported to the environment during tasks."
-  echo "                     Can be useful to define custom values of generic variables, e.g. \"refgenus=Escherichia,seqcentre=Sanger_Institute\""
+  echo "                      Will add these variables to the configuration file so they can be exported to the environment during tasks."
+  echo "                      Can be useful to define custom values of generic variables, e.g. \"refgenus=Escherichia,seqcentre=Sanger_Institute\""
   echo ""
   echo " Output: core genome / reference phylogeny options:"
   echo ""
@@ -406,7 +410,7 @@ promptdate () {
   echo $(date +'[%Y-%m-%d %H:%M:%S]') ${1}
 }
 
-ARGS=`getopt --options "d:r:i:I:f:a:T:A:L:s:t:RV:N:H:cg:e:q:u:hFz" --longoptions "dbname:,rootdir:,initfile:,refresh,iam:,famprefix:,refseq_ass:,refseq_list:,refseq_ass4annot:,refseq_list4annot:,custom_ass:,taxonomy:,pseudocore:,core_seqtype:,pop_lg_thresh:,pop_bs_thresh:,rooting:,reftree:,resume,env_var:,threads:,submit_hpc:,collapse,no_collapse,collapse_param:,genefam_list:,rec_method:,max_event_age:,help,FORCE,compress,path_to_interproscan:,update_from:" --name "pantagruel" -- "$@"`
+ARGS=`getopt --options "d:r:i:I:f:a:T:A:L:s:t:RV:N:H:cg:e:q:u:hFz" --longoptions "dbname:,rootdir:,initfile:,refresh,iam:,famprefix:,refseq_ass:,refseq_list:,refseq_ass4annot:,refseq_list4annot:,custom_ass:,taxonomy:,pseudocore:,core_seqtype:,pop_lg_thresh:,pop_bs_thresh:,rooting:,reftree:,resume,env_var:,threads:,submit_hpc:,collapse,no_collapse,collapse_param:,genefam_list:,rec_method:,max_event_age:,help,FORCE,compress,path_to_interproscan:,update_from:,strain_info:" --name "pantagruel" -- "$@"`
 
 #Bad arguments
 if [ ${?} -ne 0 ];
@@ -480,6 +484,12 @@ do
       testmandatoryarg "${1}" "${2}"
       export listncbiass=$(readlink -f ${2})
       echo "set NCBI RefSeq(-like) genome assembly id list to '$listncbiass'"
+      shift 2;;
+	  
+	--strain_info)
+      testmandatoryarg "${1}" "${2}"
+      export customstraininfo=$(readlink -f ${2})
+	  echo "optional custom strain information file provided at '${customstraininfo}'"
       shift 2;;
 
     --refseq_ass4annot)
