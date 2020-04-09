@@ -65,14 +65,15 @@ mmseqslogs=${ptglogs}/mmseqs && mkdir -p ${mmseqslogs}/
 # notably those from the custom assemblies to those from the public database (and those redudant between RefSeq, Genbank or custom sets)
 
 # run mmseqs clusthash with 100% seq id threshold
-echo "${datepad}-- Perform first protein clustering step (100% prot identity clustering with clusthash algorithm)"
+echo "${datepad}-- Perform first protein clustering step (100% prot identity clustering)"
 mmlog0=${mmseqslogs}/mmseqs-0-identicalprot-clusthash.log
 mmseqs createdb ${allfaarad}.nrprotids.faa ${allfaarad}.mmseqsdb &> ${mmlog0}
 if [ -z "${updatedbfrom}" ] ; then
+    echo "${datepad}-- (will use clusthash algorithm)"
 	mmseqs clusthash ${mmthreads} --min-seq-id 1.0 ${allfaarad}.mmseqsdb ${allfaarad}.clusthashdb_minseqid100 &>> ${mmlog0}
 	mmseqs clust ${mmthreads} ${allfaarad}.mmseqsdb ${allfaarad}.clusthashdb_minseqid100 ${allfaarad}.clusthashdb_minseqid100_clust &>> ${mmlog0}
 else
-	# update previous clustering
+    echo "${datepad}-- (will update previous clustering made with clusthash algorithm)"
 	mmseqs clusterupdate ${mmthreads} --min-seq-id 1.0 ${prevdballfaarad}.mmseqsdb ${allfaarad}.mmseqsdb ${prevdballfaarad}.clusthashdb_minseqid100_clust ${allfaarad}.mmseqsdb.updated ${allfaarad}.clusthashdb_minseqid100_clust ${mmseqstmp} &>> ${mmlog0}
 	mv1="mv ${allfaarad}.mmseqsdb ${allfaarad}.mmseqsdb.noupdate" && echo "# ${mv1}" &>> ${mmlog0} && eval ${mv1} &>> ${mmlog0}
 	mv2="mv ${allfaarad}.mmseqsdb.updated ${allfaarad}.mmseqsdb" && echo "# ${mv2}" &>> ${mmlog0} && eval ${mv2} &>> ${mmlog0}
