@@ -52,7 +52,7 @@ if [ "${rectype}" != 'dated' ] ; then
 fi
 
 if [ -z "${getOrpthologuesOptions}" ] ; then
-  getOrpthologuesOptions=" --ale.model=${rectype} --methods='mixed' --max.frac.extra.spe=0.5 --majrule.combine=0.5 --colour.combined.tree --use.unreconciled.gene.trees ${mbgenetrees} --unreconciled.format 'nexus' --unreconciled.ext '.con.tre'"
+  getOrpthologuesOptions=" --ale.model=${rectype} --methods=mixed --max.frac.extra.spe=0.5 --majrule.combine=0.5 --colour.combined.tree --use.unreconciled.gene.trees=${mbgenetrees} --unreconciled.format=nexus --unreconciled.ext=.con.tre"
 fi
 if [ -z "${orthocolid}" ] ; then
   orthocolid=1
