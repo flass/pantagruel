@@ -42,6 +42,9 @@ if [ ! -z "${updatedbfrom}" ] ; then
 	  exit 1
     fi
   fi
+  mmsdbtag=".updated"
+else
+  mmsdbtag=""
 fi
 
 ## extract all the protein sequences into single proteome fasta files
@@ -71,12 +74,10 @@ if [ -z "${updatedbfrom}" ] ; then
 	mmseqs clust ${mmthreads} ${allfaarad}.mmseqsdb ${allfaarad}.clusthashdb_minseqid100 ${allfaarad}.clusthashdb_minseqid100_clust &>> ${mmlog0}
 else
 	# update previous clustering
-	mmseqs clusterupdate ${mmthreads} --min-seq-id 1.0 ${prevdballfaarad}.mmseqsdb ${allfaarad}.mmseqsdb ${prevdballfaarad}.clusthashdb_minseqid100_clust ${allfaarad}.mmseqsdb.updated ${allfaarad}.clusthashdb_minseqid100_clust ${mmseqstmp} &>> ${mmlog0}
-	mv1="mv ${allfaarad}.mmseqsdb ${allfaarad}.mmseqsdb.noupdate" && echo "# ${mv1}" &>> ${mmlog0} && eval ${mv1} &>> ${mmlog0}
-	mv2="mv ${allfaarad}.mmseqsdb.updated ${allfaarad}.mmseqsdb" && echo "# ${mv2}" &>> ${mmlog0} && eval ${mv2} &>> ${mmlog0}
+	mmseqs clusterupdate ${mmthreads} --min-seq-id 1.0 ${prevdballfaarad}.mmseqsdb ${allfaarad}.mmseqsdb ${prevdballfaarad}.clusthashdb_minseqid100_clust ${allfaarad}.mmseqsdb${mmsdbtag} ${allfaarad}.clusthashdb_minseqid100_clust ${mmseqstmp} &>> ${mmlog0}
 fi
 mmsummary0=$(tail -n 4 ${mmlog0} | head -n 3)
-mmseqs createseqfiledb ${allfaarad}.mmseqsdb ${allfaarad}.clusthashdb_minseqid100_clust ${allfaarad}.clusthashdb_minseqid100_clusters &>> ${mmlog0}
+mmseqs createseqfiledb ${allfaarad}.mmseqsdb${mmsdbtag} ${allfaarad}.clusthashdb_minseqid100_clust ${allfaarad}.clusthashdb_minseqid100_clusters &>> ${mmlog0}
 checkexec "First protein clustering step failed; please inestigate error reports in '${mmlog0}'" "${datepad}-- First protein clustering step complete: ${mmsummary0}"
 
 # get table of redundant protein names
@@ -132,13 +133,11 @@ if [ -z "${updatedbfrom}" ] ; then
 else
 	# update previous clustering
 	prevdbmmseqsclout=${prevdbseqdb}/$(basename ${families})/$(basename ${allfaarad}.nr).mmseqs_clusterdb_default
-	mmseqs clusterupdate ${mmthreads} ${prevdballfaarad}.nr.mmseqsdb ${allfaarad}.nr.mmseqsdb $prevdbmmseqsclout ${allfaarad}.nr.mmseqsdb.updated $mmseqsclout $mmseqstmp &>> ${mmlog1}
-	mv1="mv ${allfaarad}.nr.mmseqsdb ${allfaarad}.nr.mmseqsdb.noupdate" && echo "# ${mv1}" &>> ${mmlog1} && eval ${mv1} &>> ${mmlog1}
-	mv2="mv ${allfaarad}.nr.mmseqsdb.updated ${allfaarad}.nr.mmseqsdb" && echo "# ${mv2}" &>> ${mmlog1} && eval ${mv2} &>> ${mmlog1}	
+	mmseqs clusterupdate ${mmthreads} ${prevdballfaarad}.nr.mmseqsdb ${allfaarad}.nr.mmseqsdb $prevdbmmseqsclout ${allfaarad}.nr.mmseqsdb${mmsdbtag} $mmseqsclout $mmseqstmp &>> ${mmlog1}
 fi
 mmsummary=$(tail -n 4 ${mmlog1} | head -n 3)
 # generate indexed fasta file listing all protein families
-mmseqs createseqfiledb ${mmthreads} ${allfaarad}.nr.mmseqsdb $mmseqsclout ${mmseqsclout}_clusters &>> ${mmlog1}
+mmseqs createseqfiledb ${mmthreads} ${allfaarad}.nr.mmseqsdb${mmsdbtag} $mmseqsclout ${mmseqsclout}_clusters &>> ${mmlog1}
 checkexec "Second protein clustering step failed; please inestigate error reports in '${mmlog1}'" "${datepad}-- Second protein clustering step complete: ${mmsummary1}"
 # generate separate fasta files with family identifiers distinc from representative sequence name
 python2.7 ${ptgscripts}/split_mmseqs_clustdb_fasta.py ${mmseqsclout}_clusters "${famprefix}P" ${mmseqsclout}_clusters_fasta 6 1 0
