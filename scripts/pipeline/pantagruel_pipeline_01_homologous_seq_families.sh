@@ -87,7 +87,7 @@ python2.7 ${ptgscripts}/genefam_table_as_list.py ${allfaarad}.identicals.tab ${a
 if [ -z "${updatedbfrom}" ] ; then
   python2.7 ${ptgscripts}/remove_identical_seqs.py ${allfaarad}.nrprotids.faa ${allfaarad}.identicals.tab ${allfaarad}.nr.faa
 else
-  python2.7 ${ptgscripts}/remove_identical_seqs.py ${allfaarad}.nrprotids.faa ${allfaarad}.identicals.tab ${allfaarad}.nr.faa ${prevdballfaarad}.identicals.list
+  python2.7 ${ptgscripts}/remove_identical_seqs.py ${allfaarad}.nrprotids.faa ${allfaarad}.identicals.tab ${allfaarad}.nr.faa ${prevdballfaarad}.identicals.tab
 fi
 ## collect data from assemblies, including matching of (nr) protein to CDS sequence ids
 python2.7 ${ptgscripts}/allgenome_gff2db.py --assemb_list ${genomeinfo}/assemblies_list --dirout ${genomeinfo}/assembly_info \
