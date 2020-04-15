@@ -7,10 +7,12 @@ import sys, os, getopt
 #sys.setrecursionlimit(20000)
 
 #deventshort = {'S':'S', 'D':'D', 'H':'T'}
+orinhxcommsep=':'
+cleannhxcommsep='/'
 
 def parse_branch_annot(annot):
 	levt = []
-	for elt in annot.split(':'):
+	for elt in annot.split(cleannhxcommsep):
 		if not elt=='&&NHX':
 			evtype, evloc = elt.split('=')
 			if evloc!='N':
@@ -25,14 +27,27 @@ def parse_branch_annot(annot):
 nfinnhx = sys.argv[1]
 nfout = sys.argv[2]
 
-lgt = read_multiple_newick(nfinnhx, keep_comments=True)
-
 devtcount = {}
-for gt in lgt:
-	for node in gt:
-		for evt in parse_branch_annot(node.comment()):
-			devtcount[evt] = devtcount.setdefault(evt, 0) + 1
+with open(nfinnhx, 'r') as finnhx:
+	# first clean this dirty NHX format with semilocons within comment that messes the parsing
+	# replace in-comment ':' with '/'
+	for line in finnhx:
+		scleannhx = ''
+		incomment = 0
+		for char in line:
+			if char=='[': incomment += 1
+			elif char==']': incomment -= 1
+			if incomment:
+				if char==orinhxcommsep: char=cleannhxcommsep
+			scleannhx += char
+	
+#		print scleannhx
+		gt = tree2.Node(newick=scleannhx, keep_comments=True)
+
+		for node in gt:
+			for evt in parse_branch_annot(node.comment()):
+				devtcount[evt] = devtcount.setdefault(evt, 0) + 1
 
 with open(nfout, 'w') as fout:
 	for evt, n in devtcount.iteritems():
-		fout.write('\t'.join(evt+(str(n,))+'\n')
+		fout.write('\t'.join(evt+(str(n),))+'\n')
