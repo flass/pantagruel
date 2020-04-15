@@ -26,7 +26,7 @@ def parseCDSFasta(nfcds):
 	if nfcds.endswith('.gz'):
 		fcds = gzip.open(nfcds, 'rb')
 	else:
-		fcds = open(nfcds, 'b')
+		fcds = open(nfcds, 'r')
 	# register unambiguously the exact naming of the CDS sequence in the corresponding extracted CDS sequence file
 	for line in fcds:
 		if line.startswith('>'):
@@ -150,7 +150,9 @@ def compileFeatures(fgff, dfout, dgenbankcdsids, dgeneloctag, dgenenchild, diden
 
 def parseAssemb(dirassemb, dfout, dtaxid2sciname={}, dmergedtaxid={}, didentseq={}):
 	# parse CDS fasta file
-	nfcdsfasta = "%s/%s_cds_from_genomic.fna.gz"%(dirassemb, os.path.basename(dirassemb))
+	nfcdsfastarad = "%s/%s_cds_from_genomic.fna"%(dirassemb, os.path.basename(dirassemb))
+	nfcdsfasta = nfcdsfastarad+'.gz'
+	if not os.path.exists(nfcdsfasta): nfcdsfasta = nfcdsfastarad
 	dgenbankcdsids = parseCDSFasta(nfcdsfasta)
 	# extract assembly acc and name
 	assembsearch = assembpat.search(os.path.basename(dirassemb))
