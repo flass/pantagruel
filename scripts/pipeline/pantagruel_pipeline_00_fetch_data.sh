@@ -318,7 +318,8 @@ if [ ! -z "${customassemb}" ] ; then
           done
           cp ${contigs}/${allcontigs} ${annotgff[0]/gff/fna}
           python2.7 ${ptgscripts}/GFFGenomeFasta2GenBankCDSProtFasta.py ${annotptggff} ${annotgff[0]/gff/fna}
-          checkexec "something went wrong when generating the GenBank flat file from GFF file ${annotptggff}" "succesfuly generated the GenBank flat file from GFF file ${annotptggff}"
+		  sgfin="the GenBank flat file from GFF file '${annotptggff}' and fasta file '${annotgff[0]/gff/fna}'"
+          checkexec "something went wrong when generating ${sgfin}" "succesfuly generated ${sgfin}"
         fi
         annotfna=($(ls ${annot}/${gproject}/*.fna))
         annotgbk=($(ls ${annot}/${gproject}/*.gbk 2> /dev/null))
