@@ -17,6 +17,9 @@ from BCBio import GFF
 def main(gff_file, fasta_file):
 	fasta_input = SeqIO.to_dict(SeqIO.parse(fasta_file, "fasta", alphabet=generic_dna))
 	genome = list(GFF.parse(gff_file, fasta_input))
+	# enforce alphabet (bug in GFFParser)
+	for seqrec in genome:
+		seqrec.seq.alphabet = generic_dna
 	# output Genbank
 	with open("%s.gbk" % os.path.splitext(gff_file)[0], 'w') as gbout_file:
 		SeqIO.write(genome, gbout_file, "genbank")
