@@ -26,7 +26,7 @@ def parse_branch_annot(annot):
 
 
 def parseMultiNHXRec(nfinnhx):
-	lgt = []
+	lrecgt = []
 	devtcount = {}
 	with open(nfinnhx, 'r') as finnhx:
 		# first clean this dirty NHX format with semilocons within comment that messes the parsing
