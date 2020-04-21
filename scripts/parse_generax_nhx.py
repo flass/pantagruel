@@ -6,21 +6,27 @@ import sys, os, getopt
 
 #sys.setrecursionlimit(20000)
 
-#deventshort = {'S':'S', 'D':'D', 'H':'T'}
 orinhxcommsep=':'
 cleannhxcommsep='/'
 
 def parse_branch_annot(annot):
 	levt = []
+	evloc = None
 	for elt in annot.split(cleannhxcommsep):
-		if not elt=='&&NHX':
-			evtype, evloc = elt.split('=')
-			if evloc!='N':
-				if (elt[0] in ('S', 'D')):
-					levt.append((evtype, evloc, ''))
-				elif elt[0]=='H':
+		if elt=='&&NHX': continue
+		e1, e2 = elt.split('=')
+		if e1=='S':
+			evloc = e2
+		else
+			if e2!='N':
+				if e1=='D':
+					levt.append(('D', evloc, ''))
+				elif e1=='H':
 					don, rec = evloc.split('@')[1:]
 					levt.append(('T', rec, don))
+	if not levt:
+		# no D or H/T event recorded: just a speciation S
+		levt.append(('S', evloc, ''))
 	return levt
 	
 
