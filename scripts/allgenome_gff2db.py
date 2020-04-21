@@ -104,7 +104,9 @@ def compileFeatures(fgff, dfout, dgenbankcdsids, dgeneloctag, dgenenchild, diden
 			if not locustag:
 				try:
 					locustag = desc['locus_tag']
-					if not parentgene: parentgene = locustag
+					if not parentgene:
+						parentgene = locustag
+						dgenenchild[parentgene] = dgenenchild.setdefault(parentgene, 0) + 1
 				except KeyError:
 					raise ValueError, "cannot find locus tag information either through the parent gene (%s) or directly from the descritption field:\n%s"%(repr(parentgene), repr(desc))
 			# need to buffer extraction of entries as several lines can relate to the same gene in case of CDS/RNA in several segments (due  to introns, framshifts, ...)
