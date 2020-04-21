@@ -98,10 +98,15 @@ def compileFeatures(fgff, dfout, dgenbankcdsids, dgeneloctag, dgenenchild, diden
 		seqreg, annottype, beg, end, strand, desc = parseGFFline(line)
 		if annottype in annottype2fouttag:
 			lineoutend = []
+			parentgene = desc.get('Parent')
 			locustag = None
-			locustag = dgeneloctag.get(desc.get('Parent'))
-			if not locustag: locustag = desc.get('locus_tag')
-			if not locustag: raise ValueError, "cannot find locus tag information either through the parent gene (%s) or directly from the descritption field:\n%s"%(repr(parentgene), repr(desc))
+			locustag = dgeneloctag.get(parentgene)
+			if not locustag:
+				try:
+					locustag = desc['locus_tag']
+					if not parentgene: parentgene = locustag
+				except KeyError:
+					raise ValueError, "cannot find locus tag information either through the parent gene (%s) or directly from the descritption field:\n%s"%(repr(parentgene), repr(desc))
 			# need to buffer extraction of entries as several lines can relate to the same gene in case of CDS/RNA in several segments (due  to introns, framshifts, ...)
 			if annottype=="CDS":
 				productid = desc.get('protein_id', '').split('|')[-1]	# to account for Prokka-style annotation that prepends 'gnl|Sequencing_Centre' to the protein_id
