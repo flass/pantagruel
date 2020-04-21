@@ -17,12 +17,12 @@ def parse_branch_annot(annot):
 		e1, e2 = elt.split('=')
 		if e1=='S':
 			evloc = e2
-		else
+		else:
 			if e2!='N':
 				if e1=='D':
 					levt.append(('D', evloc, ''))
 				elif e1=='H':
-					don, rec = evloc.split('@')[1:]
+					don, rec = e2.split('@')[1:]
 					levt.append(('T', rec, don))
 	if not levt:
 		# no D or H/T event recorded: just a speciation S
