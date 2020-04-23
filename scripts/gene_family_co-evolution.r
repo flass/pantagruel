@@ -2,6 +2,12 @@
 library('parallel')
 library('RColorBrewer')
 
+sminmedmax = function(mat){
+  sapply(c('min', 'median', 'max'), function(fun){
+	  sprintf("%.2g", get(fun)(mat, na.rm=T))
+  })
+}
+
 maxfreq = 1000
 ncpus = detectCores()
 
@@ -25,7 +31,6 @@ f = length(fams)
 famsizes = read.table(nffamsizes, sep='\t', h=F, col.names=c('fam', 'size'))
 
 testfams = readLines(nftestfams)
-t = length(testfams)
 
 lfameventtabs = lapply(lnffamevents, function(nffamevents){
 	famevents = read.table(nffamevents, sep='\t', h=F, col.names=c('type', 'location', 'donor', 'freq'))
@@ -82,7 +87,7 @@ for (i in 1:ncol(mfamcoevol)){ mfamcoevol[i,i] = minscore } # to keep colour sca
 pdf(paste(outprefix, outtag, 'family_coevol_scores.pdf', sep='.'), height=30, width=30)
 heatmap(mfamcoevol, main='coevolution scores',
 		col=colorRampPalette(brewer.pal(8, "Greens"))(25), scale='none')
-legend(x="topleft", legend=c(min(mfamcoevol), "median", "max"), 
+legend(x="topleft", legend=sminmedmax(mfamcoevol), 
      fill=colorRampPalette(brewer.pal(8, "Greens"))(3))
 dev.off()
 
@@ -105,13 +110,15 @@ write.table(matscorepval, file=paste(outprefix, outtag, 'test_family_coevol_pval
 
 
 pdf(paste(outprefix, outtag, 'test_family_coevol_scores_pvalues.pdf', sep='.'), height=15, width=15)
-h = heatmap(mfamcoevol[testfams, testfams],
+h = heatmap(mtestfamcoevol,
 	 main='coevolution scores (test gene families only)',
-	 col=colorRampPalette(brewer.pal(8, "Greens"))(25), scale='none')
-legend(x="topleft", legend=c("min", "median", "max"), 
+	 col=colorRampPalette(brewer.pal(8, "Greens"))(25), scale='none', keep.dendro=T)
+legend(x="topleft", legend=sminmedmax(mtestfamcoevol), 
      fill=colorRampPalette(brewer.pal(8, "Greens"))(3))
 heatmap(matscorepval, Rowv=h$Rowv, Colv=h$Colv,
-	 main='coevolution p-values (test gene families only)',
+	 main='coevolution rank p-values',
 	 col=colorRampPalette(brewer.pal(8, "Reds"))(25), scale='none')
+legend(x="topleft", legend=sminmedmax(matscorepval), 
+     fill=colorRampPalette(brewer.pal(8, "Reds"))(3))
 dev.off()
 	
