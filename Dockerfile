@@ -39,7 +39,7 @@ RUN pip install bcbio-gff bioscripts.convert
 # make fix for bug introduced in BCBio.GFF v0.6.6 - may be removed once integrated in further releases of bcbio-gff
 # see https://github.com/chapmanb/bcbb/commit/33869f3933d23e0c0b7655cec4aa474f48f9b302
 RUN cd / && git clone https://github.com/chapmanb/bcbb.git \
-&& cd bcbb && checkout 3ba0ec42120065cca136fd496948948f57081039 && cd - \
+&& cd bcbb && git checkout 3ba0ec42120065cca136fd496948948f57081039 && cd - \
 && cp -pf bcbb/gff/BCBio/GFF/* $(dirname $(python -c "from BCBio import GFF ; print(str(GFF).strip('<>').split()[-1].strip('\''))"))/
 
 # BLAST+ v2.8.1 ( >= 2.8 required by Prokka)
