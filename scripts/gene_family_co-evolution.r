@@ -1,4 +1,4 @@
-#/usr/bin/env Rscript --vanilla
+#/usr/bin/env Rscript --vanilla --no-save
 library(parallel)
 
 maxfreq = 1000
@@ -14,7 +14,7 @@ famsizes = read.table(cargs[2], sep='\t', h=F, col.names=c('fam', 'size'))
 
 lfameventtabs = lapply(lnffamevents, read.table, sep='\t', h=F, col.names=c('type', 'location', 'donor', 'freq'))
 names(lfameventtabs) = fams
-stopifnot(all(sort(fams)==sort(famisizes$fam)))
+stopifnot(all(sapply(fams, function(fam){ fam %in% famsizes$fam })))
 
 # truncate aggregated counts of multiple gene tree events with the same species tree address
 for (fameventtab in lfameventtabs){
