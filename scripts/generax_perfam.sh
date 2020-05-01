@@ -87,3 +87,9 @@ else
   grxcmd="generax"
 fi
 ${grxcmd} ${generaxcommonopt} -s ${speciestree}_clade_defs.nwk -f ${generaxfamfi} -p ${outrecdir} ${generaxopt}
+if [ ${GeneRaxalgo} == 'reconciliation-samples' ] ; then
+  # clean up by deleting the highly redundant transfer list files
+  for fam in $(grep '^- ' ${generaxfamfi} | cut -d' ' -f2) ; do
+    rm ${outrecdir}/reconciliations/${fam}*_transfers.txt
+  done
+fi
