@@ -2,8 +2,10 @@
 library('parallel')
 library('RColorBrewer')
 
+midrange = function(x, ...){ mean(c(min(x, na.rm=T), max(x, na.rm=T)), ...) }
+
 sminmedmax = function(mat){
-  sapply(c('min', 'median', 'max'), function(fun){
+  sapply(c('min', 'midrange', 'max'), function(fun){
 	  sprintf("%.2g", get(fun)(mat, na.rm=T))
   })
 }
@@ -39,9 +41,12 @@ lfameventtabs = lapply(lnffamevents, function(nffamevents){
 names(lfameventtabs) = fams
 
 # check data consistency
-stopifnot(all(sapply(fams, function(fam){ fam %in% famsizes$fam })))
-stopifnot(all(sapply(testfams, function(fam){ fam %in% famsizes$fam })))
-stopifnot(all(sapply(testfams, function(fam){ fam %in% fams })))
+a = sapply(fams, function(fam){ fam %in% famsizes$fam })
+stopifnot(all(a))
+b = sapply(testfams, function(fam){ fam %in% famsizes$fam })
+stopifnot(all(b))
+c = sapply(testfams, function(fam){ fam %in% fams })
+stopifnot(all(c))
 
 controlfams = setdiff(fams, testfams)
 
@@ -65,6 +70,21 @@ lfamcoevol = mclapply(rowids, function(a){
 	return(partialrow)
 }, mc.cores=ncpus, mc.preschedule=F)
 names(lfamcoevol) = fams[rowids]
+
+lhighprobcoevt = mclapply(rowids, function(a){
+	colids = (a+1):f
+	partialrow = lapply(colids, function(b){
+#		cat(sprintf("\r# %d-%d (%s vs. %s)\t\n", a, b, fams[a], fams[b]))
+		cotab = merge(lfameventtabs[[a]], lfameventtabs[[b]], by=1:3)
+		cotab$coev = sqrt(cotab$freq.x * cotab$freq.y) / maxfreq
+		# sum and scale by gene tree size2
+		return( cotab[cotab$coev>0.5,] )
+	})
+	names(partialrow) = fams[colids]
+	return(partialrow)
+}, mc.cores=ncpus, mc.preschedule=F)
+names(lhighprobcoevt) = fams[rowids]
+write(capture.output(print(lhighprobcoevt[testfams])), file=paste(outprefix, outtag, 'high_probability_coevents', sep='.'))
 
 mfamcoevol = matrix(NA, f, f)
 for (a in 1:f){
