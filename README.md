@@ -1,3 +1,5 @@
+![dockerhup-pulls]
+
 # *Pantagruel*: a bioinformatic pipeline for the inference of gene evolution scenarios in bacterial pangenomes.
 
 ## News
@@ -572,7 +574,7 @@ Main options are to use either:
 
 ![repas]
 
-
+[dockerhup-pulls]:https://img.shields.io/docker/pulls/flass/pantagruel-dep.svg
 [repas]: https://github.com/flass/pantagruel/blob/master/pics/Pantagruels_childhood.jpg
 [pipeline1]: https://github.com/flass/pantagruel/blob/master/pics/extract_cluster_concat_spetree_MLgenetrees.png
 [pipeline2]: https://github.com/flass/pantagruel/blob/master/pics/collapse_samplebackbones_reconcile_compare.png
