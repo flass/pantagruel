@@ -249,7 +249,7 @@ if [[ "${chaintype}" == 'fullgenetree' ]] ; then
   ## no need to replace anything in the tree; just link the original ML gene trees to the folder of replaced gene tree chains
   echo "will directly use ML trees from RAxML; link files from '${colmlgenetrees}/' into '${coltreechains}/${collapsecond}/${replmethod}/'"
   rm -rf ${coltreechains}/${collapsecond}/${replmethod}/
-  mkdir ${coltreechains}/${collapsecond}/${replmethod}/
+  mkdir -p ${coltreechains}/${collapsecond}/${replmethod}/
   for nfgt in $(cat ${repltasklist}) ; do
     bnfgt=$(basename ${nfgt})
     radnfgt=${bnfgt#*.}  # trim RAxML_tag. prefix
