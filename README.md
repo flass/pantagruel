@@ -1,4 +1,4 @@
-![dockerhup-pulls]
+![license] ![dockerhup-pulls]
 
 # *Pantagruel*: a bioinformatic pipeline for the inference of gene evolution scenarios in bacterial pangenomes.
 
@@ -574,6 +574,7 @@ Main options are to use either:
 
 ![repas]
 
+[license]:https://img.shields.io/github/license/flass/pantagruel
 [dockerhup-pulls]:https://img.shields.io/docker/pulls/flass/pantagruel-dep.svg
 [repas]: https://github.com/flass/pantagruel/blob/master/pics/Pantagruels_childhood.jpg
 [pipeline1]: https://github.com/flass/pantagruel/blob/master/pics/extract_cluster_concat_spetree_MLgenetrees.png
