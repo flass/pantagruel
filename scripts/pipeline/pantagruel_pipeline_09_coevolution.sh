@@ -29,10 +29,10 @@ if [ -z $parsedreccolid ] ; then
 fi
 
 # safer specifying the parsed reconciliation collection to consider; e.g.: 'ale_collapsed_dated_1_parsed_1'
-if [ -z "${reccol}" ] ; then
+if [ -z "${parsedreccol}" ] ; then
   # if not inferred from the record of the last reconciliation computation
   parsedreccol=$(cut -f3 ${alerec}/parsedreccol)
-  [ -z "${reccol}" ] && echo "Error: cannot find parsed reconciliation collection as env variable \$parsedreccol is empty; exit now" && exit 1
+  [ -z "${parsedreccol}" ] && echo "Error: cannot find parsed reconciliation collection as env variable \$parsedreccol is empty; exit now" && exit 1
 fi
 
 ## look for correlated gene lineage histories through identification of matching speciation and transfer events
