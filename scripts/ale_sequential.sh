@@ -254,7 +254,7 @@ for nfchain in $(cat $tasklist) ; do
   top -b -n 1 -p ${alepid} | tail -n 2 > ${nfrad}.ale.toplog
   while [ ! -z $(ps -q ${alepid} -o comm=) ] ; do
     ## check memory use is not going off the charts
-	pcmem=$(ps -o pid,%mem | grep ${alepid} | awk '{print $NF}')
+	pcmem=$(ps -o pid,%mem | grep "${alepid} " | awk '{print $NF}')
     if [ ${pcmem%.*} -ge ${maxpcmem} ] ; then
       # stop immediately
       echo "!!! Memory use is > ${pcmem%.*}% the server capacity; stop the ${nfrad} job now"
