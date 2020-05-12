@@ -334,9 +334,10 @@ Options are detailed here:
 						   to set non-default values if not already, e.g. turn on collapsing:
 						     `pantagruel -i config_file --refresh -c init`
 						   to revert to default values, e.g. turn off collapsing:
-						     `pantagruel -i config_file --refresh --no_colapse init`
-						   to do both, e.g. turn off collapsing and switch to use ecceTERA recconciliation method:
-						     `pantagruel -i config_file --refresh --no_colapse -e ecceTERA init`
+						     `pantagruel -i config_file --refresh -n init`
+                           to do both, e.g. turn off collapsing and switch to use ecceTERA recconciliation method:
+                             `pantagruel -i config_file --refresh -n -e ecceTERA init`
+                         Currently, only short options (e.g., -e or -n, NOT --rec_method or --no_collapse) are supported after --refresh.
                          
  General configuration options:
 
@@ -463,7 +464,7 @@ Options are detailed here:
 
     -c|--collapse    (no value) Enable collapsing the rake clades in the gene trees (strongly recomended in datasets of size >50 genomes).
 
-    --no_collapse    (no value) disable collapsing the rake clades in the gene trees"
+    -n|--no_collapse    (no value) disable collapsing the rake clades in the gene trees"
                        (default; use this option in combination with -i --refresh to restore default behaviour when -c was used in previous runs)."
 
     -C|--collapse_par  quoted string. Specifies parameters for collapsing the rake clades in the gene trees.
@@ -518,9 +519,9 @@ Tasks are broken down into steps, as every step within tasks need to be complete
 
 Here is how to proceed:
 
-1) first, you should refresh your configuration file so to include the HPC parameters through the `-H|--submit_hpc` option:  
+1) first, you should refresh your configuration file so to include the HPC parameters through the `-H` option:  
 ```sh
-pantagruel -i previous_config_file --refresh --submit_hpc hpchost:/where/you/will/set/your/database init
+pantagruel -i previous_config_file --refresh -H hpchost:/where/you/will/set/your/database init
 ```
 
 2) then run task `06` as you would normally do:
