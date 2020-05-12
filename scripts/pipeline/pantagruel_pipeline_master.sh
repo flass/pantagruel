@@ -82,9 +82,10 @@ usagelong (){
   echo "                           to set non-default values if not already, e.g. turn on collapsing:"
   echo "                             \`pantagruel -i config_file --refresh -c init\`"
   echo "                           to revert to default values, e.g. turn off collapsing:"
-  echo "                             \`pantagruel -i config_file --refresh --no_colapse init\`"
+  echo "                             \`pantagruel -i config_file --refresh -n init\`"
   echo "                           to do both, e.g. turn off collapsing and switch to use ecceTERA recconciliation method:"
-  echo "                             \`pantagruel -i config_file --refresh --no_colapse -e ecceTERA init\`"                       
+  echo "                             \`pantagruel -i config_file --refresh -n -e ecceTERA init\`"
+  echo "                         Currently, only short options (e.g., -e or -n, NOT --rec_method or --no_collapse) are supported after --refresh"
   echo ""
   echo " General configuration options:"
   echo ""
@@ -213,7 +214,7 @@ usagelong (){
   echo ""
   echo "    -c|--collapse     (no value) enable collapsing the rake clades in the gene trees (strongly recomended in datasets of size >50 genomes)."
   echo ""
-  echo "    --no_collapse     (no value) disable collapsing the rake clades in the gene trees"
+  echo "    -n|--no_collapse     (no value) disable collapsing the rake clades in the gene trees"
   echo "                       (default; use this option in combination with -i --refresh to restore default behaviour when -c was used in previous runs)."
   echo ""
   echo "    --collapse_param  quoted string. specify parameters for collapsing the rake clades in the gene trees."
@@ -406,7 +407,7 @@ promptdate () {
   echo $(date +'[%Y-%m-%d %H:%M:%S]') ${1}
 }
 
-ARGS=`getopt --options "d:r:i:I:f:a:T:A:L:s:t:RV:N:H:cg:e:q:u:hFz" --longoptions "dbname:,rootdir:,initfile:,refresh,iam:,famprefix:,refseq_ass:,refseq_list:,refseq_ass4annot:,refseq_list4annot:,custom_ass:,taxonomy:,pseudocore:,core_seqtype:,pop_lg_thresh:,pop_bs_thresh:,rooting:,reftree:,resume,env_var:,threads:,submit_hpc:,collapse,no_collapse,collapse_param:,genefam_list:,rec_method:,max_event_age:,help,FORCE,compress,path_to_interproscan:,update_from:,strain_info:" --name "pantagruel" -- "$@"`
+ARGS=`getopt --options "d:r:i:I:f:a:T:A:L:s:t:RV:N:H:cng:e:q:u:hFz" --longoptions "dbname:,rootdir:,initfile:,refresh,iam:,famprefix:,refseq_ass:,refseq_list:,refseq_ass4annot:,refseq_list4annot:,custom_ass:,taxonomy:,pseudocore:,core_seqtype:,pop_lg_thresh:,pop_bs_thresh:,rooting:,reftree:,resume,env_var:,threads:,submit_hpc:,collapse,no_collapse,collapse_param:,genefam_list:,rec_method:,max_event_age:,help,FORCE,compress,path_to_interproscan:,update_from:,strain_info:" --name "pantagruel" -- "$@"`
 
 #Bad arguments
 if [ ${?} -ne 0 ];
@@ -577,7 +578,7 @@ do
       echo "gene tree clade collapsing enabled"
       shift ;;
     
-    --no_collapse)
+    -n|--no_collapse)
       export chaintype=""
       echo "gene tree clade collapsing disabled"
       shift ;;
