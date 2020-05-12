@@ -24,9 +24,9 @@ if [ -z "${ptgthreads}" ] ; then
   export ptgthreads=$(nproc)
 fi
   
-#############################################################
-## 06. Gene trees (full [ML] and collapsed [bayesian sample])
-#############################################################
+###############################################
+## 06. Gene trees (full and collapsed ML trees)
+###############################################
 
 mkdir -p ${colalinexuscodedir}/${collapsecond}/ ${mlgenetrees}/ ${bayesgenetrees}/
 mkdir -p ${ptglogs}/raxml/gene_trees
@@ -114,75 +114,49 @@ else
   checkexec "could not generate restricted gene family list ; exit now" "succesfully generated restricted gene family lists :\n$famlist (containing $(echo $nrestrfam | cut -d' ' -f1) gene families)"
 fi
 
+##########################
+## 06.1 Full ML gene trees
+##########################
+
+## compute first pass of gene trees with RAxML, using rapid bootstrap to estimate branch supports
+tasklist=${famlist}_aln_list
+rm -f ${tasklist}*
+for fam in $(cut -f1 ${famlist}) ; do
+  aln=${cdsalifastacodedir}/${fam}.codes.aln
+  if [[ "${resumetask}" == "true" ]] ; then
+    if [[ ! -s ${mlgenetrees}/${mainresulttag}/RAxML_${mainresulttag}.${fam}.codes ]] ; then
+      ls ${aln} >> ${tasklist}_resume
+    fi
+  fi
+  ls ${aln} >> ${tasklist}
+done
+if [[ "${resumetask}" == "true" ]] ; then
+  if [[ -s ${tasklist}_resume ]] ; then
+    echo "Resume task 6, step 1: $(wc -l ${tasklist}_resume | cut -d' ' -f1) ML trees left to infer"
+  else
+    echo "Resume task 6, step 1: all ML tree built; skip ML tree building"
+  fi
+  tasklist=${tasklist}_resume
+fi
+if [ -s "${tasklist}" ] ; then
+  ${ptgscripts}/raxml_sequential.sh "${tasklist}" "${mlgenetrees}" 'GTRCATX' 'bipartitions rootedTree identical_sequences' 'x' "${ptgthreads}" 'true'
+  checkexec "step 1: RAxML tree estimation was interupted. You can check the cause in logs stored in '${ptglogs}/raxml/gene_trees/' ; exit now" "step 1: RAxML tree estimation complete"
+fi
+  
 if [[ "${chaintype}" == 'fullgenetree' ]] ; then
   #### OPTION A1: no collapsing, just convert the alignments from fasta to nexus to directly compute bayesian trees
-  cdsalifastacodealnlist=${genetrees}/cdsalifastacode_aln_list
-  rm -f ${cdsalifastacodealnlist}
-  for fam in $(cut -f1 ${famlist}) ; do
-   ls ${cdsalifastacodedir}/${fam}.codes.aln >> ${cdsalifastacodealnlist}
-  done
-  if [[ "${resumetask}" == "true" && -d ${colalinexuscodedir}/${collapsecond} ]] ; then
-    rm -f ${cdsalifastacodealnlist}_resume && touch ${cdsalifastacodealnlist}_resume
-    for aln in $(cat ${cdsalifastacodealnlist}) ; do
-      bnaln=$(basename $aln)
-      if [[ ! -s ${colalinexuscodedir}/${collapsecond}/${bnaln/.codes.aln/.codes.nex} ]] ; then
-        echo $aln >> ${cdsalifastacodealnlist}_resume
-      fi
-    done
-    if [[ -s ${cdsalifastacodealnlist}_resume ]] ; then
-      echo "Resume task 6: $(wc -l ${cdsalifastacodealnlist}_resume | cut -d' ' -f1) alignments left to convert"
-    else
-      echo "Resume task 6: skip converting alignments"
-    fi
-    cdsalifastacodealnlist=${cdsalifastacodealnlist}_resume
-  fi
-  
-  for aln in $(cat ${cdsalifastacodealnlist}) ; do
-    bnaln=$(basename $aln)
-    cp -p $aln ${colalinexuscodedir}/${collapsecond}/ && \
-     convalign -i fasta -e nex -t dna nexus ${colalinexuscodedir}/${collapsecond}/$bnaln && \
-      rm ${colalinexuscodedir}/${collapsecond}/$bnaln
-  done
-  checkexec "could not convert alignments from Fasta to Nexus format ; exit now" "succesfully converted alignemts from Fasta to Nexus format"
-  export nexusaln4chains=${colalinexuscodedir}/${collapsecond}
-#  export mboutputdir=${bayesgenetrees}/${collapsecond}
+
+  echo "step 2: will not collapse gene trees; nothing to do."
   
   #### end OPTION A1
 else
-  #### OPTION B1: compute ML gene trees and collapse rake clades
+  #### OPTION B1: collapse rake clades
 
   if [[ "${chaintype}" != 'collapsed' ]] ; then
    echo "Error: incorrect value for variable chaintype: '${chaintype}'"
    exit 1
   fi
-  ##########################
-  ## 06.1 Full ML gene trees
-  ##########################
-  
-  ## compute first pass of gene trees with RAxML, using rapid bootstrap to estimate branch supports
-  tasklist=${famlist}_aln_list
-  rm -f ${tasklist}*
-  for fam in $(cut -f1 ${famlist}) ; do
-    aln=${cdsalifastacodedir}/${fam}.codes.aln
-    if [[ "${resumetask}" == "true" ]] ; then
-      if [[ ! -s ${mlgenetrees}/${mainresulttag}/RAxML_${mainresulttag}.${fam}.codes ]] ; then
-        ls ${aln} >> ${tasklist}_resume
-      fi
-    fi
-    ls ${aln} >> ${tasklist}
-  done
-  if [[ "${resumetask}" == "true" ]] ; then
-    if [[ -s ${tasklist}_resume ]] ; then
-      echo "Resume task 6, step 1: $(wc -l ${tasklist}_resume | cut -d' ' -f1) ML trees left to infer"
-    else
-      echo "Resume task 6, step 1: all ML tree built; skip ML tree building"
-    fi
-    tasklist=${tasklist}_resume
-  fi
-  if [ -s "${tasklist}" ] ; then
-    ${ptgscripts}/raxml_sequential.sh "${tasklist}" "${mlgenetrees}" 'GTRCATX' 'bipartitions rootedTree identical_sequences' 'x' "${ptgthreads}" 'true'
-    checkexec "step 1: RAxML tree estimation was interupted. You can check the cause in logs stored in '${ptglogs}/raxml/gene_trees/' ; exit now" "step 1: RAxML tree estimation complete"
-  fi
+
   ############################
   ## 06.2 Gene tree collapsing
   ############################
@@ -228,14 +202,13 @@ else
     checkexec "step 2: ML tree collapsing was interupted ; exit now" "step 2: ML tree collapsing complete"
   fi
   export collapsecoldate=$(date +%Y-%m-%d)
-  export nexusaln4chains=${colalinexuscodedir}/${collapsecond}/collapsed_alns
 #  export mboutputdir=${bayesgenetrees}/${collapsecond}
   echo -e "${collapsecolid}\t${collapsecoldate}\t${collapsecriteriondef}" > ${genetrees}/collapsecol
 fi
 #### end OPTION B1
 
 ################################################################################
-## 06.4 Replace species by populations
+## 06.3 Replace species by populations
 ################################################################################
 
 mkdir -p ${ptgdb}/logs/replspebypop
@@ -247,6 +220,7 @@ replrun=$(date +'%d%m%Y')
 if [[ "${chaintype}" == 'fullgenetree' ]] ; then
   #### OPTION A2: 
   ## no need to replace anything in the tree; just link the original ML gene trees to the folder of replaced gene tree chains
+  echo "step 3: no need for gene tree format conversion and replacement of collapsed clades"
   echo "will directly use ML trees from RAxML; link files from '${colmlgenetrees}/' into '${coltreechains}/${collapsecond}/${replmethod}/'"
   rm -rf ${coltreechains}/${collapsecond}/${replmethod}/
   mkdir -p ${coltreechains}/${collapsecond}/${replmethod}/
@@ -272,9 +246,9 @@ else
       fi
     done > ${repltasklist}_resume
     if [ -s ${repltasklist}_resume ] ; then
-      echo "Resume task 6, step 4: $(wc -l ${repltasklist}_resume | cut -d' ' -f1) collapsed ML trees remain to be processed for format conversion and replacement of collapsed clades"
+      echo "Resume task 6, step 3: $(wc -l ${repltasklist}_resume | cut -d' ' -f1) collapsed ML trees remain to be processed for format conversion and replacement of collapsed clades"
     else
-      echo "Resume task 6, step 4: all collapsed ML trees processed; skip format conversion and replacement of collapsed clades"
+      echo "Resume task 6, step 3: all collapsed ML trees processed; skip format conversion and replacement of collapsed clades"
     fi
     repltasklist=${repltasklist}_resume
   fi
@@ -297,7 +271,7 @@ else
 	 -o ${coltreechains}/${collapsecond} --flatRCs --populations=${speciestree%.*}_populations --population_tree=${speciestree%.*}_collapsedPopulations.nwk \
 	 --population_node_distance=${speciestree%.*}_interNodeDistPopulations --dir_full_gene_trees=${mlgenetrees}/rootedTree --method=${replmethod} \
 	 --threads=${ptgthreads} --reuse=0 --verbose=0 --max.recursion.limit=12000 --logfile=${repllogs}_${replrun}.log
-    checkexec "step 4: format conversion and replacement of collapsed clades was interupted ; exit now" "step 4: format conversion and replacement of collapsed clades complete"
+    checkexec "step 3: format conversion and replacement of collapsed clades was interupted ; exit now" "step 3: format conversion and replacement of collapsed clades complete"
   fi 
   ## make a summary matrix of collapsed clade (CC) occurence in genome populations
   ## this really reflects the output of step 2, but relies on files made during step 4
@@ -311,7 +285,7 @@ else
   echo -e "${replacecolid}\t${replacecoldate}" > ${genetrees}/replacecol
 
   ##############################################################
-  ## 06.5 Populate database with all collapsed gene tree results
+  ## 06.4 Populate database with all collapsed gene tree results
   ##############################################################
   if [ "${resumetask}" == 'true' ] ; then
     # first clean the database
@@ -319,7 +293,7 @@ else
   fi
   ## load these information into the database
   ${ptgscripts}/pantagruel_sqlitedb_phylogeny_populate_collapsed_clades.sh "${database}" "${sqldb}" "${colalinexuscodedir}" "${coltreechains}" "${collapsecond}" "${replmethod}" "${collapsecriteriondef}" "${collapsecolid}" "${replacecolid}" "${collapsecoldate}" "${replacecoldate}"
-  checkexec "step 5: populating the SQL database with collapsed/replaced gene tree clades was interupted ; exit now" "step 5: populating the SQL database with collapsed/replaced gene tree clades complete"
+  checkexec "step 4: populating the SQL database with collapsed/replaced gene tree clades was interupted ; exit now" "step 4: populating the SQL database with collapsed/replaced gene tree clades complete"
 
   #### end OPTION B2
  
