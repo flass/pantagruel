@@ -22,6 +22,13 @@ fi
 ###############################################
 
 echo "Will use the reconciliation method: ${recmethod}"
+if [ "${recmethod}" != 'GeneRax' ] ; then
+  echo "This is the 'usingGeneRax' branch of Pantagruel pipeline; only 'GeneRax' reconciliation method is supported."
+  echo "You can edit the environment file '${envsourcescript}' to set the value of the variable with the command \`export recmethod='GeneRax'\`;"
+  echo "or you can use the 'master' branch of the pipeline for other reconciliation methods."
+  echo "Pantagruel will exit now."
+  exit 1
+fi
 if [ "${recmethod}" == 'ALE' ] ; then
   ${ptgscripts}/pipeline/pantagruel_pipeline_07_ALE_reconciliations.sh ${envsourcescript}
 elif [ "${recmethod}" == 'ecceTERA' ] ; then
