@@ -336,7 +336,7 @@ Options are detailed here:
 						     `pantagruel -i config_file --refresh -c init`
 						   to revert to default values, e.g. turn off collapsing:
 						     `pantagruel -i config_file --refresh -n init`
-                           to do both, e.g. turn off collapsing and switch to use ecceTERA recconciliation method:
+                           to do both, e.g. turn off collapsing and switch to use ecceTERA reconciliation method:
                              `pantagruel -i config_file --refresh -n -e ecceTERA init`
                          Currently, only short options (e.g., -e or -n, NOT --rec_method or --no_collapse) are supported after --refresh.
                          
@@ -396,7 +396,7 @@ Options are detailed here:
                          'locus_tag_prefix' must match the prefix of ids given to CDS, proteins and genome regions (contigs)
                          in potentially provided annotation files (see below).
                          Note that for ensuring compatibility with dependencies (namely BioPython Nexus alignment parser
-                         and ALE reconciliation program), the characters '-' and '_' are forbiden in the 'locus_tag_prefix' field.
+                         and ALE reconciliation program), the characters '-' and '_' are forbidden in the 'locus_tag_prefix' field.
                       _optional_ 
                        - an 'annotation/' folder, where are stored annotation files: 
                          - one mandatory in GFF 3.0 file format (with a '.gff' extension);
