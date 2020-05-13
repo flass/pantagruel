@@ -116,7 +116,7 @@ if [ "${resumetask}" == 'true' ] ; then
   # resuming after a stop in batch computing, or to collect those jobs that crashed (and may need to be re-ran with more mem/time allowance)
   for nfgs in $(cat ${tasklist}) ; do
     bng=$(basename ${nfgs})
-	if [ "${ALEvtag}"=='v0.5' ] ; then
+	if [ "${ALEvtag}" == 'v0.5' ] ; then
       [ ${spetree} == 'Stree.nwk' ] && aleoutSpref=${bng/Gtrees/Stree} || aleoutSpref=$(basename ${spetree})
       bnalerec=${aleoutSpref}_${bng}.ale.${tag}ml_rec
     else
