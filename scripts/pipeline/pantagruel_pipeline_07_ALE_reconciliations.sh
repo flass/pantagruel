@@ -35,7 +35,6 @@ fi
 ### perform reconciliations with ALE
 
 # parameters to be set: defaults:
-#~ export ALEversion='v0.4'
 #~ export ALEalgo='ALEml'
 #~ export recsamplesize=1000
 if [ -z ${reccolid} ] ; then
@@ -44,57 +43,14 @@ fi
 # derived parameters
 if [ ${ALEalgo} == 'ALEml_undated' ] ; then
   export rectype='undat'
-else
+elif  [ ${ALEalgo} == 'ALEml' ] ; then
   export rectype='dated'
+else
+  echo "Error: '${ALEalgo}' is not a known algorithm/executable file name for ALE software; exit now"
+  exit 1
 fi
 export reccol="ale_${chaintype}_${rectype}_${reccolid}"
 export recs=${alerec}/${chaintype}_ALE_recs
-
-tasklist=${alerec}/${collapsecond}_${replmethod}_Gtrees_list
-if [ -z ${genefamlist} ] ; then
-  ${ptgscripts}/lsfullpath.py "${coltreechains}/${collapsecond}/${replmethod}/*-Gtrees.nwk" > ${tasklist}
-else
-  rm -f ${tasklist}
-  for fam in $(cut -f1 ${genefamlist}) ; do
-    ls ${coltreechains}/${collapsecond}/${replmethod}/${fam}*-Gtrees.nwk 2> /dev/null
-  done > ${tasklist} 
-fi
-alelogs=${ptgdb}/logs/ALE
-mkdir -p $alelogs/${reccol}
-outrecdir=${recs}/${collapsecond}/${replmethod}/${reccol}
-mkdir -p $outrecdir
-
-cd ${ptgtmp} 
-
-if [[ "${chaintype}" == 'fullgenetree' ]] ; then
-  # use the same species tree file for every gene family, with no collapsed populations
-  spetree=${speciestree}.lsd.nwk
-else
-  # use a dedicated species tree file for each gene family, with population collapsed in accordance to the gene tree
-  spetree='Stree.nwk'
-fi
-
-if [ "${resumetask}" == 'true' ] ; then
-  rm -f ${tasklist}_resumetasklist
-  # resuming after a stop in batch computing, or to collect those jobs that crashed (and may need to be re-ran with more mem/time allowance)
-  for nfgs in $(cat ${tasklist}) ; do
-    bng=$(basename ${nfgs})
-    [ ${spetree} == 'Stree.nwk' ] && aleoutSpref=${bng/Gtrees/Stree} || aleoutSpref=$(basename ${spetree})
-    bnalerec=${aleoutSpref}_${bng}.ale.${tag}ml_rec
-    if [[ ! -e ${recs}/${collapsecond}/${replmethod}/${reccol}/${bnalerec} ]] ; then
-     echo ${nfgs}
-   fi
-  done > ${tasklist}_resumetasklist
-  tasklist=${tasklist}_resumetasklist
-fi
-
-## perform reconciliations sequentially (one gene family after another)
-if [ -s ${tasklist} ] ; then
-  export worklocal='false'
-  ${ptgscripts}/ale_sequential.sh ${tasklist} ${outrecdir} ${spetree} ${recsamplesize} ${ALEalgo}
-else
-  echo "no gene tree left to reconcile, skip reconciliation computation"
-fi
 
 export reccoldate=$(date +%Y-%m-%d)
 if [[ -z "${alebin}" ]] ; then
@@ -125,10 +81,63 @@ if [[ ! -z "${alebin}" ]] ; then
     ALEheader="$(${ALEalgo} -h | head -n 1)"
     if [ -z "${ALEheader}" ] ; then
       ALEheader="using ALE software"
+	  ALEvtag=$(echo ${ALEheader} | awk '{ print $NF }')
     fi
     ALEsourcenote="${ALEheader#*${ALEalgo} } binaries found at '${pathalebin}'"
   fi
 fi
+
+tasklist=${alerec}/${collapsecond}_${replmethod}_Gtrees_list
+if [ -z ${genefamlist} ] ; then
+  ${ptgscripts}/lsfullpath.py "${coltreechains}/${collapsecond}/${replmethod}/*-Gtrees.nwk" > ${tasklist}
+else
+  rm -f ${tasklist}
+  for fam in $(cut -f1 ${genefamlist}) ; do
+    ls ${coltreechains}/${collapsecond}/${replmethod}/${fam}*-Gtrees.nwk 2> /dev/null
+  done > ${tasklist} 
+fi
+alelogs=${ptgdb}/logs/ALE
+mkdir -p $alelogs/${reccol}
+outrecdir=${recs}/${collapsecond}/${replmethod}/${reccol}
+mkdir -p $outrecdir
+
+cd ${ptgtmp} 
+
+if [[ "${chaintype}" == 'fullgenetree' ]] ; then
+  # use the same species tree file for every gene family, with no collapsed populations
+  spetree=${speciestree}.lsd.nwk
+else
+  # use a dedicated species tree file for each gene family, with population collapsed in accordance to the gene tree
+  spetree='Stree.nwk'
+fi
+
+if [ "${resumetask}" == 'true' ] ; then
+  rm -f ${tasklist}_resumetasklist
+  # resuming after a stop in batch computing, or to collect those jobs that crashed (and may need to be re-ran with more mem/time allowance)
+  for nfgs in $(cat ${tasklist}) ; do
+    bng=$(basename ${nfgs})
+	if [ "${ALEvtag}"=='v0.5' ] ; then
+      [ ${spetree} == 'Stree.nwk' ] && aleoutSpref=${bng/Gtrees/Stree} || aleoutSpref=$(basename ${spetree})
+      bnalerec=${aleoutSpref}_${bng}.ale.${tag}ml_rec
+    else
+	  # assume ALE v0.4
+	  bnalerec=${bng}.ale.${tag}ml_rec
+	fi
+	if [[ ! -e ${recs}/${collapsecond}/${replmethod}/${reccol}/${bnalerec} ]] ; then
+     echo ${nfgs}
+   fi
+  done > ${tasklist}_resumetasklist
+  tasklist=${tasklist}_resumetasklist
+fi
+
+## perform reconciliations sequentially (one gene family after another)
+if [ -s ${tasklist} ] ; then
+  export worklocal='false'
+  ${ptgscripts}/ale_sequential.sh ${tasklist} ${outrecdir} ${spetree} ${recsamplesize} ${ALEalgo}
+else
+  echo "no gene tree left to reconcile, skip reconciliation computation"
+fi
+
 echo -e "${reccolid}\t${reccoldate}\t${ALEsourcenote}\t${reccol}" > ${alerec}/reccol
 echo -e "\n# Reconciliation collection details:"
 cat ${alerec}/reccol
