@@ -475,8 +475,10 @@ if [ ! -z "$(command -v mash)" ] ; then
   rm -f ${fnalist}
   for ass in $(ls ${assemblies}) ; do
     ls ${assemblies}/${ass}/${ass}_genomic.fna.gz 2> /dev/null >> ${fnalist} || ls ${assemblies}/${ass}/${ass}_genomic.fna 2> /dev/null >> ${fnalist} 
-  done
-  mash triangle ${paramash} $(cat ${fnalist}) > ${indata}/all_assemblies_mash.dist
+  done  
+  mash sketch ${paramash} -s 10000 -l ${fnalist} -o ${indata}/all_assemblies_mash
+  mash triangle ${paramash} ${indata}/all_assemblies_mash.msh > ${indata}/all_assemblies_mash.dist
+#  mash triangle ${paramash} $(cat ${fnalist}) > ${indata}/all_assemblies_mash.dist
   
   if [[ -s "${speciestree}" && -s "${database}/genome_codes.tab" ]] ; then
     # only likely to happen if task 00 is re-run with -R after tasks 03 and 05 are complete
