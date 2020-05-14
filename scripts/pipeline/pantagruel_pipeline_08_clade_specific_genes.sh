@@ -112,7 +112,7 @@ ${ptgscripts}/get_clade_specific_genes.r --gene_count_matrix ${orthomatrad}_geno
  checkexec "step 4: failed ${step4}; check specific logs in '${claspelogs}' for more details" "step 4: completed ${step4}\n"
 
 # create clustering based on the abs/pres matrix (using Jaccard Distance)
-${ptgscripts}/pangenome_hclust.r ${orthomatrad} 1000 & 
+${ptgscripts}/pangenome_hclust.r ${orthomatrad} 1000
 
 ## test GO term enrichment in gene sets
 
