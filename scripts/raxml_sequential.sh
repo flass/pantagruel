@@ -117,13 +117,12 @@ raxmlcalls=(raxmlcall0 raxmlcall1 raxmlcall2 raxmlcall3 raxmlcall4 raxmlcallz)
 smallfam=''
 status=${?}
 for i in {0..5} ; do
-  let j=$i-1
   if [ ${status} != 0 ] ; then
     echo "!!! ERROR : during former RAxML call ; exit now"
     exit 1
   else  
     if [ -e "RAxML_info.${nfrad2}" ] ; then 
-      mv -f RAxML_info.${nfrad2} RAxML_info.${j}.${nfrad2} 
+      mv -f RAxML_info.${nfrad2} RAxML_info.${i}.${nfrad2} 
     fi
     eval raxmlcall='$'${raxmlcalls[$i]}
     echo ""
