@@ -35,9 +35,13 @@ run_clustalo_sequential () {
   bn=`basename ${task}`
   fout=${bn/fasta/aln}
   echo "task: $task" &> ${ptglogs}/clustalo/${bn}.clustalo.log
-  date +"%d/%m/%Y %H:%M:%S" &> ${ptglogs}/clustalo/${bn}.clustalo.log
-  clustalo --threads=1 -i ${task} -o ${nrprotali}/${fout} &> ${ptglogs}/clustalo/${bn}.clustalo.log
-  date +"%d/%m/%Y %H:%M:%S" &> ${ptglogs}/clustalo/${bn}.clustalo.log
+  if [[ "${resumetask}" == "true" && -s ${nrprotali}/${fout} ]] ; then
+	echo "output file exists; skip task"
+  else
+    date +"%d/%m/%Y %H:%M:%S" &> ${ptglogs}/clustalo/${bn}.clustalo.log
+    clustalo --threads=1 -i ${task} -o ${nrprotali}/${fout} &> ${ptglogs}/clustalo/${bn}.clustalo.log
+    date +"%d/%m/%Y %H:%M:%S" &> ${ptglogs}/clustalo/${bn}.clustalo.log
+  fi
 }
 export -f run_clustalo_sequential
 parallel --jobs ${ptgthreads} --joblog ${ptglogs}/run_clustalo_sequential.log run_clustalo_sequential :::: ${tasklist}
