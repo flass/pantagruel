@@ -36,7 +36,7 @@ def parseCDSFasta(nfcds):
 	fcds.close()
 	return dgenbankcdsids
 
-def parseGFFline(line):
+def parseGFFline(line, defaulttag=''):
 	#~ print line
 	lsp = line.rstrip('\n').split('\t')
 	# split by '|' to account for Prokka-style annotation that prepends 'gnl|Sequencing_Centre|' to the region_id
@@ -47,6 +47,9 @@ def parseGFFline(line):
 		seqreg = lspsp[-1]	
 	else:
 		# not from Prokka, keep everything but substitute '|' with '.'
+		if lspsp[0]=='':
+			# the identifiers risk being non-specific to this genome; add tag
+			lspsp[0] = defaulttag
 		seqreg = '.'.join(lspsp)
 	annottype = lsp[2]
 	beg = lsp[3]
@@ -63,7 +66,7 @@ def indexRegionsAndGenes(fgff, dfout, assacc, assname, dtaxid2sciname={}, dmerge
 		if line.startswith('#'): continue
 		elif line.startswith('>'): break
 		#~ print line
-		seqreg, annottype, beg, end, strand, desc = parseGFFline(line)
+		seqreg, annottype, beg, end, strand, desc = parseGFFline(line, defaulttag=assname)
 		if annottype=='region':
 			if seqreg!=currseqreg and beg=='1':
 				# new replicon
@@ -93,7 +96,7 @@ def indexRegionsAndGenes(fgff, dfout, assacc, assname, dtaxid2sciname={}, dmerge
 				dgenenchild[parentgene] = dgenenchild.setdefault(parentgene, 0) + 1
 	return (dgeneloctag, dgenenchild)
 
-def compileFeatures(fgff, dfout, dgenbankcdsids, dgeneloctag, dgenenchild, didentseq={}):
+def compileFeatures(fgff, dfout, dgenbankcdsids, dgeneloctag, dgenenchild, didentseq={}, assname=assname):
 	dgenerangeprods = {}
 	#~ annottype = None
 	nprintmullicds = 0
@@ -103,7 +106,7 @@ def compileFeatures(fgff, dfout, dgenbankcdsids, dgeneloctag, dgenenchild, diden
 		if line.startswith('#'): continue
 		elif line.startswith('>'): break
 		#~ print line
-		seqreg, annottype, beg, end, strand, desc = parseGFFline(line)
+		seqreg, annottype, beg, end, strand, desc = parseGFFline(line, defaulttag=assname)
 		if annottype in annottype2fouttag:
 			lineoutend = []
 			parentgene = desc.get('Parent')
@@ -180,7 +183,7 @@ def parseAssemb(dirassemb, dfout, dtaxid2sciname={}, dmergedtaxid={}, didentseq=
 	dgeneloctag, dgenenchild = indexRegionsAndGenes(fgff, dfout, assacc, assname, dtaxid2sciname=dtaxid2sciname, dmergedtaxid=dmergedtaxid)
 	# resume reading the file from start
 	fgff.seek(0)
-	compileFeatures(fgff, dfout, dgenbankcdsids, dgeneloctag, dgenenchild, didentseq=didentseq)
+	compileFeatures(fgff, dfout, dgenbankcdsids, dgeneloctag, dgenenchild, didentseq=didentseq, assname=assname)
 	fgff.close()
 
 def usage():
