@@ -550,6 +550,11 @@ do
       export resumetask=true
       echo "will try and resume computation of task where it was last stopped"
       shift ;;
+	
+    -S|--snp_aln)
+      export snpali=true
+      echo "will restrict core-genome alignment to SNPs"
+      shift ;;
 
     -V|--env_var)
       testmandatoryarg "${1}" "${2}"
