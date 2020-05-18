@@ -93,7 +93,7 @@ def indexRegionsAndGenes(fgff, dfout, assacc, assname, dtaxid2sciname={}, dmerge
 				dgenenchild[parentgene] = dgenenchild.setdefault(parentgene, 0) + 1
 	return (dgeneloctag, dgenenchild)
 
-def compileFeatures(fgff, dfout, dgenbankcdsids, dgeneloctag, dgenenchild, didentseq={}):
+def compileFeatures(fgff, dfout, dgenbankcdsids, dgeneloctag, dgenenchild, didentseq={}, assname=''):
 	dgenerangeprods = {}
 	#~ annottype = None
 	nprintmullicds = 0
