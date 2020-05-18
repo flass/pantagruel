@@ -198,6 +198,8 @@ usagelong (){
   echo "                           To use codes, you may thus want run task 3 first, then run task init again with this option to regenerate the config file with "
   echo "                           the desired outgroup organism codes and only then run task 5."
   echo ""
+  echo "    -S|--snp_aln        reduce the core-genome alignment to SNPs"
+  echo ""
   echo " Output: gene trees / reconciliations options:"
   echo ""
   echo "    -H|--submit_hpc   full address (hostname:/folder/location) of a folder on a remote high-performance computating (HPC) cluster server"
@@ -411,7 +413,7 @@ promptdate () {
   echo $(date +'[%Y-%m-%d %H:%M:%S]') ${1}
 }
 
-ARGS=`getopt --options "d:r:i:I:f:a:T:A:L:s:t:RV:N:H:cng:e:q:u:hFz" --longoptions "dbname:,rootdir:,initfile:,refresh,iam:,famprefix:,refseq_ass:,refseq_list:,refseq_ass4annot:,refseq_list4annot:,custom_ass:,taxonomy:,pseudocore:,core_seqtype:,pop_lg_thresh:,pop_bs_thresh:,rooting:,reftree:,resume,env_var:,threads:,submit_hpc:,collapse,no_collapse,collapse_param:,genefam_list:,rec_method:,max_event_age:,help,FORCE,compress,path_to_interproscan:,update_from:,strain_info:" --name "pantagruel" -- "$@"`
+ARGS=`getopt --options "d:r:i:I:f:a:T:A:L:s:t:RSV:N:H:cng:e:q:u:hFz" --longoptions "dbname:,rootdir:,initfile:,refresh,iam:,famprefix:,refseq_ass:,refseq_list:,refseq_ass4annot:,refseq_list4annot:,custom_ass:,taxonomy:,pseudocore:,core_seqtype:,pop_lg_thresh:,pop_bs_thresh:,rooting:,snp_aln,reftree:,resume,env_var:,threads:,submit_hpc:,collapse,no_collapse,collapse_param:,genefam_list:,rec_method:,max_event_age:,help,FORCE,compress,path_to_interproscan:,update_from:,strain_info:" --name "pantagruel" -- "$@"`
 
 #Bad arguments
 if [ ${?} -ne 0 ];
