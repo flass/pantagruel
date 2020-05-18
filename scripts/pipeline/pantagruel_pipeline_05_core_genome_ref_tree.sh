@@ -22,17 +22,21 @@ fi
 
 case "${coreseqtype}" in
   prot)
+      modelpref='PROT'
+	  [ "${snpali}" == 'true' ] && modelpref="ASC_${modelpref}"
       alifastacodedir=${protalifastacodedir}
-      raxmloptions="-n ${treename} -m PROTCATLGX -j -p 1753 -w ${coretree}"
-      raxmloptionsG="-n ${treename} -m PROTGAMMALGX -j -p 1753 -w ${coretree}"
+      raxmloptions="-n ${treename} -m ${modelpref}CATLGX -j -p 1753 -w ${coretree}"
+      raxmloptionsG="-n ${treename} -m ${modelpref}GAMMALGX -j -p 1753 -w ${coretree}"
       if [[ -z "${poplgthresh}" || "${poplgthresh}" == 'default' ]] ; then
         poplgthresh=0.0002
       fi
       ;;
   cds)
+      modelpref='GTR'
+	  [ "${snpali}" == 'true' ] && modelpref="ASC_${modelpref}"
       alifastacodedir=${cdsalifastacodedir}
-      raxmloptions="-n ${treename} -m GTRCATX -j -p 1753 -w ${coretree}"
-      raxmloptionsG="-n ${treename} -m GTRGAMMAX -j -p 1753 -w ${coretree}"
+      raxmloptions="-n ${treename} -m ${modelpref}CATX -j -p 1753 -w ${coretree}"
+      raxmloptionsG="-n ${treename} -m ${modelpref}GAMMAX -j -p 1753 -w ${coretree}"
       if [[ -z "${poplgthresh}" || "${poplgthresh}" == 'default' ]] ; then
         poplgthresh=0.0005
       fi
@@ -160,6 +164,11 @@ else
    python2.7 ${ptgscripts}/concat.py ${coregenome}/pseudo-coregenome_sets/${pseudocore}_${coreseqtype}_aln_list ${pseudocorealn} > ${ptglogs}/concat_core_genome.log
    checkexec "failed to produce concatenated (pseudo)core-genome alignment" "created concatenated (pseudo)core-genome alignment in file '${pseudocorealn}'"
    rm ${alifastacodedir}/*_all_sp_new
+  fi
+  if [ "${snpali}" == 'true' ] ; then
+    pseudocoresnpaln=${pseudocorealn/.aln/.snp.aln}
+    snp-sites -o ${pseudocoresnpaln} ${pseudocorealn}
+	export pseudocorealn=${pseudocoresnpaln}
   fi
 
   ## compute species tree using RAxML
