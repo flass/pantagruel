@@ -28,10 +28,11 @@ case "${coreseqtype}" in
 	  if [ "${snpali}" == 'true' ] ; then
 	    modelpref="ASC_${modelpref}"
 		treetag=${treetag}.snp
+		ascopt="--asc-corstamatakis -q ${treetag}.part"
 	  fi
       alifastacodedir=${protalifastacodedir}
-      raxmloptions="-n ${treetag} -m ${modelpref}CAT${modelmat}X -j -p 1753 -w ${coretree}"
-      raxmloptionsG="-n ${treetag} -m ${modelpref}GAMMA${modelmat}X -j -p 1753 -w ${coretree}"
+      raxmloptions="-n ${treetag} -m ${modelpref}CAT${modelmat}X ${ascopt} -j -p 1753 -w ${coretree}"
+      raxmloptionsG="-n ${treetag} -m ${modelpref}GAMMA${modelmat}X ${ascopt} -j -p 1753 -w ${coretree}"
       if [[ -z "${poplgthresh}" || "${poplgthresh}" == 'default' ]] ; then
         poplgthresh=0.0002
       fi
@@ -41,10 +42,11 @@ case "${coreseqtype}" in
 	  if [ "${snpali}" == 'true' ] ; then
 	    modelpref="ASC_${modelpref}"
 		treetag=${treetag}.snp
+		ascopt="--asc-corstamatakis -q ${treetag}.part"
 	  fi
       alifastacodedir=${cdsalifastacodedir}
-      raxmloptions="-n ${treetag} -m ${modelpref}CATX -j -p 1753 -w ${coretree}"
-      raxmloptionsG="-n ${treetag} -m ${modelpref}GAMMAX -j -p 1753 -w ${coretree}"
+      raxmloptions="-n ${treetag} -m ${modelpref}CATX ${ascopt} -j -p 1753 -w ${coretree}"
+      raxmloptionsG="-n ${treetag} -m ${modelpref}GAMMAX ${ascopt} -j -p 1753 -w ${coretree}"
       if [[ -z "${poplgthresh}" || "${poplgthresh}" == 'default' ]] ; then
         poplgthresh=0.0005
       fi
@@ -174,8 +176,14 @@ else
    rm ${alifastacodedir}/*_all_sp_new
   fi
   if [ "${snpali}" == 'true' ] ; then
-    pseudocoresnpaln=${pseudocorealn/.aln/.snp.aln}
+    pseudocoresnpaln=${coregenome}/${treename}.snp.aln
+    pseudocoreinvaln=${coregenome}/${treename}.invar.aln
     snp-sites -o ${pseudocoresnpaln} ${pseudocorealn}
+    snp-sites -b -o ${pseudocoreinvaln} ${pseudocorealn}
+	head -n 2 ${pseudocoreinvaln} > ${pseudocoreinvaln}.reduced && rm ${pseudocoreinvaln}
+	${ptgscripts}/print_base_freq_ali.r ${pseudocoreinvaln}.reduced | tail -n 1 > ${pseudocoreinvaln}.basefreq
+	nbbase=$(tail -n 1 ${pseudocoreinvaln}.reduced | wc -c)
+	echo "[asc~${pseudocoreinvaln}.basefreq], ASC_DNA, p1=1-${nbbase}" > ${treetag}.part
 	export pseudocorealn=${pseudocoresnpaln}
   fi
 
