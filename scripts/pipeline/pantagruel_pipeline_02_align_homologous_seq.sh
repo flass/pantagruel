@@ -44,7 +44,10 @@ run_clustalo_sequential () {
   fi
 }
 export -f run_clustalo_sequential
+step1="step 1: alignment of nr protein families with clustalo and GNU parallel"
+echo "$(promptdate)-- ${step1}"
 parallel --jobs ${ptgthreads} --joblog ${ptglogs}/run_clustalo_sequential.log run_clustalo_sequential :::: ${tasklist}
+checkexec "something went worng during ${step1}" "succefully completed ${step1}"
 
 # check that alignments are not empty
 ${ptgscripts}/lsfullpath.py "${nrprotali}/*" > ${nrprotali}_list
@@ -67,11 +70,13 @@ for cg in `cat ${genomeinfo}/assemblies_list` ; do ls $cg/*_cds_from_genomic.fna
 
 # generate (full protein alignment, unaligned CDS fasta) file pairs and reverse-translate alignments to get CDS (gene family) alignments
 mkdir -p ${ptglogs}/extract_full_prot_and_cds_family_alignments/
+step2="step 2: generation of full CDS alignments from the nr protein alignments"
+echo "$(promptdate)-- ${step2}"
 python2.7 ${ptgscripts}/extract_full_prot_and_cds_family_alignments.py --nrprot_fam_alns ${nrprotali} --singletons ${protfamseqs}/${protorfanclust}.fasta \
  --prot_info ${genomeinfo}/assembly_info/allproteins_info.tab --repli_info ${genomeinfo}/assembly_info/allreplicons_info.tab --assemblies ${assemblies} \
  --dirout ${protali} --famprefix ${famprefix} --identical_prots ${allfaarad}.identicals.list \
  --threads ${ptgthreads} --logs ${ptglogs}/extract_full_prot_and_cds_family_alignments
-checkexec "$(promptdate)-- Critical error during the production of full CDS alignments from the nr protein alignments" "$(promptdate)-- complete generation of full CDS alignments without critical errors"
+checkexec "Critical error occurred during ${step2}" "completed ${step2} without critical errors"
 
 ## check consistency of full reverse translated alignment set
 ok=1
@@ -92,18 +97,22 @@ if [ $ok -lt 1 ] ; then
   # some protein alignments do not match the CDS sequences
   # transpose the CDS into the positions of the aligned protein; assumes no indels, only mismatches and possibly shortenned sequences
   rm -f ${ptglogs}/tranposeAlignmentProt2CDS.log && touch ${ptglogs}/tranposeAlignmentProt2CDS.log
+  step21="step 2.1: generation the reverse translated aligments missed by pal2nal"
+  echo "$(promptdate)-- ${step21}"
   for fam in `cut -f1 ${protali}/pal2nal_missed_fams` ; do
     ${ptgscripts}/tranposeAlignmentProt2CDS.py $protali/full_cdsfam_fasta/$fam.fasta $protali/full_protfam_alignments/$fam.aln $protali/full_cdsfam_alignments/$fam.aln > ${ptglogs}/tranposeAlignmentProt2CDS.log
   done
-  checkexec "$(promptdate)-- failed to generate the reverse translated aligments missed by pal2nal" "$(promptdate)-- Complete generating the reverse translated aligments missed by pal2nal"
+  checkexec "failed during ${step21}" "Completed ${step21}"
   >&2 promptdate 
   >&2 echo "See '${ptglogs}/tranposeAlignmentProt2CDS.log' for the list of alignments that were reverse-translated using the coarse algorithm implemented in tranposeAlignmentProt2CDS.py"
 fi
 
 # join non-ORFan and ORFan family count matrices
+step3="step 3: generating the gene family count matrices"
+echo "$(promptdate)-- ${step4}"
 rm -f ${protali}/all_families_genome_counts.mat*
 cat ${protali}/full_families_genome_counts-noORFans.mat > ${protali}/all_families_genome_counts.mat
 tail -n +2 ${protali}/${famprefix}C000000_genome_counts-ORFans.mat >> ${protali}/all_families_genome_counts.mat
 gzip ${protali}/all_families_genome_counts.mat
-checkexec "$(promptdate)-- failed to generate the gene family count matrices" "$(promptdate)-- Complete generating the gene family count matrices"
+checkexec "failed during ${step3}" "Completed ${step3}"
 
