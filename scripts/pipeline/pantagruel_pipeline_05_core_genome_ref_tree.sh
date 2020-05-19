@@ -25,7 +25,7 @@ case "${coreseqtype}" in
   prot)
       modelpref='PROT'
 	  [ -z "${modelmat}" ] && modelmat='LG'
-	  [ "${snpali}" == 'true' ] ; then
+	  if [ "${snpali}" == 'true' ] ; then
 	    modelpref="ASC_${modelpref}"
 		treetag=${treetag}.snp
 	  fi
@@ -38,7 +38,7 @@ case "${coreseqtype}" in
       ;;
   cds)
       modelpref='GTR'
-	  [ "${snpali}" == 'true' ] ; then
+	  if [ "${snpali}" == 'true' ] ; then
 	    modelpref="ASC_${modelpref}"
 		treetag=${treetag}.snp
 	  fi
