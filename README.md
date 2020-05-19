@@ -447,7 +447,9 @@ Options are detailed here:
                           The mapping between genome accession ids and organism codes is given in the file '03.database/genome_codes.tab' generated during task 3.
                           To use codes, you may thus want run task 3 first, then run task init again with this option to regenerate the config file with 
                           the desired outgroup organism codes and only then run task 5.
-                          
+
+    -S|--snp_aln        reduce the core-genome alignment to SNPs
+
  Output: gene trees / reconciliations options:
      
     -H|--submit_hpc  full address (hostname:/folder/location) of a folder on a remote high-performance computating (HPC) cluster server.
