@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends wget git build-
         libxml2-dev libcurl4-openssl-dev locales linuxbrew-wrapper rsync \
         libboost-dev libboost-serialization-dev libboost-mpi-dev \
         libbpp-core-dev libbpp-phyl-dev libbpp-seq-dev libbpp-seq-omics-dev \
-		libdatetime-perl libxml-simple-perl libdigest-md5-perl bioperl \
+		libdatetime-perl libxml-simple-perl libdigest-md5-perl bioperl snp-sites \
 		flex bison libgmp3-dev \
 	&& rm -rf /var/lib/apt/lists/*
 
