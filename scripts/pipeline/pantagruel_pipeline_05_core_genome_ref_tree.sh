@@ -28,7 +28,7 @@ case "${coreseqtype}" in
 	  if [ "${snpali}" == 'true' ] ; then
 	    modelpref="ASC_${modelpref}"
 		treetag=${treetag}.snp
-		ascopt="--asc-corstamatakis -q ${coregenome}/${treename}.invar.part"
+		ascopt="--asc-corr=stamatakis -q ${coregenome}/${treename}.invar.part"
 	  fi
       alifastacodedir=${protalifastacodedir}
       raxmloptions="-n ${treetag} -m ${modelpref}CAT${modelmat}X ${ascopt} -j -p 1753 -w ${coretree}"
@@ -42,7 +42,7 @@ case "${coreseqtype}" in
 	  if [ "${snpali}" == 'true' ] ; then
 	    modelpref="ASC_${modelpref}"
 		treetag=${treetag}.snp
-		ascopt="--asc-corstamatakis -q ${coregenome}/${treename}.invar.part"
+		ascopt="--asc-corr=stamatakis -q ${coregenome}/${treename}.invar.part"
 	  fi
       alifastacodedir=${cdsalifastacodedir}
       raxmloptions="-n ${treetag} -m ${modelpref}CATX ${ascopt} -j -p 1753 -w ${coretree}"
