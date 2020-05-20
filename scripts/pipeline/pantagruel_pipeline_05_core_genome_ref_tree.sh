@@ -177,13 +177,13 @@ else
   fi
   if [ "${snpali}" == 'true' ] ; then
     pseudocoresnpaln=${coregenome}/${treename}.snp.aln
-    pseudocoreinvaln=${coregenome}/${treename}.invar.aln
+#    pseudocoreinvaln=${coregenome}/${treename}.invar.aln
     snp-sites -o ${pseudocoresnpaln} ${pseudocorealn}
-    snp-sites -b -o ${pseudocoreinvaln} ${pseudocorealn}
-	head -n 2 ${pseudocoreinvaln} > ${pseudocoreinvaln}.reduced && rm ${pseudocoreinvaln}
+#    snp-sites -b -o ${pseudocoreinvaln} ${pseudocorealn}
+#	head -n 2 ${pseudocoreinvaln} > ${pseudocoreinvaln}.reduced && rm ${pseudocoreinvaln}
 	${ptgscripts}/print_base_freq_ali.r ${pseudocoreinvaln}.reduced > ${pseudocoreinvaln}.basefreq
-	nbbase=$(tail -n 1 ${pseudocoreinvaln}.reduced | wc -c)
-	echo "[asc~${pseudocoreinvaln}.basefreq], ASC_DNA, p1=1-${nbbase}" > ${coregenome}/${treename}.invar.part
+	nbbase=$(head -n 2 ${pseudocoresnpaln} |  tail -n 1 | wc -c)
+	echo "[asc~${pseudocoreinvaln}.basefreq], ASC_DNA, p1=1-$(( ${nbbase} - 1 ))" > ${coregenome}/${treename}.invar.part
 	export pseudocorealn=${pseudocoresnpaln}
   fi
 
