@@ -28,7 +28,7 @@ case "${coreseqtype}" in
 	  if [ "${snpali}" == 'true' ] ; then
 	    modelpref="ASC_${modelpref}"
 		treetag=${treetag}.snp
-		ascopt="--asc-corstamatakis -q ${treetag}.part"
+		ascopt="--asc-corstamatakis -q ${coregenome}/${treename}.invar.part"
 	  fi
       alifastacodedir=${protalifastacodedir}
       raxmloptions="-n ${treetag} -m ${modelpref}CAT${modelmat}X ${ascopt} -j -p 1753 -w ${coretree}"
@@ -42,7 +42,7 @@ case "${coreseqtype}" in
 	  if [ "${snpali}" == 'true' ] ; then
 	    modelpref="ASC_${modelpref}"
 		treetag=${treetag}.snp
-		ascopt="--asc-corstamatakis -q ${treetag}.part"
+		ascopt="--asc-corstamatakis -q ${coregenome}/${treename}.invar.part"
 	  fi
       alifastacodedir=${cdsalifastacodedir}
       raxmloptions="-n ${treetag} -m ${modelpref}CATX ${ascopt} -j -p 1753 -w ${coretree}"
@@ -181,9 +181,9 @@ else
     snp-sites -o ${pseudocoresnpaln} ${pseudocorealn}
     snp-sites -b -o ${pseudocoreinvaln} ${pseudocorealn}
 	head -n 2 ${pseudocoreinvaln} > ${pseudocoreinvaln}.reduced && rm ${pseudocoreinvaln}
-	${ptgscripts}/print_base_freq_ali.r ${pseudocoreinvaln}.reduced | tail -n 1 > ${pseudocoreinvaln}.basefreq
+	${ptgscripts}/print_base_freq_ali.r ${pseudocoreinvaln}.reduced > ${pseudocoreinvaln}.basefreq
 	nbbase=$(tail -n 1 ${pseudocoreinvaln}.reduced | wc -c)
-	echo "[asc~${pseudocoreinvaln}.basefreq], ASC_DNA, p1=1-${nbbase}" > ${treetag}.part
+	echo "[asc~${pseudocoreinvaln}.basefreq], ASC_DNA, p1=1-${nbbase}" > ${coregenome}/${treename}.invar.part
 	export pseudocorealn=${pseudocoresnpaln}
   fi
 
