@@ -180,10 +180,10 @@ else
 	head -n 2 ${pseudocoreinvaln} > ${pseudocoreinvaln}.reduced && rm ${pseudocoreinvaln}
 	${ptgscripts}/print_base_freq_ali.r ${pseudocoreinvaln}.reduced | tail -n 1 > ${pseudocoreinvaln}.basefreq
 	nbsnp=$(head -n 2 ${pseudocoresnpaln} | tail -n 1 | wc -c)
-	nbinvar=$(head -n 2 ${pseudocoresnpaln} | tail -n 1 | wc -c)
-	echo "[asc~${pseudocoreinvaln}.basefreq], ASC_DNA, p1=1-$(( ${nbsnp} - 1 ))" > ${coregenome}/${treetag}.part
-	echo "restricted the pseudo-core-genome alignment to ${nbsnp} SNP positions (removed ${nbinvar} invariant sites)"
-	export pseudocorealn=${pseudocoresnpaln}
+	nbinv=$(head -n 2 ${pseudocoreinvaln} | tail -n 1 | wc -c)
+    echo "[asc~${pseudocoreinvaln}.basefreq], ASC_DNA, p1=1-$(( ${nbsnp} - 1 ))" > ${coregenome}/${treetag}.part
+    echo "restricted the pseudo-core-genome alignment to ${nbsnp} SNP positions (removed ${nbinv} invariant sites)"
+    export pseudocorealn=${pseudocoresnpaln}
   fi
 
   ## compute species tree using RAxML
