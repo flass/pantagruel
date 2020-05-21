@@ -20,43 +20,40 @@ if [ "${resumetask}" == "true" ] ; then
   echo "will try and resume computation where it was last stopped; may skip/resume computing: core genome concatenated alignment, core ML tree search, core tree bootstrapping, core tree rooting with ${rootingmethod}"
 fi
 
-treetag=${treename}
+# parameterizing
 case "${coreseqtype}" in
   prot)
       modelpref='PROT'
 	  [ -z "${modelmat}" ] && modelmat='LG'
-	  if [ "${snpali}" == 'true' ] ; then
-	    modelpref="ASC_${modelpref}"
-		treetag=${treetag}.snp
-		ascopt="--asc-corr=stamatakis -q ${coregenome}/${treename}.part"
-	  fi
-      alifastacodedir=${protalifastacodedir}
-      raxmloptions="-n ${treetag} -m ${modelpref}CAT${modelmat}X ${ascopt} -j -p 1753 -w ${coretree}"
-      raxmloptionsG="-n ${treetag} -m ${modelpref}GAMMA${modelmat}X ${ascopt} -j -p 1753 -w ${coretree}"
       if [[ -z "${poplgthresh}" || "${poplgthresh}" == 'default' ]] ; then
         poplgthresh=0.0002
       fi
+      alifastacodedir=${protalifastacodedir}
       ;;
   cds)
       modelpref='GTR'
-	  if [ "${snpali}" == 'true' ] ; then
-	    modelpref="ASC_${modelpref}"
-		treetag=${treetag}.snp
-		ascopt="--asc-corr=stamatakis -q ${coregenome}/${treename}.part"
-	  fi
-      alifastacodedir=${cdsalifastacodedir}
-      raxmloptions="-n ${treetag} -m ${modelpref}CATX ${ascopt} -j -p 1753 -w ${coretree}"
-      raxmloptionsG="-n ${treetag} -m ${modelpref}GAMMAX ${ascopt} -j -p 1753 -w ${coretree}"
+	  modelmat=''
       if [[ -z "${poplgthresh}" || "${poplgthresh}" == 'default' ]] ; then
         poplgthresh=0.0005
       fi
+      alifastacodedir=${cdsalifastacodedir}
       ;;
   *)
       echo "ERROR: incorrect core sequence type was specified: ${coreseqtype} (must be 'prot' or 'cds'); exit now"
       exit 1 ;;
 esac
+
 popstemconds="[('lg', '>=', ${poplgthresh}, ${poplgleafmul}), ('bs', '>=', ${popbsthresh})]"
 withinpopconds="[('max', 'lg', '<=', ${poplgthresh}, -1)]"
+if [ "${snpali}" == 'true' ] ; then
+  modelpref="ASC_${modelpref}"
+  treetag=${treename}.snp
+  ascopt="--asc-corr=stamatakis -q ${coregenome}/${treename}.part"
+else
+  treetag=${treename}
+fi
+raxmloptions="-n ${treetag} -m ${modelpref}CAT${modelmat}X ${ascopt} -j -p 1753 -w ${coretree}"
+raxmloptionsG="-n ${treetag} -m ${modelpref}GAMMA${modelmat}X ${ascopt} -j -p 1753 -w ${coretree}"
 
 
 ###########################################
@@ -181,9 +178,11 @@ else
     snp-sites -o ${pseudocoresnpaln} ${pseudocorealn}
     snp-sites -b -o ${pseudocoreinvaln} ${pseudocorealn}
 	head -n 2 ${pseudocoreinvaln} > ${pseudocoreinvaln}.reduced && rm ${pseudocoreinvaln}
-	${ptgscripts}/print_base_freq_ali.r ${pseudocoreinvaln}.reduced > ${pseudocoreinvaln}.basefreq
-	nbbase=$(head -n 2 ${pseudocoresnpaln} |  tail -n 1 | wc -c)
-	echo "[asc~${pseudocoreinvaln}.basefreq], ASC_DNA, p1=1-$(( ${nbbase} - 1 ))" > ${coregenome}/${treename}.part
+	${ptgscripts}/print_base_freq_ali.r ${pseudocoreinvaln}.reduced | tail -n 1 > ${pseudocoreinvaln}.basefreq
+	nbsnp=$(head -n 2 ${pseudocoresnpaln} | tail -n 1 | wc -c)
+	nbinvar=$(head -n 2 ${pseudocoresnpaln} | tail -n 1 | wc -c)
+	echo "[asc~${pseudocoreinvaln}.basefreq], ASC_DNA, p1=1-$(( ${nbsnp} - 1 ))" > ${coregenome}/${treetag}.part
+	echo "restricted the pseudo-core-genome alignment to ${nbsnp} SNP positions (removed ${nbinvar} invariant sites)"
 	export pseudocorealn=${pseudocoresnpaln}
   fi
 
