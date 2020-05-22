@@ -51,7 +51,7 @@ export recs=${alerec}/${chaintype}_GeneRax_recs
 gttorecdir=${coltreechains}/${collapsecond}/${replmethod}
 grxlogs=${ptgdb}/logs/GeneRax
 mkdir -p $grxlogs/${reccol}
-outrecdir=${recs}/${collapsecond}/${replmethod}/${reccol}
+export outrecdir=${recs}/${collapsecond}/${replmethod}/${reccol}
 mkdir -p ${outrecdir}
 
 cd ${ptgtmp} 
@@ -71,7 +71,7 @@ if [[ "${chaintype}" == 'fullgenetree' ]] ; then
 else
   # use a dedicated species tree file for each gene family, with population collapsed in accordance to the gene tree
   spetree='Stree.nwk'
-  # this dictate that every family ned to be run independently, thus loosing the benefit of built-in optimised load balance
+  # this dictate that every family need to be run independently, thus loosing the benefit of built-in optimised load balance
   
   # generate a family file i.e. parameter settings for each gene family
   generaxfamfidir=${alerec}/${reccol}_generax_families

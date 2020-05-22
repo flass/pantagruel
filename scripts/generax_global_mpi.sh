@@ -1,16 +1,16 @@
 #!/bin/bash
 ### verify and parse key variable definition
 # generaxfamfi
-if [ -z ${generaxfamfi} ] ; then
+if [ -z "${generaxfamfi}" ] ; then
   generaxfamfi="${1}"
-  if [ -z ${generaxfamfi} ] ; then
+  if [ -z "${generaxfamfi}" ] ; then
     echo "missing mandatory argument: generax families file path (to pass either through env var \$generaxfamfi or as positional argument \$1); exit now"
 	exit 1
   fi
 fi
-if [ -z ${outrecdir} ] ; then
+if [ -z "${outrecdir}" ] ; then
   outrecdir="${2}"
-  if [ -z ${outrecdir} ] ; then
+  if [ -z "${outrecdir}" ] ; then
     echo "missing mandatory argument: generax output folder path (to pass either through env var \$outrecdir or as positional argument \$2); exit now"
 	exit 1
   fi
