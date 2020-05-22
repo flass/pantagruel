@@ -40,7 +40,7 @@ if [ -z ${reccolid} ] ; then
  reccolid=1
 fi
 # derived parameters
-if [ ${GeneRaxalgo} == 'reconciliation-samples' ] ; then
+if [[ "${GeneRaxalgo}" =~ 'reconciliation-samples' ]] ; then
   export rectype='recsampling'
 else
   export rectype='pointestimate'
@@ -62,17 +62,21 @@ if [[ "${chaintype}" == 'fullgenetree' ]] ; then
   grlog=${grxlogs}/generax_global.log
   # use the same species tree file for every gene family, with no collapsed populations
   spetree=${speciestree}_clade_defs.nwk
-  # this allows a single run of GeneRax, with built-in optimised load balance
-  # generate a global family file i.e. job scheduling list and per-family parameter settings
-  generaxfamfi=${alerec}/${reccol}_generax.families
-  python ${ptgscripts}/make_generax_family_file.py --alignments ${cdsalifastacodedir} --out ${generaxfamfi}
-  ${ptgscripts}/generax_global_mpi.sh ${generaxfamfi}
-
 else
   # use a dedicated species tree file for each gene family, with population collapsed in accordance to the gene tree
   spetree='Stree.nwk'
   # this dictate that every family need to be run independently, thus loosing the benefit of built-in optimised load balance
-  
+fi
+if [[ "${chaintype}" == 'fullgenetree' && "${GeneRaxalgo}" =~ 'global' ]] ; then
+  # using the same species tree allows a single run of GeneRax, with built-in optimised load balance
+  echo "detected 'global' keyword in reconciliation algorithm"
+  echo "will run GeneRax on the whole pangenome with global parameter estimation"
+  # generate a global family file i.e. job scheduling list and per-family parameter settings
+  generaxfamfi=${alerec}/${reccol}_generax.families
+  python ${ptgscripts}/make_generax_family_file.py --alignments ${cdsalifastacodedir} --out ${generaxfamfi}
+  ${ptgscripts}/generax_global_mpi.sh ${generaxfamfi}
+else  
+  echo "will run GeneRax independently on each pangenome gene family, with family-specific parameter estimation"
   # generate a family file i.e. parameter settings for each gene family
   generaxfamfidir=${alerec}/${reccol}_generax_families
   mkdir -p ${generaxfamfidir}/
