@@ -73,15 +73,22 @@ if [[ "${chaintype}" == 'fullgenetree' && "${GeneRaxalgo}" =~ 'global' ]] ; then
   echo "will run GeneRax on the whole pangenome with global parameter estimation"
   # generate a global family file i.e. job scheduling list and per-family parameter settings
   generaxfamfi=${alerec}/${reccol}_generax.families
+  step1="create a family file i.e. parameter settings for the whole pangenome gene family set"
   python ${ptgscripts}/make_generax_family_file.py --alignments ${cdsalifastacodedir} --out ${generaxfamfi}
+  checkexec "failed to ${step1}" "successfully ${step1/create/created}"
+  step2="run GeneRax on all pangenome genes at once"
+  echo "${step2} (using GeneRax built-in optimised load balance)"
   ${ptgscripts}/generax_global_mpi.sh ${generaxfamfi}
+  checkexec "failed to ${step2}" "successfully ${step2/run/ran}"
 else  
   echo "will run GeneRax independently on each pangenome gene family, with family-specific parameter estimation"
   # generate a family file i.e. parameter settings for each gene family
+  step1="create a family file i.e. parameter settings for each gene family"
   generaxfamfidir=${alerec}/${reccol}_generax_families
   mkdir -p ${generaxfamfidir}/
   gttorecdir=${coltreechains}/${collapsecond}/${replmethod}
-  python ${ptgscripts}/make_generax_family_file.py --perfam --alignments ${gttorecdir} --gene-trees ${gttorecdir} --out ${generaxfamfidir}
+  python ${ptgscripts}/make_generax_family_file.py --per-family --alignments ${gttorecdir} --gene-trees ${gttorecdir} --out ${generaxfamfidir}
+  checkexec "failed to ${step1}" "successfully ${step1/create/created}"
   
   tasklist=${generaxfamfidir}_list
   if [ -z ${genefamlist} ] ; then
@@ -95,6 +102,9 @@ else
   
   grlog=${grxlogs}/generax_perfam.log
   export ncpus=1
+  step2="run GeneRax on each pangenome gene family in parallel"
+  echo "${step2} (using GNU parallel)"
   parallel -j ${ptgthreads} ${ptgscripts}/generax_perfam.sh :::: ${tasklist}
+  checkexec "failed to ${step2}" "successfully ${step2/run/ran}"
 		
 fi
