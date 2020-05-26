@@ -8,14 +8,18 @@ def usage():
 	s = '[need help message here]'
 	return s
 
-opts, args = getopt.getopt(sys.argv[1:], 'a:o:hv', ['alignments=', 'gene-trees=', 'per-family', 'model=', 'out=', 'alitag='])
+opts, args = getopt.getopt(sys.argv[1:], 'a:o:hv', ['alignments=', 'gene-trees=', 'out=', \
+													'model=', 'per-family', \
+													'alitag=', 'gttag=', 'sttag=', 'gftag='])
 dopt = dict(opts)
 if ('-h' in dopt) or ('--help' in dopt):
 	print usage()
 	sys.exit(0)
 
-gttag = '-Gtree.nwk'
-sttag = '-Stree.nwk'
+gttag = dopt.get('--gttag', '-Gtree.nwk')
+sttag = dopt.get('--sttag', '-Stree.nwk')
+gftag = dopt.get('--gftag', '.generax.families')
+alitag = dopt.get('--alitag', '*.aln')
 
 dirali = dopt.get('-a', dopt.get('--alignments'))
 if not dirali:
@@ -34,7 +38,6 @@ else:
 	if not os.path.isdir(dirout):
 		raise ValueError, "specified output directory '%s' does not exist / is not a directory / cannot be accessed"%dirout
 
-alitag = dopt.get('--alitag', '*.aln')
 lnfali = glob.glob('%s/%s'%(dirali, alitag))
 
 for nfali in lnfali:
@@ -42,7 +45,7 @@ for nfali in lnfali:
 	fam = bnali.split('.')[0]
 	bnrad = bnali.rsplit('.',1)[0]
 	if perfam:
-		fout = open(os.path.join(dirout, "%s.generax_families"%fam), 'w')
+		fout = open(os.path.join(dirout, "%s%s"%(fam, gftag)), 'w')
 		fout.write('[FAMILIES]\n')
 	if dirgt:
 		nfgt = glob.glob("%s/*%s*%s"%(dirgt, fam, gttag))[0]

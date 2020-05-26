@@ -88,12 +88,13 @@ else
   generaxfamfidir=${alerec}/${reccol}_generax_families
   mkdir -p ${generaxfamfidir}/
   gttorecdir=${coltreechains}/${collapsecond}/${replmethod}
-  python ${ptgscripts}/make_generax_family_file.py --per-family --alignments ${gttorecdir} --gene-trees ${gttorecdir} --out ${generaxfamfidir}
+  python ${ptgscripts}/make_generax_family_file.py --per-family --alignments ${gttorecdir} \
+   --gene-trees ${gttorecdir} --out ${generaxfamfidir} --gftag '.generax.families'
   checkexec "failed to ${step1}" "successfully ${step1/create/created}"
   
   tasklist=${generaxfamfidir}_list
   if [ -z "${genefamlist}" ] ; then
-    ${ptgscripts}/lsfullpath.py "${generaxfamfidir}/*_generax.families" > ${tasklist}
+    ${ptgscripts}/lsfullpath.py "${generaxfamfidir}/*.generax.families" > ${tasklist}
   else
     rm -f ${tasklist}
     for fam in $(cut -f1 ${genefamlist}) ; do

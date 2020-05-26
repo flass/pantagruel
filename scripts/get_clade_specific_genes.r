@@ -30,7 +30,7 @@ spec = matrix(c(
   'sqldb',                'd', 1, "character", "path to SQLite database file",
   'clade_defs',           'C', 1, "character", "path to file describing clade composition; this must be a (tab-delimited) table file with named rows and a header with the following collumns: (mandatory:) 'clade', 'siterclade', (facultative:) 'name', 'maxabsin', 'maxpresout', 'maxpresin' and 'maxabsout'",
   'outrad',               'o', 1, "character", "path to output dir+file prefix for output files",
-  'contrast_with',         'w', 2, "character", "(optional) char string: 'sisterclade', for comparison to sister clades (default), or any other name matching a column in the clade definition file; use 'backgroundclade' to select a deeper contrasting genome set",
+  'contrast_with',        'w', 2, "character", "(optional) char string: 'sisterclade', for comparison to sister clades (default), or any other name matching a column in the clade definition file; use 'backgroundclade' to select a deeper contrasting genome set",
   'restrict_to_genomes',  'g', 2, "character", "(optional) path to file listing the genomes (UniProt-like codes) to which the analysis will be restricted",
   'og_col_id',            'c', 2, "integer",   "orthologous group collection id in SQL database; if not provided, will only use the homologous family mapping of genes (coarser homology mapping, meaning stricter clade-specific gene definition)",
   'ass_to_code',          'a', 2, "character", "(optional) path to file providing correspondency between assembly ids and UniProt-like genome codes; only if the input matrix has assembly ids in column names (deprecated)",
@@ -291,7 +291,11 @@ for (i in 1:length(cladedefs)){
 				 gsc, "pathway_id NOT NULL ORDER BY locus_tag ;"), collapse=" ")
  				if (verbose) print(q4)
 				spegallpathways = dbGetQuery(dbcon, q4)
-				if (genesetscope=="reprseq"){ write.table(spegeneinfo, file=nfoutspege[[ab]], sep='\t', quote=F, row.names=F, col.names=T, append=T) }
+				if (genesetscope=="reprseq"){
+					options(warn=-1)
+					write.table(spegeneinfo, file=nfoutspege[[ab]], sep='\t', quote=F, row.names=F, col.names=T, append=T)
+					options(warn=0)
+				}
 				write.table(spegeneinfoplus, file=file.path(diroutspegedetail, paste(bnoutspege[[ab]], cla, genesetscope, "details.tab", sep='_')), sep='\t', quote=F, row.names=F, col.names=T, append=F)
 				write.table(spegallgoterms, file=file.path(diroutspegedetail, paste(bnoutspege[[ab]], cla, genesetscope, "goterms.tab", sep='_')), sep='\t', quote=F, row.names=F, col.names=T, append=F)
 				write.table(spegallpathways, file=file.path(diroutspegedetail, paste(bnoutspege[[ab]], cla, genesetscope, "pathways.tab", sep='_')), sep='\t', quote=F, row.names=F, col.names=T, append=F)
