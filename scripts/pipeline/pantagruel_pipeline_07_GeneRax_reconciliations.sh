@@ -50,7 +50,7 @@ export recs=${alerec}/${chaintype}_GeneRax_recs
 
 gttorecdir=${coltreechains}/${collapsecond}/${replmethod}
 grxlogs=${ptgdb}/logs/GeneRax
-mkdir -p $grxlogs/${reccol}
+mkdir -p ${grxlogs}/${reccol}
 export outrecdir=${recs}/${collapsecond}/${replmethod}/${reccol}
 mkdir -p ${outrecdir}
 
@@ -59,7 +59,6 @@ cd ${ptgtmp}
 #generaxcommonopt="-r UndatedDTL --max-spr-radius 5 --strategy SPR" # now a pipeline default
 
 if [[ "${chaintype}" == 'fullgenetree' ]] ; then
-  grlog=${grxlogs}/generax_global.log
   # use the same species tree file for every gene family, with no collapsed populations
   spetree=${speciestree}_clade_defs.nwk
 else
@@ -77,7 +76,9 @@ if [[ "${chaintype}" == 'fullgenetree' && "${GeneRaxalgo}" =~ 'global' ]] ; then
   python ${ptgscripts}/make_generax_family_file.py --alignments ${cdsalifastacodedir} --out ${generaxfamfi}
   checkexec "failed to ${step1}" "successfully ${step1/create/created}"
   step2="run GeneRax on all pangenome genes at once"
-  echo "${step2} (using GeneRax built-in optimised load balance)"
+#  grlog=${grxlogs}/generax_global.log
+  export ncpus=${ptgthreads}
+  echo "${step2} (using GeneRax built-in optimised load balance on ${ncpus} cores)"
   ${ptgscripts}/generax_global_mpi.sh ${generaxfamfi}
   checkexec "failed to ${step2}" "successfully ${step2/run/ran}"
 else  
@@ -91,8 +92,8 @@ else
   checkexec "failed to ${step1}" "successfully ${step1/create/created}"
   
   tasklist=${generaxfamfidir}_list
-  if [ -z ${genefamlist} ] ; then
-    ${ptgscripts}/lsfullpath.py "${gttorecdir}/*_generax.families" > ${tasklist}
+  if [ -z "${genefamlist}" ] ; then
+    ${ptgscripts}/lsfullpath.py "${generaxfamfidir}/*_generax.families" > ${tasklist}
   else
     rm -f ${tasklist}
     for fam in $(cut -f1 ${genefamlist}) ; do
@@ -100,10 +101,10 @@ else
     done > ${tasklist} 
   fi
   
-  grlog=${grxlogs}/generax_perfam.log
+#  grlog=${grxlogs}/generax_perfam.log
   export ncpus=1
   step2="run GeneRax on each pangenome gene family in parallel"
-  echo "${step2} (using GNU parallel)"
+  echo "${step2} (using GNU parallel on ${ptgthreads} cores, ${ncpus} thread(s) per process)"
   parallel -j ${ptgthreads} ${ptgscripts}/generax_perfam.sh :::: ${tasklist}
   checkexec "failed to ${step2}" "successfully ${step2/run/ran}"
 		
