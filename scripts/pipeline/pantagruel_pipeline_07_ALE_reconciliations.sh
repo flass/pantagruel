@@ -68,6 +68,13 @@ if [[ -z "${alebin}" ]] ; then
   fi
 fi
 
+ALEheader="$(${ALEalgo} -h | head -n 1)"
+if [ -z "${ALEheader}" ] ; then
+  # will be interpreted as ALE v0.4 or less
+  ALEheader="using ALE software"
+fi
+ALEvtag=$(echo ${ALEheader} | awk '{ print $NF }')
+
 if [[ ! -z "${alebin}" ]] ; then
   pathalebin=$(readlink -f "${alebin}")
   alerepo=${pathalebin%%ALE/*}ALE/
@@ -76,13 +83,8 @@ if [[ ! -z "${alebin}" ]] ; then
 	alesrcorig=$(cd ${alerepo} && git remote -v | grep fetch | awk '{ print $2 }' 2> /dev/null && cd - > /dev/null)
   fi
   if [ ! -z "${alesrcvers}" ] ; then
-    ALEsourcenote="using ALE software compiled from source; code origin: ${alesrcorig}; version ${alesrcvers}"
+    ALEsourcenote="using ALE software (version ${ALEvtag}) compiled from source; code origin: ${alesrcorig}; code version ${alesrcvers}"
   else
-    ALEheader="$(${ALEalgo} -h | head -n 1)"
-    if [ -z "${ALEheader}" ] ; then
-      ALEheader="using ALE software"
-	  ALEvtag=$(echo ${ALEheader} | awk '{ print $NF }')
-    fi
     ALEsourcenote="${ALEheader#*${ALEalgo} } binaries found at '${pathalebin}'"
   fi
 fi
