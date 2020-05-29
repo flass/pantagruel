@@ -29,11 +29,11 @@ source ${hpcscriptdir}/pantagruel_pipeline_HPC_common_interface.sh "${@}"
 
 # parameters to be set:
 #~ export recsamplesize=1000
-if [ -z ${reccolid} ] ; then
+if [ -z "${reccolid}" ] ; then
  reccolid=1
 fi
 # derived parameters
-if [ ${GeneRaxalgo} == 'reconciliation-samples' ] ; then
+if [ "${GeneRaxalgo}" == 'reconciliation-samples' ] ; then
   export rectype='recsampling'
 else
   export rectype='pointestimate'
@@ -43,23 +43,55 @@ export recs=${alerec}/${chaintype}_GeneRax_recs
 
 gttorecdir=${coltreechains}/${collapsecond}/${replmethod}
 grxlogs=${ptgdb}/logs/GeneRax
-mkdir -p $grxlogs/${reccol}
+mkdir -p ${grxlogs}/${reccol}
 export outrecdir=${recs}/${collapsecond}/${replmethod}/${reccol}
 mkdir -p ${outrecdir}
 
 cd ${ptgtmp} 
 
+# recording the software version that was used
+GRheader="$(${grbin} -h | grep '\[00:00:' | awk '{ print $2,$3 }')"
+if [ -z "${GRheader}" ] ; then
+  GRheader="GeneRax"
+fi
+GRvtag=$(echo ${GRheader} | awk '{ print $NF }')
+	
+if [[ ! -z "${grbin}" ]] ; then
+  pathgrbin=$(readlink -f "${grbin}")
+  grrepo=${pathgrbin%%GeneRax/*}GeneRax/
+  if [ -d ${grrepo} ] ; then
+	grsrcvers=$(cd ${grrepo} && git log | head -n 1 | awk '{ print $2 }' 2> /dev/null && cd - > /dev/null)
+	grsrcorig=$(cd ${grrepo} && git remote -v | grep fetch | awk '{ print $2 }' 2> /dev/null && cd - > /dev/null)
+  fi
+  if [ ! -z "${grsrcvers}" ] ; then
+    GRsourcenote="using GeneRax software (version ${GRvtag}) compiled from source; code origin: ${grsrcorig}; code version ${grsrcvers}"
+  else
+    GRsourcenote="${GRheader} binaries found at '${pathgrbin}'"
+  fi
+fi
 #generaxcommonopt="-r UndatedDTL --max-spr-radius 5 --strategy SPR" # now a pipeline default
 
 if [[ "${chaintype}" == 'fullgenetree' ]] ; then
-  grlog=${grxlogs}/generax_global.log
   # use the same species tree file for every gene family, with no collapsed populations
   spetree=${speciestree}_clade_defs.nwk
-  # this allows a single run of GeneRax, with built-in optimised load balance
+else
+  # use a dedicated species tree file for each gene family, with population collapsed in accordance to the gene tree
+  spetree='Stree.nwk'
+  # this dictate that every family need to be run independently, thus loosing the benefit of built-in optimised load balance
+fi
+if [[ "${chaintype}" == 'fullgenetree' && "${GeneRaxalgo}" =~ 'global' ]] ; then
+  # using the same species tree allows a single run of GeneRax, with built-in optimised load balance
+  echo "detected 'global' keyword in reconciliation algorithm"
+  echo "will run GeneRax on the whole pangenome with global parameter estimation"
   # generate a global family file i.e. job scheduling list and per-family parameter settings
   generaxfamfi=${alerec}/${reccol}_generax.families
+  step1="create a family file i.e. parameter settings for the whole pangenome gene family set"
   python ${ptgscripts}/make_generax_family_file.py --alignments ${cdsalifastacodedir} --out ${generaxfamfi}
-
+  checkexec "failed to ${step1}" "successfully ${step1/create/created}"
+  step2="run GeneRax on all pangenome genes at once"
+  grlog=${grxlogs}/generax_global.log
+  
+  echo "submitting MPI job to ${step2} (using GeneRax built-in optimised load balance on ${ncpus} cores)"
   case "$hpctype" in
     'LSF')
 	  bqueue='parallel'
@@ -77,38 +109,40 @@ if [[ "${chaintype}" == 'fullgenetree' ]] ; then
   eval "${subcmd}"
 
 else
-  # use a dedicated species tree file for each gene family, with population collapsed in accordance to the gene tree
-  spetree='Stree.nwk'
-  # this dictate that every family ned to be run independently, thus loosing the benefit of built-in optimised load balance
-  
+  echo "will run GeneRax independently on each pangenome gene family, with family-specific parameter estimation"
   # generate a family file i.e. parameter settings for each gene family
+  step1="create a family file i.e. parameter settings for each gene family"
   generaxfamfidir=${alerec}/${reccol}_generax_families
   mkdir -p ${generaxfamfidir}/
   gttorecdir=${coltreechains}/${collapsecond}/${replmethod}
-  python ${ptgscripts}/make_generax_family_file.py --perfam --alignments ${gttorecdir} --gene-trees ${gttorecdir} --out ${generaxfamfidir}
+  python ${ptgscripts}/make_generax_family_file.py --per-family --alignments ${gttorecdir} \
+   --gene-trees ${gttorecdir} --out ${generaxfamfidir} --gftag '.generax.families'
+  checkexec "failed to ${step1}" "successfully ${step1/create/created}"
   
-  export tasklist=${generaxfamfidir}_list
-  if [ -z ${genefamlist} ] ; then
-    ${ptgscripts}/lsfullpath.py "${generaxfamfidir}/*.generax_families" > ${tasklist}
+  tasklist=${generaxfamfidir}_list
+  if [ -z "${genefamlist}" ] ; then
+    ${ptgscripts}/lsfullpath.py "${generaxfamfidir}/*.generax.families" > ${tasklist}
   else
     rm -f ${tasklist}
     for fam in $(cut -f1 ${genefamlist}) ; do
-      ls ${generaxfamfidir}/${fam}*.generax_families 2> /dev/null
+      ls ${generaxfamfidir}/${fam}*.generax.families 2> /dev/null
     done > ${tasklist} 
   fi
   
   Njob=`wc -l ${tasklist} | cut -f1 -d' '`
-  [ ! -z ${topindex} ] &&  [ ${Njob} -gt ${topindex} ] && Njob=${topindex}
-  jobranges=($(${ptgscripts}/get_jobranges.py $chunksize $Njob))
+  [ ! -z "${topindex}" ] &&  [ ${Njob} -gt ${topindex} ] && Njob=${topindex}
+  jobranges=($(${ptgscripts}/get_jobranges.py ${chunksize} ${Njob}))
 
+  step2="run GeneRax on each pangenome gene family in parallel"
+  echo "submitting array job to ${step2} (using ${ncpus} thread(s) per process)"
   for jobrange in ${jobranges[@]} ; do
     dlogs=${grxlogs}/${reccol}/generax_perfam_array_${dtag}_${jobrange}
     mkdir -p ${dlogs}/
-    case "$hpctype" in
+    case "${hpctype}" in
       'LSF')
 	    bqueue='parallel'
-        arrayspec="[$jobrange]"
-	    [ ! -z ${maxatonce} ] && arrayspec="${arrayspec}%${maxatonce}"
+        arrayspec="[${jobrange}]"
+	    [ ! -z "${maxatonce}" ] && arrayspec="${arrayspec}%${maxatonce}"
         memmb=$((${mem} * 1024))
         nflog="${dlogs}/generax_perfam.%J.%I.log"
   
@@ -125,3 +159,7 @@ else
   done
   
 fi
+
+echo -e "${reccolid}\t${reccoldate}\t${GRsourcenote}\t${reccol}" > ${alerec}/reccol
+echo -e "\n# Reconciliation collection details:"
+cat ${alerec}/reccol

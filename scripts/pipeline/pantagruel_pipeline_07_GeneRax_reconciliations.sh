@@ -47,6 +47,7 @@ else
 fi
 export reccol="generax_${chaintype}_${rectype}_${reccolid}"
 export recs=${alerec}/${chaintype}_GeneRax_recs
+export reccoldate=$(date +%Y-%m-%d)
 
 gttorecdir=${coltreechains}/${collapsecond}/${replmethod}
 grxlogs=${ptgdb}/logs/GeneRax
@@ -54,7 +55,26 @@ mkdir -p ${grxlogs}/${reccol}
 export outrecdir=${recs}/${collapsecond}/${replmethod}/${reccol}
 mkdir -p ${outrecdir}
 
-cd ${ptgtmp} 
+# recording the software version that was used
+GRheader="$(${grbin} -h | grep '\[00:00:' | awk '{ print $2,$3 }')"
+if [ -z "${GRheader}" ] ; then
+  GRheader="GeneRax"
+fi
+GRvtag=$(echo ${GRheader} | awk '{ print $NF }')
+	
+if [[ ! -z "${grbin}" ]] ; then
+  pathgrbin=$(readlink -f "${grbin}")
+  grrepo=${pathgrbin%%GeneRax/*}GeneRax/
+  if [ -d ${grrepo} ] ; then
+	grsrcvers=$(cd ${grrepo} && git log | head -n 1 | awk '{ print $2 }' 2> /dev/null && cd - > /dev/null)
+	grsrcorig=$(cd ${grrepo} && git remote -v | grep fetch | awk '{ print $2 }' 2> /dev/null && cd - > /dev/null)
+  fi
+  if [ ! -z "${grsrcvers}" ] ; then
+    GRsourcenote="using GeneRax software (version ${GRvtag}) compiled from source; code origin: ${grsrcorig}; code version ${grsrcvers}"
+  else
+    GRsourcenote="${GRheader} binaries found at '${pathgrbin}'"
+  fi
+fi
 
 #generaxcommonopt="-r UndatedDTL --max-spr-radius 5 --strategy SPR" # now a pipeline default
 
@@ -98,7 +118,7 @@ else
   else
     rm -f ${tasklist}
     for fam in $(cut -f1 ${genefamlist}) ; do
-      ls ${generaxfamfidir}/${fam}*_generax.families 2> /dev/null
+      ls ${generaxfamfidir}/${fam}*.generax.families 2> /dev/null
     done > ${tasklist} 
   fi
   
@@ -110,3 +130,7 @@ else
   checkexec "failed to ${step2}" "successfully ${step2/run/ran}"
 		
 fi
+
+echo -e "${reccolid}\t${reccoldate}\t${GRsourcenote}\t${reccol}" > ${alerec}/reccol
+echo -e "\n# Reconciliation collection details:"
+cat ${alerec}/reccol
