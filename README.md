@@ -495,7 +495,9 @@ Options are detailed here:
                           pantagruel -i configfile --refresh -g genelist init  (note it is important that -g option be placed after the --refresh option)
                         Reverting to the exhaustive computation behavior can be done similarly by setting 'genefamlist' variable to an empty value or by using:
                           pantagruel -i configfile --refresh -g '' init
-   
+                          
+    -p|--pref_genomes Comma-spearated list of genome codes to use as preferred representative in the listing of genes in clade-specific gene lists during task 08 
+    
  Output: Gene co-evolution options:"
 
     -q|--max_event_age Older relative age on the species tree (real value between 0.0 = tips and 1.0 = root) under which events will considered to compute co-evolution scores"

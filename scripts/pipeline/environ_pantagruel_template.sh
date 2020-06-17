@@ -44,6 +44,7 @@ export rootingmethod='REPLACErootingmethod'                # rooting method for 
 export snpali='REPLACEsnpali'                              # restrict core-genome alignment to SNPs
 export chaintype='REPLACEchaintype'                        # whether gene trees will be collapsed ('collapsed', if -c option enabled) or not ('fullgenetree', default)
 export genefamlist='REPLACEgenefamlist'                    # list of gene families for which computation of gene trees and all subsequent analyses will be restricted (default: no restriction)
+export preferredgenomes='REPLACEpreferredgenomes'          # list of genome codes to use as preferred representative in the listing of genes in clade-specific gene lists (default: none)
 export recmethod='REPLACErecmethod'                        # genetree/species tree reconciliation method: 'ALE' or 'ecceTERA'
 # non-default parameters for gene trees collapsing derived from -C option value (passed to init script via ${collapseCladeParams}): 
 export cladesupp=REPLACEcladesupp                          # - clade criterion trheshold (int)
