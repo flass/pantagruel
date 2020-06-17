@@ -20,13 +20,18 @@ echo
 export ptgscripts=${ptgrepo}/scripts
 
 usage (){
-  echo "Usage: pantagruel -d db_name -r root_dir {-A refseq_assembly_folder | -a custom_assembly_folder} [other init options] init"
-  echo " or"
-  echo "Usage: pantagruel -i config_file TASK1 [TASK2, [...]]"
+  echo "Usage:"
+  echo ""
+  echo " pantagruel -d db_name -r root_dir {-A refseq_assembly_folder | -a custom_assembly_folder} [other init options] init"
+  echo "   or"
+  echo " pantagruel -i config_file TASK1 [TASK2, [...]]"
+  echo "   or"
+  echo " pantagruel -h"
 }
 
 usagelong (){
   usage
+  echo ""
   echo "# for Pantagruel task 0-9:"
   echo ""
   echo "_only one mandatory option_"
@@ -408,6 +413,11 @@ checkexectask (){
 promptdate () {
   echo $(date +'[%Y-%m-%d %H:%M:%S]') ${1}
 }
+
+if [ -z "${@}" ] ; then
+  usage
+  exit 1
+fi
 
 ARGS=`getopt --options "d:r:i:I:f:a:T:A:L:s:t:RSV:N:H:cng:e:q:u:hFz" --longoptions "dbname:,rootdir:,initfile:,refresh,iam:,famprefix:,refseq_ass:,refseq_list:,refseq_ass4annot:,refseq_list4annot:,custom_ass:,taxonomy:,pseudocore:,core_seqtype:,pop_lg_thresh:,pop_bs_thresh:,rooting:,snp_aln,reftree:,resume,env_var:,threads:,submit_hpc:,collapse,no_collapse,collapse_param:,genefam_list:,rec_method:,max_event_age:,help,FORCE,compress,path_to_interproscan:,update_from:,strain_info:" --name "pantagruel" -- "$@"`
 
