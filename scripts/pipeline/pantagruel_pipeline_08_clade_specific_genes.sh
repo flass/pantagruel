@@ -97,7 +97,8 @@ step3="generating abs/pres matrix"
 echo ${step3}
 orthocol=ortholog_collection_${orthocolid}
 echo ${orthocol}
-orthomatrad=${orthogenes}/${orthocol}/mixed_majrule_combined_0.5.orthologs
+ogmethod='mixed_majrule_combined_0.5.orthologs'
+orthomatrad=${orthogenes}/${orthocol}/${ogmethod}
 python2.7 ${ptgscripts}/get_ortholog_presenceabsence_matrix_from_sqlitedb.py ${sqldb} ${orthomatrad} ${orthocolid}
 checkexec "step 3: failed ${step3}" "step 3: completed ${step3}\n"
 
@@ -106,8 +107,13 @@ step4="listing clade-specific orthologs"
 echo ${step4}
 claspelogs=${ptglogs}/get_clade_specific_genes.log
 cladedefs=${speciestree}_clade_defs
+if [ ! -z "${preferredgenomes}" ] ; then
+  pfg="--preferred_genomes ${preferredgenomes}"
+else
+  pfg=""
+fi
 ${ptgscripts}/get_clade_specific_genes.r --gene_count_matrix ${orthomatrad}_genome_counts.no-singletons.mat \
- --sqldb ${sqldb} --og_col_id ${orthocolid} --clade_defs ${cladedefs} \
+ --sqldb ${sqldb} --og_col_id ${orthocolid} --clade_defs ${cladedefs} ${pfg} \
  --outrad ${orthomatrad} &> ${claspelogs}
  checkexec "step 4: failed ${step4}; check specific logs in '${claspelogs}' for more details" "step 4: completed ${step4}\n"
 
@@ -117,35 +123,124 @@ ${ptgscripts}/pangenome_hclust.r ${orthomatrad} 1000
 ## test GO term enrichment in gene sets
 
 # generate background term distribution for clades i.e. list all genes in their pangenome and associated terms
-step5="generating background term distribution for clades"
-echo ${step5}
 export goterms=${funcannot}/GeneOntology
 mkdir -p ${goterms}
 cladedefhead=$(head -n1 ${cladedefs})
+
+## core genome terms
+step51="generating core genome background term distribution for clades"
+echo "step 5.1: ${step5}"
+## only select representative genes aong the member sequences of core gene families
+## by default choose 'smallest' string in the clade code list to pick representative sequence, as done by default in get_clade_specific_genes.r
+## this can be overridden using the env. variable ${preferredgenomes}
 # for the whole dataset
-sqlite3 -cmd ".mode tab" ${sqldb} "select distinct locus_tag, go_id from coding_sequences 
-left join functional_annotations using (nr_protein_id) 
-left join interpro2GO using (interpro_id) ;" > ${goterms}/${ngenomes}-genomes_pangenome_terms.tab
+# rely on WHERE code=${mincode} clause to choose the smallest code as it allows to speed up the query and to potentially pick different preferred genome, rather than using min(cds_code)
+if [ ! -z "${preferredgenomes}" ] ; then
+  mincode="'$(echo ${preferredgenomes} | tr ',' '\n' | head -n1)'"
+else
+  mincode="'$(cut -f1 ${database}/organism_codes.tab | sort | head -n1)'"
+fi
+qcore="
+select distinct locus_tag, go_id 
+  FROM ( 
+   SELECT gene_family_id, og_id, min(cds_code) AS cds_code
+    FROM coding_sequences
+	INNER JOIN replicons USING (genomic_accession) 
+	INNER JOIN assemblies USING (assembly_id) 
+    LEFT JOIN orthologous_groups USING (gene_family_id, cds_code)
+    INNER JOIN gene_fam_og_sizes USING (gene_family_id, og_id) 
+   WHERE code=${mincode}
+   AND size=${ngenomes} AND genome_present=${ngenomes}
+   GROUP BY gene_family_id, og_id 
+  ) AS q
+  INNER JOIN coding_sequences using (cds_code)
+  LEFT JOIN functional_annotations using (nr_protein_id) 
+  LEFT JOIN interpro2GO using (interpro_id)
+"
+sqlite3 -cmd ".mode tab .header off" ${sqldb} "${qcore};" > ${goterms}/${ngenomes}-genomes_coregenome_terms.tab
+sqlite3 -cmd ".mode tab .header off" ${sqldb} "${qcore} where go_id not null;" > ${goterms}/${ngenomes}-genomes_coregenome_terms.tab_nonull
 # for all clades of the species tree
 export claderefgodir=${goterms}/clade_go_term_reference_sets
 mkdir -p ${claderefgodir}/
 tail -n +2 ${cladedefs} | while read cla ${cladedefhead} ; do
-  claspeset="'$(echo $cladedef | sed -e "s/,/','/g")'"
-  echo $cla $claspeset
+  cladest=${claderefgodir}/${cla}_coregenome_terms.tab
+  claspeset="'$(echo ${clade} | sed -e "s/,/','/g")'"
+  cladesize="$(echo ${clade} | tr ',' '\n' | wc -l)"
+  if [ ! -z "${preferredgenomes}" ] ; then
+    clasperef="'$(for pg in $(echo ${preferredgenomes} | tr ',' ' ') ; do
+      for csr in $(echo ${clade} | tr ',' ' ') ; do
+        [ "${pg}" == "${csr}" ] && echo ${csr}
+      done
+    done | head -n1)'"
+  fi
+  if [ -z "${clasperef}" ] ; then
+    clasperef="'$(echo ${clade} | tr ',' '\n' | sort | head -n1)'"
+  fi
+  echo "$cla $name (repr.: $clasperef; size: $cladesize) $claspeset"
+  qcorecla="
+  CREATE TEMP TABLE pan${cla} AS 
+   SELECT cds_code, locus_tag, nr_protein_id, gene_family_id, og_id, code 
+	FROM coding_sequences 
+	INNER JOIN replicons USING (genomic_accession) 
+	INNER JOIN assemblies USING (assembly_id) 
+	LEFT JOIN orthologous_groups USING (gene_family_id, cds_code)
+   WHERE gene_family_id IS NOT NULL 
+   AND (ortholog_col_id=${orthocolid} OR ortholog_col_id IS NULL)
+   AND code IN (${claspeset});
+  SELECT distinct locus_tag, go_id 
+   FROM (
+    SELECT gene_family_id, og_id, count(*) AS size, count(distinct code) AS genome_present
+	 FROM pan${cla} 
+    GROUP BY gene_family_id, og_id
+   ) AS q1
+   INNER JOIN (
+    SELECT * from pan${cla}
+    WHERE code=${clasperef}
+   ) AS q2 USING (gene_family_id, og_id)
+   LEFT JOIN functional_annotations USING (nr_protein_id) 
+   LEFT JOIN interpro2GO USING (interpro_id) 
+  WHERE size=${cladesize} AND genome_present=${cladesize}"
+
+  sqlite3 -cmd ".mode tab" ${sqldb} "${qcorecla};" > ${cladest}
+  checkexec "step 5.1: failed ${step5} for clade ${cla} including NULL go_id"
+  sqlite3 -cmd ".mode tab" ${sqldb} "${qcorecla} and go_id not null;" > ${cladest}_nonull
+  checkexec "step 5.1: failed ${step5} for clade ${cla} not including NULL go_id"
+  ls -lh ${cladest}*
+done
+checkexec "step 5.1: failed ${step5}" "step 5.2: completed ${step5}\n"
+
+# pangenome terms
+step52="generating pangenome background term distribution for clades"
+echo "step 5.2: ${step5}"
+# for the whole dataset
+qpan="
+select distinct locus_tag, go_id 
+ from coding_sequences 
+ left join functional_annotations using (nr_protein_id) 
+ left join interpro2GO using (interpro_id)
+"
+sqlite3 -cmd ".mode tab" ${sqldb} "${qpan};" > ${goterms}/${ngenomes}-genomes_pangenome_terms.tab
+sqlite3 -cmd ".mode tab" ${sqldb} "${qpan} where go_id not null;" > ${goterms}/${ngenomes}-genomes_pangenome_terms.tab_nonul
+# for all clades of the species tree
+export claderefgodir=${goterms}/clade_go_term_reference_sets
+mkdir -p ${claderefgodir}/
+tail -n +2 ${cladedefs} | while read cla ${cladedefhead} ; do
+  claspeset="'$(echo ${clade} | sed -e "s/,/','/g")'"
+  echo "$cla $name $claspeset"
   cladest=${claderefgodir}/${cla}_pangenome_terms.tab
-  q="select distinct locus_tag, go_id from coding_sequences 
+  qpancla="select distinct locus_tag, go_id from coding_sequences 
   inner join replicons using (genomic_accession)
   inner join assemblies using (assembly_id)
   left join functional_annotations using (nr_protein_id) 
   left join interpro2GO using (interpro_id) 
   where code in (${claspeset})"
-  sqlite3 -cmd ".mode tab" ${sqldb} "${q};" > ${cladest}
-  checkexec "step 5: failed ${step5} for clade ${cla} including NULL go_id"
-  sqlite3 -cmd ".mode tab" ${sqldb} "${q} and go_id not null;" > ${cladest}_nonull
-  checkexec "step 5: failed ${step5} for clade ${cla} not including NULL go_id"
-  ls -lh ${cladest}
+  sqlite3 -cmd ".mode tab" ${sqldb} "${qpancla};" > ${cladest}
+  checkexec "step 5.2: failed ${step5} for clade ${cla} including NULL go_id"
+  sqlite3 -cmd ".mode tab" ${sqldb} "${qpancla} and go_id not null;" > ${cladest}_nonull
+  checkexec "step 5.2: failed ${step5} for clade ${cla} not including NULL go_id"
+  ls -lh ${cladest}*
 done
-checkexec "step 5: failed ${step5}" "step 5: completed ${step5}\n"
+checkexec "step 5.2: failed ${step5}" "step 5.2: completed ${step5}\n"
 
 export dirgotablescladespe=${orthomatrad}_specific_genes.tables_byclade_goterms_pathways
 export dirgoenrichcladespecore=${goterms}/clade_go_term_enriched_cladespecific_vs_coregenome
@@ -159,7 +254,7 @@ echo ${step6}
 claspevscoreenrichlogsrad=${gotermlogs}/cladespecific_vs_coregenome_genes
 tail -n +2 ${cladedefs} | while read cla ${cladedefhead} ; do
   echo $cla
-  cladspego=${dirgotablescladespe}/mixed_majrule_combined_0.5.orthologs_specific_pres_genes_${cla}_reprseq_goterms.tab
+  cladspego=${dirgotablescladespe}/${ogmethod}_specific_pres_genes_${cla}_reprseq_goterms.tab
   if [[ -s ${cladspego} && $(wc -l ${cladspego} | cut -d ' ' -f1) -gt 1 ]] ; then
     cut -f5,6 ${cladspego} | grep -v "NA$" > ${cladspego}_nonull
     ${ptgscripts}/clade_specific_genes_GOterm_enrichment_test.r \
@@ -184,7 +279,7 @@ echo ${step7}
 claspevspanenrichlogsrad=${gotermlogs}/cladespecific_vs_pangenome_genes
 tail -n +2 ${cladedefs} | while read cla ${cladedefhead} ; do
   echo $cla
-  cladspego=${dirgotablescladespe}/mixed_majrule_combined_0.5.orthologs_specific_pres_genes_${cla}_allseq_goterms.tab
+  cladspego=${dirgotablescladespe}/${ogmethod}_specific_pres_genes_${cla}_allseq_goterms.tab
   if [[ -s ${cladspego} && $(wc -l ${cladspego} | cut -d ' ' -f1) -gt 1 ]] ; then
     cut -f5,6 ${cladspego} | grep -v "NA$" > ${cladspego}_nonull
     ${ptgscripts}/clade_specific_genes_GOterm_enrichment_test.r \

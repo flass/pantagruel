@@ -254,6 +254,8 @@ usagelong (){
   echo "                        Reverting to the exhaustive computation behavior can be done similarly by setting 'genefamlist' variable to an empty value or by using:"
   echo "                          pantagruel -i configfile --refresh -g '' init"
   echo ""
+  echo "    -p|--pref_genomes Comma-spearated list of genome codes to use as preferred representative in the listing of genes in clade-specific gene lists during task 08"
+  echo ""
   echo " Output: Gene co-evolution options:"
   echo ""
   echo "    -q|--max_event_age Older relative age on the species tree (real value between 0.0 = tips and 1.0 = root) under which events will considered to compute co-evolution scores"
@@ -423,7 +425,7 @@ if [ -z "${@}" ] ; then
   exit 1
 fi
 
-ARGS=`getopt --options "d:r:i:I:f:a:T:A:L:s:t:RSV:N:H:cng:e:q:u:hFz" --longoptions "dbname:,rootdir:,initfile:,refresh,iam:,famprefix:,refseq_ass:,refseq_list:,refseq_ass4annot:,refseq_list4annot:,custom_ass:,taxonomy:,pseudocore:,core_seqtype:,pop_lg_thresh:,pop_bs_thresh:,rooting:,snp_aln,reftree:,resume,env_var:,threads:,submit_hpc:,collapse,no_collapse,collapse_param:,genefam_list:,rec_method:,max_event_age:,help,FORCE,compress,path_to_interproscan:,update_from:,strain_info:" --name "pantagruel" -- "$@"`
+ARGS=`getopt --options "d:r:i:I:f:a:T:A:L:s:t:RSV:N:H:cng:e:p:q:u:hFz" --longoptions "dbname:,rootdir:,initfile:,refresh,iam:,famprefix:,refseq_ass:,refseq_list:,refseq_ass4annot:,refseq_list4annot:,custom_ass:,taxonomy:,pseudocore:,core_seqtype:,pop_lg_thresh:,pop_bs_thresh:,rooting:,snp_aln,reftree:,resume,env_var:,threads:,submit_hpc:,collapse,no_collapse,collapse_param:,genefam_list:,rec_method:,pref_genomes:,max_event_age:,help,FORCE,compress,path_to_interproscan:,update_from:,strain_info:" --name "pantagruel" -- "$@"`
 
 #Bad arguments
 if [ ${?} -ne 0 ];
@@ -637,7 +639,13 @@ do
       export maxreftreeheight=${2}
       echo "will restrict events younger than age ${maxreftreeheight} on the species tree for gene co-evolution scoring"
       shift 2;;
-	  
+    
+	-p|--pref_genomes)
+      testmandatoryarg "${1}" "${2}"
+      export preferredgenomes=${2}
+      echo "will use the following list of genome codes as preferred representative in the listing of genes in clade-specific gene lists"
+      shift 2;;
+    
 	--path_to_interproscan)
 	  testmandatoryarg "${1}" "${2}"
 	  export pathtoipscan=${2}
