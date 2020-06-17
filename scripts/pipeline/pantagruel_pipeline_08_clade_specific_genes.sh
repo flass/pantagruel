@@ -120,10 +120,18 @@ ${ptgscripts}/get_clade_specific_genes.r --gene_count_matrix ${orthomatrad}_geno
 # create clustering based on the abs/pres matrix (using Jaccard Distance)
 ${ptgscripts}/pangenome_hclust.r ${orthomatrad} 1000
 
+
 ## test GO term enrichment in gene sets
+ipannotrecords=$(sqlite3 -cmd '.header off' ${sqldb} 'select count(go_id) from functional_annotations inner join interpro2GO using (interpro_id);')
+echo "Found ${ipannotrecords} functional annotation records linked to GO terms in the database '${sqldb}'"
+if [[ -z "${ipannotrecords}" || ${ipannotrecords} -eq 0 ]] ; then
+  echo "no functional annotation records linked to GO terms was detected; please run Pantagruel task 04 (functional annotation using InterProScan) to enable GO term enrichment tests"
+else
+  echo "Will now run GO term enrichment tests"
+fi
 
 # generate background term distribution for clades i.e. list all genes in their pangenome and associated terms
-export goterms=${funcannot}/GeneOntology
+export goterms=${orthogenes}/${orthocol}/GeneOntology
 mkdir -p ${goterms}
 cladedefhead=$(head -n1 ${cladedefs})
 
