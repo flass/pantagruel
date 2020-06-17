@@ -92,8 +92,8 @@ RUN cd / && wget --progress=dot:giga -O /usr/bin/lsd https://github.com/tothuhie
     && chmod +x /usr/bin/lsd
 
 # GeneRax
-RUN cd / && git clone --recursive https://github.com/BenoitMorel/GeneRax \
-    && cd GeneRax/ && ./install.sh
+RUN cd / && git clone --recursive https://github.com/BenoitMorel/GeneRax -b 'v1.2.1' \
+    && cd GeneRax/ && ./install.sh && cp /GeneRax/build/bin/generax /usr/bin/
 
 # make pantagruel executable and scripts available
 # last echo command is a dummy one that can be edited so that build is resumed at this stage
