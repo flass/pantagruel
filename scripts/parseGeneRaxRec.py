@@ -7,11 +7,94 @@ import copy
 
 eventTypes = 'DTLSO'
 outtaxlab = '#OUTSIDE#'
+orinhxcommsep=':'
+cleannhxcommsep='/'
 
-def getOriSpeciesFromEventLab(eventlab, sgsep='_'):
-	# split at DT location separator '@', then possibly at T don/rec seprator '->', and finally shorten the species label if node is a leaf
-	elab = eventlab.split('@')[1] if '@' in eventlab else eventlab
-	return elab.split('->')[0].split(sgsep)[0]
+def _parse_NHXRec_branch_annot(annot, spetree, fat_loc=None):
+	"""parse the event information stored in the NHX comment of a reconciled gene (G) tree branch
+	
+	use the topology of the species (S) tree with whih G was reconcled to infer implicit events of species and loss.
+	"""
+	# first read the event(s) from the G branch comment
+	# only one event per branch is expected from GeneRax output,
+	# but implement support for multiple events in case several events are included in the future, as the NHX comment format technically allows for this
+	brlevt = []
+	evloc = None
+	for elt in annot.split(cleannhxcommsep):
+		if elt=='&&NHX': continue
+		e1, e2 = elt.split('=')
+		if e1=='S':
+			# give S tree location of events occurring on this G branch
+			evloc = e2
+		else:
+			if e2!='N':
+				if e1=='D':
+					brlevt.append(('D', evloc, ''))
+				elif e1=='H':
+					don, rec = e2.split('@')[1:]
+					brlevt.append(('T', rec, don))
+	
+	if not evloc: raise ValueError, "could not find the S tree location information in the NHX comment string: '%s'"%annot
+	speloc = spetree[evloc]
+	if not speloc: raise IndexError, "the location '%s' is unknown in the species tree"%evloc
+	if not brlevt:
+		# no D or H/T event recorded: just a speciation S
+		brlevt.append(('S', evloc, ''))
+	prelevt = []
+	if not fat_loc:
+		# this is the G root node, so an origination event must be added
+		prelevt.append(('O', evloc, ''))
+	else:
+		spefat = spetree[fat_loc]
+		if not spefat: raise IndexError, "the location '%s' is unknown in the species tree"%fat_loc
+		if not speloc.is_child(spefat): raise IndexError, "the S tree location '%s' is not below the specified S tree location of the event occurring on the parent G tree brach '%s'"%(evloc, fat_loc)
+		nodepath = spefat.path_to(speloc)
+		assert nodepath[0]==spefat
+		prelevt = []
+		for node in nodepath[1:]:
+			if node==speloc:
+				break
+			else:
+				# add a speciation on that interleaving node
+				prelevt.append(('S', node.label(), ''))
+				# add a loss on the siblings of that interleaving node
+				bronode = node.go_brother()
+				prelevt.append(('L', bronode.label(), ''))
+		
+	return prelevt+brlevt
+
+def recurse_parse_NHXRec_branch_annot(node, spetree, fat_loc=None):
+	levt = _parse_NHXRec_branch_annot(node.comment(), spetree, fat_loc=fat_loc)
+	lastloc = levt[-1][1]
+	for child in node.children:
+		levt += recurse_parse_NHXRec_branch_annot(child.comment(), spetree, fat_loc=lastloc)
+	return levt
+
+def parseMultiNHXRec(nfinnhx, spetree):
+	lrecgt = []
+	devtcount = {}
+	spetree = tree2.read
+	with open(nfinnhx, 'r') as finnhx:
+		# first clean this dirty NHX format with semilocons within comment that messes the parsing
+		# replace in-comment ':' with '/'
+		for line in finnhx:
+			scleannhx = ''
+			incomment = 0
+			for char in line:
+				if char=='[': incomment += 1
+				elif char==']': incomment -= 1
+				if incomment:
+					if char==orinhxcommsep: char=cleannhxcommsep
+				scleannhx += char
+
+	#		print scleannhx
+			recgt = tree2.AnnotatedNode(newick=scleannhx, keep_comments=True)
+			recgt.complete_node_ids()
+			lrecgt.append(recgt)
+			for evt in levt:
+				devtcount[evt] = devtcount.setdefault(evt, 0) + 1
+			
+	return (devtcount, lrecgt)
 
 def parseGeneRaxOuput(dirGRout, genefam, reftreelen=None, restrictclade=None, skipEventFreq=False, skipLines=False, nsample=[], returnDict=False):
 	line = ''
@@ -20,6 +103,7 @@ def parseGeneRaxOuput(dirGRout, genefam, reftreelen=None, restrictclade=None, sk
 	# extract node labels from reconciled species tree
 	spetree = tree2.AnnotatedNode(os.path.join(dirGRout, 'starting_species_tree.newick'), namesAsNum=True)
 	spetree.complete_node_ids()
+	spetree.prepare_fast_lookup()
 	if reftreelen:
 		if not spetree.hasSameTopology(reftreelen): raise IndexError, "reference tree from $2 has not the same topology as that extracted from reconciliation output file $1"
 		for node in spetree:
@@ -34,343 +118,351 @@ def parseGeneRaxOuput(dirGRout, genefam, reftreelen=None, restrictclade=None, sk
 		subspetree = spetree
 	
 	nfinnhx = os.path.join(dirGRout, 'reconciliations', '%s_samples.nhx'%genefam)		
-	dnodeevt, lrecgt = parseMultiNHXRec(nfinnhx) # !!! dnodeevt has different content from parselALErec version
+	dnodeevt, lrecgt = parseMultiNHXRec(nfinnhx, spetree) # !!! dnodeevt has different content from parselALErec version
 
 	if returnDict:
 		return {'spetree':spetree, 'subspetree':subspetree, 'lrecgt':lrecgt, 'restrictlabs':restrictlabs, 'dnodeevt':dnodeevt}
 	else:
 		return [spetree, subspetree, lrecgt, restrictlabs, dnodeevt]
 
-def parseDatedRecGeneTree(recgt, spet, dexactevt={}, recgtsample=None, nsample=1, sgsep='_', restrictlabs=[], \
-                          fillDTLSdict=True, recordEvTypes='ODTL', excludeTaggedLeaves=None, excludeTaggedSubtrees=None, joinTdonrec=True, verbose=False):
-	def parseDatedRecGTNode(node, dlevt, dnodeallevt):
-		nodelab = node.label()
-		nodeid = node.nodeid()
-		if verbose: print '#', nodeid, ':', nodelab
-		if not nodelab: raise ValueError, "unannotated node:\n%s"%str(node)
-		if node.is_leaf() and (excludeTaggedLeaves in nodelab):
-			# the species assignment of this leaf is not certain (inferred)
-			# and thus events leading directly to this leaf are not to be trusted and should be skipped
-			return
-		# line of events to be read left-to-right backward in time
-		lineage, leaflab = splitEventChain(nodelab, isleaf=node.is_leaf(), ALEmodel='dated', sgsep='_')
-		# list of events goes BACKWARD in time when read left-to-right
-		if verbose: print 'lineage:', lineage
-		for i, event in enumerate(lineage):
-			evtype, evloc, evdate = event
-			#~ print evtype, evloc, evdate
-			# evtype[0] to capture Td, TdL, Tr events as T
-			if (evtype[0] not in recordEvTypes) or (restrictlabs and not (dup in restrictlabs)): continue
-			if fillDTLSdict: dlevt[evtype].append(evloc)
-			if evtype =='Tr' and joinTdonrec:
-				# piece back together Td and Tr events: look for preceding transfer eimssion
-				if i<(len(lineage)-1):
-					prevent = lineage[i+1] # (remember BACKWARD time event listing)
-					if prevent[0][:2]=='Td':
-						# just before on the same branch
-						donloc = prevent[1]
-						dnodeallevt.setdefault(nodeid, []).append(('T', donloc, evloc))
-					else:
-						print nodelab
-						print recgt
-						raise IndexError, "transfer event reception (Tr) is not the first event on gene tree branch,\nbut no transfer emission+loss (TdL) event can be detected before it;\npreceding event on same branch: %s"%repr(prevent)
-				else:
-					# in parent branch
-					parent = node.go_father()
-					if not parent:
-						# gain at the gene tree root: it is an origination
-						# (gene creation or transfer from outside the dataset)
-						# will be recorded below
-						pass
-					else:
-						# donor transfer should be the last event
-						pevent = dnodeallevt[parent.nodeid()][0] # (remember BACKWARD time event listing)
-						if pevent[0][:2]=='Td':
-							donloc = pevent[1]
-							dnodeallevt.setdefault(nodeid, []).append(('T', donloc, evloc))
-						else:
-							print nodelab
-							print recgt
-							raise IndexError, "transfer event reception (Tr) is the first event on gene tree branch,\nbut could not find transfer emission (Td) event before it;\nlast event on previous branch: %s"%repr(pevent)
-			else:
-				if evtype[-1]=='L':
-					dnodeallevt.setdefault(nodeid, []).append((evtype[:-1], evloc))
-					if ('L' in recordEvTypes) and (not spet[evloc].is_root()):
-						sisspe = spet[evloc].go_brother()
-						dnodeallevt.setdefault(nodeid, []).append(('L', sisspe.label()))
-				else:
-					dnodeallevt.setdefault(nodeid, []).append((evtype, evloc))
-		if ('O' in recordEvTypes) and not node.go_father():
-			# record origination = gene creation or transfer from outside the dataset
-			if lineage:
-				# use location of oldest event
-				evloc = lineage[-1][1]
-				dnodeallevt[nodeid].append(('O', evloc))
-		if excludeTaggedSubtrees:
-			alllabext = [lab.split('_', 1)[1] for lab in node.iter_leaf_labels()]
-			if (excludeTaggedSubtrees in alllabext[0]) and (len(set(alllabext)) == 1):
-				# the subtree below this node is an artificial addition to the reconciled gene tree and should be skipped
-				return
-		for child in node.get_children():
-			# use recursion to be able to exclude subtrees
-			parseDatedRecGTNode(child, dlevt, dnodeallevt)
-		return
-	
-	dnodeallevt = {}
-	dlevt = {e:[] for e in eventTypes}
-	parseDatedRecGTNode(recgt, dlevt, dnodeallevt) # recursive function call
-	return dlevt, dnodeallevt
-	
-def parseUndatedRecGeneTree(recgt, spet, dexactevt={}, recgtsample=None, nsample=1, sgsep='_', restrictlabs=[], \
-                            fillDTLSdict=True, recordEvTypes='DTL', excludeTaggedLeaves=None, excludeTaggedSubtrees=None, verbose=False):
-	def parseUndatedRecGTNode(node, dlevt, dnodeallevt):
-		nodelab = node.label()
-		if not nodelab: raise ValueError, "unannotated node:\n%s"%str(node)
-		if node.is_leaf() and (excludeTaggedLeaves in nodelab):
-			# the species assignment of this leaf is not certain (inferred)
-			# and thus events leading directly to this leaf are not to be trusted and should be skipped
-			return
-		nodeid = node.nodeid()
-		# line of events to be read left-to-right backward in time
-		lineage = nodelab.split('.')
-		for i in range(1, len(lineage)):
-			eventlab = lineage[i]
-			# identify next (i.e. forward in time) event on the lineage
-			preveventlab = lineage[i-1] 
-			if eventlab.startswith('D@'):
-				if ('D' in recordEvTypes):
-					# duplication event
-					dup = eventlab.split('D@')[1]
-					evtup = ('D', dup)
-					fevt = dexactevt.setdefault(evtup, float(recgtsample.count(eventlab))/nsample)
-					if restrictlabs and not (dup in restrictlabs): continue
-					if fillDTLSdict: dlevt['D'].append(dup)
-					dnodeallevt.setdefault(nodeid, []).append(evtup)
-			elif eventlab.startswith('T@'):
-				if ('T' in recordEvTypes):
-					# transfer event
-					translab = eventlab.split('T@')[1]
-					don, rec = translab.split('->')
-					evtup = ('T', don, rec)
-					fevt = dexactevt.setdefault(evtup, float(recgtsample.count(eventlab))/nsample)
-					if restrictlabs and not ((don in restrictlabs) and (rec in restrictlabs)): continue
-					if fillDTLSdict: dlevt['T'].append((don, rec))
-					dnodeallevt.setdefault(nodeid, []).append(evtup)
-			else:
-				# just a species tree node label
-				if ('S' in recordEvTypes):
-					spe = getOriSpeciesFromEventLab(eventlab, sgsep=sgsep)
-					evtup = ('S', spe)
-					#~ evtpat = "(\)\.|[\(,])%s"%eventlab	# pattern captures the event at an internal node or a leaf 
-					evtpat = "([\.\(,]%s)"%eventlab	# pattern captures the event at an internal node or a leaf 
-					#~ print "count occurence in sample of pattern:", evtpat
-					fevt = dexactevt.setdefault(evtup, float(len(re.search(evtpat, recgtsample).groups()))/nsample)
-					if fillDTLSdict: dlevt['S'].append(spe)
-					dnodeallevt.setdefault(nodeid, []).append(evtup)
-				if preveventlab!='':
-					if ('L' in recordEvTypes):
-						# speciation-loss event
-						# speciation occurs of the named node but loss acutally occurs in its descendant (the other than that below/preceding on the lineage)
-						ploss = spet[eventlab]
-						closslabs = ploss.children_labels()
-						closslabs.remove(getOriSpeciesFromEventLab(preveventlab, sgsep=sgsep))
-						if len(closslabs)>1: raise IndexError, "non binary species tree at node %s (children: %s)"%(lineage[-1], repr(ploss.get_children_labels()))
-						los = closslabs[0]
-						evtup = ('L', los)
-						fevt = dexactevt.setdefault(evtup, float(re.search("([^\)]\.%s)"%eventlab, recgtsample).groups)/nsample)
-						if restrictlabs and not (los in restrictlabs): continue
-						if fillDTLSdict: dlevt['L'].append(los)
-						dnodeallevt.setdefault(nodeid, []).append(evtup)
+#~ def getOriSpeciesFromEventLab(eventlab, sgsep='_'):
+	#~ # split at DT location separator '@', then possibly at T don/rec seprator '->', and finally shorten the species label if node is a leaf
+	#~ elab = eventlab.split('@')[1] if '@' in eventlab else eventlab
+	#~ return elab.split('->')[0].split(sgsep)[0]
+
+#~ def parseDatedRecGeneTree(recgt, spet, dexactevt={}, recgtsample=None, nsample=1, sgsep='_', restrictlabs=[], \
+                          #~ fillDTLSdict=True, recordEvTypes='ODTL', excludeTaggedLeaves=None, excludeTaggedSubtrees=None, joinTdonrec=True, verbose=False):
+	#~ def parseDatedRecGTNode(node, dlevt, dnodeallevt):
+		#~ nodelab = node.label()
+		#~ nodeid = node.nodeid()
+		#~ if verbose: print '#', nodeid, ':', nodelab
+		#~ if not nodelab: raise ValueError, "unannotated node:\n%s"%str(node)
+		#~ if node.is_leaf() and (excludeTaggedLeaves in nodelab):
+			#~ # the species assignment of this leaf is not certain (inferred)
+			#~ # and thus events leading directly to this leaf are not to be trusted and should be skipped
+			#~ return
+		#~ # line of events to be read left-to-right backward in time
+		#~ lineage, leaflab = splitEventChain(nodelab, isleaf=node.is_leaf(), ALEmodel='dated', sgsep='_')
+		#~ # list of events goes BACKWARD in time when read left-to-right
+		#~ if verbose: print 'lineage:', lineage
+		#~ for i, event in enumerate(lineage):
+			#~ evtype, evloc, evdate = event
+			#~ # print evtype, evloc, evdate
+			#~ # evtype[0] to capture Td, TdL, Tr events as T
+			#~ if (evtype[0] not in recordEvTypes) or (restrictlabs and not (dup in restrictlabs)): continue
+			#~ if fillDTLSdict: dlevt[evtype].append(evloc)
+			#~ if evtype =='Tr' and joinTdonrec:
+				#~ # piece back together Td and Tr events: look for preceding transfer eimssion
+				#~ if i<(len(lineage)-1):
+					#~ prevent = lineage[i+1] # (remember BACKWARD time event listing)
+					#~ if prevent[0][:2]=='Td':
+						#~ # just before on the same branch
+						#~ donloc = prevent[1]
+						#~ dnodeallevt.setdefault(nodeid, []).append(('T', donloc, evloc))
+					#~ else:
+						#~ print nodelab
+						#~ print recgt
+						#~ raise IndexError, "transfer event reception (Tr) is not the first event on gene tree branch,\nbut no transfer emission+loss (TdL) event can be detected before it;\npreceding event on same branch: %s"%repr(prevent)
 				#~ else:
-					#~ # a simple speciation event ; already delt with
-					#~ pass
-		if excludeTaggedSubtrees:
-			alllabext = [lab.split('_', 1)[1] for lab in node.iter_leaf_labels()]
-			if (len(set(alllabext)) == 1) and (excludeTaggedSubtrees in alllabext[0]):
-				# the subtree below this node is an artificial addition to the reconciled gene tree and should be skipped
-				return
-		for child in node.get_children():
-			# use recursion to be able to exclude subtrees
-			parseUndatedRecGTNode(child, dlevt, dnodeallevt)
-		return
+					#~ # in parent branch
+					#~ parent = node.go_father()
+					#~ if not parent:
+						#~ # gain at the gene tree root: it is an origination
+						#~ # (gene creation or transfer from outside the dataset)
+						#~ # will be recorded below
+						#~ pass
+					#~ else:
+						#~ # donor transfer should be the last event
+						#~ pevent = dnodeallevt[parent.nodeid()][0] # (remember BACKWARD time event listing)
+						#~ if pevent[0][:2]=='Td':
+							#~ donloc = pevent[1]
+							#~ dnodeallevt.setdefault(nodeid, []).append(('T', donloc, evloc))
+						#~ else:
+							#~ print nodelab
+							#~ print recgt
+							#~ raise IndexError, "transfer event reception (Tr) is the first event on gene tree branch,\nbut could not find transfer emission (Td) event before it;\nlast event on previous branch: %s"%repr(pevent)
+			#~ else:
+				#~ if evtype[-1]=='L':
+					#~ dnodeallevt.setdefault(nodeid, []).append((evtype[:-1], evloc))
+					#~ if ('L' in recordEvTypes) and (not spet[evloc].is_root()):
+						#~ sisspe = spet[evloc].go_brother()
+						#~ dnodeallevt.setdefault(nodeid, []).append(('L', sisspe.label()))
+				#~ else:
+					#~ dnodeallevt.setdefault(nodeid, []).append((evtype, evloc))
+		#~ if ('O' in recordEvTypes) and not node.go_father():
+			#~ # record origination = gene creation or transfer from outside the dataset
+			#~ if lineage:
+				#~ # use location of oldest event
+				#~ evloc = lineage[-1][1]
+				#~ dnodeallevt[nodeid].append(('O', evloc))
+		#~ if excludeTaggedSubtrees:
+			#~ alllabext = [lab.split('_', 1)[1] for lab in node.iter_leaf_labels()]
+			#~ if (excludeTaggedSubtrees in alllabext[0]) and (len(set(alllabext)) == 1):
+				#~ # the subtree below this node is an artificial addition to the reconciled gene tree and should be skipped
+				#~ return
+		#~ for child in node.get_children():
+			#~ # use recursion to be able to exclude subtrees
+			#~ parseDatedRecGTNode(child, dlevt, dnodeallevt)
+		#~ return
 	
-	dnodeallevt = {}
-	dlevt = {e:[] for e in eventTypes}
-	parseUndatedRecGTNode(recgt, dlevt, dnodeallevt) # recursive function call
-	return dlevt, dnodeallevt
+	#~ dnodeallevt = {}
+	#~ dlevt = {e:[] for e in eventTypes}
+	#~ parseDatedRecGTNode(recgt, dlevt, dnodeallevt) # recursive function call
+	#~ return dlevt, dnodeallevt
+	
+#~ def parseUndatedRecGeneTree(recgt, spet, dexactevt={}, recgtsample=None, nsample=1, sgsep='_', restrictlabs=[], \
+                            #~ fillDTLSdict=True, recordEvTypes='DTL', excludeTaggedLeaves=None, excludeTaggedSubtrees=None, verbose=False):
+	#~ def parseUndatedRecGTNode(node, dlevt, dnodeallevt):
+		#~ nodelab = node.label()
+		#~ if not nodelab: raise ValueError, "unannotated node:\n%s"%str(node)
+		#~ if node.is_leaf() and (excludeTaggedLeaves in nodelab):
+			#~ # the species assignment of this leaf is not certain (inferred)
+			#~ # and thus events leading directly to this leaf are not to be trusted and should be skipped
+			#~ return
+		#~ nodeid = node.nodeid()
+		#~ # line of events to be read left-to-right backward in time
+		#~ lineage = nodelab.split('.')
+		#~ for i in range(1, len(lineage)):
+			#~ eventlab = lineage[i]
+			#~ # identify next (i.e. forward in time) event on the lineage
+			#~ preveventlab = lineage[i-1] 
+			#~ if eventlab.startswith('D@'):
+				#~ if ('D' in recordEvTypes):
+					#~ # duplication event
+					#~ dup = eventlab.split('D@')[1]
+					#~ evtup = ('D', dup)
+					#~ fevt = dexactevt.setdefault(evtup, float(recgtsample.count(eventlab))/nsample)
+					#~ if restrictlabs and not (dup in restrictlabs): continue
+					#~ if fillDTLSdict: dlevt['D'].append(dup)
+					#~ dnodeallevt.setdefault(nodeid, []).append(evtup)
+			#~ elif eventlab.startswith('T@'):
+				#~ if ('T' in recordEvTypes):
+					#~ # transfer event
+					#~ translab = eventlab.split('T@')[1]
+					#~ don, rec = translab.split('->')
+					#~ evtup = ('T', don, rec)
+					#~ fevt = dexactevt.setdefault(evtup, float(recgtsample.count(eventlab))/nsample)
+					#~ if restrictlabs and not ((don in restrictlabs) and (rec in restrictlabs)): continue
+					#~ if fillDTLSdict: dlevt['T'].append((don, rec))
+					#~ dnodeallevt.setdefault(nodeid, []).append(evtup)
+			#~ else:
+				#~ # just a species tree node label
+				#~ if ('S' in recordEvTypes):
+					#~ spe = getOriSpeciesFromEventLab(eventlab, sgsep=sgsep)
+					#~ evtup = ('S', spe)
+					#~ # evtpat = "(\)\.|[\(,])%s"%eventlab	# pattern captures the event at an internal node or a leaf 
+					#~ evtpat = "([\.\(,]%s)"%eventlab	# pattern captures the event at an internal node or a leaf 
+					#~ # print "count occurence in sample of pattern:", evtpat
+					#~ fevt = dexactevt.setdefault(evtup, float(len(re.search(evtpat, recgtsample).groups()))/nsample)
+					#~ if fillDTLSdict: dlevt['S'].append(spe)
+					#~ dnodeallevt.setdefault(nodeid, []).append(evtup)
+				#~ if preveventlab!='':
+					#~ if ('L' in recordEvTypes):
+						#~ # speciation-loss event
+						#~ # speciation occurs of the named node but loss acutally occurs in its descendant (the other than that below/preceding on the lineage)
+						#~ ploss = spet[eventlab]
+						#~ closslabs = ploss.children_labels()
+						#~ closslabs.remove(getOriSpeciesFromEventLab(preveventlab, sgsep=sgsep))
+						#~ if len(closslabs)>1: raise IndexError, "non binary species tree at node %s (children: %s)"%(lineage[-1], repr(ploss.get_children_labels()))
+						#~ los = closslabs[0]
+						#~ evtup = ('L', los)
+						#~ fevt = dexactevt.setdefault(evtup, float(re.search("([^\)]\.%s)"%eventlab, recgtsample).groups)/nsample)
+						#~ if restrictlabs and not (los in restrictlabs): continue
+						#~ if fillDTLSdict: dlevt['L'].append(los)
+						#~ dnodeallevt.setdefault(nodeid, []).append(evtup)
+				#~ # else:
+					#~ # # a simple speciation event ; already delt with
+					#~ # pass
+		#~ if excludeTaggedSubtrees:
+			#~ alllabext = [lab.split('_', 1)[1] for lab in node.iter_leaf_labels()]
+			#~ if (len(set(alllabext)) == 1) and (excludeTaggedSubtrees in alllabext[0]):
+				#~ # the subtree below this node is an artificial addition to the reconciled gene tree and should be skipped
+				#~ return
+		#~ for child in node.get_children():
+			#~ # use recursion to be able to exclude subtrees
+			#~ parseUndatedRecGTNode(child, dlevt, dnodeallevt)
+		#~ return
+	
+	#~ dnodeallevt = {}
+	#~ dlevt = {e:[] for e in eventTypes}
+	#~ parseUndatedRecGTNode(recgt, dlevt, dnodeallevt) # recursive function call
+	#~ return dlevt, dnodeallevt
 
-def parseRecGeneTree(recgt, spet, ALEmodel='undated', **kw):
-	"""extract list of events from one reconciled gene tree as found in output of ALEml_undated (Szolosi et al., 2013; https://github.com/ssolo/ALE)
+#~ def parseRecGeneTree(recgt, spet, ALEmodel='undated', **kw):
+	#~ """extract list of events from one reconciled gene tree as found in output of ALEml_undated (Szolosi et al., 2013; https://github.com/ssolo/ALE)
 	
-	This function returns two objects:
+	#~ This function returns two objects:
 	
-	- a dict object 'dlevt', containing the (possibly redundant) list of unique events having occurred in the tree,
-	sorted by event type, which can be 'D', 'T', 'L' or 'S', for duplications, horizontal transfers, losses or speciations.
-	This record is a crude aggregate of what happened in the whole gene family, present for back-compatiility purposes.
-	The behaviour of filling up this record can be turned off to gain time and memory with fillDTLSdict=False.
+	#~ - a dict object 'dlevt', containing the (possibly redundant) list of unique events having occurred in the tree,
+	#~ sorted by event type, which can be 'D', 'T', 'L' or 'S', for duplications, horizontal transfers, losses or speciations.
+	#~ This record is a crude aggregate of what happened in the whole gene family, present for back-compatiility purposes.
+	#~ The behaviour of filling up this record can be turned off to gain time and memory with fillDTLSdict=False.
 	
-	- a dict object 'dnodeallevt', containing the list all events in one reconciliation scenario
-	(a single scenario anomg the sample), sorted by gene tree node id. 
-	Event are represented as tuples of the following form: (X, [don, ] rec, freq),
-	where X is the event type
-	'rec' and optionally 'don' (for Ts only) are species tree node labels where the event where inferred,
-	and 'freq' the event frequency of this event in the whole sample.
+	#~ - a dict object 'dnodeallevt', containing the list all events in one reconciliation scenario
+	#~ (a single scenario anomg the sample), sorted by gene tree node id. 
+	#~ Event are represented as tuples of the following form: (X, [don, ] rec, freq),
+	#~ where X is the event type
+	#~ 'rec' and optionally 'don' (for Ts only) are species tree node labels where the event where inferred,
+	#~ and 'freq' the event frequency of this event in the whole sample.
 	
-	Frequency of events is searched in the WHOLE reconciled gene tree sample 
-	provided as the list of pseudo-newick strings, using exact string matching (only for DT).
-	In case of the same pattern of event occurring repeatedly in the same tree, e.g. same T@DON->REC in two paralogous lineages 
-	(can likely happen with tandem duplicates...), the count will reflect the sum of all such events. 
-	Records of event frequencies in both 'dlevt' and 'dnodeallevt' are thus NOT differentiated by lineage.
-	"""
-	if ALEmodel=='undated':
-		return parseUndatedRecGeneTree(recgt, spet, **kw)
-	elif ALEmodel=='dated':
-		return parseDatedRecGeneTree(recgt, spet, **kw)
-	else:
-		raise ValueError, "specified ALE model not valid: %s"%ALEmodel
+	#~ Frequency of events is searched in the WHOLE reconciled gene tree sample 
+	#~ provided as the list of pseudo-newick strings, using exact string matching (only for DT).
+	#~ In case of the same pattern of event occurring repeatedly in the same tree, e.g. same T@DON->REC in two paralogous lineages 
+	#~ (can likely happen with tandem duplicates...), the count will reflect the sum of all such events. 
+	#~ Records of event frequencies in both 'dlevt' and 'dnodeallevt' are thus NOT differentiated by lineage.
+	#~ """
+	#~ if ALEmodel=='undated':
+		#~ return parseUndatedRecGeneTree(recgt, spet, **kw)
+	#~ elif ALEmodel=='dated':
+		#~ return parseDatedRecGeneTree(recgt, spet, **kw)
+	#~ else:
+		#~ raise ValueError, "specified ALE model not valid: %s"%ALEmodel
 
-#### dated model gene tree syntax parsing
-def findNextDatedEventSlice(nodelab): #, receptionOK=False
-	nextev1 = nodelab.find('@')
-	if nextev1 > 0:
-		if nodelab[nextev1-1] in {'T', 'D', 'b'}:
-			nextev1 -= 1		# account for the preceding D or T
-			if nodelab[nextev1-1]=='b':
-				if nodelab[nextev1-2]=='T':
-					nextev1 -= 2	# account for the preceding Tb
-				else:
-					raise IndexError
-		#~ elif not receptionOK:
-			#~ raise IndexError
-	nextev2 = nodelab.find('.')
-	if (nextev1 < 0) and (nextev2 < 0):
-		return None
-	elif (nextev1 >= 0) and ((nextev2 < 0) or (nextev1 < nextev2)):
-		return nextev1
-	elif (nextev2 >= 0) and ((nextev1 < 0) or (nextev2 < nextev1)):
-		return nextev2
-	else:
-		raise IndexError
+#~ #### dated model gene tree syntax parsing
+#~ def findNextDatedEventSlice(nodelab): #, receptionOK=False
+	#~ nextev1 = nodelab.find('@')
+	#~ if nextev1 > 0:
+		#~ if nodelab[nextev1-1] in {'T', 'D', 'b'}:
+			#~ nextev1 -= 1		# account for the preceding D or T
+			#~ if nodelab[nextev1-1]=='b':
+				#~ if nodelab[nextev1-2]=='T':
+					#~ nextev1 -= 2	# account for the preceding Tb
+				#~ else:
+					#~ raise IndexError
+		#~ # elif not receptionOK:
+			#~ # raise IndexError
+	#~ nextev2 = nodelab.find('.')
+	#~ if (nextev1 < 0) and (nextev2 < 0):
+		#~ return None
+	#~ elif (nextev1 >= 0) and ((nextev2 < 0) or (nextev1 < nextev2)):
+		#~ return nextev1
+	#~ elif (nextev2 >= 0) and ((nextev1 < 0) or (nextev2 < nextev1)):
+		#~ return nextev2
+	#~ else:
+		#~ raise IndexError
 
-def splitSingleUndatedEvent(nodelab, isleaf=False):
-	"""yet to implement; just need to check really as in principle splitting at periods is enough"""
-	raise NotImplementedError
-	lineage = nodelab.split('.') # bring in code from parseUndatedRecGeneTree()
-	return lineage
+#~ def splitSingleUndatedEvent(nodelab, isleaf=False):
+	#~ """yet to implement; just need to check really as in principle splitting at periods is enough"""
+	#~ raise NotImplementedError
+	#~ lineage = nodelab.split('.') # bring in code from parseUndatedRecGeneTree()
+	#~ return lineage
 
-def extractLabelfromDatedEventLeaf(nodelab):
-	"""extract leaf label prefix from string (possible followed by an event chain)"""
-	nextev = findNextDatedEventSlice(nodelab) #, receptionOK=True)
-	leaflab = nodelab[:nextev] # the whole string if nextev is None
-	return leaflab
+#~ def extractLabelfromDatedEventLeaf(nodelab):
+	#~ """extract leaf label prefix from string (possible followed by an event chain)"""
+	#~ nextev = findNextDatedEventSlice(nodelab) #, receptionOK=True)
+	#~ leaflab = nodelab[:nextev] # the whole string if nextev is None
+	#~ return leaflab
 
-def splitSingleDatedEvent(nodelab, isleaf=False, verbose=False, sgsep='_', **kw):
-	"""from a gene tree branch event chain, return iterator that yields the type and location of every event
+#~ def splitSingleDatedEvent(nodelab, isleaf=False, verbose=False, sgsep='_', **kw):
+	#~ """from a gene tree branch event chain, return iterator that yields the type and location of every event
 	
-	if isleaf=True, assumes the branch led to a leaf, and the leaf label is yielded as the last item.
-	Note that events are written backward in time when read from left to right (i.e. first in chain is last in time).
-	"""
-	def process_event(s, happenslast=False):
-		# process possible event separators in order
-		if s.startswith('.T@'):
-			# immediate transfer-loss (should be only present on the beginning of the event chain)
-			# emission of transfer by donor followed by loss of resident copy; just changes species identity of the gene tree branch (from donor to recipient species)
-			# will be followed by transfer reception event
-			thisev = 3
-			evtype = 'TdL'
-		elif s.startswith('.'):
-			# simple speciation
-			evtype = 'S'
-			thisev = 1
-			# if event is not last it is followed by a loss: loss in one of the daughter lineage for speciation; loss of resident copy for transfer
-			# no creation of gene lineage, just changes species identity of the gene tree branch (from parent to daughter species)
-			if not happenslast: evtype += 'L'
-		elif s.startswith('@'):
-			# reception of transfer by recipient = gain
-			thisev = 1
-			evtype = 'Tr'
-		elif s.startswith('Tb@'):
-			# reception of transfer by recipient (case where diversification occurs out of ref tre and several copies come back in) = gain
-			thisev = 3
-			evtype = 'Tr'
-		elif s.startswith('T@'):
-			# emission of transfer by donor; not relevant to gene content
-			thisev = 2
-			evtype = 'Td'
-		elif s.startswith('D@'):
-			# duplication = gain
-			thisev = 2
-			evtype = 'D'
-		else:
-			raise ValueError
-		nextev = findNextDatedEventSlice(s[thisev:]) #, receptionOK=reception)
-		if nextev is None:
-			# no other event
-			evlocdate = s[thisev:]
-			s = None
-		else:
-			evlocdate = s[thisev:nextev+thisev]
-			s = s[nextev+thisev:]
-		if evtype[0]=='S':
-			evloc = evlocdate
-			evdate = evlocdate
-		else:
-			evdate, evloc = evlocdate.split('|')
-		if evloc=='-1':
-			evloc = outtaxlab
-		return s, evtype, evloc, int(evdate)
+	#~ if isleaf=True, assumes the branch led to a leaf, and the leaf label is yielded as the last item.
+	#~ Note that events are written backward in time when read from left to right (i.e. first in chain is last in time).
+	#~ """
+	#~ def process_event(s, happenslast=False):
+		#~ # process possible event separators in order
+		#~ if s.startswith('.T@'):
+			#~ # immediate transfer-loss (should be only present on the beginning of the event chain)
+			#~ # emission of transfer by donor followed by loss of resident copy; just changes species identity of the gene tree branch (from donor to recipient species)
+			#~ # will be followed by transfer reception event
+			#~ thisev = 3
+			#~ evtype = 'TdL'
+		#~ elif s.startswith('.'):
+			#~ # simple speciation
+			#~ evtype = 'S'
+			#~ thisev = 1
+			#~ # if event is not last it is followed by a loss: loss in one of the daughter lineage for speciation; loss of resident copy for transfer
+			#~ # no creation of gene lineage, just changes species identity of the gene tree branch (from parent to daughter species)
+			#~ if not happenslast: evtype += 'L'
+		#~ elif s.startswith('@'):
+			#~ # reception of transfer by recipient = gain
+			#~ thisev = 1
+			#~ evtype = 'Tr'
+		#~ elif s.startswith('Tb@'):
+			#~ # reception of transfer by recipient (case where diversification occurs out of ref tre and several copies come back in) = gain
+			#~ thisev = 3
+			#~ evtype = 'Tr'
+		#~ elif s.startswith('T@'):
+			#~ # emission of transfer by donor; not relevant to gene content
+			#~ thisev = 2
+			#~ evtype = 'Td'
+		#~ elif s.startswith('D@'):
+			#~ # duplication = gain
+			#~ thisev = 2
+			#~ evtype = 'D'
+		#~ else:
+			#~ raise ValueError
+		#~ nextev = findNextDatedEventSlice(s[thisev:]) #, receptionOK=reception)
+		#~ if nextev is None:
+			#~ # no other event
+			#~ evlocdate = s[thisev:]
+			#~ s = None
+		#~ else:
+			#~ evlocdate = s[thisev:nextev+thisev]
+			#~ s = s[nextev+thisev:]
+		#~ if evtype[0]=='S':
+			#~ evloc = evlocdate
+			#~ evdate = evlocdate
+		#~ else:
+			#~ evdate, evloc = evlocdate.split('|')
+		#~ if evloc=='-1':
+			#~ evloc = outtaxlab
+		#~ return s, evtype, evloc, int(evdate)
 	
-	# initiate
-	if isleaf:
-		leaflab = extractLabelfromDatedEventLeaf(nodelab)
-		# remove leaf label prefix before parsing (possible) trailing event chain
-		s = nodelab[len(leaflab):]
-		if verbose>1: print 'leaflab: %s;'%leaflab,
-	else:
-		s = nodelab
-	# parse string describing the event chain
-	if verbose>1: print 'events:',
-	first=True
-	while s:
-		s, evtype, evloc, evdate = process_event(s, happenslast=first)
-		yield (evtype, evloc, evdate)
-		if verbose>1: print (evtype, evloc, evdate),
-		first=False
-	if isleaf:
-		#~ # add the final speciation
-		#~ evtype = 'S'
-		#~ evdate = 0
-		#~ evloc = leaflab.split(sgsep)[0]
+	#~ # initiate
+	#~ if isleaf:
+		#~ leaflab = extractLabelfromDatedEventLeaf(nodelab)
+		#~ # remove leaf label prefix before parsing (possible) trailing event chain
+		#~ s = nodelab[len(leaflab):]
+		#~ if verbose>1: print 'leaflab: %s;'%leaflab,
+	#~ else:
+		#~ s = nodelab
+	#~ # parse string describing the event chain
+	#~ if verbose>1: print 'events:',
+	#~ first=True
+	#~ while s:
+		#~ s, evtype, evloc, evdate = process_event(s, happenslast=first)
 		#~ yield (evtype, evloc, evdate)
-		if verbose>1: print 'leaflab: %s;'%leaflab,
-		# last yield
-		yield leaflab
-	if verbose>1: print ''
+		#~ if verbose>1: print (evtype, evloc, evdate),
+		#~ first=False
+	#~ if isleaf:
+		#~ # # add the final speciation
+		#~ # evtype = 'S'
+		#~ # evdate = 0
+		#~ # evloc = leaflab.split(sgsep)[0]
+		#~ # yield (evtype, evloc, evdate)
+		#~ if verbose>1: print 'leaflab: %s;'%leaflab,
+		#~ # last yield
+		#~ yield leaflab
+	#~ if verbose>1: print ''
 
-def splitEventChain(nodelab, isleaf=False, ALEmodel='dated', **kw):
-	"""from the event chain string, return the list of event tuples (type, date, location) forward in time, but for last element that is the leaf label (or None if was not a leaf)"""
-	verbose = kw.get('verbose')
-	if ALEmodel=='undated':
-		lineage = [event for event in splitSingleUndatedEvent(nodelab, isleaf=isleaf, **kw)]
-	elif ALEmodel=='dated':
-		lineage = [event for event in splitSingleDatedEvent(nodelab, isleaf=isleaf, **kw)]
-		# line of events is read left-to-right FORWARD in time; for compatibility matters, reverse it for a BACKWARD result
-		lineage.reverse()
-	if isleaf:
-		# remove the first-yielded element from event list that's the leaf label
-		leaflab = lineage[0]
-		lineage = lineage[1:]
-	else:
-		leaflab = None
-	return (lineage, leaflab)
+#~ def splitEventChain(nodelab, isleaf=False, ALEmodel='dated', **kw):
+	#~ """from the event chain string, return the list of event tuples (type, date, location) forward in time, but for last element that is the leaf label (or None if was not a leaf)"""
+	#~ verbose = kw.get('verbose')
+	#~ if ALEmodel=='undated':
+		#~ lineage = [event for event in splitSingleUndatedEvent(nodelab, isleaf=isleaf, **kw)]
+	#~ elif ALEmodel=='dated':
+		#~ lineage = [event for event in splitSingleDatedEvent(nodelab, isleaf=isleaf, **kw)]
+		#~ # line of events is read left-to-right FORWARD in time; for compatibility matters, reverse it for a BACKWARD result
+		#~ lineage.reverse()
+	#~ if isleaf:
+		#~ # remove the first-yielded element from event list that's the leaf label
+		#~ leaflab = lineage[0]
+		#~ lineage = lineage[1:]
+	#~ else:
+		#~ leaflab = None
+	#~ return (lineage, leaflab)
 
-def _prune_orthologs_bottom_up(node, ALEmodel='dated', **kw):
+def _prune_orthologs_bottom_up(node, GeneRaxmodel='undated', **kw):
 	"""'last-gain' (strict) definition of ortholous groups: only those genes related by a line of speciation events (no transfer, no duplication) are orthologs"""
 	# initiate at root
 	unclassified = set([])
 	orthologGroups = kw.get('orthologGroups', [])
 	dlabs = kw.get('dlabs', {})
 	verbose = kw.get('verbose')
+	levt = parse_NHXRec_branch_annot(node.comment()) # given that GeneRax only implements undated DTL model
+	
+	
 	nodelab = node.label()
 	if not nodelab: raise ValueError, "unannotated node:\n%s"%str(node)
 	lineage, leaflab = splitEventChain(nodelab, isleaf=node.is_leaf(), **kw)
