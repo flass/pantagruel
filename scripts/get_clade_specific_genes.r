@@ -197,7 +197,7 @@ for (i in 1:length(cladedefs)){
 			spefamogs = as.data.frame(t(sapply(strsplit(rownames(genocount)[specset], split='-'), function(x){ if (length(x)==2) return(x) else return(c(x, NA)) })), stringsAsFactors=F)
 			spefamogs[,2] = as.numeric(spefamogs[,2])
 			colnames(spefamogs) = c("gene_family_id", "og_id")
-			if ((ogcolid < 0) && any(!is.na(spefamogs[,"og_id"))){
+			if ((ogcolid < 0) && any(!is.na(spefamogs[,"og_id"]))){
 				stop(paste(sprintf("orthologous group ids were detected in the labels of the input gene count matrix:\n'%s',", nffamgenomemat), 
 				           "        suggesting an orthologous gene abs/pres matrix from Pantagruel task 08 is being considered,",
 				           "        but the orthologous group collection was not specified (option `--og_col_id n` ommitted);",
