@@ -10,10 +10,13 @@ outtaxlab = '#OUTSIDE#'
 orinhxcommsep=':'
 cleannhxcommsep='/'
 
-def _parse_NHXRec_branch_annot(annot, spetree, fat_loc=None):
+def _parse_NHXRec_branch_annot(annot, spetree, fatlocs=None, guessHGT=False):
 	"""parse the event information stored in the NHX comment of a reconciled gene (G) tree branch
 	
 	use the topology of the species (S) tree with whih G was reconcled to infer implicit events of species and loss.
+	fatlocs is a 2-tuple of S tree locations; it indicate the location of the last event above; 
+	in most case only the first memeber will be non-empty, but in case of the last event being a transfer, 
+	both recipent and donor locations are featured and will be tried as potential ancestor for the current event location.
 	"""
 	# first read the event(s) from the G branch comment
 	# only one event per branch is expected from GeneRax output,
@@ -41,39 +44,59 @@ def _parse_NHXRec_branch_annot(annot, spetree, fat_loc=None):
 		# no D or H/T event recorded: just a speciation S
 		brlevt.append(('S', evloc, ''))
 	prelevt = []
-	if not fat_loc:
+	if not fatlocs:
 		# this is the G root node, so an origination event must be added
 		prelevt.append(('O', evloc, ''))
 	else:
-		spefat = spetree[fat_loc]
-		if not spefat: raise IndexError, "the location '%s' is unknown in the species tree"%fat_loc
-		if not speloc.is_child(spefat): raise IndexError, "the S tree location '%s' is not below the specified S tree location of the event occurring on the parent G tree brach '%s'"%(evloc, fat_loc)
-		nodepath = spefat.path_to(speloc)
-		assert nodepath[0]==spefat
-		prelevt = []
-		for node in nodepath[1:]:
-			if node==speloc:
-				break
+		nodepaths = []
+		for fatloc in fatlocs:
+			if not fatloc: continue
+			spefat = spetree[fatloc]
+			if not spefat: raise IndexError, "the location '%s' is unknown in the species tree"%fatloc
+			if speloc.is_childorself(spefat):
+				nodepath = spefat.path_to(speloc)
+				assert nodepath[0]==spefat
+				nodepaths.append(nodepath)
+			
+		if not nodepaths:
+			#~ print "last NHX branch comment annotation:", annot
+			serr = "the S tree location '%s' is not below any of the specified S tree location(s) for the event occurring on the parent G tree branch %s"%(evloc, repr(fatlocs))
+			if guessHGT:
+				don = fatlocs[0]
+				print "Warning:", serr, "; infer an additional HGT event from %s to %s"%(don, evloc)
+				prelevt.insert(-1, ('T', evloc, don))
 			else:
-				# add a speciation on that interleaving node
-				prelevt.append(('S', node.label(), ''))
-				# add a loss on the siblings of that interleaving node
-				bronode = node.go_brother()
-				prelevt.append(('L', bronode.label(), ''))
+				raise IndexError, serr
+		else:
+			# order both parent node event locations in S based on the length of the path to the current location
+			# while in most cases only one of the (rec, don) locations wouldbe found abovethe current event location and have their path computed
+			# the rare case of HGT from outside the tree will result in donor being the S tree root hence both locations may be above the current one
+			# but if the current lineage is the recipient oneage, the recipent ancestor location will be found with a shorter path.
+			nodepaths.sort(key=len)
+			nodepath = nodepaths[0]
+			prelevt = []
+			for node in nodepath[1:]:
+				if node==speloc:
+					break
+				else:
+					# add a speciation on that interleaving node
+					prelevt.append(('S', node.label(), ''))
+					# add a loss on the siblings of that interleaving node
+					bronode = node.go_brother()
+					prelevt.append(('L', bronode.label(), ''))
 		
 	return prelevt+brlevt
 
-def recurse_parse_NHXRec_branch_annot(node, spetree, fat_loc=None):
-	levt = _parse_NHXRec_branch_annot(node.comment(), spetree, fat_loc=fat_loc)
-	lastloc = levt[-1][1]
+def recurse_parse_NHXRec_branch_annots(node, spetree, fatlocs=None, guessHGT=False):
+	levt = _parse_NHXRec_branch_annot(node.comment(), spetree, fatlocs=fatlocs, guessHGT=guessHGT)
+	lastlocs = levt[-1][1:]
 	for child in node.children:
-		levt += recurse_parse_NHXRec_branch_annot(child.comment(), spetree, fat_loc=lastloc)
+		levt += recurse_parse_NHXRec_branch_annots(child, spetree, fatlocs=lastlocs, guessHGT=guessHGT)
 	return levt
 
-def parseMultiNHXRec(nfinnhx, spetree):
+def parseMultiNHXRec(nfinnhx, spetree, guessHGT=False):
 	lrecgt = []
 	devtcount = {}
-	spetree = tree2.read
 	with open(nfinnhx, 'r') as finnhx:
 		# first clean this dirty NHX format with semilocons within comment that messes the parsing
 		# replace in-comment ':' with '/'
@@ -89,8 +112,10 @@ def parseMultiNHXRec(nfinnhx, spetree):
 
 	#		print scleannhx
 			recgt = tree2.AnnotatedNode(newick=scleannhx, keep_comments=True)
+			#~ recgt.seaview(comment='comment')
 			recgt.complete_node_ids()
 			lrecgt.append(recgt)
+			levt = recurse_parse_NHXRec_branch_annots(recgt, spetree, guessHGT=guessHGT)
 			for evt in levt:
 				devtcount[evt] = devtcount.setdefault(evt, 0) + 1
 			
@@ -101,7 +126,7 @@ def parseGeneRaxOuput(dirGRout, genefam, reftreelen=None, restrictclade=None, sk
 	lrecgt = []
 	restrictlabs = []
 	# extract node labels from reconciled species tree
-	spetree = tree2.AnnotatedNode(os.path.join(dirGRout, 'starting_species_tree.newick'), namesAsNum=True)
+	spetree = tree2.AnnotatedNode(file=os.path.join(dirGRout, 'starting_species_tree.newick'), namesAsNum=True)
 	spetree.complete_node_ids()
 	spetree.prepare_fast_lookup()
 	if reftreelen:
