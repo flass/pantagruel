@@ -80,9 +80,8 @@ else
     tail -n +${beg} ${mlgenetreelist} | head -n ${chunksize} > ${mlgenetreelist}_${jobrange}
 	
     qsubvars="mlgenetreelist=${mlgenetreelist}_${jobrange},ptgscripts,cdsalifastacodedir,ncpus,colalinexuscodedir,collapsecond,mlgenetrees"
-    if [ ! -z "${fwdenv}" ] ; then
-	  qsubvars="${qsubvars},${fwdenv}"
-	fi
+    [ ! -z "${fwdenv}" ] && qsubvars="${qsubvars},${fwdenv}"
+    [ ! -z "${modulefile}" ] && qsubvars="${qsubvars},modulefile=${modulefile}"
 	
 	case "${hpctype}" in
       'PBS')
