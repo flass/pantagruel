@@ -81,9 +81,10 @@ for i in ${!allcdsfam2phylo[@]} ; do
   fi
 
   qsubvars="tasklist=${tasklist},outputdir=${mlgenetrees},reducedaln=true,nbthreads=${ncpus}"
-  if [ ! -z "${raxmlbin}" ] ; then
-    qsubvars="${qsubvars},raxmlbin=${raxmlbin}"
-  fi
+  [ ! -z "${raxmlbin}" ] && qsubvars="${qsubvars},raxmlbin=${raxmlbin}"
+  [ ! -z "${fwdenv}" ] && qsubvars="${qsubvars},${fwdenv}"
+  [ ! -z "${modulefile}" ] && qsubvars="${qsubvars},modulefile=${modulefile}"
+  
   [ -s ${tasklist} ] && Njob=`wc -l ${tasklist} | cut -f1 -d' '` || Njob=0
   [ ! -z "${topindex}" ] && [ ${Njob} -gt ${topindex} ] && Njob=${topindex}
   
