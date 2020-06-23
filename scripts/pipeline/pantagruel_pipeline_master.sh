@@ -416,7 +416,7 @@ promptdate () {
   echo $(date +'[%Y-%m-%d %H:%M:%S]') ${1}
 }
 
-if [ -z "${@}" ] ; then
+if [[ -z "${@}" ]] ; then
   usage
   exit 1
 fi
