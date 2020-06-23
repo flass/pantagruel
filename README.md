@@ -331,10 +331,10 @@ Options are detailed here:
                          Note that when options had quoted string arguments, unpredictable behaviour might occur;
                          please verify the outcome in the regenerated config file.
 						 New options can be added _after_ the --refresh option to change the value of environment variables in the config file:
-						   to set non-default values if not already, e.g. turn on collapsing:
-						     `pantagruel -i config_file --refresh -c init`
-						   to revert to default values, e.g. turn off collapsing:
-						     `pantagruel -i config_file --refresh -n init`
+                           to set non-default values if not already, e.g. turn on collapsing:
+                             `pantagruel -i config_file --refresh -c init`
+                           to revert to default values, e.g. turn off collapsing:
+                             `pantagruel -i config_file --refresh -n init`
                            to do both, e.g. turn off collapsing and switch to use ecceTERA reconciliation method:
                              `pantagruel -i config_file --refresh -n -e ecceTERA init`
                          Currently, only short options (e.g., -e or -n, NOT --rec_method or --no_collapse) are supported after --refresh.
