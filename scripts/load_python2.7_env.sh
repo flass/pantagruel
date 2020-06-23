@@ -32,10 +32,8 @@ if [ ! -z "$(conda env list | grep ptgenv 2> /dev/null)" ] ; then
   fi
 elif  [ ! -z $(command -v module) ] ; then
   # use ad-hoc environment loading (deprecated: only known on Imperial College London HPC in its vintage form)
-  #module load python
-  module load anaconda3/personal
-#  source activate env_python2
-  source activate ptgenv
+  module load anaconda2/personal
+  conda activate ptgenv
 else
   echo ${pyenvwarn}
 fi
