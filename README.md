@@ -325,20 +325,20 @@ Options are detailed here:
                          Parameters values specified in this file will override other options.
                          Can also be combined alone with --refresh to update the software version used for an existing database.
 
-    --refresh          (no value) Use in combination with the -i option above to simply refresh the configuration file.
-                         (e.g. after an update of the software) the program will simply re-run the `pantagruel [options] init` command
-                         that has been previously used to generate the config file; hence there is no need to repeat any other option.
-                         (even -d and -r options can be omitted if `pantagruel -i config_file --refresh init` is used)
+    --refresh          (no value) Use in combination with the -i option above to simply refresh the configuration file
+                         (e.g. after an update of the software). The program will simply re-run the `pantagruel [options] init` command
+                         that has been previously used to generate the config file; hence there is no need to repeat any other option
+                         (even -d and -r options can be omitted if `pantagruel -i config_file --refresh init` is used).
                          Note that when options had quoted string arguments, unpredictable behaviour might occur;
                          please verify the outcome in the regenerated config file.
-						 New options can be added _after_ the --refresh option to change the value of environment variables in the config file:
+                         New options can be added _after_ the --refresh option to change the value of environment variables in the config file:
                            to set non-default values if not already, e.g. turn on collapsing:
                              `pantagruel -i config_file --refresh -c init`
-                           to revert to default values, e.g. turn off collapsing:
-                             `pantagruel -i config_file --refresh -n init`
-                           to do both, e.g. turn off collapsing and switch to use ecceTERA reconciliation method:
-                             `pantagruel -i config_file --refresh -n -e ecceTERA init`
-                         Currently, only short options (e.g., -e or -n, NOT --rec_method or --no_collapse) are supported after --refresh.
+                           to change the value of an already set option, e.g. switch to use GeneRax reconciliation method:
+                             `pantagruel -i config_file --refresh -e GeneRax init`
+                           to both turn on collapsing and switch to use GeneRax reconciliation method:
+                             `pantagruel -i config_file --refresh -c -e GeneRax init`
+                         Currently, only short options (e.g., -e or -n, NOT --rec_method or --collapse) are supported after --refresh.
                          
  General configuration options:
 
