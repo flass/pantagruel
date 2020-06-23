@@ -41,14 +41,18 @@ allmems=(4 8 32 64)
 allwalltimes=(12 24 48 72)
 allncpus=(4 4 4 16)
 
+m=${mem}
+w=${wth}
+c=${ncpus}
+
 for i in ${!allcdsfam2phylo[@]} ; do
   # iterate over lists of family classed by sizes and find matching setting
   [ ${i} -gt 3 ] && i=3 # max 
   cdsfam2phylo=${allcdsfam2phylo[$i]}
   # if their value was left to their default 'auto-configure', these variables are defined based on the size of the gene family
-  [ "${mem}" == 'auto-configure' ] && mem=${allmems[$i]}
-  [ "${wth}" == 'auto-configure'  ] && wth=${allwalltimes[$i]}
-  [ "${ncpus}" == 'auto-configure'  ] && ncpus=${allncpus[$i]}
+  [ "${m}" == 'auto-configure' ] && mem=${allmems[$i]}
+  [ "${w}" == 'auto-configure' ] && wth=${allwalltimes[$i]}
+  [ "${c}" == 'auto-configure' ] && ncpus=${allncpus[$i]}
   echo "cdsfam2phylo=${cdsfam2phylo} ; mem_per_core=${mem}gb ; walltime=${wth}:00:00 ; ncpus=${ncpus}"
   tasklist=${cdsfam2phylo}_aln_list
   rm -f $tasklist ; for fam in `cut -f1 $cdsfam2phylo` ; do ls ${cdsalifastacodedir}/${fam}.codes.aln >> $tasklist ; done
@@ -80,8 +84,8 @@ for i in ${!allcdsfam2phylo[@]} ; do
   if [ ! -z "${raxmlbin}" ] ; then
     qsubvars="${qsubvars},raxmlbin=${raxmlbin}"
   fi
-  Njob=`wc -l ${tasklist} | cut -f1 -d' '`
-  [ ! -z ${topindex} ] &&  [ ${Njob} -gt ${topindex} ] && Njob=${topindex}
+  [ -s ${tasklist} ] && Njob=`wc -l ${tasklist} | cut -f1 -d' '` || Njob=0
+  [ ! -z "${topindex}" ] && [ ${Njob} -gt ${topindex} ] && Njob=${topindex}
   
   # accomodate with possible upper limit on number of tasks in an array job
   jobranges=($(${ptgscripts}/get_jobranges.py $chunksize $Njob))
