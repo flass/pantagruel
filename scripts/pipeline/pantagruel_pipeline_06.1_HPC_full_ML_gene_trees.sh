@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 #########################################################
 ## PANTAGRUEL:                                         ##
@@ -28,14 +28,8 @@ source ${hpcscriptdir}/pantagruel_pipeline_HPC_common_interface.sh "${@}"
 mkdir -p ${ptglogs}/raxml/gene_trees/ ${mlgenetrees}/
 
 ## compute first pass of gene trees with RAxML, using rapid bootstrap to estimate branch supports
-if [[ "${resumetask}" == "true" && ! -z "$(ls ${genetrees}/*cdsfams_* 2> /dev/null | grep -v 'aln_list')" ]] ; then
-  echo "will re-use previously established lists of gene families for which to compute trees" 
-  allcdsfam2phylo=($(ls ${genetrees}/*cdsfams_* | grep -v 'aln_list'))
-else
-  rm -f ${genetrees}/cdsfams_*_aln_list
-  sortminsizes=($(for famset in `ls ${genetrees}/*cdsfams_*` ; do echo $famset | sed -e 's/.*cdsfams_minsize\([0-9]\+.*\)/\1/' ; done | sort -n))
-  allcdsfam2phylo=($(for famminsize in ${sortminsizes[@]} ; do ls ${genetrees}/*${famminsize} ; done))
-fi
+sortminsizes=($(for famset in `ls ${genetrees}/*cdsfams_* | grep -v 'aln_list'` ; do echo $famset | sed -e 's/.*cdsfams_minsize\([0-9]\+.*\)/\1/' ; done | sort -n))
+allcdsfam2phylo=($(for famminsize in ${sortminsizes[@]} ; do ls ${genetrees}/*${famminsize} ; done))
   
 allmems=(4 8 32 64)
 allwalltimes=(12 24 48 72)
@@ -47,15 +41,21 @@ c=${ncpus}
 
 for i in ${!allcdsfam2phylo[@]} ; do
   # iterate over lists of family classed by sizes and find matching setting
-  [ ${i} -gt 3 ] && i=3 # max 
   cdsfam2phylo=${allcdsfam2phylo[$i]}
+  [ ${i} -gt 3 ] && i=3 # max for settings
   # if their value was left to their default 'auto-configure', these variables are defined based on the size of the gene family
   [ "${m}" == 'auto-configure' ] && mem=${allmems[$i]}
   [ "${w}" == 'auto-configure' ] && wth=${allwalltimes[$i]}
   [ "${c}" == 'auto-configure' ] && ncpus=${allncpus[$i]}
   echo "cdsfam2phylo=${cdsfam2phylo} ; mem_per_core=${mem}gb ; walltime=${wth}:00:00 ; ncpus=${ncpus}"
   tasklist=${cdsfam2phylo}_aln_list
-  rm -f $tasklist ; for fam in `cut -f1 $cdsfam2phylo` ; do ls ${cdsalifastacodedir}/${fam}.codes.aln >> $tasklist ; done
+  if [[ "${resumetask}" == "true" && -s ${tasklist} ]] ; then
+    echo "will re-use previously established list of gene families for which to compute trees:"
+    ls -l ${tasklist}
+  else
+    rm -f ${tasklist}
+    for fam in `cut -f1 $cdsfam2phylo` ; do ls ${cdsalifastacodedir}/${fam}.codes.aln >> $tasklist ; done
+  fi
   if [ "$(wc -l $cdsfam2phylo | cut -f1 -d' ')" -lt "$(wc -l $tasklist | cut -f1 -d' ')" ] ; then 
     >&2 echo "ERROR $(dateprompt): missing gene family alignments; please fix the list '$tasklist' or the content of folder '$alifastacodedir/' before continuing."
     exit 1
