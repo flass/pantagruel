@@ -171,10 +171,10 @@ ls ./*.$nfrad2*
 
 rsync -avz --exclude=$nfrad1 --exclude=RAxML_info* ./*$nfrad2 $outputdir/bulk/
 if [ $? != 0 ] ; then
-  echo "!!! ERROR : unable to copy RAxML_* output files from $HOSTNAME:$PWD ; exit now"
+  echo "!!! ERROR : unable to copy RAxML_* output files from $HOSTNAME:$PWD to $outputdir/bulk/ ; exit now"
   exit 1
 else
-  echo "copied RAxML_* output files with exit status $?"
+  echo "Succesfully copied RAxML_* output files from $HOSTNAME:$PWD to $outputdir/bulk/"
 fi
 echo ""
 for mainresulttag in ${mainresulttags[@]} ; do
