@@ -65,7 +65,9 @@ for i in ${!allcdsfam2phylo[@]} ; do
   for fam in $(cut -f1 ${cdsfam2phylo}) ; do
     aln=${cdsalifastacodedir}/${fam}.codes.aln
     if [[ "${resumetask}" == "true" ]] ; then
-      if [[ ! -s ${mlgenetrees}/${mainresulttag}/RAxML_${mainresulttag}.${fam}.codes ]] ; then
+      mainres=${mlgenetrees}/${mainresulttag}/RAxML_${mainresulttag}.${fam}.codes
+      skiptag=${mlgenetrees}/bulk/${fam}.codes.smallreducedali
+      if [[ ! -s ${mainres} && ! -s ${skiptag} ]] ; then
         ls ${aln} >> ${tasklist}_resume
       fi
     fi
