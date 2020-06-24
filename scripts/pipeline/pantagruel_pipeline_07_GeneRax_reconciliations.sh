@@ -56,13 +56,18 @@ export outrecdir=${recs}/${collapsecond}/${replmethod}/${reccol}
 mkdir -p ${outrecdir}
 
 # recording the software version that was used
-GRheader="$(${grbin} -h | grep '\[00:00:' | awk '{ print $2,$3 }')"
-if [ -z "${GRheader}" ] ; then
-  GRheader="GeneRax"
+if [[ -z "${grbin}" ]] ; then
+  grbin=$(command -v generax)
 fi
-GRvtag=$(echo ${GRheader} | awk '{ print $NF }')
-	
-if [[ ! -z "${grbin}" ]] ; then
+if [[ -z "${grbin}" ]] ; then
+  echo "Error: could not find command 'generax' in the path; please provide the path to the generax executable file through env variable \$grbin; exit now"
+  exit 1
+else
+  GRheader="$(${grbin} -h | grep '\[00:00:' | awk '{ print $2,$3 }')"
+  if [ -z "${GRheader}" ] ; then
+    GRheader="GeneRax"
+  fi
+  GRvtag=$(echo ${GRheader} | awk '{ print $NF }')
   pathgrbin=$(readlink -f "${grbin}")
   grrepo=${pathgrbin%%GeneRax/*}GeneRax/
   if [ -d ${grrepo} ] ; then

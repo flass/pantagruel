@@ -32,7 +32,7 @@ or for this help mesage:\n
 \t --hpctype:\t'PBS' for Torque scheduling system, or 'LSF' for IBM schedulling system (default: '${defhpctype}').\n
 \t --chunksize:\tnumber of families to be processed in one submitted job (default: ${defchunksize})\n
 \t --topindex:\tmax number of (gene family) sub-jobs to be actually submitted (default: '')\n
-\t --maxatonce:\tmaximum number of jobs you want to run at once (only relelvant on LSF system;
+\t --maxatonce:\tmaximum number of jobs you want to run at once (only relelvant on LSF system;\n
 \t\t\t useful for fair use of computing resources/queue priority management).\n
 \t --fwdenv:\tnames of current environment variables you want to be passed down to the submitted jobs\n
 \t\t\t if several, separate by ',' and enclose in quotes, e.g.: 'VAR1, VAR2' \n
