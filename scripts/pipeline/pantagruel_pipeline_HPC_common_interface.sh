@@ -32,18 +32,18 @@ or for this help mesage:\n
 \t --hpctype:\t'PBS' for Torque scheduling system, or 'LSF' for IBM schedulling system (default: '${defhpctype}').\n
 \t --chunksize:\tnumber of families to be processed in one submitted job (default: ${defchunksize})\n
 \t --topindex:\tmax number of (gene family) sub-jobs to be actually submitted (default: '')\n
+\t --maxatonce:\tmaximum number of jobs you want to run at once (only relelvant on LSF system;
+\t\t\t useful for fair use of computing resources/queue priority management).\n
 \t --fwdenv:\tnames of current environment variables you want to be passed down to the submitted jobs\n
+\t\t\t if several, separate by ',' and enclose in quotes, e.g.: 'VAR1, VAR2' \n
 \t --resume:\tresume the task from previous run that was interupted (skip gene families for wich the task already completed)\n
 \t --modules:\tnames (quoted, comma-separated list) of local modules to be loaded using the 'module load' command\n
-\t\t\t if several, separate by ',' and enclose in quotes, e.g.: 'VAR1, VAR2' \n
 \t --parallelflags:\tadditional flags to be specified for worker nodes' resource requests\n
 \t\t\t for instance, specifying parallelflags=\"mpiprocs=1:ompthreads=8\" (with hpctype='PBS')\n
 \t\t\t will force the use of OpenMP multi-threading instead of default MPI parallelism.\n
 \t\t\t Note that parameter declaration syntax is not standard and differ depending on your HPC system;\n
 \t\t\t also the relevant parameter flags may be different depending on the HPC system config.\n
 \t\t\t Get in touch with your system admins to know the relevant flags and syntax.\n
-\t --maxatonce:\tmaximum number of jobs you want to run at once (only relelvant on LSF system;
-\t\t\t useful for fair use of computing resources/queue priority management).\n
 "
 pythonmsg="
 \n

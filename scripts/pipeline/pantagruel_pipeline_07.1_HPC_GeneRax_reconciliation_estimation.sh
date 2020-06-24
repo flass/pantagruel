@@ -13,8 +13,8 @@
 export hpcscript=$(basename ${0})
 hpcscriptdir=$(dirname ${0})
 export defncpus=1
-export defmem=64
-export defwth=168
+export defmem=16
+export defwth=24
 export defhpctype='LSF'
 export defchunksize=1000
 export withpython='false'

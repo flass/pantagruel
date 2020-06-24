@@ -108,7 +108,7 @@ else
   generaxfamfidir=${alerec}/${reccol}_generax_families
   mkdir -p ${generaxfamfidir}/
   gttorecdir=${coltreechains}/${collapsecond}/${replmethod}
-  python ${ptgscripts}/make_generax_family_file.py --per-family --alignments ${gttorecdir} \
+  python ${ptgscripts}/make_generax_family_file.py --per-family --alignments ${cdsalifastacodedir} \
    --gene-trees ${gttorecdir} --out ${generaxfamfidir} --gftag '.generax.families'
   checkexec "failed to ${step1}" "successfully ${step1/create/created}"
   
