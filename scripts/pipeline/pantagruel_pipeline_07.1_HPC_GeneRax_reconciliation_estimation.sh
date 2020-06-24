@@ -49,6 +49,12 @@ mkdir -p ${outrecdir}
 
 cd ${ptgtmp} 
 
+# load GeneRax support modules
+if [ ! -z "${modulefile}" ] ; then
+  source ${modulefile}
+fi
+
+
 # recording the software version that was used
 if [[ -z "${grbin}" ]] ; then
   grbin=$(command -v generax)
