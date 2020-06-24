@@ -130,7 +130,7 @@ else
   generaxfamfidir=${alerec}/${reccol}_generax_families
   mkdir -p ${generaxfamfidir}/
   gttorecdir=${coltreechains}/${collapsecond}/${replmethod}
-  python ${ptgscripts}/make_generax_family_file.py --per-family --alignments ${gttorecdir} \
+  python ${ptgscripts}/make_generax_family_file.py --per-family --alignments ${cdsalifastacodedir} \
    --gene-trees ${gttorecdir} --out ${generaxfamfidir} --gftag '.generax.families'
   checkexec "failed to ${step1}" "successfully ${step1/create/created}"
   ls -d ${generaxfamfidir}
@@ -150,7 +150,7 @@ else
   jobranges=($(${ptgscripts}/get_jobranges.py ${chunksize} ${Njob}))
 
   step2="run GeneRax on each pangenome gene family in parallel"
-  echo "submitting array job to ${step2} (using ${ncpus} thread(s) per process)"
+  echo "submitting array job(s) to ${step2} (using ${ncpus} thread(s) per process)"
   for jobrange in ${jobranges[@]} ; do
     dlogs=${grxlogs}/${reccol}/generax_perfam_array_${dtag}_${jobrange}
     mkdir -p ${dlogs}/
