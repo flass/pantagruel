@@ -186,7 +186,7 @@ else
       fam=$(echo ${bngt} | cut -d'.' -f2 )
       colaln=${colalinexuscodedir}/${collapsecond}/collapsed_alns/${fam}-collapsed.nex
       colmlgt=${colalinexuscodedir}/${collapsecond}/collapsed_ML_genetrees/${fam}-collapsed.nwk
-      if [[ ! -s ${colaln} ! && -s ${colmlgt} ]] ; then
+      if [[ ! -s ${colaln} && ! -s ${colmlgt} ]] ; then
         echo ${gt} >> ${mlgenetreelist}_resume
       fi
     done
