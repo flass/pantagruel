@@ -50,13 +50,18 @@ mkdir -p ${outrecdir}
 cd ${ptgtmp} 
 
 # recording the software version that was used
-GRheader="$(${grbin} -h | grep '\[00:00:' | awk '{ print $2,$3 }')"
-if [ -z "${GRheader}" ] ; then
-  GRheader="GeneRax"
+if [[ -z "${grbin}" ]] ; then
+  grbin=$(command -v generax)
 fi
-GRvtag=$(echo ${GRheader} | awk '{ print $NF }')
-	
-if [[ ! -z "${grbin}" ]] ; then
+if [[ -z "${grbin}" ]] ; then
+  echo "Error: could not find command 'generax' in the path; please provide the path to the generax executable file through env variable \$grbin; exit now"
+  exit 1
+else
+  GRheader="$(${grbin} -h | grep '\[00:00:' | awk '{ print $2,$3 }')"
+  if [ -z "${GRheader}" ] ; then
+    GRheader="GeneRax"
+  fi
+  GRvtag=$(echo ${GRheader} | awk '{ print $NF }')
   pathgrbin=$(readlink -f "${grbin}")
   grrepo=${pathgrbin%%GeneRax/*}GeneRax/
   if [ -d ${grrepo} ] ; then
@@ -88,6 +93,7 @@ if [[ "${chaintype}" == 'fullgenetree' && "${GeneRaxalgo}" =~ 'global' ]] ; then
   step1="create a family file i.e. parameter settings for the whole pangenome gene family set"
   python ${ptgscripts}/make_generax_family_file.py --alignments ${cdsalifastacodedir} --out ${generaxfamfi}
   checkexec "failed to ${step1}" "successfully ${step1/create/created}"
+  ls ${generaxfamfi}
   step2="run GeneRax on all pangenome genes at once"
   
   echo "submitting MPI job to ${step2} (using GeneRax built-in optimised load balance on ${ncpus} cores)"
@@ -121,6 +127,7 @@ else
   python ${ptgscripts}/make_generax_family_file.py --per-family --alignments ${gttorecdir} \
    --gene-trees ${gttorecdir} --out ${generaxfamfidir} --gftag '.generax.families'
   checkexec "failed to ${step1}" "successfully ${step1/create/created}"
+  ls -d ${generaxfamfidir}
   
   tasklist=${generaxfamfidir}_list
   if [ -z "${genefamlist}" ] ; then
@@ -142,7 +149,7 @@ else
     dlogs=${grxlogs}/${reccol}/generax_perfam_array_${dtag}_${jobrange}
     mkdir -p ${dlogs}/
     case "${hpctype}" in
-    'PBS') 
+      'PBS') 
         subcmd="qsub -J ${jobrange} -l walltime=${wth}:00:00 -l select=1:ncpus=${ncpus}:mem=${mem}gb -N \"${reccol}\" \
 	    -o ${dlogs} -j oe -V ${ptgscripts}/generax_perfam_array.qsub"
         ;;
