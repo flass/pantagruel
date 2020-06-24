@@ -33,7 +33,7 @@ allcdsfam2phylo=($(for famminsize in ${sortminsizes[@]} ; do ls ${genetrees}/*${
   
 allmems=(4 8 32 64)
 allwalltimes=(12 24 48 72)
-allncpus=(4 4 4 16)
+allncpus=(4 4 8 16)
 
 m=${mem}
 w=${wth}

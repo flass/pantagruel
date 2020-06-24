@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+#PBS -S /bin/bash
+#PBS -N generax_perfam
+#PBS -j oe 
+#PBS -l walltime=12:00:00 
+#PBS -l select=1:ncpus=4:mem=4gb
+
+echo "This is job $PBS_JOBNAME, job_ID $PBS_JOBID (array_task_ID $PBS_ARRAY_INDEX) on host $HOSTNAME, running on these workers:"
+cat ${PBS_NODEFILE}
+echo ""
+
+# load potential modules
+if [ ! -z "${modulefile}" ] ; then
+  source ${modulefile}
+fi
+
+thisscript=$(readlink -f ${0})
+dirscript=$(dirname ${thisscript})
+
+### verify and parse key variable definition
+# tasklist
+echo "tasklist:"
+if [ -z "${tasklist}" ] ; then
+  echo "ERROR: need to define variable tasklist ; exit now"
+  exit 2
+else
+  ls ${tasklist}
+  if [ ${?} != 0 ] ; then
+    echo "ERROR: file '${tasklist}' is missing ; exit now"
+    exit 2
+  fi
+fi
+export generaxfamfi=`awk "NR==${PBS_ARRAY_INDEX}" ${tasklist}`
+
+${dirscript}/generax_perfam.sh ${generaxfamfi}

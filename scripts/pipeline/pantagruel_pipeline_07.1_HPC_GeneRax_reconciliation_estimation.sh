@@ -89,10 +89,13 @@ if [[ "${chaintype}" == 'fullgenetree' && "${GeneRaxalgo}" =~ 'global' ]] ; then
   python ${ptgscripts}/make_generax_family_file.py --alignments ${cdsalifastacodedir} --out ${generaxfamfi}
   checkexec "failed to ${step1}" "successfully ${step1/create/created}"
   step2="run GeneRax on all pangenome genes at once"
-  grlog=${grxlogs}/generax_global.log
   
   echo "submitting MPI job to ${step2} (using GeneRax built-in optimised load balance on ${ncpus} cores)"
   case "$hpctype" in
+    'PBS') 
+        subcmd="qsub -l walltime=${wth}:00:00 -l select=1:ncpus=${ncpus}:mem=${mem}gb -N \"${reccol}\" \
+	    -o ${grxlogs}/${reccol}/generax_global_mpi.%J.log -j oe -V ${ptgscripts}/generax_global_mpi.qsub ${generaxfamfi}"
+        ;;
     'LSF')
 	  bqueue='parallel'
       memmb=$((${mem} * 1024))
@@ -139,6 +142,10 @@ else
     dlogs=${grxlogs}/${reccol}/generax_perfam_array_${dtag}_${jobrange}
     mkdir -p ${dlogs}/
     case "${hpctype}" in
+    'PBS') 
+        subcmd="qsub -J ${jobrange} -l walltime=${wth}:00:00 -l select=1:ncpus=${ncpus}:mem=${mem}gb -N \"${reccol}\" \
+	    -o ${dlogs} -j oe -V ${ptgscripts}/generax_perfam_array.qsub"
+        ;;
       'LSF')
 	    bqueue='parallel'
         arrayspec="[${jobrange}]"
