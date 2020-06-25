@@ -48,7 +48,10 @@ for nfali in lnfali:
 		fout = open(os.path.join(dirout, "%s%s"%(fam, gftag)), 'w')
 		fout.write('[FAMILIES]\n')
 	if dirgt:
-		nfgt = glob.glob("%s/*%s*%s"%(dirgt, fam, gttag))[0]
+		gfgt = "%s/*%s*%s"%(dirgt, fam, gttag)
+		lnfgt = glob.glob(gfgt)
+		if not lnfgt: raise IndexError, "found no file matching the pattern: %s"%gfgt
+		nfgt = lnfgt[0]
 		bnmap = bnrad+'.link'
 		nfmap = os.path.join(dirgt, bnmap)
 		with open(nfmap, 'w') as fmap:
