@@ -113,7 +113,8 @@ else
   generaxfamfidir=${alerec}/${reccol}_generax_families
   mkdir -p ${generaxfamfidir}/
   gttorecdir=${coltreechains}/${collapsecond}/${replmethod}
-  python ${ptgscripts}/make_generax_family_file.py --per-family --alignments ${cdsalifastacodedir} \
+  # collapsed-replaced alignments are in the same folder as collapsed-replaced gene trees
+  python ${ptgscripts}/make_generax_family_file.py --per-family --alignments ${gttorecdir} \
    --gene-trees ${gttorecdir} --out ${generaxfamfidir} --gftag '.generax.families'
   checkexec "failed to ${step1}" "successfully ${step1/create/created}"
   
