@@ -80,7 +80,7 @@ if [ ${?} != 0 ] ; then
       exit 2
   else
     echo "found it!" 
-    lnfstree=(`ls ${spetreedir}/${nfrad2}*${spetree}* 2> /dev/null/`)
+    lnfstree=(`ls ${spetreedir}/${nfrad2}*${spetree}*`)
     nfstree=${lnfstree[0]}
     echo "will use nfstree=${nfstree}"
   fi
@@ -95,7 +95,7 @@ if [ ${ncpus} -gt 1 ] ; then
 else
   grxcmd="generax"
 fi
-${grxcmd} ${generaxcommonopt} -s ${speciestree}_clade_defs.nwk -f ${generaxfamfi} -p ${outrecdir} ${generaxopt}
+${grxcmd} ${generaxcommonopt} -s ${nfstree} -f ${generaxfamfi} -p ${outrecdir} ${generaxopt}
 if [ "${GeneRaxalgo}" == 'reconciliation-samples' ] ; then
   # clean up by deleting the highly redundant transfer list files
   for fam in $(grep '^- ' ${generaxfamfi} | cut -d' ' -f2) ; do
