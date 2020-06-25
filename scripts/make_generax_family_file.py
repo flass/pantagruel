@@ -9,7 +9,7 @@ def usage():
 	return s
 
 opts, args = getopt.getopt(sys.argv[1:], 'a:o:hv', ['alignments=', 'gene-trees=', 'out=', \
-													'model=', 'per-family', \
+													'model=', 'per-family', 'skip-abs-gt', \
 													'alitag=', 'gttag=', 'sttag=', 'gftag='])
 dopt = dict(opts)
 if ('-h' in dopt) or ('--help' in dopt):
@@ -20,6 +20,7 @@ gttag = dopt.get('--gttag', '-Gtree.nwk')
 sttag = dopt.get('--sttag', '-Stree.nwk')
 gftag = dopt.get('--gftag', '.generax.families')
 alitag = dopt.get('--alitag', '*.aln')
+skipabsgt = ('--skip-abs-gt' in dopt)
 
 dirali = dopt.get('-a', dopt.get('--alignments'))
 if not dirali:
@@ -50,7 +51,12 @@ for nfali in lnfali:
 	if dirgt:
 		gfgt = "%s/*%s*%s"%(dirgt, fam, gttag)
 		lnfgt = glob.glob(gfgt)
-		if not lnfgt: raise IndexError, "found no file matching the pattern: %s"%gfgt
+		if not lnfgt:
+			if skipabsgt:
+				print "no file match the pattern: %s; skip gene family %s in the absence of a gene tree"%(gfgt, fam)
+				continue # the for nfali loop
+			else:
+				raise IndexError, "found no file matching the pattern: %s"%gfgt
 		nfgt = lnfgt[0]
 		bnmap = bnrad+'.link'
 		nfmap = os.path.join(dirgt, bnmap)
