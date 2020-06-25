@@ -37,6 +37,10 @@ if [ -z "${spetree}" ] ; then
   echo "ERROR: need to define variable spetree ; exit now"
   exit 2
 fi
+# spetreedir
+if [ ! -z "${spetreedir}" ] ; then
+  echo "specied folder where to find species tree:  ${spetreedir}"
+fi
 # generaxcommonopt
 if [ -z "${generaxcommonopt}" ] ; then
   generaxcommonopt="-r UndatedDTL --max-spr-radius 5 --strategy SPR" # env var is a pipeline default
@@ -62,22 +66,21 @@ fi
 ######
 
 nfrad1=$(basename ${generaxfamfi})
-dngrff=$(dirname ${generaxfamfi})
+[ -z "${spetreedir}" ] && spetreedir=$(dirname ${generaxfamfi})
 nfext=${nfrad1##*.}
 nfrad2=${nfrad1%.*}
-nfrad3=${nfrad2%%-*}
 echo ${nfrad2}
 
 ls ${spetree}
 if [ ${?} != 0 ] ; then
-  echo "look for ${spetree} species tree file in ${dnchain}/ folder"
-  ls ${dngrff}/${nfrad3}*${spetree}*
+  echo "look for ${spetree} species tree file in folder ${spetreedir}/"
+  ls ${spetreedir}/${nfrad2}*${spetree}*
   if [ ${?} != 0 ] ; then
-      echo "ERROR: species tree file '${spetree}' is missing/empty ; exit now"
+      echo "ERROR: species tree file '${spetree}' is missing from folder ${spetreedir}/ ; exit now"
       exit 2
   else
     echo "found it!" 
-    lnfstree=(`ls ${dngrff}/${nfrad3}*${spetree}* 2> /dev/null/`)
+    lnfstree=(`ls ${spetreedir}/${nfrad2}*${spetree}* 2> /dev/null/`)
     nfstree=${lnfstree[0]}
     echo "will use nfstree=${nfstree}"
   fi

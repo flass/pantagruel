@@ -89,6 +89,7 @@ if [[ "${chaintype}" == 'fullgenetree' ]] ; then
 else
   # use a dedicated species tree file for each gene family, with population collapsed in accordance to the gene tree
   export spetree='Stree.nwk'
+  export spetreedir=${gttorecdir}
   # this dictate that every family need to be run independently, thus loosing the benefit of built-in optimised load balance
 fi
 if [[ "${chaintype}" == 'fullgenetree' && "${GeneRaxalgo}" =~ 'global' ]] ; then
@@ -112,19 +113,18 @@ else
   step1="create a family file i.e. parameter settings for each gene family"
   generaxfamfidir=${alerec}/${reccol}_generax_families
   mkdir -p ${generaxfamfidir}/
-  gttorecdir=${coltreechains}/${collapsecond}/${replmethod}
   # collapsed-replaced alignments are in the same folder as collapsed-replaced gene trees
   python ${ptgscripts}/make_generax_family_file.py --per-family --alignments ${gttorecdir} \
-   --gene-trees ${gttorecdir} --out ${generaxfamfidir} --gftag '.generax.families'
+   --gene-trees ${gttorecdir} --out ${generaxfamfidir} --gftag '.generax_families'
   checkexec "failed to ${step1}" "successfully ${step1/create/created}"
   
   tasklist=${generaxfamfidir}_list
   if [ -z "${genefamlist}" ] ; then
-    ${ptgscripts}/lsfullpath.py "${generaxfamfidir}/*.generax.families" > ${tasklist}
+    ${ptgscripts}/lsfullpath.py "${generaxfamfidir}/*.generax_families" > ${tasklist}
   else
     rm -f ${tasklist}
     for fam in $(cut -f1 ${genefamlist}) ; do
-      ls ${generaxfamfidir}/${fam}*.generax.families 2> /dev/null
+      ls ${generaxfamfidir}/${fam}*.generax_families 2> /dev/null
     done > ${tasklist} 
   fi
   

@@ -18,7 +18,7 @@ if ('-h' in dopt) or ('--help' in dopt):
 
 gttag = dopt.get('--gttag', '-Gtree.nwk')
 sttag = dopt.get('--sttag', '-Stree.nwk')
-gftag = dopt.get('--gftag', '.generax.families')
+gftag = dopt.get('--gftag', '.generax_families')
 alitag = dopt.get('--alitag', '*.aln')
 skipabsgt = ('--skip-abs-gt' in dopt)
 
@@ -49,7 +49,7 @@ for nfali in lnfali:
 		fout = open(os.path.join(dirout, "%s%s"%(fam, gftag)), 'w')
 		fout.write('[FAMILIES]\n')
 	if dirgt:
-		gfgt = "%s/*%s*%s"%(dirgt, fam, gttag)
+		gfgt = "%s/*%s*%s"%(dirgt, bnrad, gttag)
 		lnfgt = glob.glob(gfgt)
 		if not lnfgt:
 			if skipabsgt:
