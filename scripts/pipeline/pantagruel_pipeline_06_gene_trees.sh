@@ -222,6 +222,14 @@ fi
 ## 06.3 Replace species by populations
 ################################################################################
 
+# backward compatability fix:
+if [ -d ${genetrees}/${chaintype}_tree_chains ] ; then
+  cd ${genetrees}/
+  ln -s ${chaintype}_tree_chains $(basename ${coltreechains})
+  cd - > /dev/null
+else
+  mkdir -p ${coltreechains}/
+fi
 mkdir -p ${ptgdb}/logs/replspebypop
 repltasklist=${genetrees}/$(basename ${colmlgenetrees})_list
 ${ptgscripts}/lsfullpath.py ${colmlgenetrees}/ > ${repltasklist}
