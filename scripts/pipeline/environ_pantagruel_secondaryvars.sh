@@ -35,7 +35,6 @@ export coretree=${coregenome}/raxml_tree
 export mlgenetrees=${genetrees}/raxml_trees
 # sub folders that depend on the gene tree clade collapsing option
 export colalinexuscodedir=${genetrees}/${chaintype}_cdsfam_alignments_species_code
-export coltreechains=${genetrees}/${chaintype}_tree_chains
 export recs=${alerec}/${chaintype}_${recmethod}_recs
 export goterms=${funcannot}/GeneOntology
 export claderefgodir=${goterms}/clade_go_term_reference_sets
@@ -84,10 +83,12 @@ if [[ "${chaintype}" == 'fullgenetree' ]] ; then
   export replmethod='noreplace'
 #  export colmlgenetrees=${mlgenetrees}/rootedTree
   export colmlgenetrees=${mlgenetrees}/bipartitions 
+  export coltreechains=${genetrees}/${chaintype}_ML_genetrees
 else
   export collapsecond=${criterion}_stem${cladesupp}_within${withinfun}${subcladesupp}
   export replmethod='replaceCCinGasinS-collapsePOPinSnotinG'
   export colmlgenetrees=${colalinexuscodedir}/${collapsecond}/collapsed_ML_genetrees
+  export coltreechains=${genetrees}/replaced_ML_genetrees
 fi
 export mboutputdir=${bayesgenetrees}/${collapsecond}
 if [ -z "${pathtoipscan}" ] ; then
