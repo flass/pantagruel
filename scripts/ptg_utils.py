@@ -556,6 +556,7 @@ def duplicateSeqsInAln(nfcolaln, dold2newname, nfoutreplaln=None, inalnfmt='nexu
 	for cladename, newlaborst in dold2newname.iteritems():
 		# collect collpased clade representative sequences
 		ccreprseqalnrowid = findSeqRecordIndexesFromSeqNames(colaln, cladename)
+		if verbose: print "cladename, ccreprseqalnrowid;", cladename, ccreprseqalnrowid
 		rmseqrowid.append(ccreprseqalnrowid)
 		ccreprseq = colaln[ccreprseqalnrowid]
 		newlabs = labsFromReplacementLabOrSubtree(newlaborst)
