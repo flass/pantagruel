@@ -43,7 +43,7 @@ lnfali = glob.glob('%s/%s'%(dirali, alitag))
 
 for nfali in lnfali:
 	bnali = os.path.basename(nfali)
-	fam = bnali.split('.')[0]
+	fam = bnali.split('.')[0].split('-')[0]
 	bnrad = bnali.rsplit('.',1)[0]
 	if perfam:
 		fout = open(os.path.join(dirout, "%s%s"%(fam, gftag)), 'w')
