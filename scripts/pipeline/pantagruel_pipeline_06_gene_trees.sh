@@ -223,7 +223,7 @@ fi
 ################################################################################
 
 # backward compatability fix:
-if [ -d ${genetrees}/${chaintype}_tree_chains ] ; then
+if [[ -d ${genetrees}/${chaintype}_tree_chains && ! -d ${coltreechains} ]] ; then
   cd ${genetrees}/
   ln -s ${chaintype}_tree_chains $(basename ${coltreechains})
   cd - > /dev/null
