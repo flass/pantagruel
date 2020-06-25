@@ -85,10 +85,10 @@ fi
 
 if [[ "${chaintype}" == 'fullgenetree' ]] ; then
   # use the same species tree file for every gene family, with no collapsed populations
-  spetree=${speciestree}_clade_defs.nwk
+  export spetree=${speciestree}_clade_defs.nwk
 else
   # use a dedicated species tree file for each gene family, with population collapsed in accordance to the gene tree
-  spetree='Stree.nwk'
+  export spetree='Stree.nwk'
   # this dictate that every family need to be run independently, thus loosing the benefit of built-in optimised load balance
 fi
 if [[ "${chaintype}" == 'fullgenetree' && "${GeneRaxalgo}" =~ 'global' ]] ; then
@@ -132,7 +132,7 @@ else
   export ncpus=1
   step2="run GeneRax on each pangenome gene family in parallel"
   echo "${step2} (using GNU parallel on ${ptgthreads} cores, ${ncpus} thread(s) per process)"
-  parallel -j ${ptgthreads} ${ptgscripts}/generax_perfam.sh :::: ${tasklist}
+  parallel -j ${ptgthreads} --results ${grxlogs}/${reccol}/generax_perfam.{/.}.log ${ptgscripts}/generax_perfam.sh :::: ${tasklist}
   checkexec "failed to ${step2}" "successfully ${step2/run/ran}"
 		
 fi

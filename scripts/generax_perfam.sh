@@ -2,11 +2,17 @@
 
 ### verify and parse key variable definition
 # generaxfamfi
+echo "generaxfamfi:"
 if [ -z "${generaxfamfi}" ] ; then
   generaxfamfi="${1}"
   if [ -z "${generaxfamfi}" ] ; then
     echo "missing mandatory argument: generax family file path (to pass either through env var \$generaxfamfi or as positional argument \$1); exit now"
 	exit 1
+  fi
+  ls ${generaxfamfi}
+  if [ ${?} != 0 ] ; then
+    echo "ERROR: generax family file '${generaxfamfi}' is missing/empty ; exit now"
+    exit 2
   fi
 fi
 # outrecdir
@@ -67,7 +73,7 @@ if [ ${?} != 0 ] ; then
   echo "look for ${spetree} species tree file in ${dnchain}/ folder"
   ls ${dngrff}/${nfrad3}*${spetree}*
   if [ ${?} != 0 ] ; then
-      echo "ERROR: file '${spetree}' is missing/empty ; exit now"
+      echo "ERROR: species tree file '${spetree}' is missing/empty ; exit now"
       exit 2
   else
     echo "found it!" 
