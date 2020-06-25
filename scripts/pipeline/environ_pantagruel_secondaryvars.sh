@@ -83,7 +83,7 @@ if [[ "${chaintype}" == 'fullgenetree' ]] ; then
   export replmethod='noreplace'
 #  export colmlgenetrees=${mlgenetrees}/rootedTree
   export colmlgenetrees=${mlgenetrees}/bipartitions 
-  export coltreechains=${genetrees}/${chaintype}_ML_genetrees
+  export coltreechains=${genetrees}/full_ML_genetrees
 else
   export collapsecond=${criterion}_stem${cladesupp}_within${withinfun}${subcladesupp}
   export replmethod='replaceCCinGasinS-collapsePOPinSnotinG'
