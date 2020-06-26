@@ -54,7 +54,7 @@ The job-submitted wrapper script will first attempt to load a conda environment\
 named 'ptgenv', which can be created (just once) using:\n
 \t\`\`\`conda create -n ptgenv python=2.7 pip\n
 \t\ \ \ conda activate ptgenv\n
-\t\ \ \ pip install scipy numpy biopython bcbio-gff Cython python-igraph\`\`\`\n
+\t\ \ \ pip install scipy numpy biopython bcbio-gff Cython python-igraph bioscripts.convert\`\`\`\n
 \n
 If not found, the script will attempt to load Anaconda and attached python modules
 with the \`module load anaconda3/personal\` command (not standard, likely not available on your cluster).

@@ -153,7 +153,7 @@ fi
 if [[ "${chaintype}" == 'fullgenetree' ]] ; then
   #### OPTION A1: no collapsing, just convert the alignments from fasta to nexus to directly compute bayesian trees
 
-  echo -e "step 2: will not collapse gene trees; nothing to do.\n# # #"
+  echo -e "step 2: env var \$chaintype is set to '${chaintype}', hence will not collapse the gene trees; nothing to do here.\n# # #"
   
   #### end OPTION A1
 else
@@ -230,16 +230,13 @@ if [[ -d ${genetrees}/${chaintype}_tree_chains && ! -d ${coltreechains} ]] ; the
 else
   mkdir -p ${coltreechains}/
 fi
-mkdir -p ${ptgdb}/logs/replspebypop
+
 repltasklist=${genetrees}/$(basename ${colmlgenetrees})_list
 ${ptgscripts}/lsfullpath.py ${colmlgenetrees}/ > ${repltasklist}
-repllogd=${ptgdb}/logs/replspebypop
-repllogs=$repllogd/replace_species_by_pop_in_gene_trees
-replrun=$(date +'%d%m%Y')  
 if [[ "${chaintype}" == 'fullgenetree' ]] ; then
   #### OPTION A2: 
   ## no need to replace anything in the tree; just link the original ML gene trees to the folder of replaced gene tree chains
-  echo "step 3: no need for gene tree format conversion and replacement of collapsed clades"
+  echo "step 3: env var \$chaintype is set to '${chaintype}', hence no need for gene tree format conversion and replacement of collapsed clades"
   echo -e "will directly use ML trees from RAxML; link files from '${colmlgenetrees}/' into '${coltreechains}/${collapsecond}/${replmethod}/'\n# # #"
   rm -rf ${coltreechains}/${collapsecond}/${replmethod}/
   mkdir -p ${coltreechains}/${collapsecond}/${replmethod}/
@@ -254,6 +251,10 @@ else
   step3="step 3: replace collapsed clades in ML gene trees by population representatives"
   step3s="step 3: replacement of collapsed clades"
   echo ${step3}
+  repllogd=${ptgdb}/logs/replspebypop
+  mkdir -p ${repllogd}/
+  repllogs=${repllogd}/replace_species_by_pop_in_gene_trees
+  replrun=$(date +'%d%m%Y')  
   if [ "${resumetask}" == 'true' ] ; then
     # resume mode (useful fter a stop in batch computing, or to collect those jobs that crashed and may need to be re-ran with more mem/time allowance)
 	# evaluate what gene tree parsing/replacement jobs remain to be done
