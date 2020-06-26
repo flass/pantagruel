@@ -107,7 +107,7 @@ if [[ "${chaintype}" == 'fullgenetree' && "${GeneRaxalgo}" =~ 'global' ]] ; then
   case "$hpctype" in
     'PBS') 
         subcmd="qsub -l walltime=${wth}:00:00 -l select=1:ncpus=${ncpus}:mem=${mem}gb -N \"${reccol}\" \
-	    -o ${grxlogs}/${reccol}/generax_global_mpi.%J.log -j oe -V ${ptgscripts}/generax_global_mpi.qsub ${generaxfamfi}"
+	    -o ${grxlogs}/${reccol}/generax_global_mpi.log -j oe -V ${ptgscripts}/generax_global_mpi.qsub ${generaxfamfi}"
         ;;
     'LSF')
 	  bqueue='parallel'
@@ -151,7 +151,7 @@ else
   jobranges=($(${ptgscripts}/get_jobranges.py ${chunksize} ${Njob}))
 
   step2="run GeneRax on each pangenome gene family in parallel"
-  echo "submitting array job(s) to ${step2} (using ${ncpus} thread(s) per process)"
+  echo "submitting array job(s) to ${step2} (using ${ncpus} thread(s) per process) with the following range: ${jobranges[@]}"
   for jobrange in ${jobranges[@]} ; do
     dlogs=${grxlogs}/${reccol}/generax_perfam_array_${dtag}_${jobrange}
     mkdir -p ${dlogs}/

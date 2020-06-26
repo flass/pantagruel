@@ -28,7 +28,7 @@ source ${hpcscriptdir}/pantagruel_pipeline_HPC_common_interface.sh "${@}"
 
 if [[ "${chaintype}" == 'fullgenetree' ]] ; then
   #### OPTION A2: pretty much nothing to do
-  echo "Warning: step 5 of task 06 ('06.5 Populate database with all collapsed gene tree results') is not required when \${chaintype}='fullgenetree' ; exit now."
+  echo "Warning: Pantagruel task 06, step 5 ('06.5 Populate database with all collapsed gene tree results') is not required when \${chaintype}='fullgenetree' ; exit now."
   exit 0
   
   #### end OPTION A2: 

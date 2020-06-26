@@ -36,7 +36,8 @@ echo "$(wc -l ${smallfams}) gene families were found to contain to few non-ident
 
 #### OPTION: edit collapsed gene trees to attribute an (ancestral) species identity to the leafs representing collapsed clades = pre-reconciliation of recent gene history
 if [[ "${chaintype}" == 'fullgenetree' ]] ; then
-  echo "Pantagruel task 6, step 2: env var \$chaintype is set to '${chaintype}', hence will not collapse the gene trees; nothing to do here."
+  echo "Warning: Pantagruel task 6, step 2 ('Collapse rake clades in ML gene trees') is not required when \${chaintype}='fullgenetree' ; exit now."
+  exit 0
 else
  if [[ "${chaintype}" == 'collapsed' ]] ; then
   if [ -z ${collapsecolid} ] ; then
