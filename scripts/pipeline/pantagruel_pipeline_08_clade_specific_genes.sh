@@ -137,8 +137,8 @@ cladedefhead=$(head -n1 ${cladedefs})
 
 ## core genome terms
 step51="generating core genome background term distribution for clades"
-echo "step 5.1: ${step5}"
-## only select representative genes aong the member sequences of core gene families
+echo "step 5.1: ${step51}"
+## only select representative genes among the member sequences of core gene families
 ## by default choose 'smallest' string in the clade code list to pick representative sequence, as done by default in get_clade_specific_genes.r
 ## this can be overridden using the env. variable ${preferredgenomes}
 # for the whole dataset
@@ -152,10 +152,13 @@ qcore="
 select distinct locus_tag, go_id 
   FROM ( 
    SELECT gene_family_id, og_id, min(cds_code) AS cds_code
-    FROM coding_sequences
+    FROM coding_sequences AS cod
 	INNER JOIN replicons USING (genomic_accession) 
 	INNER JOIN assemblies USING (assembly_id) 
-    LEFT JOIN orthologous_groups USING (gene_family_id, cds_code)
+    LEFT JOIN (
+	  SELECT replacement_label_or_cds_code AS cds_code, *
+	  FROM orthologous_groups
+	) USING (gene_family_id, cds_code)
     INNER JOIN gene_fam_og_sizes USING (gene_family_id, og_id) 
    WHERE code=${mincode}
    AND size=${ngenomes} AND genome_present=${ngenomes}
@@ -191,7 +194,10 @@ tail -n +2 ${cladedefs} | while read cla ${cladedefhead} ; do
 	FROM coding_sequences 
 	INNER JOIN replicons USING (genomic_accession) 
 	INNER JOIN assemblies USING (assembly_id) 
-	LEFT JOIN orthologous_groups USING (gene_family_id, cds_code)
+	LEFT JOIN (
+	  SELECT replacement_label_or_cds_code AS cds_code, *
+	  FROM orthologous_groups
+	) USING (gene_family_id, cds_code)
    WHERE gene_family_id IS NOT NULL 
    AND (ortholog_col_id=${orthocolid} OR ortholog_col_id IS NULL)
    AND code IN (${claspeset});
