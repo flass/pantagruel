@@ -50,9 +50,6 @@ for nfali in lnfali:
 	bnali = os.path.basename(nfali)
 	fam = bnali.split('.')[0].split('-')[0]
 	bnrad = bnali.rsplit('.',1)[0]
-	if perfam:
-		fout = open(os.path.join(dirout, "%s%s"%(fam, gftag)), 'w')
-		fout.write('[FAMILIES]\n')
 	if dirgt:
 		gfgt = "%s/*%s*%s"%(dirgt, bnrad, gttag)
 		lnfgt = glob.glob(gfgt)
@@ -74,6 +71,9 @@ for nfali in lnfali:
 		nfmap = None
 		nfgt = None
 	
+	if perfam:
+		fout = open(os.path.join(dirout, "%s%s"%(fam, gftag)), 'w')
+		fout.write('[FAMILIES]\n')
 	# write out
 	fout.write('- %s\n'%fam)
 	fout.write('alignment = %s\n'%(nfali))

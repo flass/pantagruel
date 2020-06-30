@@ -132,20 +132,46 @@ else
   step1="create a family file i.e. parameter settings for each gene family"
   generaxfamfidir=${alerec}/${reccol}_generax_families
   mkdir -p ${generaxfamfidir}/
-  # collapsed-replaced alignments are in the same folder as collapsed-replaced gene trees
-  python2.7 ${ptgscripts}/make_generax_family_file.py --per-family --alignments ${alitorecdir} \
-   --gene-trees ${gttorecdir} --out ${generaxfamfidir} --gftag '.generax_families'
-  checkexec "failed to ${step1}" "successfully ${step1/create/created}"
-  ls -d ${generaxfamfidir}
-  
   tasklist=${generaxfamfidir}_list
-  if [ -z "${genefamlist}" ] ; then
-    ${ptgscripts}/lsfullpath.py "${generaxfamfidir}/*.generax_families" > ${tasklist}
+  if [ -z "${resumetask}" ] ; then
+  # collapsed-replaced alignments are in the same folder as collapsed-replaced gene trees
+    python2.7 ${ptgscripts}/make_generax_family_file.py --per-family --alignments ${alitorecdir} \
+     --gene-trees ${gttorecdir} --out ${generaxfamfidir} --gftag '.generax_families'
+    checkexec "failed to ${step1}" "successfully ${step1/create/created}"
+    ls -d ${generaxfamfidir}
+    if [ -z "${genefamlist}" ] ; then
+      ${ptgscripts}/lsfullpath.py "${generaxfamfidir}/*.generax_families" > ${tasklist}
+    else
+      rm -f ${tasklist}
+      for fam in $(cut -f1 ${genefamlist}) ; do
+        ls ${generaxfamfidir}/${fam}*.generax_families 2> /dev/null
+      done > ${tasklist} 
+    fi
   else
-    rm -f ${tasklist}
-    for fam in $(cut -f1 ${genefamlist}) ; do
-      ls ${generaxfamfidir}/${fam}*.generax_families 2> /dev/null
-    done > ${tasklist} 
+    echo "Resume mode: will reuse previous gene family file list:"
+    ls ${tasklist}
+    checkexec "failed to locate previous gene family file list"
+    echo "will restrict this list to remaining jobs"
+    rm -f ${tasklist}_*
+    for generaxfamfi in $(cat ${tasklist}) ; do
+      fam=${generaxfamfi%%.*}
+      grxout=${outrecdir}/reconciliations/${fam}_samples.nhx
+      if [ -s ${grxout} ] ; then
+        nsampout=$(wc -l ${grxout} | cut -f1 -d' ')
+        if [ ${nsampout} != ${recsamplesize} ] ; then
+          echo ${generaxfamfi} >> ${tasklist}_incomplete_samples
+        else
+          echo ${generaxfamfi} >> ${tasklist}_complete_samples
+        fi
+      else  
+        echo ${generaxfamfi} >> ${tasklist}_resume
+      fi
+    done
+    echo "found $(wc -l ${tasklist}_complete_resume 2> /dev/null | cut -f1 -d' ') gene families for which reconciliation sampling was not done; these jobs will be resubmitted"
+    echo "found $(wc -l ${tasklist}_complete_samples 2> /dev/null | cut -f1 -d' ') complete reconciliation samples"
+    echo "found $(wc -l ${tasklist}_incomplete_samples 2> /dev/null | cut -f1 -d' ') incomplete reconciliation samples; these will be resubmitted after the above and GeneRax should pick up from previous results. However, you may want to increase time/CPU allowance relative to previous job submissions to allow for completion of these jobs."
+    cat ${tasklist}_incomplete_samples >> ${tasklist}_resume
+    export tasklist=${tasklist}_resume
   fi
   
   Njob=`wc -l ${tasklist} | cut -f1 -d' '`
