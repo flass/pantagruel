@@ -4,6 +4,8 @@
 import sys, os, glob, getopt
 import tree2
 
+print "# call was:", ' '.join(sys.argv)
+
 def usage():
 	s = '[need help message here]'
 	return s
@@ -18,7 +20,6 @@ if ('-h' in dopt) or ('--help' in dopt):
 	sys.exit(0)
 
 verbose = (('-v' in dopt) or ('--verbose' in dopt))
-if verbose: print "# call was:", ' '.join(sys.argv)
 
 gttag = dopt.get('--gttag', '-Gtree.nwk')
 sttag = dopt.get('--sttag', '-Stree.nwk')
@@ -57,10 +58,10 @@ for nfali in lnfali:
 		lnfgt = glob.glob(gfgt)
 		if not lnfgt:
 			if skipabsgt:
-				print "no file match the pattern: %s; skip gene family %s in the absence of a gene tree"%(gfgt, fam)
+				if verbose: print "no file match the pattern: %s; skip gene family %s in the absence of a gene tree"%(gfgt, fam)
 				continue # the for nfali loop
 			else:
-				raise IndexError, "found no file matching the pattern: %s"%gfgt
+				raise IndexError, "found no gene tree file matching the pattern: %s"%gfgt
 		nfgt = lnfgt[0]
 		bnmap = bnrad+'.link'
 		nfmap = os.path.join(dirgt, bnmap)
