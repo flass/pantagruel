@@ -91,11 +91,13 @@ fi
 mkdir -p ${outrecdir}
 
 if [ ${ncpus} -gt 1 ] ; then
-  grxcmd="mpirun -np ${ncpus} generax"
+  grxcmd="mpiexec -np ${ncpus} generax"
 else
   grxcmd="generax"
 fi
+
 ${grxcmd} ${generaxcommonopt} -s ${nfstree} -f ${generaxfamfi} -p ${outrecdir} ${generaxopt}
+
 if [ "${GeneRaxalgo}" == 'reconciliation-samples' ] ; then
   # clean up by deleting the highly redundant transfer list files
   for fam in $(grep '^- ' ${generaxfamfi} | cut -d' ' -f2) ; do
