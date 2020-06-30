@@ -90,10 +90,13 @@ fi
 
 mkdir -p ${outrecdir}
 
+if [ -z ${grbin} ] ; then
+  grbin="generax"
+fi
 if [ ${ncpus} -gt 1 ] ; then
-  grxcmd="mpiexec -np ${ncpus} generax"
+  grxcmd="mpiexec -np ${ncpus} ${grbin}"
 else
-  grxcmd="generax"
+  grxcmd="${grbin}"
 fi
 
 ${grxcmd} ${generaxcommonopt} -s ${nfstree} -f ${generaxfamfi} -p ${outrecdir} ${generaxopt}

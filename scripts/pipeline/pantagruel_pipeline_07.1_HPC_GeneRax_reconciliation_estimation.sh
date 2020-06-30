@@ -57,7 +57,7 @@ fi
 
 # recording the software version that was used
 if [[ -z "${grbin}" ]] ; then
-  grbin=$(command -v generax)
+  export grbin=$(command -v generax)
 fi
 if [[ -z "${grbin}" ]] ; then
   echo "Error: could not find command 'generax' in the path; please provide the path to the generax executable file through env variable \$grbin; exit now"
