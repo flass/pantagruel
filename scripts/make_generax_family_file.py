@@ -10,11 +10,15 @@ def usage():
 
 opts, args = getopt.getopt(sys.argv[1:], 'a:o:hv', ['alignments=', 'gene-trees=', 'out=', \
 													'model=', 'per-family', 'skip-abs-gt', \
-													'alitag=', 'gttag=', 'sttag=', 'gftag='])
+													'alitag=', 'gttag=', 'sttag=', 'gftag=', \
+													'help', 'verbose'])
 dopt = dict(opts)
 if ('-h' in dopt) or ('--help' in dopt):
 	print usage()
 	sys.exit(0)
+
+verbose = (('-v' in dopt) or ('--verbose' in dopt))
+if verbose: print "# call was:", ' '.join(sys.argv)
 
 gttag = dopt.get('--gttag', '-Gtree.nwk')
 sttag = dopt.get('--sttag', '-Stree.nwk')

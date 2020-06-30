@@ -85,7 +85,7 @@ fi
 if [[ "${chaintype}" == 'fullgenetree' ]] ; then
   # use the same species tree file for every gene family, with no collapsed populations
   export spetree=${speciestree}_clade_defs.nwk
-  export alitorec=${cdsalifastacodedir}
+  export alitorecdir=${cdsalifastacodedir}
 else
   # use a dedicated species tree file for each gene family, with population collapsed in accordance to the gene tree
   export spetree='Stree.nwk'
@@ -100,7 +100,7 @@ if [[ "${chaintype}" == 'fullgenetree' && "${GeneRaxalgo}" =~ 'global' ]] ; then
   # generate a global family file i.e. job scheduling list and per-family parameter settings
   generaxfamfi=${alerec}/${reccol}_generax.families
   step1="create a family file i.e. parameter settings for the whole pangenome gene family set"
-  python ${ptgscripts}/make_generax_family_file.py --alignments ${alitorecdir} --out ${generaxfamfi}
+  python ${ptgscripts}/make_generax_family_file.py --alignments ${alitorecdir} --out ${generaxfamfi} --verbose
   checkexec "failed to ${step1}" "successfully ${step1/create/created}"
   ls ${generaxfamfi}
   step2="run GeneRax on all pangenome genes at once"
@@ -134,7 +134,7 @@ else
   mkdir -p ${generaxfamfidir}/
   # collapsed-replaced alignments are in the same folder as collapsed-replaced gene trees
   python ${ptgscripts}/make_generax_family_file.py --per-family --alignments ${alitorecdir} \
-   --gene-trees ${gttorecdir} --out ${generaxfamfidir} --gftag '.generax_families'
+   --gene-trees ${gttorecdir} --out ${generaxfamfidir} --gftag '.generax_families' --verbose
   checkexec "failed to ${step1}" "successfully ${step1/create/created}"
   ls -d ${generaxfamfidir}
   
