@@ -32,4 +32,5 @@ else
 fi
 export generaxfamfi=`awk "NR==${PBS_ARRAY_INDEX}" ${tasklist}`
 
-${dirscript}/generax_perfam.sh ${generaxfamfi}
+#~ ${dirscript}/generax_perfam.sh ${generaxfamfi}
+${ptgscripts}/generax_perfam.sh ${generaxfamfi}
