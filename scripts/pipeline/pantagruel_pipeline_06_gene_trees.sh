@@ -23,7 +23,30 @@ checkfoldersafe ${genetrees}
 if [ -z "${ptgthreads}" ] ; then
   export ptgthreads=$(nproc)
 fi
-  
+
+
+if [[ "${chaintype}" == 'fullgenetree' ]] ; then
+  echo "WARNING: these environment variables are set: chaintype='${chaintype}' ; recmethod='${recmethod}'."
+  echo " -> running this task (06/gene_trees) of Pantagruel pipeline when using GeneRax reconciliation method is DEPRECATED."
+  echo ""
+  echo "If you really want to run task 06 under these settings, please set the env. variable 'raxmlfullgenetrees' as 'true' with:"
+  echo "   \`export raxmlfullgenetrees=true\`"
+  echo "(but note that these gene trees will not be used by the next task)"
+  echo ""
+  echo "Finally, you may consider using the -c|--collapse option of the Pantagruel pipeline,"
+  echo "which allows to reconstruct the history of large pangenomes with high sequence diversity and complex histories,"
+  echo "in which case task 06 is required to pre-compute gene trees so to collapse their rake clades."
+  echo ""
+  echo -e "\n# # #\n"
+  if [ "${raxmlfullgenetrees}" != 'true' ] ; then
+    echo ""
+    echo "This task will exit with code 0 now, moving on to the next task (07/reconciliations)."
+    exit 0
+  else
+    echo "raxmlfullgenetrees='true' ; Will execute task 06 regardless."
+  fi
+fi
+
 ###############################################
 ## 06. Gene trees (full and collapsed ML trees)
 ###############################################

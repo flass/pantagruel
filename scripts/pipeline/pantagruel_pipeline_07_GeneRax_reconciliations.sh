@@ -81,18 +81,46 @@ else
   fi
 fi
 
-#generaxcommonopt="-r UndatedDTL --max-spr-radius 5 --strategy SPR" # now a pipeline default
+# generaxcommonopt="-r UndatedDTL --max-spr-radius 5 --strategy SPR" # now a pipeline default
 
 if [[ "${chaintype}" == 'fullgenetree' ]] ; then
   # use the same species tree file for every gene family, with no collapsed populations
   export spetree=${speciestree}_clade_defs.nwk
-  export alitorecdir=${cdsalifastacodedir}
+  # expect that task 6 has been skipped altogether; proceed with the gene family selection
+  echo "generate list of gene familes to be reconciled"
+  allfamlist=${alerec}/cdsfams_minsize4
+  python2.7 ${ptgscripts}/pantagruel_sqlitedb_query_gene_fam_sets.py --db=${sqldb} --outprefix='cdsfams' --dirout=${alerec} --base.query="${basequery}" \
+   --famsets.min.sizes="4"
+  checkexec "could not generate gene family list ; exit now" "succesfully generated gene family list : $allfamlist"
+  if [ -z "${genefamlist}" ] ; then
+    famlist=${allfamlist}
+  else
+    echo "will restrict the gene families to be processed to those listed in '${genefamlist}':"
+    cut -f1 ${genefamlist} | head
+    ngf=$(wc -l ${genefamlist} | cut -d' ' -f1)
+    if [ $ngf -gt 6 ] ; then
+      echo "... ($ngf families)"
+    fi
+    bngenefamlist=$(basename ${genefamlist})
+    famlist=${genetrees}/${bngenefamlist}_cdsfams_minsize4
+    for fam in $(cut -f1 ${genefamlist}) ; do
+      grep ${fam} ${allfamlist}
+    done > ${famlist}
+    nrestrfam=$(wc -l $famlist)
+    checkexec "could not generate restricted gene family list ; exit now" "succesfully generated restricted gene family lists :\n$famlist (containing $(echo $nrestrfam | cut -d' ' -f1) gene families)"
+  fi
+  alntasklist=${famlist}_aln_list
+  rm -f ${alntasklist}*
+  for fam in $(cut -f1 ${famlist}) ; do
+    ls ${cdsalifastacodedir}/${fam}.codes.aln >> ${alntasklist}
+  done
+  export mkgrfamfiopts="--alignment_list ${alntasklist}"
 else
-  # use a dedicated species tree file for each gene family, with population collapsed in accordance to the gene tree
+  # use a pre-computed gene tree with collapsed rake clades and a dedicated species tree file for each gene family, with population collapsed in accordance to the gene tree
   export spetree='Stree.nwk'
   export spetreedir=${gttorecdir}
-  export alitorecdir=${gttorecdir}
   # this dictate that every family need to be run independently, thus loosing the benefit of built-in optimised load balance
+  export mkgrfamfiopts="--alignments ${gttorecdir} --gene-trees ${gttorecdir}"
 fi
 if [[ "${chaintype}" == 'fullgenetree' && "${GeneRaxalgo}" =~ 'global' ]] ; then
   # using the same species tree allows a single run of GeneRax, with built-in optimised load balance
@@ -101,7 +129,7 @@ if [[ "${chaintype}" == 'fullgenetree' && "${GeneRaxalgo}" =~ 'global' ]] ; then
   # generate a global family file i.e. job scheduling list and per-family parameter settings
   generaxfamfi=${alerec}/${reccol}_generax.families
   step1="create a family file i.e. parameter settings for the whole pangenome gene family set"
-  python ${ptgscripts}/make_generax_family_file.py --alignments ${cdsalifastacodedir} --out ${generaxfamfi}
+  python2.7 ${ptgscripts}/make_generax_family_file.py ${mkgrfamfiopts} --out ${generaxfamfi}
   checkexec "failed to ${step1}" "successfully ${step1/create/created}"
   step2="run GeneRax on all pangenome genes at once"
 #  grlog=${grxlogs}/generax_global.log
@@ -116,8 +144,7 @@ else
   generaxfamfidir=${alerec}/${reccol}_generax_families
   mkdir -p ${generaxfamfidir}/
   # collapsed-replaced alignments are in the same folder as collapsed-replaced gene trees
-  python ${ptgscripts}/make_generax_family_file.py --per-family --alignments ${gttorecdir} \
-   --gene-trees ${gttorecdir} --out ${generaxfamfidir} --gftag '.generax_families'
+  python2.7 ${ptgscripts}/make_generax_family_file.py ${mkgrfamfiopts} --per-family --out ${generaxfamfidir} --gftag '.generax_families'
   checkexec "failed to ${step1}" "successfully ${step1/create/created}"
   
   tasklist=${generaxfamfidir}_list

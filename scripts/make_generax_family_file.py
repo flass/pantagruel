@@ -10,7 +10,7 @@ def usage():
 	s = '[need help message here]'
 	return s
 
-opts, args = getopt.getopt(sys.argv[1:], 'a:o:hv', ['alignments=', 'gene-trees=', 'out=', \
+opts, args = getopt.getopt(sys.argv[1:], 'l:a:o:hv', ['alignment_list=', 'alignments=', 'gene-trees=', 'out=', \
 													'model=', 'per-family', 'skip-abs-gt', \
 													'alitag=', 'gttag=', 'sttag=', 'gftag=', \
 													'help', 'verbose'])
@@ -28,8 +28,9 @@ alitag = dopt.get('--alitag', '.aln')
 skipabsgt = ('--skip-abs-gt' in dopt)
 
 dirali = dopt.get('-a', dopt.get('--alignments'))
-if not dirali:
-	raise ValueError, "you must specify an input alignment folder with -a|--alignments"
+nflistali = dopt.get('-l', dopt.get('--alignment_list'))
+if not (dirali or nflistali):
+	raise ValueError, "you must specify an input alignment list with -l|--alignment_list and/or an alignment folder with -a|--alignments"
 dirgt = dopt.get('--gene-trees')
 model = dopt.get('--model', 'GTR+G')
 perfam = ('--per-family' in dopt)
@@ -44,7 +45,13 @@ else:
 	if not os.path.isdir(dirout):
 		raise ValueError, "specified output directory '%s' does not exist / is not a directory / cannot be accessed"%dirout
 
-lnfali = glob.glob('%s/*%s'%(dirali, alitag))
+lnfali = []
+if dirali:
+	lnfali += glob.glob('%s/*%s'%(dirali, alitag))
+if nflistali:
+	with open(nflistali) as flistali:
+		lnfali += [line.rstrip('\n') for line in flistali]
+
 if dirgt and skipabsgt:
 	lnfgt = glob.glob('%s/*%s'%(dirgt, gttag))
 	sgtfam = set([os.path.basename(nfgt).split('.')[0].split('-')[0] for nfgt in lnfgt])
