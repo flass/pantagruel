@@ -124,7 +124,7 @@ do
 	--topindex)
       testmandatoryarg "${1}" "${2}"
       export topindex="${2}"
-      echo "will sumit a maximum of ${topindex} individual tasks (gene families)"
+      echo "will submit a maximum of ${topindex} individual tasks (gene families)"
       shift 2;;
 	
 	--parallelflags)

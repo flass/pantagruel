@@ -132,7 +132,7 @@ else
   step1="create a family file i.e. parameter settings for each gene family"
   generaxfamfidir=${alerec}/${reccol}_generax_families
   mkdir -p ${generaxfamfidir}/
-  tasklist=${generaxfamfidir}_list
+  export tasklist=${generaxfamfidir}_list
   if [ -z "${resumetask}" ] ; then
   # collapsed-replaced alignments are in the same folder as collapsed-replaced gene trees
     python2.7 ${ptgscripts}/make_generax_family_file.py --per-family --alignments ${alitorecdir} \
@@ -177,7 +177,8 @@ else
   Njob=`wc -l ${tasklist} | cut -f1 -d' '`
   [ ! -z "${topindex}" ] &&  [ ${Njob} -gt ${topindex} ] && Njob=${topindex}
   jobranges=($(${ptgscripts}/get_jobranges.py ${chunksize} ${Njob}))
-
+  
+  dtag=$(date +%Y-%m-%d-%H-%M-%S)
   step2="run GeneRax on each pangenome gene family in parallel"
   echo "submitting array job(s) to ${step2} (using ${ncpus} thread(s) per process) with the following range: ${jobranges[@]}"
   for jobrange in ${jobranges[@]} ; do
