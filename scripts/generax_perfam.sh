@@ -89,7 +89,13 @@ fi
 mkdir -p ${outrecdir}
 
 if [ ${ncpus} -gt 1 ] ; then
-  grxexe="mpiexec -np ${ncpus} ${grbin}"
+  grxexe="mpirun -np ${ncpus} ${grbin}"
+  # test which syntax to use
+  ${grxexe} > /dev/null
+  if [ ${?} != 0 ] ; then
+    # Imperial HPC's querky refusal of mpirun
+    grxexe="mpiexec ${ncpus} ${grbin}"
+  fi 
 else
   grxexe="${grbin}"
 fi
