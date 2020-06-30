@@ -1,6 +1,7 @@
 #!/bin/bash
 
 ### verify and parse key variable definition
+
 # generaxfamfi
 echo "generaxfamfi:"
 if [ -z "${generaxfamfi}" ] ; then
@@ -14,6 +15,16 @@ if [ -z "${generaxfamfi}" ] ; then
     echo "ERROR: generax family file '${generaxfamfi}' is missing/empty ; exit now"
     exit 2
   fi
+  nfrad1=$(basename ${generaxfamfi})
+  nfext=${nfrad1##*.}
+  nfrad2=${nfrad1%.*}
+  echo ${nfrad2}
+fi
+# spetreedir
+if [ ! -z "${spetreedir}" ] ; then
+  echo "a folder was specified where to find the gene-family-specific species tree: ${spetreedir}"
+else
+  spetreedir=$(dirname ${generaxfamfi})
 fi
 # outrecdir
 echo "outrecdir:"
@@ -36,10 +47,26 @@ echo "spetree:"
 if [ -z "${spetree}" ] ; then
   echo "ERROR: need to define variable spetree ; exit now"
   exit 2
+else
+  if [ -s ${spetree} ] ; then
+    nfstree=${spetree}
+  else
+    echo "look for ${spetree} species tree file in folder ${spetreedir}/"
+    ls ${spetreedir}/${nfrad2}*${spetree}*
+    if [ ${?} != 0 ] ; then
+      echo "ERROR: species tree file '${spetree}' is missing from folder ${spetreedir}/ ; exit now"
+      exit 2
+    else
+      echo "found it!" 
+      lnfstree=(`ls ${spetreedir}/${nfrad2}*${spetree}*`)
+      nfstree=${lnfstree[0]}
+    fi
+  fi
+  echo "will use nfstree=${nfstree}"
 fi
-# spetreedir
-if [ ! -z "${spetreedir}" ] ; then
-  echo "specied folder where to find species tree:  ${spetreedir}"
+# grbin
+if [ -z "${grbin}" ] ; then
+  grbin="generax"
 fi
 # generaxcommonopt
 if [ -z "${generaxcommonopt}" ] ; then
@@ -57,49 +84,19 @@ if [ -z "${ncpus}" ] ; then
   ncpus=1
 fi
 
-if [ ${ncpus} -gt 1 ] ; then
-  grxcmd="mpirun -np ${ncpus} generax"
-else
-  grxcmd="generax"
-fi
-
-######
-
-nfrad1=$(basename ${generaxfamfi})
-[ -z "${spetreedir}" ] && spetreedir=$(dirname ${generaxfamfi})
-nfext=${nfrad1##*.}
-nfrad2=${nfrad1%.*}
-echo ${nfrad2}
-
-ls ${spetree}
-if [ ${?} != 0 ] ; then
-  echo "look for ${spetree} species tree file in folder ${spetreedir}/"
-  ls ${spetreedir}/${nfrad2}*${spetree}*
-  if [ ${?} != 0 ] ; then
-      echo "ERROR: species tree file '${spetree}' is missing from folder ${spetreedir}/ ; exit now"
-      exit 2
-  else
-    echo "found it!" 
-    lnfstree=(`ls ${spetreedir}/${nfrad2}*${spetree}*`)
-    nfstree=${lnfstree[0]}
-    echo "will use nfstree=${nfstree}"
-  fi
-else
-  nfstree=${spetree}
-fi
+### excute task
 
 mkdir -p ${outrecdir}
 
-if [ -z ${grbin} ] ; then
-  grbin="generax"
-fi
 if [ ${ncpus} -gt 1 ] ; then
-  grxcmd="mpiexec -np ${ncpus} ${grbin}"
+  grxexe="mpiexec -np ${ncpus} ${grbin}"
 else
-  grxcmd="${grbin}"
+  grxexe="${grbin}"
 fi
 
-${grxcmd} ${generaxcommonopt} -s ${nfstree} -f ${generaxfamfi} -p ${outrecdir} ${generaxopt}
+grxcmd="${grxexe} ${generaxcommonopt} -s ${nfstree} -f ${generaxfamfi} -p ${outrecdir} ${generaxopt}"
+echo "# ${grxcmd}"
+eval ${grxcmd}
 
 if [ "${GeneRaxalgo}" == 'reconciliation-samples' ] ; then
   # clean up by deleting the highly redundant transfer list files
