@@ -94,7 +94,7 @@ if [ ${ncpus} -gt 1 ] ; then
   ${grxexe} > /dev/null
   if [ ${?} != 0 ] ; then
     # Imperial HPC's querky refusal of mpirun
-    grxexe="mpiexec ${ncpus} ${grbin}"
+    grxexe="mpiexec ${grbin}"
   fi 
 else
   grxexe="${grbin}"

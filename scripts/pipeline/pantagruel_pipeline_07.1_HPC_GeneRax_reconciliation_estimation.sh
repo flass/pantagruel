@@ -167,10 +167,10 @@ else
         echo ${generaxfamfi} >> ${tasklist}_resume
       fi
     done
-    echo "found $(wc -l ${tasklist}_complete_resume 2> /dev/null | cut -f1 -d' ') gene families for which reconciliation sampling was not done; these jobs will be resubmitted"
-    echo "found $(wc -l ${tasklist}_complete_samples 2> /dev/null | cut -f1 -d' ') complete reconciliation samples"
-    echo "found $(wc -l ${tasklist}_incomplete_samples 2> /dev/null | cut -f1 -d' ') incomplete reconciliation samples; these will be resubmitted after the above and GeneRax should pick up from previous results. However, you may want to increase time/CPU allowance relative to previous job submissions to allow for completion of these jobs."
-    cat ${tasklist}_incomplete_samples >> ${tasklist}_resume
+    echo "found $((wc -l ${tasklist}_resume 2> /dev/null || echo 0) | cut -f1 -d' ') gene families for which reconciliation sampling was not done; these jobs will be resubmitted"
+    echo "found $((wc -l ${tasklist}_complete_samples 2> /dev/null || echo 0) | cut -f1 -d' ') complete reconciliation samples"
+    echo "found $((wc -l ${tasklist}_incomplete_samples 2> /dev/null || echo 0) | cut -f1 -d' ') incomplete reconciliation samples; these will be resubmitted after the above and GeneRax should pick up from previous results. However, you may want to increase time/CPU allowance relative to previous job submissions to allow for completion of these jobs."
+    [ -s ${tasklist}_incomplete_samples ] && cat ${tasklist}_incomplete_samples >> ${tasklist}_resume
     export tasklist=${tasklist}_resume
   fi
   
