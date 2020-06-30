@@ -24,7 +24,7 @@ verbose = (('-v' in dopt) or ('--verbose' in dopt))
 gttag = dopt.get('--gttag', '-Gtree.nwk')
 sttag = dopt.get('--sttag', '-Stree.nwk')
 gftag = dopt.get('--gftag', '.generax_families')
-alitag = dopt.get('--alitag', '*.aln')
+alitag = dopt.get('--alitag', '.aln')
 skipabsgt = ('--skip-abs-gt' in dopt)
 
 dirali = dopt.get('-a', dopt.get('--alignments'))
@@ -44,13 +44,20 @@ else:
 	if not os.path.isdir(dirout):
 		raise ValueError, "specified output directory '%s' does not exist / is not a directory / cannot be accessed"%dirout
 
-lnfali = glob.glob('%s/%s'%(dirali, alitag))
+lnfali = glob.glob('%s/*%s'%(dirali, alitag))
+if dirgt and skipabsgt:
+	lnfgt = glob.glob('%s/*%s'%(dirgt, gttag))
+	sgtfam = set([os.path.basename(nfgt).split('.')[0].split('-')[0] for nfgt in lnfgt])
 
 for nfali in lnfali:
 	bnali = os.path.basename(nfali)
 	fam = bnali.split('.')[0].split('-')[0]
 	bnrad = bnali.rsplit('.',1)[0]
 	if dirgt:
+		if skipabsgt:
+			if not (fam in sgtfam):
+				if verbose: print "skip gene family %s in the absence of a matching gene tree in folder %s"%(fam, dirgt)
+				continue # the for nfali loop	
 		gfgt = "%s/*%s*%s"%(dirgt, bnrad, gttag)
 		lnfgt = glob.glob(gfgt)
 		if not lnfgt:
