@@ -88,6 +88,7 @@ if [[ "${chaintype}" == 'fullgenetree' ]] ; then
   # expect that task 6 has been skipped altogether; proceed with the gene family selection
   echo "generate list of gene familes to be reconciled"
   allfamlist=${alerec}/cdsfams_minsize4
+  basequery="select gene_family_id, size from gene_family_sizes where gene_family_id is not null and gene_family_id!='${cdsorfanclust}'"
   python2.7 ${ptgscripts}/pantagruel_sqlitedb_query_gene_fam_sets.py --db=${sqldb} --outprefix='cdsfams' --dirout=${alerec} --base.query="${basequery}" \
    --famsets.min.sizes="4"
   checkexec "could not generate gene family list ; exit now" "succesfully generated gene family list : $allfamlist"
