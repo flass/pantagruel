@@ -86,34 +86,39 @@ if [[ "${chaintype}" == 'fullgenetree' ]] ; then
   # use the same species tree file for every gene family, with no collapsed populations
   export spetree=${speciestree}_clade_defs.nwk
   # expect that task 6 has been skipped altogether; proceed with the gene family selection
-  echo "generate list of gene familes to be reconciled"
-  allfamlist=${alerec}/cdsfams_minsize4
-  basequery="select gene_family_id, size from gene_family_sizes where gene_family_id is not null and gene_family_id!='${cdsorfanclust}'"
-  python2.7 ${ptgscripts}/pantagruel_sqlitedb_query_gene_fam_sets.py --db=${sqldb} --outprefix='cdsfams' --dirout=${alerec} --base.query="${basequery}" \
-   --famsets.min.sizes="4"
-  checkexec "could not generate gene family list ; exit now" "succesfully generated gene family list : $allfamlist"
-  if [ -z "${genefamlist}" ] ; then
-    famlist=${allfamlist}
-  else
-    echo "will restrict the gene families to be processed to those listed in '${genefamlist}':"
-    cut -f1 ${genefamlist} | head
-    ngf=$(wc -l ${genefamlist} | cut -d' ' -f1)
-    if [ $ngf -gt 6 ] ; then
-      echo "... ($ngf families)"
-    fi
-    bngenefamlist=$(basename ${genefamlist})
-    famlist=${genetrees}/${bngenefamlist}_cdsfams_minsize4
-    for fam in $(cut -f1 ${genefamlist}) ; do
-      grep ${fam} ${allfamlist}
-    done > ${famlist}
-    nrestrfam=$(wc -l $famlist)
-    checkexec "could not generate restricted gene family list ; exit now" "succesfully generated restricted gene family lists :\n$famlist (containing $(echo $nrestrfam | cut -d' ' -f1) gene families)"
-  fi
   alntasklist=${famlist}_aln_list
-  rm -f ${alntasklist}*
-  for fam in $(cut -f1 ${famlist}) ; do
-    ls ${cdsalifastacodedir}/${fam}.codes.aln >> ${alntasklist}
-  done
+  if [ ! -z "${resumetask}" ] ; then
+    echo "Resume mode: will reuse previous gene family alignment list:"
+    ls ${alntasklist}
+  else
+    rm -f ${alntasklist}*
+    echo "generate list of gene familes to be reconciled"
+    allfamlist=${alerec}/cdsfams_minsize4
+    basequery="select gene_family_id, size from gene_family_sizes where gene_family_id is not null and gene_family_id!='${cdsorfanclust}'"
+    python2.7 ${ptgscripts}/pantagruel_sqlitedb_query_gene_fam_sets.py --db=${sqldb} --outprefix='cdsfams' --dirout=${alerec} --base.query="${basequery}" \
+     --famsets.min.sizes="4"
+    checkexec "could not generate gene family list ; exit now" "succesfully generated gene family list : $allfamlist"
+    if [ -z "${genefamlist}" ] ; then
+      famlist=${allfamlist}
+    else
+      echo "will restrict the gene families to be processed to those listed in '${genefamlist}':"
+      cut -f1 ${genefamlist} | head
+      ngf=$(wc -l ${genefamlist} | cut -d' ' -f1)
+      if [ $ngf -gt 6 ] ; then
+        echo "... ($ngf families)"
+      fi
+      bngenefamlist=$(basename ${genefamlist})
+      famlist=${genetrees}/${bngenefamlist}_cdsfams_minsize4
+      for fam in $(cut -f1 ${genefamlist}) ; do
+        grep ${fam} ${allfamlist}
+      done > ${famlist}
+      nrestrfam=$(wc -l $famlist)
+      checkexec "could not generate restricted gene family list ; exit now" "succesfully generated restricted gene family lists :\n$famlist (containing $(echo $nrestrfam | cut -d' ' -f1) gene families)"
+    fi
+    for fam in $(cut -f1 ${famlist}) ; do
+      ls ${cdsalifastacodedir}/${fam}.codes.aln >> ${alntasklist}
+    done
+  fi
   export mkgrfamfiopts="--alignment_list ${alntasklist}"
 else
   # use a pre-computed gene tree with collapsed rake clades and a dedicated species tree file for each gene family, with population collapsed in accordance to the gene tree
@@ -184,7 +189,7 @@ else
     for generaxfamfi in $(cat ${tasklist}) ; do
       fam=${generaxfamfi%%.*}
       grxout=${outrecdir}/reconciliations/${fam}_samples.nhx
-      if [ -s ${grxout} ] ; then
+      if [ -e ${grxout} ] ; then
         nsampout=$(wc -l ${grxout} | cut -f1 -d' ')
         if [ ${nsampout} != ${recsamplesize} ] ; then
           echo ${generaxfamfi} >> ${tasklist}_incomplete_samples
