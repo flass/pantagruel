@@ -15,11 +15,11 @@ if [ -z "${generaxfamfi}" ] ; then
     echo "ERROR: generax family file '${generaxfamfi}' is missing/empty ; exit now"
     exit 2
   fi
-  nfrad1=$(basename ${generaxfamfi})
-  nfext=${nfrad1##*.}
-  nfrad2=${nfrad1%.*}
-  echo ${nfrad2}
 fi
+nfrad1=$(basename ${generaxfamfi})
+nfext=${nfrad1##*.}
+nfrad2=${nfrad1%.*}
+echo ${nfrad2}
 # spetreedir
 if [ ! -z "${spetreedir}" ] ; then
   echo "a folder was specified where to find the gene-family-specific species tree: ${spetreedir}"
@@ -47,6 +47,10 @@ if [ "${worklocal}" == 'true' ] ; then
   echo "will produce reults locally in folder '${PWD}/' and only at the end of GeneRax run rapatriate the results to '${outrecdir}/'"
   outd=${PWD}/generax_${nfrad2}
   mkdir -p ${outd}/
+  if [ ${?} != 0 ] ; then
+    echo "could not create directory '${outd}' ; exit now"
+    exit 2
+  fi
 else
   outd=${outrecdir}
 fi
@@ -109,6 +113,9 @@ fi
 grxcmd="${grxexe} ${generaxcommonopt} -s ${nfstree} -f ${generaxfamfi} -p ${outd} ${generaxopt}"
 echo "# ${grxcmd}"
 eval ${grxcmd}
+
+echo "Output of GeneRax is:"
+ls ${outd}/
 
 if [ "${GeneRaxalgo}" == 'reconciliation-samples' ] ; then
   # clean up by deleting the highly redundant transfer list files
