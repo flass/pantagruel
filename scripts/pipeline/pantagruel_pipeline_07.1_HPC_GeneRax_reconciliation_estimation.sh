@@ -187,7 +187,8 @@ else
     echo "will restrict this list to remaining jobs"
     rm -f ${tasklist}_*
     for generaxfamfi in $(cat ${tasklist}) ; do
-      fam=${generaxfamfi%%.*}
+      bngeneraxfamfi=$(basename ${generaxfamfi})
+      fam=${bngeneraxfamfi%%.*}
       grxout=${outrecdir}/reconciliations/${fam}_samples.nhx
       if [ -e ${grxout} ] ; then
         nsampout=$(wc -l ${grxout} | cut -f1 -d' ')
