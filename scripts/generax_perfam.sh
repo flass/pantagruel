@@ -119,8 +119,8 @@ eval ${grxcmd}
 echo "Output of GeneRax is:"
 echo "ls -l ${outd}/"
 ls -l ${outd}/
-echo "ls -l ${outd}/reconciliations/"
-ls -l ${outd}/reconciliations/
+echo "ls -l ${outd}/reconciliations/ | grep -v transfers"
+ls -l ${outd}/reconciliations/ | grep -v transfers
 
 if [ "${GeneRaxalgo}" == 'reconciliation-samples' ] ; then
   # clean up by deleting the highly redundant transfer list files
