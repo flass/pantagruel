@@ -25,5 +25,20 @@ else
   fi
 fi
 export generaxfamfi=`awk "NR==${LSB_JOBINDEX}" ${tasklist}`
+nfrad1=$(basename ${generaxfamfi})
+nfext=${nfrad1##*.}
+nfrad2=${nfrad1%.*}
 
-${dirscript}/generax_perfam.sh ${generaxfamfi}
+cd /tmp/
+jobtmpdir=raxml_tmp.${nfrad2}
+mkdir -p ${jobtmpdir}/ && cd ${jobtmpdir}/
+echo "current directory is ${PWD}"
+
+export worklocal='true'
+
+${ptgscripts}/generax_perfam.sh ${generaxfamfi}
+
+if [[ "$(basename ${PWD})" == "${jobtmpdir}" ]] ; then
+  cd ..
+  rm -r ${jobtmpdir}/
+fi

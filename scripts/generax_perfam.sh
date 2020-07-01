@@ -42,6 +42,14 @@ else
     fi
   fi
 fi
+# worklocal
+if [ "${worklocal}" == 'true' ] ; then
+  echo "will produce reults locally in folder '${PWD}/' and only at the end of GeneRax run rapatriate the results to '${outrecdir}/'"
+  outd=${PWD}/generax_${nfrad2}
+  mkdir -p ${outd}/
+else
+  outd=${outrecdir}
+fi
 # spetree
 echo "spetree:"
 if [ -z "${spetree}" ] ; then
@@ -86,8 +94,6 @@ fi
 
 ### excute task
 
-mkdir -p ${outrecdir}
-
 if [ ${ncpus} -gt 1 ] ; then
   grxexe="mpirun -np ${ncpus} ${grbin}"
   # test which syntax to use
@@ -100,13 +106,25 @@ else
   grxexe="${grbin}"
 fi
 
-grxcmd="${grxexe} ${generaxcommonopt} -s ${nfstree} -f ${generaxfamfi} -p ${outrecdir} ${generaxopt}"
+grxcmd="${grxexe} ${generaxcommonopt} -s ${nfstree} -f ${generaxfamfi} -p ${outd} ${generaxopt}"
 echo "# ${grxcmd}"
 eval ${grxcmd}
 
 if [ "${GeneRaxalgo}" == 'reconciliation-samples' ] ; then
   # clean up by deleting the highly redundant transfer list files
   for fam in $(grep '^- ' ${generaxfamfi} | cut -d' ' -f2) ; do
-    rm ${outrecdir}/reconciliations/${fam}*_transfers.txt
+    rm ${outd}/reconciliations/${fam}*_transfers.txt
   done
+fi
+
+if [ "${worklocal}" == 'true' ] ; then
+  echo "now rapatriate output files from $HOSTNAME:${outd}/ to ${outputdir}/"
+  rsync -avz ${outd}/* ${outputdir}/
+  if [ $? != 0 ] ; then
+    echo "!!! ERROR : unable to copy GeneRax output files from $HOSTNAME:${outd}/ to ${outputdir}/ ; exit now"
+    exit 1
+  else
+    echo "Succesfully copied GeneRax output files from $HOSTNAME:${outd}/ to ${outputdir}/"
+  fi
+  echo -e "# # # #\n"
 fi

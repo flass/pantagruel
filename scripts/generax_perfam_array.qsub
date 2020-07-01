@@ -31,6 +31,19 @@ else
   fi
 fi
 export generaxfamfi=`awk "NR==${PBS_ARRAY_INDEX}" ${tasklist}`
+nfrad1=$(basename ${generaxfamfi})
+nfext=${nfrad1##*.}
+nfrad2=${nfrad1%.*}
 
-#~ ${dirscript}/generax_perfam.sh ${generaxfamfi}
+if [ -x "${TMPDIR}" ] ; then
+  cd ${TMPDIR}
+else
+  cd /tmp/
+  jobtmpdir=raxml_tmp.${nfrad2}
+  mkdir -p ${jobtmpdir}/ && cd ${jobtmpdir}/
+fi
+echo "current directory is ${PWD}"
+
+export worklocal='true'
+
 ${ptgscripts}/generax_perfam.sh ${generaxfamfi}
