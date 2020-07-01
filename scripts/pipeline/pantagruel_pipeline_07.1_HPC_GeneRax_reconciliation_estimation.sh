@@ -91,7 +91,7 @@ if [[ "${chaintype}" == 'fullgenetree' ]] ; then
   if [ ! -z "${resumetask}" ] ; then
     alntasklist=${famlist}_aln_list
     echo "Resume mode: will reuse previous gene family alignment list:"
-    ls ${alntasklist}
+    wc -l ${alntasklist}
   else
     echo "generate list of gene familes to be reconciled"
     basequery="select gene_family_id, size from gene_family_sizes where gene_family_id is not null and gene_family_id!='${cdsorfanclust}'"
@@ -182,7 +182,7 @@ else
     fi
   else
     echo "Resume mode: will reuse previous gene family file list:"
-    ls ${tasklist}
+    wc -l ${tasklist}
     checkexec "failed to locate previous gene family file list"
     echo "will restrict this list to remaining jobs"
     rm -f ${tasklist}_*

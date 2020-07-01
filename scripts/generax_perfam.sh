@@ -54,6 +54,8 @@ if [ "${worklocal}" == 'true' ] ; then
 else
   outd=${outrecdir}
 fi
+# make this robust to path expansion when '[]' characters present in path
+outd2=$(echo $outd | sed -e 's/\[/\\[/g' | sed -e 's/\]/\\]/g')
 # spetree
 echo "spetree:"
 if [ -z "${spetree}" ] ; then
@@ -123,13 +125,13 @@ ls -l ${outd}/reconciliations/
 if [ "${GeneRaxalgo}" == 'reconciliation-samples' ] ; then
   # clean up by deleting the highly redundant transfer list files
   for fam in $(grep '^- ' ${generaxfamfi} | cut -d' ' -f2) ; do
-    rm ${outd}/reconciliations/${fam}*_transfers.txt
+    rm ${outd2}/reconciliations/${fam}*_transfers.txt
   done
 fi
 
 if [ "${worklocal}" == 'true' ] ; then
   echo "now rapatriate output files from $HOSTNAME:${outd}/ to ${outputdir}/"
-  rsync -avz ${outd}/* ${outputdir}/
+  rsync -avz ${outd}/ ${outputdir}/
   if [ $? != 0 ] ; then
     echo "!!! ERROR : unable to copy GeneRax output files from $HOSTNAME:${outd}/ to ${outputdir}/ ; exit now"
     exit 1
