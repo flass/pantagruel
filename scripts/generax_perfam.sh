@@ -130,13 +130,13 @@ if [ "${GeneRaxalgo}" == 'reconciliation-samples' ] ; then
 fi
 
 if [ "${worklocal}" == 'true' ] ; then
-  echo "now rapatriate output files from $HOSTNAME:${outd}/ to ${outputdir}/"
-  rsync -avz ${outd}/ ${outputdir}/
+  echo "now rapatriate output files from $HOSTNAME:${outd}/ to ${outrecdir}/"
+  rsync -avz ${outd}/ ${outrecdir}/
   if [ $? != 0 ] ; then
-    echo "!!! ERROR : unable to copy GeneRax output files from $HOSTNAME:${outd}/ to ${outputdir}/ ; exit now"
+    echo "!!! ERROR : unable to copy GeneRax output files from $HOSTNAME:${outd}/ to ${outrecdir}/ ; exit now"
     exit 1
   else
-    echo "Succesfully copied GeneRax output files from $HOSTNAME:${outd}/ to ${outputdir}/"
+    echo "Succesfully copied GeneRax output files from $HOSTNAME:${outd}/ to ${outrecdir}/"
   fi
   echo -e "# # # #\n"
 fi
