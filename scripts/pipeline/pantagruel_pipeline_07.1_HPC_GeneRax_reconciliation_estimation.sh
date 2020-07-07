@@ -224,7 +224,18 @@ else
 	    -o ${dlogs} -j oe -V ${ptgscripts}/generax_perfam_array.qsub"
         ;;
       'LSF')
-	    bqueue='parallel'
+	    if [ ${ncpus} -gt 1 ] ; then
+		  bqueue='parallel'
+		  sel
+		else
+	      if [ ${wth} -le 12 ] ; then
+	        bqueue='normal'
+	      elif [ ${wth} -le 48 ] ; then
+	        bqueue='long'
+	      else
+	        bqueue='basement'
+	      fi
+		fi
         arrayspec="[${jobrange}]"
 	    [ ! -z "${maxatonce}" ] && arrayspec="${arrayspec}%${maxatonce}"
         memmb=$((${mem} * 1024))
