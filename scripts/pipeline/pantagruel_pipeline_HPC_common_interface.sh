@@ -31,7 +31,8 @@ or for this help mesage:\n
 \t --wth:\tmax walltime, in hours (default: ${defwth}).\n
 \t --hpctype:\t'PBS' for Torque scheduling system, or 'LSF' for IBM schedulling system (default: '${defhpctype}').\n
 \t --chunksize:\tnumber of families to be processed in one submitted job (default: ${defchunksize})\n
-\t --topindex:\tmax number of (gene family) sub-jobs to be actually submitted (default: '')\n
+\t --topindex:\tmax index of (gene family) sub-job list to be actually submitted (default: '')\n
+\t --minindex:\tmin index of (gene family) sub-job list to be actually submitted (default: '')\n
 \t --maxatonce:\tmaximum number of jobs you want to run at once (only relelvant on LSF system;\n
 \t\t\t useful for fair use of computing resources/queue priority management).\n
 \t --fwdenv:\tnames of current environment variables you want to be passed down to the submitted jobs\n
@@ -74,7 +75,7 @@ testmandatoryarg (){
   fi
 }
 
-ARGS=`getopt --options "h" --longoptions "ncpus:,mem:,wth:,hpctype:,chunksize:,topindex:,parallelflags:,fwdenv:,modules:,maxatonce:,resume" --name "${hpcscript}" -- "$@"`
+ARGS=`getopt --options "h" --longoptions "ncpus:,mem:,wth:,hpctype:,chunksize:,topindex:,minindex:,parallelflags:,fwdenv:,modules:,maxatonce:,resume" --name "${hpcscript}" -- "$@"`
 
 #Bad arguments
 if [ ${?} -ne 0 ];
@@ -124,7 +125,13 @@ do
 	--topindex)
       testmandatoryarg "${1}" "${2}"
       export topindex="${2}"
-      echo "will submit a maximum of ${topindex} individual tasks (gene families)"
+      echo "will submit individual array sub-jobs (gene family jobs) up to a maximum index of ${topindex}"
+      shift 2;;
+	  
+	--minindex)
+      testmandatoryarg "${1}" "${2}"
+      export minindex="${2}"
+      echo "will submit individual array sub-jobs (gene family jobs) starting from a minimum index of ${topindex}"
       shift 2;;
 	
 	--parallelflags)
@@ -150,7 +157,7 @@ do
       echo "will load the following modules in the submitted jobs' environment: '${modules}'"
       shift 2;;
 	  
-	  --maxatonce)
+	--maxatonce)
       testmandatoryarg "${1}" "${2}"
       export maxatonce="${2}"
       if [ "${hpctype}" == 'LSF' ] ; then

@@ -210,7 +210,7 @@ else
   
   Njob=`wc -l ${tasklist} | cut -f1 -d' '`
   [ ! -z "${topindex}" ] &&  [ ${Njob} -gt ${topindex} ] && Njob=${topindex}
-  jobranges=($(${ptgscripts}/get_jobranges.py ${chunksize} ${Njob}))
+  jobranges=($(${ptgscripts}/get_jobranges.py ${chunksize} ${Njob} ${minindex}))
   
   dtag=$(date +%Y-%m-%d-%H-%M-%S)
   step2="run GeneRax on each pangenome gene family in parallel"

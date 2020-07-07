@@ -91,7 +91,7 @@ for i in ${!allcdsfam2phylo[@]} ; do
   [ ! -z "${topindex}" ] && [ ${Njob} -gt ${topindex} ] && Njob=${topindex}
   
   # accomodate with possible upper limit on number of tasks in an array job
-  jobranges=($(${ptgscripts}/get_jobranges.py $chunksize $Njob))
+  jobranges=($(${ptgscripts}/get_jobranges.py ${chunksize} ${Njob} ${minindex}))
   for jobrange in ${jobranges[@]} ; do
     echo "jobrange=$jobrange"
     case "$hpctype" in
