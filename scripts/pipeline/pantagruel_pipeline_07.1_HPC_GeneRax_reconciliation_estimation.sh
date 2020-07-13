@@ -186,25 +186,42 @@ else
     checkexec "failed to locate previous gene family file list"
     echo "will restrict this list to remaining jobs"
     rm -f ${tasklist}_*
-    for generaxfamfi in $(cat ${tasklist}) ; do
-      bngeneraxfamfi=$(basename ${generaxfamfi})
-      fam=${bngeneraxfamfi%%.*}
-      grxout=${outrecdir}/reconciliations/${fam}_samples.nhx
-      if [ -e ${grxout} ] ; then
-        nsampout=$(wc -l ${grxout} | cut -f1 -d' ')
-        if [ ${nsampout} != ${recsamplesize} ] ; then
-          echo ${generaxfamfi} >> ${tasklist}_incomplete_samples
-        else
-          echo ${generaxfamfi} >> ${tasklist}_complete_samples
-        fi
-      else  
-        echo ${generaxfamfi} >> ${tasklist}_resume
-      fi
-    done
-    echo "found $((wc -l ${tasklist}_resume 2> /dev/null || echo 0) | cut -f1 -d' ') gene families for which reconciliation sampling was not done; these jobs will be resubmitted"
-    echo "found $((wc -l ${tasklist}_complete_samples 2> /dev/null || echo 0) | cut -f1 -d' ') complete reconciliation samples"
-    echo "found $((wc -l ${tasklist}_incomplete_samples 2> /dev/null || echo 0) | cut -f1 -d' ') incomplete reconciliation samples; these will be resubmitted after the above and GeneRax should pick up from previous results. However, you may want to increase time/CPU allowance relative to previous job submissions to allow for completion of these jobs."
-    [ -s ${tasklist}_incomplete_samples ] && cat ${tasklist}_incomplete_samples >> ${tasklist}_resume
+    if [ ! -z "${fastresume}" ] ; then
+     # assume that the sample file present in $outrecdir/ are complete
+     for generaxfamfi in $(cat ${tasklist}) ; do
+       bngeneraxfamfi=$(basename ${generaxfamfi})
+       fam=${bngeneraxfamfi%%.*}
+       echo ${fam}
+     done | sort > ${tasklist}_families
+     for outrec in $(ls ${outrecdir}/reconciliations/) ; do
+       fam=${outrec%%_*}
+       echo ${fam}
+     done | sort > ${tasklist}_families_done
+     comm -23 ${tasklist}_families ${tasklist}_families_done > ${tasklist}_families_notdone
+     for fam in $(cat ${tasklist}_families_notdone) ; do 
+       echo ${outrecdir}/reconciliations/${fam}_samples.nhx
+     done > ${tasklist}_resume
+    else
+     for generaxfamfi in $(cat ${tasklist}) ; do
+       bngeneraxfamfi=$(basename ${generaxfamfi})
+       fam=${bngeneraxfamfi%%.*}
+       grxout=${outrecdir}/reconciliations/${fam}_samples.nhx
+       if [ -e ${grxout} ] ; then
+         nsampout=$(wc -l ${grxout} | cut -f1 -d' ')
+         if [ ${nsampout} != ${recsamplesize} ] ; then
+           echo ${generaxfamfi} >> ${tasklist}_incomplete_samples
+         else
+           echo ${generaxfamfi} >> ${tasklist}_complete_samples
+         fi
+       else  
+         echo ${generaxfamfi} >> ${tasklist}_resume
+       fi
+     done
+     echo "found $((wc -l ${tasklist}_resume 2> /dev/null || echo 0) | cut -f1 -d' ') gene families for which reconciliation sampling was not done; these jobs will be resubmitted"
+     echo "found $((wc -l ${tasklist}_complete_samples 2> /dev/null || echo 0) | cut -f1 -d' ') complete reconciliation samples"
+     echo "found $((wc -l ${tasklist}_incomplete_samples 2> /dev/null || echo 0) | cut -f1 -d' ') incomplete reconciliation samples; these will be resubmitted after the above and GeneRax should pick up from previous results. However, you may want to increase time/CPU allowance relative to previous job submissions to allow for completion of these jobs."
+     [ -s ${tasklist}_incomplete_samples ] && cat ${tasklist}_incomplete_samples >> ${tasklist}_resume
+	fi
     export tasklist=${tasklist}_resume
   fi
   
