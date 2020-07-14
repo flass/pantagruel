@@ -22,7 +22,7 @@ NB: this may be used to generate a Singularity container as well, even though it
 
 ### 26/03/2019: now on bioRxiv! 
 The preprint describing the software and underlying methods is available on bioRxiv preprint server at:  
-[bioRxivMS].
+[https://www.biorxiv.org/content/10.1101/586495v3](https://www.biorxiv.org/content/10.1101/586495v3).
 
 ## Reference
 
