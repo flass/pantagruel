@@ -165,7 +165,7 @@ usagelong (){
   echo "                       NOTE: to ensure uniform annotation of the dataset, it is advised to let Pantagruel annotate the contigs (calling Prokka)"
   echo ""
   echo "    --strain_info   path to an optional custom strain information file, provided in the same format as described above for 'strain_infos_\$\{databasename\}.txt'"
-  echo "                      This is only taken into account in the basence of option -a, i.e. only when using options -A or -L to specify input genomes"
+  echo "                      This is only taken into account in the absence of option -a, i.e. only when using options -A or -L to specify input genomes"
   echo "                      from GenBank/RefSeq (or genomes with compliant formats). This allows to override automated genome code generation."
   echo ""
   echo "    -V|--env_var    (preferably double-quoted) string of the form: \"variable1=value1[,variable2=value2[,...]]'.\""
