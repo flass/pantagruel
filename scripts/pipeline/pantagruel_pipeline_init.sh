@@ -156,16 +156,17 @@ if [ ! -z "${customassemb}" ] ; then
   else
     if [ ! -e "${straininfo}" ] ; then
      echo "Error: '${straininfo}' is missing"
-     echo " assembly_id,genus,species,strain,taxid,locus_tag_prefix" | tr ',' '\t' > ${straininfo}
-     echo " and fill up the information table ${straininfo} (tab-delimited fields) according to header:"
-     cat ${straininfo}
+     echo -e "assembly_id\tgenus\tspecies\tstrain\ttaxid\tlocus_tag_prefix" > ${straininfo}
+     echo " a template information table '${straininfo}' was created"
      if [[ "$(ls -A "${customassemb}/contigs/" 2>/dev/null)" ]] ; then
       for allcontigs in `ls ${customassemb}/contigs/` ; do
         gproject=${allcontigs%%.fa*}
-        echo "${gproject}\t\t\t\t\t" >> ${straininfo}
+        echo -e "${gproject}\t\t\t\t\t" >> ${straininfo}
       done
-      echo " a tab-delimited template was prepared in file '${straininfo}' with assembly_id values copied from names of files found in '${customassemb}/contigs/'"
      fi
+     echo " with assembly_id values copied from names of files found in '${customassemb}/contigs/';"
+     echo " please fill it up according to header (and respecting already present tabs delimiting fields):"
+     cat ${straininfo}
      echo " exit now"
      exit 1
     else
