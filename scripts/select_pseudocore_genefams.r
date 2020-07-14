@@ -57,27 +57,29 @@ selectMinGenomes = function(countmatrix, dirout, pseudocoremingenomes=-1, ngenom
 		if (!interactive.X){ pdf(nfpdfout, width=40, height=40) }
 		pcmg = p
 		pseudocorefams = getpseudocorefams(p, countsbyfam)
-		cat("plotting heatmap... ")
-		pseudocoremat = countmatrix[pseudocorefams,]
-		heatmap(t(pseudocoremat), breaks=c(-0.5, 0.5, 1.5, N), col=c('white', 'black', 'red'), scale='none')
-		if (interactive.X){
-			cat("please verify that the distribution of markers per species is not too skewed (counts per species, white: 0, black: 1, red: >1)\n")
-			message("Press Return To Continue") ; invisible(readLines("stdin", n=1))
-		}
-		if (plot.PCoA){
-			cat("computing and plotting PCoA of gene species based on presence/absence... ")
-			count.coa = ade4::dudi.coa(pseudocoremat, scannf=F, nf=2)
+		if (length(pseudocorefams)>0){
+			cat("plotting heatmap... ")
+			pseudocoremat = countmatrix[pseudocorefams,]
+			heatmap(t(pseudocoremat), breaks=c(-0.5, 0.5, 1.5, N), col=c('white', 'black', 'red'), scale='none')
+			if (interactive.X){
+				cat("please verify that the distribution of markers per species is not too skewed (counts per species, white: 0, black: 1, red: >1)\n")
+				message("Press Return To Continue") ; invisible(readLines("stdin", n=1))
+			}
+			if (plot.PCoA){
+				cat("computing and plotting PCoA of gene species based on presence/absence... ")
+				count.coa = ade4::dudi.coa(pseudocoremat, scannf=F, nf=2)
+				if (interactive.X){ message("Press Return To Continue") ; invisible(readLines("stdin", n=1)) }
+				s.label(count.coa$c1)
+			}
+			nmissing = apply(pseudocoremat, 2, function(x){ length(which(!x)) })
+			barplot(nmissing, horiz=T, las=2, ylab='Species label', xlab='Nb. missing gene markers')
 			if (interactive.X){ message("Press Return To Continue") ; invisible(readLines("stdin", n=1)) }
-			s.label(count.coa$c1)
+			barplot(nmissing[order(nmissing, decreasing=T)[1:min(20, N)]], horiz=T, las=2, ylab='Species label', xlab='Nb. missing gene markers')
+			if (!interactive.X){ dev.off() }
 		}
-		nmissing = apply(pseudocoremat, 2, function(x){ length(which(!x)) })
-		barplot(nmissing, horiz=T, las=2, ylab='Species label', xlab='Nb. missing gene markers')
-		if (interactive.X){ message("Press Return To Continue") ; invisible(readLines("stdin", n=1)) }
-		barplot(nmissing[order(nmissing, decreasing=T)[1:min(20, N)]], horiz=T, las=2, ylab='Species label', xlab='Nb. missing gene markers')
-		if (!interactive.X){ dev.off() }
 		write(pseudocorefams, file=nftabout)
-		cat(sprintf("Written list of pseudo-core unicopy gene families (with min. genome nb. = %d) and graphical representation of their distribution at:\n%s\n%s\n",
-		 p, nfpdfout, nftabout))
+		cat(sprintf("Written list of %d pseudo-core unicopy gene families (with min. genome nb. = %d) and graphical representation of their distribution at:\n%s\n%s\n",
+		 length(pseudocorefams), p, nfpdfout, nftabout))
 		pseudocore[[as.character(p)]] = pseudocorefams
 		nloop = nloop + 1
 		if (nloop < length(pseudocoremingenomes)){
@@ -93,13 +95,6 @@ selectMinGenomes = function(countmatrix, dirout, pseudocoremingenomes=-1, ngenom
 	cat(sprintf("Selected %d as value of P\n", p))
 	return(pseudocore)
 }
-
-#~ ngenomes = as.numeric(Sys.getenv('ngenomes'))
-#~ pseudocoremingenomes = as.numeric(Sys.getenv('pseudocoremingenomes'))
-#~ protali = Sys.getenv('protali')
-#~ nflasscode =  file.path(Sys.getenv('database'), 'genome_codes.tab')
-#~ dirout = protali
-#~ nffamgenomemat = file.path(protali, 'full_families_genome_counts-noORFans.mat')
 
 cargs = commandArgs(trailingOnly=TRUE)
 
@@ -159,8 +154,6 @@ if (!is.null(nfrestrictlist)){
 
 onlyunicopy = apply(genocount, 1, function(x){ max(x)==1 })
 genocountunicopy = genocount[onlyunicopy,]
-
-
 
 pseudocore = selectMinGenomes(genocountunicopy, dirout, pseudocoremingenomes=pseudocoremingenomes, interactive.X=interactive.X)
 nfdataout = file.path(dirout, "pseudo-core-all.RData")
