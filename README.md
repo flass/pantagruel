@@ -12,7 +12,7 @@ The worries of installing Pantagruel are in the past! now you just have to downl
 docker pull flass/pantagruel-dep:usingGeneRax-latest
 ```
 
-See details [here](https://github.com/flass/pantagruel/blob/master/INSTALL.md#building-the-docker-image).
+See details [INSTALLdocker].
 Note that the image is quite large (2.05 GB) so make sure you have the relevant space on your machine (and on the filesystem partition that hosts the docker client). Also, InterProScan (used in task 04) is NOT included in docker image, see [here](https://github.com/flass/pantagruel/blob/usingGeneRax/INSTALL.md#interproscantask-04-not-included-in-docker-image).
 
 ### 17/12/2019: :whale: Dockerfile
@@ -22,7 +22,7 @@ NB: this may be used to generate a Singularity container as well, even though it
 
 ### 26/03/2019: now on bioRxiv! 
 The preprint describing the software and underlying methods is available on bioRxiv preprint server at:  
-[https://www.biorxiv.org/content/10.1101/586495v3](https://www.biorxiv.org/content/10.1101/586495v2).
+[bioRxivMS].
 
 ## Reference
 
@@ -585,6 +585,7 @@ Main options are to use either:
 [pipeline2]: https://github.com/flass/pantagruel/blob/usingGeneRax/pics/collapse_samplebackbones_reconcile_compare.png
 [installation]: https://github.com/flass/pantagruel#installing-pantagruel-and-its-dependencies
 [INSTALL]: https://github.com/flass/pantagruel/blob/usingGeneRax/INSTALL.md
+[INSTALLdocker]: https://github.com/flass/pantagruel/blob/usingGeneRax/INSTALL.md#building-the-docker-image
 [usage]: https://github.com/flass/pantagruel#using-pantagruel
 [examples]: https://github.com/flass/pantagruel#usage-example
 [template environment script]: https://github.com/flass/pantagruel/blob/usingGeneRax/scripts/pipeline/environ_pantagruel_template.sh
@@ -592,3 +593,4 @@ Main options are to use either:
 [Dockerfile]:  https://github.com/flass/pantagruel/blob/usingGeneRax/Dockerfile
 [HPC scripts doc]: https://github.com/flass/pantagruel#hpc-scripts-submission-of-intensive-tasks-to-high-performance-computer-clusters
 [Dockerhub]: https://hub.docker.com/repository/docker/flass/pantagruel-dep
+[bioRxivMS]:https://www.biorxiv.org/content/10.1101/586495v3
