@@ -12,7 +12,7 @@ The worries of installing Pantagruel are in the past! now you just have to downl
 docker pull flass/pantagruel-dep:master-latest
 ```
 
-See details [here](https://github.com/flass/pantagruel/blob/master/INSTALL.md#building-the-docker-image).
+See details on the [Docker section of the INSTALL page].
 Note that the image is quite large (2.05 GB) so make sure you have the relevant space on your machine (and on the filesystem partition that hosts the docker client). Also, InterProScan (used in task 04) is NOT included in docker image, see [here](https://github.com/flass/pantagruel/blob/master/INSTALL.md#interproscantask-04-not-included-in-docker-image).
 
 ### 17/12/2019: :whale: Dockerfile
@@ -586,6 +586,7 @@ Main options are to use either:
 [pipeline2]: https://github.com/flass/pantagruel/blob/master/pics/collapse_samplebackbones_reconcile_compare.png
 [installation]: https://github.com/flass/pantagruel#installing-pantagruel-and-its-dependencies
 [INSTALL]: https://github.com/flass/pantagruel/blob/master/INSTALL.md
+[Docker section of the INSTALL page]: https://github.com/flass/pantagruel/blob/master/INSTALL.md#building-the-docker-image
 [usage]: https://github.com/flass/pantagruel#using-pantagruel
 [examples]: https://github.com/flass/pantagruel#usage-example
 [template environment script]: https://github.com/flass/pantagruel/blob/master/scripts/pipeline/environ_pantagruel_template.sh
