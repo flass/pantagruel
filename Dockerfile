@@ -72,7 +72,7 @@ RUN prokka --setupdb
 #RUN brew install mmseqs2
 RUN cd / && git clone https://github.com/soedinglab/MMseqs2.git \
     && cd MMseqs2/ && git checkout 10-6d92c && mkdir build && cd build \
-    && cmake -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_INSTALL_PREFIX=. .. \
+    && cmake -DHAVE_SSE4_1=1 -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_INSTALL_PREFIX=. .. \
     && make && make install
 
 #PAL2NAL
