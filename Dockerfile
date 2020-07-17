@@ -3,7 +3,7 @@ FROM ubuntu:bionic
 ARG DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && apt-get install -y --no-install-recommends wget git build-essential cmake gcc g++ \
-        linuxbrew-wrapper lftp clustalo raxml libhmsbeagle1v5 mrbayes r-base-core \
+        lftp clustalo raxml libhmsbeagle1v5 mrbayes r-base-core \
         r-recommended r-cran-ape r-cran-ade4 r-cran-vegan r-cran-dbi r-cran-rsqlite \
         r-cran-igraph r-cran-getopt sqlite3 sqlite3-doc libmagick++-dev python \
         python-scipy python-numpy python-biopython python-biopython-sql python-igraph \
@@ -12,12 +12,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends wget git build-
         libxml2-dev libcurl4-openssl-dev locales linuxbrew-wrapper rsync \
         libboost-dev libboost-serialization-dev libboost-mpi-dev \
         libbpp-core-dev libbpp-phyl-dev libbpp-seq-dev libbpp-seq-omics-dev \
-		libdatetime-perl libxml-simple-perl libdigest-md5-perl bioperl snp-sites libidn11 \
+        libdatetime-perl libxml-simple-perl libdigest-md5-perl bioperl snp-sites libidn11 \
 	&& rm -rf /var/lib/apt/lists/*
 
 RUN echo 'source("https://bioconductor.org/biocLite.R") ; biocLite("topGO") ; install.packages(c("phytools","pvclust"), repos="https://pbil.univ-lyon1.fr/CRAN/")' | R --vanilla
 
 # HOMEBREW
+# apt-get install -y --no-install-recommends linuxbrew-wrapper
 #RUN localedef -i en_US -f UTF-8 en_US.UTF-8 \
 #   && useradd -m -s /bin/bash linuxbrew \
 #   && echo 'linuxbrew ALL=(ALL) NOPASSWD:ALL' >>/etc/sudoers
