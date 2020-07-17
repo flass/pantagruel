@@ -423,7 +423,7 @@ EOF
 fi
 
 ### make version of full reference tree with actual organism names
-python2.7 ${ptgscripts}/code2orgnames_in_tree.py ${speciestree} $database/organism_codes.tab ${speciestree}.names
+python2.7 ${ptgscripts}/code2orgnames_in_tree.py ${speciestree} ${database}/organism_codes.tab ${speciestree}.names
 checkexec "failed name translation in reference tree" "reference tree name translation in complete; tree with organism names stored in file '${speciestree}.names'"
 
 ### generate ultrametric 'dated' species tree for more meaningfulgptghical representation of reconciliation AND to use the dated (original) version of ALE
@@ -465,7 +465,7 @@ tree2.write_newick(t, nfout, comment=None)
 EOF
 
 ### delineate populations of near-identical strains (based on tree with branch lengths in subs/site) and generate the population tree, i.e. the species tree withs population collapsed
-python2.7 ${ptgscripts}/replace_species_by_pop_in_gene_trees.py -S ${speciestree} --threads=8 \
+python2.7 ${ptgscripts}/replace_species_by_pop_in_gene_trees.py -S ${speciestree} --threads=${ptgthreads} \
 --pop_stem_conds="${popstemconds}" --within_pop_conds="${withinpopconds}"
 checkexec "failed search of populations in reference tree" "search of populations in reference tree complete; population description stored in file '${speciestree%.*}_populations'"
 nspepop=$(tail -n+3 ${speciestree%.*}_populations | wc -l)
