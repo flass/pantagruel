@@ -129,10 +129,9 @@ Note there are **dependencies between tasks**, which must be carried on mostly s
 - *00, 01, 02, 03 tasks* each strictly depend on the previous step: 00 -> 01 -> 02 -> 03  
 - *functional annotation task 04* is optional - though highly recomended - and depends on the previous task 01: 01 -> 04 
 - *reference tree task 05* depends on previous *task 03* (and thus the previous ones)  
-- *gene trees task 06* only depends on the previous *task 03* (and thus the previous ones) **IF** the `-c|--collapse` option is **NOT** used: 03 -> 06  
-- however, if the `-c` option is specified, *task 06* (specifically step 6.4 when in HPC mode) is also dependent on *task 05*: 03 + 05 -> 06  
-- *gene tree/species tree reconciliation task 07* strictly depends on the previous steps: 05 + 06 -> 07  
-- *orthologous group clustering task 08* depends on previous *reconciliation step 07*: 07 -> 08  
+- *gene trees task 06* is only required if the `-c` option is specified; it then depends on the previous *tasks 03 and 05* (and thus the previous ones): 03 + 05 -> 06  
+- *gene tree/species tree reconciliation task 07* depends on the previous *task 05*, and additionally on *task 06*if the `-c` option is specified: 05 (+ 06) -> 07  
+- *orthologous group clustering task 08* depends on previous *reconciliation step 07*; it also benefits from functional annotations from optional *task 04*: 07 (+ 04) -> 08  
 - *co-evolution network task 09* depends on previous *reconciliation task 07*: 07 -> 09  
 - but if run after *task 08*, an additional version of the co-evolution network will be made by collapsing the full network, grouping gene nodes by orthologous group: 07 + 08 -> 09
 
