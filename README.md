@@ -126,14 +126,14 @@ pantagruel -i config_file all
 #### Dependencies between subsequent tasks 
 
 Note there are **dependencies between tasks**, which must be carried on mostly sequentially:  
-- *00, 01, 02, 03 tasks* each strictly depend on the previous step: 00 -> 01 -> 02 -> 03  
-- *functional annotation task 04* is optional - though highly recomended - and depends on the previous task 01: 01 -> 04 
-- *reference tree task 05* depends on previous *task 03* (and thus the previous ones)  
-- *gene trees task 06* is only required if the `-c` option is specified; it then depends on the previous *tasks 03 and 05* (and thus the previous ones): 03 + 05 -> 06  
-- *gene tree/species tree reconciliation task 07* depends on the previous *task 05*, and additionally on *task 06*if the `-c` option is specified: 05 (+ 06) -> 07  
-- *orthologous group clustering task 08* depends on previous *reconciliation step 07*; it also benefits from functional annotations from optional *task 04*: 07 (+ 04) -> 08  
-- *co-evolution network task 09* depends on previous *reconciliation task 07*: 07 -> 09  
-- but if run after *task 08*, an additional version of the co-evolution network will be made by collapsing the full network, grouping gene nodes by orthologous group: 07 + 08 -> 09
+- *00, 01, 02, 03 tasks* each strictly depend on the previous step: **00 -> 01 -> 02 -> 03**  
+- *functional annotation task 04* is optional - though highly recomended - and depends on the previous task 01: **01 -> 04**  
+- *reference tree task 05* depends on previous *task 03* (and thus the previous ones): **03 -> 05**  
+- *gene trees task 06* is only required if the `-c` option is specified; it then depends on the previous *tasks 03 and 05* (and thus the previous ones): **03 + 05 -> 06**  
+- *gene tree/species tree reconciliation task 07* depends on the previous *task 05*, and additionally on *task 06*if the `-c` option is specified: **05 (+ 06) -> 07**  
+- *orthologous group clustering task 08* depends on reconciliations from previous *task 07*; it also benefits from functional annotations from optional *task 04*: **07 (+ 04) -> 08**  
+- *co-evolution network task 09* depends on reconciliations from previous *task 07*; it also benefits from orthologous groups from *task 08*, as an additional version of the co-evolution network can be made by collapsing the full network, grouping gene nodes by orthologous group: **07 (+ 08) -> 09**  
+
 
 So all in all, you're better off running all the tasks sequentially, for instance using `pantagruel all`.
 
