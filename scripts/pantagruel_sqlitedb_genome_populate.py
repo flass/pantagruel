@@ -350,18 +350,6 @@ if __name__=='__main__':
 	usergenomefinalassdir = dopt.get('--user.genome.ass.dir') # os.environ['usergenomefinalassdir']
 	verbose = (('--verbose' in dopt) or ('-v' in dopt))
 	
-	
-	
-	
-	if len(sys.argv) > 6:
-		nfusergenomeinfo = sys.argv[6]
-	else:
-		nfusergenomeinfo = None
-	if len(sys.argv) > 7:
-		usergenomefinalassdir = sys.argv[7]
-	else:
-		usergenomefinalassdir = None
-	
 	for nf in [dbname, nfspeclist, nfusergenomeinfo, usergenomefinalassdir]:
 		if (nf is not None) and not (os.path.exists(nf)):
 			raise ValueError, "specified input file '%s' cannot be found"%nf
