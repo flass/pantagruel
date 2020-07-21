@@ -54,7 +54,7 @@ RUN cd /opt \
     && rm ${BLAST_ARCHIVE}
 
 # add relevant locations to the PATH
-ENV PATH="/pantagruel:/pantagruel/scripts:/pantagruel/scripts/pipeline:/opt/${BLAST_NAME}/bin:/MMseqs2/build/bin:/prokka/bin:/ALE/build/bin:/pal2nal.v14:/mad:${PATH}"
+ENV PATH="/pantagruel:/pantagruel/scripts:/pantagruel/scripts/pipeline:/opt/${BLAST_NAME}/bin:/MMseqs2/build/bin:/prokka/bin:/ALE/build/bin:/pal2nal.v14:/mad:/mash-Linux64-v2.2/${PATH}"
 ENV PYTHONPATH="/pantagruel/python_libs:${PYTHONPATH}"
 
 # PROKKA v1.14.5
@@ -95,6 +95,10 @@ RUN cd / && git clone https://github.com/ssolo/ALE \
 # tbl2asn (Prokka dependency)
 RUN cd / && wget --progress=dot:giga ftp://ftp.ncbi.nih.gov/toolbox/ncbi_tools/converters/by_program/tbl2asn/linux64.tbl2asn.gz \
     && gzip -d linux64.tbl2asn.gz && chmod +x linux64.tbl2asn && mv -f linux64.tbl2asn /usr/bin/tbl2asn
+
+# MASH
+RUN cd / && wget https://github.com/marbl/Mash/releases/download/v2.2/mash-Linux64-v2.2.tar \
+    && tar -xf mash-Linux64-v2.2.tar && rm mash-Linux64-v2.2.tar && chmod +x mash-Linux64-v2.2/mash
 
 # make pantagruel executable and scripts available
 # last echo command is a dummy one that can be edited so that build is resumed at this stage
