@@ -51,6 +51,6 @@ for mol in prot cds ; do
 done
 
 ## Phylogeny schema: initiate
-step3="initiating database (phylogeny-related tables)" && echo ${step1}
+step3="initiating database (phylogeny-related tables)" && echo ${step3}
 sqlite3 ${sqldb} < ${ptgscripts}/pantagruel_sqlitedb_phylogeny_initiate.sql
 checkexec "something went wrong while ${step3}" "succefully completed ${step3}"

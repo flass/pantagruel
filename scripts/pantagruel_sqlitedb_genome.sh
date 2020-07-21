@@ -78,7 +78,7 @@ protfieldnums=$(getnumfield ${assemblyinfo}/allproteins_info.tab $protfields)
 head -n 1  ${assemblyinfo}/allproteins_info.tab | cut -f ${protfieldnums} | sed -e ${protidsedfilter} > genome_protein_products.tab && \
 tail -n +2 ${assemblyinfo}/allproteins_info.tab | cut -f ${protfieldnums} | grep -vP "^\t" | sort -u | sed -e "s/%2C/,/g" | sed -e "s/%3B/;/g" >> genome_protein_products.tab
 
-ls genome_replicons.tab genome_gene_families.tab  genome_protein_families.tab genome_coding_sequences.tab genome_protein_products.tab
+ls -l genome_replicons.tab genome_gene_families.tab  genome_protein_families.tab genome_coding_sequences.tab genome_protein_products.tab
 checkexec "failed ${step1}" "succesfully ${step1/ing/ed}"
 
 ## populate database
