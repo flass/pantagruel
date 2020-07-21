@@ -321,20 +321,44 @@ def main(dbname, protorfanclust, cdsorfanclust, nfspeclist, nfgsrc2assidname, nf
 	conn.commit()
 
 	conn.close()
+	
+def usage():
+	s =  'Basic usage:\n'
+	s += ' python %s -G /path/to/list.of.gene.tree.sample.chain1.files -o /path/to/output.folder [options]\n'%sys.argv[0]
+	s =  'Options:\n'
+	s += '  --chain.ext\t\tdefine the file extension of the tree chain file (the #1 chain when multiple ones); default to \'mb.run1.t\'\n'
+	s += '  --nb.chains\t\tthe number of available tree chain to interwine into the single result file; default 2\n'
+	s += '  --threads\t\t\tnumber of parralel processes to run; default to 1 (sequential).\n'
+	s += '  -v  --verbose\tverbose mode.\n'
+	return s
+
 
 if __name__=='__main__':
 	
-	dbname = sys.argv[1] # os.environ['sqldbname']
-	protorfanclust = sys.argv[2] # os.environ['protorfanclust']
-	cdsorfanclust = sys.argv[3] # os.environ['cdsorfanclust']
-	nfspeclist = sys.argv[4] # os.environ['sqldb']+'/speclist'
-	nfgsrc2assidname = sys.argv[5] # os.environ['gp2ass']
+	opts, args = getopt.getopt(sys.argv[1:], 'd:o:O:s:i:vh', ['verbose', 'help', 'user.genome.info=', 'user.genome.ass.dir='])
+	dopt = dict(opts)
+	if ('-h' in dopt) or ('--help' in dopt):
+		print usage()
+		sys.exit(0)
+
+	dbname = dopt['-d'] # os.environ['sqldbname']
+	protorfanclust = dopt['-o'] # os.environ['protorfanclust']
+	cdsorfanclust = dopt['-O']] # os.environ['cdsorfanclust']
+	nfspeclist = dopt['-s'] # os.environ['sqldb']+'/speclist'
+	nfgsrc2assidname = dopt['-i'] # os.environ['gp2ass']
+	nfusergenomeinfo = dopt.get('--user.genome.info') # os.environ['usergenomeinfo']
+	usergenomefinalassdir = dopt.get('--user.genome.ass.dir') # os.environ['usergenomefinalassdir']
+	verbose = (('--verbose' in dopt) or ('-v' in dopt))
+	
+	
+	
+	
 	if len(sys.argv) > 6:
-		nfusergenomeinfo = sys.argv[6] # os.environ['usergenomeinfo']
+		nfusergenomeinfo = sys.argv[6]
 	else:
 		nfusergenomeinfo = None
 	if len(sys.argv) > 7:
-		usergenomefinalassdir = sys.argv[7] # os.environ['usergenomefinalassdir']
+		usergenomefinalassdir = sys.argv[7]
 	else:
 		usergenomefinalassdir = None
 	

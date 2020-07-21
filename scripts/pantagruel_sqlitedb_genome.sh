@@ -85,9 +85,9 @@ checkexec "failed ${step1}" "succesfully ${step1/ing/ed}"
 step2="populating database with information on genome assemblies, CDS/protein annotation and gene families"
 echo ${step2}
 if [ -z  "${customassemb}" ] ; then
-  python2.7 "${populatescript}" "${dbname}"" ${protorfanclust}" "${cdsorfanclust}" "${database}/speclist" "${gp2ass}"
+  python2.7 "${populatescript}" -d "${dbname}" -o "${protorfanclust}" -O "${cdsorfanclust}" -s "${database}/speclist" -i "${gp2ass}"
 else
-  python2.7 "${populatescript}" "${dbname}"" ${protorfanclust}" "${cdsorfanclust}" "${database}/speclist" "${gp2ass}" "${usergenomeinfo}" "${usergenomefinalassdir}"
+  python2.7 "${populatescript}" -d "${dbname}" -o "${protorfanclust}" -O "${cdsorfanclust}" -s "${database}/speclist" -i "${gp2ass}" --user.genome.info "${usergenomeinfo}" --user.genome.ass.dir "${usergenomefinalassdir}"
 fi
 checkexec "failed ${step2}" "succesfully ${step2/ing/ed}"
 cd -
