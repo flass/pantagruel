@@ -25,7 +25,7 @@ cd ${database}
 
 ## Genome schema: initiate and populate
 step1="initiating and populating database (genome-related tables)" && echo ${step1}
-${ptgscripts}/pantagruel_sqlitedb_genome.sh ${database} ${sqldbname} ${genomeinfo}/assembly_metadata ${genomeinfo}/assembly_info ${protali} ${protfamseqs}.tab ${protorfanclust} ${cdsorfanclust} ${straininfo} ${gblikeass} ${gp2ass}
+${ptgscripts}/pantagruel_sqlitedb_genome.sh "${database}" "${sqldbname}" "${genomeinfo}/assembly_metadata" "${genomeinfo}/assembly_info" "${protali}" "${protfamseqs}.tab" "${protorfanclust}" "${cdsorfanclust}" "${straininfo}" "${gblikeass}" "${gp2ass}"
 checkexec "something went wrong while ${step1}" "succefully completed ${step1}"
 
 # dump reference table for translation of genome assembly names into short identifier codes (uing UniProt "5-letter" code when available).
