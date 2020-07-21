@@ -343,7 +343,7 @@ if __name__=='__main__':
 
 	dbname = dopt['-d'] # os.environ['sqldbname']
 	protorfanclust = dopt['-o'] # os.environ['protorfanclust']
-	cdsorfanclust = dopt['-O']] # os.environ['cdsorfanclust']
+	cdsorfanclust = dopt['-O'] # os.environ['cdsorfanclust']
 	nfspeclist = dopt['-s'] # os.environ['sqldb']+'/speclist'
 	nfgsrc2assidname = dopt['-i'] # os.environ['gp2ass']
 	nfusergenomeinfo = dopt.get('--user.genome.info') # os.environ['usergenomeinfo']
