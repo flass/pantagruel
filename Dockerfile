@@ -59,7 +59,7 @@ RUN cd / && wget --progress=dot:giga ftp://ftp.ncbi.nih.gov/toolbox/ncbi_tools/c
     && gzip -d linux64.tbl2asn.gz && chmod +x linux64.tbl2asn && mv -f linux64.tbl2asn /usr/bin/tbl2asn
 
 # add relevant locations to the PATH
-ENV PATH="/pantagruel:/pantagruel/scripts:/pantagruel/scripts/pipeline:/opt/${BLAST_NAME}/bin:/MMseqs2/build/bin:/prokka/bin:/ALE/build/bin:/pal2nal.v14:/mad:${PATH}"
+ENV PATH="/pantagruel:/pantagruel/scripts:/pantagruel/scripts/pipeline:/opt/${BLAST_NAME}/bin:/MMseqs2/build/bin:/prokka/bin:/ALE/build/bin:/pal2nal.v14:/mad:/mash-Linux64-v2.2/${PATH}"
 ENV PYTHONPATH="/pantagruel/python_libs:${PYTHONPATH}"
 
 # PROKKA v1.14.5
@@ -91,6 +91,10 @@ RUN cd / && wget --progress=dot:giga https://www.mikrobio.uni-kiel.de/de/ag-daga
 # LSD
 RUN cd / && wget --progress=dot:giga -O /usr/bin/lsd https://github.com/tothuhien/lsd-0.3beta/releases/download/v0.3.3/lsd_unix \
     && chmod +x /usr/bin/lsd
+
+# MASH
+RUN cd / && wget https://github.com/marbl/Mash/releases/download/v2.2/mash-Linux64-v2.2.tar \
+    && tar -xf mash-Linux64-v2.2.tar && rm mash-Linux64-v2.2.tar && chmod +x mash-Linux64-v2.2/mash
 
 # GeneRax
 RUN cd / && git clone --recursive https://github.com/BenoitMorel/GeneRax -b 'v1.2.1' \
