@@ -325,7 +325,7 @@ def main(dbname, protorfanclust, cdsorfanclust, nfspeclist, nfgsrc2assidname, nf
 def usage():
 	s =  'Basic usage:\n'
 	s += ' python %s -G /path/to/list.of.gene.tree.sample.chain1.files -o /path/to/output.folder [options]\n'%sys.argv[0]
-	s =  'Options:\n'
+	s += 'Options:\n'
 	s += '  --chain.ext\t\tdefine the file extension of the tree chain file (the #1 chain when multiple ones); default to \'mb.run1.t\'\n'
 	s += '  --nb.chains\t\tthe number of available tree chain to interwine into the single result file; default 2\n'
 	s += '  --threads\t\t\tnumber of parralel processes to run; default to 1 (sequential).\n'
