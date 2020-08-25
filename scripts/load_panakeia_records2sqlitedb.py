@@ -12,7 +12,7 @@ def main(nfsqldb, nfprotclust, nfprotsubclust=None, nfsynpat=None, subclusogcoli
 		dbcur.execute("SELECT ortholog_col_id FROM ortholog_collections WHERE ortholog_col_id=?;", subclusogcolid)
 		ogcolidexists = dbcur.fetchall()
 		if ogcolidexists:
-			raise IndexError, "orthologous collection with id %d is already used in the database '%s':\n%s\n- - -\nPlease use another integer as input OG collection id."%(subclusogcolid, nfsqldb, '\n'.join([repr(row) for row in ogcolidexists])')
+			raise IndexError, "orthologous collection with id %d is already used in the database '%s':\n%s\n- - -\nPlease use another integer as input OG collection id."%(subclusogcolid, nfsqldb, '\n'.join([repr(row) for row in ogcolidexists]))
 	
 	# parse input data
 	dprotclust = {}
