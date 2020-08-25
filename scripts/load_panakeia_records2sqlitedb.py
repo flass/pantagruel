@@ -63,7 +63,7 @@ def main(nfsqldb, nfprotclust, nfprotsubclust=None, nfsynpat=None, subclusogcoli
 	
 	if subclusogcolid:
 		# first set the new OG collection
-		dbcur.execute("INSERT INTO ortholog_collections VALUES (?,?,?,?,?,?,?,datetime('now'));", (subclusogcolid, 'panakeia_subclusters', 0, 'Panakeia', 'v0.1', 'main'))
+		dbcur.execute("INSERT INTO ortholog_collections VALUES (?,?,?,?,?,?,datetime('now'),?);", (subclusogcolid, 'panakeia_subclusters', 0, 'Panakeia', 'v0.1', 'main', ''))
 		
 		# query the mapping of CDS to Pantagruel gene families
 		qfam = "SELECT gene_family_id FROM coding_sequences;"
