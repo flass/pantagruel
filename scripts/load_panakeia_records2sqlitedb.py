@@ -105,8 +105,8 @@ if __name__=='__main__':
 
 	dbname = dopt['-d']
 	nfprotclust = dopt['-p']
-	nfprotsubclust = dopt['-s']
-	nfsynpat = dopt['-t']
+	nfprotsubclust = dopt.get('-s')
+	nfsynpat = dopt.get('-t')
 	subclusogcolid = dopt.get('-i', dopt.get('--otholog_col_id'))
 	verbose = (('--verbose' in dopt) or ('-v' in dopt))
 	
