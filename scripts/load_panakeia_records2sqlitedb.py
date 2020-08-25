@@ -3,7 +3,7 @@ import sys, os, getopt
 import sqlite3
 import time
 
-def main(nfsqldb, nfprotclust, nfprotsubclust, nfsynpat, subclusogcolid=None, verbose=False):
+def main(nfsqldb, nfprotclust, nfprotsubclust=None, nfsynpat=None, subclusogcolid=None, verbose=False):
 	# prepare database
 	dbcon = sqlite3.connect(nfsqldb, isolation_level="DEFERRED")
 	dbcur = dbcon.cursor()
@@ -16,24 +16,26 @@ def main(nfsqldb, nfprotclust, nfprotsubclust, nfsynpat, subclusogcolid=None, ve
 	
 	# parse input data
 	dprotclust = {}
+	dprotsubclust = {}
+	dsynpat = {}
 	with open(nfprotclust, 'r') as fprotclust:
 		for line in fprotclust:
 			lsp = line.rstrip('\n').split(': ')
 			dprotclust[lsp[0]] = lsp[1].split('\t')
 	lprotclust = sorted(dprotclust.keys())
-	dprotsubclust = {}
-	with open(nfprotsubclust, 'r') as fprotsubclust:
-		for line in fprotsubclust:
-			lsp = line.rstrip('\n').split(': ')
-			dprotsubclust[lsp[0]] = lsp[1].split('\t')
-	lprotsubclust = sorted(dprotsubclust.keys())
-	dsynpat = {}
-	with open(nfsynpat, 'r') as fsynpat:
-		for line in fsynpat:
-			lsp = line.rstrip('\n').split(': ')
-			patit, pattype = lsp[0].split(', ')	# TO ADAPT TO ACTUAL INPUT FORMAT
-			dsynpat[(patit, pattype)] = lsp[1].split('\t')
-	lsynpat = sorted(dsynpat.keys())
+	if nfprotsubclust:
+		with open(nfprotsubclust, 'r') as fprotsubclust:
+			for line in fprotsubclust:
+				lsp = line.rstrip('\n').split(': ')
+				dprotsubclust[lsp[0]] = lsp[1].split('\t')
+		lprotsubclust = sorted(dprotsubclust.keys())
+	if nfsynpat:
+		with open(nfsynpat, 'r') as fsynpat:
+			for line in fsynpat:
+				lsp = line.rstrip('\n').split(': ')
+				patit, pattype = lsp[0].split(', ')	# TO ADAPT TO ACTUAL INPUT FORMAT
+				dsynpat[(patit, pattype)] = lsp[1].split('\t')
+		lsynpat = sorted(dsynpat.keys())
 	
 	# (re)set tables
 	dbcur.execute("DROP TABLE IF EXISTS panakeia_gene_clusters;")
@@ -54,8 +56,10 @@ def main(nfsqldb, nfprotclust, nfprotsubclust, nfsynpat, subclusogcolid=None, ve
 	                 );""")
 	# load table contents
 	dbcur.executemany("""INSERT INTO panakeia_gene_clusters VALUES (?,?)""", ((cdscode, clusid) for clusid in lprotclust for cdscode in dprotclust[clusid]))
-	dbcur.executemany("""INSERT INTO panakeia_gene_subclusters VALUES (?,?)""", ((cdscode, sclusid) for sclusid in lprotsubclust for cdscode in dprotsubclust[sclusid]))
-	dbcur.executemany("""INSERT INTO panakeia_gene_patterns VALUES (?,?,?)""", ((cdscode, patid, pattype) for patid,pattype in lsynpat for cdscode in dsynpat[(patid,pattype)]))
+	if nfprotsubclust:
+		dbcur.executemany("""INSERT INTO panakeia_gene_subclusters VALUES (?,?)""", ((cdscode, sclusid) for sclusid in lprotsubclust for cdscode in dprotsubclust[sclusid]))
+	if nfsynpat:
+		dbcur.executemany("""INSERT INTO panakeia_gene_patterns VALUES (?,?,?)""", ((cdscode, patid, pattype) for patid,pattype in lsynpat for cdscode in dsynpat[(patid,pattype)]))
 	
 	if subclusogcolid:
 		# first set the new OG collection
@@ -67,7 +71,12 @@ def main(nfsqldb, nfprotclust, nfprotsubclust, nfsynpat, subclusogcolid=None, ve
 		lfam = dbcur.fetchall()
 		for fam in lfam:
 			# retrieve CDS and associated Panakeia subclusters
-			qcdssubc = "SELECT cds_code, subcluster_id FROM coding_sequences LEFT JOIN panakeia_gene_subclusters USING (cds_code) WHERE gene_family_id=?;"
+			if nfsynpat:
+				qcdssubc = "SELECT cds_code, pattern_id FROM coding_sequences LEFT JOIN panakeia_gene_patterns USING (cds_code) WHERE gene_family_id=? AND pattern_type='indel';"
+			elif nfprotsubclust:
+				qcdssubc = "SELECT cds_code, subcluster_id FROM coding_sequences LEFT JOIN panakeia_gene_subclusters USING (cds_code) WHERE gene_family_id=?;"
+			else:
+				qcdssubc = "SELECT cds_code, cluster_id FROM coding_sequences LEFT JOIN panakeia_gene_clusters USING (cds_code) WHERE gene_family_id=?;"
 			dbcur.execute(qcdssubc, fam)
 			lcdssubc = dbcur.fetchall()
 			usubc = set([cdssubc[1] for cdssubc in lcdssubc])
