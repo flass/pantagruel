@@ -51,7 +51,7 @@ def main(nfsqldb, nfprotclust, nfprotsubclust=None, nfsynpat=None, subclusogcoli
 	                 );""") 
 	dbcur.execute("""CREATE TABLE panakeia_gene_patterns (
 	                   cds_code varchar(20),
-					   pattern_id varchar(20)
+					   pattern_id varchar(20),
 					   pattern_type varchar(20)
 	                 );""")
 	# load table contents
