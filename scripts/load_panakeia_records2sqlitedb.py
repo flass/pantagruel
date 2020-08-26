@@ -69,7 +69,8 @@ def main(nfsqldb, nfprotclust, nfprotsubclust=None, nfsynpat=None, subclusogcoli
 		qfam = "SELECT gene_family_id FROM coding_sequences;"
 		dbcur.execute(qfam)
 		lfam = dbcur.fetchall()
-		for fam in lfam:
+		for tfam in lfam:
+			fam = tfam[0]
 			# retrieve CDS and associated Panakeia subclusters
 			if nfsynpat:
 				qcdssubc = "SELECT cds_code, pattern_id FROM coding_sequences LEFT JOIN panakeia_gene_patterns USING (cds_code) WHERE gene_family_id=? AND pattern_type='indel';"
