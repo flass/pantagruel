@@ -3,7 +3,7 @@ import sys, os, getopt
 import sqlite3
 import time
 
-def main(nfsqldb, nfprotclust, nfprotsubclust=None, nfsynpat=None, subclusogcolid=None, verbose=False):
+def main(nfsqldb, nfprotclust, nfprotsubclust=None, nfsynpat=None, cdsorfanfamid=None, subclusogcolid=None, verbose=False):
 	# prepare database
 	dbcon = sqlite3.connect(nfsqldb, isolation_level="DEFERRED")
 	dbcur = dbcon.cursor()
@@ -71,7 +71,7 @@ def main(nfsqldb, nfprotclust, nfprotsubclust=None, nfsynpat=None, subclusogcoli
 		lfam = dbcur.fetchall()
 		for tfam in lfam:
 			fam = tfam[0]
-			print tfam, fam
+			if fam==cdsorfanfamid: continue
 			# retrieve CDS and associated Panakeia subclusters
 			if nfsynpat:
 				qcdssubc = "SELECT cds_code, pattern_id FROM coding_sequences LEFT JOIN panakeia_gene_patterns USING (cds_code) WHERE gene_family_id=? AND pattern_type='indel';"
@@ -79,7 +79,7 @@ def main(nfsqldb, nfprotclust, nfprotsubclust=None, nfsynpat=None, subclusogcoli
 				qcdssubc = "SELECT cds_code, subcluster_id FROM coding_sequences LEFT JOIN panakeia_gene_subclusters USING (cds_code) WHERE gene_family_id=?;"
 			else:
 				qcdssubc = "SELECT cds_code, cluster_id FROM coding_sequences LEFT JOIN panakeia_gene_clusters USING (cds_code) WHERE gene_family_id=?;"
-			dbcur.execute(qcdssubc, fam)
+			dbcur.execute(qcdssubc, tfam
 			lcdssubc = dbcur.fetchall()
 			usubc = set([cdssubc[1] for cdssubc in lcdssubc])
 			dsubcid = dict((subc, i) for i, subc in enumerate(usubc))
@@ -89,7 +89,7 @@ def main(nfsqldb, nfprotclust, nfprotsubclust=None, nfsynpat=None, subclusogcoli
 
 def usage():
 	s =  'Basic usage:\n'
-	s += ' python %s -d /path/to/sqlite3.db.file -p /path/to/protein.cluster.file -s /path/to/protein.subcluster.file -t /path/to/synteny.pattern.file [options]\n'%sys.argv[0]
+	s += ' python %s -d /path/to/sqlite3.db.file -p /path/to/protein.cluster.file -O orfan_cds_fam_id [-s /path/to/protein.subcluster.file] [-t /path/to/synteny.pattern.file] [options]\n'%sys.argv[0]
 	s += 'Options:\n'
 	s += '  -i|--otholog_col_id int\tspecify id of orthologous group collection to which Panakeia subclusters will be assigned.\n'
 	s += '  -v|--verbose\t\t\tverbose mode.\n'
@@ -99,7 +99,7 @@ def usage():
 
 if __name__=='__main__':
 	
-	opts, args = getopt.getopt(sys.argv[1:], 'd:p:s:t:i:vh', ['verbose', 'help', 'otholog_col_id='])
+	opts, args = getopt.getopt(sys.argv[1:], 'd:p:s:t:i:O:vh', ['verbose', 'help', 'otholog_col_id='])
 	dopt = dict(opts)
 	if ('-h' in dopt) or ('--help' in dopt):
 		print usage()
@@ -110,10 +110,11 @@ if __name__=='__main__':
 	nfprotsubclust = dopt.get('-s')
 	nfsynpat = dopt.get('-t')
 	subclusogcolid = dopt.get('-i', dopt.get('--otholog_col_id'))
+	cdsorfanfamid = dopt.get('-O', 'VCHOLC000000')
 	verbose = (('--verbose' in dopt) or ('-v' in dopt))
 	
 	for nf in [dbname, nfprotclust, nfprotsubclust, nfsynpat]:
 		if (nf is not None) and not (os.path.exists(nf)):
 			raise ValueError, "specified input file '%s' cannot be found"%nf
 	
-	main(dbname, nfprotclust, nfprotsubclust, nfsynpat, subclusogcolid=subclusogcolid, verbose=verbose)
+	main(dbname, nfprotclust, nfprotsubclust, nfsynpat, cdsorfanfamid=cdsorfanfamid, subclusogcolid=subclusogcolid, verbose=verbose)
