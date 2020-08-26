@@ -79,7 +79,7 @@ def main(nfsqldb, nfprotclust, nfprotsubclust=None, nfsynpat=None, cdsorfanfamid
 				qcdssubc = "SELECT cds_code, subcluster_id FROM coding_sequences LEFT JOIN panakeia_gene_subclusters USING (cds_code) WHERE gene_family_id=?;"
 			else:
 				qcdssubc = "SELECT cds_code, cluster_id FROM coding_sequences LEFT JOIN panakeia_gene_clusters USING (cds_code) WHERE gene_family_id=?;"
-			dbcur.execute(qcdssubc, tfam
+			dbcur.execute(qcdssubc, tfam)
 			lcdssubc = dbcur.fetchall()
 			usubc = set([cdssubc[1] for cdssubc in lcdssubc])
 			dsubcid = dict((subc, i) for i, subc in enumerate(usubc))
