@@ -66,10 +66,10 @@ def main(nfsqldb, nfprotclust, nfprotsubclust=None, nfsynpat=None, cdsorfanfamid
 		dbcur.execute("INSERT INTO ortholog_collections VALUES (?,?,?,?,?,?,datetime('now'),?);", (subclusogcolid, 'panakeia_subclusters', 0, 'Panakeia', 'v0.1', 'main', ''))
 		
 		# query the mapping of CDS to Pantagruel gene families
-		qfam = "SELECT gene_family_id FROM coding_sequences;"
+		qfam = "SELECT DISTINCT gene_family_id FROM coding_sequences;"
 		dbcur.execute(qfam)
 		lfam = dbcur.fetchall()
-		print "found %d gene families:"
+		print "found %d gene families:"%len(lfam)
 		for tfam in lfam:
 			fam = tfam[0]
 			if fam==cdsorfanfamid: continue
