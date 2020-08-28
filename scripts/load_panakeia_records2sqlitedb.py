@@ -69,6 +69,7 @@ def main(nfsqldb, nfprotclust, nfprotsubclust=None, nfsynpat=None, cdsorfanfamid
 		qfam = "SELECT gene_family_id FROM coding_sequences;"
 		dbcur.execute(qfam)
 		lfam = dbcur.fetchall()
+		print "found %d gene families:"
 		for tfam in lfam:
 			fam = tfam[0]
 			if fam==cdsorfanfamid: continue
@@ -83,6 +84,7 @@ def main(nfsqldb, nfprotclust, nfprotsubclust=None, nfsynpat=None, cdsorfanfamid
 			lcdssubc = dbcur.fetchall()
 			usubc = set([cdssubc[1] for cdssubc in lcdssubc])
 			dsubcid = dict((subc, i) for i, subc in enumerate(usubc))
+			print '#', fam, ':', len(lcdssubc), 'CDSs;',  len(usubc), 'unique associated Panakeia clusters %s;'%repr(list(usubc))
 			dbcur.executemany("INSERT INTO orthologous_groups VALUES (?,?,?,?)", ((cds, fam, dsubcid[subc], subclusogcolid) for cds,subc in lcdssubc))
 	
 	dbcon.commit()
