@@ -94,8 +94,7 @@ checkexec "step 2.2: failed when ${step2} for unreconciled gene trees" "step 2.2
 
 # generate abs/pres matrix
 step3="generating abs/pres matrix"
-echo ${step3}
-orthocol=ortholog_collection_${orthocolid}
+echo "step 3: ${step3}"
 echo ${orthocol}
 ogmethod='mixed_majrule_combined_0.5.orthologs'
 orthomatrad=${orthogenes}/${orthocol}/${ogmethod}
@@ -142,6 +141,8 @@ echo "step 5.1: ${step51}"
 ## by default choose 'smallest' string in the clade code list to pick representative sequence, as done by default in get_clade_specific_genes.r
 ## this can be overridden using the env. variable ${preferredgenomes}
 # for the whole dataset
+step50="generating core genome background term distribution for the whole dataset"
+echo "step 5.0: ${step50}"
 # rely on WHERE code=${mincode} clause to choose the smallest code as it allows to speed up the query and to potentially pick different preferred genome, rather than using min(cds_code)
 if [ ! -z "${preferredgenomes}" ] ; then
   mincode="'$(echo ${preferredgenomes} | tr ',' '\n' | head -n1)'"
@@ -170,7 +171,10 @@ select distinct locus_tag, go_id
 "
 sqlite3 -cmd ".mode tab .header off" ${sqldb} "${qcore};" > ${goterms}/${ngenomes}-genomes_coregenome_terms.tab
 sqlite3 -cmd ".mode tab .header off" ${sqldb} "${qcore} where go_id not null;" > ${goterms}/${ngenomes}-genomes_coregenome_terms.tab_nonull
+ls -lh ${goterms}/${ngenomes}-genomes_coregenome_terms.tab*
 # for all clades of the species tree
+step51="generating core genome background term distribution for each clade in the tree based on ortholog collection ${orthocolid}"
+echo "step 5.1: ${step51}"
 export claderefgodir=${goterms}/clade_go_term_reference_sets
 mkdir -p ${claderefgodir}/
 tail -n +2 ${cladedefs} | while read cla ${cladedefhead} ; do
@@ -187,7 +191,7 @@ tail -n +2 ${cladedefs} | while read cla ${cladedefhead} ; do
   if [ -z "${clasperef}" ] ; then
     clasperef="'$(echo ${clade} | tr ',' '\n' | sort | head -n1)'"
   fi
-  echo "$cla $name (repr.: $clasperef; size: $cladesize) $claspeset"
+  echo "${cla} ${name} (repr.: ${clasperef}; size: ${cladesize}) ${claspeset}"
   qcorecla="
   CREATE TEMP TABLE pan${cla} AS 
    SELECT cds_code, locus_tag, nr_protein_id, gene_family_id, og_id, code 
@@ -199,7 +203,7 @@ tail -n +2 ${cladedefs} | while read cla ${cladedefhead} ; do
 	  FROM orthologous_groups
 	) USING (gene_family_id, cds_code)
    WHERE gene_family_id IS NOT NULL 
-   AND (ortholog_col_id=${orthocolid} OR ortholog_col_id IS NULL)
+   AND ((ortholog_col_id=${orthocolid}) OR (ortholog_col_id IS NULL))
    AND code IN (${claspeset});
   SELECT distinct locus_tag, go_id 
    FROM (
@@ -264,7 +268,7 @@ mkdir -p ${gotermlogs}/
 enrichlogsext=GOterm_enrichment_test.log
 # compare each clade-specific core genome (single repr sequence per OG) to its respective core genome (single repr sequence per OG)
 step6="comparing each clade-specific core genome to its respective core genome"
-echo ${step6}
+echo "step 6: ${step6}"
 claspevscoreenrichlogsrad=${gotermlogs}/cladespecific_vs_coregenome_genes
 tail -n +2 ${cladedefs} | while read cla ${cladedefhead} ; do
   echo $cla
