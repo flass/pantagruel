@@ -59,11 +59,11 @@ if [ -z "${orthocolid}" ] ; then
 fi
 
 outrecdir=${recs}/${collapsecond}/${replmethod}/${reccol}
+orthocol=ortholog_collection_${orthocolid}
 
 # generate ortholog collection
 step1="generating ortholog collection from reconciled gene trees"
 echo ${step1}
-orthocol=ortholog_collection_${orthocolid}
 mkdir -p ${orthogenes}/${orthocol}
 getorthologs=$ptglogs/get_orthologues_from_ALE_recs_${orthocol}.log
 getorthocmd="python2.7 ${ptgscripts}/get_orthologues_from_ALE_recs.py -i ${outrecdir} -o ${orthogenes}/${orthocol} --threads=${ptgthreads} ${getOrpthologuesOptions} &> ${getorthologs}"
@@ -125,6 +125,8 @@ ipannotrecords=$(sqlite3 -cmd '.header off' ${sqldb} 'select count(go_id) from f
 echo "Found ${ipannotrecords} functional annotation records linked to GO terms in the database '${sqldb}'"
 if [[ -z "${ipannotrecords}" || ${ipannotrecords} -eq 0 ]] ; then
   echo "no functional annotation records linked to GO terms was detected; please run Pantagruel task 04 (functional annotation using InterProScan) to enable GO term enrichment tests"
+  echo "exit now"
+  exit 0
 else
   echo "Will now run GO term enrichment tests"
 fi
@@ -239,6 +241,7 @@ select distinct locus_tag, go_id
 "
 sqlite3 -cmd ".mode tab" ${sqldb} "${qpan};" > ${goterms}/${ngenomes}-genomes_pangenome_terms.tab
 sqlite3 -cmd ".mode tab" ${sqldb} "${qpan} where go_id not null;" > ${goterms}/${ngenomes}-genomes_pangenome_terms.tab_nonul
+ls -lh ${goterms}/${ngenomes}-genomes_pangenome_terms.tab*
 # for all clades of the species tree
 export claderefgodir=${goterms}/clade_go_term_reference_sets
 mkdir -p ${claderefgodir}/
@@ -273,15 +276,14 @@ claspevscoreenrichlogsrad=${gotermlogs}/cladespecific_vs_coregenome_genes
 tail -n +2 ${cladedefs} | while read cla ${cladedefhead} ; do
   echo $cla
   cladspego=${dirgotablescladespe}/${ogmethod}_specific_pres_genes_${cla}_reprseq_goterms.tab
-  if [[ -s ${cladspego} && $(wc -l ${cladspego} | cut -d ' ' -f1) -gt 1 ]] ; then
-    cut -f5,6 ${cladspego} | grep -v "NA$" > ${cladspego}_nonull
+  if [[ -s ${cladspego} && $(wc -l ${cladspego} | awk '{print $1}') -gt 1 ]] ; then
+    cut -f5,6 ${cladspego} | grep -v 'NA$' > ${cladspego}_nonull
+	outenrichgocore=${dirgoenrichcladespecore}/${cla}_go_term_enriched_cladespecific_vs_coregenome.tab
     ${ptgscripts}/clade_specific_genes_GOterm_enrichment_test.r \
-    --study_annots ${cladspego}_nonull  \
-    --population_annots ${claderefgodir}/${cla}_coregenome_terms.tab_nonull \
-    --out ${dirgoenrichcladespecore}/${cla}_go_term_enriched_cladespecific_vs_coregenome.tab \
-    --algo "weight01" --stat "Fisher" &> ${claspevscoreenrichlogsrad}_${cla}_${enrichlogsext}
+    --study_annots ${cladspego}_nonull --population_annots ${claderefgodir}/${cla}_coregenome_terms.tab_nonull \
+    --out ${outenrichgocore} --algo "weight01" --stat "Fisher" &> ${claspevscoreenrichlogsrad}_${cla}_${enrichlogsext}
     checkexec "step 6: failed ${step6} for clade ${cla}"
-    ls -lh ${dirgoenrichcladespecore}/*_${cla}_* ; echo ""
+    ls -lh ${outenrichgocore} ; echo ""
   else
     echo "no clade-specific (present) genes with referenced GO terms for ${cla}; skip GO term enrichment test"
   fi
@@ -299,14 +301,13 @@ tail -n +2 ${cladedefs} | while read cla ${cladedefhead} ; do
   echo $cla
   cladspego=${dirgotablescladespe}/${ogmethod}_specific_pres_genes_${cla}_allseq_goterms.tab
   if [[ -s ${cladspego} && $(wc -l ${cladspego} | cut -d ' ' -f1) -gt 1 ]] ; then
-    cut -f5,6 ${cladspego} | grep -v "NA$" > ${cladspego}_nonull
+    cut -f5,6 ${cladspego} | grep -v 'NA$' > ${cladspego}_nonull
+	outenrichgopan=${dirgoenrichcladespepan}/${cla}_go_term_enriched_cladespecific_vs_pangenome.tab
     ${ptgscripts}/clade_specific_genes_GOterm_enrichment_test.r \
-    --study_annots ${cladspego}_nonull  \
-    --population_annots ${claderefgodir}/${cla}_pangenome_terms.tab_nonull \
-    --out ${dirgoenrichcladespepan}/${cla}_go_term_enriched_cladespecific_vs_pangenome.tab \
-    --algo "weight01" --stat "Fisher" &> ${claspevspanenrichlogsrad}_${cla}_${enrichlogsext}
+    --study_annots ${cladspego}_nonull --population_annots ${claderefgodir}/${cla}_pangenome_terms.tab_nonull \
+    --out ${outenrichgopan} --algo "weight01" --stat "Fisher" &> ${claspevspanenrichlogsrad}_${cla}_${enrichlogsext}
     checkexec "step 7: failed ${step7} for clade ${cla}"
-    ls -lh ${dirgoenrichcladespepan}/*${cla}* ; echo ""
+    ls -lh ${outenrichgopan} ; echo ""
   else
     echo "no clade-specific (present) genes with referenced GO terms for ${cla}; skip GO term enrichment test"
   fi
