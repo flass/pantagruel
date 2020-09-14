@@ -40,9 +40,12 @@ export coltreechains=${genetrees}/${chaintype}_tree_chains
 export recs=${alerec}/${chaintype}_${recmethod}_recs
 export goterms=${funcannot}/GeneOntology
 export claderefgodir=${goterms}/clade_go_term_reference_sets
-export dirgotablescladespe=${orthomatrad}_specific_genes.tables_byclade_goterms_pathways
 export dirgoenrichcladespecore=${goterms}/clade_go_term_enriched_cladespecific_vs_coregenome
 export dirgoenrichcladespepan=${goterms}/clade_go_term_enriched_cladespecific_vs_pangenome
+#export dirgotablescladespe=${orthomatrad}_specific_genes.tables_byclade_goterms_pathways
+# sub folders that depend on the gene tree clade collapsing option
+export colalinexuscodedir=${genetrees}/${chaintype}_cdsfam_alignments_species_code
+export recs=${alerec}/${chaintype}_${recmethod}_recs
 export compoutdir=${comparerecs}/${parsedreccol}
 
 # other secondary variables
