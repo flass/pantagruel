@@ -300,7 +300,7 @@ claspevspanenrichlogsrad=${gotermlogs}/cladespecific_vs_pangenome_genes
 tail -n +2 ${cladedefs} | while read cla ${cladedefhead} ; do
   echo $cla
   cladspego=${dirgotablescladespe}/${ogmethod}_specific_pres_genes_${cla}_allseq_goterms.tab
-  if [[ -s ${cladspego} && $(wc -l ${cladspego} | cut -d ' ' -f1) -gt 1 ]] ; then
+  if [[ -s ${cladspego} && $(wc -l ${cladspego} | awk '{print $1}') -gt 1 ]] ; then
     cut -f5,6 ${cladspego} | grep -v 'NA$' > ${cladspego}_nonull
 	outenrichgopan=${dirgoenrichcladespepan}/${cla}_go_term_enriched_cladespecific_vs_pangenome.tab
     ${ptgscripts}/clade_specific_genes_GOterm_enrichment_test.r \
@@ -319,7 +319,6 @@ step8="concatenating summary reports"
 echo ${step8}
 cladespevssummary=${goterms}/clade_go_term_enriched_cladespecific_summary.tab
 tail -n +2 ${cladedefs} | while read cla ${cladedefhead} ; do
-  cla=clade${n}
   echo "# ${cla} ${name}"
   echo "# cladespe vs. core"
   cladespevscoresum=${dirgoenrichcladespecore}/${cla}_go_term_enriched_cladespecific_vs_coregenome.tab
