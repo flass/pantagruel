@@ -125,7 +125,7 @@ fi
 # compute the memory use of MMSeq2: M = (7 × N × L + 8 × a^k) bytes, N the number of sequences, L their average size, a the size of the alphabet
 # create MMseqs2 db
 mmlog1=${mmseqslogs}/mmseqs-1-cluster.log
-mmseqs createdb ${allfaarad}.nr.faa ${allfaarad}.nr.mmseqsdb &> ${mmlog1}
+mmseqs createdb ${allfaarad}.nr.faa ${allfaarad}.nr.mmseqsdb${mmsdbtag} &> ${mmlog1}
 # perform clustering
 mkdir -p ${families}
 echo "${datepad}-- Perform second protein clustering step (to find homologs with cluster algorithm)"
