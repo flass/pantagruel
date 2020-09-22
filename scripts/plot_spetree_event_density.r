@@ -1,4 +1,4 @@
-#!/usr/bin/Rscript --vanilla --slave
+#!/usr/bin/env Rscript
 library('ape')
 
 cargs = commandArgs(trailing=T)

@@ -132,7 +132,7 @@ echo "${datepad}-- Perform second protein clustering step (to find homologs with
 mmseqsclout=${families}/$(basename ${allfaarad}.nr).mmseqs_clusterdb_default
 # perform similarity search and clustering
 if [ -z "${updatedbfrom}" ] ; then
-	mmseqs cluster ${mmthreads} ${allfaarad}.nr.mmseqsdb $mmseqsclout $mmseqstmp &>> ${mmlog1}
+	mmseqs cluster ${mmthreads} ${allfaarad}.nr.mmseqsdb${mmsdbtag} $mmseqsclout $mmseqstmp &>> ${mmlog1}
 else
 	# update previous clustering
 	prevdbmmseqsclout=${prevdbseqdb}/$(basename ${families})/$(basename ${allfaarad}.nr).mmseqs_clusterdb_default
@@ -141,7 +141,7 @@ fi
 mmsummary=$(tail -n 4 ${mmlog1} | head -n 3)
 # generate indexed fasta file listing all protein families
 mmseqs createseqfiledb ${mmthreads} ${allfaarad}.nr.mmseqsdb${mmsdbtag} $mmseqsclout ${mmseqsclout}_clusters &>> ${mmlog1}
-checkexec "Second protein clustering step failed; please inestigate error reports in '${mmlog1}'" "${datepad}-- Second protein clustering step complete: ${mmsummary1}"
+checkexec "Second protein clustering step failed; please investigate error reports in '${mmlog1}'" "${datepad}-- Second protein clustering step complete: ${mmsummary1}"
 # generate separate fasta files with family identifiers distinc from representative sequence name
 python2.7 ${ptgscripts}/split_mmseqs_clustdb_fasta.py ${mmseqsclout}_clusters "${famprefix}P" ${mmseqsclout}_clusters_fasta 6 1 0
 checkexec "Fialed to split mmseqs cluster '${mmseqsclout}_clusters'" "${datepad}-- Successfully split mmseqs cluster '${mmseqsclout}_clusters'"
