@@ -1,4 +1,4 @@
-#!/usr/bin/Rscript
+#!/usr/bin/env Rscript
 library(phytools)
 
 combineNames = function(ass, metadata){

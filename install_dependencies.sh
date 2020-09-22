@@ -122,7 +122,7 @@ if [ "$installdebian" == 'true' ] ; then
   # 'libgsl*' are required for proper functioningof MASH, even though it should rely on its brew dependency
   # 'openjdk-11*' are required for Interproscan since release 5.37-76.0; this package has to be obtained from PPA ppa:openjdk-r/ppa (otherwise the default repository will provide an java-11-openjdk packageg that installs JDK 10 [as of 26/09/2019])
   deppackages="git build-essential cmake gcc g++ lftp clustalo raxml libhmsbeagle1v5 mrbayes \
-  r-base-core r-recommended r-cran-ape r-cran-ade4 r-cran-vegan r-cran-dbi r-cran-rsqlite r-cran-igraph r-cran-getopt r-cran-phytools \
+  r-base-core r-recommended r-cran-ape r-cran-ade4 r-cran-vegan r-cran-dbi r-cran-rsqlite r-cran-igraph r-cran-getopt r-cran-phytools r-cran-rcolorbrewer \
   sqlite3 sqlite3-doc libmagick++-dev python python-scipy python-numpy python-biopython python-biopython-sql python-igraph cython \
   mpi-default-bin mpi-default-dev mrbayes-mpi python-pip openjdk-11-jdk openjdk-11-jre \
   libdw1 libdw-dev libgsl23 libgsl-dev flex bison libgmp3-dev"

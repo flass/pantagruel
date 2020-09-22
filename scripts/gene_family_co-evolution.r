@@ -1,4 +1,4 @@
-#/usr/bin/env Rscript --vanilla --no-save
+#!/usr/bin/env Rscript
 library('parallel')
 library('RColorBrewer')
 
