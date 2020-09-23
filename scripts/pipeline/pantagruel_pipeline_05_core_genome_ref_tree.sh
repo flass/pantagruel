@@ -20,6 +20,10 @@ if [ "${resumetask}" == "true" ] ; then
   echo "will try and resume computation where it was last stopped; may skip/resume computing: core genome concatenated alignment, core ML tree search, core tree bootstrapping, core tree rooting with ${rootingmethod}"
 fi
 
+if [ -z "${ptgthreads}" ] ; then
+  ptgthreads=$(nproc)
+fi
+
 # parameterizing
 case "${coreseqtype}" in
   prot)
@@ -198,12 +202,8 @@ else
   else
     raxmlflav=''
   fi
-  if [ -z "${ptgthreads}" ] ; then
-    raxmlthreads="-T $(nproc)"
-  else
-    raxmlthreads="-T ${ptgthreads}"
-  fi
-  raxmlbin="raxmlHPC-PTHREADS${raxmlflav} ${raxmlthreads}"
+  
+  raxmlbin="raxmlHPC-PTHREADS${raxmlflav} -T ${ptgthreads}"
 
   # first check the alignment for duplicate sequences and write a reduced alignment with  will be excluded
   if [[ "${resumetask}" == "true" && -e ${pseudocorealn}.identical_sequences ]] ; then
