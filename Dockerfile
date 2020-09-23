@@ -2,7 +2,7 @@ FROM ubuntu:bionic
 
 ARG DEBIAN_FRONTEND=noninteractive
 
-RUN apt-get update && apt-get install -y --no-install-recommends wget git build-essential cmake gcc g++ \
+RUN apt-get update && apt-get install -y --no-install-recommends wget git build-essential cmake gcc g++ gfortran \
         lftp clustalo raxml libhmsbeagle1v5 mrbayes r-base-core \
         r-recommended r-cran-ape r-cran-ade4 r-cran-vegan r-cran-dbi r-cran-rsqlite r-cran-rcolorbrewer \
         r-cran-igraph r-cran-getopt sqlite3 sqlite3-doc libmagick++-dev python python-setuptools \
