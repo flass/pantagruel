@@ -13,8 +13,19 @@ if [ -z ${2} ] ; then
   exit 1
 fi
 
-asslist="${1}"
-outdir="${2}"
+asslist=$(readlink -f ${1})
+outdir=$(readlink -f ${2})
+if [ ! -s "${asslist}" ] ; then
+  echo "Error: specified input Assembly accession id list: '${asslist}' is empty/does not exist"
+  exit 1
+fi
+if [ ! -d "${outdir}" ] ; then
+  echo "Error: specified output folder: '${outdir}' is not a directory/does not exist"
+  exit 1
+fi
+
+echo "# input Assembly accession id list: '${asslist}'"
+echo "# output folder: '${outdir}'"
 
 if [ ! -z "${3}" ] ; then
   para="--parallel=${3}"
