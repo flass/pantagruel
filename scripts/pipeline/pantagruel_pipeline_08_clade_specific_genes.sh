@@ -183,6 +183,7 @@ tail -n +2 ${cladedefs} | while read cla ${cladedefhead} ; do
   cladest=${claderefgodir}/${cla}_coregenome_terms.tab
   claspeset="'$(echo ${clade} | sed -e "s/,/','/g")'"
   cladesize="$(echo ${clade} | tr ',' '\n' | wc -l)"
+  clasperef="''"
   if [ ! -z "${preferredgenomes}" ] ; then
     clasperef="'$(for pg in $(echo ${preferredgenomes} | tr ',' ' ') ; do
       for csr in $(echo ${clade} | tr ',' ' ') ; do
