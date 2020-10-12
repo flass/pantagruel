@@ -59,6 +59,8 @@ usagelong (){
   echo "                        when resuming a task run with -R; avoid using compression when likely to have to resume later"
   echo "                        (for the moment only available for tasks: 00 i.e. 'fetch')"
   echo ""
+  echo "    -v|--verbose      increase verbosity of logs (for the moment only affecting for tasks: 08 i.e. 'orthologs')"
+  echo ""
   echo "# for Pantagruel task init:"
   echo ""
   echo "  _mandatory options_"
@@ -421,7 +423,7 @@ if [[ -z "${@}" ]] ; then
   exit 1
 fi
 
-ARGS=`getopt --options "d:r:i:I:f:a:T:A:L:s:t:RSV:N:H:cng:e:p:q:u:hFz" --longoptions "dbname:,rootdir:,initfile:,refresh,iam:,famprefix:,refseq_ass:,refseq_list:,refseq_ass4annot:,refseq_list4annot:,custom_ass:,taxonomy:,pseudocore:,core_seqtype:,pop_lg_thresh:,pop_bs_thresh:,rooting:,snp_aln,reftree:,resume,env_var:,threads:,submit_hpc:,collapse,no_collapse,collapse_param:,genefam_list:,rec_method:,pref_genomes:,max_event_age:,help,FORCE,compress,path_to_interproscan:,update_from:,strain_info:" --name "pantagruel" -- "$@"`
+ARGS=`getopt --options "d:r:i:I:f:a:T:A:L:s:t:RSV:N:H:cng:e:p:q:u:hFvz" --longoptions "dbname:,rootdir:,initfile:,refresh,iam:,famprefix:,refseq_ass:,refseq_list:,refseq_ass4annot:,refseq_list4annot:,custom_ass:,taxonomy:,pseudocore:,core_seqtype:,pop_lg_thresh:,pop_bs_thresh:,rooting:,snp_aln,reftree:,resume,env_var:,threads:,submit_hpc:,collapse,no_collapse,collapse_param:,genefam_list:,rec_method:,pref_genomes:,max_event_age:,help,FORCE,compress,path_to_interproscan:,update_from:,strain_info:,verbose" --name "pantagruel" -- "$@"`
 
 #Bad arguments
 if [ ${?} -ne 0 ];
@@ -444,6 +446,10 @@ do
     
     -z|--compress) 
       export compress='on'
+      shift ;;
+	  
+    -v|--verbose) 
+      export verbosemode='on'
       shift ;;
     
     --refresh) 
