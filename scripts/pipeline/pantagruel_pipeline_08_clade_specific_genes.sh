@@ -190,7 +190,7 @@ tail -n +2 ${cladedefs} | while read cla ${cladedefhead} ; do
       done
     done | head -n1)'"
   fi
-  if [ -z "${clasperef}" ] ; then
+  if [ "${clasperef}" == "''" ] ; then
     clasperef="'$(echo ${clade} | tr ',' '\n' | sort | head -n1)'"
   fi
   echo "${cla} ${name} (repr.: ${clasperef}; size: ${cladesize}) ${claspeset}"
@@ -227,11 +227,11 @@ tail -n +2 ${cladedefs} | while read cla ${cladedefhead} ; do
   checkexec "step 5.1: failed ${step5} for clade ${cla} not including NULL go_id"
   ls -lh ${cladest}*
 done
-checkexec "step 5.1: failed ${step5}" "step 5.2: completed ${step5}\n"
+checkexec "step 5.1: failed ${step51}" "step 5.1: completed ${step51}\n"
 
 # pangenome terms
 step52="generating pangenome background term distribution for clades"
-echo "step 5.2: ${step5}"
+echo "step 5.2: ${step52}"
 # for the whole dataset
 qpan="
 select distinct locus_tag, go_id 
@@ -256,9 +256,9 @@ tail -n +2 ${cladedefs} | while read cla ${cladedefhead} ; do
   left join interpro2GO using (interpro_id) 
   where code in (${claspeset})"
   sqlite3 -cmd ".mode tab" ${sqldb} "${qpancla};" > ${cladest}
-  checkexec "step 5.2: failed ${step5} for clade ${cla} including NULL go_id"
+  checkexec "step 5.2: failed ${step52} for clade ${cla} including NULL go_id"
   sqlite3 -cmd ".mode tab" ${sqldb} "${qpancla} and go_id not null;" > ${cladest}_nonull
-  checkexec "step 5.2: failed ${step5} for clade ${cla} not including NULL go_id"
+  checkexec "step 5.2: failed ${step52} for clade ${cla} not including NULL go_id"
   ls -lh ${cladest}*
 done
 checkexec "step 5.2: failed ${step5}" "step 5.2: completed ${step5}\n"
