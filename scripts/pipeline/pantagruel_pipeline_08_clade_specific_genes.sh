@@ -143,14 +143,14 @@ echo "step 5.1: ${step51}"
 ## by default choose 'smallest' string in the clade code list to pick representative sequence, as done by default in get_clade_specific_genes.r
 ## this can be overridden using the env. variable ${preferredgenomes}
 # for the whole dataset
-step50="generating core genome background term distribution for the whole dataset"
-echo "step 5.0: ${step50}"
 # rely on WHERE code=${mincode} clause to choose the smallest code as it allows to speed up the query and to potentially pick different preferred genome, rather than using min(cds_code)
 if [ ! -z "${preferredgenomes}" ] ; then
   mincode="'$(echo ${preferredgenomes} | tr ',' '\n' | head -n1)'"
 else
   mincode="'$(cut -f1 ${database}/organism_codes.tab | sort | head -n1)'"
 fi
+step50="generating core genome background term distribution for the whole dataset (repr.: ${mincode}; size: ${ngenomes})"
+echo "step 5.0: ${step50}"
 qcore="
 select distinct locus_tag, go_id 
   FROM ( 
@@ -171,6 +171,7 @@ select distinct locus_tag, go_id
   LEFT JOIN functional_annotations using (nr_protein_id) 
   LEFT JOIN interpro2GO using (interpro_id)
 "
+[ "${verbosemode}" == "on" ] && echo "#${qcore}"
 sqlite3 -cmd ".mode tab .header off" ${sqldb} "${qcore};" > ${goterms}/${ngenomes}-genomes_coregenome_terms.tab
 sqlite3 -cmd ".mode tab .header off" ${sqldb} "${qcore} where go_id not null;" > ${goterms}/${ngenomes}-genomes_coregenome_terms.tab_nonull
 ls -lh ${goterms}/${ngenomes}-genomes_coregenome_terms.tab*
@@ -220,8 +221,9 @@ tail -n +2 ${cladedefs} | while read cla ${cladedefhead} ; do
    ) AS q2 USING (gene_family_id, og_id)
    LEFT JOIN functional_annotations USING (nr_protein_id) 
    LEFT JOIN interpro2GO USING (interpro_id) 
-  WHERE size=${cladesize} AND genome_present=${cladesize}"
-
+  WHERE size=${cladesize} AND genome_present=${cladesize}
+  "
+  [ "${verbosemode}" == "on" ] && echo "#${qcorecla}"
   sqlite3 -cmd ".mode tab" ${sqldb} "${qcorecla};" > ${cladest}
   checkexec "step 5.1: failed ${step5} for clade ${cla} including NULL go_id"
   sqlite3 -cmd ".mode tab" ${sqldb} "${qcorecla} and go_id not null;" > ${cladest}_nonull
@@ -240,6 +242,7 @@ select distinct locus_tag, go_id
  left join functional_annotations using (nr_protein_id) 
  left join interpro2GO using (interpro_id)
 "
+[ "${verbosemode}" == "on" ] && echo "#${qpan}"
 sqlite3 -cmd ".mode tab" ${sqldb} "${qpan};" > ${goterms}/${ngenomes}-genomes_pangenome_terms.tab
 sqlite3 -cmd ".mode tab" ${sqldb} "${qpan} where go_id not null;" > ${goterms}/${ngenomes}-genomes_pangenome_terms.tab_nonul
 ls -lh ${goterms}/${ngenomes}-genomes_pangenome_terms.tab*
@@ -256,6 +259,7 @@ tail -n +2 ${cladedefs} | while read cla ${cladedefhead} ; do
   left join functional_annotations using (nr_protein_id) 
   left join interpro2GO using (interpro_id) 
   where code in (${claspeset})"
+  [ "${verbosemode}" == "on" ] && echo "#${qpancla}"
   sqlite3 -cmd ".mode tab" ${sqldb} "${qpancla};" > ${cladest}
   checkexec "step 5.2: failed ${step52} for clade ${cla} including NULL go_id"
   sqlite3 -cmd ".mode tab" ${sqldb} "${qpancla} and go_id not null;" > ${cladest}_nonull

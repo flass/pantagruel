@@ -304,6 +304,8 @@ Options are detailed here:
                         This will induce possible extra decompressing/re-generating data computing time
                         when resuming a task run with -R; avoid using compression when likely to have to resume later
                         (for the moment only available for tasks: 00 i.e. 'fetch')
+						
+    -v|--verbose      increase verbosity of logs (for the moment only affecting for tasks: 08 i.e. 'orthologs')
 
 # for Pantagruel task init:
 
