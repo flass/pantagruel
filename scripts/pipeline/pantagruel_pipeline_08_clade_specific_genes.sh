@@ -98,7 +98,7 @@ echo "step 3: ${step3}"
 echo ${orthocol}
 ogmethod='mixed_majrule_combined_0.5.orthologs'
 orthomatrad=${orthogenes}/${orthocol}/${ogmethod}
-python2.7 ${ptgscripts}/get_ortholog_presenceabsence_matrix_from_sqlitedb.py ${sqldb} ${orthomatrad} ${orthocolid}
+python2.7 ${ptgscripts}/get_ortholog_presenceabsence_matrix_from_sqlitedb.py ${sqldb} ${orthomatrad} ${orthocolid} ${cdsorfanclust}
 checkexec "step 3: failed ${step3}" "step 3: completed ${step3}\n"
 
 # list clade-specific orthologs
@@ -171,9 +171,9 @@ select distinct locus_tag, go_id
   LEFT JOIN functional_annotations using (nr_protein_id) 
   LEFT JOIN interpro2GO using (interpro_id)
 "
-[ "${verbosemode}" == "on" ] && echo "#${qcore}"
-sqlite3 -cmd ".mode tab .header off" ${sqldb} "${qcore};" > ${goterms}/${ngenomes}-genomes_coregenome_terms.tab
-sqlite3 -cmd ".mode tab .header off" ${sqldb} "${qcore} where go_id not null;" > ${goterms}/${ngenomes}-genomes_coregenome_terms.tab_nonull
+[ "${verbosemode}" == "on" ] && echo "#${qcore};"
+sqlite3 -cmd ".mode tab" ${sqldb} "${qcore};" > ${goterms}/${ngenomes}-genomes_coregenome_terms.tab
+sqlite3 -cmd ".mode tab" ${sqldb} "${qcore} where go_id not null;" > ${goterms}/${ngenomes}-genomes_coregenome_terms.tab_nonull
 ls -lh ${goterms}/${ngenomes}-genomes_coregenome_terms.tab*
 # for all clades of the species tree
 step51="generating core genome background term distribution for each clade in the tree based on ortholog collection ${orthocolid}"
@@ -223,7 +223,7 @@ tail -n +2 ${cladedefs} | while read cla ${cladedefhead} ; do
    LEFT JOIN interpro2GO USING (interpro_id) 
   WHERE size=${cladesize} AND genome_present=${cladesize}
   "
-  [ "${verbosemode}" == "on" ] && echo "#${qcorecla}"
+  [ "${verbosemode}" == "on" ] && echo "#${qcorecla};"
   sqlite3 -cmd ".mode tab" ${sqldb} "${qcorecla};" > ${cladest}
   checkexec "step 5.1: failed ${step5} for clade ${cla} including NULL go_id"
   sqlite3 -cmd ".mode tab" ${sqldb} "${qcorecla} and go_id not null;" > ${cladest}_nonull
@@ -242,7 +242,7 @@ select distinct locus_tag, go_id
  left join functional_annotations using (nr_protein_id) 
  left join interpro2GO using (interpro_id)
 "
-[ "${verbosemode}" == "on" ] && echo "#${qpan}"
+[ "${verbosemode}" == "on" ] && echo "#${qpan};"
 sqlite3 -cmd ".mode tab" ${sqldb} "${qpan};" > ${goterms}/${ngenomes}-genomes_pangenome_terms.tab
 sqlite3 -cmd ".mode tab" ${sqldb} "${qpan} where go_id not null;" > ${goterms}/${ngenomes}-genomes_pangenome_terms.tab_nonul
 ls -lh ${goterms}/${ngenomes}-genomes_pangenome_terms.tab*
@@ -259,7 +259,7 @@ tail -n +2 ${cladedefs} | while read cla ${cladedefhead} ; do
   left join functional_annotations using (nr_protein_id) 
   left join interpro2GO using (interpro_id) 
   where code in (${claspeset})"
-  [ "${verbosemode}" == "on" ] && echo "#${qpancla}"
+  [ "${verbosemode}" == "on" ] && echo "#${qpancla};"
   sqlite3 -cmd ".mode tab" ${sqldb} "${qpancla};" > ${cladest}
   checkexec "step 5.2: failed ${step52} for clade ${cla} including NULL go_id"
   sqlite3 -cmd ".mode tab" ${sqldb} "${qpancla} and go_id not null;" > ${cladest}_nonull

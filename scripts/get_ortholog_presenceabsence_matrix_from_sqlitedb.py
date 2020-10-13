@@ -21,8 +21,9 @@ if len(sys.argv) < 2:
 nfsqldb = sys.argv[1]
 nfoutrad = sys.argv[2].rstrip('/')
 ortcolid = int(sys.argv[3])
-if len(sys.argv) > 4:
-	nffocusgenomecodes = sys.argv[4]
+orfanfam = int(sys.argv[4])
+if len(sys.argv) > 5:
+	nffocusgenomecodes = sys.argv[5]
 else:
 	nffocusgenomecodes = None
 
@@ -55,8 +56,8 @@ FROM coding_sequences
 INNER JOIN replicons USING (genomic_accession) 
 INNER JOIN assemblies USING (assembly_id) %s
 INNER JOIN gene_tree_label2cds_code USING (cds_code)
-WHERE gene_family_id IS NOT NULL AND gene_family_id!='RHIZOC000000'
-ORDER BY gene_family_id, code;"""%(IJfocus))
+WHERE gene_family_id IS NOT NULL AND gene_family_id!='%s'
+ORDER BY gene_family_id, code;"""%(IJfocus, orfanfam))
 
 #~ dbcur.execute("""
 #~ CREATE TEMP TABLE cds_fam_code AS 
@@ -135,12 +136,12 @@ else:
 nfoutlnoortho = nfoutrad+"_families_no-orthologs"
 with open(nfoutlnoortho, 'w') as foutlnoortho:
 	foutlnoortho.write('\n'.join(lnoorthofams)+'\n')
-print "%d families not covererd by orthology classification (means no evolution scenario was inferred for these families)"%len(lnoorthofams)
+print "%d families not covered by orthology classification (means no evolution scenario was inferred for these families)"%len(lnoorthofams)
 
 nfoutlortho = nfoutrad+"_families_with_orthologs"
 with open(nfoutlortho, 'w') as foutlortho:
 	foutlortho.write('\n'.join(lorthofams)+'\n')
-print "%d families covererd by orthology classification into a total of %d orthologous groups"%(len(lorthofams), northofamogs)
+print "%d families covered by orthology classification into a total of %d orthologous groups"%(len(lorthofams), northofamogs)
 
 print "these totalize %d families with unique representative in the dataset (singletons) and %d others [total: %d]"%(northosing, northonosing, northosing+northonosing)
 
