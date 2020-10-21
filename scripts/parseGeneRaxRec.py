@@ -63,7 +63,7 @@ def _parse_NHXRec_branch_annot(annot, spetree, fatlocs=None, guessHGT=False):
 			serr = "the S tree location '%s' is not below any of the specified S tree location(s) for the event occurring on the parent G tree branch %s"%(evloc, repr(fatlocs))
 			if guessHGT:
 				don = fatlocs[0]
-				print "Warning:", serr, "; infer an additional HGT event from %s to %s"%(don, evloc)
+				sys.stderr.write("Warning:", serr, "; infer an additional HGT event from %s to %s\n"%(don, evloc))
 				prelevt.insert(-1, ('T', evloc, don))
 			else:
 				raise IndexError, serr
