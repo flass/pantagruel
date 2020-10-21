@@ -362,7 +362,11 @@ if __name__=='__main__':
 	if nbthreads < 1: nbthreads = mp.cpu_count()
 	
 	## main execution
+	print "# This is", os.path.basename(sys.argv[0])
+	print "# cal was:", ' '.join(sys.argv)
+	print ""
 	lnfrec = glob.glob('%s/*ale.ml_rec'%(alerecdir))
+	print "# found %d reconciliation files to process in fodler '%s'"%(len(lnfrec), alerecdir)
 
 	for d in methods:
 		pd = os.path.join(outortdir, d)
@@ -407,10 +411,12 @@ if __name__=='__main__':
 		# list the consensus/ML gene trees available
 		lnfgtcon = glob.glob('%s/*%s'%(unreconciledGTdir, unreconciledGText))
 		# identify those not yet treated via reconciliation scanrios
+		print "# found %d consensus/ML gene trees to process in fodler '%s'"%(len(lnfgtcon), unreconciledGTdir)
 		dfamcon = {os.path.basename(nfgtcon).split('.')[0].split('-')[0].split('_')[0]:nfgtcon for nfgtcon in lnfgtcon}
 		lfamrec = [os.path.basename(nfrec).split('.')[0].split('-')[0].split('_')[0] for nfrec in lnfrec]
 		missrecfams = set(dfamcon.keys()) - set(lfamrec)
 		lnfgtconmis = [dfamcon[fam] for fam in missrecfams]
+		print "# found %d consensus/ML gene trees covering gene families that are not covered by reconciliations"%(len(lnfgtconmis))
 	
 		pd = os.path.join(outortdir, 'unreconciled')
 		if not os.path.isdir(pd):
