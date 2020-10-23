@@ -55,7 +55,7 @@ SELECT cds_code, replacement_label_or_cds_code, gene_family_id, code
 FROM coding_sequences 
 INNER JOIN replicons USING (genomic_accession) 
 INNER JOIN assemblies USING (assembly_id) %s
-INNER JOIN gene_tree_label2cds_code USING (cds_code)
+LEFT JOIN gene_tree_label2cds_code USING (cds_code)
 WHERE gene_family_id IS NOT NULL AND gene_family_id!='%s'
 ORDER BY gene_family_id, code;"""%(IJfocus, orfanfam))
 
