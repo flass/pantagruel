@@ -14,8 +14,11 @@ pleasecite="When using this software, please cite: '${ptgcitation}'"
 ptgcmdargs=$(echo ${@} | sed -e "s/'/\'/g")
 locexec=$(readlink -e $0)
 export ptgrepo=${locexec%%/scripts/pipeline/*}
-cd ${ptgrepo} ; export ptgversion=$(git log | head -n 1 | awk '{ print $2 }') ; cd - > /dev/null
-echo "This is Pantagruel pipeline version ${ptgversion} using source code from repository '$ptgrepo'"
+cd ${ptgrepo}
+export ptgversion=$(git log | head -n 1 | awk '{ print $2 }')
+export ptgbranch=$(git branch | grep '*' | cut -d' ' -f2)
+cd - > /dev/null
+echo "This is Pantagruel pipeline version ${ptgversion} using source code from repository '$ptgrepo' (branch: '${ptgbranch}')"
 echo
 export ptgscripts=${ptgrepo}/scripts
 
