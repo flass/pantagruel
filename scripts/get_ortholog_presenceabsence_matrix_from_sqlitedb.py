@@ -21,7 +21,7 @@ if len(sys.argv) < 2:
 nfsqldb = sys.argv[1]
 nfoutrad = sys.argv[2].rstrip('/')
 ortcolid = int(sys.argv[3])
-orfanfam = int(sys.argv[4])
+orfanfam = sys.argv[4]
 if len(sys.argv) > 5:
 	nffocusgenomecodes = sys.argv[5]
 else:
