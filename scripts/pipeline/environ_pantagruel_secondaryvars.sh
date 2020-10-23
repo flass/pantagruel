@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 ## This source file should be called by a Pantagruel database configuration file 
 ## to generate all database-related secondary environment variables

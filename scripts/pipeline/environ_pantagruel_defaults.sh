@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Prokka annotation parameters (only relevant if custom genome assemblies are provided):
 export assembler="somesoftware"
 export seqcentre="somewhere"
