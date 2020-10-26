@@ -74,7 +74,7 @@ checkexec "step 1: failed when ${step1}; check specific logs in '${getorthologs}
 # import ortholog classification into database
 step2="importing ortholog classification into database"
 echo ${step2}
-if [ "${resumetask}" == 'true' ] ; then
+if [[ "${resumetask}" == 'true' || "${runmode}" == 'force' ]] ; then
   echo "first delete previous records for this ortholog collection ('${orthocol}') in the database '${sqldb}'"
   sqlite3 ${sqldb} """DELETE FROM ortholog_collections WHERE ortholog_col_id=${orthocolid};"""
   # statement made below through first call to pantagruel_sqlitedb_load_orthologous_groups.py:
