@@ -103,7 +103,7 @@ def enforceUnicity(graph, clustering, graphcommfun, maxdrop=-1, w='weight', nrou
 	dcountspememb = {spememb:lspememb.count(spememb) for spememb in set(lspememb)}
 	spemembhicount = [spememb for spememb, n in dcountspememb.iteritems() if n > 1]
 	if not spemembhicount:
-		if verbose and nround>0: print "Conflict resolved at round %; network has now %d edges."%(nround, len(graph.es))
+		if verbose and nround>0: print "Conflict resolved at round %d; network has now %d edges."%(nround, len(graph.es))
 		return (graph, clustering)
 	elif verbose:
 		print "forbidden same-species genes in orthologous communities:", spemembhicount
