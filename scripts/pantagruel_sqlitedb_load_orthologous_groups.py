@@ -9,13 +9,15 @@ orthomethod = sys.argv[3]
 clustmethod = sys.argv[4]
 ortcolid = int(sys.argv[5])
 if len(sys.argv)>6:
-	keepPrevRecord = bool(int(sys.argv[6]))
+	keepPrevRecord = (sys.argv[6] == 'keep')
 else:
 	keepPrevRecord = False
 
 dbcon = sqlite3.connect(nfsqldb)
 dbcur = dbcon.cursor()
-if not keepPrevRecord: dbcur.execute("DELETE FROM orthologous_groups WHERE ortholog_col_id=?;", (ortcolid,))
+if not keepPrevRecord:
+	print "Warning: deleting previous records in table 'orthologous_groups WHERE ortholog_col_id=%d'"%ortcolid
+	dbcur.execute("DELETE FROM orthologous_groups WHERE ortholog_col_id=?;", (ortcolid,))
 filesuffix = "_%s.orthologs.%s"%(orthomethod, clustmethod)
 lnfortho = glob.glob(os.path.join(dirortho, orthomethod, '*'+filesuffix))
 for nfortho in lnfortho:
