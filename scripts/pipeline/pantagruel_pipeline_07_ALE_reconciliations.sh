@@ -186,7 +186,7 @@ echo -e "${parsedreccolid}\t${parsedreccoldate}\t${parsedreccol}" > ${alerec}/pa
 echo -e "\n# Parsed reconciliation collection details:"
 cat ${alerec}/parsedreccol
 
-if [ "${resumetask}" == 'true' ] ; then
+if [[ "${resumetask}" == 'true' || "${runmode}" == 'force' ]] ; then
   stepb="clean the database from previous inserts and indexes"
   echo "Resume mode: first ${stepb}"
   ${ptgscripts}/pantagruel_sqlitedb_phylogeny_clean_reconciliations.sh "${database}" "${sqldb}" "${parsedreccolid}"

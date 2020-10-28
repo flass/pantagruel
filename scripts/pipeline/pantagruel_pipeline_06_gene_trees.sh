@@ -391,7 +391,7 @@ if [[ "${chaintype}" != 'fullgenetree' ]] ; then
   ##############################################################
   ## 06.5 Populate database with all collapsed gene tree results
   ##############################################################
-  if [ "${resumetask}" == 'true' ] ; then
+  if [[ "${resumetask}" == 'true' || "${runmode}" == 'force'  ]] ; then
     # first clean the database
     ${ptgscripts}/pantagruel_sqlitedb_phylogeny_clean_collapsed_clades.sh "${sqldb}" "${collapsecolid}" "${replacecolid}"
   fi

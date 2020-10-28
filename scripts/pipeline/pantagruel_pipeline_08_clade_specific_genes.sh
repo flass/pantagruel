@@ -87,10 +87,18 @@ sqlite3 ${sqldb} """INSERT INTO ortholog_collections (ortholog_col_id, ortholog_
 ;
 """
 checkexec "step 2.0: failed when ${step2/classification/collection record}" "step 2.0: completed ${step2/classification/collection record}"
-python2.7 ${ptgscripts}/pantagruel_sqlitedb_load_orthologous_groups.py ${sqldb} ${orthogenes}/${orthocol} "mixed" "majrule_combined_0.500000" ${orthocolid} 0
+python2.7 ${ptgscripts}/pantagruel_sqlitedb_load_orthologous_groups.py ${sqldb} ${orthogenes}/${orthocol} "mixed" "majrule_combined_0.500000" ${orthocolid}
 checkexec "step 2.1: failed when ${step2} for reconciled gene trees" "step 2.1: completed ${step2} for reconciled gene trees"
-python2.7 ${ptgscripts}/pantagruel_sqlitedb_load_orthologous_groups.py ${sqldb} ${orthogenes}/${orthocol} "unreconciled" "unicopy" ${orthocolid} 1
+echo "records present in orthologous_group table:"
+sqlite3 ${sqldb} "SELECT count(*) from orthologous_group WHERE ortholog_col_id=${orthocolid};"
+python2.7 ${ptgscripts}/pantagruel_sqlitedb_load_orthologous_groups.py ${sqldb} ${orthogenes}/${orthocol} "unreconciled" "unicopy" ${orthocolid} 'keep'
 checkexec "step 2.2: failed when ${step2} for unreconciled gene trees" "step 2.2: completed ${step2} for unreconciled gene trees\n"
+echo "records present in orthologous_group table:"
+sqlite3 ${sqldb} "SELECT count(*) from orthologous_group WHERE ortholog_col_id=${orthocolid};"
+echo "orthologous groups present in orthologous_group table (with an OG id):"
+sqlite3 ${sqldb} "SELECT count(distinct gene_family_id, og_id) from orthologous_group WHERE ortholog_col_id=${orthocolid} AND og_id IS NOT NULL;"
+echo "orthologous groups present in orthologous_group table (without OG id):"
+sqlite3 ${sqldb} "SELECT count(distinct gene_family_id, og_id) from orthologous_group WHERE ortholog_col_id=${orthocolid} AND og_id IS NULL;"
 
 # generate abs/pres matrix
 step3="generating abs/pres matrix"
