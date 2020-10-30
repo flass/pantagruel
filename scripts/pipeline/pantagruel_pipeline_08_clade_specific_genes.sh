@@ -229,7 +229,7 @@ tail -n +2 ${cladedefs} | while read cla ${cladedefhead} ; do
    ) AS q2 USING (gene_family_id, og_id)
    LEFT JOIN functional_annotations USING (nr_protein_id) 
    LEFT JOIN interpro2GO USING (interpro_id) 
-  WHERE size=${cladesize} AND genome_present=${cladesize};
+  WHERE size=${cladesize} AND genome_present=${cladesize}
   "
   [ "${verbosemode}" == "on" ] && echo "#${qcorecla};"
   sqlite3 -cmd ".mode tab" ${sqldb} "${qcorecla};" > ${cladest}
