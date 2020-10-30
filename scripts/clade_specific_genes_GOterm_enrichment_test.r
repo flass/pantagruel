@@ -115,11 +115,13 @@ if (!is.null(opt$stat)){ tgstat = opt$stat }else{ tgstat = "Fisher" }
 # run analysis
 for (study.name in names(lstudy.gene2GO)){
 	study.gene2GO = lstudy.gene2GO[[study.name]]
+	print("head(study.gene2GO):")
+	print(head(study.gene2GO))
+	print("head(pop.gene2GO):")
+	print(head(pop.gene2GO))
 	geneList = makeGeneList(names(study.gene2GO), names(pop.gene2GO))
 	print("head(geneList):")
 	print(head(geneList))
-	print("head(pop.gene2GO):")
-	print(head(pop.gene2GO))
 	print("create topGOdata object")
 	GOdata = new("topGOdata", ontology=ontology, allGenes=geneList, annot=annFUN.gene2GO, gene2GO=pop.gene2GO)
 	print(sprintf("run term enrichment test (algo: %s; statistic: %s)", tgalgo, tgstat))
