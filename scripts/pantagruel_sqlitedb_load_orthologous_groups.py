@@ -36,9 +36,12 @@ dbcur.execute("CREATE UNIQUE INDEX IF NOT EXISTS og_cds_ogcol_idx ON orthologous
 
 dbcur.execute("DROP TABLE IF EXISTS gene_fam_og_sizes;")
 dbcur.execute("""CREATE TABLE gene_fam_og_sizes AS 
-                   SELECT gene_family_id, og_id, count(cds_code) AS size, count(cds_code) AS genome_present, ortholog_col_id 
+                   SELECT gene_family_id, og_id, count(distinct cds_code) AS size, count(distinct code) AS genome_present, ortholog_col_id 
                     FROM orthologous_groups 
                     INNER JOIN gene_tree_label2cds_code USING (replacement_label_or_cds_code)
+					INNER JOIN coding_sequences 
+					INNER JOIN replicons USING (genomic_accession) 
+					INNER JOIN assemblies USING (assembly_id) 
                    WHERE ortholog_col_id=?
                    GROUP BY gene_family_id, og_id, ortholog_col_id
                   UNION

@@ -219,11 +219,11 @@ tail -n +2 ${cladedefs} | while read cla ${cladedefhead} ; do
    AND code IN (${claspeset});
   SELECT distinct locus_tag, go_id 
    FROM (
-    SELECT gene_family_id, og_id, count(*) AS size, count(distinct code) AS genome_present
+    SELECT gene_family_id, og_id, count(distinct cds_code) AS size, count(distinct code) AS genome_present
 	 FROM pan${cla} 
     GROUP BY gene_family_id, og_id
    ) AS q1
-   INNER JOIN (
+   LEFT JOIN (
     SELECT * from pan${cla}
     WHERE code=${clasperef}
    ) AS q2 USING (gene_family_id, og_id)
