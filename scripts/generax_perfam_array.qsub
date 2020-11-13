@@ -46,4 +46,4 @@ echo "current directory is ${PWD}"
 
 export worklocal='true'
 
-${ptgscripts}/generax_perfam.sh ${generaxfamfi}
+${dirscript}/generax_perfam.sh ${generaxfamfi}

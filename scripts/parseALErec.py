@@ -542,8 +542,8 @@ def _prune_orthologs_top_down(node, **kw):
 	    targetting almost-unicopy clades disrupted by late gains.
 	if 'reRootMaxBalance':
 		the tree is re-rooted according the the maximum branch length balance of sub-root trees; note that doing so, 
-		a lot of information from reconciliation is lost, only the possibly varried almagamated tology of the gene tree
-		may differ between sampled receonciled gene trees. The 'refspetree' option is therefore unvalid and overridden by this one. 
+		a lot of information from reconciliation is lost, only the possibly varried almagamated topology of the gene tree
+		may differ between sampled reconciled gene trees. The 'refspetree' option is therefore unvalid and overridden by this one. 
 		Note also that if using mixed criterion, a candidate OG from strict gain scenario may have covered a subtree that contained 
 		the new root, in which case it is discarded.
 	"""
