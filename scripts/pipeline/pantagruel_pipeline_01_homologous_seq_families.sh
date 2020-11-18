@@ -52,8 +52,13 @@ fi
 rm -f ${allfaarad}*
 for ass in `ls ${assemblies}` ; do
  if [ -d ${assemblies}/${ass} ] ; then
-  faa=$(ls ${assemblies}/${ass}/* | grep "protein.faa")
-  zcat ${faa} >> ${allfaarad}.faa && echo $faa >> ${allfaarad}_list
+  faa=$(ls ${assemblies}/${ass}/*protein.faa)
+  if [[ ! -z "${faa}" && -s "${faa}" ]] ; then
+   cat ${faa} >> ${allfaarad}.faa && echo ${faa} >> ${allfaarad}_list
+  else
+   faagz=$(ls ${assemblies}/${ass}/*protein.faa.gz)
+   zcat ${faagz} >> ${allfaarad}.faa && echo ${faagz} >> ${allfaarad}_list
+  fi
  fi
 done
 promptdate "-- $(wc -l ${allfaarad}_list | cut -d' ' -f1) proteomes in dataset"
