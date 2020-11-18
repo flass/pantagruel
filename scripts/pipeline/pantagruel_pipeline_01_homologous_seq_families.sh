@@ -25,6 +25,10 @@ fi
 #############################
 ## 01. Homologous Sequence db
 #############################
+if [ -z "${ptgtmp}" ] ; then
+  echo "Error: \${ptgtmp} is not defined; exit now"
+  exit 1
+fi
 mmseqstmp=${ptgtmp}/mmseqs && rm -rf ${mmseqstmp} && mkdir -p ${mmseqstmp}/
 
 if [ ! -z "${updatedbfrom}" ] ; then
@@ -48,7 +52,10 @@ else
 fi
 
 ## extract all the protein sequences into single proteome fasta files
-
+if [ -z "${allfaarad}" ] ; then
+  echo "Error: \${allfaarad} is not defined; exit now"
+  exit 1
+fi
 rm -f ${allfaarad}*
 for ass in `ls ${assemblies}` ; do
  if [ -d ${assemblies}/${ass} ] ; then
