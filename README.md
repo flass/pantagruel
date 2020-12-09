@@ -303,7 +303,7 @@ Options are detailed here:
     -z|--compress     will try and compress result file on the go (especially bulky files that won't be used much later
                         This will induce possible extra decompressing/re-generating data computing time
                         when resuming a task run with -R; avoid using compression when likely to have to resume later
-                        (for the moment only available for tasks: 00 i.e. 'fetch')
+                        (for the moment only available for tasks: 00, 02 i.e. 'fetch', 'align')
 						
     -v|--verbose      increase verbosity of logs (for the moment only affecting for tasks: 08 i.e. 'orthologs')
 

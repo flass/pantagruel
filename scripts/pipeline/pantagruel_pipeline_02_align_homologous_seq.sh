@@ -116,3 +116,11 @@ tail -n +2 ${protali}/${famprefix}C000000_genome_counts-ORFans.mat >> ${protali}
 gzip ${protali}/all_families_genome_counts.mat
 checkexec "failed during ${step3}" "Completed ${step3}"
 
+ if [[ "${compress}" == 'on' ]] ; then
+   step4="compressing redundant folders"
+   echo "Pantagruel compress option (-z) ON: $step4"
+   cd ${protali}/
+   for daln in nr_protfam_clustalo_alignments full_cdsfam_fasta full_protfam_alignments full_cdsfam_alignments ; do
+     tar -czf ${daln}.tar.gz ${daln}/ && rm -r ${daln}/ || echo "Warning: could not succesfully compress '${protali}/${daln}/'; keep the full folder as is"
+   done
+ fi
