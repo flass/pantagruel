@@ -117,6 +117,7 @@ if [ ! -z "${srcass}" ] ; then
       if [[ "${dass}" == 'all_assemblies_organism_names' || "${dass}" == 'genome_assemblies_list' ]] ; then
         echo "found file '${dass}' presumably generated from a previous Pantagruel run; this file will be deleted now and regenrated later"
         rm ${srcass}/${dass}
+        continue
       elif [ ! -d ${srcass}/${dass} ] ; then
         echo "Error: RefSeq assemblies must be provided as folders including sequence and annotation files;"
         echo " '${srcass}/${dass}' is not a directory; exit now"
