@@ -111,10 +111,13 @@ if [ ! -z "${srcass}" ] ; then
   if [ -z "${inass}" ] ; then
     echo "Error: the folder '${srcass}' provided for custom reference genome assembly set (through option '--refseq_ass4annot') is empty; pease provide "
   fi
-  # detected input RefSeq genome folder
+  # detected an input RefSeq genome folder
     for dass in ${inass} ; do
-    # check validity of the folder file structure
-      if [ ! -d ${srcass}/${dass} ] ; then
+      # check validity of the folder file structure
+      if [[ "${dass}" == 'all_assemblies_organism_names' | "${dass}" == 'genome_assemblies_list' ]] ; then
+        echo "found file '${dass}' presumably generated from a previous Pantagruel run; this file will be deleted now and regenrated later"
+        rm ${srcass}/${dass}
+      elif [ ! -d ${srcass}/${dass} ] ; then
         echo "Error: RefSeq assemblies must be provided as folders including sequence and annotation files;"
         echo " '${srcass}/${dass}' is not a directory; exit now"
         exit 1
