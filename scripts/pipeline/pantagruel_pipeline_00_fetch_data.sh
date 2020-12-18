@@ -66,7 +66,7 @@ extractass (){
 		  fi
         fi
       done
-      rm -r ${assd[0]}/ 
+      rm -r ${assd[0]}
     done
   fi
   grep "# Organism name" ${srcass}/*/*_assembly_stats.txt > ${srcass}/all_assemblies_organism_names
