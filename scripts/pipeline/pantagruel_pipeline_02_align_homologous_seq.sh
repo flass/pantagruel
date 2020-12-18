@@ -121,6 +121,6 @@ checkexec "failed during ${step3}" "Completed ${step3}"
    echo "Pantagruel compress option (-z) ON: $step4"
    cd ${protali}/
    for daln in nr_protfam_clustalo_alignments full_cdsfam_fasta full_protfam_alignments full_cdsfam_alignments ; do
-     tar -czf ${daln}.tar.gz ${daln}/ && rm -r ${daln}/ || echo "Warning: could not succesfully compress '${protali}/${daln}/'; keep the full folder as is"
+     tar -czf ${daln}.tar.gz ${daln} && rm -r ${daln} || echo "Warning: could not succesfully compress '${protali}/${daln}/'; keep the full folder as is"
    done
  fi
