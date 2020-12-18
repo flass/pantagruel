@@ -115,7 +115,7 @@ if [ -z $protidfield ] ; then
  protidfield=$(head -n 1 ${genomeinfo}/assembly_info/allproteins_info.tab |  tr '\t' '\n' | grep -n 'protein_id' | cut -d':' -f1)
 fi
 cut -f $protidfield ${genomeinfo}/assembly_info/allproteins_info.tab | grep -v "^$\|protein_id" | sort -u > ${genomeinfo}/assembly_info/allproteins_in_gff
-grep '>' ${allfaarad}.nr.faa | cut -d' ' -f1 | cut -d'>' -f2 | sort -u > ${allfaarad}.nr_protlist
+grep '>' ${allfaarad}.faa | cut -d' ' -f1 | cut -d'>' -f2 | sort -u > ${allfaarad}.nr_protlist
 # compare original dataset of nr protein (as described in the input GFF files) to the aligned nr proteome
 diff ${genomeinfo}/assembly_info/allproteins_in_gff ${allfaarad}.nr_protlist > $ptgtmp/diff_prot_info_fasta
 if [ -s $ptgtmp/diff_prot_info_fasta ] ; then 
@@ -156,7 +156,7 @@ mmseqs createseqfiledb ${mmthreads} ${allfaarad}.nr.mmseqsdb${mmsdbtag} $mmseqsc
 checkexec "Second protein clustering step failed; please investigate error reports in '${mmlog1}'" "${datepad}-- Second protein clustering step complete: ${mmsummary1}"
 # generate separate fasta files with family identifiers distinc from representative sequence name
 python2.7 ${ptgscripts}/split_mmseqs_clustdb_fasta.py ${mmseqsclout}_clusters "${famprefix}P" ${mmseqsclout}_clusters_fasta 6 1 0
-checkexec "Fialed to split mmseqs cluster '${mmseqsclout}_clusters'" "${datepad}-- Successfully split mmseqs cluster '${mmseqsclout}_clusters'"
+checkexec "Failed to split mmseqs cluster '${mmseqsclout}_clusters'" "${datepad}-- Successfully split mmseqs cluster '${mmseqsclout}_clusters'"
 promptdate "-- $(wc -l ${mmseqsclout}_clusters_fasta.tab | cut -d' ' -f1) non-redundant proteins"
 promptdate "-- classified into $(ls ${mmseqsclout}_clusters_fasta/ | wc -l) clusters"
 echo "${datepad}-- including artificial cluster ${famprefix}P000000 gathering $(grep -c '>' ${mmseqsclout}_clusters_fasta/${famprefix}P000000.fasta) ORFan nr proteins"
