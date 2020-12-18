@@ -247,7 +247,7 @@ if [ ! -z "${customassemb}" ] ; then
       if [ -d ${custannot}/${gproject} ] ; then
         echo "found annotation folder '${custannot}/${gproject}' ; skip annotation of contigs in '${contigs}/${allcontigs}'"
         # better preserve actual path as input data are external to the Pantagruel database 
-        ln -s ${custannot}/${gproject} ${annot}/
+        ln -s ${custannot}/${gproject} ${annot}/${gproject}
       else
 	    if [[ "${resumetask}" == 'true' && -d ${annot}/${gproject} && ! -z $(ls ${annot}/${gproject}/*.gff) && ! -z $(ls ${annot}/${gproject}/*.gbk) ]] ; then
 		  echo "found already computed annotation in ${annot}/${gproject}/:"
@@ -407,9 +407,13 @@ if [ ! -z "${customassemb}" ] ; then
         python2.7 ${ptgscripts}/format_prokkaCDS.py ${annot}/${gproject}/${ffn[0]} ${cdsfnagz}
         ls -l ${cdsfnagz}
 	    if [[ "${compress}" == 'on' ]] ; then
-          # compress and only upon success delete the uncompress folder
-		  echo "will compress folder '${annot}/${gproject}/':"
-          tar -czf ${annot}/${gproject}.tar.gz ${annot}/${gproject}/ && rm -rf ${annot}/${gproject}/ && echo -e "successfully compressed into\n:'$(ls -l ${annot}/${gproject}.tar.gz)' and deleted source folder." || "Compression failed; leave source folder '${annot}/${gproject}/' as is"
+          if [[ -L ${annot}/${gproject} ]] ; then
+            echo "${annot}/${gproject}/ is a symlink to input data; won't compress it and leave the symlink as is"
+          else    
+            # compress and only upon success delete the uncompressed folder
+		    echo "will compress folder '${annot}/${gproject}/':"
+            tar -czf ${annot}/${gproject}.tar.gz ${annot}/${gproject} && rm -rf ${annot}/${gproject} && echo -e "successfully compressed into:\n$(ls -l ${annot}/${gproject}.tar.gz)\nand deleted source folder." || "Compression failed; leave the source folder '${annot}/${gproject}/' as is"
+          fi
 	    fi
 	  fi
 #    done > ${ptglogs}/genbank-format_assemblies.log
