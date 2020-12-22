@@ -322,11 +322,15 @@ if [ ! -z "${customassemb}" ] ; then
           checkexec "something went wrong when generating ${sgfin}" "succesfuly generated ${sgfin}"
         fi
         annotfna=($(ls ${annot}/${gproject}/*.fna))
-        annotgbk=($(ls ${annot}/${gproject}/*.gbk 2> /dev/null | grep -v '.ptg.gbk'))
+        annotgbk=($(ls ${annot}/${gproject}/*.gbk 2> /dev/null))
         annotrad=${annotgbk[0]%*.gbk}
         if [ -z "${annotgbk[0]}" ] ; then
-          annotgbk=($(ls ${annot}/${gproject}/*.gbf | grep -v '.ptg.gbf'))
+          annotgbk=($(ls ${annot}/${gproject}/*.gbf))
           annotrad=${annotgbk[0]%*.gbf}
+          if [ -z "${annotgbk[0]}" ] ; then
+            echo "ERROR: could not find any GenBank flat file matching *.gbk or *.gbf in ${annot}/${gproject}/ ; exit now"
+            exit 1
+          fi
         fi
         annotfaa=($(ls ${annot}/${gproject}/*.faa))
         annotffn=($(ls ${annot}/${gproject}/*.ffn))
