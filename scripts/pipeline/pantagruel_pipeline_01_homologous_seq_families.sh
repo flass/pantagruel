@@ -59,11 +59,15 @@ fi
 rm -f ${allfaarad}*
 for ass in `ls ${assemblies}` ; do
  if [ -d ${assemblies}/${ass} ] ; then
-  faa=$(ls ${assemblies}/${ass}/*protein.faa)
+  faa=$(ls ${assemblies}/${ass}/*protein.faa 2> /dev/null)
   if [[ ! -z "${faa}" && -s "${faa}" ]] ; then
    cat ${faa} >> ${allfaarad}.faa && echo ${faa} >> ${allfaarad}_list
   else
-   faagz=$(ls ${assemblies}/${ass}/*protein.faa.gz)
+   faagz=$(ls ${assemblies}/${ass}/*protein.faa.gz 2> /dev/null)
+   if [ -z "${faagz}" ] ; then
+     echo "Error: could not find any proteome file matching '${assemblies}/${ass}/*protein.faa[.gz]' ; exit now"
+     exit 1
+   fi
    zcat ${faagz} >> ${allfaarad}.faa && echo ${faagz} >> ${allfaarad}_list
   fi
  fi
@@ -108,22 +112,22 @@ python2.7 ${ptgscripts}/allgenome_gff2db.py --assemb_list ${genomeinfo}/assembli
  --ncbi_taxonomy ${ncbitax} --identical_prots ${allfaarad}.identicals.list
 
 ## check consistency of non-redundant protein sets
-mkdir -p $ptgtmp
+mkdir -p ${ptgtmp}
 protidfield=$(head -n 1 ${genomeinfo}/assembly_info/allproteins_info.tab |  tr '\t' '\n' | grep -n 'nr_protein_id' | cut -d':' -f1)
-if [ -z $protidfield ] ; then 
+if [ -z "${protidfield}" ] ; then 
  protidfield=$(head -n 1 ${genomeinfo}/assembly_info/allproteins_info.tab |  tr '\t' '\n' | grep -n 'protein_id' | cut -d':' -f1)
 fi
-cut -f $protidfield ${genomeinfo}/assembly_info/allproteins_info.tab | grep -v "^$\|protein_id" | sort -u > ${genomeinfo}/assembly_info/allproteins_in_gff
-grep '>' ${allfaarad}.faa | cut -d' ' -f1 | cut -d'>' -f2 | sort -u > ${allfaarad}.nr_protlist
+cut -f ${protidfield} ${genomeinfo}/assembly_info/allproteins_info.tab | grep -v "^$\|protein_id" | sort -u > ${genomeinfo}/assembly_info/allproteins_in_gff
+grep '>' ${allfaarad}.nr.faa | cut -d' ' -f1 | cut -d'>' -f2 | sort -u > ${allfaarad}.nr_protlist
 # compare original dataset of nr protein (as described in the input GFF files) to the aligned nr proteome
-diff ${genomeinfo}/assembly_info/allproteins_in_gff ${allfaarad}.nr_protlist > $ptgtmp/diff_prot_info_fasta
-if [ -s $ptgtmp/diff_prot_info_fasta ] ; then 
+diff ${genomeinfo}/assembly_info/allproteins_in_gff ${allfaarad}.nr_protlist > ${ptgtmp}/diff_prot_info_fasta
+if [ -s ${ptgtmp}/diff_prot_info_fasta ] ; then 
   >&2 promptdate
   >&2 echo "ERROR: inconsistent propagation of the protein dataset:"
-  >&2 echo "present in aligned fasta proteome / absent in info table generated from input GFF:"
-  >&2 grep '>' $ptgtmp/diff_prot_info_fasta | cut -d' ' -f2
-  >&2 echo "present in info table generated from input GFF / absent in aligned fasta proteome:"
-  >&2 grep '<' $ptgtmp/diff_prot_info_fasta | cut -d' ' -f2
+  >&2 echo "present in combined proteome fasta files / absent in info table generated from input GFF:"
+  >&2 grep '>' ${ptgtmp}/diff_prot_info_fasta | cut -d' ' -f2
+  >&2 echo "present in info table generated from input GFF / absent in combined proteome fasta files:"
+  >&2 grep '<' ${ptgtmp}/diff_prot_info_fasta | cut -d' ' -f2
   exit 1
 fi
 
