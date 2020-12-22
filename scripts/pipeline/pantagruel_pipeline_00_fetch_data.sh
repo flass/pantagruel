@@ -322,10 +322,10 @@ if [ ! -z "${customassemb}" ] ; then
           checkexec "something went wrong when generating ${sgfin}" "succesfuly generated ${sgfin}"
         fi
         annotfna=($(ls ${annot}/${gproject}/*.fna))
-        annotgbk=($(ls ${annot}/${gproject}/*.gbk 2> /dev/null))
+        annotgbk=($(ls ${annot}/${gproject}/*.gbk 2> /dev/null | grep -v '.ptg.gbk'))
         annotrad=${annotgbk[0]%*.gbk}
         if [ -z "${annotgbk[0]}" ] ; then
-          annotgbk=($(ls ${annot}/${gproject}/*.gbf))
+          annotgbk=($(ls ${annot}/${gproject}/*.gbf | grep -v '.ptg.gbf'))
           annotrad=${annotgbk[0]%*.gbf}
         fi
         annotfaa=($(ls ${annot}/${gproject}/*.faa))
@@ -390,19 +390,19 @@ if [ ! -z "${customassemb}" ] ; then
         gffgz=${assembpathrad}_genomic.gff.gz
         gzip -c ${annot}/${gproject}/${gff} > ${gffgz}
         ls -l ${gffgz}
-        gbk=($(ls ${annot}/${gproject}/ | grep 'ptg.gbk' | grep -v '.original'))
+        gbk=($(ls ${annot}/${gproject}/*.ptg.gbk 2> /dev/null | grep -v '.original'))
         gbkgz=${assembpathrad}_genomic.gbff.gz
         gzip -c ${annot}/${gproject}/${gbk[0]} > ${gbkgz}
         ls -l ${gbkgz}
-        faa=($(ls ${annot}/${gproject}/ | grep '.faa' | grep -v '.original'))
+        faa=($(ls ${annot}/${gproject}/*.faa 2> /dev/null | grep -v '.original'))
         faagz=${assembpathrad}_protein.faa.gz
         gzip -c ${annot}/${gproject}/${faa[0]} > ${faagz}
         ls -l ${faagz}
-        gfna=($(ls ${annot}/${gproject}/ | grep '.fna' | grep -v '.original'))
+        gfna=($(ls ${annot}/${gproject}/*.fna 2> /dev/null | grep -v '.original'))
         gfnagz=${assembpathrad}_genomic.fna.gz
         gzip -c ${annot}/${gproject}/${gfna[0]} > ${gfnagz}
         ls -l ${gfnagz}
-        ffn=($(ls ${annot}/${gproject}/ | grep '.ffn' | grep -v '.original'))
+        ffn=($(ls ${annot}/${gproject}/*.ffn 2> /dev/null | grep -v '.original'))
         cdsfnagz=${assembpathrad}_cds_from_genomic.fna.gz
         python2.7 ${ptgscripts}/format_prokkaCDS.py ${annot}/${gproject}/${ffn[0]} ${cdsfnagz}
         ls -l ${cdsfnagz}
