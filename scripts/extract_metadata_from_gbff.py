@@ -213,7 +213,7 @@ def main(nfldirassemb, dirassemblyinfo, output, defspename, nfdhandmetaraw, nfdh
 				  #~ 'sequencing_coverage', 'contig_N50', 'contig_count', 'note']
 	for cq in lcurqualif: dcurated[cq] = {}
 	na = ''
-    nana = ':'
+	nana = ':'
 	#~ na = 'NA'
 
 	for assemb in lassemb:
