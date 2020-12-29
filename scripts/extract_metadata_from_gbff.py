@@ -213,6 +213,7 @@ def main(nfldirassemb, dirassemblyinfo, output, defspename, nfdhandmetaraw, nfdh
 				  #~ 'sequencing_coverage', 'contig_N50', 'contig_count', 'note']
 	for cq in lcurqualif: dcurated[cq] = {}
 	na = ''
+    nana = ':'
 	#~ na = 'NA'
 
 	for assemb in lassemb:
@@ -228,7 +229,7 @@ def main(nfldirassemb, dirassemblyinfo, output, defspename, nfdhandmetaraw, nfdh
 		sero = dmetadata.get('serovar',{}).get(assemb, na)
 		note = dmetadata.get('note',{}).get(assemb, na)
 		#~ print dmetadata['db_xref'].get(assemb,na)
-		taxid = dict(dbxref.split(':') for dbxref in dmetadata.get('db_xref',{}).get(assemb,na).strip(' "').split(';'))['taxon']
+		taxid = dict(dbxref.split(':') for dbxref in dmetadata.get('db_xref',{}).get(assemb,nana).strip(' "').split(';'))['taxon']
 		subspe = na
 		ecol = na
 		## strain
