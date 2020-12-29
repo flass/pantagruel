@@ -345,7 +345,8 @@ if [ ! -z "${customassemb}" ] ; then
 #    mkdir -p ${gblikeass}/
 #    for gproject in `ls ${annot}` ; do
 	  doprocess2=true
-      gff=$(ls ${annot}/${gproject}/ 2> /dev/null | grep 'ptg.gff' | grep -v '\.original')
+      gff=($(ls ${annot}/${gproject}/*.ptg.gff 2> /dev/null | grep -v '\.original\|ptg.ptg'))
+      bngff=$(basename ${gff[0]})
 	  if [ -z "${gff}" ] ; then
 	    if [ -s ${annot}/${gproject}.tar.gz  ] ; then
 		  # annotation was previously processed then compressed; try and see if the final files are present
@@ -369,7 +370,7 @@ if [ ! -z "${customassemb}" ] ; then
 	          echo "Error: could not find file '${annotptggff}' in the extracted content of archive '${annot}/${gproject}.tar.gz'; annotation is missing for genome '${gproject}': exit now"
 		      exit 1
 			else
-			  assemb=${gproject}.1_${gff[0]%*.ptg.gff}
+			  assemb=${gproject}.1_${bngff%*.ptg.gff}
 	        fi
 	      fi
 		else
@@ -377,14 +378,14 @@ if [ ! -z "${customassemb}" ] ; then
 		  exit 1
 	    fi
 	  else
-	    assemb=${gproject}.1_${gff[0]%*.ptg.gff}
+	    assemb=${gproject}.1_${bngff%*.ptg.gff}
 	  fi
       
 	  assaccname=$(parseGBass ${gproject})
 	  if [ ! -z "${assaccname}" ] ; then
-	    echo -e "${gproject}\t${assaccname}.1_${gff[0]%*.ptg.gff}\tcustom_assembly" >> ${gp2ass}
+	    echo -e "${gproject}\t${assaccname}.1_${bngff%*.ptg.gff}\tcustom_assembly" >> ${gp2ass}
       else
-	    echo -e "${gproject}\t${gproject}.1\t${gff[0]%*.ptg.gff}\tcustom_assembly" >> ${gp2ass}
+	    echo -e "${gproject}\t${gproject}.1\t${bngff%*.ptg.gff}\tcustom_assembly" >> ${gp2ass}
 	  fi
 	  if [[ "${doprocess2}" == 'true' ]] ; then
         assembpathdir=${gblikeass}/${assemb}
@@ -392,23 +393,23 @@ if [ ! -z "${customassemb}" ] ; then
         mkdir -p ${assembpathdir}/
         ls -l ${assembpathdir}/ -d
         gffgz=${assembpathrad}_genomic.gff.gz
-        gzip -c ${annot}/${gproject}/${gff} > ${gffgz}
+        gzip -c ${gff[0]} > ${gffgz}
         ls -l ${gffgz}
-        gbk=($(ls ${annot}/${gproject}/*.ptg.gbk 2> /dev/null | grep -v '.original'))
+        gbk=($(ls ${annot}/${gproject}/*.ptg.gbk 2> /dev/null | grep -v '\.original\|ptg.ptg'))
         gbkgz=${assembpathrad}_genomic.gbff.gz
-        gzip -c ${annot}/${gproject}/${gbk[0]} > ${gbkgz}
+        gzip -c ${gbk[0]} > ${gbkgz}
         ls -l ${gbkgz}
-        faa=($(ls ${annot}/${gproject}/*.faa 2> /dev/null | grep -v '.original'))
+        faa=($(ls ${annot}/${gproject}/*.faa 2> /dev/null | grep -v '\.original\|ptg.ptg'))
         faagz=${assembpathrad}_protein.faa.gz
-        gzip -c ${annot}/${gproject}/${faa[0]} > ${faagz}
+        gzip -c ${faa[0]} > ${faagz}
         ls -l ${faagz}
-        gfna=($(ls ${annot}/${gproject}/*.fna 2> /dev/null | grep -v '.original'))
+        gfna=($(ls ${annot}/${gproject}/*.fna 2> /dev/null | grep -v '\.original\|ptg.ptg'))
         gfnagz=${assembpathrad}_genomic.fna.gz
-        gzip -c ${annot}/${gproject}/${gfna[0]} > ${gfnagz}
+        gzip -c ${gfna[0]} > ${gfnagz}
         ls -l ${gfnagz}
-        ffn=($(ls ${annot}/${gproject}/*.ffn 2> /dev/null | grep -v '.original'))
+        ffn=($(ls ${annot}/${gproject}/*.ffn 2> /dev/null | grep -v '\.original\|ptg.ptg'))
         cdsfnagz=${assembpathrad}_cds_from_genomic.fna.gz
-        python2.7 ${ptgscripts}/format_prokkaCDS.py ${annot}/${gproject}/${ffn[0]} ${cdsfnagz}
+        python2.7 ${ptgscripts}/format_prokkaCDS.py ${ffn[0]} ${cdsfnagz}
         ls -l ${cdsfnagz}
 	    if [[ "${compress}" == 'on' ]] ; then
           if [[ -L ${annot}/${gproject} ]] ; then
