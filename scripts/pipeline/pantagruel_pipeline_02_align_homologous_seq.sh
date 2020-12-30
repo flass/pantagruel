@@ -70,13 +70,13 @@ for cg in `cat ${genomeinfo}/assemblies_list` ; do ls $cg/*_cds_from_genomic.fna
 
 # generate (full protein alignment, unaligned CDS fasta) file pairs and reverse-translate alignments to get CDS (gene family) alignments
 mkdir -p ${ptglogs}/extract_full_prot_and_cds_family_alignments/
-step2="step 2: generation of full CDS alignments from the nr protein alignments"
+step20="step 2.0: generation of full CDS alignments from the nr protein alignments"
 echo "$(promptdate)-- ${step2}"
 python2.7 ${ptgscripts}/extract_full_prot_and_cds_family_alignments.py --nrprot_fam_alns ${nrprotali} --singletons ${protfamseqs}/${protorfanclust}.fasta \
  --prot_info ${genomeinfo}/assembly_info/allproteins_info.tab --repli_info ${genomeinfo}/assembly_info/allreplicons_info.tab --assemblies ${assemblies} \
  --dirout ${protali} --famprefix ${famprefix} --identical_prots ${allfaarad}.identicals.list \
  --threads ${ptgthreads} --logs ${ptglogs}/extract_full_prot_and_cds_family_alignments
-checkexec "Critical error occurred during ${step2}" "completed ${step2} without critical errors"
+checkexec "Critical error occurred during ${step20}" "completed ${step20} without critical errors"
 
 ## check consistency of full reverse translated alignment set
 ok=1
@@ -97,7 +97,7 @@ if [ $ok -lt 1 ] ; then
   # some protein alignments do not match the CDS sequences
   # transpose the CDS into the positions of the aligned protein; assumes no indels, only mismatches and possibly shortenned sequences
   rm -f ${ptglogs}/tranposeAlignmentProt2CDS.log && touch ${ptglogs}/tranposeAlignmentProt2CDS.log
-  step21="step 2.1: generation the reverse translated aligments missed by pal2nal"
+  step21="step 2.1: generation of the reverse translated aligments missed by pal2nal"
   echo "$(promptdate)-- ${step21}"
   for fam in `cut -f1 ${protali}/pal2nal_missed_fams` ; do
     ${ptgscripts}/tranposeAlignmentProt2CDS.py $protali/full_cdsfam_fasta/$fam.fasta $protali/full_protfam_alignments/$fam.aln $protali/full_cdsfam_alignments/$fam.aln > ${ptglogs}/tranposeAlignmentProt2CDS.log
@@ -120,7 +120,7 @@ checkexec "failed during ${step3}" "Completed ${step3}"
    step4="compressing redundant folders"
    echo "Pantagruel compress option (-z) ON: $step4"
    cd ${protali}/
-   for daln in nr_protfam_clustalo_alignments full_cdsfam_fasta full_protfam_alignments full_cdsfam_alignments ; do
+   for daln in nr_protfam_clustalo_alignments full_cdsfam_fasta ; do
      tar -czf ${daln}.tar.gz ${daln} && rm -r ${daln} || echo "Warning: could not succesfully compress '${protali}/${daln}/'; keep the full folder as is"
    done
  fi
