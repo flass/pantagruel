@@ -6,6 +6,10 @@ import multiprocessing, time
 nflnfinfa = sys.argv[1]
 nftranstab = sys.argv[2]
 dirout = sys.argv[3]
+if len(sys.argv)>4:
+    nbcores = int(sys.argv[4])
+else:
+    nbcores = multiprocessing.cpu_count()
 
 transnames = {}
 with open(nftranstab, 'r') as ftranstab:
@@ -34,7 +38,6 @@ def genbank2code(argtup):
 	q.put(nfout)
 	return nfout
 
-nbcores = multiprocessing.cpu_count()
 pool = multiprocessing.Pool(processes=nbcores)
 manag = multiprocessing.Manager()
 queue = manag.Queue(len(lnfinfa))

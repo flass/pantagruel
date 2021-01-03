@@ -295,11 +295,11 @@ Options are detailed here:
                         (available for tasks 04-07)
 
     -N|--threads      specify the number of threads to use for (some) parrallelizable tasks (defaults to the maximum available))
-                        (available for tasks: 00-02, 04-08)
+                        (available for tasks: 00-08)
 						Note 1: this does not apply to ALE/ecceTERA reconciliations,
 						  which jobs always run sequentially due to their high memory needs.
-						Note 2: this does not apply to tasks run through the HPC script,
-						  which have their own interface to define number of used CPUs.
+						Note 2: this does not apply to tasks run through HPC scripts,
+						  which have their own interface to define the number of CPUs to be used.
 
     -z|--compress     will try and compress result file on the go (especially bulky files that won't be used much later
                         This will induce possible extra decompressing/re-generating data computing time

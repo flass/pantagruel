@@ -16,6 +16,10 @@ source ${envsourcescript}
 checkptgversion
 checkfoldersafe ${database}
 
+if [ -z "${ptgthreads}" ] ; then
+  ptgthreads=1
+fi
+
 ##############################################
 ## 03. Create and Populate SQLite database
 ##############################################
@@ -49,7 +53,7 @@ for mol in prot cds ; do
   eval "export ${mol}alifastacodedir=${alifastacodedir}"
   # use multiprocessing python script
   ${ptgscripts}/lsfullpath.py "${protali}/full_${mol}fam_alignments/*.aln" > ${protali}/full_${mol}fam_alignment_list
-  ${ptgscripts}/genbank2code_fastaseqnames.py ${protali}/full_${mol}fam_alignment_list ${database}/cds_codes.tab ${alifastacodedir} > ${ptgdb}/logs/genbank2code_fastaseqnames.${mol}.log
+  ${ptgscripts}/genbank2code_fastaseqnames.py ${protali}/full_${mol}fam_alignment_list ${database}/cds_codes.tab ${alifastacodedir} ${ptgthreads} > ${ptgdb}/logs/genbank2code_fastaseqnames.${mol}.log
   checkexec "something went wrong during ${step2x}" "succefully completed ${step2x}"
 done
 if [[ "${compress}" == 'on' ]] ; then
