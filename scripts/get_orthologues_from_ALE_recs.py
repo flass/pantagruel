@@ -10,6 +10,9 @@ import multiprocessing as mp
 import cPickle as pickle
 
 allmethods = ['strict', 'unicopy', 'mixed']
+famprefix = os.environ['famprefix']
+if not famprefix:
+    print "Warning: could not infer the gene family id prefix from environment variable $famprefix; this may prevent the inference of the gene family id from ALE output file names if ALE version was >= 0.5"
 
 def summaryOGs(ogs, dlabs, N, verbose):
 	n = len(ogs)
@@ -137,10 +140,20 @@ def enforceUnicity(graph, clustering, graphcommfun, maxdrop=-1, w='weight', nrou
 
 def orthoFromSampleRecs(nfrec, outortdir, nsample=[], methods=['mixed'], \
                         foutdiffog=None, outputOGperSampledRecGT=True, colourTreePerSampledRecGT=False, \
-                        graphCombine=None, majRuleCombine=None, **kw):
+                        graphCombine=None, majRuleCombine=None, ALEvtag='v1.0', **kw):
 	""""""
 	verbose = kw.get('verbose')
-	fam = os.path.basename(nfrec).split('-', 1)[0]
+    bnfrec = os.path.basename(nfrec)
+    if ALEvtag >= 'v0.5':
+        lbnfrecsp = bnfrec.split('_')
+        for bnfrecsp in lbnfrecsp:
+            if bnfrecsp.startswith(famprefix):
+                break
+        else:
+            raise ValueError, "could not identify the gene family name from the ALE output file name: %s"%nfrec
+        fam = bnfrecsp.split('-', 1)[0]
+    else:
+        fam = bnfrec.split('-', 1)[0]
 	if verbose: print "\n# # # %s"%fam
 	# collect the desired sample from the reconciliation file
 	dparserec = parseALERecFile(nfrec, skipLines=True, skipEventFreq=True, nsample=nsample, returnDict=True)
@@ -310,6 +323,7 @@ def usage(mini=False):
 	s += "  --unreconciled.format\texpected input file format for the consensus/ML gene trees (default: Nexus);\n"
 	s += "  --unreconciled.ext\texpected file extension for the consensus/ML gene trees (default: '.con.tre');\n"
 	s += "\t\t\t\t\t\tsimple unicity-based classification will be applied.\n"
+	s += "  --ale.vtag\t\t\t version number of the ALE software that was used to produce input (default: 'v1.0').\n"
 	s += "  --threads\t\t\tnumber of parralel processes to run.\n"
 	s += "  --verbose {0,1,2}\tverbose mode, from none to plenty.\n"
 	s += "  -v\t\t\tequivalent to --verbose=1.\n"
@@ -317,7 +331,7 @@ def usage(mini=False):
 
 if __name__=='__main__':
 	
-	opts, args = getopt.getopt(sys.argv[1:], 'i:o:T:hv', ['input.reconciliation.dir=', 'output.dir=', 'ale.model=', 'sample=', \
+	opts, args = getopt.getopt(sys.argv[1:], 'i:o:T:hv', ['input.reconciliation.dir=', 'output.dir=', 'ale.model=', 'ale.vtag=', 'sample=', \
 														'methods=', 'max.frac.extra.spe=', 'use.species.tree', 'reroot.max.balance', \
 														'colour.sampled.trees', 'report.ogs.per.sampled.tree', 'summary.per.sampled.tree', \
 														'majrule.combine=', 'graph.combine=', 'colour.combined.tree', \
@@ -338,6 +352,7 @@ if __name__=='__main__':
 	userefspetree = dopt.get('--use.species.tree')
 	verbose = int(dopt.get('--verbose', ('-v' in dopt)))
 	ALEmodel = dopt.get('--ale.model', 'dated')
+	ALEvtag = dopt.get('--ale.vtag', 'v1.0')
 	summaryOverlap = ('--summary.per.sampled.tree' in dopt)
 	outputOGperSampledRecGT = ('--report.ogs.per.sampled.tree' in dopt)
 	colourTreePerSampledRecGT = ('--colour.sampled.trees' in dopt)
@@ -388,7 +403,7 @@ if __name__=='__main__':
 		verbose = 0
 			
 	def orthoFromSampleRecsSetArgs(nfrec):
-		orthoFromSampleRecs(nfrec, outortdir, nsample=nsample, ALEmodel=ALEmodel, \
+		orthoFromSampleRecs(nfrec, outortdir, nsample=nsample, ALEmodel=ALEmodel, ALEvtag=ALEvtag, \
 							methods=methods, userefspetree=userefspetree, trheshExtraSpe=trheshExtraSpe, reRootMaxBalance=reRootMaxBalance, \
 							graphCombine=graphCombine, majRuleCombine=majRuleCombine, colourCombinedTree=colourCombinedTree, \
 							foutdiffog=foutdiffog, outputOGperSampledRecGT=outputOGperSampledRecGT, colourTreePerSampledRecGT=colourTreePerSampledRecGT, \

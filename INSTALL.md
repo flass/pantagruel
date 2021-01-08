@@ -289,7 +289,7 @@ If you feel like installing the depedencies your own way without following the a
   ([source code](http://www.atgc-montpellier.fr/LSD/))
   
 - **ALE/xODT** for gene tree / species tree reconciliation  
-  (Install from [source code](https://github.com/ssolo/ALE); version used and recommended: 0.4; notably depends on [Bio++ libs](https://github.com/BioPP) (v2.2.0+))
+  (Install from [source code](https://github.com/ssolo/ALE); version used and recommended: 1.0; notably depends on [Bio++ libs](https://github.com/BioPP) (v2.2.0+))
   
 ### Required code libraries
 - **R** (version 3, >=3.2.3 recommended) + packages:

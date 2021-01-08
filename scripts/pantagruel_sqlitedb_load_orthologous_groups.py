@@ -3,6 +3,8 @@
 import glob, os, sys
 import sqlite3
 
+print "# call was:", ' '.join(sys.argv)
+
 nfsqldb = sys.argv[1]
 dirortho = sys.argv[2]
 orthomethod = sys.argv[3]
@@ -13,20 +15,33 @@ if len(sys.argv)>6:
 else:
 	keepPrevRecord = False
 
+print "arguments: nfsqldb = %s; dirortho = %s; orthomethod = %s; ortcolid = %s; keepPrevRecord = %s"%(repr(nfsqldb), repr(dirortho), repr(orthomethod), repr(ortcolid), repr(keepPrevRecord))
+
 dbcon = sqlite3.connect(nfsqldb)
 dbcur = dbcon.cursor()
 if not keepPrevRecord:
 	print "Warning: deleting previous records in table 'orthologous_groups WHERE ortholog_col_id=%d'"%ortcolid
 	dbcur.execute("DELETE FROM orthologous_groups WHERE ortholog_col_id=?;", (ortcolid,))
+
 filesuffix = "_%s.orthologs.%s"%(orthomethod, clustmethod)
 lnfortho = glob.glob(os.path.join(dirortho, orthomethod, '*'+filesuffix))
-for nfortho in lnfortho:
-    fam = os.path.basename(nfortho).replace(filesuffix, '')
-    with open(nfortho, 'r') as fortho:
-        lcdsog = [tuple(line.replace(' ', '').rstrip('\n').split('\t')) for line in fortho]
-    dbcur.executemany("INSERT INTO orthologous_groups (replacement_label_or_cds_code, gene_family_id, og_id, ortholog_col_id) VALUES (?,?,?,?);", [(cds, fam, ogid, ortcolid) for cds, ogid in lcdsog])
-    #~ dbcur.executemany("INSERT INTO orthologous_groups (cds_code, gene_family_id, og_id, ortholog_col_id) VALUES (?,?,?,?);", [(cds, fam, ogid, ortcolid) for cds, ogid in lcdsog])
-
+Nlnfortho = len(lnfortho)
+print "found %d orthologous group description files:"%Nlnfortho
+M = max(5, Nlnfortho)
+print '\n'.join(lnfortho[:(M-1)])
+if M<Nlnfortho: print '...'
+if lnfortho:
+    print "load orthologous group descriptions into the database"
+    for nfortho in lnfortho:
+        fam = os.path.basename(nfortho).replace(filesuffix, '')
+        with open(nfortho, 'r') as fortho:
+            lcdsog = [tuple(line.replace(' ', '').rstrip('\n').split('\t')) for line in fortho]
+        dbcur.executemany("INSERT INTO orthologous_groups (replacement_label_or_cds_code, gene_family_id, og_id, ortholog_col_id) VALUES (?,?,?,?);", [(cds, fam, ogid, ortcolid) for cds, ogid in lcdsog])
+        #~ dbcur.executemany("INSERT INTO orthologous_groups (cds_code, gene_family_id, og_id, ortholog_col_id) VALUES (?,?,?,?);", [(cds, fam, ogid, ortcolid) for cds, ogid in lcdsog])
+else:
+    print "Error: found no orthologous group description files; exit now"
+    sys.exit(1)
+        
 dbcur.execute("CREATE INDEX IF NOT EXISTS og_cds_idx ON orthologous_groups (replacement_label_or_cds_code);")
 #~ dbcur.execute("CREATE INDEX IF NOT EXISTS og_cds_idx ON orthologous_groups (cds_code);")
 dbcur.execute("CREATE INDEX IF NOT EXISTS og_fam_idx ON orthologous_groups (gene_family_id);")

@@ -50,7 +50,11 @@ if [ "${rectype}" != 'dated' ] ; then
   echo "exit now"
   exit 1
 fi
-
+ALEvtag=$(cut -f3 ${alerec}/reccol | grep -o 'ALE software(version v[10]\.[0-9])' | grep -o 'v[10]\.[0-9]')
+if [ -z "${ALEvtag}" ] ; then
+  # assume version 1.0
+  ALEvtag='v1.0'
+fi
 if [ -z "${getOrpthologuesOptions}" ] ; then
   getOrpthologuesOptions=" --ale.model=${rectype} --methods=mixed --max.frac.extra.spe=0.5 --majrule.combine=0.5 --colour.combined.tree --use.unreconciled.gene.trees=${mboutputdir} --unreconciled.format=nexus --unreconciled.ext=.con.tre"
 fi
@@ -66,7 +70,7 @@ step1="generating ortholog collection from reconciled gene trees"
 echo ${step1}
 mkdir -p ${orthogenes}/${orthocol}
 getorthologs=$ptglogs/get_orthologues_from_ALE_recs_${orthocol}.log
-getorthocmd="python2.7 ${ptgscripts}/get_orthologues_from_ALE_recs.py -i ${outrecdir} -o ${orthogenes}/${orthocol} --threads=${ptgthreads} ${getOrpthologuesOptions} &> ${getorthologs}"
+getorthocmd="python2.7 ${ptgscripts}/get_orthologues_from_ALE_recs.py -i ${outrecdir} -o ${orthogenes}/${orthocol} --threads=${ptgthreads} ${getOrpthologuesOptions} --ale.vtag ${ALEvtag} &> ${getorthologs}"
 echo "# call: ${getorthocmd}"
 eval "${getorthocmd}"
 checkexec "step 1: failed when ${step1}; check specific logs in '${getorthologs}' for more details" "step 1: complete ${step1}\n"
