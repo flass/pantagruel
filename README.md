@@ -399,16 +399,19 @@ Options are detailed here:
                          Note that for ensuring compatibility with dependencies (namely BioPython Nexus alignment parser
                          and ALE reconciliation program), the characters '-' and '_' are forbidden in the 'locus_tag_prefix' field.
                       _optional_ 
-                       - an 'annotation/' folder, where are stored annotation files: 
+                       - an 'annotation/' folder, where are stored annotation folders, one per genome. Each genome annotation file set 
+					   must be stored in a separate folder, which name must match a contig file (e.g. 'seqProjID/' for 'seqProjID.fasta').
+					   Alternatively, each folder can be provided as a .tar or .tar.gz archive containing the annotation folder 
+					   (e.g. 'seqProjID.tar' or 'seqProjID.tar.gz', containing the folder 'seqProjID/').
+					     each genome annotation folder should contain: 
                          - one mandatory in GFF 3.0 file format (with a '.gff' extension);
                           and optionally, the following files (with consistent ids!!):
                          - one in GenBank flat file format (with a '.gbk' extension);
                          - one in Fasta format containing CDS sequences (with a '.ffn' extension).
                          - one in Fasta format containing matching protein sequences (with a '.faa' extension).
-                         These four files are produced when using Prokka for annotation; if at least one of the .gbk, .ffn or .faa
-                         are missing, all three will be derived from the .gff source. Each genome annotation file set must be stored
-                         in a separate folder, which name must match a contig file (e.g. 'seqProjID/' for 'seqProjID.fasta').
-                      NOTE: to ensure proper parsing, it is strongly advised that any provided annotation was generated with Prokka
+                         If at least one of the .gbk, .ffn or .faa are missing, all three will be derived from the .gff source. 
+				      NOTE: These four files are typically produced when using Prokka for annotation; thus to ensure proper parsing, 
+					        it is strongly advised that any provided annotation was generated with Prokka
                       NOTE: to ensure uniform annotation of the dataset, it is advised to let Pantagruel annotate the contigs (calling Prokka)
  
  --strain_info   path to an optional custom strain information file, provided in the same format as described above for 'strain_infos_\$\{databasename\}.txt'

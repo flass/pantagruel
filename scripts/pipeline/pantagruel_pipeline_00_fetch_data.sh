@@ -242,12 +242,37 @@ if [ ! -z "${customassemb}" ] ; then
 	
     for allcontigs in ${contigsets} ; do
 #      gproject=${allcontigs%%.fa*}
+	  if [ "${allcontigs##*.}" == 'gz' ] ; then
+	    contigwaszipped='true'
+		echo "unzip the input contig file ${allcontigs}"
+	    gzip -d ${allcontigs}
+		allcontigs=${allcontigs%.*}
+	  fi
 	  gproject=$(parsefastaext ${allcontigs})
       echo "$(promptdate) ${gproject}"
-      if [ -d ${custannot}/${gproject} ] ; then
-        echo "found annotation folder '${custannot}/${gproject}' ; skip annotation of contigs in '${contigs}/${allcontigs}'"
+      if [[ -e ${custannot}/${gproject}.tar && "$(tar -tf ${custannot}/${gproject}.tar ${gproject})" == "${gproject}/" ]] ; then
+        echo "found tarred file '${custannot}/${gproject}.tar' containing the folder '${gproject}/'"
+		echo "uncompress the archive into ${annot}/ and skip annotation of contigs in '${contigs}/${allcontigs}'"
+		cd ${annot}/
+		tar -xf ${custannot}/${gproject}.tar ${gproject}
+		ls -d ${PWD}/${gproject}/
+		ls ${PWD}/${gproject}/
+	    custarred='true'
+		cd -
+	  elif [[ -e ${custannot}/${gproject}.tar.gz && "$(tar -tzf ${custannot}/${gproject}.tar ${gproject})" == "${gproject}/" ]] ; then
+        echo "found tarred-gzipped file '${custannot}/${gproject}.tar.gz' containing the folder '${gproject}/'"
+		echo "uncompress the archive into ${annot}/ and skip annotation of contigs in '${contigs}/${allcontigs}'"
+		cd ${annot}/
+		tar -xzf ${custannot}/${gproject}.tar.gz ${gproject}
+		ls -d ${PWD}/${gproject}/
+		ls ${PWD}/${gproject}/
+	    custargzed='true'
+		cd -
+	  elif [ -d ${custannot}/${gproject} ] ; then
+        echo "found annotation folder '${custannot}/${gproject}' ; link folder into '${annot}/' and skip annotation of contigs in '${contigs}/${allcontigs}'"
         # better preserve actual path as input data are external to the Pantagruel database 
         ln -s ${custannot}/${gproject} ${annot}/${gproject}
+		ls -l ${annot}/${gproject}
       else
 	    if [[ "${resumetask}" == 'true' && -d ${annot}/${gproject} && ! -z $(ls ${annot}/${gproject}/*.gff) && ! -z $(ls ${annot}/${gproject}/*.gbk) ]] ; then
 		  echo "found already computed annotation in ${annot}/${gproject}/:"
@@ -422,7 +447,11 @@ if [ ! -z "${customassemb}" ] ; then
 	    fi
 	  fi
 #    done > ${ptglogs}/genbank-format_assemblies.log
-    done
+	if [ "${contigwaszipped}" == 'true' ] ; then
+	  echo "re-zip the input contig file ${allcontigs}"
+	  gzip ${allcontigs}
+	fi
+    done ## end of for allcontigs loop
     
     relpathass2gblass=$(realpath --relative-to=${assemblies} ${gblikeass})
     for gblass in $(ls -A ${gblikeass}/) ; do
