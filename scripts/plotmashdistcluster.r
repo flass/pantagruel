@@ -66,7 +66,9 @@ ml = t(sapply(2:(ntaxa+1), function(k){
 assaccm = sapply(2:(ntaxa+1), function(k){
   nfseq = strsplit(mashdist[[k]], split='\t')[[1]][1]
   bnseq = basename(nfseq)
-  nseq = gsub("(GC[AF]_[0-9]*\\.[1-9])_.*_genomic.fna.gz", "\\1", bnseq)
+  nseq1 = gsub("(^GC[AF]_[0-9]*\\.[1-9])_.*_genomic.fna.gz", "\\1", bnseq)
+  nseq2 = gsub("(^.*)\\.[1-9]_.*_genomic.fna.gz", "\\1", bnseq)
+  return(ifelse(grepl("^GC[AF]_[0-9]*\\.[1-9]", bnseq), nseq1, nseq2))
 })
 
 colnames(ml) = rownames(ml) = assaccm

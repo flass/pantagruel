@@ -9,6 +9,9 @@
 
 # Copyright: Florent Lassalle (f.lassalle@imperial.ac.uk), 30 July 2018
 
+echo "This is the 'usingGeneRax' branch of Pantagruel pipeline; using this module that runs 'ecceTERA' reconciliation method instead of 'GeneRax' may result into data that are incompatible with downstream modules."
+echo "Alternatively, you can use the 'master' branch of the pipeline  for other reconciliation methods, ALE or ecceTERA: https://github.com/flass/pantagruel/tree/master."
+
 if [ -z "$1" ] ; then echo "missing mandatory parameter: pantagruel config file" ; echo "Usage: $0 ptg_env_file [gene_fam_list]" ; exit 1 ; fi
 envsourcescript="$1"
 source ${envsourcescript}

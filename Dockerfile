@@ -3,11 +3,11 @@ FROM ubuntu:bionic
 ARG DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && apt-get install -y --no-install-recommends wget git build-essential cmake gcc g++ gfortran \
-        lftp clustalo raxml libhmsbeagle1v5 mrbayes r-base-core \
+        lftp clustalo raxml libhmsbeagle1v5 r-base-core \
         r-recommended r-cran-ape r-cran-ade4 r-cran-vegan r-cran-dbi r-cran-rsqlite r-cran-rcolorbrewer \
         r-cran-igraph r-cran-getopt sqlite3 sqlite3-doc libmagick++-dev python python-setuptools \
         python-scipy python-numpy python-biopython python-biopython-sql python-igraph \
-        cython mpi-default-bin mpi-default-dev mrbayes-mpi python-pip \
+        cython mpi-default-bin mpi-default-dev python-pip \
         openjdk-11-jdk openjdk-11-jre parallel libdw1 libdw-dev libgsl23 libgsl-dev \
         libxml2-dev libcurl4-openssl-dev locales rsync \
         libboost-dev libboost-serialization-dev libboost-mpi-dev \
@@ -59,7 +59,7 @@ RUN cd / && wget --progress=dot:giga ftp://ftp.ncbi.nih.gov/toolbox/ncbi_tools/c
     && gzip -d linux64.tbl2asn.gz && chmod +x linux64.tbl2asn && mv -f linux64.tbl2asn /usr/bin/tbl2asn
 
 # add relevant locations to the PATH
-ENV PATH="/pantagruel:/pantagruel/scripts:/pantagruel/scripts/pipeline:/opt/${BLAST_NAME}/bin:/MMseqs2/build/bin:/prokka/bin:/ALE/build/bin:/pal2nal.v14:/mad:/mash-Linux64-v2.2/${PATH}"
+ENV PATH="/pantagruel:/pantagruel/scripts:/pantagruel/scripts/pipeline:/opt/${BLAST_NAME}/bin:/MMseqs2/build/bin:/prokka/bin=:/pal2nal.v14:/mad:/mash-Linux64-v2.2/${PATH}"
 ENV PYTHONPATH="/pantagruel/python_libs:${PYTHONPATH}"
 
 # PROKKA v1.14.5

@@ -9,6 +9,10 @@
 
 # Copyright: Florent Lassalle (f.lassalle@imperial.ac.uk), 30 July 2018
 # environment variables to be passed on to interface script:
+
+echo "This is the 'usingGeneRax' branch of Pantagruel pipeline; using this module that runs 'ecceTERA' reconciliation method instead of 'GeneRax' may result into data that are incompatible with downstream modules."
+echo "Alternatively, you can use the 'master' branch of the pipeline  for other reconciliation methods, ALE or ecceTERA: https://github.com/flass/pantagruel/tree/master."
+
 export hpcscript=$(basename ${0})
 hpcscriptdir=$(dirname ${0})
 export defncpus=1

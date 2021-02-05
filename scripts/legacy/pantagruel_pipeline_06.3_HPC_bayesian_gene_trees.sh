@@ -9,6 +9,10 @@
 
 # Copyright: Florent Lassalle (f.lassalle@imperial.ac.uk), 15 Jan 2019
 # environment variables to be passed on to interface script:
+
+echo "This is the 'usingGeneRax' branch of Pantagruel pipeline; using this module that runs 'MrBayes' bayesin gene tree inference method is not be of any use in the downstream pipeline (notably reconciliation with 'GeneRax') and may result into data that are incompatible with downstream modules."
+echo "Alternatively, you can use the 'master' branch of the pipeline  for other reconciliation methods, ALE or ecceTERA: https://github.com/flass/pantagruel/tree/master."
+
 export hpcscript=$(basename ${0})
 hpcscriptdir=$(dirname ${0})
 export defncpus=8
