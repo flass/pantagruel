@@ -27,7 +27,7 @@ nfrefroottree = dopt.get('--ref.rooted.nr.tree')
 nfouttree = dopt.get('--output.tree', nfintree+'.full')
 maxnobs = -1 if ('--noBS' in dopt) else 4
 
-intree = tree2.read_check_newick(nfintree)
+intree = tree2.read_check_newick(nfintree, maxNoBS=maxnobs)
 
 dseq = {}
 if nfidentseqs:
