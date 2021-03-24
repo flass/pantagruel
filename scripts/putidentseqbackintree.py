@@ -4,18 +4,28 @@ import sys, tree2, getopt
 
 sys.setrecursionlimit(20000)
 
+def usage():
+	s  = "%s --input.nr.tree filepath [options]\n"%(sys.argv[0])
+	s += " Options:\n"
+	s += "  --list.identical.seq filepath\n"
+	s += "  --ref.rooted.nr.tree filepath\n"
+	s += "  --output.tree filepath\n"
+	s += "  --noBS   turns off errors due to absene of bootstrap values on the branches\n"
+	return s
+
 opts, args = getopt.getopt(sys.argv[1:], 'h', ['input.nr.tree=', 'output.tree=', 'list.identical.seq=', 'ref.rooted.nr.tree=', 'help'])
 
 dopt = dict(opts)
 
 if ('-h' in dopt) or ('--help' in dopt):
-	#~ print usage()
+	print usage()
 	exit()
 
 nfintree = dopt['--input.nr.tree']
 nfidentseqs = dopt.get('--list.identical.seq')
 nfrefroottree = dopt.get('--ref.rooted.nr.tree')
 nfouttree = dopt.get('--output.tree', nfintree+'.full')
+maxnobs = -1 if ('--noBS' in dopt) else 4
 
 intree = tree2.read_check_newick(nfintree)
 
@@ -27,7 +37,7 @@ if nfidentseqs:
 			dseq.setdefault(lsp[0], []).append(lsp[1])
 
 if nfrefroottree:
-	refroottree = tree2.read_check_newick(nfrefroottree)
+	refroottree = tree2.read_check_newick(nfrefroottree, maxNoBS=maxnobs)
 	
 	if not refroottree.is_bifurcated():
 		raise ValueError, "the provided 'rooted' tree is not bifurcated"
