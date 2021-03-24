@@ -13,13 +13,13 @@ def usage():
 	s += "  --noBS   turns off errors due to absene of bootstrap values on the branches\n"
 	return s
 
-opts, args = getopt.getopt(sys.argv[1:], 'h', ['input.nr.tree=', 'output.tree=', 'list.identical.seq=', 'ref.rooted.nr.tree=', 'help'])
+opts, args = getopt.getopt(sys.argv[1:], 'h', ['input.nr.tree=', 'output.tree=', 'list.identical.seq=', 'ref.rooted.nr.tree=', 'help', 'noBS'])
 
 dopt = dict(opts)
 
 if ('-h' in dopt) or ('--help' in dopt):
 	print usage()
-	exit()
+	sys.exit(0)
 
 nfintree = dopt['--input.nr.tree']
 nfidentseqs = dopt.get('--list.identical.seq')
