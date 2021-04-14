@@ -9,6 +9,7 @@ Credit Brad Chapman https://www.biostars.org/p/2492/
 
 import sys
 import os
+import gzip
 
 from Bio import SeqIO
 from Bio.Alphabet import generic_dna
@@ -26,9 +27,18 @@ def parse_strain_info(straininfo_file):
 	return dstraininfo
 
 def main(gff_file, fasta_file, straininfo_file=None):
-	gid = os.path.splitext(gff_file)[0]
-	fasta_input = SeqIO.to_dict(SeqIO.parse(fasta_file, "fasta", alphabet=generic_dna))
-	genome = list(GFF.parse(gff_file, fasta_input))
+	if fasta_file.endswith('.gz'): ffasta = gzip.open(fasta_file, 'rb')
+	else: ffasta = open(fasta_file, 'r')
+	fasta_input = SeqIO.to_dict(SeqIO.parse(ffasta, "fasta", alphabet=generic_dna))
+	ffasta.close()
+	if gff_file.endswith('.gz'):
+		fgff = gzip.open(gff_file, 'rb')
+		gid = os.path.splitext(os.path.splitext(gff_file)[0])[0]
+	else:
+		fgff = open(gff_file, 'r')
+		gid = os.path.splitext(gff_file)[0]
+	genome = list(GFF.parse(fgff, fasta_input))
+	fgff.close()
 	if straininfo_file: straininfo = parse_strain_info(straininfo_file).get(gid)
 	else: straininfo = {}
 	# enforce alphabet (bug in GFFParser)
@@ -54,9 +64,10 @@ def main(gff_file, fasta_file, straininfo_file=None):
 	for genomerecord in genome:
 		for feature in genomerecord.features:
 			if feature.type=='CDS':
+				qualstr = ''.join(['[%s=%s]'%(qkey, '; '.join(qval)) for qkey, qval in feature.qualifiers.iteritems()])
 				product = feature.qualifiers.get('product', '')
 				seqcds = feature.location.extract(genomerecord).seq
-				cdsout_file.write(">%s %s\n%s\n" % (feature.id, product, str(seqcds)))
+				cdsout_file.write(">%s %s\n%s\n" % (feature.id, qualstr, str(seqcds)))
 				seqprot = seqcds.translate(table=11)
 				protout_file.write(">%s %s\n%s\n" % (feature.id, product, str(seqprot)))
 	cdsout_file.close()
@@ -65,11 +76,12 @@ def main(gff_file, fasta_file, straininfo_file=None):
 	rnaout_file = open("%s.frn" % gid, 'w')
 	for genomerecord in genome:
 		for feature in genomerecord.features:
-			if feature.type=='rRNA':
-				product = feature.qualifiers.get('product', '')
-				if product == "16S ribosomal RNA":
+			if feature.type.endswith('RNA'):
+				qualstr = ' '.join(['[%s=%s]'%(qkey, '; '.join(qval)) for qkey, qval in feature.qualifiers.iteritems()])
+				loctag = feature.qualifiers.get('locus_tag', '')
 				seqrna = feature.location.extract(genomerecord).seq
-				rnaout_file.write(">%s %s\n%s\n" % (feature.id, product, str(seqcds)))
+				if feature.id is None: feature.id = loctag[0]
+				rnaout_file.write(">%s %s\n%s\n" % (feature.id, qualstr, str(seqrna)))
 	rnaout_file.close()
 
 if __name__ == "__main__":
