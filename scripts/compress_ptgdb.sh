@@ -13,7 +13,7 @@ cd ${ptgdb}
 for d in ${topfolders} ; do
   bnd=$(basename ${d})
   if [ -d ${bnd} ] ; then
-    tar -czf ${bnd}.tar.gz && rm -r ${bnd}/
+    tar -czf ${bnd}.tar.gz ${bnd}/ && rm -r ${bnd}/
   fi
 done
 
