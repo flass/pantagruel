@@ -13,9 +13,9 @@ cleannhxcommsep='/'
 def _parse_NHXRec_branch_annot(annot, spetree, fatlocs=None, guessHGT=False):
 	"""parse the event information stored in the NHX comment of a reconciled gene (G) tree branch
 	
-	use the topology of the species (S) tree with whih G was reconcled to infer implicit events of species and loss.
+	use the topology of the species (S) tree with whih G was reconciled to infer implicit events of species and loss.
 	fatlocs is a 2-tuple of S tree locations; it indicate the location of the last event above; 
-	in most case only the first memeber will be non-empty, but in case of the last event being a transfer, 
+	in most cases only the first member will be non-empty, but in case of the last event being a transfer, 
 	both recipent and donor locations are featured and will be tried as potential ancestor for the current event location.
 	"""
 	# first read the event(s) from the G branch comment
@@ -485,7 +485,7 @@ def _prune_orthologs_bottom_up(node, GeneRaxmodel='undated', **kw):
 	orthologGroups = kw.get('orthologGroups', [])
 	dlabs = kw.get('dlabs', {})
 	verbose = kw.get('verbose')
-	levt = parse_NHXRec_branch_annot(node.comment()) # given that GeneRax only implements undated DTL model
+	levt = _parse_NHXRec_branch_annot(node.comment()) # given that GeneRax only implements undated DTL model
 	
 	
 	nodelab = node.label()

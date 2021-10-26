@@ -27,7 +27,7 @@ if (length(cargs)>4){
 outtag = paste(only.eventtypes, collapse='')
 
 lnffamevents = readLines(nflnffamevents)
-fams = sapply(lnffamevents, function(p){ strsplit(basename(p), split='_samples.nhx')[[1]][1] })
+fams = sapply(lnffamevents, function(p){ strsplit(basename(p), split='_samples')[[1]][1] })
 f = length(fams)
 
 famsizes = read.table(nffamsizes, sep='\t', h=F, col.names=c('fam', 'size'))
