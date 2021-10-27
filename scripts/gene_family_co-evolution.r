@@ -11,6 +11,7 @@ sminmedmax = function(mat){
 }
 
 maxfreq = 1000
+evprobthresh = 0.5
 ncpus = detectCores()
 
 cargs = commandArgs(trailingOnly=T)
@@ -25,6 +26,9 @@ if (length(cargs)>4){
 	only.eventtypes = c('D', 'T', 'S', 'L')
 }
 outtag = paste(only.eventtypes, collapse='')
+tmpdir = paste(outprefix, outtag, 'tmp_files')
+hitbyquerydir = file.path(tmpdir, 'coevolscores_by_query_fam')
+dir.create(hitbyquerydir, showWarnings=F, recursive=T)
 
 lnffamevents = readLines(nflnffamevents)
 fams = sapply(lnffamevents, function(p){ strsplit(basename(p), split='_samples')[[1]][1] })
@@ -67,6 +71,8 @@ lfamcoevol = mclapply(rowids, function(a){
 		return( sum(cotab$coev) / max(Gtreesizes) )
 	})
 	names(partialrow) = fams[colids]
+	# save intermediary results
+	write.table(partialrow, file=file.path(hitbyquerydir, paste(fams[colids], 'coevol-scores.tab'), sep='_'), quote=F, col.names=F, sep='\t')
 	return(partialrow)
 }, mc.cores=ncpus, mc.preschedule=F)
 names(lfamcoevol) = fams[rowids]
@@ -78,7 +84,7 @@ lhighprobcoevt = mclapply(rowids, function(a){
 		cotab = merge(lfameventtabs[[a]], lfameventtabs[[b]], by=1:3)
 		cotab$coev = sqrt(cotab$freq.x * cotab$freq.y) / maxfreq
 		# sum and scale by gene tree size2
-		return( cotab[cotab$coev>0.5,] )
+		return( cotab[cotab$coev>evprobthresh,] )
 	})
 	names(partialrow) = fams[colids]
 	return(partialrow)
