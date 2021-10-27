@@ -36,7 +36,13 @@ f = length(fams)
 
 famsizes = read.table(nffamsizes, sep='\t', h=F, col.names=c('fam', 'size'))
 
-testfams = readLines(nftestfams)
+if (nftestfams=='all'){
+	testfams = c()
+	focusfams = fams
+}else{
+	testfams = readLines(nftestfams)
+	focusfams = testfams
+}
 
 lfameventtabs = lapply(lnffamevents, function(nffamevents){
 	famevents = read.table(nffamevents, sep='\t', h=F, col.names=c('type', 'location', 'donor', 'freq'))
@@ -59,6 +65,7 @@ for (fameventtab in lfameventtabs){
 	fameventtab$freq[fameventtab$freq > maxfreq] = maxfreq
 }
 
+print("computing pairwise family co-evolution scores", quote=F)
 rowids = 1:(f-1)
 lfamcoevol = mclapply(rowids, function(a){
 	colids = (a+1):f
@@ -77,6 +84,7 @@ lfamcoevol = mclapply(rowids, function(a){
 }, mc.cores=ncpus, mc.preschedule=F)
 names(lfamcoevol) = fams[rowids]
 
+print("normalising and filtering pairwise family co-evolution scores", quote=F)
 lhighprobcoevt = mclapply(rowids, function(a){
 	colids = (a+1):f
 	partialrow = lapply(colids, function(b){
@@ -90,8 +98,9 @@ lhighprobcoevt = mclapply(rowids, function(a){
 	return(partialrow)
 }, mc.cores=ncpus, mc.preschedule=F)
 names(lhighprobcoevt) = fams[rowids]
-write(capture.output(print(lhighprobcoevt[testfams])), file=paste(outprefix, outtag, 'high_probability_coevents', sep='.'))
+write(capture.output(print(lhighprobcoevt[focusfams])), file=paste(outprefix, outtag, 'high_probability_coevents', sep='.'))
 
+print("generating matrix of pairwise family co-evolution scores", quote=F)
 mfamcoevol = matrix(NA, f, f)
 for (a in 1:f){
  for (b in 1:f){
@@ -105,22 +114,24 @@ for (a in 1:f){
  }
 }
 colnames(mfamcoevol) = rownames(mfamcoevol) = fams
-write.table(mfamcoevol, file=paste(outprefix, outtag, 'family_coevol_scores.mat', sep='.'), sep='\t')
-mtestfamcoevol = mfamcoevol[testfams, testfams]
-minscore = min(mfamcoevol)
+nfoutmat = paste(outprefix, outtag, 'family_coevol_scores.mat', sep='.')
+write.table(mfamcoevol, file=nfoutmat, sep='\t')
+print(paste("wrote matrix of pairwise family co-evolution scores to:", nfoutmat, sep='\n'), quote=F)minscore = min(mfamcoevol)
 for (i in 1:ncol(mfamcoevol)){ mfamcoevol[i,i] = minscore } # to keep colour scaling
 
-pdf(paste(outprefix, outtag, 'family_coevol_scores.pdf', sep='.'), height=30, width=30)
+print("generating heatmap representation of matrix of pairwise family co-evolution scores", quote=F)
+nfoutpdf = paste(outprefix, outtag, 'family_coevol_scores.pdf', sep='.')
+pdf(nfoutpdf, height=30, width=30)
 heatmap(mfamcoevol, main='coevolution scores',
 		col=colorRampPalette(brewer.pal(8, "Greens"))(25), scale='none')
 legend(x="topleft", legend=sminmedmax(mfamcoevol), 
      fill=colorRampPalette(brewer.pal(8, "Greens"))(3))
 dev.off()
+print(paste("wrote heatmap representation of matrix of pairwise family co-evolution scores to:", nfoutmat, sep='\n'), quote=F)
 
-write.table(mfamcoevol[testfams, testfams], file=paste(outprefix, outtag, 'test_family_coevol_scores.mat', sep='.'), sep='\t')
-
-matscorepval = sapply(testfams, function(fam1){
-  sapply(testfams, function(fam2){
+print("compute p-values from background/full family set distribution", quote=F)
+matscorepval = sapply(focusfams, function(fam1){
+  sapply(focusfams, function(fam2){
 	if (fam1==fam2){ s = 1 
 	}else{ s = mfamcoevol[fam1, fam2] }
 	bg1 = mfamcoevol[fam1, controlfams]
@@ -132,19 +143,28 @@ matscorepval = sapply(testfams, function(fam1){
   })
 })
 rownames(matscorepval) = colnames(matscorepval) = testfams
-write.table(matscorepval, file=paste(outprefix, outtag, 'test_family_coevol_pvalues.mat', sep='.'), sep='\t')
+nfpvalout = paste(outprefix, outtag, 'test_family_coevol_pvalues.mat', sep='.')
+write.table(matscorepval, file=nfpvalout, sep='\t')
+print(paste("wrote matrix of p-values to:", nfpvalout, sep='\n'), quote=F)
 
 
-pdf(paste(outprefix, outtag, 'test_family_coevol_scores_pvalues.pdf', sep='.'), height=15, width=15)
-h = heatmap(mtestfamcoevol,
-	 main='coevolution scores (test gene families only)',
-	 col=colorRampPalette(brewer.pal(8, "Greens"))(25), scale='none', keep.dendro=T)
-legend(x="topleft", legend=sminmedmax(mtestfamcoevol), 
-     fill=colorRampPalette(brewer.pal(8, "Greens"))(3))
-heatmap(matscorepval, Rowv=h$Rowv, Colv=h$Colv,
-	 main='coevolution rank p-values',
-	 col=colorRampPalette(brewer.pal(8, "Reds"))(25), scale='none')
-legend(x="topleft", legend=sminmedmax(matscorepval), 
-     fill=colorRampPalette(brewer.pal(8, "Reds"))(3))
-dev.off()
-	
+if (nftestfams!='all'){
+	print("generating heatmap representation of matrix of pairwise family co-evolution scores and p-values for test gene families", quote=F)
+	mfocusfamcoevol = mfamcoevol[testfams, testfams]
+	write.table(mfocusfamcoevol, file=paste(outprefix, outtag, 'test_family_coevol_scores.mat', sep='.'), sep='\t')
+	nftestmatsout = paste(outprefix, outtag, 'test_family_coevol_scores_pvalues.pdf', sep='.')
+	pdf(nftestmatsout, height=15, width=15)
+	h = heatmap(mfocusfamcoevol,
+		 main='coevolution scores (test gene families only)',
+		 col=colorRampPalette(brewer.pal(8, "Greens"))(25), scale='none', keep.dendro=T)
+	legend(x="topleft", legend=sminmedmax(mfocusfamcoevol), 
+		 fill=colorRampPalette(brewer.pal(8, "Greens"))(3))
+	heatmap(matscorepval, Rowv=h$Rowv, Colv=h$Colv,
+		 main='coevolution rank p-values',
+		 col=colorRampPalette(brewer.pal(8, "Reds"))(25), scale='none')
+	legend(x="topleft", legend=sminmedmax(matscorepval), 
+		 fill=colorRampPalette(brewer.pal(8, "Reds"))(3))
+	dev.off()
+	print(paste("wrote heatmap representation of matrix of pairwise family co-evolution scores and p-values for test gene families to:", nftestmatsout, sep='\n'), quote=F)
+
+}
