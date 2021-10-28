@@ -26,7 +26,7 @@ if (length(cargs)>4){
 	only.eventtypes = c('D', 'T', 'S', 'L')
 }
 outtag = paste(only.eventtypes, collapse='')
-tmpdir = paste(outprefix, outtag, 'tmp_files')
+tmpdir = paste(outprefix, outtag, 'tmp_files', sep='_')
 hitbyquerydir = file.path(tmpdir, 'coevolscores_by_query_fam')
 dir.create(hitbyquerydir, showWarnings=F, recursive=T)
 
@@ -69,36 +69,40 @@ print("computing pairwise family co-evolution scores", quote=F)
 rowids = 1:(f-1)
 lfamcoevol = mclapply(rowids, function(a){
 	colids = (a+1):f
+	nfprogout = file.path(hitbyquerydir, paste(fams[a], 'coevol-scores.tab', sep='_'))
+	write.table(c("compared_fam", "coev_score"), file=nfprogout, quote=F, col.names=F, sep='\t')
 	partialrow = sapply(colids, function(b){
 #		cat(sprintf("\r# %d-%d (%s vs. %s)\t\n", a, b, fams[a], fams[b]))
 		cotab = merge(lfameventtabs[[a]], lfameventtabs[[b]], by=1:3)
 		cotab$coev = sqrt(cotab$freq.x * cotab$freq.y) / maxfreq
 		# sum and scale by gene tree size
 		Gtreesizes = (famsizes$size[famsizes$fam %in% fams[c(a, b)]] * 2) - 2
-		return( sum(cotab$coev) / max(Gtreesizes) )
+		coevscore = sum(cotab$coev) / max(Gtreesizes)
+		write.table(c(fams[b], coevscore), file=nfprogout, quote=F, col.names=F, sep='\t', append=T)
+		return( coevscore )
 	})
 	names(partialrow) = fams[colids]
 	# save intermediary results
-	write.table(partialrow, file=file.path(hitbyquerydir, paste(fams[colids], 'coevol-scores.tab'), sep='_'), quote=F, col.names=F, sep='\t')
+#	write.table(partialrow, file=nfprogout, sep='_'), quote=F, col.names=F, sep='\t')
 	return(partialrow)
 }, mc.cores=ncpus, mc.preschedule=F)
 names(lfamcoevol) = fams[rowids]
 
-print("normalising and filtering pairwise family co-evolution scores", quote=F)
-lhighprobcoevt = mclapply(rowids, function(a){
-	colids = (a+1):f
-	partialrow = lapply(colids, function(b){
-#		cat(sprintf("\r# %d-%d (%s vs. %s)\t\n", a, b, fams[a], fams[b]))
-		cotab = merge(lfameventtabs[[a]], lfameventtabs[[b]], by=1:3)
-		cotab$coev = sqrt(cotab$freq.x * cotab$freq.y) / maxfreq
-		# sum and scale by gene tree size2
-		return( cotab[cotab$coev>evprobthresh,] )
-	})
-	names(partialrow) = fams[colids]
-	return(partialrow)
-}, mc.cores=ncpus, mc.preschedule=F)
-names(lhighprobcoevt) = fams[rowids]
-write(capture.output(print(lhighprobcoevt[focusfams])), file=paste(outprefix, outtag, 'high_probability_coevents', sep='.'))
+#print("listing high-probability co-events", quote=F)
+#lhighprobcoevt = mclapply(rowids, function(a){
+#	colids = (a+1):f
+#	partialrow = lapply(colids, function(b){
+##		cat(sprintf("\r# %d-%d (%s vs. %s)\t\n", a, b, fams[a], fams[b]))
+#		cotab = merge(lfameventtabs[[a]], lfameventtabs[[b]], by=1:3)
+#		cotab$coev = sqrt(cotab$freq.x * cotab$freq.y) / maxfreq
+#		# sum and scale by gene tree size2
+#		return( cotab[cotab$coev>evprobthresh,] )
+#	})
+#	names(partialrow) = fams[colids]
+#	return(partialrow)
+#}, mc.cores=ncpus, mc.preschedule=F)
+#names(lhighprobcoevt) = fams[rowids]
+#write(capture.output(print(lhighprobcoevt[focusfams])), file=paste(outprefix, outtag, 'high_probability_coevents', sep='.'))
 
 print("generating matrix of pairwise family co-evolution scores", quote=F)
 mfamcoevol = matrix(NA, f, f)
