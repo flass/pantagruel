@@ -70,7 +70,7 @@ rowids = 1:(f-1)
 lfamcoevol = mclapply(rowids, function(a){
 	colids = (a+1):f
 	nfprogout = file.path(hitbyquerydir, paste(fams[a], 'coevol-scores.tab', sep='_'))
-	write.table(data.frame(compared_fam=c(), coev_score=c()), file=nfprogout, quote=F, col.names=T, row.names=F, sep='\t')
+	cat("compared_fam\tcoev_score\n", file=nfprogout)
 	partialrow = sapply(colids, function(b){
 #		cat(sprintf("\r# %d-%d (%s vs. %s)\t\n", a, b, fams[a], fams[b]))
 		cotab = merge(lfameventtabs[[a]], lfameventtabs[[b]], by=1:3)
@@ -78,7 +78,7 @@ lfamcoevol = mclapply(rowids, function(a){
 		# sum and scale by gene tree size
 		Gtreesizes = (famsizes$size[famsizes$fam %in% fams[c(a, b)]] * 2) - 2
 		coevscore = sum(cotab$coev) / max(Gtreesizes)
-		write.table(c(fams[b], coevscore), file=nfprogout, quote=F, col.names=F, row.names=F, sep='\t', append=T)
+		write.table(data.frame(compared_fam=fams[b], coev_score=coevscore), file=nfprogout, quote=F, col.names=F, row.names=F, sep='\t', append=T)
 		return( coevscore )
 	})
 	names(partialrow) = fams[colids]
