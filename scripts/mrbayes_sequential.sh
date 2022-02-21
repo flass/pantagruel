@@ -1,5 +1,9 @@
 #!/bin/bash
 
+echo "This script relies on GNU Parallel for multi-threading"
+parallel --citation
+
+
 tasklist="${1}"
 export outputdir="${2}"
 export mbmcmcopt="${3}"

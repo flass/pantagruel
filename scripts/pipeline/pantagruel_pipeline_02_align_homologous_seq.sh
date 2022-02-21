@@ -24,6 +24,9 @@ fi
 ## 02. Homologous Sequence Alignemnt
 ####################################
 
+echo "This script relies on GNU Parallel for multi-threading"
+parallel --citation
+
 ## prepare protein families for alignment
 mkdir -p ${nrprotali}/ ${ptglogs}/clustalo/
 tasklist=$protali/$(basename ${protfamseqs})_tasklist

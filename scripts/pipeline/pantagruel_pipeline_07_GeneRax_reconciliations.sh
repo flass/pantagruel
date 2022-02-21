@@ -28,6 +28,9 @@ fi
 ## 07. Gene tree / Species tree reconciliations
 ###############################################
 
+echo "This script relies on GNU Parallel for multi-threading"
+parallel --citation
+
 ######################################################
 ## 07.1 Infer Gene tree / Species tree reconciliations
 ######################################################
