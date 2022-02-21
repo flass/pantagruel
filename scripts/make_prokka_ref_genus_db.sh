@@ -1,5 +1,8 @@
 #!/bin/bash
 
+echo "This script relies on GNU Parallel for multi-threading"
+parallel --citation
+
 testpgb2fdb () {
   gbff=${1}
   testgbff=${gbff%*.gz}

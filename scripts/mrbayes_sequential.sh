@@ -47,6 +47,8 @@ if [ ! -e "${tasklist}" ] ; then
   exit 1
 fi
 
+echo "This script relies on GNU Parallel for multi-threading"
+parallel --citation
 
 
 runmb(){
