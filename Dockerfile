@@ -84,8 +84,9 @@ RUN cd / && wget --progress=dot:giga -O /usr/bin/lsd https://github.com/tothuhie
 
 # ALE
 RUN cd / && git clone https://github.com/ssolo/ALE \
+    && cd ALE \
     && git checkout 168274f71ac819047e9cc446fc3608ae32789e27 \
-    && cd ALE && mkdir build && cd build \
+	&& mkdir build && cd build \
     && cmake .. && make
 
 # tbl2asn (Prokka dependency)
