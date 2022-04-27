@@ -5,7 +5,7 @@
 Pantagruel pipeline is 'just' a bunch of scripts. What you simply need to do is to download them, that's about it. Here is how:
 
 Under a Debian environment (e.g. Ubuntu), you can automatically install all dependencies using the script [install_dependencies.sh](https://github.com/flass/pantagruel/blob/usingGeneRax/install_dependencies.sh), following the indications below.
-Pantagruel has been developed for use and last tested on on Ubuntu 18.4 LTS (Bionic Beaver). 
+I recommend to install pantagruel and its dependencies on a machine with Ubuntu 18.4 LTS (Bionic Beaver), as this is the operating system Pantagruel has been developed for use and last tested on. 
 *IMPORTANT:* Due to the retirement of Python 2 from the most recent Linux operating systems, the dependency installation script (and therefore operation of Pantagruel) may fail on these systems. If you want to use Pantagruel on such an OS, please make sure to install Python 2.7 by other means (e.g. using a Conda environnment) and to modify the installation scripts accordingly.
 
 Assuming you want to create a folder named `pantagruel_pipeline/` in the current working directory and install the whole software pipeline (the *pantagruel* package and its dependencies) in it, you should first do:
