@@ -125,7 +125,7 @@ if [ ! -z "${srcass}" ] ; then
       fi
       for ext in genomic.fna genomic.gbff genomic.gff cds_from_genomic protein.faa ; do
        if [ -z "$(ls -A ${srcass}/${dass}/${dass}_${ext}* 2> /dev/null)" ] ; then
-        echo "Error: could not detect file named like '${dass}_${ext}*' extension in custom assembly folder '${srcass}/${dass}/';"
+        echo "Error: could not detect file named like '${dass}_${ext}*' extension in assembly folder '${srcass}/${dass}/';"
         echo " Input RefSeq assemblies must include a file with extension *_${ext}[.gz] ; exit now"
         exit 1
        fi

@@ -211,14 +211,14 @@ if [ ! -z "${customassemb}" ] ; then
   echo "found $(echo $contigsets | wc -w) contig files (raw genome assemblies) in ${contigs}/"
   ## if the folder of custom/user-provided set of genomes is not empty
   if [[ -z "${contigsets}" ]] ; then
-    echo "folder ${contigs} is empty! did you intend to provide custom genomeassemblies with -a option? ; exit now"
+    echo "folder ${contigs} is empty! did you intend to provide custom genome assemblies with -a option? ; exit now"
     exit 1
   else
     
     # gather representative proteins from the custom reference genome set to make a prot database for Prokka to search for similarities
     prevrefdb="$(${ptgscripts}/make_prokka_ref_genus_db.sh 'check' ${refgenus})"
     if [[ "${prevrefdb}" == 'noprokka' ]] ; then
-      echo "Warning: 'prokka' command was not available from the PATH; this may be fine, as long as none of you custome genomes need annotating"
+      echo "Warning: 'prokka' command was not available from the PATH; this may be fine, as long as none of you custom genomes need annotating"
       echo "skip building the reference BLAST db"
     elif [[ "${prevrefdb}" == 'notwritable' ]] ; then
       echo "Warning: the reference BLAST database folder for prokka is not writable; custom assemblies will be annotated with the standard prokka reference BLAST db (this cancels the use of options '--refseq_ass4annot' and '--refseq_list4annot')"
@@ -244,8 +244,8 @@ if [ ! -z "${customassemb}" ] ; then
 #      gproject=${allcontigs%%.fa*}
 	  if [ "${allcontigs##*.}" == 'gz' ] ; then
 	    contigwaszipped='true'
-		echo "unzip the input contig file ${allcontigs}"
-	    gzip -d ${allcontigs}
+		echo "unzip the input contig file ${contigs}/${allcontigs}"
+	    gzip -d ${contigs}/${allcontigs}
 		allcontigs=${allcontigs%.*}
 	  fi
 	  gproject=$(parsefastaext ${allcontigs})
