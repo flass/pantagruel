@@ -78,7 +78,11 @@ if [ -z "${prokkabin}" ] ; then
   fi
 fi
 prokkadir=$(dirname $(dirname $(readlink -f $prokkabin)))
-prokkablastdb=${prokkadir}/db/genus
+if [ ! -z "$(env | grep ${PROKKA_DATA_DIR} | cut -d'=' -f2)" ] ; then
+  prokkablastdb=${PROKKA_DATA_DIR}
+else
+  prokkablastdb=${prokkadir}/db/genus
+fi
 
 if [[ "${inrefass}" == 'check' ]] ; then
   # just check the pre-existence of the database and exit with code 0
