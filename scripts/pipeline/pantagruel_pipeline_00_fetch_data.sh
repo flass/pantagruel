@@ -245,7 +245,7 @@ if [ ! -z "${customassemb}" ] ; then
 	  if [ "${allcontigs##*.}" == 'gz' ] ; then
 	    contigwaszipped='true'
 		echo "unzip the input contig file ${contigs}/${allcontigs}"
-	    gzip -d ${contigs}/${allcontigs}
+	    gzip -df ${contigs}/${allcontigs}
 		allcontigs=${allcontigs%.*}
 	  fi
 	  gproject=$(parsefastaext ${allcontigs})
