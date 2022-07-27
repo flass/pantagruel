@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "This script relies on GNU Parallel for multi-threading"
+&>2 echo "This script relies on GNU Parallel for multi-threading" >&2
 parallel --citation
 
 testpgb2fdb () {
@@ -46,7 +46,7 @@ gzpgb2fdb (){
     # for the moment produces a warning only as a bug in prokka
 	# results in recurent failure to produce CDSs from GenBank flat files
 	# cf. https://github.com/tseemann/prokka/issues/ #400 and #393
-    echo "WARNING: produced no CDS for file $nfgff" >&2
+    echo "WARNING: produced no CDS for file $nfgff" 1>&2
     echo "${pgb2fdb} ${nfgff}  ... failed"
   fi
 }
@@ -73,7 +73,7 @@ if [ -z "${prokkabin}" ] ; then
     echo "noprokka"
     exit 0
   else
-    &>2 echo "Error: command 'prokka' was not found"
+    echo "Error: command 'prokka' was not found" >&2
     exit 1
   fi
 fi
