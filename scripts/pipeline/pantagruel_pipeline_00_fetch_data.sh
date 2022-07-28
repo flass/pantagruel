@@ -79,7 +79,7 @@ extractass (){
   #~ done
   # better preserve actual path as input data are supposed to be located outside the Pantagruel database
   for ass in `cat ${srcass}/genome_assemblies*_list` ; do
-    ln -s ${srcass}/${ass} ${lndestass}/
+    ln -sf ${srcass}/${ass} ${lndestass}/
   done
   cd -
 }
@@ -106,7 +106,7 @@ downloadass (){
   # better link with relative path as input data are suposed to be dowloaded inside the Pantagruel database
   relpathass2srcass=$(realpath --relative-to=${lndestass} ${srcassftpdest})
   for ass in `ls ${srcassftpdest}/` ; do
-    ln -s ${relpathass2srcass}/${ass} ${lndestass}/
+    ln -sf ${relpathass2srcass}/${ass} ${lndestass}/
     if [ ! -z "${gp2ass}" ] ; then
 		 assaccname=$(parseGBass ${ass})
 		 if [ -z "${assaccname}" ] ; then 
@@ -271,7 +271,7 @@ if [ ! -z "${customassemb}" ] ; then
 	  elif [ -d ${custannot}/${gproject} ] ; then
         echo "found annotation folder '${custannot}/${gproject}' ; link folder into '${annot}/' and skip annotation of contigs in '${contigs}/${allcontigs}'"
         # better preserve actual path as input data are external to the Pantagruel database 
-        ln -s ${custannot}/${gproject} ${annot}/${gproject}
+		ln -sf ${custannot}/${gproject} ${annot}/${gproject}
 		ls -l ${annot}/${gproject}
       else
 	    if [[ "${resumetask}" == 'true' && -d ${annot}/${gproject} && ! -z $(ls ${annot}/${gproject}/*.gff) && ! -z $(ls ${annot}/${gproject}/*.gbk) ]] ; then
@@ -455,7 +455,7 @@ if [ ! -z "${customassemb}" ] ; then
     
     relpathass2gblass=$(realpath --relative-to=${assemblies} ${gblikeass})
     for gblass in $(ls -A ${gblikeass}/) ; do
-      ln -s ${relpathass2gblass}/${gblass} ${assemblies}/
+      ln -sf ${relpathass2gblass}/${gblass} ${assemblies}/
     done
   fi
 fi
@@ -484,7 +484,7 @@ for dass in $(ls -A ${indata}/extracted_cds_from_genomic_fasta) ; do
   relpathass2extcds=$(realpath --relative-to=${assemblies}/${dass} ${indata}/extracted_cds_from_genomic_fasta/${dass})
   for nfcds in $(ls -A ${indata}/extracted_cds_from_genomic_fasta/${dass}/${dass}_cds_from_genomic.fna*) ; do
     bnnfcds=$(basename ${nfcds})
-    ln -s ${relpathass2extcds}/${bnnfcds} ${assemblies}/${dass}/
+    ln -sf ${relpathass2extcds}/${bnnfcds} ${assemblies}/${dass}/
   done
 done
 
