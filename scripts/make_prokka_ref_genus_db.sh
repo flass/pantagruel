@@ -1,6 +1,6 @@
 #!/bin/bash
 
-&>2 echo "This script relies on GNU Parallel for multi-threading" >&2
+echo "This script relies on GNU Parallel for multi-threading" >&2
 parallel --citation
 
 
@@ -47,7 +47,7 @@ gzpgb2fdb (){
     # for the moment produces a warning only as a bug in prokka
 	# results in recurent failure to produce CDSs from GenBank flat files
 	# cf. https://github.com/tseemann/prokka/issues/ #400 and #393
-    echo "WARNING: produced no CDS for file $nfgff" 1>&2
+    echo "WARNING: produced no CDS for file ${nfgff}" >&2
     echo "${pgb2fdb} ${nfgff}  ... failed"
   fi
 }
@@ -86,6 +86,7 @@ if [ ! -z "$(env | grep ${PROKKA_DATA_DIR} | cut -d'=' -f2)" ] ; then
   if [ ! -d ${prokkablastdb} ] ; then
     echo "Error: the directory '${prokkablastdb}' is missing"
 	exit 1
+  fi
 else
   prokkablastdb=${prokkadir}/db/genus
 fi
