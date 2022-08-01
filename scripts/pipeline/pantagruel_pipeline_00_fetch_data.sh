@@ -371,8 +371,10 @@ if [ ! -z "${customassemb}" ] ; then
 #    for gproject in `ls ${annot}` ; do
 	  doprocess2=true
       gff=($(ls ${annot}/${gproject}/*.ptg.gff 2> /dev/null | grep -v '\.original\|ptg.ptg'))
-      bngff=$(basename ${gff[0]})
-	  if [ -z "${gff}" ] ; then
+	  if [ ! -z "${gff}" ] ; then
+      	bngff=$(basename ${gff[0]})
+	    assemb=${gproject}.1_${bngff%*.ptg.gff}
+	  else
 	    if [ -s ${annot}/${gproject}.tar.gz  ] ; then
 		  # annotation was previously processed then compressed; try and see if the final files are present
 		  gblikefilemissing=-1
@@ -391,19 +393,18 @@ if [ ! -z "${customassemb}" ] ; then
 			assemb=$(basename ${assembpathdir})
 		  else
 		    tar -xzf ${annot}/${gproject}.tar.gz && gff=$(ls ${annot}/${gproject}/ 2> /dev/null | grep 'ptg.gff' | grep -v '\.original')
-	        if [ -z "${gff}" ] ; then
+	        if [ ! -z "${gff}" ] ; then
+      		  bngff=$(basename ${gff[0]})
+			  assemb=${gproject}.1_${bngff%*.ptg.gff}
+			else
 	          echo "Error: could not find file '${annotptggff}' in the extracted content of archive '${annot}/${gproject}.tar.gz'; annotation is missing for genome '${gproject}': exit now"
 		      exit 1
-			else
-			  assemb=${gproject}.1_${bngff%*.ptg.gff}
 	        fi
 	      fi
 		else
 		  echo "Error: could not find file '${annotptggff}' or archive '${annot}/${gproject}.tar.gz' ; annotation is missing for genome '${gproject}': exit now"
 		  exit 1
 	    fi
-	  else
-	    assemb=${gproject}.1_${bngff%*.ptg.gff}
 	  fi
       
 	  assaccname=$(parseGBass ${gproject})
