@@ -27,6 +27,16 @@ EOF
 }
 export -f parseGBass
 
+testFileSize (){
+ nf=${1}
+ minsize=${2}
+ fsize=$(wc -c < ${nf})
+ if [ "${fsize}" -lt "${minsize}" ] ; then
+   ls -l ${nf}
+   echo "Error: file '${nf}' is too small; if a gzip-compressed archive, it might be empty. Exit now."
+   exit 1
+}
+
 extractass (){
   srcass=${1}
   lndestass=${2}
@@ -420,23 +430,23 @@ if [ ! -z "${customassemb}" ] ; then
         ls -l ${assembpathdir}/ -d
         gffgz=${assembpathrad}_genomic.gff.gz
         gzip -c ${gff[0]} > ${gffgz}
-        ls -l ${gffgz}
+        ls -l ${gffgz} && testFileSize ${gffgz} 100
         gbk=($(ls ${annot}/${gproject}/*.ptg.gbk 2> /dev/null | grep -v '\.original\|ptg.ptg'))
         gbkgz=${assembpathrad}_genomic.gbff.gz
         gzip -c ${gbk[0]} > ${gbkgz}
-        ls -l ${gbkgz}
+        ls -l ${gbkgz} && testFileSize ${gbkgz} 100
         faa=($(ls ${annot}/${gproject}/*.faa 2> /dev/null | grep -v '\.original\|ptg.ptg'))
         faagz=${assembpathrad}_protein.faa.gz
         gzip -c ${faa[0]} > ${faagz}
-        ls -l ${faagz}
+        ls -l ${faagz} && testFileSize ${faagz} 100
         gfna=($(ls ${annot}/${gproject}/*.fna 2> /dev/null | grep -v '\.original\|ptg.ptg'))
         gfnagz=${assembpathrad}_genomic.fna.gz
         gzip -c ${gfna[0]} > ${gfnagz}
-        ls -l ${gfnagz}
+        ls -l ${gfnagz} && testFileSize ${gfnagz} 100
         ffn=($(ls ${annot}/${gproject}/*.ffn 2> /dev/null | grep -v '\.original\|ptg.ptg'))
         cdsfnagz=${assembpathrad}_cds_from_genomic.fna.gz
         python2.7 ${ptgscripts}/format_prokkaCDS.py ${ffn[0]} ${cdsfnagz}
-        ls -l ${cdsfnagz}
+        ls -l ${cdsfnagz} && testFileSize ${cdsfnagz} 100
 	    if [[ "${compress}" == 'on' ]] ; then
           if [[ -L ${annot}/${gproject} ]] ; then
             echo "${annot}/${gproject}/ is a symlink to input data; won't compress it and leave the symlink as is"
