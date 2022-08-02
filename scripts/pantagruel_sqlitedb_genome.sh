@@ -27,8 +27,17 @@ populatescript=${thisscript%.*}_populate.py
 cd ${database}
 
 # fetch UniProt taxon codes
-if [ ! -e speclist ] ; then
- wget --progress=dot:mega http://www.uniprot.org/docs/speclist
+if [ ! -e ./speclist ] ; then
+# wget --progress=dot:mega http://www.uniprot.org/docs/speclist  # discontinued
+  user='anonymous'
+  pswd=''
+  host='ftp://ftp.ebi.ac.uk'
+  openparam=" -u ${user},${pswd} ${host}"
+  source='/pub/databases/uniprot/knowledgebase/docs'
+  files='speclist.txt'
+  #~ lftp ${openparam} -e "cd ${source} ; mget -O ${ncbitax}/ ${files} ; quit"
+  lftp -c "set dns:fatal-timeout 10 ; open ${openparam} ; cd ${source} ; mget ${files} ; quit"
+
 fi
 
 
