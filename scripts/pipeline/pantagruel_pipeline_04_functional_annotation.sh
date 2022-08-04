@@ -32,23 +32,23 @@ fi
 ############################
 
 mkdir -p ${funcannot}/
-export currIPversion=$(${ipscanexe} --version | head -n 1 | sed -e 's/InterProScan version //')
-if [ -z "$currIPversion" ] ; then
-  echo "Error: unable to dertermine version of Interproscan; please verify the program is correctly installed ; exiting now."
-  exit 1
-fi
-iphost="ftp://ftp.ebi.ac.uk"
-iploc="pub/software/unix/iprscan/5/"
-lastIPversion=$(lftp -c "open ${iphost} ; ls -tr ${iploc}[0-9].[0-9][0-9]*-[0-9][0-9]*.[0-9] ; quit" | tail -n 1 | awk '{print $NF}')
-if [ -z "${lastIPversion}" ] ; then
-  echo "could not reach the EBI FTP server and verify the last published InterproScan version; the InterproScan look-up service may fail if the current version '${currIPversion}' is not the last"
-elif [ "${currIPversion}" != "${lastIPversion}" ] ; then
-  echo "Error: the installed version of InterProScan (found at $(readlink -f "$(which interproscan)") is '${currIPversion}', different from the version last published on the EBI FTP: '${lastIPversion}'."
-  echo "Using this outdated version would cause the look-up service not to work and thus a significant loss of efficiency."
-  echo "Please install the most recent version by running again the script '${ptgrepo}/install_dependencies.sh'."
-  echo "Exiting now."
-  exit 1
-fi
+#export currIPversion=$(${ipscanexe} --version | head -n 1 | sed -e 's/InterProScan version //')
+#if [ -z "$currIPversion" ] ; then
+#  echo "Error: unable to dertermine version of Interproscan; please verify the program is correctly installed ; exiting now."
+#  exit 1
+#fi
+#iphost="ftp://ftp.ebi.ac.uk"
+#iploc="pub/software/unix/iprscan/5/"
+#lastIPversion=$(lftp -c "open ${iphost} ; ls -tr ${iploc}[0-9].[0-9][0-9]*-[0-9][0-9]*.[0-9] ; quit" | tail -n 1 | awk '{print $NF}')
+#if [ -z "${lastIPversion}" ] ; then
+#  echo "could not reach the EBI FTP server and verify the last published InterproScan version; the InterproScan look-up service may fail if the current version '${currIPversion}' is not the last"
+#elif [ "${currIPversion}" != "${lastIPversion}" ] ; then
+#  echo "Error: the installed version of InterProScan (found at $(readlink -f "$(which interproscan)") is '${currIPversion}', different from the version last published on the EBI FTP: '${lastIPversion}'."
+#  echo "Using this outdated version would cause the look-up service not to work and thus a significant loss of efficiency."
+#  echo "Please install the most recent version by running again the script '${ptgrepo}/install_dependencies.sh'."
+#  echo "Exiting now."
+#  exit 1
+#fi
 
 export interpro=${funcannot}/InterProScan_${IPversion}
 mkdir -p ${interpro}/ ${ptgtmp}/interpro/ ${ptglogs}/interpro/
