@@ -43,6 +43,8 @@ else
   echo "setting the number of parallel cores to default value: ${ncpus}"
 fi
 
+export ptgdb=${ptgroot}/${ptgdbname}
+
 source ${ptgdb}/environ_pantagruel_${ptgdbname}.sh
 
 export ppanggo=${ptgdb}/ppanggolin_${pangotag}
