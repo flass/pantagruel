@@ -55,7 +55,7 @@ mkdir -p ${ppangglog}/ ${ppanggoin}/
 
 # load annotated genomes
 sqlite3 ${sqldb} "SELECT code, assembly_id, assembly_name from assemblies;" | sed -e 's/|/\t/g' | while read code assid assname ; do
-echo -e "${code}\t$(ls ${indata}/genbank-format_assemblies/${assid}_${assname}/*gbff.gz)"
+echo -e "${code}\t$(ls ${indata}/assemblies/${assid}_${assname}/${assid}_${assname}_genomicgbff.gz)"
 done > ${ppanggo}/input/genome_annotations.txt
 
 ppanggolin annotate --cpu ${ncpus} --anno ${ppanggo}/input/genome_annotations.txt --output ${ppanggout} --log ${ppangglog}/annotate.log
