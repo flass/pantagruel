@@ -61,8 +61,7 @@ done > ${ppanggo}/input/genome_annotations.txt
 ppanggolin annotate --cpu ${ncpus} --anno ${ppanggo}/input/genome_annotations.txt --output ${ppanggout} --log ${ppangglog}/annotate.log
 
 # load gene families
-sqlite3 ${sqldb} "SELECT gene_family_id, locus_tag from coding_sequences;" | sed -e 's/|/\t/g' > ${ppanggo}/input/gene_families.txt
-grep -v 'VCHOLC000000' ${ppanggo}/input/gene_families.txt > ${ppanggo}/input/gene_families_noORFans.txt
+sqlite3 ${sqldb} "SELECT gene_family_id, locus_tag from coding_sequences where gene_family_id IS NOT NULL AND gene_family_id!='${famprefix}C000000';" | sed -e 's/|/\t/g' > ${ppanggo}/input/gene_families_noORFans.txt
 
 ppanggolin cluster --cpu ${ncpus} -p ${ppanggout}/pangenome.h5 --clusters ${ppanggo}/input/gene_families_noORFans.txt --infer_singletons --log ${ppangglog}/cluster.log
 
