@@ -78,7 +78,7 @@ if [ -z "${prokkabin}" ] ; then
     exit 1
   fi
 else
-  prokkavers=$(prokka --version 2>&1 >/dev/null | tr ' ' '-')
+  prokkavers=$(${prokkabin} --version 2>&1 >/dev/null | tr ' ' '-')
 fi
 prokkadir=$(dirname $(dirname $(readlink -f ${prokkabin})))
 if [ ! -z "$(env | grep PROKKA_DATA_DIR | cut -d'=' -f2)" ] ; then

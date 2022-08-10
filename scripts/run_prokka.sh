@@ -72,6 +72,8 @@ if [ -e ${prokkablastdb}/${refgenus} ] ; then
  fi
 elif [ -e ${prokkablastdb}/${genus} ] ; then
  usegenus="--usegenus"
+else
+ echo "could not find the genus-specific database file '${prokkablastdb}/${genus}' or the automaticly generated placeholder '${prokkablastdb}/${refgenus}'; will NOT use the \`--genus\` option i.e. will annotate as using the generic Bacteria db"
 fi
 
 if [ ! -z "${ptgthreads}" ] ; then
