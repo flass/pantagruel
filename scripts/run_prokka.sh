@@ -31,8 +31,20 @@ if [[ -z "${genus}" || -z "${species}" || -z "${strain}" || -z "${taxid}" || -z 
 fi
 mkdir -p ${outdir}
 
-
-prokkablastdb=$(dirname $(dirname $(readlink -f `which prokka` | awk '{ print $NF }')))/db/genus
+prokkabin=$(which prokka)
+prokkadir=$(dirname $(dirname $(readlink -f ${prokkabin} | awk '{ print $NF }')))
+prokkavers=$(${prokkabin} --version 2>&1 >/dev/null | tr ' ' '-')
+if [ ! -z "$(env | grep ${PROKKA_DATA_DIR} | cut -d'=' -f2)" ] ; then
+  prokkablastdb=${PROKKA_DATA_DIR}/${prokkavers}/db/genus
+  echo "The environment variable \${PROKKA_DATA_DIR} is set; using its value as the location of Prokka reference BLAST databases:" >&2
+  ls ${prokkablastdb} > /dev/null
+  if [ ! -d ${prokkablastdb} ] ; then
+    echo "Error: the directory '${prokkablastdb}' is missing" >&2
+	exit 1
+  fi
+else
+  prokkablastdb=${prokkadir}/db/genus
+fi
 
 if [ -e ${prokkablastdb}/${refgenus} ] ; then
  usegenus="--usegenus"
@@ -74,8 +86,8 @@ prokkaopts="
 --addgenes --locustag ${loctagprefix} --compliant --centre ${seqcentre} ${usegenus}
 --genus ${genus} --species ${species} --strain ${strain}
  --kingdom Bacteria --gcode 11 ${paraopt}"
-echo "#call: prokka $prokkaopts ${allcontigs}"
-prokka $prokkaopts ${allcontigs}
+echo "#call: ${prokkabin} ${prokkaopts} ${allcontigs}"
+${prokkabin} ${prokkaopts} ${allcontigs}
 prokkaexit=${?}
 date
 
