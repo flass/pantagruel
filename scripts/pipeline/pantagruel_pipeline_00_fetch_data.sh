@@ -35,6 +35,7 @@ testFileSize (){
    ls -l ${nf}
    echo "Error: file '${nf}' is too small; if a gzip-compressed archive, it might be empty. Exit now."
    exit 1
+ fi
 }
 
 extractass (){
