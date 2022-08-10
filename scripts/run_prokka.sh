@@ -86,8 +86,8 @@ prokkaopts="
 --addgenes --locustag ${loctagprefix} --compliant --centre ${seqcentre} ${usegenus}
 --genus ${genus} --species ${species} --strain ${strain}
  --kingdom Bacteria --gcode 11 ${paraopt}"
-echo "#call: prokka $prokkaopts ${allcontigs}"
-prokka $prokkaopts ${allcontigs}
+echo "#call: ${prokkabin} ${prokkaopts} ${allcontigs}"
+${prokkabin} ${prokkaopts} ${allcontigs}
 prokkaexit=${?}
 date
 
