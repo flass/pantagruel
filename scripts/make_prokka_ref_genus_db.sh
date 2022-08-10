@@ -78,9 +78,9 @@ if [ -z "${prokkabin}" ] ; then
     exit 1
   fi
 else
-  prokkavers=$(prokka --version 2>&1 >/dev/null | tr ' ' '-')
+  prokkavers=$(${prokkabin} --version 2>&1 >/dev/null | tr ' ' '-')
 fi
-prokkadir=$(dirname $(dirname $(readlink -f $prokkabin)))
+prokkadir=$(dirname $(dirname $(readlink -f ${prokkabin})))
 if [ ! -z "$(env | grep ${PROKKA_DATA_DIR} | cut -d'=' -f2)" ] ; then
   prokkablastdb=${PROKKA_DATA_DIR}/${prokkavers}/db/genus
   echo "The environment variable \${PROKKA_DATA_DIR} is set; using its value as the location of Prokka reference BLAST databases:" >&2
