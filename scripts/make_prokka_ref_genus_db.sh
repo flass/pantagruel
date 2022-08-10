@@ -77,6 +77,8 @@ if [ -z "${prokkabin}" ] ; then
     echo "Error: command 'prokka' was not found" >&2
     exit 1
   fi
+else
+  prokkavers=$(prokka --version 2>&1 >/dev/null | tr ' ' '-')
 fi
 prokkadir=$(dirname $(dirname $(readlink -f ${prokkabin})))
 if [ ! -z "$(env | grep PROKKA_DATA_DIR | cut -d'=' -f2)" ] ; then
@@ -84,7 +86,7 @@ if [ ! -z "$(env | grep PROKKA_DATA_DIR | cut -d'=' -f2)" ] ; then
   echo "The environment variable \${PROKKA_DATA_DIR} is set; using its value as the location of Prokka reference BLAST databases:" >&2
   ls ${prokkablastdb} > /dev/null
   if [ ! -d ${prokkablastdb} ] ; then
-    echo "Error: the directory '${prokkablastdb}' is missing"
+    echo "Error: the directory '${prokkablastdb}' is missing" >&2
 	exit 1
   fi
 else
@@ -104,7 +106,7 @@ fi
 
 if [ -s ${prokkablastdb}/${refgenus} ] ; then
   datetime=$(date +%Y-%m-%d_%H-%M-%S)
-  echo "Warning: found a previous Prokka reference database for the genus '${refgenus}; save it to '${prokkablastdb}/${refgenus}.backup_${datetime}'"
+  echo "Warning: found a previous Prokka reference database for the genus '${refgenus}; save it to '${prokkablastdb}/${refgenus}.backup_${datetime}'" >&2
   mv -f ${prokkablastdb}/${refgenus} ${prokkablastdb}/${refgenus}.backup_${datetime}
 fi
 # add all the (representative) proteins in the dataset to the custom reference prot database for Prokka to search for similarities
@@ -117,20 +119,10 @@ if [ -s ${inrefass}_genomic_gbffgz_list ] ; then
   # extract protein sequences
   parallel --halt now,fail=1 -a ${inrefass}_genomic_gbffgz_list gzpgb2fdb "${pgb2fdb} {} ${tmpd}/${refgenus}.faa.{%} ${logdir}/prokka-genbank_to_fasta_db.log.{%}"
   if [ ${?} -gt 0 ] ; then
-    >&2 echo "WARNING: could not build custom genus-specific BLAST db from files ${inrefass}/*/*_genomic.gbff ; Prokka will have to use default databases."
+    echo "WARNING: could not build custom genus-specific BLAST db from files ${inrefass}/*/*_genomic.gbff ; Prokka will have to use default databases." >&2
   else
     cat ${tmpd}/${refgenus}.faa.* > ${tmpd}/${refgenus}.faa && rm -f ${tmpd}/${refgenus}.faa.*
     ## cluster similar sequences
-#    # use CD-HIT, 
-#    # with thresholds: 90% seq id (-c 0.9), with seq identity defined as global (-G 1)
-#	 # a mininum (unaligned!) length ratio of 80% (-s 0.8)
-#	 # uses multiple threads (-T 0 <=> `nproc` threads), unlimited memory use (-M 0)
-#    cdhit -i ${tmpd}/${refgenus}.faa -o ${tmpd}/${refgenus}_representative.faa -T 0 -M 0 -G 1 -s 0.8 -c 0.9 &> ${logdir}/make_prokka_ref_cdhit.log
-#	 ndiscarded=$(grep -c 'Discarding invalid sequence' ${logdir}/cdhit.log)
-#	 [[ ${ndiscarded} -gt 0 ]] && echo "Discarded ${ndiscarded} invalid sequence or sequence without identifier and description:" && grep -A2 'Discarding invalid sequence' | grep '>'
-#    rm -fv ${tmpd}/${refgenus}.faa ${tmpd}/${refgenus}_representative.faa.clstr
-#    cp -p ${tmpd}/${refgenus}_representative.faa ${prokkablastdb}/${refgenus}
-
     # use MMSeqs/Linclust,
     # with thresholds: 90% seq id (--min-seq-id 0.9), with seq identity defined over the (global) alignment length (--seq-id-mode 0)
     # a mininum (aligned!) length ratio of 80% (-c 0.8 --cov-mode 0)
