@@ -115,6 +115,8 @@ usagelong (){
   echo "                          2) the gene family prefix tag provided by option -F should be the same"
   echo "                        As a result of the update, all gene family identifiers will correspond to the same"
   echo "                        families between the datasets (unless when they are unique to the new genomes)."
+  echo "                        Relevant files from the source database will be linked over or reused during"
+  echo "                        Pantagruel tasks 00 and 01; dowstream tasks will be entirely computed de novo."
   echo ""
   echo " Input options:"
   echo ""

@@ -247,7 +247,7 @@ fi
 
 
 if [ ! -z "${customassemb}" ] ; then
-  echo "$(promptdate) extract assembly data from folder '${customassemb}'"
+  echo "$(promptdate) extract custom genome assembly data from folder '${customassemb}'"
   
   contigsets="$(ls -A "${contigs}/" 2>/dev/null)"
   echo "found $(echo $contigsets | wc -w) contig files (raw genome assemblies) in ${contigs}/"
@@ -284,7 +284,7 @@ if [ ! -z "${customassemb}" ] ; then
 	
     for allcontigs in ${contigsets} ; do
 #      gproject=${allcontigs%%.fa*}
-	  if [ "${allcontigs##*.}" == 'gz' ] ; then
+	 if [ "${allcontigs##*.}" == 'gz' ] ; then
 	    contigwaszipped='true'
 		echo "unzip the input contig file ${contigs}/${allcontigs}"
 	    gzip -df ${contigs}/${allcontigs}
@@ -321,8 +321,10 @@ if [ ! -z "${customassemb}" ] ; then
 	  elif [ -s ${prevdbannot}/${gproject}.tar.gz ] ; then
 	    ln -sf ${prevdbannot}/${gproject}.tar.gz ${annot}/
 	  fi
-	  gproject=$(parsefastaext ${allcontigs})
-      echo "$(promptdate) ${gproject}"
+	  grep -P '\tcustom_assembly' ${prevdbgp2ass} | -P "^${gproject}\t"  | sed -e "s/custom_assembly/custom_assembly_from_source_db_$(basename ${updatedbfrom})/" >> ${gp2ass}
+	  # end of block updating from a previous database
+     else
+	  # extract input data for custom genome assembly
       if [[ -e ${custannot}/${gproject}.tar && "$(tar -tf ${custannot}/${gproject}.tar ${gproject})" == "${gproject}/" ]] ; then
         echo "found tarred file '${custannot}/${gproject}.tar' containing the folder '${gproject}/'"
 		echo "uncompress the archive into ${annot}/ and skip annotation of contigs in '${contigs}/${allcontigs}'"
@@ -520,6 +522,7 @@ if [ ! -z "${customassemb}" ] ; then
           fi
 	    fi
 	  fi
+	 fi
 #    done > ${ptglogs}/genbank-format_assemblies.log
 	if [ "${contigwaszipped}" == 'true' ] ; then
 	  echo "re-zip the input contig file ${allcontigs}"
