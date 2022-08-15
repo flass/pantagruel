@@ -358,6 +358,8 @@ Options are detailed here:
                           2) the gene family prefix tag provided by option -F should be the same
                         As a result of the update, all gene family identifiers will correspond to the same
                         families between the datasets (unless when they are unique to the new genomes).
+                        Relevant files from the source database will be linked over or reused during
+                        Pantagruel tasks 00 and 01; dowstream tasks will be entirely computed de novo.
  Input options:
  
     -T|--taxonomy      path to folder of taxonomy database flat files. Defaults to $rootdir/NCBI/Taxonomy_YYYY-MM-DD (suffix is today's date)
