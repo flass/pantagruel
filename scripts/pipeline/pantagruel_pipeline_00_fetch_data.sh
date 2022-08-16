@@ -33,7 +33,7 @@ testFileSize (){
  fsize=$(wc -c < ${nf})
  if [ "${fsize}" -lt "${minsize}" ] ; then
    ls -l ${nf}
-   echo "Error: file '${nf}' is too small; if a gzip-compressed archive, it might be empty. Exit now."
+   echo "Error: file '${nf}' is too small; if a gzip-compressed archive, it might be empty. Exit now." >&2
    exit 1
  fi
 }
@@ -209,20 +209,22 @@ if [ ! -z "${updatedbfrom}" ] ; then
   prevdbindata=${updatedbfrom}/$(basename ${indata})
   prevdbgp2ass=${prevdbindata}/$(basename ${gp2ass})
   if [ ! -e "${prevdbgp2ass}" ] ; then
-    echo "Error: could not find the genome input tracking list from the reference Pantagruel db/update source where expected:"
+    echo "Error: could not find the genome input tracking list from the reference Pantagruel db/update source where expected:" >&2
 	ls ${prevdbgp2ass}
-	echo "will rely instead on the Prokka genome annotation output files/folders stored in the reference Pantagruel db/update source"
+	echo "will rely instead on the Prokka genome annotation output files/folders stored in the reference Pantagruel db/update source" >&2
     prevdbannot=${prevdbindata}/$(basename ${annot})
     if [ ! -e "${prevdbannot}" ] ; then
-      echo "Error: could not find the Prokka genome annotation folder from the reference Pantagruel db/update source where expected:"
+      echo "Error: could not find the Prokka genome annotation folder from the reference Pantagruel db/update source where expected:" >&2
 	  ls ${prevdbannot}
+	  echo "exit now" >&2
 	  exit 1
     fi
   fi
   prevdbgblikeass=${prevdbindata}/$(basename ${gblikeass})
   if [ ! -d "${prevdbgblikeass}" ] ; then
-    echo "Error: could not find the GenBank/RefSeq-like genome assemblies folder (output of Pantagruel task 00) from the reference Pantagruel db/update source where expected:"
+    echo "Error: could not find the GenBank/RefSeq-like genome assemblies folder (output of Pantagruel task 00) from the reference Pantagruel db/update source where expected:" >&2
 	ls ${prevdbgblikeass}
+	echo "exit now" >&2
 	exit 1
   fi
 fi
@@ -297,7 +299,7 @@ if [ ! -z "${customassemb}" ] ; then
 	  echo "custom genome assembly was found in reference Pantagruel db/update source; will create sympolic links to source files"
 	  assembpathdir=$(ls -d ${prevdbgblikeass}/${gproject}.1_*)
 	  if [ ! -d "${assembpathdir}" ] ; then
-	    echo "Error: could not find the GenBank/RefSeq-like genome assembly from the reference Pantagruel db/update source where expected; won't be able to ensure match between annotation and proteome when updating database; exit now"
+	    echo "Error: could not find the GenBank/RefSeq-like genome assembly from the reference Pantagruel db/update source where expected; won't be able to ensure match between annotation and proteome when updating database; exit now" >&2
 		exit 1
 	  else
 	    gblikefilemissing=0
@@ -310,7 +312,7 @@ if [ ! -z "${customassemb}" ] ; then
 		  echo "all final GenBank-like files found in source folder ${assembpathdir}/ ; link folder."
 	      ln -sf ${assembpathdir} ${gblikeass}/
 		else
-		   echo "Error: some critical files are missing in the GenBank/RefSeq-like genome assembly folder from the reference Pantagruel db/update source: ${assembpathdir}/; won't be able to ensure match between annotation and proteome when updating database; exit now"
+		   echo "Error: some critical files are missing in the GenBank/RefSeq-like genome assembly folder from the reference Pantagruel db/update source: ${assembpathdir}/; won't be able to ensure match between annotation and proteome when updating database; exit now" >&2
 		  exit 1
 		fi
 	  fi
@@ -378,14 +380,14 @@ if [ ! -z "${customassemb}" ] ; then
 	  fi
 	  if [[ "${doprocess1}" == 'true' ]] ; then
         if [[ "$(grep ${gproject} ${straininfo} | cut -f2- | grep -P '[^\t]' | wc -l)" -eq 0 ]] ; then
-          echo "Error: missing mandatory information about custom genomes"
-          echo "Please fill information in '${straininfo}' file before running this step again."
+          echo "Error: missing mandatory information about custom genomes" >&2
+          echo "Please fill information in '${straininfo}' file before running this step again; exit now." >&2
           exit 1
         fi
         echo "fix annotation to integrate region information into GFF files"
         annotgff=($(ls ${annot}/${gproject}/*.gff))
         if [ -z ${annotgff[0]} ] ; then
-          echo "Error: missing mandatory GFF file in ${annot}/${gproject}/ folder"
+          echo "Error: missing mandatory GFF file in ${annot}/${gproject}/ folder; exit now" >&2
           exit 1
         fi
         if [ -z "$(grep '##sequence-region' ${annotgff[0]})" ] ; then
@@ -470,12 +472,12 @@ if [ ! -z "${customassemb}" ] ; then
       		  bngff=$(basename ${gff[0]})
 			  assemb=${gproject}.1_${bngff%*.ptg.gff}
 			else
-	          echo "Error: could not find file '${annotptggff}' in the extracted content of archive '${annot}/${gproject}.tar.gz'; annotation is missing for genome '${gproject}': exit now"
+	          echo "Error: could not find file '${annotptggff}' in the extracted content of archive '${annot}/${gproject}.tar.gz'; annotation is missing for genome '${gproject}': exit now" >&2
 		      exit 1
 	        fi
 	      fi
 		else
-		  echo "Error: could not find file '${annotptggff}' or archive '${annot}/${gproject}.tar.gz' ; annotation is missing for genome '${gproject}': exit now"
+		  echo "Error: could not find file '${annotptggff}' or archive '${annot}/${gproject}.tar.gz' ; annotation is missing for genome '${gproject}': exit now" >&2
 		  exit 1
 	    fi
 	  fi
@@ -546,9 +548,9 @@ ls -Ad ${assemblies}/* > ${genomeinfo}/assemblies_list
 ## test that there are at least 4 genomes to process
 export ngenomes=$(ls -A "${assemblies}/" 2>/dev/null | wc -l)
 if [ ${ngenomes} -lt 4 ] ; then
-  echo "Error: there are not enough genomes (< 4) in input for pantegruel to produce anything meaningful."
-  echo "please add more genome assemblies in either ${ncbiass}/ or ${contigs}/ (see manual with \`pantagruel -- help\`)"
-  echo "exit now."
+  echo "Error: there are not enough genomes (< 4) in input for pantegruel to produce anything meaningful." >&2
+  echo "please add more genome assemblies in either ${ncbiass}/ or ${contigs}/ (see manual with \`pantagruel -- help\`)" >&2
+  echo "exit now." >&2
   exit 1
 fi
 
