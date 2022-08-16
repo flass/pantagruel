@@ -5,6 +5,7 @@ parallel --citation
 
 testpgb2fdb () {
   gbff=${1}
+  prokkadir=${2}
   testgbff=${gbff%*.gz}
   if [ "${testgbff}" != "${gbff}" ] ; then gunzip -k ${gbff} ; fi
   # test the functioning of prokka-genbank_to_fasta_db script
@@ -77,9 +78,9 @@ if [ -z "${prokkabin}" ] ; then
     exit 1
   fi
 fi
-prokkadir=$(dirname $(dirname $(readlink -f $prokkabin)))
-if [ ! -z "$(env | grep ${PROKKA_DATA_DIR} | cut -d'=' -f2)" ] ; then
-  prokkablastdb=${PROKKA_DATA_DIR}/db/genus
+prokkadir=$(dirname $(dirname $(readlink -f ${prokkabin})))
+if [ ! -z "$(env | grep PROKKA_DATA_DIR | cut -d'=' -f2)" ] ; then
+  prokkablastdb=${PROKKA_DATA_DIR}/${prokkavers}/db/genus
   echo "The environment variable \${PROKKA_DATA_DIR} is set; using its value as the location of Prokka reference BLAST databases:" >&2
   ls ${prokkablastdb} > /dev/null
   if [ ! -d ${prokkablastdb} ] ; then
@@ -108,7 +109,7 @@ if [ -s ${prokkablastdb}/${refgenus} ] ; then
 fi
 # add all the (representative) proteins in the dataset to the custom reference prot database for Prokka to search for similarities
 ls ${inrefass}/*/*_genomic.gbff.gz > ${inrefass}_genomic_gbffgz_list
-pgb2fdb=$(testpgb2fdb `head -n1 ${inrefass}_genomic_gbffgz_list`)
+pgb2fdb=$(testpgb2fdb `head -n1 ${inrefass}_genomic_gbffgz_list` ${prokkadir})
 tmpd=${tmpdir}/mkprokkarefgendb
 mkdir -p ${tmpd}
 rm -f ${tmpd}/${refgenus}.faa.*  ${logdir}/prokka-genbank_to_fasta_db.log.*
