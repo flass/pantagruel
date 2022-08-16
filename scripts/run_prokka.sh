@@ -32,9 +32,8 @@ fi
 mkdir -p ${outdir}
 
 prokkabin=$(which prokka)
-prokkadir=$(dirname $(dirname $(readlink -f ${prokkabin} | awk '{ print $NF }')))
-prokkavers=$(${prokkabin} --version 2>&1 >/dev/null | tr ' ' '-')
-if [ ! -z "$(env | grep ${PROKKA_DATA_DIR} | cut -d'=' -f2)" ] ; then
+if [ ! -z "$(env | grep PROKKA_DATA_DIR | cut -d'=' -f2)" ] ; then
+  prokkavers=$(${prokkabin} --version 2>&1 >/dev/null | tr ' ' '-')
   prokkablastdb=${PROKKA_DATA_DIR}/${prokkavers}/db/genus
   echo "The environment variable \${PROKKA_DATA_DIR} is set; using its value as the location of Prokka reference BLAST databases:" >&2
   ls ${prokkablastdb} > /dev/null
@@ -43,6 +42,7 @@ if [ ! -z "$(env | grep ${PROKKA_DATA_DIR} | cut -d'=' -f2)" ] ; then
 	exit 1
   fi
 else
+  prokkadir=$(dirname $(dirname $(readlink -f ${prokkabin} | awk '{ print $NF }')))
   prokkablastdb=${prokkadir}/db/genus
 fi
 
