@@ -292,7 +292,7 @@ if [ ! -z "${customassemb}" ] ; then
      echo "$(promptdate) ${gproject}"
 	 
 	 # check if updating from previous Pantagruel dtabase:
-     if [[ ! -z "${updatedbfrom}" && ( ! -z "$(grep -P '\tcustom_assembly' ${prevdbgp2ass} | -P "^${gproject}\t")" || -d ${prevdbannot}/${gproject} || -s ${prevdbannot}/${gproject}.tar.gz ) ]] ; then
+     if [[ ! -z "${updatedbfrom}" && ( ! -z "$(grep -P '\tcustom_assembly' ${prevdbgp2ass} | grep -P "^${gproject}\t")" || -d ${prevdbannot}/${gproject} || -s ${prevdbannot}/${gproject}.tar.gz ) ]] ; then
 	  # linking input data for custom genome assembly from previous Pantagruel database
 	  echo "custom genome assembly was found in reference Pantagruel db/update source; will create sympolic links to source files"
 	  assembpathdir=$(ls -d ${prevdbgblikeass}/${gproject}.1_*)
@@ -319,7 +319,7 @@ if [ ! -z "${customassemb}" ] ; then
 	  elif [ -s ${prevdbannot}/${gproject}.tar.gz ] ; then
 	    ln -sf ${prevdbannot}/${gproject}.tar.gz ${annot}/
 	  fi
-	  grep -P '\tcustom_assembly' ${prevdbgp2ass} | -P "^${gproject}\t"  | sed -e "s/custom_assembly/custom_assembly_from_source_db_$(basename ${updatedbfrom})/" >> ${gp2ass}
+	  grep -P '\tcustom_assembly' ${prevdbgp2ass} | grep -P "^${gproject}\t"  | sed -e "s/custom_assembly/custom_assembly_from_source_db_$(basename ${updatedbfrom})/" >> ${gp2ass}
 	  # end of block updating from a previous database
      else
 	  # extract input data for custom genome assembly
@@ -404,7 +404,7 @@ if [ ! -z "${customassemb}" ] ; then
         checkexec "something went wrong when adding region features to GFF file (In: ${annotgff[0]}; Out:${annotptggff}; Stdin/Stderr or the last command: ${addregfeatlog})"
         annotfna=($(ls ${annot}/${gproject}/*.fna))
         annotgbk=($(ls ${annot}/${gproject}/*.gbf 2> /dev/null || ls ${annot}/${gproject}/*.gbk))
-        annotfaa=($(ls ${annot}/${gproject}/*.faa))
+        annotfaa=($(ls ${annot}/${gproject}/*.faa | grep -v '\.tmp\.'))
         annotffn=($(ls ${annot}/${gproject}/*.ffn))
         if [[ -z "${annotfna[0]}" || -z "${annotgbk[0]}" || -z "${annotffn[0]}" || -z "${annotfaa[0]}" ]] ; then
           echo "At least one of these files is missing in ${annot}/${gproject}/ folder: contig fasta file (.fna), GenBank flat file (gbk/gbf), CDS Fasta (ffn) or protein Fasta (faa)."
@@ -430,7 +430,7 @@ if [ ! -z "${customassemb}" ] ; then
             exit 1
           fi
         fi
-        annotfaa=($(ls ${annot}/${gproject}/*.faa))
+        annotfaa=($(ls ${annot}/${gproject}/*.faa | grep -v '\.tmp\.'))
         annotffn=($(ls ${annot}/${gproject}/*.ffn))
 		echo "fix annotation to integrate taxid information into GBK files"
         python2.7 ${ptgscripts}/add_taxid_feature2prokkaGBK.py ${gproject} ${annotgbk[0]} ${annotrad}.ptg.gbk ${straininfo}
@@ -498,7 +498,7 @@ if [ ! -z "${customassemb}" ] ; then
         gbkgz=${assembpathrad}_genomic.gbff.gz
         gzip -c ${gbk[0]} > ${gbkgz}
         ls -l ${gbkgz} && testFileSize ${gbkgz} 100
-        faa=($(ls ${annot}/${gproject}/*.faa 2> /dev/null | grep -v '\.original\|ptg.ptg'))
+        faa=($(ls ${annot}/${gproject}/*.faa 2> /dev/null | grep -v '\.tmp\.\|\.original\|ptg.ptg'))
         faagz=${assembpathrad}_protein.faa.gz
         gzip -c ${faa[0]} > ${faagz}
         ls -l ${faagz} && testFileSize ${faagz} 100
