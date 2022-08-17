@@ -11,8 +11,9 @@ fi
 echo "### assembly: $gproject; contig files from: ${allcontigs}/"
 head -n1 $refstrains
 
-taxo=($(grep -P "^${gproject}\t" ${refstrains} | sed -e s,[ \/],@#=,g')) # escapes the whitespaces and (back)slashes
-# restores the whitespaces and (back)slashes or replace them with underscores when deemed unsafe
+# escape the whitespaces and (back)slashes
+taxo=($(grep -P "^${gproject}\t" ${refstrains} | sed -e 's,[ \/],@#=,g')) 
+# restore the whitespaces and (back)slashes or replace them with underscores when deemed unsafe
 genus="$(echo ${taxo[1]} | sed -e 's/@#=/ /g')"
 species="$(echo ${taxo[2]%*.} | sed -e 's/@#=/ /g')"
 if [ ! -z "$(echo ${taxo[3]} | grep '@#=')" ] ; then
