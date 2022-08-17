@@ -20,6 +20,7 @@ with open(nfin, 'r') as fin:
 	for fieldname in forbiddenstuff:
 		fieldindex = header.index(fieldname)
 		forbiddenstuff[fieldname][0] = fieldindex
+	errorfound = 0
 	for line in fin:
 		lsp = line.rstrip('\n').split('\t')
 		for fieldname, fieldstuff in forbiddenstuff.iteritems():
@@ -27,4 +28,7 @@ with open(nfin, 'r') as fin:
 			fieldval = lsp[fieldindex]
 			for fchar in forbidenchars:
 				if (fchar in fieldval):
-					raise ValueError, "%s the characters '%s' is forbidden in the '%s' field; rule broken at:\n%s%s%s"%(errprefix, forbidenchars, fieldname, headerline, line, errsuffix)
+					print "the characters '%s' is forbidden in the '%s' field; rule broken at:\n%s%s%s\n# # #"%(forbidenchars, fieldname, headerline, line)
+					errorfound += 1
+	if errorfound:
+		raise ValueError, "%sforbidden characters were found. %s"%(errprefix, , errsuffix)
