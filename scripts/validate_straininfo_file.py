@@ -26,4 +26,6 @@ with open(nfin, 'r') as fin:
             fieldval = lsp[fieldindex]
             for fchar in forbidenchars:
                 if (fchar in fieldval):
-                    raise ValueError, "%s the characters '%s' is forbiden in the '%s' field. %s"%(errprefix, forbidenchars, fieldname, errsuffix)
+					print '\t'.join(header)
+					print '\t'.join(lsp)
+                    raise ValueError, "%s the characters '%s' is forbidden in the '%s' field. %s"%(errprefix, forbidenchars, fieldname, errsuffix)
