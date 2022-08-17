@@ -398,7 +398,8 @@ Options are detailed here:
                          'locus_tag_prefix' must match the prefix of ids given to CDS, proteins and genome regions (contigs)
                          in potentially provided annotation files (see below).
                          Note that for ensuring compatibility with dependencies (namely BioPython Nexus alignment parser
-                         and ALE reconciliation program), the characters '-' and '_' are forbidden in the 'locus_tag_prefix' field.
+                         and ALE reconciliation program), the characters '-' and '_' are forbidden in the 'locus_tag_prefix' field. ' \/' characters are forbidden in the strain name.
+						 Formating of this file can be validated using scripts/validate_straininfo_file.py
                       _optional_ 
                        - an 'annotation/' folder, where are stored annotation folders, one per genome. Each genome annotation file set 
 					   must be stored in a separate folder, which name must match a contig file (e.g. 'seqProjID/' for 'seqProjID.fasta').
