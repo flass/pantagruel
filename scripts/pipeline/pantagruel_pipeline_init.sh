@@ -174,28 +174,9 @@ if [ ! -z "${customassemb}" ] ; then
      echo " exit now"
      exit 1
     else
-      # check that proposed locus-tag prefix are free from characters '-' and '_'
-      python2.7 << EOF
-nfin = '${straininfo}'
-errprefix = "Error in format of strain info file '%s': "%nfin
-errsuffix = "\nPlease edit the file accordingly."
-dstrains = {}
-expectedfields = set(['assembly_id','genus','species','strain','taxid','locus_tag_prefix'])
-with open(nfin, 'r') as fin:
-  header = fin.readline().rstrip('\n').split('\t')
-  missingfields = expectedfields - set(header)
-  extrafields = set(header) - expectedfields
-  if missingfields:
-    sextra = "\nExtra fields were detected: %s. Maybe the header was misspelled?"%repr(list(extrafields)) if extrafields else ''
-    raise ValueError, "%s\nthe fields %s are missing from the header.%s%s"%(errprefix, repr(list(missingfields)), sextra, errsuffix)
-  ltpi = header.index('locus_tag_prefix')
-  for line in fin:
-    lsp = line.rstrip('\n').split('\t')
-    ltp = lsp[ltpi]
-    if ('-' in ltp) or ('_' in ltp):
-      raise ValueError, "%s the characters '-' and '_' are forbiden in the 'locus_tag_prefix' field. %s"%(errprefix, errsuffix)
-
-EOF
+    # check that proposed locus-tag prefix are free from characters '-' and '_'
+    # and that strain names are free from characters ' ', '/' and '\'
+    ${ptgscripts}/validate_straininfo_file.py ${straininfo}
     checkexec "Custom strain info file detected; Error in format" "Custom strain info file detected; format validated"
     fi
   fi
