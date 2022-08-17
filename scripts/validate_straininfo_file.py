@@ -31,4 +31,4 @@ with open(nfin, 'r') as fin:
 					print "the characters '%s' is forbidden in the '%s' field; rule broken at:\n%s%s%s\n# # #"%(forbidenchars, fieldname, headerline, line)
 					errorfound += 1
 	if errorfound:
-		raise ValueError, "%sforbidden characters were found. %s"%(errprefix, , errsuffix)
+		raise ValueError, "%sforbidden characters were found. %s"%(errprefix, errsuffix)
