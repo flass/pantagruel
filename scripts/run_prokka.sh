@@ -18,15 +18,16 @@ species="$(echo ${taxo[2]%*.} | sed -e 's/@#=/ /g')"
 strain="$(echo ${taxo[3]} | sed -e 's/@#=/ /g')"
 safestrain="$(echo ${taxo[3]} | sed -e 's/@#=/_/g')"
 if [ "${strain}" != "${safestrain}" ] ; then
-  echo -e "it is not safe to have a strain name with a whitespace in it: '${strain}'.\nPlease edit your strain information file '${refstrains}' and re-run this step. Will exit now"
+  echo -e "Error: it is not safe to have a strain name with a whitespace in it: '${strain}'.\nPlease edit your strain information file '${refstrains}' and re-run this step. Will exit now" >&2
+  exit 1
 fi
 taxid="$(echo ${taxo[4]} | sed -e 's/@#=/_/g')"
 loctagprefix="$(echo ${taxo[5]} | sed -e 's/@#=/_/g')"
 echo "'${genus}' '${species}' '${strain}' '${taxid}' '${loctagprefix}'"
 
 if [[ -z "${genus}" || -z "${species}" || -z "${strain}" || -z "${taxid}" || -z "${loctagprefix}" ]] ; then
-  echo "missing value in genus='$genus', species='$species', strain='$strain', taxid='$taxid', loctagprefix='$loctagprefix'"
-  echo "cannot run Prokka, exit now."
+  echo "Error: missing value in genus='$genus', species='$species', strain='$strain', taxid='$taxid', loctagprefix='$loctagprefix'" >&2
+  echo "Cannot run Prokka, exit now." >&2
   exit 1
 fi
 mkdir -p ${outdir}
@@ -48,12 +49,12 @@ fi
 
 if [ -e ${prokkablastdb}/${refgenus} ] ; then
  usegenus="--usegenus"
- echo "will use '${prokkablastdb}/${refgenus}' protein database for BLAST-based annotation"
+ echo "Will use '${prokkablastdb}/${refgenus}' protein database for BLAST-based annotation"
  if [[ "${refgenus}" != "${genus}" ]] ; then
    # refgenus value is 'Reference', or different genus than that of the focal genome (hereafter 'Genus')
    if [[ -e ${prokkablastdb}/${genus} ]] ; then
      # substitute the 'Reference' files to the 'Genus' files for the time of this annotation
-     echo "temporarily move the resident genus database '${prokkablastdb}/${genus}' to '${prokkablastdb}/${genus}_bak' to substitute it with '${prokkablastdb}/${refgenus}' and make links:"
+     echo "Temporarily move the resident genus database '${prokkablastdb}/${genus}' to '${prokkablastdb}/${genus}_bak' to substitute it with '${prokkablastdb}/${refgenus}' and make links:"
      for gdbfile in $(ls ${prokkablastdb}/${genus} ${prokkablastdb}/${genus}.*) ; do
        mv -f ${gdbfile} ${gdbfile/${genus}/${genus}_bak}
 	   refdbfile=${prokkablastdb}/$(basename ${gdbfile/${genus}/${refgenus}})
@@ -73,7 +74,7 @@ if [ -e ${prokkablastdb}/${refgenus} ] ; then
 elif [ -e ${prokkablastdb}/${genus} ] ; then
  usegenus="--usegenus"
 else
- echo "could not find the genus-specific database file '${prokkablastdb}/${genus}' or the automaticly generated placeholder '${prokkablastdb}/${refgenus}'; will NOT use the \`--genus\` option i.e. will annotate as using the generic Bacteria db"
+ echo "Warning: could not find the genus-specific database file '${prokkablastdb}/${genus}' or the automaticly generated placeholder '${prokkablastdb}/${refgenus}'; will NOT use the \`--genus\` option i.e. will annotate as using the generic Bacteria db" >&2
 fi
 
 if [ ! -z "${ptgthreads}" ] ; then
@@ -95,19 +96,19 @@ date
 for dbfile in $(ls ${prokkablastdb}/${genus} ${prokkablastdb}/${genus}.*) ; do
   if [ -L ${dbfile} ] ; then
     rm ${dbfile}
-    echo "removed link: ${dbfile}"
+    echo "Removed link: ${dbfile}"
   fi
   if [ -e ${dbfile/${genus}/${genus}_bak} ] ; then
-    echo "restore the resident genus database file '${dbfile}' from '${dbfile/${genus}/${genus}_bak}'"
+    echo "Restore the resident genus database file '${dbfile}' from '${dbfile/${genus}/${genus}_bak}'"
     mv -f ${dbfile/${genus}/${genus}_bak} ${dbfile}
   fi
 done
 
 if [ ${prokkaexit} -gt 0 ] ; then 
-  echo "error during prokka run; see logs in $(ls ${outdir}/*.log)"
-  echo "DEBUG: try running the last command caled by Prokka, but keeping the STDERR:"
+  echo "An error occurred during prokka run; see logs in $(ls ${outdir}/*.log)" >&2
+  echo "DEBUG: try running the last command caled by Prokka, but keeping the STDERR:" >&2
   failedcmd=$(grep "Could not run command: " ${outdir}/*.log | sed -e 's#\[.\+\] Could not run command: \(.\+\) 2> /dev/null#\1#')
-  echo "# ${failedcmd}"
+  echo "# ${failedcmd}" >&2
   eval "${failedcmd}"
   exit ${prokkaexit}
 fi
