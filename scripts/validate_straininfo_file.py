@@ -2,7 +2,7 @@
 import sys
 
 forbiddenstuff = {'locus_tag_prefix':[None, '-_'], \
-				    'strain':[None, ' \/']}
+                    'strain':[None, ' \/']}
 
 nfin = sys.argv[1]
 errprefix = "Error in format of strain info file '%s': "%nfin
@@ -18,12 +18,12 @@ with open(nfin, 'r') as fin:
         raise ValueError, "%s\nthe fields %s are missing from the header.%s%s"%(errprefix, repr(list(missingfields)), sextra, errsuffix)
     for fieldname in forbiddenstuff:
         fieldindex = header.index(fieldname)
-	    forbiddenstuff[fieldname][0] = fieldindex
+        forbiddenstuff[fieldname][0] = fieldindex
     for line in fin:
         lsp = line.rstrip('\n').split('\t')
         for fieldname, fieldstuff in forbiddenstuff.iteritems():
-			fieldindex, forbidenchars = fieldstuff
-	        fieldval = lsp[fieldindex]
-	        for fchar in forbidenchars:
+            fieldindex, forbidenchars = fieldstuff
+            fieldval = lsp[fieldindex]
+            for fchar in forbidenchars:
                 if (fchar in fieldval):
                     raise ValueError, "%s the characters '%s' is forbiden in the '%s' field. %s"%(errprefix, forbidenchars, fieldname, errsuffix)
