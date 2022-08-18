@@ -20,15 +20,24 @@ with open(nfin, 'r') as fin:
 	for fieldname in forbiddenstuff:
 		fieldindex = header.index(fieldname)
 		forbiddenstuff[fieldname][0] = fieldindex
-	errorfound = 0
+	emptyfieldfound = 0
+	charerrorfound = 0
 	for line in fin:
 		lsp = line.rstrip('\n').split('\t')
+		# check that every field has a value
+		for fieldval, n in enumerate(lsp):
+			if not fieldval:
+				fieldname = header[n]
+				emptyfieldfound += 1
+				print "the field '%s' is empty for this entry:\n%s%s# # #\n"%(fieldname, headerline, line)
 		for fieldname, fieldstuff in forbiddenstuff.iteritems():
 			fieldindex, forbidenchars = fieldstuff
 			fieldval = lsp[fieldindex]
 			for fchar in forbidenchars:
 				if (fchar in fieldval):
-					print "the characters '%s' is forbidden in the '%s' field; rule broken at:\n%s%s%s\n# # #"%(forbidenchars, fieldname, headerline, line)
-					errorfound += 1
-	if errorfound:
+					print "the characters '%s' is forbidden in the '%s' field; rule broken at:\n%s%s# # #\n"%(forbidenchars, fieldname, headerline, line)
+					charerrorfound += 1
+	if emptyfieldfound:
+		raise ValueError, "%sempty fields were found. %s"%(errprefix, errsuffix)
+	if charerrorfound:
 		raise ValueError, "%sforbidden characters were found. %s"%(errprefix, errsuffix)
