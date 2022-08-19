@@ -82,10 +82,10 @@ for nfinn in lnfinn:
 				if dseq2prevfam and len(lseqinfam)>1:
 					# search previous clustering for an already assigned family
 					# (do not search for singletons, bound to be all in the same 'family' PREFIX000000)
-					prevfams = []
+					prevfams = set([])
 					for seqname in lseqinfam:
 						prevfam = dseq2prevfam.get(seqname)
-						if prevfam: prevfams.append(prevfam)
+						if prevfam: prevfams.add(prevfam)
 					if prevfams:
 						if len(prevfams)>1:
 							raise IndexError, "too many family ids from preious clustering associated to proteins that are members of a single family in new clustering:\nprevious clustering families: "+' '.join(prevfams)
