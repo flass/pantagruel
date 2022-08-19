@@ -27,8 +27,7 @@ if len(sys.argv)>7:
 			dseq2prevfam[prot] = fam
 			famn = int(fam.split(famprefix)[1]) # assumes the same prefix has been used! should throw an error if not
 			if famn > maxprevfamn: maxprevfamn = famn # a bit over the top as the fam ids should come sequentially, but this is more robust
-else:
-	
+
 lvar = []
 for var in ['nfin', 'famprefix', 'dirout', 'padlen', 'writeseq', 'discardsingle']:
 	lvar.append("%s = %s"%(var, repr(eval(var))))
