@@ -90,7 +90,7 @@ for nfinn in lnfinn:
 						if len(prevfams)>1:
 							raise IndexError, "too many family ids from preious clustering associated to proteins that are members of a single family in new clustering:\nprevious clustering families: "+' '.join(prevfams)
 						else:
-							nfam, lseqinfam, seqbuffer = incrementfam(nfam, lseqinfam, seqbuffer, prevfam=prevfams[0])
+							nfam, lseqinfam, seqbuffer = incrementfam(nfam, lseqinfam, seqbuffer, prevfam=list(prevfams)[0])
 				else:
 					nfam, lseqinfam, seqbuffer = incrementfam(nfam, lseqinfam, seqbuffer)
 				l = line.lstrip('\0')
