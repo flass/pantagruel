@@ -42,7 +42,7 @@ if [ ! -z "${updatedbfrom}" ] ; then
     prevdballfaarad=${prevdbseqdb}/$(basename ${allfaarad})
 	if [[ ! -e "${prevdballfaarad}.faa" || ! -e "${prevdballfaarad}.mmseqsdb" ]] ; then
       echo "Error: could not find the concatenated proteome fasta file and/or MMSeqs protein db from the reference Pantagruel db/update source where expected:"
-	  ls ${prevdballfaarad}
+	  ls ${prevdballfaarad}.faa ${prevdballfaarad}.mmseqsdb
 	  exit 1
     fi
   fi
@@ -97,10 +97,14 @@ else
 fi
 mmsummary0=$(tail -n 4 ${mmlog0} | head -n 3)
 mmseqs createseqfiledb ${allfaarad}.mmseqsdb${mmsdbtag} ${allfaarad}.clusthashdb_minseqid100_clust ${allfaarad}.clusthashdb_minseqid100_clusters &>> ${mmlog0}
-checkexec "First protein clustering step failed; please inestigate error reports in '${mmlog0}'" "${datepad}-- First protein clustering step complete: ${mmsummary0}"
+checkexec "First protein clustering step failed; please investigate error reports in '${mmlog0}'" "${datepad}-- First protein clustering step complete: ${mmsummary0}"
 
 # get table of redundant protein names
-python2.7 ${ptgscripts}/split_mmseqs_clustdb_fasta.py ${allfaarad}.clusthashdb_minseqid100_clusters "NRPROT" ${allfaarad}.clusthashdb_minseqid100_families 6 0 0
+if [ -z "${updatedbfrom}" ] ; then
+    python2.7 ${ptgscripts}/split_mmseqs_clustdb_fasta.py ${allfaarad}.clusthashdb_minseqid100_clusters "NRPROT" ${allfaarad}.clusthashdb_minseqid100_families 6 0 0
+else
+    python2.7 ${ptgscripts}/split_mmseqs_clustdb_fasta.py ${allfaarad}.clusthashdb_minseqid100_clusters "NRPROT" ${allfaarad}.clusthashdb_minseqid100_families 6 0 0 ${prevdballfaarad}.identicals.tab
+fi
 grep -v NRPROT000000 ${allfaarad}.clusthashdb_minseqid100_families.tab > ${allfaarad}.identicals.tab
 python2.7 ${ptgscripts}/genefam_table_as_list.py ${allfaarad}.identicals.tab ${allfaarad}.identicals.list 0
 if [ -z "${updatedbfrom}" ] ; then
