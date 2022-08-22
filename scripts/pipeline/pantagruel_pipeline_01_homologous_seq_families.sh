@@ -52,59 +52,71 @@ else
 fi
 
 ## extract all the protein sequences into single proteome fasta files
-if [ -z "${allfaarad}" ] ; then
+if [[ "${resumetask}" == 'true' && -s ${allfaarad}.faa && $(wc -l < ${allfaarad}_list) -eq ${ngenomes} ]] ; then
+ echo "Resume mode: found full preoteome file '${allfaarad}.faa' and trace of extraction of proteomes from all ${ngenomes} input assemblies; skip generating proteome file"
+else
+ if [ -z "${allfaarad}" ] ; then
   echo "Error: \${allfaarad} is not defined; exit now"
   exit 1
-fi
-rm -f ${allfaarad}*
-for ass in `ls ${assemblies}` ; do
- if [ -d ${assemblies}/${ass} ] ; then
-  faa=$(ls ${assemblies}/${ass}/*protein.faa 2> /dev/null)
-  if [[ ! -z "${faa}" && -s "${faa}" ]] ; then
-   cat ${faa} >> ${allfaarad}.faa && echo ${faa} >> ${allfaarad}_list
-  else
-   faagz=$(ls ${assemblies}/${ass}/*protein.faa.gz 2> /dev/null)
-   if [ -z "${faagz}" ] ; then
-     echo "Error: could not find any proteome file matching '${assemblies}/${ass}/*protein.faa[.gz]' ; exit now"
-     exit 1
-   fi
-   zcat ${faagz} >> ${allfaarad}.faa && echo ${faagz} >> ${allfaarad}_list
-  fi
  fi
-done
-promptdate "-- $(wc -l ${allfaarad}_list | cut -d' ' -f1) proteomes in dataset"
+ rm -f ${allfaarad}*
+ for ass in `ls ${assemblies}` ; do
+  if [ -d ${assemblies}/${ass} ] ; then
+   faa=$(ls ${assemblies}/${ass}/*protein.faa 2> /dev/null)
+   if [[ ! -z "${faa}" && -s "${faa}" ]] ; then
+    cat ${faa} >> ${allfaarad}.faa && echo ${faa} >> ${allfaarad}_list
+   else
+    faagz=$(ls ${assemblies}/${ass}/*protein.faa.gz 2> /dev/null)
+    if [ -z "${faagz}" ] ; then
+      echo "Error: could not find any proteome file matching '${assemblies}/${ass}/*protein.faa[.gz]' ; exit now"
+      exit 1
+    fi
+    zcat ${faagz} >> ${allfaarad}.faa && echo ${faagz} >> ${allfaarad}_list
+   fi
+  fi
+ done
+fi
+promptdate "-- $(wc -l < ${allfaarad}_list) proteomes in dataset"
 promptdate "-- $(grep -c '>' ${allfaarad}.faa) proteins in dataset"
 
-# dereplicate proteins in db based on their identifier as can occur among genomes from the same source RefSeq or Genbank 
-python2.7 ${ptgscripts}/dereplicate_fasta.py ${allfaarad}.faa ${allfaarad}.nrprotids.faa
-promptdate "-- $(grep -c '>' ${allfaarad}.nrprotids.faa) non-redundant protein ids in dataset"
-diff ${allfaarad}.faa ${allfaarad}.nrprotids.faa > ${allfaarad}.fullVSnrprotids.faa.diff
-if [ -z ${allfaarad}.fullVSnrprotids.faa.diff ] ; then
-  echo "could not find same-name protein redundancy in full proteome file '${allfaarad}'; delete the '${allfaarad}.nrprotids.faa' to save disk space and instead make a symlink to full proteome '${allfaarad}'"
-  rm ${allfaarad}.nrprotids.faa
-  ln -s ${allfaarad}.faa ${allfaarad}.nrprotids.faa
+## dereplicate proteins in db based on their identifier as can occur among genomes from the same source RefSeq or Genbank 
+if [[ "${resumetask}" == 'true' && -s ${allfaarad}.nrprotids.faa ]] ; then
+ echo "Resume mode: found preoteome file with same-name protein redundancy removed: '${allfaarad}.faa'; skip sequence name-based of proteome dereplication proteome file"
+else
+ python2.7 ${ptgscripts}/dereplicate_fasta.py ${allfaarad}.faa ${allfaarad}.nrprotids.faa
+ promptdate "-- $(grep -c '>' ${allfaarad}.nrprotids.faa) non-redundant protein ids in dataset"
+ diff ${allfaarad}.faa ${allfaarad}.nrprotids.faa > ${allfaarad}.fullVSnrprotids.faa.diff
+ if [ -z ${allfaarad}.fullVSnrprotids.faa.diff ] ; then
+   echo "could not find same-name protein redundancy in full proteome file '${allfaarad}'; delete the '${allfaarad}.nrprotids.faa' to save disk space and instead make a symlink to full proteome '${allfaarad}'"
+   rm ${allfaarad}.nrprotids.faa
+   ln -s ${allfaarad}.faa ${allfaarad}.nrprotids.faa
+ fi
+ rm ${allfaarad}.fullVSnrprotids.faa.diff
 fi
-rm ${allfaarad}.fullVSnrprotids.faa.diff
 
 mmseqslogs=${ptglogs}/mmseqs && mkdir -p ${mmseqslogs}/
+
 ## clustering of identical protein sequences
 # notably those from the custom assemblies to those from the public database (and those redudant between RefSeq, Genbank or custom sets)
 
-# run mmseqs clusthash with 100% seq id threshold
-echo "${datepad}-- Perform first protein clustering step (100% prot identity clustering with clusthash algorithm)"
-mmlog0=${mmseqslogs}/mmseqs-0-identicalprot-clusthash.log
-mmseqs createdb ${allfaarad}.nrprotids.faa ${allfaarad}.mmseqsdb &> ${mmlog0}
-if [ -z "${updatedbfrom}" ] ; then
-	mmseqs clusthash ${mmthreads} --min-seq-id 1.0 ${allfaarad}.mmseqsdb ${allfaarad}.clusthashdb_minseqid100 &>> ${mmlog0}
-	mmseqs clust ${mmthreads} ${allfaarad}.mmseqsdb ${allfaarad}.clusthashdb_minseqid100 ${allfaarad}.clusthashdb_minseqid100_clust &>> ${mmlog0}
+if [[ "${resumetask}" == 'true' && -s ${allfaarad}.clusthashdb_minseqid100_clusters.index ]] ; then
+ echo "Resume mode: found index of first protein clustering step (100% prot identity clustering with clusthash algorithm); skip this clustering step"
 else
-	# update previous clustering
-	mmseqs clusterupdate ${mmthreads} --min-seq-id 1.0 ${prevdballfaarad}.mmseqsdb ${allfaarad}.mmseqsdb ${prevdballfaarad}.clusthashdb_minseqid100_clust ${allfaarad}.mmseqsdb${mmsdbtag} ${allfaarad}.clusthashdb_minseqid100_clust ${mmseqstmp} &>> ${mmlog0}
+ # run mmseqs clusthash with 100% seq id threshold
+ echo "${datepad}-- Perform first protein clustering step (100% prot identity clustering with clusthash algorithm)"
+ mmlog0=${mmseqslogs}/mmseqs-0-identicalprot-clusthash.log
+ mmseqs createdb ${allfaarad}.nrprotids.faa ${allfaarad}.mmseqsdb &> ${mmlog0}
+ if [ -z "${updatedbfrom}" ] ; then
+  mmseqs clusthash ${mmthreads} --min-seq-id 1.0 ${allfaarad}.mmseqsdb ${allfaarad}.clusthashdb_minseqid100 &>> ${mmlog0}
+  mmseqs clust ${mmthreads} ${allfaarad}.mmseqsdb ${allfaarad}.clusthashdb_minseqid100 ${allfaarad}.clusthashdb_minseqid100_clust &>> ${mmlog0}
+ else
+  # update previous clustering
+  mmseqs clusterupdate ${mmthreads} --min-seq-id 1.0 ${prevdballfaarad}.mmseqsdb ${allfaarad}.mmseqsdb ${prevdballfaarad}.clusthashdb_minseqid100_clust ${allfaarad}.mmseqsdb${mmsdbtag} ${allfaarad}.clusthashdb_minseqid100_clust ${mmseqstmp} &>> ${mmlog0}
+ fi
+ mmsummary0=$(tail -n 4 ${mmlog0} | head -n 3)
+ mmseqs createseqfiledb ${mmthreads} ${allfaarad}.mmseqsdb${mmsdbtag} ${allfaarad}.clusthashdb_minseqid100_clust ${allfaarad}.clusthashdb_minseqid100_clusters &>> ${mmlog0}
+ checkexec "First protein clustering step failed; please investigate error reports in '${mmlog0}'" "${datepad}-- First protein clustering step complete: ${mmsummary0}"
 fi
-mmsummary0=$(tail -n 4 ${mmlog0} | head -n 3)
-mmseqs createseqfiledb ${mmthreads} ${allfaarad}.mmseqsdb${mmsdbtag} ${allfaarad}.clusthashdb_minseqid100_clust ${allfaarad}.clusthashdb_minseqid100_clusters &>> ${mmlog0}
-checkexec "First protein clustering step failed; please investigate error reports in '${mmlog0}'" "${datepad}-- First protein clustering step complete: ${mmsummary0}"
-
 # get table of redundant protein names
 if [ -z "${updatedbfrom}" ] ; then
     python2.7 ${ptgscripts}/split_mmseqs_clustdb_fasta.py ${allfaarad}.clusthashdb_minseqid100_clusters "NRPROT" ${allfaarad}.clusthashdb_minseqid100_families 6 0 0
