@@ -7,18 +7,16 @@ nfin = sys.argv[1]
 famprefix = sys.argv[2]
 dirout = sys.argv[3]
 padlen = int(sys.argv[4])
-if len(sys.argv)>5: 
-	writeseq = bool(int(sys.argv[5]))
-else:
-	writeseq = True
-if len(sys.argv)>6: 
-	discardsingle = bool(int(sys.argv[6]))
-else:
-	discardsingle = False
-	
+# defaults:
+writeseq = True
+discardsingle = False
+nfprevdbidentseq = ''
 dseq2prevfam = {}
 dprevfam2reprseq = {}
 maxprevfamn = 0
+# options:
+if len(sys.argv)>5: writeseq = bool(int(sys.argv[5]))
+if len(sys.argv)>6: discardsingle = bool(int(sys.argv[6]))
 if len(sys.argv)>7: 
 	nfprevdbidentseq = sys.argv[7]
 	print "will pick family numbering based on previous clustering (more intensive task)"
