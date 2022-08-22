@@ -170,9 +170,11 @@ echo "${datepad}-- Perform second protein clustering step (to find homologs with
 mmseqsclout=${families}/$(basename ${allfaarad}.nr).mmseqs_clusterdb_default
 # perform similarity search and clustering
 if [ -z "${updatedbfrom}" ] ; then
+	#usage: mmseqs cluster <i:sequenceDB> <o:clusterDB> <tmpDir> [options]
 	mmseqs cluster ${mmthreads} ${allfaarad}.nr.mmseqsdb${mmsdbtag} $mmseqsclout $mmseqstmp &>> ${mmlog1}
 else
 	# update previous clustering
+	#usage: mmseqs clusterupdate <i:oldSequenceDB> <i:newSequenceDB> <i:oldClustResultDB> <o:newMappedSequenceDB> <o:newClustResultDB> <tmpDir> [options]
 	prevdbmmseqsclout=${prevdbseqdb}/$(basename ${families})/$(basename ${allfaarad}.nr).mmseqs_clusterdb_default
 	mmseqs clusterupdate ${mmthreads} ${prevdballfaarad}.nr.mmseqsdb ${allfaarad}.nr.mmseqsdb $prevdbmmseqsclout ${allfaarad}.nr.mmseqsdb${mmsdbtag} $mmseqsclout $mmseqstmp &>> ${mmlog1}
 fi
