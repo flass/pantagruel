@@ -20,6 +20,7 @@ if len(sys.argv)>4:
 			if fam not in dprevfamreprseq:
 				dprevfamreprseq[fam] = prot
 	
+	print "  found %d gene families based on previous clustering"%(len(dprevfamreprseq))
 	with open(nfidentseq, 'r') as fidentseq:
 		for line in fidentseq:
 			fam, prot = line.rstrip('\n').split('\t')

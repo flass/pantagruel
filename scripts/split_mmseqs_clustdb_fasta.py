@@ -17,6 +17,7 @@ else:
 	discardsingle = False
 	
 dseq2prevfam = {}
+dprevfam2reprseq = {}
 maxprevfamn = 0
 if len(sys.argv)>7: 
 	nfprevdbidentseq = sys.argv[7]
@@ -25,11 +26,12 @@ if len(sys.argv)>7:
 		for line in fprevdbidentseq:
 			fam, prot = line.rstrip('\n').split('\t')
 			dseq2prevfam[prot] = fam
+			if not fam in dprevfam2reprseq: dprevfam2reprseq[fam] = prot
 			famn = int(fam.split(famprefix)[1]) # assumes the same prefix has been used! should throw an error if not
 			if famn > maxprevfamn: maxprevfamn = famn # a bit over the top as the fam ids should come sequentially, but this is more robust
 
 lvar = []
-for var in ['nfin', 'famprefix', 'dirout', 'padlen', 'writeseq', 'discardsingle']:
+for var in ['nfin', 'famprefix', 'dirout', 'padlen', 'writeseq', 'discardsingle', 'nfprevdbidentseq']:
 	lvar.append("%s = %s"%(var, repr(eval(var))))
 print ' ; '.join(lvar)
 
@@ -48,10 +50,14 @@ idfam0, nfam0 = idfam()
 if writeseq: fout0 = open("%s/%s.fasta"%(dirout, idfam0), 'w')	# family with id # PREFIX000000 is reserved for ORFan sequences
 ftabout = open("%s.tab"%dirout, 'w')
 
-def incrementfam(nfam, lseqinfam, seqbuffer, prevfam=None):
+def incrementfam(nfam, lseqinfam, seqbuffer, prevfam=None, dprevfam2reprseq=None):
 	if len(lseqinfam)>1:
 		if prevfam:
 			idfamn = prevfam
+			if dprevfam2reprseq:
+				reprseq = dprevfam2reprseq[prevfam]
+				irepr = lseqinfam.index(reprseq)
+				lseqinfam = [lseqinfam[irepr]]+lseqinfam[:irepr]+lseqinfam[(irepr  + 1):]
 		else:
 			# generate new id
 			idfamn, nfam = idfam(nfam)
@@ -88,9 +94,9 @@ for nfinn in lnfinn:
 						if prevfam: prevfams.add(prevfam)
 					if prevfams:
 						if len(prevfams)>1:
-							raise IndexError, "too many family ids from preious clustering associated to proteins that are members of a single family in new clustering:\nprevious clustering families: "+' '.join(prevfams)
+							raise IndexError, "too many family ids from preious clustering associated to proteins that are members of a single family in new clustering:\nprevious clustering families: "+' '.join(prevfams)+'\n'+'\n'.join(lseqinfam[:2])+'\n...\n'+'\n'.join(lseqinfam[-2:])
 						else:
-							nfam, lseqinfam, seqbuffer = incrementfam(nfam, lseqinfam, seqbuffer, prevfam=list(prevfams)[0])
+							nfam, lseqinfam, seqbuffer = incrementfam(nfam, lseqinfam, seqbuffer, prevfam=list(prevfams)[0], dprevfam2reprseq=dprevfam2reprseq)
 				else:
 					nfam, lseqinfam, seqbuffer = incrementfam(nfam, lseqinfam, seqbuffer)
 				l = line.lstrip('\0')
