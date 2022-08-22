@@ -96,7 +96,7 @@ else
 	mmseqs clusterupdate ${mmthreads} --min-seq-id 1.0 ${prevdballfaarad}.mmseqsdb ${allfaarad}.mmseqsdb ${prevdballfaarad}.clusthashdb_minseqid100_clust ${allfaarad}.mmseqsdb${mmsdbtag} ${allfaarad}.clusthashdb_minseqid100_clust ${mmseqstmp} &>> ${mmlog0}
 fi
 mmsummary0=$(tail -n 4 ${mmlog0} | head -n 3)
-mmseqs createseqfiledb ${allfaarad}.mmseqsdb${mmsdbtag} ${allfaarad}.clusthashdb_minseqid100_clust ${allfaarad}.clusthashdb_minseqid100_clusters &>> ${mmlog0}
+mmseqs createseqfiledb ${mmthreads} ${allfaarad}.mmseqsdb${mmsdbtag} ${allfaarad}.clusthashdb_minseqid100_clust ${allfaarad}.clusthashdb_minseqid100_clusters &>> ${mmlog0}
 checkexec "First protein clustering step failed; please investigate error reports in '${mmlog0}'" "${datepad}-- First protein clustering step complete: ${mmsummary0}"
 
 # get table of redundant protein names

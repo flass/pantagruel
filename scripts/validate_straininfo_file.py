@@ -5,7 +5,7 @@ forbiddenstuff = {'locus_tag_prefix':[None, '-_'], \
 					'strain':[None, ' \/']}
 
 nfin = sys.argv[1]
-errprefix = "Error in format of strain info file '%s': "%nfin
+errprefix = "Error(s) in format of strain info file '%s': "%nfin
 errsuffix = "Please edit the file accordingly."
 dstrains = {}
 expectedfields = set(['assembly_id','genus','species','strain','taxid','locus_tag_prefix'])
@@ -22,6 +22,7 @@ with open(nfin, 'r') as fin:
 		forbiddenstuff[fieldname][0] = fieldindex
 	emptyfieldfound = 0
 	charerrorfound = 0
+	loctagprefixes = []
 	for line in fin:
 		lsp = line.rstrip('\n').split('\t')
 		# check that every field has a value
@@ -37,7 +38,18 @@ with open(nfin, 'r') as fin:
 				if (fchar in fieldval):
 					print "the characters '%s' is forbidden in the '%s' field; rule broken at:\n%s%s# # #\n"%(forbidenchars, fieldname, headerline, line)
 					charerrorfound += 1
+			if fieldname == 'locus_tag_prefix':
+				if fieldval in loctagprefixes:
+					print "%s occurs more than once in the %s field"%(fieldval, fieldname)
+				loctagprefixes.append(fieldval)
+	
+	errorlist = []
 	if emptyfieldfound:
-		raise ValueError, "%sempty fields were found. %s"%(errprefix, errsuffix)
+		errorlist.append("\t** empty fields were found")
 	if charerrorfound:
-		raise ValueError, "%sforbidden characters were found. %s"%(errprefix, errsuffix)
+		errorlist.append("\t** forbidden characters were found")
+	if len(loctagprefixes) > len(set(loctagprefixes)):
+		errorlist.append("\t** there are duplicate locus tag prefixe")
+	if errorlist:
+		raise ValueError, "%s\n%s\n%s"%(errprefix, '\n'.join(errorlist), errsuffix)
+	
