@@ -59,8 +59,10 @@ else
   echo "Error: \${allfaarad} is not defined; exit now"
   exit 1
  fi
+ echo "Combining all proteomes into a single fasta file; processing individual assembly proteome files:"
  rm -f ${allfaarad}*
  for ass in `ls ${assemblies}` ; do
+  echo -n "$ass "
   if [ -d ${assemblies}/${ass} ] ; then
    faa=$(ls ${assemblies}/${ass}/*protein.faa 2> /dev/null)
    if [[ ! -z "${faa}" && -s "${faa}" ]] ; then
@@ -75,9 +77,10 @@ else
    fi
   fi
  done
+ echo "... done"
 fi
 promptdate "-- $(wc -l < ${allfaarad}_list) proteomes in dataset"
-promptdate "-- $(grep -c '>' ${allfaarad}.faa) proteins in dataset"
+promptdate "-- $(grep -c '^>' ${allfaarad}.faa) proteins in dataset (full proteome file: '${allfaarad}.faa')"
 
 ## dereplicate proteins in db based on their identifier as can occur among genomes from the same source RefSeq or Genbank 
 if [[ "${resumetask}" == 'true' && -s ${allfaarad}.nrprotids.faa ]] ; then
