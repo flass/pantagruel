@@ -78,6 +78,13 @@ promptdate "-- $(grep -c '>' ${allfaarad}.faa) proteins in dataset"
 # dereplicate proteins in db based on their identifier as can occur among genomes from the same source RefSeq or Genbank 
 python2.7 ${ptgscripts}/dereplicate_fasta.py ${allfaarad}.faa ${allfaarad}.nrprotids.faa
 promptdate "-- $(grep -c '>' ${allfaarad}.nrprotids.faa) non-redundant protein ids in dataset"
+diff ${allfaarad}.faa ${allfaarad}.nrprotids.faa > ${allfaarad}.fullVSnrprotids.faa.diff
+if [ -z ${allfaarad}.fullVSnrprotids.faa.diff ] ; then
+  echo "could not find same-name protein redundancy in full proteome file '${allfaarad}'; delete the '${allfaarad}.nrprotids.faa' to save disk space and instead make a symlink to full proteome '${allfaarad}'"
+  rm ${allfaarad}.nrprotids.faa
+  ln -s ${allfaarad}.faa ${allfaarad}.nrprotids.faa
+fi
+rm ${allfaarad}.fullVSnrprotids.faa.diff
 
 mmseqslogs=${ptglogs}/mmseqs && mkdir -p ${mmseqslogs}/
 ## clustering of identical protein sequences
