@@ -4,6 +4,14 @@
 
 ## News
 
+### 22/09/2022: Up-to-date docker image on Quay.io :passenger_ship:
+
+Due to the interuption of free support on continuous builds on DockerHub, the dependency images for Pantagruel are now also hosted on [Quay.io].
+
+```sh
+docker pull quay.io/flass/pantagruel-dep:usingGeneRax
+```
+
 ### 23/03/2019: docker image on DockerHub! :whale:
 
 The worries of installing Pantagruel are in the past! now you just have to download the docker image from the [Dockerhub] repository!
@@ -11,6 +19,7 @@ The worries of installing Pantagruel are in the past! now you just have to downl
 ```sh
 docker pull flass/pantagruel-dep:usingGeneRax-latest
 ```
+:warning: UPDATE: images hosted on DockerHub are out of sync with this repo and should now be considered deprecated; see above for finding up-to-date images on [Quay.io].
 
 See details on the [Docker section of the INSTALL page].
 Note that the image is quite large (2.05 GB) so make sure you have the relevant space on your machine (and on the filesystem partition that hosts the docker client). Also, InterProScan (used in task 04) is NOT included in docker image, see [here](https://github.com/flass/pantagruel/blob/usingGeneRax/INSTALL.md#interproscantask-04-not-included-in-docker-image).
