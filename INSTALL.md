@@ -33,7 +33,7 @@ sudo apt install docker.io
 ```
 
 #### Downloading the docker image from Dockerhub
-The simpler way to get the docker image for the pantagruel dependencies is to download it form the [Quay.io](https://quay.io/repository/flass/pantagruel-dep) repository, where builds are made automatically with the latest code on the Gihub repository - magical!
+The simpler way to get the docker image for the pantagruel dependencies is to download it from the [Quay.io repository](https://quay.io/repository/flass/pantagruel-dep), where builds are made automatically with the latest code on the Github repository - magical!
 
 Just run:
 ```sh
@@ -55,24 +55,24 @@ This should create a Docker image called `panta` that will be stored on your ser
 
 Now, to run the pipeline, you will only need to create a docker container from that image. The pipeline scripts (and other executables) are available from the `$PATH` of the container, so you can use this syntax:  
 ```sh
-docker run -u $UID:$UID -v $PWD:$PWD -w $PWD flass/pantagruel-dep:usingGeneRax-latest pantagruel
+docker run -u $UID:$UID -v $PWD:$PWD -w $PWD quay.io/flass/pantagruel-dep:usingGeneRax pantagruel
 ```
 
-NB: if you built yourself the docker image, replace `flass/pantagruel-dep:usingGeneRax-latest` by `panta` or whatever else you used as value of option `docker build -t`.
+NB: if you built yourself the docker image, replace `quay.io/flass/pantagruel-dep:usingGeneRax` by `panta` or whatever else you used as value of option `docker build -t`.
 
 The `-v $PWD:$PWD` part of the command mounts your current directory `$PWD` as a volume onto the filesystem of the container, which otherwise is completely isolated from your host machine's own filesystem. The right bit of that part `:$PWD` indicates the mounting destination, which in that case is the same, meaning this location will have the same path in the container's filesystem, making it seemless to use the docker container vs. other modes of installing Pantagruel. Mounting a location of your own filesystem (it can be somewhere else than `$PWD`) thus allows you to write in it - so you can keep the output! The location chosen as root of your Pantgruel database (given as argument of `-r` option of the `init` task call) thus has to be included in that location. For instance, you can write the results in `/home/me/pantagruel_databases` if you mounted `/home/me` onto the container:  
 ```sh
-docker run -u $UID:$UID -v /home/me:/home/me -w /home/me flass/pantagruel-dep:usingGeneRax-latest pantagruel -d nameofptgdb -r /home/me/pantagruel_databases init
+docker run -u $UID:$UID -v /home/me:/home/me -w /home/me quay.io/flass/pantagruel-dep:usingGeneRax pantagruel -d nameofptgdb -r /home/me/pantagruel_databases init
 ```
 
 If you want to use another version of Pantagruel source code (for instance because a bug fix or a new feature has been published), you don't have to rebuild the docker image! You can call an external version of pipeline through the container, provided the location of that code repository on your machine is included in the mounted volume:
 ```sh
-docker run -u $UID:$UID -v $PWD:$PWD -w $PWD flass/pantagruel-dep:usingGeneRax-latest $PWD/pantagruel_pipeline/pantagruel/pantagruel
+docker run -u $UID:$UID -v $PWD:$PWD -w $PWD quay.io/flass/pantagruel-dep:usingGeneRax $PWD/pantagruel_pipeline/pantagruel/pantagruel
 ```
 
 You can even alias this command so it's less ugly and you just need to call `pantagruel`:
 ```sh
-alias pantagruel="docker run -u $UID:$UID -v $PWD:$PWD -w $PWD flass/pantagruel-dep:usingGeneRax-latest pantagruel_pipeline/pantagruel/pantagruel"
+alias pantagruel="docker run -u $UID:$UID -v $PWD:$PWD -w $PWD quay.io/flass/pantagruel-dep:usingGeneRax pantagruel_pipeline/pantagruel/pantagruel"
 ```
 
 #### InterProScan/task 04 NOT included in docker image

@@ -588,7 +588,8 @@ To install them, please follow the indications in the [INSTALL] page.
 
 Main options are to use either: 
 - the automated [install_dependencies.sh] shell script (for Debian systems; tested on Ubuntu 18.04)
-- (NEW!) the [Dockerfile] to generate a Docker image containing all dependencies; use that image to run `pantagruel` commmands within the environment provided by the container
+- the [Dockerfile] to generate a Docker image containing all dependencies; use that image to run `pantagruel` commmands within the environment provided by the container
+- pull a docker image from the repository at [Quay.io]
 
 -------------
 
@@ -609,4 +610,5 @@ Main options are to use either:
 [Dockerfile]:  https://github.com/flass/pantagruel/blob/usingGeneRax/Dockerfile
 [HPC scripts doc]: https://github.com/flass/pantagruel#hpc-scripts-submission-of-intensive-tasks-to-high-performance-computer-clusters
 [Dockerhub]: https://hub.docker.com/repository/docker/flass/pantagruel-dep
+[Quay.io]: https://quay.io/repository/flass/pantagruel-dep
 [bioRxivMS]:https://www.biorxiv.org/content/10.1101/586495v3
